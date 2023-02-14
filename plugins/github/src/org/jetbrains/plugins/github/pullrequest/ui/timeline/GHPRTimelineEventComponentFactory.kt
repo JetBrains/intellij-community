@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
-import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemComponentFactory.Item
+import javax.swing.JComponent
 
 interface GHPRTimelineEventComponentFactory<T : GHPRTimelineEvent> {
-  fun createComponent(event: T): Item
+  fun createComponent(event: T): JComponent
 }

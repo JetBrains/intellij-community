@@ -52,7 +52,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      AssertHint assertHint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName));
+      AssertHint assertHint = AssertHint.create(expression, methodName -> AbstractAssertHint.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName));
       if (assertHint == null) {
         return;
       }
@@ -74,7 +74,7 @@ public class AssertWithoutMessageInspection extends BaseInspection {
     private AssertWithoutMessageFix(boolean messageIsOnFirstPosition) {myMessageIsOnFirstPosition = messageIsOnFirstPosition;}
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
 
       PsiMethodCallExpression methodCallExpr = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (methodCallExpr == null) return;

@@ -31,16 +31,13 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class EncodingReference implements PsiReference, EmptyResolveMessageProvider {
   private final PsiElement myElement;
 
   private final String myCharsetName;
   private final TextRange myRangeInElement;
 
-  public EncodingReference(PsiElement element, final String charsetName, final TextRange rangeInElement) {
+  public EncodingReference(PsiElement element, String charsetName, TextRange rangeInElement) {
     myElement = element;
     myCharsetName = charsetName;
     myRangeInElement = rangeInElement;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -6,13 +6,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.IntroduceVariableUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -23,11 +26,15 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType()) {
           PsiElement parent = variable.getParent();
           if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+            return;
+          }
+          PsiExpression initializer = variable.getInitializer();
+          if (initializer instanceof PsiFunctionalExpression) {
             return;
           }
           doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
@@ -35,13 +42,34 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         PsiParameter parameter = statement.getIterationParameter();
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null && !typeElement.isInferredType()) {
           PsiForeachStatement copy = (PsiForeachStatement)statement.copy();
-          doCheck(parameter, copy.getIterationParameter(), typeElement);
+          doCheck(parameter, Objects.requireNonNull(copy.getIterationParameter()), typeElement);
+        }
+      }
+
+      @Override
+      public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+        PsiPattern deconstructionComponent = variable.getPattern();
+        if (deconstructionComponent.getParent() instanceof PsiDeconstructionList deconstructionList &&
+            deconstructionList.getParent() instanceof PsiDeconstructionPattern deconstruction) {
+          PsiTypeElement typeElement = variable.getTypeElement();
+          if (!typeElement.isInferredType()) {
+            @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
+            int index = ArrayUtil.indexOf(patterns, deconstructionComponent);
+            // We need a copy of the entire pattern, not just the pattern variable, as we will
+            // replace the variable type with 'var' inside the 'doCheck' method by calling the
+            // 'IntroduceVariableUtil#expandDiamondsAndReplaceExplicitTypeWithVar' method.
+            // Without the record pattern as context, we will not be able to get the type of
+            // the deconstruction component variable when calling the 'getNormalizedType' method.
+            PsiDeconstructionPattern deconstructionCopy = (PsiDeconstructionPattern)deconstruction.copy();
+            PsiPattern componentCopy = deconstructionCopy.getDeconstructionList().getDeconstructionComponents()[index];
+            doCheck(variable, Objects.requireNonNull(JavaPsiPatternUtil.getPatternVariable(componentCopy)), typeElement);
+          }
         }
       }
 
@@ -54,21 +82,20 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
 
         PsiTypeElement typeElementCopy = copyVariable.getTypeElement();
         if (typeElementCopy != null) {
-          IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
+          IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar(typeElementCopy, variable);
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
             holder.registerProblem(element2Highlight,
                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    new ReplaceWithVarFix());
           }
         }
        }
 
-      private PsiType getNormalizedType(PsiVariable copyVariable) {
+      private static PsiType getNormalizedType(PsiVariable copyVariable) {
         PsiType type = copyVariable.getType();
         PsiClass refClass = PsiUtil.resolveClassInType(type);
-        if (refClass instanceof PsiAnonymousClass) {
-          type = ((PsiAnonymousClass)refClass).getBaseClassType();
+        if (refClass instanceof PsiAnonymousClass anonymousClass) {
+          type = anonymousClass.getBaseClassType();
         }
         return type;
       }
@@ -88,7 +115,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiTypeElement) {
         CodeStyleManager.getInstance(project)
-          .reformat(IntroduceVariableBase.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
+          .reformat(IntroduceVariableUtil.expandDiamondsAndReplaceExplicitTypeWithVar((PsiTypeElement)element, element));
       }
     }
   }

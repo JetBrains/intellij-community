@@ -1,0 +1,9 @@
+// WITH_STDLIB
+fun foo(): () -> Unit = if (true) {
+    {}
+} else {
+    bar()
+    ::println
+}
+
+fun bar() {}

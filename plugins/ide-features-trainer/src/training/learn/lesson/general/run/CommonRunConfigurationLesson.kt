@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.run
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBCheckBox
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.ui.LearningUiHighlightingManager
-import java.util.concurrent.CompletableFuture
+import training.ui.LearningUiManager
 import javax.swing.JButton
 
 abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBundle.message("run.configuration.lesson.name")) {
@@ -22,7 +22,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
   protected fun TaskRuntimeContext.configurations() =
     runManager().allSettings.filter { it.name.contains(demoConfigurationName) }
 
-  private fun TaskContext.runToolWindow() = strong(UIBundle.message("tool.window.name.run"))
+  private fun TaskContext.runToolWindow() = strong(ExecutionBundle.message("tool.window.name.run"))
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -42,20 +42,11 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         test { actions(it) }
       }
 
+      showWarningIfRunConfigurationsHidden()
+
       task {
-        val configurationsShown = CompletableFuture<Boolean>()
-        triggerByUiComponentAndHighlight<JButton> { ui ->
-          if (ui.text == demoConfigurationName) {
-            configurationsShown.complete(true)
-            true
-          }
-          else false
-        }
-        showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
-                                          strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
-                                          strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
-                                          strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()))) {
-          !configurationsShown.getNow(false)
+        triggerAndFullHighlight().component { ui: JButton ->
+          ui.text == demoConfigurationName
         }
       }
 
@@ -63,7 +54,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         .dropMnemonic()
       task {
         text(LessonsBundle.message("run.configuration.temporary.to.permanent"))
-        triggerByListItemAndHighlight { item ->
+        triggerAndBorderHighlight().listItem { item ->
           item.toString() == saveConfigurationItemName
         }
         test {
@@ -82,7 +73,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         test {
           ideFrame {
-            jList(saveConfigurationItemName).click()
+            jList(saveConfigurationItemName).item(saveConfigurationItemName).click()
           }
         }
       }
@@ -92,7 +83,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         text(LessonsBundle.message("run.configuration.edit.configuration",
                                    strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic()),
                                    action(it)))
-        triggerByUiComponentAndHighlight<JBCheckBox>(highlightInside = false) { ui ->
+        triggerAndBorderHighlight().component { ui: JBCheckBox ->
           ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
         }
         test {
@@ -112,10 +103,50 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
           }
         }
       }
+
+      restoreUiInformer()
     }
 
   protected abstract fun LessonContext.runTask()
 
+  private fun LessonContext.showWarningIfRunConfigurationsHidden() {
+    task {
+      val step = stateCheck {
+        UISettings.getInstance().run { showNavigationBar || showMainToolbar }
+      }
+      val callbackId = LearningUiManager.addCallback {
+        UISettings.getInstance().apply {
+          showNavigationBar = true
+          fireUISettingsChanged()
+        }
+        step.complete(true)
+      }
+      showWarning(LessonsBundle.message("run.configuration.list.not.shown.warning",
+                                        strong(ActionsBundle.message("action.ViewNavigationBar.text").dropMnemonic()),
+                                        strong(ActionsBundle.message("group.ViewMenu.text").dropMnemonic()),
+                                        strong(ActionsBundle.message("group.ViewAppearanceGroup.text").dropMnemonic()),
+                                        callbackId)) {
+        UISettings.getInstance().run { !showNavigationBar && !showMainToolbar }
+      }
+    }
+  }
+
+  private fun LessonContext.restoreUiInformer() {
+    if (UISettings.getInstance().run { showNavigationBar || showMainToolbar }) return
+    restoreChangedSettingsInformer {
+      UISettings.getInstance().apply {
+        showNavigationBar = false
+        showMainToolbar = false
+        fireUISettingsChanged()
+      }
+    }
+  }
+
   override val testScriptProperties: TaskTestContext.TestScriptProperties
     get() = TaskTestContext.TestScriptProperties(duration = 20)
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("run.configuration.help.link"),
+         LessonUtil.getHelpLink("run-debug-configuration.html")),
+  )
 }

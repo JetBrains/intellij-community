@@ -1,4 +1,4 @@
-// "Use 'putIfAbsent' method without lambda" "true"
+// "Use 'putIfAbsent' method without lambda" "true-preview"
 import java.util.Map;
 
 class Test {

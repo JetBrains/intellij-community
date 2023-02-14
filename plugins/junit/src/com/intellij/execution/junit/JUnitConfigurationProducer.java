@@ -14,7 +14,7 @@ public abstract class JUnitConfigurationProducer extends AbstractJavaTestConfigu
   /**
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected JUnitConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

@@ -18,16 +18,18 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
 
   private abstract static class LogEntry {
-    protected LogEntry() {
+    LogEntry() {
       ProgressIndicatorProvider.checkCanceled();
     }
     abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
@@ -88,10 +90,10 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl changeEvent) {
       ASTNode parent = ensureOldParent();
 
-      final PsiElement psiParent = parent.getPsi();
-      final PsiElement psiOldChild = file.isPhysical() ? myOldChild.getPsi() : null;
+      PsiElement psiParent = parent.getPsi();
+      PsiElement psiOldChild = file.isPhysical() ? myOldChild.getPsi() : null;
       if (psiParent != null && psiOldChild != null) {
-        final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(file.getManager());
         event.setParent(psiParent);
         event.setFile(file);
         event.setOldChild(psiOldChild);
@@ -232,12 +234,12 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
       synchronized (((AbstractFileViewProvider)viewProvider).getFilePsiLock()) {
         viewProvider.beforeContentsSynchronized();
 
-        final Document document = viewProvider.getDocument();
+        Document document = viewProvider.getDocument();
         PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
         PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
 
         if (transaction == null) {
-          final PomModel model = PomManager.getModel(file.getProject());
+          PomModel model = PomManager.getModel(file.getProject());
 
           model.runTransaction(new PomTransactionBase(file) {
             @Override

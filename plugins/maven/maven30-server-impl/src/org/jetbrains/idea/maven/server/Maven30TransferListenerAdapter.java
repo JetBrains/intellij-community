@@ -25,9 +25,6 @@ import org.sonatype.aether.transfer.TransferResource;
 import java.io.File;
 import java.rmi.RemoteException;
 
-/**
- * @author Sergey Evdokimov
- */
 public class Maven30TransferListenerAdapter implements TransferListener {
 
   protected final MavenServerProgressIndicator myIndicator;

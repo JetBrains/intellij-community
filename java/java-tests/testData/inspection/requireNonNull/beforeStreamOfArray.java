@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 
 public class Main {
   Stream<Object> getStream(Object[] arr) {
-    if<caret>(arr == null) return Stream.empty();
+    if<caret>(((arr) == (null))) return Stream.empty();
     else return Stream.of(arr);
   }
 }

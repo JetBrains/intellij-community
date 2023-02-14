@@ -3,16 +3,15 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
-import de.plushnikov.intellij.plugin.LombokBundle;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,12 +31,21 @@ public class SuperBuilderHandler extends BuilderHandler {
   private static final String BUILDER_VARIABLE_NAME = "b";
 
   @Override
-  public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {
+  protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
+                                               Collection<BuilderInfo> builderInfos,
+                                               @NotNull ProblemSink problemSink) {
+    return true;
+  }
+
+  @Override
+  public boolean validateExistingBuilderClass(@NotNull String builderClassName,
+                                              @NotNull PsiClass psiClass,
+                                              @NotNull ProblemSink problemSink) {
     final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 
     if (existingInnerBuilderClass.isPresent()) {
 
-      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemBuilder)) {
+      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemSink)) {
         return false;
       }
 
@@ -46,7 +54,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
 
       if (isStaticAndAbstract.isEmpty()) {
-        problemBuilder.addError(LombokBundle.message("inspection.message.existing.builder.must.be.abstract.static.inner.class"));
+        problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
         return false;
       }
     }
@@ -73,7 +81,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     }
 
     final Collection<PsiMethod> existedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-    if (existedConstructors.stream().anyMatch(psiMethod -> psiMethod.getParameterList().getParametersCount() == 1)) {
+    if (ContainerUtil.exists(existedConstructors, psiMethod -> psiMethod.getParameterList().getParametersCount() == 1)) {
       return Optional.empty();
     }
 
@@ -95,10 +103,11 @@ public class SuperBuilderHandler extends BuilderHandler {
     final PsiClass superClass = psiClass.getSuperClass();
     if (null != superClass && !"Object".equals(superClass.getName())) {
       codeBlock = "super(b);\n" + buildMethodPrepare;
-    } else {
+    }
+    else {
       codeBlock = buildMethodPrepare;
     }
-    constructorBuilderBased.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlock, constructorBuilderBased));
+    constructorBuilderBased.withBodyText(codeBlock);
 
     return Optional.of(constructorBuilderBased);
   }
@@ -121,17 +130,17 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.STATIC);
     addTypeParameters(containingClass, null, methodBuilder);
 
-    final String blockText = String.format("return new %s();", PsiClassUtil.getTypeWithGenerics(builderImplClass).getPresentableText());
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    final String blockText = String.format("return new %s();", PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false));
+    methodBuilder.withBodyText(blockText);
 
     return Optional.of(methodBuilder);
   }
 
-  public Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
-                                                              @NotNull PsiClass builderBaseClass,
-                                                              @NotNull PsiClass builderImplClass,
-                                                              @NotNull PsiAnnotation psiAnnotation,
-                                                              @NotNull PsiClassType psiTypeBaseWithGenerics) {
+  public static Optional<PsiMethod> createToBuilderMethodIfNecessary(@NotNull PsiClass containingClass,
+                                                                     @NotNull PsiClass builderBaseClass,
+                                                                     @NotNull PsiClass builderImplClass,
+                                                                     @NotNull PsiAnnotation psiAnnotation,
+                                                                     @NotNull PsiClassType psiTypeBaseWithGenerics) {
     if (!shouldGenerateToBuilderMethods(psiAnnotation)) {
       return Optional.empty();
     }
@@ -143,23 +152,25 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.PUBLIC);
 
     final String blockText = String.format("return new %s().%s(this);",
-      PsiClassUtil.getTypeWithGenerics(builderImplClass).getPresentableText(), FILL_VALUES_METHOD_NAME);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+                                           PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false),
+                                           FILL_VALUES_METHOD_NAME);
+    methodBuilder.withBodyText(blockText);
 
     return Optional.of(methodBuilder);
   }
 
-  private boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
+  private static boolean shouldGenerateToBuilderMethods(@NotNull PsiAnnotation psiAnnotation) {
     return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, TO_BUILDER_ANNOTATION_KEY, false);
   }
 
-  private String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
+  private static String selectNonClashingNameFor(String classGenericName, Collection<String> typeParamStrings) {
     String result = classGenericName;
     if (typeParamStrings.contains(classGenericName)) {
       int counter = 2;
       do {
         result = classGenericName + counter++;
-      } while (typeParamStrings.contains(result));
+      }
+      while (typeParamStrings.contains(result));
     }
     return result;
   }
@@ -177,7 +188,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.ABSTRACT);
 
-    final List<String> typeParamNames = Stream.of(psiClass.getTypeParameters()).map(PsiTypeParameter::getName).collect(Collectors.toList());
+    final List<String> typeParamNames = ContainerUtil.map(psiClass.getTypeParameters(), PsiTypeParameter::getName);
 
     final LightTypeParameterBuilder c = new LightTypeParameterBuilder(selectNonClashingNameFor("C", typeParamNames), baseClassBuilder, 0);
     c.getExtendsList().addReference(PsiClassUtil.getTypeWithGenerics(psiClass));
@@ -196,8 +207,8 @@ public class SuperBuilderHandler extends BuilderHandler {
       final PsiClass parentBuilderClass = superClass.findInnerClassByName(getBuilderClassName(superClass), false);
       if (null != parentBuilderClass) {
         final PsiType[] explicitTypes = Stream.concat(
-          Stream.of(psiClass.getExtendsListTypes()).map(PsiClassType::getParameters).flatMap(Stream::of),
-          Stream.of(cType, bType))
+            Stream.of(psiClass.getExtendsListTypes()).map(PsiClassType::getParameters).flatMap(Stream::of),
+            Stream.of(cType, bType))
           .toArray(PsiType[]::new);
 
         final PsiClassType extendsType = getTypeWithSpecificTypeParameters(parentBuilderClass, explicitTypes);
@@ -205,8 +216,8 @@ public class SuperBuilderHandler extends BuilderHandler {
       }
     }
 
-    baseClassBuilder.withFieldSupplier(() -> {
-      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+    baseClassBuilder.withFieldSupplier((thisPsiClass) -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, thisPsiClass);
       initBuilderInfosBuilderClassType(builderInfos, bType);
 
       // create builder Fields
@@ -216,12 +227,12 @@ public class SuperBuilderHandler extends BuilderHandler {
         .collect(Collectors.toList());
     });
 
-    baseClassBuilder.withMethodSupplier(() -> {
-      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, baseClassBuilder);
+    baseClassBuilder.withMethodSupplier((thisPsiClass) -> {
+      final List<BuilderInfo> builderInfos = createBuilderInfos(psiClass, psiAnnotation, thisPsiClass);
       initBuilderInfosBuilderClassType(builderInfos, bType);
 
       // create all methods
-      return addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, baseClassBuilder, builderInfos, bType, cType);
+      return addAllMethodsForBaseBuilderClass(psiClass, psiAnnotation, thisPsiClass, builderInfos, bType, cType);
     });
 
     return baseClassBuilder;
@@ -238,7 +249,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     return builderInfos;
   }
 
-  private void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
+  private static void initBuilderInfosBuilderClassType(@NotNull List<BuilderInfo> builderInfos, @NotNull PsiClassType bType) {
     for (BuilderInfo builderInfo : builderInfos) {
       builderInfo.withBuilderClassType(bType);
     }
@@ -252,7 +263,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     if (typeParameters.length >= 2) {
       bTypeClass = typeParameters[typeParameters.length - 1];
       cTypeClass = typeParameters[typeParameters.length - 2];
-    } else {
+    }
+    else {
       //Fallback only
       bTypeClass = new LightTypeParameterBuilder("B", psiBuilderClass, 1);
       cTypeClass = new LightTypeParameterBuilder("C", psiBuilderClass, 0);
@@ -293,7 +305,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       if (!existedMethodNames.contains(STATIC_FILL_VALUES_METHOD_NAME)) {
         // create '$fillValuesFromInstanceIntoBuilder' method
         final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, STATIC_FILL_VALUES_METHOD_NAME)
-          .withMethodReturnType(PsiType.VOID)
+          .withMethodReturnType(PsiTypes.voidType())
           .withParameter(INSTANCE_VARIABLE_NAME, PsiClassUtil.getTypeWithGenerics(psiClass))
           .withParameter(BUILDER_VARIABLE_NAME, getTypeWithWildcardsForSuperBuilderTypeParameters(baseClassBuilder))
           .withContainingClass(baseClassBuilder)
@@ -303,10 +315,10 @@ public class SuperBuilderHandler extends BuilderHandler {
         addTypeParameters(psiClass, null, methodBuilder);
 
         final String toBuilderMethodCalls = builderInfos.stream()
-          .map(BuilderInfo::renderToBuilderCall)
+          .map(BuilderInfo::renderToBuilderCallWithoutPrependLogic)
           .collect(Collectors.joining(';' + BUILDER_VARIABLE_NAME + '.', BUILDER_VARIABLE_NAME + '.', ";\n"));
 
-        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(toBuilderMethodCalls, methodBuilder));
+        methodBuilder.withBodyText(toBuilderMethodCalls);
         result.add(methodBuilder);
       }
 
@@ -321,8 +333,8 @@ public class SuperBuilderHandler extends BuilderHandler {
 
         final String callSuperCode = "super." + FILL_VALUES_METHOD_NAME + "(" + INSTANCE_VARIABLE_NAME + ");\n";
         final String codeBlockText = String.format("%s%s.%s(%s, this);\nreturn self();", forceCallSuper ? callSuperCode : "",
-          baseClassBuilder.getName(), STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
-        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+                                                   baseClassBuilder.getQualifiedName(), STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
+        methodBuilder.withBodyText(codeBlockText);
 
         result.add(methodBuilder);
       }
@@ -368,15 +380,22 @@ public class SuperBuilderHandler extends BuilderHandler {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withParameterTypes(psiClass.getTypeParameterList())
-      .withModifier(PsiModifier.PRIVATE)
       .withModifier(PsiModifier.STATIC)
       .withModifier(PsiModifier.FINAL);
 
     final PsiClassType extendsType = getTypeWithSpecificTypeParameters(psiBaseBuilderClass,
-      PsiClassUtil.getTypeWithGenerics(psiClass), PsiClassUtil.getTypeWithGenerics(implClassBuilder));
+                                                                       PsiClassUtil.getTypeWithGenerics(psiClass),
+                                                                       PsiClassUtil.getTypeWithGenerics(implClassBuilder));
     implClassBuilder.withExtends(extendsType);
 
-    implClassBuilder.withMethodSupplier(() -> createAllMethodsOfImplBuilder(psiClass, psiAnnotation, implClassBuilder));
+    if (hasValidJacksonizedAnnotation(psiClass, null)) {
+      handleJacksonized(psiClass, null, psiAnnotation, implClassBuilder);
+    }
+    else {
+      implClassBuilder.withModifier(PsiModifier.PRIVATE);
+    }
+
+    implClassBuilder.withMethodSupplier((thisPsiClass) -> createAllMethodsOfImplBuilder(psiClass, psiAnnotation, thisPsiClass));
 
     return implClassBuilder;
   }
@@ -386,8 +405,8 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                              @NotNull PsiClass implBuilderClass) {
     Collection<PsiMethod> result = new ArrayList<>();
 
-    final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(implBuilderClass).stream()
-      .map(PsiMethod::getName).collect(Collectors.toSet());
+    final Collection<String> existedMethodNames =
+      ContainerUtil.map2Set(PsiClassUtil.collectClassMethodsIntern(implBuilderClass), PsiMethod::getName);
 
     final String builderImplClassName = StringUtil.notNullize(implBuilderClass.getName());
     final PsiManager psiManager = psiClass.getManager();
@@ -397,8 +416,8 @@ public class SuperBuilderHandler extends BuilderHandler {
         .withConstructor(true)
         .withContainingClass(implBuilderClass)
         .withNavigationElement(psiClass)
-        .withModifier(PsiModifier.PRIVATE);
-      privateConstructor.withBody(PsiMethodUtil.createCodeBlockFromText("", privateConstructor));
+        .withModifier(PsiModifier.PRIVATE)
+        .withBodyText("");
       result.add(privateConstructor);
     }
 
@@ -408,8 +427,8 @@ public class SuperBuilderHandler extends BuilderHandler {
         .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(implBuilderClass))
         .withContainingClass(implBuilderClass)
         .withNavigationElement(psiClass)
-        .withModifier(PsiModifier.PROTECTED);
-      selfMethod.withBody(PsiMethodUtil.createCodeBlockFromText("return this;", selfMethod));
+        .withModifier(PsiModifier.PROTECTED)
+        .withBodyText("return this;");
       result.add(selfMethod);
     }
 
@@ -425,8 +444,9 @@ public class SuperBuilderHandler extends BuilderHandler {
         .withContainingClass(implBuilderClass)
         .withNavigationElement(psiClass)
         .withModifier(PsiModifier.PUBLIC);
-      final String buildCodeBlockText = String.format("return new %s(this);", PsiClassUtil.getTypeWithGenerics(psiClass).getPresentableText());
-      buildMethod.withBody(PsiMethodUtil.createCodeBlockFromText(buildCodeBlockText, buildMethod));
+      final String buildCodeBlockText =
+        String.format("return new %s(this);", PsiClassUtil.getTypeWithGenerics(psiClass).getCanonicalText(false));
+      buildMethod.withBodyText(buildCodeBlockText);
       result.add(buildMethod);
     }
 
@@ -434,13 +454,13 @@ public class SuperBuilderHandler extends BuilderHandler {
   }
 
   @NotNull
-  public PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
+  public static PsiClassType getTypeWithWildcardsForSuperBuilderTypeParameters(@NotNull PsiClass psiClass) {
     final PsiWildcardType wildcardType = PsiWildcardType.createUnbounded(psiClass.getManager());
     return getTypeWithSpecificTypeParameters(psiClass, wildcardType, wildcardType);
   }
 
   @NotNull
-  private PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, @NotNull PsiType... psiTypes) {
+  private static PsiClassType getTypeWithSpecificTypeParameters(@NotNull PsiClass psiClass, PsiType @NotNull ... psiTypes) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
     final int substituteTypesCount = psiTypes.length;

@@ -1,4 +1,4 @@
-// "Create inner class 'MyCollection'" "true"
+// "Create inner class 'MyCollection'" "true-preview"
 import java.util.*;
 
 public class Test {

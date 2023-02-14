@@ -1,0 +1,32 @@
+<idea-plugin package="com.intellij.byteCodeViewer">
+  <name>Bytecode Viewer</name>
+  <id>ByteCodeViewer</id>
+  <category>Other Tools</category>
+  <description>
+    <![CDATA[Shows the bytecode of a compiled Java class file.<p>
+
+To view the bytecode, select a class file and open <b>View | Show Bytecode</b>.]]>
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
+  </extensions>
+
+  <actions>
+    <group id="ByeCodeViewerGroup">
+      <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+
+  <resource-bundle>messages.JavaByteCodeViewerBundle</resource-bundle>
+</idea-plugin>

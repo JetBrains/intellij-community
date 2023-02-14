@@ -3,8 +3,5 @@ package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public final class SwitchToHtml5WithHighPriorityAction extends SwitchToHtml5Action implements HighPriorityAction {
 }

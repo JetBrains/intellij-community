@@ -1,35 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl.impl
 
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.ui.UIBundle
+import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
-import icons.FeaturesTrainerIcons
-import training.dsl.LearningBalloonConfig
-import training.dsl.TaskContext
-import training.dsl.TaskRuntimeContext
+import training.dsl.*
 import training.learn.ActionsRecorder
-import training.learn.LearnBundle
-import training.learn.lesson.LessonManager
 import training.ui.LearningUiHighlightingManager
-import training.ui.LessonMessagePane
 import training.ui.MessageFactory
-import training.ui.UISettings
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
-import java.awt.event.ActionEvent
+import java.awt.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import javax.swing.*
-import javax.swing.border.EmptyBorder
+import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
@@ -47,76 +34,68 @@ internal object LessonExecutorUtil {
     return fakeTaskContext.messages
   }
 
-  fun showBalloonMessage(text: String, ui: JComponent, balloonConfig: LearningBalloonConfig, actionsRecorder: ActionsRecorder, project: Project) {
-    val messages = MessageFactory.convert(text)
-    val messagesPane = LessonMessagePane(false)
-    messagesPane.setBounds(0, 0, balloonConfig.width.takeIf { it != 0 } ?: 500, 1000)
-    messagesPane.isOpaque = false
-    messagesPane.addMessage(messages)
+  fun getTaskCallInfo(): String? {
+    return Exception().stackTrace.first { element ->
+      element.toString().let { it.startsWith("training.learn.lesson") || !it.startsWith("training.") }
+    }?.toString()
+  }
 
-    val preferredSize = messagesPane.preferredSize
-
-    messagesPane.toolTipText = LearnBundle.message("learn.stop.hint")
-    val balloonPanel = JPanel()
-    balloonPanel.border = EmptyBorder(8, 8, 8, 8)
-    balloonPanel.isOpaque = false
-    balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
-    var height = preferredSize.height + 16
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 6)) + 16
-    balloonPanel.add(messagesPane)
-    val gotItCallBack = balloonConfig.gotItCallBack
-    val gotItButton = if (gotItCallBack != null) JButton().also {
-      balloonPanel.add(it)
-      it.action = object : AbstractAction(UIBundle.message("got.it")) {
-        override fun actionPerformed(e: ActionEvent?) {
-          gotItCallBack()
+  fun showBalloonMessage(text: String,
+                         ui: JComponent,
+                         balloonConfig: LearningBalloonConfig,
+                         actionsRecorder: ActionsRecorder,
+                         lessonExecutor: LessonExecutor) {
+    if (balloonConfig.delayBeforeShow == 0) {
+      showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
+    }
+    else {
+      val delayed = {
+        if (!actionsRecorder.disposed) {
+          showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, true)
         }
       }
-      it.isSelected = true
-      it.isFocusable = true
-      height += it.preferredSize.height
+      Alarm().addRequest(delayed, balloonConfig.delayBeforeShow)
     }
-    else null
-    gotItButton?.isSelected = true
+  }
 
-    balloonPanel.preferredSize = Dimension(width, height)
-
-    val balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonPanel)
-      .setCloseButtonEnabled(false)
-      .setAnimationCycle(0)
-      .setHideOnAction(false)
-      .setHideOnClickOutside(false)
-      .setBlockClicksThroughBalloon(true)
-      .setFillColor(UISettings.instance.backgroundColor)
-      .setBorderColor(UISettings.instance.activeTaskBorder)
-      .setHideOnCloseClick(false)
-      .setDisposable(actionsRecorder)
-      .setCloseButtonEnabled(true)
-      .createBalloon()
-
+  private fun showBalloonMessage(text: String,
+                                 ui: JComponent,
+                                 balloonConfig: LearningBalloonConfig,
+                                 actionsRecorder: ActionsRecorder,
+                                 lessonExecutor: LessonExecutor,
+                                 useAnimationCycle: Boolean) {
+    val textBuilder = MessageFactory.convertToGotItFormat(text)
+    val balloonBuilder = GotItComponentBuilder(textBuilder)
+    if (balloonConfig.width > 0) {
+      balloonBuilder.withMaxWidth(balloonConfig.width)
+    }
+    val balloon: Balloon = balloonBuilder
+      .withStepNumber(lessonExecutor.visualIndexNumber)
+      .showButton(balloonConfig.gotItCallBack != null)
+      .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
+      .requestFocus(balloonConfig.gotItCallBack != null)
+      .withContrastColors(true)
+      .build(actionsRecorder) {
+        setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
+        setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
+        setCloseButtonEnabled(false)
+        setHideOnCloseClick(false)
+        setRequestFocus(true)
+      }
 
     balloon.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         val checkStopLesson = {
-          invokeLater {
-            if (actionsRecorder.disposed) return@invokeLater
-            val yesNo = Messages.showYesNoDialog(project, LearnBundle.message("learn.stop.lesson.question"), LearnBundle.message("learn.stop.lesson"), FeaturesTrainerIcons.Img.PluginIcon)
-            if (yesNo == Messages.YES) {
-              invokeLater {
-                LessonManager.instance.stopLesson()
-              }
-            }
-            else {
-              if (actionsRecorder.disposed) return@invokeLater
-              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, project)
-            }
+          lessonExecutor.taskInvokeLater {
+            if (!actionsRecorder.disposed)
+              showBalloonMessage(text, ui, balloonConfig, actionsRecorder, lessonExecutor, false)
           }
         }
         Alarm().addRequest(checkStopLesson, 500) // it is a hacky a little bit
       }
     })
+
     balloon.show(getPosition(ui, balloonConfig.side), balloonConfig.side)
-    gotItButton?.requestFocus()
   }
 
   private fun getPosition(component: JComponent, side: Balloon.Position): RelativePoint {
@@ -141,14 +120,13 @@ internal object LessonExecutorUtil {
 }
 
 
-
 private class ExtractTaskPropertiesContext(override val project: Project) : TaskContext() {
   var textCount = 0
   var hasDetection = false
 
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
     if (useBalloon?.duplicateMessage == false) return
-    textCount++
+    textCount += text.split("\n").size
   }
 
   override fun trigger(actionId: String) {
@@ -158,6 +136,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   override fun trigger(checkId: (String) -> Boolean) {
     hasDetection = true
   }
+
   override fun <T> trigger(actionId: String, calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean) {
     hasDetection = true
   }
@@ -180,6 +159,11 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
     return CompletableFuture()
   }
 
+  override fun timerCheck(delayMillis: Int, checkState: TaskRuntimeContext.() -> Boolean): CompletableFuture<Boolean> {
+    hasDetection = true
+    return CompletableFuture()
+  }
+
   override fun addFutureStep(p: DoneStepContext.() -> Unit) {
     hasDetection = true
   }
@@ -188,8 +172,33 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
     hasDetection = true
   }
 
+  override fun triggerUI(parameters: HighlightTriggerParametersContext.() -> Unit): HighlightingTriggerMethods {
+    hasDetection = true
+    return super.triggerUI(parameters)
+  }
+
   @Suppress("OverridingDeprecatedMember")
-  override fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> () -> Component)  {
+  override fun <T : Component> triggerByPartOfComponentImpl(componentClass: Class<T>,
+                                                            options: LearningUiHighlightingManager.HighlightingOptions,
+                                                            selector: ((candidates: Collection<T>) -> T?)?,
+                                                            rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+    hasDetection = true
+  }
+
+  @Suppress("OverridingDeprecatedMember")
+  override fun <ComponentType : Component> triggerByUiComponentAndHighlightImpl(componentClass: Class<ComponentType>,
+                                                                                options: LearningUiHighlightingManager.HighlightingOptions,                                                                                selector: ((candidates: Collection<ComponentType>) -> ComponentType?)?,
+                                                                                finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                                  checkList: TaskRuntimeContext.(list: JList<*>) -> Int?) {
+    hasDetection = true
+  }
+
+  override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
+                                              checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     hasDetection = true
   }
 

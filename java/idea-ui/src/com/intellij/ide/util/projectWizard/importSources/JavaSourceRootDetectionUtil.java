@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.RootDetectionProcessor;
@@ -38,8 +38,7 @@ public final class JavaSourceRootDetectionUtil {
     Map<File, JavaModuleSourceRoot> result = new HashMap<>();
     for (List<DetectedProjectRoot> roots : rootsMap.values()) {
       for (DetectedProjectRoot root : roots) {
-        if (root instanceof JavaModuleSourceRoot) {
-          final JavaModuleSourceRoot sourceRoot = (JavaModuleSourceRoot)root;
+        if (root instanceof JavaModuleSourceRoot sourceRoot) {
           final File directory = sourceRoot.getDirectory();
           final JavaModuleSourceRoot oldRoot = result.remove(directory);
           if (oldRoot != null) {

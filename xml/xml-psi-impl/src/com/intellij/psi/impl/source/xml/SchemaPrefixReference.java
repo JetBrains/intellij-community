@@ -44,9 +44,6 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
   /**
    *
    * @param element XmlAttribute || XmlAttributeValue || XmlTag
-   * @param range
-   * @param name
-   * @param reference
    */
   public SchemaPrefixReference(XmlElement element, TextRange range, String name, @Nullable TagNameReference reference) {
     super(element, range);
@@ -86,14 +83,12 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
 
   @Override
   public PsiElement handleElementRename(@NotNull String name) throws IncorrectOperationException {
-    if (myElement instanceof XmlAttribute) {
-      final XmlAttribute attr = (XmlAttribute)myElement;
+    if (myElement instanceof XmlAttribute attr) {
       return ("xmlns".equals(attr.getNamespacePrefix()))
              ? attr.setName(attr.getNamespacePrefix() + ":" + name)
              : attr.setName(name + ":" + attr.getLocalName());
     }
-    else if (myElement instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)myElement;
+    else if (myElement instanceof XmlTag tag) {
       return tag.setName(name + ":" + tag.getLocalName());
     }
     return super.handleElementRename(name);

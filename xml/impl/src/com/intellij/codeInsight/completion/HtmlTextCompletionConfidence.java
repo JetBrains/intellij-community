@@ -29,7 +29,17 @@ public class HtmlTextCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (HtmlCompletionContributor.isHtmlElementInTextCompletionEnabledForFile(psiFile)) {
+      return notAfterASpace(psiFile, offset);
+    }
     return shouldSkipAutopopupInHtml(contextElement, offset) ? ThreeState.YES : ThreeState.UNSURE;
+  }
+
+  private static ThreeState notAfterASpace(PsiFile file, int offset) {
+    if (offset <= 0 || file.getText().charAt(offset - 1) != ' ') {
+      return ThreeState.UNSURE;
+    }
+    return ThreeState.YES;
   }
 
   public static boolean shouldSkipAutopopupInHtml(@NotNull PsiElement contextElement, int offset) {

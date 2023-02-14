@@ -40,15 +40,9 @@ public abstract class ToolProvider implements ZoomProvider {
       if (myTool != null) {
       try {
         switch (event.getID()) {
-          case KeyEvent.KEY_PRESSED:
-            myTool.keyPressed(event, area);
-            break;
-          case KeyEvent.KEY_TYPED:
-            myTool.keyTyped(event, area);
-            break;
-          case KeyEvent.KEY_RELEASED:
-            myTool.keyReleased(event, area);
-            break;
+          case KeyEvent.KEY_PRESSED -> myTool.keyPressed(event, area);
+          case KeyEvent.KEY_TYPED -> myTool.keyTyped(event, area);
+          case KeyEvent.KEY_RELEASED -> myTool.keyReleased(event, area);
         }
       }
       catch (Throwable e) {
@@ -61,38 +55,30 @@ public abstract class ToolProvider implements ZoomProvider {
     if (myTool != null) {
       try {
         switch (event.getID()) {
-          case MouseEvent.MOUSE_PRESSED:
+          case MouseEvent.MOUSE_PRESSED -> {
             myTool.mouseDown(event, area);
             if (event.isPopupTrigger()) {
               myTool.mousePopup(event, area);
             }
-            break;
-          case MouseEvent.MOUSE_RELEASED:
+          }
+          case MouseEvent.MOUSE_RELEASED -> {
             myTool.mouseUp(event, area);
             if (event.isPopupTrigger()) {
               myTool.mousePopup(event, area);
             }
-            break;
-          case MouseEvent.MOUSE_ENTERED:
-            myTool.mouseEntered(event, area);
-            break;
-          case MouseEvent.MOUSE_EXITED:
-            myTool.mouseExited(event, area);
-            break;
-          case MouseEvent.MOUSE_CLICKED:
+          }
+          case MouseEvent.MOUSE_ENTERED -> myTool.mouseEntered(event, area);
+          case MouseEvent.MOUSE_EXITED -> myTool.mouseExited(event, area);
+          case MouseEvent.MOUSE_CLICKED -> {
             if (event.getClickCount() == 2) {
               myTool.mouseDoubleClick(event, area);
             }
             if (event.isPopupTrigger()) {
               myTool.mousePopup(event, area);
             }
-            break;
-          case MouseEvent.MOUSE_MOVED:
-            myTool.mouseMove(event, area);
-            break;
-          case MouseEvent.MOUSE_DRAGGED:
-            myTool.mouseDrag(event, area);
-            break;
+          }
+          case MouseEvent.MOUSE_MOVED -> myTool.mouseMove(event, area);
+          case MouseEvent.MOUSE_DRAGGED -> myTool.mouseDrag(event, area);
         }
       }
       catch (Throwable e) {

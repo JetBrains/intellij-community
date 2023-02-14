@@ -35,7 +35,7 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    * Return all expressions which are considered assignment targets (to the left of the last = sign in the statement).
    * Doesn't unpack tuples, parentheses or anything.
    *
-   * @return the list of assignment target expressions
+   * @return the array of assignment target expressions
    */
   PyExpression @NotNull [] getRawTargets();
 

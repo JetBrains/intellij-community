@@ -12,11 +12,11 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 public class ReorderingUtilsTest extends LightJavaCodeInsightTestCase {
-  private static final String PREFIX = "import java.util.Optional;\n" +
-                                       "import java.util.List;\n" +
-                                       "/** @noinspection all*/\n" +
-                                       "class X {Object test(Object obj, String str, int x, int y, String[] arr, " +
-                                       "Optional<String> opt, List<String> list, Integer boxed) { return ";
+  private static final String PREFIX = """
+    import java.util.Optional;
+    import java.util.List;
+    /** @noinspection all*/
+    class X {Object test(Object obj, String str, int x, int y, String[] arr, Optional<String> opt, List<String> list, Integer boxed) { return\s""";
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
   private static final String SELECTION_START = "/*<*/";
   private static final String SELECTION_END = "/*>*/";

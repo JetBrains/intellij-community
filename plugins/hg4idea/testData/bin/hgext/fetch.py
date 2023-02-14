@@ -7,15 +7,56 @@
 
 '''pull, update and merge in one command (DEPRECATED)'''
 
+from __future__ import absolute_import
+
 from mercurial.i18n import _
-from mercurial.node import nullid, short
-from mercurial import commands, cmdutil, hg, util, error
-from mercurial.lock import release
+from mercurial.node import short
+from mercurial import (
+    cmdutil,
+    error,
+    exchange,
+    hg,
+    lock,
+    pycompat,
+    registrar,
+)
+from mercurial.utils import (
+    dateutil,
+    urlutil,
+)
 
-testedwith = 'internal'
+release = lock.release
+cmdtable = {}
+command = registrar.command(cmdtable)
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
-def fetch(ui, repo, source='default', **opts):
-    '''pull changes from a remote repository, merge new changes if needed.
+
+@command(
+    b'fetch',
+    [
+        (
+            b'r',
+            b'rev',
+            [],
+            _(b'a specific revision you would like to pull'),
+            _(b'REV'),
+        ),
+        (b'', b'edit', None, _(b'invoke editor on commit messages')),
+        (b'', b'force-editor', None, _(b'edit commit message (DEPRECATED)')),
+        (b'', b'switch-parent', None, _(b'switch parents when merging')),
+    ]
+    + cmdutil.commitopts
+    + cmdutil.commitopts2
+    + cmdutil.remoteopts,
+    _(b'hg fetch [SOURCE]'),
+    helpcategory=command.CATEGORY_REMOTE_REPO_MANAGEMENT,
+)
+def fetch(ui, repo, source=b'default', **opts):
+    """pull changes from a remote repository, merge new changes if needed.
 
     This finds all changes from the repository at the specified path
     or URL and adds them to the local repository.
@@ -32,55 +73,58 @@ def fetch(ui, repo, source='default', **opts):
     See :hg:`help dates` for a list of formats valid for -d/--date.
 
     Returns 0 on success.
-    '''
+    """
 
-    date = opts.get('date')
+    opts = pycompat.byteskwargs(opts)
+    date = opts.get(b'date')
     if date:
-        opts['date'] = util.parsedate(date)
+        opts[b'date'] = dateutil.parsedate(date)
 
-    parent, p2 = repo.dirstate.parents()
+    parent = repo.dirstate.p1()
     branch = repo.dirstate.branch()
     try:
         branchnode = repo.branchtip(branch)
     except error.RepoLookupError:
         branchnode = None
     if parent != branchnode:
-        raise util.Abort(_('working dir not at branch tip '
-                           '(use "hg update" to check out branch tip)'))
-
-    if p2 != nullid:
-        raise util.Abort(_('outstanding uncommitted merge'))
+        raise error.Abort(
+            _(b'working directory not at branch tip'),
+            hint=_(b"use 'hg update' to check out branch tip"),
+        )
 
     wlock = lock = None
     try:
         wlock = repo.wlock()
         lock = repo.lock()
-        mod, add, rem, del_ = repo.status()[:4]
 
-        if mod or add or rem:
-            raise util.Abort(_('outstanding uncommitted changes'))
-        if del_:
-            raise util.Abort(_('working directory is missing some files'))
+        cmdutil.bailifchanged(repo)
+
         bheads = repo.branchheads(branch)
         bheads = [head for head in bheads if len(repo[head].children()) == 0]
         if len(bheads) > 1:
-            raise util.Abort(_('multiple heads in this branch '
-                               '(use "hg heads ." and "hg merge" to merge)'))
+            raise error.Abort(
+                _(
+                    b'multiple heads in this branch '
+                    b'(use "hg heads ." and "hg merge" to merge)'
+                )
+            )
 
-        other = hg.peer(repo, opts, ui.expandpath(source))
-        ui.status(_('pulling from %s\n') %
-                  util.hidepassword(ui.expandpath(source)))
+        path = urlutil.get_unique_pull_path(b'fetch', repo, ui, source)[0]
+        other = hg.peer(repo, opts, path)
+        ui.status(_(b'pulling from %s\n') % urlutil.hidepassword(path))
         revs = None
-        if opts['rev']:
+        if opts[b'rev']:
             try:
-                revs = [other.lookup(rev) for rev in opts['rev']]
+                revs = [other.lookup(rev) for rev in opts[b'rev']]
             except error.CapabilityError:
-                err = _("other repository doesn't support revision lookup, "
-                        "so a rev cannot be specified.")
-                raise util.Abort(err)
+                err = _(
+                    b"other repository doesn't support revision lookup, "
+                    b"so a rev cannot be specified."
+                )
+                raise error.Abort(err)
 
         # Are there any changes at all?
-        modheads = repo.pull(other, heads=revs)
+        modheads = exchange.pull(repo, other, heads=revs).cgresult
         if modheads == 0:
             return 0
 
@@ -101,9 +145,13 @@ def fetch(ui, repo, source='default', **opts):
             hg.clean(repo, newparent)
         newheads = [n for n in newheads if n != newparent]
         if len(newheads) > 1:
-            ui.status(_('not merging with %d other new branch heads '
-                        '(use "hg heads ." and "hg merge" to merge them)\n') %
-                      (len(newheads) - 1))
+            ui.status(
+                _(
+                    b'not merging with %d other new branch heads '
+                    b'(use "hg heads ." and "hg merge" to merge them)\n'
+                )
+                % (len(newheads) - 1)
+            )
             return 1
 
         if not newheads:
@@ -115,44 +163,37 @@ def fetch(ui, repo, source='default', **opts):
             # By default, we consider the repository we're pulling
             # *from* as authoritative, so we merge our changes into
             # theirs.
-            if opts['switch_parent']:
+            if opts[b'switch_parent']:
                 firstparent, secondparent = newparent, newheads[0]
             else:
                 firstparent, secondparent = newheads[0], newparent
-                ui.status(_('updating to %d:%s\n') %
-                          (repo.changelog.rev(firstparent),
-                           short(firstparent)))
+                ui.status(
+                    _(b'updating to %d:%s\n')
+                    % (repo.changelog.rev(firstparent), short(firstparent))
+                )
             hg.clean(repo, firstparent)
-            ui.status(_('merging with %d:%s\n') %
-                      (repo.changelog.rev(secondparent), short(secondparent)))
-            err = hg.merge(repo, secondparent, remind=False)
+            p2ctx = repo[secondparent]
+            ui.status(
+                _(b'merging with %d:%s\n') % (p2ctx.rev(), short(secondparent))
+            )
+            err = hg.merge(p2ctx, remind=False)
 
         if not err:
             # we don't translate commit messages
-            message = (cmdutil.logmessage(ui, opts) or
-                       ('Automated merge with %s' %
-                        util.removeauth(other.url())))
-            editor = cmdutil.commiteditor
-            if opts.get('force_editor') or opts.get('edit'):
-                editor = cmdutil.commitforceeditor
-            n = repo.commit(message, opts['user'], opts['date'], editor=editor)
-            ui.status(_('new changeset %d:%s merges remote changes '
-                        'with local\n') % (repo.changelog.rev(n),
-                                           short(n)))
+            message = cmdutil.logmessage(ui, opts) or (
+                b'Automated merge with %s' % urlutil.removeauth(other.url())
+            )
+            editopt = opts.get(b'edit') or opts.get(b'force_editor')
+            editor = cmdutil.getcommiteditor(edit=editopt, editform=b'fetch')
+            n = repo.commit(
+                message, opts[b'user'], opts[b'date'], editor=editor
+            )
+            ui.status(
+                _(b'new changeset %d:%s merges remote changes with local\n')
+                % (repo.changelog.rev(n), short(n))
+            )
 
         return err
 
     finally:
         release(lock, wlock)
-
-cmdtable = {
-    'fetch':
-        (fetch,
-        [('r', 'rev', [],
-          _('a specific revision you would like to pull'), _('REV')),
-         ('e', 'edit', None, _('edit commit message')),
-         ('', 'force-editor', None, _('edit commit message (DEPRECATED)')),
-         ('', 'switch-parent', None, _('switch parents when merging')),
-        ] + commands.commitopts + commands.commitopts2 + commands.remoteopts,
-        _('hg fetch [SOURCE]')),
-}

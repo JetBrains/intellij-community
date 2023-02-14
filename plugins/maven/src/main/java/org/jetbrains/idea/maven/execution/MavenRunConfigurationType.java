@@ -35,9 +35,6 @@ import java.util.List;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public final class MavenRunConfigurationType implements ConfigurationType {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
@@ -216,11 +213,10 @@ public final class MavenRunConfigurationType implements ConfigurationType {
       runConfiguration.setBeforeRunTasks(Collections.emptyList());
     }
     MavenGeneralSettings generalSettingsToRun =
-      generalSettings != null ? generalSettings : MavenWorkspaceSettingsComponent.getInstance(project).getSettings().generalSettings;
+      generalSettings != null ? generalSettings : MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
+    MavenRunnerSettings runnerSettingsToRun = runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerParameters(params);
     runConfiguration.setGeneralSettings(generalSettingsToRun);
-    MavenRunnerSettings runnerSettingsToRun =
-      runnerSettings != null ? runnerSettings : MavenRunner.getInstance(project).getState();
     runConfiguration.setRunnerSettings(runnerSettingsToRun);
     return settings;
   }

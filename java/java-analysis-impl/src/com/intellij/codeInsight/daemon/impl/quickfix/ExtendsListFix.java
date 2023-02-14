@@ -38,7 +38,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   @SafeFieldForPreview // we don't modify this class
   protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
-  @SafeFieldForPreview // we don't mo
+  @SafeFieldForPreview // we don't modify PSI referenced from this type
   private final PsiClassType myTypeToExtendFrom;
   private final @IntentionName String myName;
 
@@ -88,6 +88,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
+    if (!myTypeToExtendFrom.isValid()) return false;
     final PsiClass myClass = (PsiClass)startElement;
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
     return

@@ -105,13 +105,13 @@ public final class ApplicationUtil {
   public static void invokeAndWaitSomewhere(@NotNull EdtReplacementThread thread, @NotNull ModalityState modalityState, @NotNull Runnable r) {
     switch (thread) {
       case EDT:
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
         }
         EdtInvocationManager.invokeAndWaitIfNeeded(r);
         break;
       case WT:
-        if (ApplicationManager.getApplication().isWriteThread()) {
+        if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           r.run();
         }
         else if (SwingUtilities.isEventDispatchThread()) {
@@ -139,7 +139,7 @@ public final class ApplicationUtil {
         }
         break;
       case EDT_WITH_IW:
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteThread()) {
+        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
           Logger.getInstance(ApplicationUtil.class).error("Can't invokeAndWait from WT to EDT: probably leads to deadlock");
         }
         ApplicationManager.getApplication().invokeAndWait(r, modalityState);

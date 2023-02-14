@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,7 +21,7 @@ import kotlin.math.abs
 
 interface AbstractIntLog : Closeable, Flushable {
   @FunctionalInterface
-  interface IntLogEntryProcessor {
+  fun interface IntLogEntryProcessor {
     fun process(data: Int, inputId: Int): Boolean
   }
 
@@ -32,9 +32,6 @@ interface AbstractIntLog : Closeable, Flushable {
 
   @Throws(StorageException::class)
   fun addData(data: Int, inputId: Int)
-
-  @Throws(StorageException::class)
-  fun removeData(data: Int, inputId: Int)
 
   fun clear()
 }
@@ -70,7 +67,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
         ProgressManager.checkCanceled()
       }
       withLock(true) {
-        if (!myKeyHashToVirtualFileMapping.processAll { key ->
+        if (!myKeyHashToVirtualFileMapping.processAll { _, key ->
             if (isReadAction) {
               ProgressManager.checkCanceled()
             }
@@ -111,16 +108,6 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     }
   }
 
-  @Throws(StorageException::class)
-  override fun addData(data: Int, inputId: Int) {
-    appendData(data, inputId)
-  }
-
-  @Throws(StorageException::class)
-  override fun removeData(data: Int, inputId: Int) {
-    appendData(data, -inputId)
-  }
-
   override fun clear() {
     try {
       close()
@@ -135,12 +122,12 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
   private fun openLog() = AppendableStorageBackedByResizableMappedFile(getDataFile(),
                                                                        4096,
                                                                        storageLockContext,
-                                                                       PagedFileStorage.MB,
+                                                                       IOUtil.MiB,
                                                                        true,
                                                                        IntPairInArrayKeyDescriptor)
 
   @Throws(StorageException::class)
-  private fun appendData(data: Int, inputId: Int) {
+  override fun addData(data: Int, inputId: Int) {
     if (inputId == 0) return
     try {
       withLock(false) { myKeyHashToVirtualFileMapping.append(intArrayOf(data, inputId)) }
@@ -195,6 +182,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       return
     }
     try {
+      Files.createDirectories(marker.parent)
       Files.createFile(marker)
     }
     catch (ignored: FileAlreadyExistsException) {
@@ -214,7 +202,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     return dataFile.resolveSibling(dataFile.fileName.toString() + ".require.compaction")
   }
 
-  fun getDataFile(): Path {
+  private fun getDataFile(): Path {
     return baseStorageFile.resolveSibling(baseStorageFile.fileName.toString() + ".project")
   }
 
@@ -222,25 +210,35 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
   private fun performCompaction() {
     try {
       val data: Int2ObjectMap<IntSet> = Int2ObjectOpenHashMap()
+      val forwardData = Int2IntOpenHashMap()
       val oldDataFile = getDataFile()
       val oldMapping = AppendableStorageBackedByResizableMappedFile(oldDataFile,
                                                                     0,
                                                                     storageLockContext,
-                                                                    PagedFileStorage.MB,
+                                                                    IOUtil.MiB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)
       oldMapping.lockRead()
       try {
-        oldMapping.processAll { key: IntArray ->
+        oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
-          val keyHash = key[0]
+          val dataKey = key[0]
           val absInputId = abs(inputId)
-          if (inputId > 0) {
-            data.computeIfAbsent(keyHash, Int2ObjectFunction<IntSet> { IntOpenHashSet() }).add(absInputId)
+          if (dataKey == 0) {
+            val currentKeyHash = forwardData[inputId]
+            val associatedInputIds = data[currentKeyHash]
+            associatedInputIds?.remove(absInputId)
           }
           else {
-            val associatedInputIds = data[keyHash]
-            associatedInputIds?.remove(absInputId)
+            if (inputId > 0) {
+              data.computeIfAbsent(dataKey, Int2ObjectFunction<IntSet> { IntOpenHashSet() }).add(absInputId)
+              forwardData[absInputId] = dataKey
+            }
+            else {
+              val associatedInputIds = data[dataKey]
+              associatedInputIds?.remove(absInputId)
+              forwardData.remove(absInputId)
+            }
           }
           true
         }
@@ -255,7 +253,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       val newMapping = AppendableStorageBackedByResizableMappedFile(newDataFile,
                                                                     32 * 2 * data.size,
                                                                     storageLockContext,
-                                                                    PagedFileStorage.MB,
+                                                                    IOUtil.MiB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)
       newMapping.lockWrite()
@@ -273,7 +271,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       finally {
         newMapping.unlockWrite()
       }
-      IOUtil.deleteAllFilesStartingWith(oldDataFile.toFile())
+      IOUtil.deleteAllFilesStartingWith(oldDataFile)
       Files.newDirectoryStream(newDataFile.parent).use { paths ->
         for (path in paths) {
           val name = path.fileName.toString()

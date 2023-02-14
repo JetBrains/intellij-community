@@ -19,9 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class StringDescriptorManager {
   private Module myModule;
   private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = ContainerUtil.createSoftValueMap();
@@ -82,7 +80,9 @@ public final class StringDescriptorManager {
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
       propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
-        myPropertiesFileCache.put(cacheKey, propertiesFile);
+        if (propertiesFile != null) {
+          myPropertiesFileCache.put(cacheKey, propertiesFile);
+        }
       }
     }
 

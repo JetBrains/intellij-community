@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
@@ -16,13 +17,18 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public final class DisablePCEAction extends DumbAwareToggleAction {
+final class DisablePCEAction extends DumbAwareToggleAction {
+
   private static final String STATUS_BAR_WIDGET_ID = "PCEDisabledStatus";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
@@ -55,8 +61,7 @@ public final class DisablePCEAction extends DumbAwareToggleAction {
     }
   }
 
-  @NotNull
-  private static ProgressManager createDebugManager(boolean enabledPCE) {
+  private static @NotNull ProgressManager createDebugManager(boolean enabledPCE) {
     return enabledPCE ? new ProgressManagerImpl() : new ProgressManagerImpl(){
       @Override
       protected void doCheckCanceled() throws ProcessCanceledException {
@@ -71,39 +76,28 @@ public final class DisablePCEAction extends DumbAwareToggleAction {
   }
 
   private static final class StatusWidget implements StatusBarWidget, StatusBarWidget.TextPresentation {
-    @NotNull
     @Override
-    public String ID() {
+    public @NotNull String ID() {
       return STATUS_BAR_WIDGET_ID;
     }
 
-    @Nullable
     @Override
-    public WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public void install(@NotNull StatusBar statusBar) {}
-
-    @Override
-    public void dispose() {}
-
-    @Nullable
-    @Override
-    public String getTooltipText() {
+    public @NotNull String getTooltipText() {
       return "Click to re-enable ProcessCanceledException";
     }
 
-    @Nullable
     @Override
-    public Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> changePCEEnabledStatus(true);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return "WARNING: PCE is disabled!";
     }
 

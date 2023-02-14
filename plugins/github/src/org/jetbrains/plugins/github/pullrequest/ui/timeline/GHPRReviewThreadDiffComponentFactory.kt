@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
@@ -12,16 +14,13 @@ import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
-import com.intellij.util.ui.codereview.timeline.TimelineDiffComponentFactory
-import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import javax.swing.JComponent
 
-class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: EditorFactory) {
-  private val timelineDiffComponentFactory = TimelineDiffComponentFactory(project, editorFactory)
+class GHPRReviewThreadDiffComponentFactory(private val project: Project, private val editorFactory: EditorFactory) {
 
   fun createComponent(diffHunk: String, startLine: Int?): JComponent {
     try {
-      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk("_", diffHunk))
+      val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it, startLine != null) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 
@@ -35,7 +34,7 @@ class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: Edit
 
         val patchContent = builder.patchContent.removeSuffix("\n")
 
-        return timelineDiffComponentFactory.createDiffComponent(patchContent) { editor ->
+        return TimelineDiffComponentFactory.createDiffComponent(project, editorFactory, patchContent) { editor ->
           editor.gutter.apply {
             setLineNumberConverter(LineNumberConverterAdapter(builder.lineConvertor1.createConvertor()),
                                    LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
@@ -51,7 +50,7 @@ class GHPRReviewThreadDiffComponentFactory(project: Project, editorFactory: Edit
       else {
         val patchContent = patchHunk.text.removeSuffix("\n")
 
-        return timelineDiffComponentFactory.createDiffComponent(patchContent) { editor ->
+        return TimelineDiffComponentFactory.createDiffComponent(project, editorFactory, patchContent) { editor ->
           editor.gutter.apply {
             setLineNumberConverter(
               LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },

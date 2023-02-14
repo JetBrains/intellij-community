@@ -4,47 +4,54 @@ package com.intellij.openapi.editor;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class EditorModificationUtilEx {
-  public static void deleteSelectedText(Editor editor) {
+  public static void deleteSelectedText(@NotNull Editor editor) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if(!selectionModel.hasSelection()) return;
 
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
-    if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && selectionStartPosition != null) {
-      editor.getCaretModel().moveToVisualPosition(selectionStartPosition);
+    CaretModel caretModel = editor.getCaretModel();
+    if (editor.isColumnMode() && caretModel.supportsMultipleCarets()) {
+      VisualPosition selectionStartPosition = selectionModel.getSelectionStartPosition();
+      if (selectionStartPosition != null) {
+        caretModel.moveToVisualPosition(selectionStartPosition);
+      }
+      else {
+        caretModel.moveToOffset(selectionStart);
+      }
     }
     else {
-      editor.getCaretModel().moveToOffset(selectionStart);
+      caretModel.moveToOffset(selectionStart);
     }
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
     scrollToCaret(editor);
   }
 
-  public static void insertStringAtCaret(Editor editor, @NotNull String s) {
+  public static void insertStringAtCaret(@NotNull Editor editor, @NotNull String s) {
     insertStringAtCaret(editor, s, false, true);
   }
 
-  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode) {
+  public static int insertStringAtCaret(@NotNull Editor editor, @NotNull String s, boolean toProcessOverwriteMode) {
     return insertStringAtCaret(editor, s, toProcessOverwriteMode, s.length());
   }
 
-  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
+  public static int insertStringAtCaret(@NotNull Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret) {
     return insertStringAtCaret(editor, s, toProcessOverwriteMode, toMoveCaret, s.length());
   }
 
-  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, int caretShift) {
+  public static int insertStringAtCaret(@NotNull Editor editor, @NotNull String s, boolean toProcessOverwriteMode, int caretShift) {
     return insertStringAtCaret(editor, s, toProcessOverwriteMode, true, caretShift);
   }
 
-  public static int insertStringAtCaret(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
+  public static int insertStringAtCaret(@NotNull Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     int result = insertStringAtCaretNoScrolling(editor, s, toProcessOverwriteMode, toMoveCaret, caretShift);
     if (toMoveCaret) {
       scrollToCaret(editor);
@@ -52,14 +59,14 @@ public class EditorModificationUtilEx {
     return result;
   }
 
-  protected static int insertStringAtCaretNoScrolling(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
+  protected static int insertStringAtCaretNoScrolling(@NotNull Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
     // space, hence, we need to give editor a chance to react accordingly.
     editor.getSoftWrapModel().beforeDocumentChangeAtCaret();
     int oldOffset = editor.getSelectionModel().getSelectionStart();
 
     String filler = editor.getSelectionModel().hasSelection() ? "" : calcStringToFillVirtualSpace(editor);
-    if (filler.length() > 0) {
+    if (!filler.isEmpty()) {
       s = filler + s;
     }
 
@@ -107,7 +114,7 @@ public class EditorModificationUtilEx {
     return offset;
   }
 
-  public static String calcStringToFillVirtualSpace(Editor editor) {
+  public static @NotNull String calcStringToFillVirtualSpace(@NotNull Editor editor) {
     int afterLineEnd = calcAfterLineEnd(editor);
     if (afterLineEnd > 0) {
       return calcStringToFillVirtualSpace(editor, afterLineEnd);
@@ -116,7 +123,7 @@ public class EditorModificationUtilEx {
     return "";
   }
 
-  public static String calcStringToFillVirtualSpace(Editor editor, int afterLineEnd) {
+  public static @NotNull String calcStringToFillVirtualSpace(@NotNull Editor editor, int afterLineEnd) {
     final Project project = editor.getProject();
     StringBuilder buf = new StringBuilder();
     final Document doc = editor.getDocument();
@@ -180,17 +187,36 @@ public class EditorModificationUtilEx {
    * @return          difference in columns between current editor caret position and end of the logical line fragment displayed
    *                  on a current visual line
    */
-  public static int calcAfterLineEnd(Editor editor) {
-    Document document = editor.getDocument();
+  public static int calcAfterLineEnd(@NotNull Editor editor) {
     CaretModel caretModel = editor.getCaretModel();
+    int caretOffset = caretModel.getOffset();
     LogicalPosition logicalPosition = caretModel.getLogicalPosition();
+    VisualPosition visualPosition = caretModel.getVisualPosition();
+    return calcAfterLineEnd(editor, caretOffset, logicalPosition, visualPosition);
+  }
+
+  /**
+   * Experimental API! Please, use {@link EditorModificationUtilEx#calcAfterLineEnd(Editor)} if possible.
+   *
+   * Calculates difference in columns between current editor caret position and end of the logical line fragment displayed
+   * on a current visual line.
+   *
+   * @param editor          target editor
+   * @param caretOffset     offset of the caret
+   * @param logicalPosition logical position of the caret
+   * @param visualPosition  visual position of the caret
+   * @return                difference in columns between current editor caret position and end of the logical line fragment displayed
+   *                        on a current visual line
+   */
+  @ApiStatus.Experimental
+  public static int calcAfterLineEnd(@NotNull Editor editor, int caretOffset, @NotNull LogicalPosition logicalPosition, @NotNull VisualPosition visualPosition) {
+    Document document = editor.getDocument();
     int lineNumber = logicalPosition.line;
     int columnNumber = logicalPosition.column;
     if (lineNumber >= document.getLineCount()) {
       return columnNumber;
     }
 
-    int caretOffset = caretModel.getOffset();
     int anchorLineEndOffset = document.getLineEndOffset(lineNumber);
     List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(logicalPosition.line);
     for (SoftWrap softWrap : softWraps) {
@@ -204,9 +230,8 @@ public class EditorModificationUtilEx {
         //     *) caret is located on a visual line before soft wrap-introduced line feed;
         //     *) caret is located on a visual line after soft wrap-introduced line feed;
         VisualPosition position = editor.offsetToVisualPosition(caretOffset - 1);
-        VisualPosition visualCaret = caretModel.getVisualPosition();
-        if (position.line == visualCaret.line) {
-          return visualCaret.column - position.column - 1;
+        if (position.line == visualPosition.line) {
+          return visualPosition.column - position.column - 1;
         }
       }
       if (softWrapOffset > caretOffset) {
@@ -217,7 +242,7 @@ public class EditorModificationUtilEx {
       // Same offset corresponds to all soft wrap-introduced symbols, however, current method should behave differently in
       // situations when the caret is located just before the soft wrap and at the next visual line.
       if (softWrapOffset == caretOffset) {
-        boolean visuallyBeforeSoftWrap = caretModel.getVisualPosition().line < editor.offsetToVisualPosition(caretOffset).line;
+        boolean visuallyBeforeSoftWrap = visualPosition.line < editor.offsetToVisualPosition(caretOffset).line;
         if (visuallyBeforeSoftWrap) {
           anchorLineEndOffset = softWrapOffset;
           break;
@@ -228,6 +253,4 @@ public class EditorModificationUtilEx {
     int lineEndColumnNumber = editor.offsetToLogicalPosition(anchorLineEndOffset).column;
     return columnNumber - lineEndColumnNumber;
   }
-
-
 }

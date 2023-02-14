@@ -109,17 +109,15 @@ public final class IntentionUtils {
           PsiMethod method1 = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
           if (context instanceof PsiMethod) {
             final PsiTypeParameter[] typeParameters = ((PsiMethod)context).getTypeParameters();
-            if (typeParameters.length > 0) {
-              for (PsiTypeParameter typeParameter : typeParameters) {
-                if (CreateMethodFromUsageFix.checkTypeParam(method1, typeParameter)) {
-                  final JVMElementFactory factory = JVMElementFactories.getFactory(method1.getLanguage(), method1.getProject());
-                  PsiTypeParameterList list = method1.getTypeParameterList();
-                  if (list == null) {
-                    PsiTypeParameterList newList = factory.createTypeParameterList();
-                    list = (PsiTypeParameterList)method1.addAfter(newList, method1.getModifierList());
-                  }
-                  list.add(factory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
+            for (PsiTypeParameter typeParameter : typeParameters) {
+              if (CreateMethodFromUsageFix.checkTypeParam(method1, typeParameter)) {
+                final JVMElementFactory factory = JVMElementFactories.getFactory(method1.getLanguage(), method1.getProject());
+                PsiTypeParameterList list = method1.getTypeParameterList();
+                if (list == null) {
+                  PsiTypeParameterList newList = factory.createTypeParameterList();
+                  list = (PsiTypeParameterList)method1.addAfter(newList, method1.getModifierList());
                 }
+                list.add(factory.createTypeParameter(typeParameter.getName(), typeParameter.getExtendsList().getReferencedTypes()));
               }
             }
           }
@@ -127,7 +125,7 @@ public final class IntentionUtils {
             try {
               final boolean hasNoReturnType = method1.getReturnTypeElement() == null && method1 instanceof GrMethod;
               if (hasNoReturnType) {
-                ((GrMethod)method1).setReturnType(PsiType.VOID);
+                ((GrMethod)method1).setReturnType(PsiTypes.voidType());
               }
               if (method1.getBody() != null) {
                 FileTemplateManager templateManager = FileTemplateManager.getInstance(project);

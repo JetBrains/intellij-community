@@ -6,12 +6,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.ide.macro.Macro;
-import com.intellij.ide.macro.MacroManager;
-import com.intellij.ide.macro.PromptingMacro;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.ide.macro.*;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -25,6 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -48,23 +46,26 @@ public class ProgramParametersConfigurator {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
+  private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");
+  private boolean myValidation;
 
   public void configureConfiguration(@NotNull SimpleProgramParameters parameters, @NotNull CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
-
-    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
-    parameters.getProgramParametersList().addParametersString(parametersString);
-
-    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
     Map<String, String> envs = new HashMap<>(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
     }
-
     parameters.setEnv(envs);
+
+    parameters.getProgramParametersList().patchMacroWithEnvs(envs);
+
+    String parametersString = expandPathAndMacros(configuration.getProgramParameters(), module, project);
+    parameters.getProgramParametersList().addParametersString(parametersString);
+
+    parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
@@ -76,10 +77,15 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  private static DataContext projectContext(Project project, Module module) {
+  public void setValidation(boolean validation) {
+    myValidation = validation;
+  }
+
+  private DataContext projectContext(Project project, Module module) {
     return dataId -> {
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      if (LangDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
+      if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
+      if (VALIDATION_MODE.is(dataId)) return myValidation;
       return null;
     };
   }
@@ -109,15 +115,33 @@ public class ProgramParametersConfigurator {
     }
 
     for (Macro macro : MacroManager.getInstance().getMacros()) {
-      String template = "$" + macro.getName() + "$";
+      boolean paramsMacro = macro instanceof MacroWithParams;
+      String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
       for (int index = path.indexOf(template);
            index != -1 && index < path.length() + template.length();
            index = path.indexOf(template, index)) {
-        String value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+        String value;
+        int tailIndex;
+        if (paramsMacro) {
+          int endIndex = path.indexOf(")$", index + template.length());
+          if (endIndex != -1) {
+            value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext, path.substring(index + template.length(), endIndex)));
+            tailIndex = endIndex + 2;
+          }
+          else {
+            //noinspection AssignmentToForLoopParameter
+            index += template.length();
+            continue;
+          }
+        }
+        else {
+          tailIndex = index + template.length();
+          value = StringUtil.notNullize(previewOrExpandMacro(macro, dataContext));
+        }
         if (applyParameterEscaping) {
           value = ParametersListUtil.escape(value);
         }
-        path = path.substring(0, index) + value + path.substring(index + template.length());
+        path = path.substring(0, index) + value + path.substring(tailIndex);
         //noinspection AssignmentToForLoopParameter
         index += value.length();
       }
@@ -125,19 +149,27 @@ public class ProgramParametersConfigurator {
     return path;
   }
 
-  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext) {
+  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
     try {
-      return macro instanceof PromptingMacro ? macro.expand(dataContext) : macro.preview();
+      if (macro instanceof PromptingMacro || macro instanceof MacroWithParams) {
+        Boolean mode = VALIDATION_MODE.getData(dataContext);
+        if (mode != null && mode) {
+          throw new IncorrectOperationException();
+        }
+        return macro.expand(dataContext, args);
+      }
+      return macro.preview();
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;
     }
   }
 
+  @SystemIndependent
   public @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
                                         @NotNull Project project,
                                         @Nullable Module module) {
-    String workingDirectory = configuration.getWorkingDirectory();
+    String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
     String projectDirectory = getDefaultWorkingDir(project);
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {

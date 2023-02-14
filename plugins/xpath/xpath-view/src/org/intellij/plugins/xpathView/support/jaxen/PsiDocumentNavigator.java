@@ -116,7 +116,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return getProcessingInstructionTarget(pi);
     }
 
-    public static String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
+    public static @NotNull String getProcessingInstructionTarget(XmlProcessingInstruction pi) {
         final PsiElement[] children = pi.getChildren();
         LOG.assertTrue(children[1] instanceof XmlToken && ((XmlToken)children[1]).getTokenType() == XmlTokenType.XML_NAME, "Unknown PI structure");
 
@@ -340,7 +340,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
           final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
           final String value = attribute.getValue();
           if ((value != null &&
@@ -358,7 +358,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         private final StringBuffer builder = new StringBuffer();
 
         @Override
-        public void visitXmlText(XmlText text) {
+        public void visitXmlText(@NotNull XmlText text) {
             builder.append(text.getValue());
         }
 

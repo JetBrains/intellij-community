@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -187,8 +188,14 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @Override
   public String toString() {
-    return StringUtil.join(myTaskNames, " ") +
-           (StringUtil.isEmpty(myScriptParameters) ? "" : " " + myScriptParameters) +
-           (StringUtil.isEmpty(myVmOptions) ? "" : " " + myVmOptions);
+    StringJoiner joiner = new StringJoiner(" ");
+    myTaskNames.forEach(it -> joiner.add(it));
+    if (StringUtil.isNotEmpty(myScriptParameters)) {
+      joiner.add(myScriptParameters);
+    }
+    if (StringUtil.isNotEmpty(myVmOptions)) {
+      joiner.add(myVmOptions);
+    }
+    return joiner.toString();
   }
 }

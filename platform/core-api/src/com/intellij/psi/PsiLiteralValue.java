@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PsiLiteralValue extends PsiElement, PsiExternalReferenceHost {
   /**
-   * Returns the value of the literal expression (an Integer for an integer constant, a String
+   * Returns the value of the literal expression (an {@link Integer} for an integer constant, a {@link String}
    * for a string literal, and so on).
    *
    * @return the value of the expression, or null if the parsing of the literal failed.

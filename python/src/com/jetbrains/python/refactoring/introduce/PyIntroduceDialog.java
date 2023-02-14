@@ -13,6 +13,7 @@ import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.Nls;
@@ -152,7 +153,7 @@ public class PyIntroduceDialog extends DialogWrapper {
   private void updateControls() {
     final boolean nameValid = myValidator.isNameValid(getName(), getProject());
     setOKActionEnabled(nameValid);
-    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null, myNameComboBox);
+    setErrorText(!nameValid ? PyPsiBundle.message("refactoring.introduce.name.error") : null, myNameComboBox);
   }
 
   public IntroduceHandler.InitPlace getInitPlace() {

@@ -1,4 +1,4 @@
-// "Remove switch branch '-/*x*/1'" "true"
+// "Remove switch branch '-/*x*/1'" "true-preview"
 class Main {
     static void fff(int x) {
         if (x > 0) {

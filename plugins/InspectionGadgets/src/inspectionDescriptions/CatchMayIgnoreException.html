@@ -1,40 +1,54 @@
 <html>
 <body>
-Reports <code>catch</code> blocks which are empty or may ignore exception.
-While occasionally intended, empty <code>catch</code> blocks can make debugging extremely difficult.
-Also ignoring catch parameter could be wrong. Finally it will be reported if it's statically detected
-that catch block may silently ignore important VM exceptions like <code>NullPointerException</code>. Ignoring such exception
-(without logging or rethrowing it) may hide a bug.
+Reports <code>catch</code> blocks that are empty or may ignore an exception.
+<p>While occasionally intended, empty <code>catch</code> blocks may complicate debugging.
+Also, ignoring a <code>catch</code> parameter might be wrong.
+  Finally, the static code analyzer reports if it detects that a <code>catch</code> block may silently ignore important VM
+  exceptions like <code>NullPointerException</code>. Ignoring such an exception
+(without logging or rethrowing it) may hide a bug.</p>
+
 <p>
-  This inspection will not report any <code>catch</code> parameters named "ignore" or "ignored".
-  Conversely this inspection will warn on any <code>catch</code> parameters named "ignore" or "ignored" that are actually used.
-  Also <code>catch</code> parameters named "expected" or "ok" are not reported inside test sources.
+  The inspection won't report any <code>catch</code> parameters named <code>ignore</code> or <code>ignored</code>.
+  Conversely, the inspection will warn you about any <code>catch</code> parameters named <code>ignore</code> or <code>ignored</code> that are actually in use.
+  Additionally, the inspection won't report <code>catch</code> parameters inside test sources named <code>expected</code> or <code>ok</code>.
 </p>
 <p>
-  You can use a quick fix to change the name of the exception to "ignored".
-  For empty <b>catch</b> blocks an additional fix to generate the <b>catch</b> body is suggested.
-  You can modify the "Catch Statement Body" template in
-  <a href="settings://fileTemplates">Settings | Editor | File and Code Templates</a> (see the "Code" tab).
+  You can use a quick-fix to change the exception name to <code>ignored</code>.
+  For empty <b>catch</b> blocks, an additional quick-fix to generate the <b>catch</b> body is suggested.
+  You can modify the "Catch Statement Body" template on the Code tab in
+  <a href="settings://fileTemplates">Settings | Editor | File and Code Templates</a>.
 </p>
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   try {
     throwingMethod();
   } catch (IOException ex) {
 
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   try {
     System.out.println(System.in.read());
   } catch (IOException ignored) {
 
   }
-</pre>
+</code></pre>
   <!-- tooltip end -->
-<p>Use second checkbox to ignore <code>catch</code> that contains statements or comments inside while the variable itself is not used.</p>
-<p>Use a third checkbox to ignore variables named <code>ignored</code>if they are still used.</p>
+<p>Configure the inspection:</p>
+<ul>
+  <li>
+    Use the <b>Do not warn when 'catch' block contains a comment</b> option to ignore <code>catch</code> blocks with comments.
+  </li>
+  <li>
+    Use the <b>Do not warn when 'catch' block is not empty</b> option to ignore <code>catch</code> blocks that contain
+    statements or comments inside, while the variable itself is not used.
+  </li>
+  <li>
+    Use the <b>Do not warn when exception named 'ignore(d)' is not actually ignored</b> option to ignore
+    variables named <code>ignored</code> if they are in use.
+  </li>
+</ul>
 
 <p><small>New in 2018.1</small></p>
 </body>

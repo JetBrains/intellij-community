@@ -32,38 +32,38 @@ public abstract class PsiShortNamesCache {
   public static final ExtensionPointName<PsiShortNamesCache> EP_NAME = ExtensionPointName.create("com.intellij.java.shortNamesCache");
 
   /**
-   * Returns the list of files with the specified name.
+   * Returns the array of files with the specified name.
    *
    * @param name the name of the files to find.
-   * @return the list of files in the project which have the specified name.
+   * @return the array of files in the project which have the specified name.
    */
   public PsiFile @NotNull [] getFilesByName(@NotNull String name) {
     return PsiFile.EMPTY_ARRAY;
   }
 
   /**
-   * Returns the list of names of all files in the project.
+   * Returns the array of names of all files in the project.
    *
-   * @return the list of all file names in the project.
+   * @return the array of all file names in the project.
    */
   public String @NotNull [] getAllFileNames() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   /**
-   * Returns the list of all classes with the specified name in the specified scope.
+   * Returns the array of all classes with the specified name in the specified scope.
    *
    * @param name  the non-qualified name of the classes to find.
    * @param scope the scope in which classes are searched.
-   * @return the list of found classes.
+   * @return the array of found classes.
    */
   public abstract @NotNull PsiClass @NotNull [] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
-   * Returns the list of names of all classes in the project and
+   * Returns the array of names of all classes in the project and
    * (optionally) libraries.
    *
-   * @return the list of all class names.
+   * @return the array of all class names.
    */
   public abstract @NotNull String @NotNull [] getAllClassNames();
 
@@ -76,11 +76,11 @@ public abstract class PsiShortNamesCache {
   }
 
   /**
-   * Returns the list of all methods with the specified name in the specified scope.
+   * Returns the array of all methods with the specified name in the specified scope.
    *
    * @param name  the name of the methods to find.
    * @param scope the scope in which methods are searched.
-   * @return the list of found methods.
+   * @return the array of found methods.
    */
   public abstract @NotNull PsiMethod @NotNull [] getMethodsByName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope);
 
@@ -108,27 +108,27 @@ public abstract class PsiShortNamesCache {
   }
 
   /**
-   * Returns the list of names of all methods in the project and
+   * Returns the array of names of all methods in the project and
    * (optionally) libraries.
    *
-   * @return the list of all method names.
+   * @return the array of all method names.
    */
   public abstract @NotNull String @NotNull [] getAllMethodNames();
 
   /**
-   * Returns the list of all fields with the specified name in the specified scope.
+   * Returns the array of all fields with the specified name in the specified scope.
    *
    * @param name  the name of the fields to find.
    * @param scope the scope in which fields are searched.
-   * @return the list of found fields.
+   * @return the array of found fields.
    */
   public abstract @NotNull PsiField @NotNull [] getFieldsByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope);
 
   /**
-   * Returns the list of names of all fields in the project and
+   * Returns the array of names of all fields in the project and
    * (optionally) libraries.
    *
-   * @return the list of all field names.
+   * @return the array of all field names.
    */
   public abstract @NotNull String @NotNull [] getAllFieldNames();
 

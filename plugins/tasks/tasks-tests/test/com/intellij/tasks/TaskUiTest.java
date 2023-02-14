@@ -40,10 +40,10 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
-    AnAction[] children = group.getChildren(new TestActionEvent());
+    AnAction[] children = group.getChildren(TestActionEvent.createTestEvent());
     for (AnAction child : children) {
       if (child instanceof ActionGroup) {
-        AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
+        AnAction[] actions = ((ActionGroup)child).getChildren(TestActionEvent.createTestEvent());
         for (AnAction action : actions) {
           if (action instanceof SwitchTaskAction) {
             combo = (SwitchTaskAction)action;
@@ -52,8 +52,8 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
       }
     }
 
-    List<AnAction> actions =
-      Utils.expandActionGroup(false, group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
+    List<AnAction> actions = Utils.expandActionGroup(
+      group, new PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.MAIN_TOOLBAR);
     assertFalse(actions.contains(combo));
 
     TaskManager manager = TaskManager.getManager(getProject());
@@ -105,15 +105,13 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
   public void testUnderscore() {
     String summary = "foo_bar";
     TaskManager.getManager(getProject()).activateTask(new LocalTaskImpl("", summary), false);
-    TestActionEvent event = new TestActionEvent();
-    event.IsFromActionToolbar = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(null);
     new SwitchTaskAction().update(event);
     assertEquals(summary, event.getPresentation().getText());
   }
 
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
-    TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
-    event.IsFromActionToolbar = true;
+    AnActionEvent event = TestActionEvent.createTestToolbarEvent(toolbar.getPresentation(action));
     action.update(event);
     return event.getPresentation();
   }

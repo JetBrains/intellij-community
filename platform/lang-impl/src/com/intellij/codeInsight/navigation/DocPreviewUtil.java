@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +19,9 @@ import java.util.regex.Pattern;
  * Provides utility methods for building documentation preview.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public final class DocPreviewUtil {
-
-  private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
+  private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {
     ALLOWED_LINK_SEPARATORS.add(',');
     ALLOWED_LINK_SEPARATORS.add(' ');
@@ -216,7 +214,7 @@ public final class DocPreviewUtil {
     for (; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (state) {
-        case TEXT:
+        case TEXT -> {
           if (c == '<') {
             if (i > dataStartOffset) {
               if (!callback.onText(text.substring(dataStartOffset, i).replace("&nbsp;", " "))) {
@@ -233,8 +231,8 @@ public final class DocPreviewUtil {
               tagNameStartOffset = i + 1;
             }
           }
-          break;
-        case INSIDE_OPEN_TAG:
+        }
+        case INSIDE_OPEN_TAG -> {
           if (c == ' ') {
             tagName = text.substring(tagNameStartOffset, i);
           }
@@ -249,7 +247,6 @@ public final class DocPreviewUtil {
               tagName = null;
               state = State.TEXT;
               dataStartOffset = ++i + 1;
-              break;
             }
           }
           else if (c == '>') {
@@ -263,12 +260,10 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
-          break;
-        case INSIDE_CLOSE_TAG:
+        }
+        case INSIDE_CLOSE_TAG -> {
           if (c == '>') {
-            if (tagName == null) {
-              tagName = text.substring(tagNameStartOffset, i);
-            }
+            tagName = text.substring(tagNameStartOffset, i);
             if (!callback.onCloseTag(tagName, text.substring(dataStartOffset, i + 1))) {
               return dataStartOffset;
             }
@@ -276,6 +271,7 @@ public final class DocPreviewUtil {
             state = State.TEXT;
             dataStartOffset = i + 1;
           }
+        }
       }
     }
 

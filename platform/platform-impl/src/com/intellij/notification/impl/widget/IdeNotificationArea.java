@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +14,7 @@ import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,11 +27,12 @@ import java.util.List;
 
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
   private @Nullable StatusBar myStatusBar;
 
   public IdeNotificationArea() {
-    setBorder(WidgetBorder.ICON);
+    setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
   }
 
   @Override
@@ -76,7 +76,13 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications = EventLog.getLogModel(project).getNotifications();
+    List<Notification> notifications;
+    if (ActionCenter.isEnabled()) {
+      notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
+    }
+    else {
+      notifications = EventLog.getLogModel(project).getNotifications();
+    }
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
@@ -85,7 +91,23 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    setIcon(createIconWithNotificationCount(this, NotificationType.getDominatingType(notifications), notifications.size(), false));
+    if (ActionCenter.isEnabled()) {
+      setIcon(getActionCenterNotificationIcon(notifications));
+    }
+    else {
+      setIcon(createIconWithNotificationCount(this, NotificationType.getDominatingType(notifications), notifications.size(), false));
+    }
+  }
+
+  public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {
+    for (Notification notification : notifications) {
+      if (notification.isSuggestionType() && notification.isImportantSuggestion() || notification.getType() == NotificationType.ERROR) {
+        if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getErrorIcon();
+        return AllIcons.Toolwindows.NotificationsNewImportant;
+      }
+    }
+    if (ExperimentalUI.isNewUI()) return NOTIFICATION_ICON.getInfoIcon(!notifications.isEmpty());
+    return notifications.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew;
   }
 
   public static @NotNull LayeredIcon createIconWithNotificationCount(JComponent component, NotificationType type, int size, boolean forToolWindow) {
@@ -109,15 +131,11 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   private static Icon getPendingNotificationsIcon(NotificationType maximumType, boolean forToolWindow) {
     if (maximumType != null) {
-      switch (maximumType) {
-        case WARNING:
-          return forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
-        case ERROR:
-          return forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
-        case INFORMATION:
-        case IDE_UPDATE:
-          return forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
-      }
+      return switch (maximumType) {
+        case WARNING -> forToolWindow ? AllIcons.Toolwindows.WarningEvents : AllIcons.Ide.Notification.WarningEvents;
+        case ERROR -> forToolWindow ? AllIcons.Toolwindows.ErrorEvents : AllIcons.Ide.Notification.ErrorEvents;
+        case INFORMATION, IDE_UPDATE -> forToolWindow ? AllIcons.Toolwindows.InfoEvents : AllIcons.Ide.Notification.InfoEvents;
+      };
     }
     return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
   }
@@ -142,9 +160,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof TextIcon)) return false;
-
-      TextIcon icon = (TextIcon)o;
+      if (!(o instanceof TextIcon icon)) return false;
 
       if (myWidth != icon.myWidth) return false;
       if (!myComponent.equals(icon.myComponent)) return false;

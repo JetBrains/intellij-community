@@ -1,31 +1,37 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.config.migration.VersionedState
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.text.Rule
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),
   Storage(value = "grazi_global.xml", deprecated = true)
-])
-class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
-  @Suppress("unused")
+], category = SettingsCategory.CODE)
+class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
   enum class Version : VersionedState.Version<State> {
     INITIAL,
 
     //Since commit abc7e5f5
     OLD_UI {
+      @Suppress("DEPRECATION")
       override fun migrate(state: State) = state.copy(
         checkingContext = CheckingContext(
           isCheckInCommitMessagesEnabled = state.enabledCommitIntegration
@@ -52,9 +58,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Property val enabledGrammarStrategies: Set<String> = defaultEnabledStrategies,
-    @Property val disabledGrammarStrategies: Set<String> = HashSet(),
-    @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
+    @Deprecated("Use checkingContext.disabledLanguages") @ApiStatus.ScheduledForRemoval @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Deprecated("Moved to checkingContext in version 2") @ApiStatus.ScheduledForRemoval @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),
     //Formerly suppressionContext -- name changed due to compatibility issues
@@ -64,14 +70,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     @Property override val version: Version = Version.CURRENT
   ) : VersionedState<Version, State> {
     /**
-     * Available languages set depends on current loaded LanguageTool modules.
+     * The available language set depends on currently loaded LanguageTool modules.
      *
-     * Note, that after loading of new module this field will not change. It will
-     * remain equal to the moment field was accessed first time.
+     * Note that after loading of a new module, this field will not change. It will
+     * remain equal to the moment the field was accessed first time.
      *
      * Lazy is used, because deserialized properties are updated during initial deserialization
      *
-     * *NOTE: By default availableLanguages are not included into equals. Check for it manually.*
+     * NOTE: By default, availableLanguages are not included into [equals]. Check for it manually.
      */
     val availableLanguages: Set<Lang> by lazy {
       enabledLanguages.asSequence().filter { lang -> lang.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
@@ -88,36 +94,62 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
   }
 
   companion object {
-    private val defaultEnabledStrategies = hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc")
+    private val defaultEnabledStrategies =
+      Collections.unmodifiableSet(hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc"))
 
-    private val instance by lazy { service<GrazieConfig>() }
+    @VisibleForTesting
+    fun migrateLTRuleIds(state: State): State {
+      val ltRules: List<Rule> by lazy {
+        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { LanguageToolChecker.grammarRules(LangTool.createTool(it, state), it) }
+      }
+
+      fun convert(ids: Set<String>): Set<String> =
+        ids.flatMap { id ->
+          if (id.contains(".")) listOf(id)
+          else ltRules.asSequence().map { it.globalId }.filter { it.startsWith("LanguageTool.") && it.endsWith(".$id") }.toList()
+        }.toSet()
+
+      return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
+    }
 
     /**
      * Get copy of Grazie config state
      *
      * Should never be called in GrazieStateLifecycle actions
      */
-    fun get() = instance.state
+    fun get() = service<GrazieConfig>().state
 
     /** Update Grazie config state */
     @Synchronized
-    fun update(change: (State) -> State) = instance.loadState(change(get()))
+    fun update(change: (State) -> State) = service<GrazieConfig>().loadState(change(get()))
+
+    fun stateChanged(prevState: State, newState: State) {
+      service<GrazieInitializerManager>().publisher.update(prevState, newState)
+
+      ProjectManager.getInstance().openProjects.forEach {
+        DaemonCodeAnalyzer.getInstance(it).restart()
+      }
+    }
   }
 
   class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
-    override fun get() = "Grazie Config"
+    override fun get() = GrazieBundle.message("grazie.config.name")
   }
 
   private var myState = State()
+  private var myModCount = AtomicLong()
+
+  override fun getModificationCount(): Long = myModCount.get()
 
   override fun getState() = myState
 
   override fun loadState(state: State) {
+    myModCount.incrementAndGet()
     val prevState = myState
-    myState = VersionedState.migrate(state)
+    myState = migrateLTRuleIds(VersionedState.migrate(state))
 
-    if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
-      service<GrazieInitializerManager>().publisher.update(prevState, myState)
+    if (prevState != myState) {
+      stateChanged(prevState, myState)
     }
   }
 }

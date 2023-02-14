@@ -7,7 +7,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.ObjectUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-/**
- * @author Pavel.Dolgov
- */
 final class DuplicateExpressionsContext {
   private static final Key<Map<PsiCodeBlock, DuplicateExpressionsContext>> CONTEXTS_KEY = Key.create("DuplicateExpressionsContext");
 
-  private final Map<PsiExpression, List<PsiExpression>> myOccurrences = new Object2ObjectOpenCustomHashMap<>(new ExpressionHashingStrategy());
+  private final Map<PsiExpression, List<PsiExpression>> myOccurrences = CollectionFactory.createCustomHashingStrategyMap(new ExpressionHashingStrategy());
   private final ComplexityCalculator myComplexityCalculator = new ComplexityCalculator();
   private final SideEffectCalculator mySideEffectCalculator = new SideEffectCalculator();
 

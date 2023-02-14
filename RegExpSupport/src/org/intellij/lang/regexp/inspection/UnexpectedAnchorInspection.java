@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -37,24 +37,20 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
     public void visitRegExpBoundary(RegExpBoundary boundary) {
       super.visitRegExpBoundary(boundary);
       final RegExpBoundary.Type type = boundary.getType();
-      switch (type) {
-        case BEGIN: // \A
-          if (!hasUnexpectedSibling(boundary, false, false)) return;
-          break;
-        case LINE_START: // ^
-          if (!hasUnexpectedSibling(boundary, false, true)) return;
-          break;
-        case END: // \z
-        case END_NO_LINE_TERM: // \Z
-          if (!hasUnexpectedSibling(boundary, true, false)) return;
-        break;
-        case LINE_END: // $
-          if (!hasUnexpectedSibling(boundary, true, true)) return;
-          break;
-        default:
-          return;
+      boolean unexpected = switch (type) {
+        case BEGIN -> // \A
+          hasUnexpectedSibling(boundary, false, false);
+        case LINE_START -> // ^
+          hasUnexpectedSibling(boundary, false, true);
+        case END /* \z */, END_NO_LINE_TERM /* \Z */ ->
+          hasUnexpectedSibling(boundary, true, false);
+        case LINE_END -> // $
+          hasUnexpectedSibling(boundary, true, true);
+        default -> false;
+      };
+      if (unexpected) {
+        myHolder.registerProblem(boundary, RegExpBundle.message("inspection.warning.anchor.code.ref.code.in.unexpected.position"));
       }
-      myHolder.registerProblem(boundary, RegExpBundle.message("inspection.warning.anchor.code.ref.code.in.unexpected.position"));
     }
 
     private static boolean hasUnexpectedSibling(PsiElement element, boolean next, boolean line) {
@@ -64,39 +60,54 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
       if (sibling == null) {
         return false;
       }
-      if (line) {
-        if (sibling instanceof RegExpChar) {
-          final int value = ((RegExpChar)sibling).getValue();
-          if (value == ' ') {
-            ShredManager shredManager = new ShredManager(element);
-            ShredInfo shredInfo = shredManager.getShredInfo(element.getParent().getText());
-            if (shredInfo == null || shredInfo.getHost() == null) return true;
-            if (RegExpLanguageHosts.getInstance().belongsToConditionalExpression(element, shredInfo.getHost())) {
-              return shredManager.containsCloseRealWhiteSpace(shredInfo, next);
-            }
-          }
-          return value != '\n' && value != '\r';
-        }
-        else if (sibling instanceof RegExpSimpleClass) {
-          final RegExpSimpleClass.Kind kind = ((RegExpSimpleClass)sibling).getKind();
-          switch (kind) {
-            case ANY:
-            case NON_DIGIT:
-            case NON_WORD:
-            case SPACE:
-            case NON_HORIZONTAL_SPACE:
-            case NON_VERTICAL_SPACE:
-            case NON_XML_NAME_START:
-            case NON_XML_NAME_PART:
-            case UNICODE_LINEBREAK:
-              return false;
-            default:
-              return true;
+      return !line || isUnexpectedSibling(element, next, sibling);
+    }
+
+    private static boolean isUnexpectedSibling(PsiElement element, boolean next, PsiElement sibling) {
+      if (sibling instanceof RegExpChar) {
+        final int value = ((RegExpChar)sibling).getValue();
+        if (value == ' ') {
+          ShredManager shredManager = new ShredManager(element);
+          ShredInfo shredInfo = shredManager.getShredInfo(element.getParent().getText());
+          if (shredInfo == null || shredInfo.getHost() == null) return true;
+          if (RegExpLanguageHosts.getInstance().belongsToConditionalExpression(element, shredInfo.getHost())) {
+            return shredManager.containsCloseRealWhiteSpace(shredInfo, next);
           }
         }
-        return sibling instanceof RegExpBoundary;
+        return value != '\n' && value != '\r';
       }
-      return true;
+      else if (sibling instanceof RegExpSimpleClass) {
+        final RegExpSimpleClass.Kind kind = ((RegExpSimpleClass)sibling).getKind();
+        return switch (kind) {
+          case ANY, NON_DIGIT, NON_WORD, SPACE, NON_HORIZONTAL_SPACE, NON_VERTICAL_SPACE, NON_XML_NAME_START, NON_XML_NAME_PART,
+            UNICODE_LINEBREAK -> false;
+          default -> true;
+        };
+      }
+      else if (sibling instanceof RegExpClosure closure) {
+        return isUnexpectedSibling(element, next, closure.getAtom());
+      }
+      else if (sibling instanceof RegExpGroup group) {
+        return isUnexpectedSibling(element, next, group.getPattern());
+      }
+      else if (sibling instanceof RegExpPattern pattern) {
+        for (RegExpBranch branch : pattern.getBranches()) {
+          if (isUnexpectedSibling(element, next, branch)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      else if (sibling instanceof RegExpBranch) {
+        final RegExpBranch branch = (RegExpBranch)sibling;
+        for (RegExpAtom atom : branch.getAtoms()) {
+          if (isUnexpectedSibling(element, next, atom)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      return sibling instanceof RegExpBoundary;
     }
   }
 }

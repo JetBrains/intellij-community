@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
@@ -9,6 +10,7 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +36,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeCoreBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeCoreBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     final String baseDir = myWizardContext.getProjectFileDirectory();
@@ -52,15 +54,16 @@ public class ProjectNameStep extends ModuleWizardStep {
     if (myWizardContext.isCreatingNewProject()) {
       myNamePathComponent.add(new JLabel(JavaUiBundle.message("label.project.format")),
                               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                     GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
       myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(),
                               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+                                                     GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
 
     myNamePathComponent.setVisible(isStepVisible());
     myAdditionalContentPanel = new JPanel(new GridBagLayout());
-    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+    myPanel.add(myAdditionalContentPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                                 JBInsets.emptyInsets(), 0, 0));
   }
 
   @Override

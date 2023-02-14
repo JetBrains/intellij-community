@@ -1,30 +1,37 @@
 <html>
 <body>
-Reports members <code>writeObject</code>, <code>readObject</code>, <code>readObjectNoData</code>, <code>writeExternal</code>,
-<code>readExternal</code>, <code>serialPersistentFields</code> defined in <code>record</code> class.
-These members are ignored during serialization/deserialization of records.
-<p>Example:</p>
-<pre>
+Reports serialization methods or fields defined in a <code>record</code> class.
+Serialization methods include <code>writeObject()</code>, <code>readObject()</code>, <code>readObjectNoData()</code>, <code>writeExternal()</code>, and
+  <code>readExternal()</code> and the field <code>serialPersistentFields</code>.
+  These members are not used for the serialization or deserialization of records and therefore unnecessary.
+<p><b>Examples:</b></p>
+<pre><code>
   record R1() implements Serializable {
+    // The field is ignored during record serialization
     @Serial
-    private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0]; //The field is ignored during record serialization
+    private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];
+
+    // The method is ignored during record serialization
     @Serial
-    private void writeObject(ObjectOutputStream out) throws IOException { //The method is ignored during record serialization
+    private void writeObject(ObjectOutputStream out) throws IOException {
     }
   }
-</pre>
-<pre>
+</code></pre>
+<pre><code>
   record R2() implements Externalizable {
+    // The method is ignored during record serialization
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException { //The method is ignored during record serialization
+    public void writeExternal(ObjectOutput out) throws IOException {
     }
+
+    // The method is ignored during record serialization
     @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException { //The method is ignored during record serialization
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only applies to language level 14 or higher.</p>
+<p>This inspection only reports if the language level of the project or module is 14 or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

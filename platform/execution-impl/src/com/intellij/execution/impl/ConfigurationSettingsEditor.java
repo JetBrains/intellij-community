@@ -55,8 +55,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     if (myCompound == null) {
       myCompound = new SettingsEditorGroup<>();
       Disposer.register(this, myCompound);
-      if (myConfigurationEditor instanceof SettingsEditorGroup) {
-        SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
+      if (myConfigurationEditor instanceof SettingsEditorGroup<RunConfiguration> group) {
         List<Pair<@TabTitle String, SettingsEditor<RunConfiguration>>> editors = group.getEditors();
         for (Pair<@TabTitle String, SettingsEditor<RunConfiguration>> pair : editors) {
           myCompound.addEditor(pair.getFirst(), new ConfigToSettingsWrapper(pair.getSecond()));
@@ -221,6 +220,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       applyTo(settings);
     }
     return settings;
+  }
+
+  boolean supportsSnapshots() {
+    return !(myConfigurationEditor instanceof CheckableRunConfigurationEditor);
   }
 
   public void targetChanged(String targetName) {

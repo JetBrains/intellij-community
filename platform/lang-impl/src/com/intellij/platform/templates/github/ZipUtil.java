@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
 import com.intellij.lang.LangBundle;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.io.Decompressor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +30,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-/**
- * @author Sergey Simonchik
- */
 public final class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
@@ -108,20 +104,6 @@ public final class ZipUtil {
     }
   }
 
-  /**
-   * @deprecated Use {@link #unzip(ProgressIndicator, Path, ZipInputStream, NullableFunction, ContentProcessor, boolean)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void unzip(@Nullable ProgressIndicator progress,
-                           @NotNull File targetDir,
-                           @NotNull ZipInputStream stream,
-                           @Nullable NullableFunction<? super String, String> pathConvertor,
-                           @Nullable ContentProcessor contentProcessor,
-                           boolean unwrapSingleTopLevelFolder) throws IOException {
-    unzip(progress, targetDir.toPath(), stream, pathConvertor, contentProcessor, unwrapSingleTopLevelFolder);
-  }
-
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull Path targetDir,
                            @NotNull ZipInputStream stream,
@@ -192,11 +174,13 @@ public final class ZipUtil {
     Path child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     Path dir = zipEntry.isDirectory() ? child : child.getParent();
     Files.createDirectories(dir);
+    LOG.assertTrue(dir.toFile().exists());
+    LOG.assertTrue(dir.toFile().listFiles() != null);
     if (zipEntry.isDirectory()) {
       return;
     }
     if (progress != null) {
-      progress.setText(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
+      progress.setText2(LangBundle.message("progress.text.extracting.path", relativeExtractPath));
     }
     if (contentProcessor == null) {
       Files.copy(entryContentStream, child, StandardCopyOption.REPLACE_EXISTING);

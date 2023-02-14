@@ -1,9 +1,15 @@
 <html>
 <body>
-Reports <b>continue</b> statements.
-<b>continue</b> statements complicate refactoring, and can be confusing.
-<!-- tooltip end -->
-<p>
-
+Reports <code>continue</code> statements.
+<p><code>continue</code> statements complicate refactoring and can be confusing.</p>
+<p>Example:</p>
+<pre><code>
+  void foo(List&lt;String&gt; strs) {
+    for (String str : strs) {
+      if (str.contains("skip")) continue;
+      handleStr(str);
+    }
+  }
+</code></pre>
 </body>
 </html>

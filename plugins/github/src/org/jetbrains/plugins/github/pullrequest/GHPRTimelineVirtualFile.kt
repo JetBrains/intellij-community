@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
-import kotlin.properties.Delegates.observable
 
 @Suppress("EqualsOrHashCode")
 internal class GHPRTimelineVirtualFile(fileManagerId: String,
@@ -17,27 +18,29 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
                                        pullRequest: GHPRIdentifier)
   : GHPRVirtualFile(fileManagerId, project, repository, pullRequest) {
 
-  var details: GHPullRequestShort? by observable(pullRequest as? GHPullRequestShort) { _, _, _ ->
-    modificationStamp = modificationStamp++
-  }
-
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
 
   override fun getName() = "#${pullRequest.number}"
-  override fun getPresentableName() = details?.let { "${it.title} $name" } ?: name
+  override fun getPresentableName() = findDetails()?.let { "${it.title} $name" } ?: name
 
-  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, pullRequest)
-  override fun getPresentablePath() = details?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(sessionId, project, repository, pullRequest, null)
+  override fun getPresentablePath() = findDetails()?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
 
-  fun getIcon(): Icon? = details?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
+  fun getIcon(): Icon? = findDetails()?.let { GHUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
+
+  private fun findDetails(): GHPullRequestShort? =
+    project.service<GHRepositoryConnectionManager>().connectionState.value?.dataContext?.run {
+      listLoader.loadedData.find { it.id == pullRequest.id }
+      ?: dataProviderRepository.findDataProvider(pullRequest)?.detailsData?.loadedDetails
+    }
+
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPRTimelineVirtualFile) return false
-    if (!super.equals(other)) return false
-    return true
+    return super.equals(other)
   }
 }

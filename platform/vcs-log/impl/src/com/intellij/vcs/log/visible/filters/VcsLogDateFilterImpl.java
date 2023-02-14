@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -11,8 +11,8 @@ import java.util.Date;
 import java.util.Objects;
 
 class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
-  @Nullable private final Date myAfter;
-  @Nullable private final Date myBefore;
+  private final @Nullable Date myAfter;
+  private final @Nullable Date myBefore;
 
   VcsLogDateFilterImpl(@Nullable Date after, @Nullable Date before) {
     myAfter = after;
@@ -33,14 +33,12 @@ class VcsLogDateFilterImpl implements VcsLogDateFilter, VcsLogDetailsFilter {
   }
 
   @Override
-  @Nullable
-  public Date getAfter() {
+  public @Nullable Date getAfter() {
     return myAfter;
   }
 
   @Override
-  @Nullable
-  public Date getBefore() {
+  public @Nullable Date getBefore() {
     return myBefore;
   }
 

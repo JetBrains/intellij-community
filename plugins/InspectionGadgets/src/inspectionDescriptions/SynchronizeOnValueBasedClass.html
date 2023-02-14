@@ -1,14 +1,16 @@
 <html>
 <body>
-Attempts to synchronize on an instance of a value-based class will produce compile-time warnings and raise run-time exceptions starting from Java 16.
+Reports attempts to synchronize on an instance of a value-based class that produce compile-time warnings and raise
+run-time exceptions starting from Java 16.
 <p>
-  For example, java.lang.Double is annotated with <code>jdk.internal.ValueBased</code>, so the following code will produce a compile-time warning
+  For example, <code>java.lang.Double</code> is annotated with <code>jdk.internal.ValueBased</code>, so the following code will
+  produce a compile-time warning:
 </p>
-<pre>
+<pre><code>
 Double d = 20.0;
 synchronized (d) { ... } // javac warning
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>Since 2021.1</p>
+<p><small>New in 2021.1</small></p>
 </body>
 </html>

@@ -17,15 +17,25 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
-  public QualifySuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
+  private QualifySuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     super(expression, psiClass);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new QualifySuperArgumentFix(PsiTreeUtil.findSameElementInCopy(myExpression, target), myPsiClass);
   }
 
   @Override
@@ -38,7 +48,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
     return RefactoringChangeUtil.createSuperExpression(manager, myPsiClass);
   }
 
-  public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, HighlightInfo highlightInfo) {
+  public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, @NotNull HighlightInfo.Builder highlightInfo) {
     LOG.assertTrue(expr.getQualifier() == null);
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
     if (containingClass != null) {
@@ -60,7 +70,8 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
               return;
             }
             if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new QualifySuperArgumentFix(expr, superClass));
+              IntentionAction action = new QualifySuperArgumentFix(expr, superClass);
+              highlightInfo.registerFix(action, null, null, null, null);
             }
           }
         }

@@ -34,10 +34,6 @@ public interface Processor {
   @NotNull
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
-  default boolean notNameHintIsEqualToSupportedAnnotation(@Nullable String nameHint) {
-    return !"lombok".equals(nameHint);
-  }
-
   @NotNull
   default List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     return process(psiClass, null);

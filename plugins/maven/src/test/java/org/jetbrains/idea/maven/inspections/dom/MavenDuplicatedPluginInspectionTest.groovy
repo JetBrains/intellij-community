@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.maven.inspections.dom
 
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection
-/**
- * @author Sergey Evdokimov
- */
+import org.junit.Test
+
 class MavenDuplicatedPluginInspectionTest extends MavenDomTestCase {
 
+  @Test
   void testDuplicatedPlugin() {
     myFixture.enableInspections(MavenDuplicatePluginInspection)
 

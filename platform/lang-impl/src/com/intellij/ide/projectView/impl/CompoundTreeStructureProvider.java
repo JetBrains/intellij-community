@@ -71,16 +71,14 @@ public final class CompoundTreeStructureProvider implements TreeStructureProvide
 
   @Nullable
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selection, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selection, @NotNull String dataId) {
     if (!myProject.isDisposed() && !selection.isEmpty()) {
       for (TreeStructureProvider provider : EP.getExtensions(myProject)) {
         try {
           Object data = provider.getData(selection, dataId);
           if (data != null) return data;
         }
-        catch (IndexNotReadyException ignore) {
-        }
-        catch (ProcessCanceledException ignore) {
+        catch (IndexNotReadyException | ProcessCanceledException ignore) {
         }
         catch (Exception exception) {
           LOG.warn("unexpected error in " + provider, exception);

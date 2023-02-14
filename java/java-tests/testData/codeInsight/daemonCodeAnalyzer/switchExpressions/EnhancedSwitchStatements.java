@@ -62,7 +62,12 @@ class EnhancedSwitchStatements {
     }
 
     switch (E.valueOf("E1")) {
-      case <error descr="Constant expression required">null</error> -> noop();
+      case E1 -> noop();
+      case E2 -> noop();
+      case <error descr="Patterns in switch are not supported at language level '15'">null</error> -> noop();
+    }
+
+    switch (E.valueOf("E1")) {
       case <error descr="An enum switch case label must be the unqualified name of an enumeration constant">E.E1</error> -> noop();
       case E2 -> noop();
       case <error descr="Incompatible types. Found: 'int', required: 'EnhancedSwitchStatements.E'">1</error> -> noop();

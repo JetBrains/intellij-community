@@ -1,0 +1,2 @@
+version = "2.10.*"
+requires = ["types-pytz"]

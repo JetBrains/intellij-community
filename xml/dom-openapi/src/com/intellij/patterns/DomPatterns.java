@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -8,8 +9,6 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomTarget;
-import com.intellij.pom.PomTargetPsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see XmlPatterns
  */
-public class DomPatterns {
+public final class DomPatterns {
   public static <T extends DomElement> DomElementPattern.Capture<T> domElement(Class<T> aClass) {
     return new DomElementPattern.Capture<>(aClass);
   }
@@ -43,8 +42,7 @@ public class DomPatterns {
   }
 
   /** @deprecated use {@link #tagWithDom(String, ElementPattern)} and {@link #attributeWithDom(String, ElementPattern)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static XmlElementPattern.Capture withDom(ElementPattern<? extends DomElement> pattern) {
     return new XmlElementPattern.Capture().with(new PatternCondition<>("tagWithDom") {

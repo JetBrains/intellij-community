@@ -11,8 +11,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +35,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
    * @deprecated use {@link CompilerConfiguration#isParallelCompilationEnabled()}
    */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public Boolean PARALLEL_COMPILATION = null;
 
   public int COMPILER_PROCESS_HEAP_SIZE = 0;
@@ -59,7 +58,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   }
 
   public boolean allowAutoMakeWhileRunningApplication() {
-    return Registry.is("compiler.automake.allow.when.app.running", false);/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
+    return AdvancedSettings.getBoolean("compiler.automake.allow.when.app.running");
   }
 
   @ApiStatus.Internal

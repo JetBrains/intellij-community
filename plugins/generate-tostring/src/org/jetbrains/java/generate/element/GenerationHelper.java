@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -78,5 +75,21 @@ public final class GenerationHelper {
       }
     }
     return propertyName;
+  }
+  
+  public static boolean isAbstractSuperMethod(ClassElement classElement, String methodName, Project project) {
+    PsiClass clazz = JavaPsiFacade.getInstance(project).findClass(classElement.getQualifiedName(), GlobalSearchScope.allScope(project));
+    if (clazz != null) {
+      PsiClass superClass = clazz.getSuperClass();
+      if (superClass != null && superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        for (HierarchicalMethodSignature signature : superClass.getVisibleSignatures()) {
+          PsiMethod method = signature.getMethod();
+          if (methodName.equals(method.getName()) && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

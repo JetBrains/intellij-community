@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.InspectionToolsSupplier
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runWriteAction
@@ -38,7 +39,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Color
 import java.awt.Font
-import java.util.function.Function
 import javax.swing.Action
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -70,7 +70,7 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    document.addDocumentListener(object: DocumentListener {
+    document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         modified = true
       }
@@ -80,17 +80,24 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
     init()
   }
 
+  override fun show() {
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+    InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile!!, { customize() }) {
+      super.show()
+    }
+  }
+
   private fun setupHighlighting(editor: Editor) {
     editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false)
+  }
+
+  private fun customize(): InspectionProfileWrapper {
     val inspections = InspectionToolsSupplier.Simple(listOf(LocalInspectionToolWrapper(ModuleNamesListInspection())))
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
-    file?.putUserData(InspectionProfileWrapper.CUSTOMIZATION_KEY, Function {
-      val profile = InspectionProfileImpl("Module names", inspections, null)
-      for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
-        profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
-      }
-      InspectionProfileWrapper(profile)
-    })
+    val profile = InspectionProfileImpl("Module names", inspections, null)
+    for (spellCheckingToolName in SpellCheckingEditorCustomizationProvider.getInstance().spellCheckingToolNames) {
+      profile.getToolsOrNull(spellCheckingToolName, project)?.isEnabled = false
+    }
+    return InspectionProfileWrapper(profile)
   }
 
   override fun createCenterPanel(): JPanel {
@@ -167,7 +174,7 @@ internal class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) :
 
     val renamingScheme = getRenamingScheme()
     if (renamingScheme.isNotEmpty()) {
-      val model = ModuleManager.getInstance(project).modifiableModel
+      val model = ModuleManager.getInstance(project).getModifiableModel()
       val byName = modules.associateBy { it.name }
       for (entry in renamingScheme) {
         model.renameModule(byName[entry.key]!!, entry.value)
@@ -205,6 +212,10 @@ internal class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(Proje
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && ModuleManager.getInstance(e.project!!).hasModuleGroups()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }
 

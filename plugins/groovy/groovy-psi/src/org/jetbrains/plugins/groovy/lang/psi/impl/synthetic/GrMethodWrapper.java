@@ -9,9 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrPsiTypeStub;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrMethodWrapper extends GrLightMethodBuilder implements PsiMirrorElement {
   private static final PsiType TYPE_MARKER = new GrPsiTypeStub() {
     @Override

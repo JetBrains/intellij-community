@@ -162,44 +162,18 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           for (int i = 0; i < 4 && off < s.length(); i++) {
             aChar = s.charAt(off++);
             switch (aChar) {
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                value = (value << 4) + aChar - '0';
-                break;
-              case 'a':
-              case 'b':
-              case 'c':
-              case 'd':
-              case 'e':
-              case 'f':
-                value = (value << 4) + 10 + aChar - 'a';
-                break;
-              case 'A':
-              case 'B':
-              case 'C':
-              case 'D':
-              case 'E':
-              case 'F':
-                value = (value << 4) + 10 + aChar - 'A';
-                break;
-              default:
+              case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> value = (value << 4) + aChar - '0';
+              case 'a', 'b', 'c', 'd', 'e', 'f' -> value = (value << 4) + 10 + aChar - 'a';
+              case 'A', 'B', 'C', 'D', 'E', 'F' -> value = (value << 4) + 10 + aChar - 'A';
+              default -> {
                 outChars.append("\\u");
                 int start = off - i - 1;
                 int end = Math.min(start + 4, s.length());
                 outChars.append(s, start, end);
-                i=4;
+                i = 4;
                 error = true;
                 off = end;
-                break;
-                //throw new IllegalArgumentException("Malformed \\uxxxx encoding.");
+              }
             }
           }
           if (!error) {
@@ -262,42 +236,17 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           for (int i = 0; i < 4; i++) {
             aChar = off < s.length() ? s.charAt(off++) : 0;
             switch (aChar) {
-              case '0':
-              case '1':
-              case '2':
-              case '3':
-              case '4':
-              case '5':
-              case '6':
-              case '7':
-              case '8':
-              case '9':
-                value = (value << 4) + aChar - '0';
-                break;
-              case 'a':
-              case 'b':
-              case 'c':
-              case 'd':
-              case 'e':
-              case 'f':
-                value = (value << 4) + 10 + aChar - 'a';
-                break;
-              case 'A':
-              case 'B':
-              case 'C':
-              case 'D':
-              case 'E':
-              case 'F':
-                value = (value << 4) + 10 + aChar - 'A';
-                break;
-              default:
+              case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> value = (value << 4) + aChar - '0';
+              case 'a', 'b', 'c', 'd', 'e', 'f' -> value = (value << 4) + 10 + aChar - 'a';
+              case 'A', 'B', 'C', 'D', 'E', 'F' -> value = (value << 4) + 10 + aChar - 'A';
+              default -> {
                 int start = off - i - 1;
                 int end = Math.min(start + 4, s.length());
-                i=4;
+                i = 4;
                 error = true;
                 off = end;
                 startSpaces = -1;
-                break;
+              }
             }
           }
           if (!error) {

@@ -36,11 +36,11 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private static final ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY =
     count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
 
-  public PsiImportListImpl(final PsiImportListStub stub) {
+  public PsiImportListImpl(PsiImportListStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_LIST);
   }
 
-  public PsiImportListImpl(final ASTNode node) {
+  public PsiImportListImpl(ASTNode node) {
     super(node);
   }
 

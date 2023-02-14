@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.EditorFactory;
@@ -40,6 +41,11 @@ public abstract class SetEditorBidiTextDirectionAction extends ToggleAction {
       EditorSettingsExternalizable.getInstance().setBidiTextDirection(myDirection);
       EditorFactory.getInstance().refreshAllEditors();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   public static class ContentBased extends SetEditorBidiTextDirectionAction {

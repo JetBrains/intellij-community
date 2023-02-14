@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports non-short-circuit operations consuming an infinite stream. Such operations can only be completed by throwing an exception.
+Reports non-short-circuit operations consuming an infinite stream. Such operations can be completed only by throwing an exception.
 <p>Example:</p>
-<pre>
+<pre><code>
   Stream.iterate(0, i -> i + 1).collect(Collectors.toList())
-</pre>
+</code></pre>
 </body>
 </html>

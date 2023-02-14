@@ -2,6 +2,7 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -10,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "DiffApplicationSettings",
-  storages = @Storage("vcs.xml")
+  storages = @Storage("vcs.xml"),
+  category = SettingsCategory.TOOLS
 )
 public class DiffApplicationSettings implements PersistentStateComponent<DiffApplicationSettings> {
 

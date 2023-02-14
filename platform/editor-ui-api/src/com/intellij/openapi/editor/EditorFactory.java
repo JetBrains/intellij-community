@@ -162,7 +162,7 @@ public abstract class EditorFactory {
    * and released.
    * @deprecated use the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener);
 
   /**
@@ -176,7 +176,7 @@ public abstract class EditorFactory {
    * and released.
    * @deprecated you should have used the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void removeEditorFactoryListener(@NotNull EditorFactoryListener listener);
 
   /**

@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* @author peter
-*/
 public class JavaCompletionSession {
   private final Set<String> myAddedClasses = new HashSet<>();
   private final Set<String> myKeywords = new HashSet<>();

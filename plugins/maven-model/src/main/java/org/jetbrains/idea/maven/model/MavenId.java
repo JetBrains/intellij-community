@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class MavenId implements Serializable, MavenCoordinate {
   public static final String UNKNOWN_VALUE = "Unknown";
@@ -81,6 +82,10 @@ public class MavenId implements Serializable, MavenCoordinate {
 
   public static void append(StringBuilder builder, String part) {
     if (builder.length() != 0) builder.append(':');
+    appendFirst(builder, part);
+  }
+
+  public static void appendFirst(StringBuilder builder, String part) {
     builder.append(part == null ? "<unknown>" : part);
   }
 
@@ -90,14 +95,14 @@ public class MavenId implements Serializable, MavenCoordinate {
   }
 
   public boolean equals(@Nullable String groupId, @Nullable String artifactId) {
-    if (myArtifactId != null ? !myArtifactId.equals(artifactId) : artifactId != null) return false;
-    if (myGroupId != null ? !myGroupId.equals(groupId) : groupId != null) return false;
+    if (!Objects.equals(myArtifactId, artifactId)) return false;
+    if (!Objects.equals(myGroupId, groupId)) return false;
     return true;
   }
 
   public boolean equals(@Nullable String groupId, @Nullable String artifactId, @Nullable String version) {
     if (!equals(groupId, artifactId)) return false;
-    if (myVersion != null ? !myVersion.equals(version) : version != null) return false;
+    if (!Objects.equals(myVersion, version)) return false;
     return true;
   }
 

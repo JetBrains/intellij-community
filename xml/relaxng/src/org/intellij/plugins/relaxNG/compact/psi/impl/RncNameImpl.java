@@ -50,6 +50,7 @@ import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,16 +207,17 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   }
 
   public static class CreateDeclFix implements LocalQuickFix {
-    private final RncNameImpl myReference;
+    private final @NotNull @Nls String myName;
 
     public CreateDeclFix(RncNameImpl reference) {
-      myReference = reference;
+      myName = RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(reference.getKind().name()),
+                                     reference.getPrefix());
     }
 
     @Override
     @NotNull
     public String getName() {
-      return RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(myReference.getKind().name()), myReference.getPrefix());
+      return myName;
     }
 
     @Override
@@ -226,6 +228,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      RncNameImpl myReference = (RncNameImpl)descriptor.getPsiElement();
       final String prefix = myReference.getPrefix();
       final PsiFileFactory factory = PsiFileFactory.getInstance(myReference.getProject());
       final RncFile psiFile = (RncFile)factory.createFileFromText("dummy.rnc",

@@ -148,10 +148,6 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
     return TestBuildObjectModelProvider()
   }
 
-  override fun requiresTaskRunning(): Boolean {
-    return true
-  }
-
   companion object {
     private val extensions: MutableMap<String, TestProjectResolverExtension> = mutableMapOf()
 

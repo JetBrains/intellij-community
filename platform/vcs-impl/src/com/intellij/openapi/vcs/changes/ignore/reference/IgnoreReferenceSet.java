@@ -245,7 +245,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      */
     @Override
     protected void innerResolveInContext(@NotNull String text, @NotNull PsiFileSystemItem context,
-                                         @NotNull Collection<ResolveResult> result, boolean caseSensitive) {
+                                         @NotNull Collection<? super ResolveResult> result, boolean caseSensitive) {
       ProgressManager.checkCanceled();
       super.innerResolveInContext(text, context, result, caseSensitive);
 

@@ -52,6 +52,10 @@ public class CodeStyleConfigurableWrapper
     return myPanel;
   }
 
+  public void setSchemesPanelVisible(boolean isVisible) {
+    if (myPanel != null) myPanel.setSchemesPanelVisible(isVisible);
+  }
+
   protected boolean canBeShared() {
     return true;
   }
@@ -145,6 +149,11 @@ public class CodeStyleConfigurableWrapper
       myPanel = new CodeStyleMainPanel(myOwner.getModel(), myFactory, canBeShared());
     }
     return myPanel.getOptionIndexer();
+  }
+
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    selectTab(label);
   }
 
   public void selectTab(@NotNull String tab) {

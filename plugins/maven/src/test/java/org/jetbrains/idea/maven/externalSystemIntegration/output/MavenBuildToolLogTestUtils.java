@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.DefaultBuildDescriptor;
@@ -15,14 +15,16 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Logger;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.SelfDescribing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -40,26 +42,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
   protected ExternalSystemTaskId myTaskId;
 
-  public interface ThrowingRunnable {
-    void run() throws Throwable;
-  }
-
-
-  public static  void failOnWarns(ThrowingRunnable runnable) throws Throwable {
-    LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
-    try {
-      LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
-        @Override
-        public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-          super.processWarn(message, t, logger);
-          fail(message + t);
-        }
-      });
-      runnable.run();
-    }
-    finally {
-      LoggedErrorProcessor.setNewInstance(oldInstance);
-    }
+  public static  void failOnWarns(ThrowableRunnable<Throwable> runnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        fail(message + t);
+        return false;
+      }
+    }, runnable);
   }
 
   @Override
@@ -90,7 +80,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     private boolean mySkipOutput = false;
 
     public TestCaseBuilder withLines(String... lines) {
-      List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
+      List<String> joinedAndSplitted = List.of(StringUtil.join(lines, "\n").split("\n"));
       myLines.addAll(joinedAndSplitted);
       return this;
     }
@@ -205,8 +195,11 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     }
 
     private List<BuildEvent> collect() {
+      MavenRunConfiguration configuration =
+        (MavenRunConfiguration)new MavenRunConfigurationType.MavenRunConfigurationFactory(MavenRunConfigurationType.getInstance())
+          .createTemplateConfiguration(getProject());
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser = new MavenLogOutputParser(getProject(), myTaskId, myParsers);
+      MavenLogOutputParser parser = new MavenLogOutputParser(configuration, myTaskId, myParsers);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));

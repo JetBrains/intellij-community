@@ -16,7 +16,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
-class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+final class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
   MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
     super(editorTextField, editor);
   }
@@ -65,9 +65,9 @@ class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
 
         g2.translate(x, y);
 
-        Object op = editorTextField.getClientProperty("JComponent.outline");
+        DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(editorTextField);
         if (editorTextField.isEnabled() && op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, hasFocus, DarculaUIUtil.Outline.valueOf(op.toString()));
+          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, hasFocus, op);
         }
         else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
           DarculaUIUtil.paintFocusBorder(g2, width, height, 0, true);

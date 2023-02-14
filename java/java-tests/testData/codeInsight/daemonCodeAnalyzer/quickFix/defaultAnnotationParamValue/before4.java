@@ -1,4 +1,4 @@
-// "Remove redundant parameter" "true"
+// "Remove redundant parameter" "true-preview"
 
 @interface Anno {
   Class foo() default void.class;

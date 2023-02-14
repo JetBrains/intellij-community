@@ -37,37 +37,48 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      if (expression.getParent() instanceof PsiReferenceExpression expr && expr.isQualified()) return;
       visitReferenceElement(expression);
     }
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      processElement(element);
       super.visitElement(element);
+    }
 
+    private void processElement(@NotNull PsiElement element) {
       for (PsiReference ref : element.getReferences()) {
         PsiElement resolved = ref.resolve();
-        if (resolved != null) {
-          myProcessor.process(ref.getElement(), resolved);
-        }
+        if (resolved != null) myProcessor.process(ref.getElement(), resolved);
       }
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) { }
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) { }
 
     @Override
-    public void visitDocComment(PsiDocComment comment) { }
+    public void visitDocComment(@NotNull PsiDocComment comment) { }
 
-    @Override
-    public void visitImportStatement(PsiImportStatement statement) {
+    private void visitImport(@NotNull PsiElement element) {
       if (!myOptions.skipImports()) {
-        visitElement(statement);
+        visitElement(element);
       }
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitImportStatement(@NotNull PsiImportStatement statement) {
+      visitImport(statement);
+    }
+
+    @Override
+    public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
+      visitImport(statement);
+    }
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
 
       PsiMethod psiMethod = expression.resolveMethod();

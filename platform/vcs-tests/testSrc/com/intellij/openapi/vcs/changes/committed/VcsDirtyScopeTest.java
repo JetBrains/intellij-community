@@ -26,9 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author irengrig
- */
 public class VcsDirtyScopeTest extends FileBasedTest {
   private MockAbstractVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;

@@ -27,14 +27,10 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
   @NotNull
   public static Shortcut newInstance(KeyboardGestureAction.ModifierType type, KeyStroke stroke) {
-    switch (type) {
-      case dblClick:
-        return new DblClick(stroke);
-      case hold:
-        return new Hold(stroke);
-    }
-
-    throw new IllegalArgumentException(type.toString());
+    return switch (type) {
+      case dblClick -> new DblClick(stroke);
+      case hold -> new Hold(stroke);
+    };
   }
 
   protected KeyboardModifierGestureShortcut(final KeyStroke stroke, KeyboardGestureAction.ModifierType type) {
@@ -57,9 +53,8 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
 
   @Override
   public boolean startsWith(@NotNull final Shortcut sc) {
-    if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
+    if (!(sc instanceof KeyboardModifierGestureShortcut other)) return false;
 
-    final KeyboardModifierGestureShortcut other = (KeyboardModifierGestureShortcut)sc;
     if (myType.equals(other.myType)) {
       if (myStroke.getModifiers() != other.myStroke.getModifiers()) return false;
       return other.myStroke.getKeyCode() != -1 || other.myStroke.getKeyCode() == myStroke.getKeyCode();

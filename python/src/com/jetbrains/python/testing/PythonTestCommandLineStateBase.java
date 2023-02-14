@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -38,21 +24,22 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.PydevConsoleRunnerImpl;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * @author yole
- */
+
 public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
   protected final T myConfiguration;
 
@@ -103,6 +90,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
+  /**
+   * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+   */
   @NotNull
   @Override
   public GeneralCommandLine generateCommandLine() {
@@ -119,12 +109,23 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    PythonScriptExecution testScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), targetEnvironmentRequest);
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
+    TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
+    PythonScriptExecution testScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), helpersAwareRequest);
+    testScriptExecution.setCharset(PydevConsoleRunnerImpl.CONSOLE_CHARSET);
     addBeforeParameters(testScriptExecution);
-    addTestSpecsAsParameters(testScriptExecution, getTestSpecs());
+    addTestSpecsAsParameters(testScriptExecution, getTestSpecs(targetEnvironmentRequest));
     addAfterParameters(targetEnvironmentRequest, testScriptExecution);
     return testScriptExecution;
+  }
+
+  @Override
+  protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest request) {
+    Function<TargetEnvironment, String> workingDir = super.getPythonExecutionWorkingDir(request);
+    if (workingDir != null) {
+      return workingDir;
+    }
+    return TargetEnvironmentFunctions.targetPath(Path.of(myConfiguration.getWorkingDirectorySafe()));
   }
 
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
@@ -155,7 +156,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  public @NotNull ExecutionResult execute(Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
+  public @Nullable ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
     throws ExecutionException {
     ProcessHandler processHandler = startProcess(converter);
     ConsoleView console = invokeAndWait(() -> createAndAttachConsole(myConfiguration.getProject(), processHandler, executor));
@@ -191,14 +192,14 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  protected void addBeforeParameters(GeneralCommandLine cmd) {}
+  protected void addBeforeParameters(GeneralCommandLine cmd) { }
 
   /**
    * To be deprecated.
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  protected void addAfterParameters(GeneralCommandLine cmd) {}
+  protected void addAfterParameters(GeneralCommandLine cmd) { }
 
   /**
    * To be deprecated.
@@ -214,18 +215,21 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     addAfterParameters(cmd);
   }
 
-  protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) {}
+  protected void addBeforeParameters(@NotNull PythonScriptExecution testScriptExecution) { }
 
   /**
    * Adds test specs (like method, class, script, etc) to list of runner parameters.
+   * <p>
+   * Works together with {@link #getTestSpecs(TargetEnvironmentRequest)}.
    */
-  protected void addTestSpecsAsParameters(@NotNull PythonScriptExecution testScriptExecution, @NotNull final List<String> testSpecs) {
-    // By default we simply add them as arguments
+  protected void addTestSpecsAsParameters(@NotNull PythonScriptExecution testScriptExecution,
+                                          @NotNull List<Function<TargetEnvironment, String>> testSpecs) {
+    // By default, we simply add them as arguments
     testSpecs.forEach(parameter -> testScriptExecution.addParameter(parameter));
   }
 
   protected void addAfterParameters(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                    @NotNull PythonScriptExecution testScriptExecution) {}
+                                    @NotNull PythonScriptExecution testScriptExecution) { }
 
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
@@ -234,18 +238,30 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  public void customizePythonExecutionEnvironmentVars(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
-                                                      @NotNull Map<String, Function<TargetEnvironment, String>> envs,
-                                                      boolean passParentEnvs) {
-    super.customizePythonExecutionEnvironmentVars(targetEnvironmentRequest, envs, passParentEnvs);
-    String pycharmHelperPath = PythonHelpersLocator.getHelperPath("pycharm");
+  protected void customizePythonExecutionEnvironmentVars(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+                                                         @NotNull Map<String, Function<TargetEnvironment, String>> envs,
+                                                         boolean passParentEnvs) {
+    super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
+    Function<TargetEnvironment, String> helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
     Function<TargetEnvironment, String> targetPycharmHelpersPath =
-      TargetEnvironmentFunctions.getTargetEnvironmentValueForLocalPath(targetEnvironmentRequest, pycharmHelperPath);
+      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath, "pycharm");
     envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
   }
 
   protected abstract HelperPackage getRunner();
 
+  /**
+   * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+   */
   @NotNull
   protected abstract List<String> getTestSpecs();
+
+  /**
+   * Returns the list of specifications for tests to be executed.
+   * <p>
+   * Works together with {@link #addTestSpecsAsParameters(PythonScriptExecution, List)}.
+   */
+  protected @NotNull List<Function<TargetEnvironment, String>> getTestSpecs(@NotNull TargetEnvironmentRequest request) {
+    return List.of();
+  }
 }

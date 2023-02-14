@@ -8,7 +8,7 @@ import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
-internal class TargetModelBuilder<T>(private val connection: TargetProjectConnection, private val modelType: Class<T>) :
+internal class TargetModelBuilder<T>(connection: TargetProjectConnection, private val modelType: Class<T>) :
   TargetBuildExecuter<TargetModelBuilder<T>, T?>(connection), ModelBuilder<T> {
 
   override val targetBuildParametersBuilder = TargetBuildParameters.ModelBuilderParametersBuilder(modelType)

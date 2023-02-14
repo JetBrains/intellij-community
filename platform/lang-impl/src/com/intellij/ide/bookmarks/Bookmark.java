@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.ide.bookmark.BookmarkType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
@@ -12,25 +13,18 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -92,7 +86,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   private void initTarget(@NotNull Project project, @NotNull VirtualFile file, int line) {
     myTarget = new OpenFileDescriptor(project, file, line, -1, true);
-    addHighlighter();
   }
 
   @NotNull
@@ -121,37 +114,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   void updateHighlighter() {
     release();
-    addHighlighter();
-  }
-
-  private void addHighlighter() {
-    Document document = getCachedDocument();
-    if (document != null) {
-      createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myTarget.getProject(), true));
-    }
-  }
-
-  public RangeHighlighter createHighlighter(@NotNull MarkupModelEx markup) {
-    final RangeHighlighterEx highlighter;
-    int line = getLine();
-    if (line >= 0) {
-      highlighter = markup.addPersistentLineHighlighter(CodeInsightColors.BOOKMARKS_ATTRIBUTES, line, HighlighterLayer.ERROR + 1);
-      if (highlighter != null) {
-        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(this));
-        highlighter.setErrorStripeTooltip(getBookmarkTooltip());
-      }
-    }
-    else {
-      highlighter = null;
-    }
-    myHighlighterRef = highlighter == null ? null : new WeakReference<>(highlighter);
-    return highlighter;
-  }
-
-  @Deprecated
-  @Nullable
-  public Document getDocument() {
-    return getCachedDocument();
   }
 
   Document getCachedDocument() {

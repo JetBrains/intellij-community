@@ -11,6 +11,7 @@ import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +74,7 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
     if (str != null) {
       return fromConstant(str);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (CASE_PRESERVING_METHODS.test(call)) {
         return fromExpression(call.getMethodExpression().getQualifierExpression(), energy - 1);
       }
@@ -161,7 +161,49 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        visitSwitchBlock(statement);
+      }
+
+      @Override
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+        visitSwitchBlock(expression);
+      }
+
+      private void visitSwitchBlock(PsiSwitchBlock block) {
+        PsiCodeBlock body = block.getBody();
+        if (body == null) return;
+        PsiExpression selector = block.getExpression();
+        if (selector == null || !TypeUtils.isJavaLangString(selector.getType())) return;
+        // Matching of constant selector against constant labels is processed by Constant Conditions & Exceptions
+        if (PsiUtil.isConstantExpression(selector)) return;
+        StringCase selectorCase = fromExpression(selector, ANALYSIS_COMPLEXITY);
+        if (selectorCase.myHasUpper != ThreeState.NO && selectorCase.myHasLower != ThreeState.NO) return;
+        for (PsiStatement statement : body.getStatements()) {
+          if (statement instanceof PsiSwitchLabelStatementBase) {
+            PsiCaseLabelElementList labels = ((PsiSwitchLabelStatementBase)statement).getCaseLabelElementList();
+            if (labels != null) {
+              for (PsiCaseLabelElement label : labels.getElements()) {
+                if (label instanceof PsiExpression) {
+                  StringCase labelCase = fromExpression((PsiExpression)label, ANALYSIS_COMPLEXITY);
+                  String errorMessage;
+                  if (selectorCase.myHasLower == ThreeState.NO && labelCase.myHasLower == ThreeState.YES) {
+                    errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.label.is.lower");
+                  } else if (selectorCase.myHasUpper == ThreeState.NO && labelCase.myHasUpper == ThreeState.YES) {
+                    errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.label.is.upper");
+                  } else {
+                    continue;
+                  }
+                  holder.registerProblem(label, errorMessage);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!STRING_COMPARISON_METHODS.test(call)) return;
         PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
         PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -170,15 +212,10 @@ public class MismatchedStringCaseInspection extends AbstractBaseJavaLocalInspect
         StringCase qualifierCase = fromExpression(qualifier, ANALYSIS_COMPLEXITY);
         PsiElement anchor = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
         String methodName = anchor.getText();
-        String returnValue;
-        switch (methodName) {
-          case "indexOf":
-          case "lastIndexOf":
-            returnValue = "-1";
-            break;
-          default:
-            returnValue = "false";
-        }
+        String returnValue = switch (methodName) {
+          case "indexOf", "lastIndexOf" -> "-1";
+          default -> "false";
+        };
         String errorMessage;
         if (qualifierCase.myHasLower == ThreeState.NO && argCase.myHasLower == ThreeState.YES) {
           errorMessage = InspectionGadgetsBundle.message("inspection.case.mismatch.message.arg.is.lower", methodName, returnValue);

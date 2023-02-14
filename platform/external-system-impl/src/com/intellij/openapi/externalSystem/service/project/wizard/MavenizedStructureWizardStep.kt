@@ -3,20 +3,25 @@ package com.intellij.openapi.externalSystem.service.project.wizard
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleLocalFileDescriptor
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.properties.comap
-import com.intellij.openapi.observable.properties.map
+import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil.*
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.layout.*
@@ -35,19 +40,19 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   abstract fun findAllParents(): List<Data>
 
   private val propertyGraph = PropertyGraph()
-  private val entityNameProperty = propertyGraph.graphProperty(::suggestName)
-  private val locationProperty = propertyGraph.graphProperty { suggestLocationByName() }
-  private val parentProperty = propertyGraph.graphProperty(::suggestParentByLocation)
-  private val groupIdProperty = propertyGraph.graphProperty(::suggestGroupIdByParent)
-  private val artifactIdProperty = propertyGraph.graphProperty(::suggestArtifactIdByName)
-  private val versionProperty = propertyGraph.graphProperty(::suggestVersionByParent)
+  private val entityNameProperty = propertyGraph.lazyProperty(::suggestName)
+  private val locationProperty = propertyGraph.lazyProperty(::suggestLocationByName)
+  private val parentProperty = propertyGraph.lazyProperty(::suggestParentByLocation)
+  private val groupIdProperty = propertyGraph.lazyProperty(::suggestGroupIdByParent)
+  private val artifactIdProperty = propertyGraph.lazyProperty(::suggestArtifactIdByName)
+  private val versionProperty = propertyGraph.lazyProperty(::suggestVersionByParent)
 
-  var entityName by entityNameProperty.map { it.trim() }
+  var entityName by entityNameProperty.trim()
   var location by locationProperty
   var parent by parentProperty
-  var groupId by groupIdProperty.map { it.trim() }
-  var artifactId by artifactIdProperty.map { it.trim() }
-  var version by versionProperty.map { it.trim() }
+  var groupId by groupIdProperty.trim()
+  var artifactId by artifactIdProperty.trim()
+  var version by versionProperty.trim()
 
   val parents by lazy { parentsData.map(::createView) }
   val parentsData by lazy { findAllParents() }
@@ -61,8 +66,8 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
     entityNameProperty.dependsOn(locationProperty, ::suggestNameByLocation)
     entityNameProperty.dependsOn(artifactIdProperty, ::suggestNameByArtifactId)
     parentProperty.dependsOn(locationProperty, ::suggestParentByLocation)
-    locationProperty.dependsOn(parentProperty) { suggestLocationByParentAndName() }
-    locationProperty.dependsOn(entityNameProperty) { suggestLocationByParentAndName() }
+    locationProperty.dependsOn(parentProperty, ::suggestLocationByParentAndName)
+    locationProperty.dependsOn(entityNameProperty, ::suggestLocationByParentAndName)
     groupIdProperty.dependsOn(parentProperty, ::suggestGroupIdByParent)
     artifactIdProperty.dependsOn(entityNameProperty, ::suggestArtifactIdByName)
     versionProperty.dependsOn(parentProperty, ::suggestVersionByParent)
@@ -83,14 +88,18 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
         textField(entityNameProperty)
           .withValidationOnApply { validateName() }
           .withValidationOnInput { validateName() }
+          .constraints(pushX)
           .focused()
+        installNameGenerators(getBuilderId(), entityNameProperty)
       }
       row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.label")) {
-        val fileChooserDescriptor = createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-        val fileChosen = { file: VirtualFile -> getUiPath(file.path) }
+        val fileChooserDescriptor = createSingleLocalFileDescriptor()
+          .withFileFilter { it.isDirectory }
+          .withPathToTextConvertor(::getPresentablePath)
+          .withTextToPathConvertor(::getCanonicalPath)
         val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        val property = locationProperty.map { getUiPath(it) }.comap { getModelPath(it) }
-        textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor, fileChosen)
+        val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
+        textFieldWithBrowseButton(property, title, context.project, fileChooserDescriptor)
           .withValidationOnApply { validateLocation() }
           .withValidationOnInput { validateLocation() }
       }
@@ -118,6 +127,8 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
     }
   }
 
+  protected open fun getBuilderId(): String? = null
+
   override fun getPreferredFocusedComponent() = contentPanel.preferredFocusedComponent
 
   override fun getComponent() = contentPanel
@@ -138,13 +149,18 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
     }
   }
 
-  private fun getUiPath(path: String): String = getLocationRelativeToUserHome(toSystemDependentName(path.trim()), false)
-
-  private fun getModelPath(path: String): String = toCanonicalPath(expandUserHome(path.trim()))
-
   protected open fun suggestName(): String {
     val projectFileDirectory = File(context.projectFileDirectory)
-    return createSequentFileName(projectFileDirectory, "untitled", "")
+    val moduleNames = findAllModules().map { it.name }.toSet()
+    return createSequentFileName(projectFileDirectory, "untitled", "") {
+      !it.exists() && it.name !in moduleNames
+    }
+  }
+
+  protected fun findAllModules(): List<Module> {
+    val project = context.project ?: return emptyList()
+    val moduleManager = ModuleManager.getInstance(project)
+    return moduleManager.modules.toList()
   }
 
   protected open fun suggestNameByLocation(): String {
@@ -211,7 +227,7 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
   }
 
   protected open fun ValidationInfoBuilder.validateVersion() = superValidateVersion()
-  protected fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateVersion(): ValidationInfo? {
     if (version.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.presentation")
       val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.missing.error",
@@ -229,11 +245,17 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
                                                  context.presentationName, propertyPresentation)
       return error(message)
     }
+    val moduleNames = findAllModules().map { it.name }.toSet()
+    if (entityName in moduleNames) {
+      val message = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.entity.name.exists.error",
+                                                 context.presentationName.capitalize(), entityName)
+      return error(message)
+    }
     return null
   }
 
   protected open fun ValidationInfoBuilder.validateLocation() = superValidateLocation()
-  protected fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
+  private fun ValidationInfoBuilder.superValidateLocation(): ValidationInfo? {
     val location = location
     if (location.isEmpty()) {
       val propertyPresentation = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.location.presentation")
@@ -289,9 +311,9 @@ abstract class MavenizedStructureWizardStep<Data : Any>(val context: WizardConte
 
   companion object {
     private val EMPTY_VIEW = object : DataView<Nothing>() {
-      override val data: Nothing by lazy { throw UnsupportedOperationException() }
+      override val data: Nothing get() = throw UnsupportedOperationException()
       override val location: String = ""
-      override val icon: Nothing by lazy { throw UnsupportedOperationException() }
+      override val icon: Nothing get() = throw UnsupportedOperationException()
       override val presentationName: String = "<None>"
       override val groupId: String = "org.example"
       override val version: String = "1.0-SNAPSHOT"

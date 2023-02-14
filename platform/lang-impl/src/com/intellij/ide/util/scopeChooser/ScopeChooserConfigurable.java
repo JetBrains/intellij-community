@@ -128,6 +128,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void refreshProject() {
+    if (myProject.isDefault()) return;
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
     for (VirtualFile openVirtualFile : fileEditorManager.getOpenFiles()) {
       fileEditorManager.updateFilePresentation(openVirtualFile);
@@ -239,15 +240,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     });
     super.initTree();
     myTree.setShowsRootHandles(false);
-    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
+    new TreeSpeedSearch(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
   }
 
   @Override
   protected boolean wasObjectStored(Object editableObject) {
-    if (editableObject instanceof NamedScope) {
-      NamedScope scope = (NamedScope)editableObject;
+    if (editableObject instanceof NamedScope scope) {
       final String scopeId = scope.getScopeId();
       return myLocalScopesManager.getScope(scopeId) != null || mySharedScopesManager.getScope(scopeId) != null;
     }
@@ -345,20 +345,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     private final boolean myFromPopup;
 
     MyAddAction(boolean fromPopup) {
-      super(IdeBundle.message("add.scope.popup.title"), true);
+      super(IdeBundle.message("add.scope.popup.title"), !fromPopup);
       myFromPopup = fromPopup;
-      final Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
+      getTemplatePresentation().setIcon(LayeredIcon.ADD_WITH_DROPDOWN);
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
-    }
-
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (myFromPopup) {
-        setPopup(false);
-      }
     }
 
     @Override
@@ -446,6 +436,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         }
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class MyCopyAction extends DumbAwareAction {
@@ -470,6 +465,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
     }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class MySaveAsAction extends DumbAwareAction {
@@ -483,8 +482,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       if (selectionPath != null) {
         MyNode node = (MyNode)selectionPath.getLastPathComponent();
         NamedConfigurable<?> configurable = node.getConfigurable();
-        if (configurable instanceof ScopeConfigurable) {
-          final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)configurable;
+        if (configurable instanceof ScopeConfigurable scopeConfigurable) {
           PackageSet set = scopeConfigurable.getEditableObject().getValue();
           if (set != null) {
             if (scopeConfigurable.getHolder() == mySharedScopesManager) {
@@ -501,6 +499,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getSelectedObject() instanceof NamedScope);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

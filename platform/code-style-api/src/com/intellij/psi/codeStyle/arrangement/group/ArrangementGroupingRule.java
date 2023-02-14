@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * Encapsulates information about grouping rules to use during arrangement.
  * <p/>
  * E.g. a rule might look like 'keep together class methods which implement methods from particular interface'.
- * 
- * @author Denis Zhdanov
  */
 public class ArrangementGroupingRule {
 

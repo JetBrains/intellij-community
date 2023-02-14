@@ -35,8 +35,7 @@ public abstract class PyBinaryConditionSurrounder extends PyExpressionAsConditio
   @Nullable
   @Override
   protected PyExpression getCondition(PyStatement statement) {
-    if (statement instanceof PyIfStatement) {
-      PyIfStatement ifStatement = (PyIfStatement)statement;
+    if (statement instanceof PyIfStatement ifStatement) {
       PyExpression condition = ifStatement.getIfPart().getCondition();
       if (condition == null) {
         return null;

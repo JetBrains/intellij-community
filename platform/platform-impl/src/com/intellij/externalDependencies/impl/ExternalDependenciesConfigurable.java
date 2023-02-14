@@ -78,8 +78,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ProjectExternalDependency> list, ProjectExternalDependency dependency,
                                            int index, boolean selected, boolean hasFocus) {
-        if (dependency instanceof DependencyOnPlugin) {
-          DependencyOnPlugin value = (DependencyOnPlugin)dependency;
+        if (dependency instanceof DependencyOnPlugin value) {
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();
@@ -195,12 +194,12 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     };
     pluginChooser.setSelectedItem(original.getPluginId());
 
-    final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
-    final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
+    final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getRawMinVersion()));
+    final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getRawMaxVersion()));
     minVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
-    minVersionField.setColumns(10);
+    minVersionField.setColumns(17);
     maxVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
-    maxVersionField.setColumns(10);
+    maxVersionField.setColumns(17);
     JPanel panel = FormBuilder.createFormBuilder()
       .addLabeledComponent(IdeBundle.message("label.plugin"), pluginChooser)
       .addLabeledComponent(IdeBundle.message("label.minimum.version"), minVersionField)

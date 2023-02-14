@@ -24,4 +24,19 @@ public interface LanguageFormattingRestriction {
     "com.intellij.lang.formatter.restriction");
 
   boolean isFormatterAllowed(@NotNull PsiElement context);
+
+  /**
+   * Checks if automatic code reformat is allowed, for example, on save. By default, the method returns the same value as
+   * {@link #isFormatterAllowed(PsiElement)} used for explicit reformat.
+   *
+   * @param context A context element.
+   *
+   * @return True if automatic reformat is allowed, false to block it. For automatic formatting to work, this method and
+   * {@link #isFormatterAllowed(PsiElement)} must <i>both</i> return {@code true}.
+   *
+   * @see LanguageFormatting#isAutoFormatAllowed(PsiElement)
+   */
+  default boolean isAutoFormatAllowed(@NotNull PsiElement context) {
+    return isFormatterAllowed(context);
+  }
 }

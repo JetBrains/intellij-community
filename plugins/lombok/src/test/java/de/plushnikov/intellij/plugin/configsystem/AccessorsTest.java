@@ -68,8 +68,32 @@ public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
   }
 
   ////////////
+  public void testMakefinal$AccessorsMakeFinalLombokConfig() {
+    doTest();
+  }
+  ////////////
 
   public void testSuperbuilder$SuperBuilderWithPrefixes() {
+    doTest();
+  }
+  ////////////
+  public void testCapitalization$BuilderWithJavaBeansSpecCapitalization() {
+    doTest();
+  }
+
+  public void testCapitalization$GetterWithJavaBeansSpecCapitalization() {
+    doTest();
+  }
+
+  public void testCapitalization$SetterWithJavaBeansSpecCapitalization() {
+    doTest();
+  }
+
+  public void testCapitalization$ValueWithJavaBeansSpecCapitalization() {
+    doTest();
+  }
+
+  public void testCapitalization$WithWithJavaBeansSpecCapitalization() {
     doTest();
   }
 }

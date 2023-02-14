@@ -25,9 +25,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class GroovyFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
   @NotNull
   @Override

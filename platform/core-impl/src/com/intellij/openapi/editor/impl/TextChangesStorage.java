@@ -31,8 +31,6 @@ import java.util.List;
  * Provides ability to automatic merging them if necessary.
  * <p/>
  * Not thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class TextChangesStorage {
   private final List<ChangeEntry> myChanges = new ArrayList<>();

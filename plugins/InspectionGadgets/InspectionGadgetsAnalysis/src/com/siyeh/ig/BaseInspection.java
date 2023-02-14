@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -117,6 +118,17 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   /**
+   * Writes an option field of any type that can be converted to a String unconditionally. The field can't be null.
+   * @param node  the xml element node the field is written to.
+   * @param property  the name of the field.
+   */
+  protected void writeOption(@NotNull Element node, @NotNull @NonNls String property) {
+    final Object value = ReflectionUtil.getField(this.getClass(), this, null, property);
+    assert value != null : "field " + property + " not found";
+    node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
+  }
+
+  /**
    * Writes fields even if they have a default value.
    * @param node  the xml element node the fields are written to.
    * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
@@ -124,12 +136,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   protected void defaultWriteSettings(@NotNull Element node, final @NonNls String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.write(this, node, field -> {
       final String name = field.getName();
-      for (String property : excludedProperties) {
-        if (name.equals(property)) {
-          return false;
-        }
-      }
-      return true;
+      return !ArrayUtil.contains(name, excludedProperties);
     });
   }
 
@@ -156,7 +163,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * which will be the same for all elements in the specified file.
    * When this method returns false, {@link #buildVisitor()} will not be called.
    */
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return true;
   }
 

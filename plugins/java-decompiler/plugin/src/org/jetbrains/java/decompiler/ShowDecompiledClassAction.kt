@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
@@ -14,6 +16,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 
 class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.show.decompiled.name")) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val psiElement = getPsiElement(e)
     val visible = psiElement?.containingFile is PsiClassOwner
@@ -40,6 +45,6 @@ class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.
   private fun getOriginalFile(psiElement: PsiElement?): VirtualFile? {
     val psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass::class.java, false)
     val file = psiClass?.originalElement?.containingFile?.virtualFile
-    return if (file != null && file.fileType == JavaClassFileType.INSTANCE) file else null
+    return if (file != null && FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) file else null
   }
 }

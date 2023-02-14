@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,19 +38,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher.doPerformActionImpl;
 import static java.awt.event.MouseEvent.*;
 
 /**
  * Current implementation of the dispatcher is intended to filter mouse event addressed to
  * the editor. Also it allows to map middle mouse's button to some action.
- *
- * @author Vladimir Kondratyev
  * @author Konstantin Bulenkov
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final List<AnAction> myActions = new ArrayList<>(1);
   private final Map<Container, BlockState> myRootPaneToBlockedId = new HashMap<>();
   private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
@@ -58,15 +55,7 @@ public final class IdeMouseEventDispatcher {
   @JdkConstants.InputEventMask
   private int myModifiersEx;
 
-  private static boolean myForceTouchIsAllowed = true;
-
-  public static void forbidForceTouch () {
-    myForceTouchIsAllowed = false;
-  }
-
-  public static boolean isForceTouchAllowed () {
-    return myForceTouchIsAllowed;
-  }
+  private boolean myForceTouchIsAllowed = true;
 
   // Don't compare MouseEvent ids. Swing has wrong sequence of events: first is mouse_clicked(500)
   // then mouse_pressed(501), mouse_released(502) etc. Here, mouse events sorted so we can compare
@@ -85,24 +74,26 @@ public final class IdeMouseEventDispatcher {
   public IdeMouseEventDispatcher() {
   }
 
-  private void fillActionsList(Component component, MouseShortcut mouseShortcut, boolean isModalContext) {
-    myActions.clear();
-
+  private static void fillActionsList(@NotNull List<? super AnAction> actions,
+                                      @NotNull Component component,
+                                      @NotNull MouseShortcut mouseShortcut,
+                                      boolean recursive) {
     // here we try to find "local" shortcuts
-    for (; component != null; component = component.getParent()) {
-      if (component instanceof JComponent) {
-        for (AnAction action : ActionUtil.getActions((JComponent)component)) {
+    for (Component c = component; c != null; c = c.getParent()) {
+      if (c instanceof JComponent) {
+        for (AnAction action : ActionUtil.getActions((JComponent)c)) {
           for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
-            if (mouseShortcut.equals(shortcut) && !myActions.contains(action)) {
-              myActions.add(action);
+            if (mouseShortcut.equals(shortcut) && !actions.contains(action)) {
+              actions.add(action);
             }
           }
         }
         // once we've found a proper local shortcut(s), we exit
-        if (!myActions.isEmpty()) {
+        if (!actions.isEmpty()) {
           return;
         }
       }
+      if (!recursive) break;
     }
 
     ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
@@ -116,6 +107,7 @@ public final class IdeMouseEventDispatcher {
       return;
     }
 
+    boolean isModalContext = IdeKeyEventDispatcher.isModalContext(component);
     Keymap keymap = keymapManager.getActiveKeymap();
     for (String actionId : keymap.getActionIds(mouseShortcut)) {
       AnAction action = actionManager.getAction(actionId);
@@ -123,8 +115,8 @@ public final class IdeMouseEventDispatcher {
         continue;
       }
 
-      if (!myActions.contains(action)) {
-        myActions.add(action);
+      if (!actions.contains(action)) {
+        actions.add(action);
       }
     }
   }
@@ -258,36 +250,38 @@ public final class IdeMouseEventDispatcher {
     }
 
     MouseShortcut shortcut = new MouseShortcut(button, modifiersEx, clickCount);
-    fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
-    ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
-    if (actionManager != null && !myActions.isEmpty()) {
-      DataContext context = DataManager.getInstance().getDataContext(c);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
-        e, ActionPlaces.MOUSE_SHORTCUT, context, new ArrayList<>(myActions),
-        newActionProcessor(modifiers), myPresentationFactory, actionManager);
-    }
+    processEvent(e, modifiers, ActionPlaces.MOUSE_SHORTCUT, shortcut, c, true);
     return e.getButton() > 3;
+  }
+
+  @ApiStatus.Internal
+  public void processEvent(@NotNull InputEvent event, int modifiers, @NotNull String place,
+                           @NotNull MouseShortcut shortcut, @NotNull Component component, boolean recursive) {
+    if (ActionPlaces.FORCE_TOUCH.equals(place)) {
+      if (!myForceTouchIsAllowed) return;
+      myForceTouchIsAllowed = false;
+    }
+    ArrayList<AnAction> actions = new ArrayList<>(1);
+    fillActionsList(actions, component, shortcut, recursive);
+    ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager != null && !actions.isEmpty()) {
+      DataContext context = DataManager.getInstance().getDataContext(component);
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
+        event, place, context, actions,
+        newActionProcessor(modifiers), myPresentationFactory, shortcut);
+    }
   }
 
   private static ActionProcessor newActionProcessor(int modifiers) {
     return new ActionProcessor() {
       @NotNull
       @Override
-      public AnActionEvent createEvent(InputEvent inputEvent,
+      public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
                                        @NotNull DataContext context,
                                        @NotNull String place,
                                        @NotNull Presentation presentation,
                                        @NotNull ActionManager manager) {
-        return new AnActionEvent(inputEvent, context, ActionPlaces.MOUSE_SHORTCUT, presentation, manager, modifiers);
-      }
-
-      @Override
-      public void onUpdatePassed(InputEvent inputEvent, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-      }
-
-      @Override
-      public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
-        doPerformActionImpl(e, action, actionEvent);
+        return new AnActionEvent(inputEvent, context, place, presentation, manager, modifiers);
       }
     };
   }
@@ -325,8 +319,7 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static boolean doVerticalDiagramScrolling(@Nullable Component component, @NotNull MouseEvent event) {
-    if (component != null && event instanceof MouseWheelEvent && isDiagramViewComponent(component.getParent())) {
-      MouseWheelEvent mwe = (MouseWheelEvent)event;
+    if (component != null && event instanceof MouseWheelEvent mwe && isDiagramViewComponent(component.getParent())) {
       if (!mwe.isShiftDown() && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && JBScrollPane.isScrollEvent(mwe)) {
         JScrollBar scrollBar = findVerticalScrollBar(component);
         if (scrollBar != null) {
@@ -350,8 +343,7 @@ public final class IdeMouseEventDispatcher {
     if (isDiagramViewComponent(component)) {
       JComponent view = (JComponent)component;
       for (int i = 0; i < view.getComponentCount(); i++) {
-        if (view.getComponent(i) instanceof JScrollBar) {
-          JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+        if (view.getComponent(i) instanceof JScrollBar scrollBar) {
           if (scrollBar.getOrientation() == Adjustable.VERTICAL) {
             return scrollBar.isVisible() ? scrollBar : null;
           }
@@ -371,9 +363,8 @@ public final class IdeMouseEventDispatcher {
 
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
-         && e instanceof MouseWheelEvent
+         && e instanceof MouseWheelEvent mwe
          && isDiagramViewComponent(c.getParent())) {
-      final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL
              && JBScrollPane.isScrollEvent(mwe)
@@ -393,8 +384,7 @@ public final class IdeMouseEventDispatcher {
     if (isDiagramViewComponent(c)) {
       final JComponent view = (JComponent)c;
       for (int i = 0; i < view.getComponentCount(); i++) {
-         if (view.getComponent(i) instanceof JScrollBar) {
-           final JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+         if (view.getComponent(i) instanceof JScrollBar scrollBar) {
            if (scrollBar.getOrientation() == Adjustable.HORIZONTAL) {
              return scrollBar.isVisible() ? scrollBar : null;
            }

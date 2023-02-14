@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -202,7 +203,7 @@ private abstract class MyDialogWrapper(project: Project?,
                                        modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
   override fun performAction(action: (() -> List<ValidationInfo>?)?) {
     val validationInfoList = action?.invoke()
-    if (validationInfoList == null || validationInfoList.isEmpty()) {
+    if (validationInfoList.isNullOrEmpty()) {
       super.doOKAction()
     }
     else {
@@ -238,31 +239,42 @@ private abstract class MyDialogWrapper(project: Project?,
 }
 
 @JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+fun <T : JComponent> installFileCompletionAndBrowseDialog(
+  project: Project?,
+  component: ComponentWithBrowseButton<T>,
+  textField: JTextField,
+  @DialogTitle browseDialogTitle: String?,
+  @Label browseDialogDescription: String? = null,
+  fileChooserDescriptor: FileChooserDescriptor,
+  textComponentAccessor: TextComponentAccessor<T>,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+) {
   if (ApplicationManager.getApplication() == null) {
     // tests
     return
   }
 
+  val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
+  if (fileChosen != null) {
+    browseFolderDescriptor.convertFileToText = fileChosen
+  }
+
   component.addActionListener(
-    object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-      override fun onFileChosen(chosenFile: VirtualFile) {
-        if (fileChosen == null) {
-          super.onFileChosen(chosenFile)
-        }
-        else {
-          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
-        }
-      }
-    })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true,
-                                                         null /* infer disposable from UI context */)
+    BrowseFolderActionListener(
+      browseDialogTitle,
+      browseDialogDescription,
+      component,
+      project,
+      browseFolderDescriptor,
+      textComponentAccessor
+    )
+  )
+  FileChooserFactory.getInstance().installFileCompletion(
+    textField,
+    fileChooserDescriptor,
+    true,
+    null /* infer disposable from UI context */
+  )
 }
 
 @JvmOverloads
@@ -284,7 +296,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     textField = component.childComponent.textEditor,
     browseDialogTitle = browseDialogTitle,
     fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
     fileChosen = fileChosen
   )
   return component
@@ -310,7 +322,17 @@ fun textFieldWithBrowseButton(project: Project?,
 
 @JvmOverloads
 fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String,
+                              @DialogTitle browseDialogTitle: String?,
+                              textField: JTextField,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  return textFieldWithBrowseButton(project, browseDialogTitle, null, textField, fileChooserDescriptor, fileChosen)
+}
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              @DialogTitle browseDialogTitle: String?,
+                              @Label browseDialogDescription: String?,
                               textField: JTextField,
                               fileChooserDescriptor: FileChooserDescriptor,
                               fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
@@ -320,6 +342,7 @@ fun textFieldWithBrowseButton(project: Project?,
     component = component,
     textField = component.textField,
     browseDialogTitle = browseDialogTitle,
+    browseDialogDescription = browseDialogDescription,
     fileChooserDescriptor = fileChooserDescriptor,
     textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
     fileChosen = fileChosen

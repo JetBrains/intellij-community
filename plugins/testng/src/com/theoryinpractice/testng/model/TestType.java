@@ -21,16 +21,14 @@ import com.theoryinpractice.testng.TestngBundle;
 
 import java.util.function.Supplier;
 
-public enum TestType
-{
-
-    PACKAGE("PACKAGE", () -> TestngBundle.message("label.all.in.package.test.type"), 0),
-    CLASS  ("CLASS", () -> TestngBundle.message("label.class.test.type"), 1),
-    METHOD ("METHOD", () -> TestngBundle.message("label.method.test.type"), 2),
-    GROUP  ("GROUP", () -> TestngBundle.message("label.group.test.type"), 3),
-    SUITE  ("SUITE", () -> TestngBundle.message("label.suite.test.type"), 4),
-    PATTERN("PATTERN", () -> TestngBundle.message("label.pattern.test.type"), 5),
-    SOURCE ("SOURCE", () -> TestngBundle.message("label.source.location.test.type"), 6);
+public enum TestType {
+    PACKAGE("PACKAGE", TestngBundle.messagePointer("label.all.in.package.test.type"), 0),
+    CLASS  ("CLASS", TestngBundle.messagePointer("label.class.test.type"), 1),
+    METHOD ("METHOD", TestngBundle.messagePointer("label.method.test.type"), 2),
+    GROUP  ("GROUP", TestngBundle.messagePointer("label.group.test.type"), 3),
+    SUITE  ("SUITE", TestngBundle.messagePointer("label.suite.test.type"), 4),
+    PATTERN("PATTERN", TestngBundle.messagePointer("label.pattern.test.type"), 5),
+    SOURCE ("SOURCE", TestngBundle.messagePointer("label.source.location.test.type"), 6);
     
     public final String type;
     private final Supplier<@NlsContexts.Label String> presentableNameSupplier;

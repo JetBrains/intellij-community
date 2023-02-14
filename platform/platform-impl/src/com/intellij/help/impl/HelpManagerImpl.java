@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl;
 
 import com.intellij.ide.BrowserUtil;
@@ -17,20 +17,26 @@ public class HelpManagerImpl extends HelpManager {
 
   @Override
   public void invokeHelp(@Nullable String id) {
+    String helpUrl = getHelpUrl(id);
+    if (helpUrl != null) {
+      BrowserUtil.browse(helpUrl);
+    }
+  }
+
+  public @Nullable String getHelpUrl(@Nullable String id) {
     id = StringUtil.notNullize(id, "top");
 
     for (WebHelpProvider provider : WEB_HELP_PROVIDER_EP_NAME.getExtensions()) {
       if (id.startsWith(provider.getHelpTopicPrefix())) {
         String url = provider.getHelpPageUrl(id);
         if (url != null) {
-          BrowserUtil.browse(url);
-          return;
+          return url;
         }
       }
     }
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
-      return;
+      return null;
     }
 
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
@@ -40,6 +46,6 @@ public class HelpManagerImpl extends HelpManager {
     if (!url.endsWith("/")) url += "/";
     url += productVersion + "/?" + URLUtil.encodeURIComponent(id);
 
-    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
   }
 }

@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class SliceTreeStructure extends AbstractTreeStructureBase {
-  private final SliceNode myRoot;
+  private final SliceRootNode myRoot;
 
-  SliceTreeStructure(@NotNull Project project, @NotNull SliceNode rootNode) {
+  SliceTreeStructure(@NotNull Project project, @NotNull SliceRootNode rootNode) {
     super(project);
     myRoot = rootNode;
   }
@@ -38,7 +38,7 @@ public class SliceTreeStructure extends AbstractTreeStructureBase {
 
   @NotNull
   @Override
-  public Object getRootElement() {
+  public SliceRootNode getRootElement() {
     return myRoot;
   }
 

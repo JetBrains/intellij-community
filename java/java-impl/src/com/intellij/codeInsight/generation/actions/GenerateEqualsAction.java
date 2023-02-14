@@ -21,9 +21,6 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsAction extends BaseGenerateAction {
   public GenerateEqualsAction() {
     super(new GenerateEqualsHandler());

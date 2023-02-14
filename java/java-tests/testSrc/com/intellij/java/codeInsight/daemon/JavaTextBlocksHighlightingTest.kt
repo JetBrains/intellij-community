@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_15
   override fun getBasePath() = "${JavaTestUtil.getRelativeJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
 
   fun testTextBlocks() = doTest()
@@ -35,7 +34,7 @@ class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testPasteMultilineText() = doTestPaste("<html>  \n  <body>\n  </body>\n</html>  ")
 
-  fun testBadEscape() = doTestPaste("\\");
+  fun testBadEscape() = doTestPaste("\\")
 
   private fun doTestPaste(textToPaste: String) {
     myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")

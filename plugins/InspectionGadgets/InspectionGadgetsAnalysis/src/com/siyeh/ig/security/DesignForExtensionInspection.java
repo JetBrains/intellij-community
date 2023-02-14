@@ -48,7 +48,7 @@ public class DesignForExtensionInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file); // IDEADEV-25538
   }
 
@@ -60,7 +60,7 @@ public class DesignForExtensionInspection extends BaseInspection {
   private static class DesignForExtensionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (method.isConstructor()) {
         return;

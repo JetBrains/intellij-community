@@ -225,8 +225,7 @@ public final class GrPullUpConflictsUtil {
         conflictsList.putValue(superClass, message);
       }
 
-      if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
+      if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
           for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
@@ -349,8 +348,7 @@ public final class GrPullUpConflictsUtil {
     }
 
     private boolean existsInSuperClass(PsiElement classMember) {
-      if (!(classMember instanceof PsiMethod)) return false;
-      final PsiMethod method = ((PsiMethod)classMember);
+      if (!(classMember instanceof PsiMethod method)) return false;
       if (myInterfaceContainmentVerifier.checkedInterfacesContain(method)) return true;
       if (mySuperClass == null) return false;
       final PsiMethod methodBySignature = mySuperClass.findMethodBySignature(method, true);

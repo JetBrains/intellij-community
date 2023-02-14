@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
+import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -19,6 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
@@ -59,9 +62,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-/**
- * @author yole
- */
+
 public class CoreApplicationEnvironment {
   private final CoreFileTypeRegistry myFileTypeRegistry;
   protected final MockApplication myApplication;
@@ -80,7 +81,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    DisabledPluginsState.setIgnoreDisabledPlugins(true);
+    PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(true);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -163,7 +164,7 @@ public class CoreApplicationEnvironment {
         if (onDoneCallback != null) {
           onDoneCallback.consume(CompletableFuture.completedFuture(null));
         }
-        return Job.NULL_JOB;
+        return Job.nullJob();
       }
     };
   }
@@ -246,45 +247,41 @@ public class CoreApplicationEnvironment {
     registerExtensionPoint(area, extensionPointName.getName(), aClass);
   }
 
-  public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
-                                                @NotNull BaseExtensionPointName extensionPointName,
-                                                @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(area, extensionPointName.getName(), aClass);
-  }
-
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
     registerExtensionPoint(area, name, aClass, false);
   }
 
-  public static <T> void registerDynamicExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(area, name, aClass, true);
-  }
-
-  @SuppressWarnings("TestOnlyProblems")
-  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass, boolean dymanic) {
+  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
+                                                 @NotNull String name,
+                                                 @NotNull Class<? extends T> aClass,
+                                                 boolean isDynamic) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      if (dymanic) {
-        area.registerDynamicExtensionPoint(name, aClass.getName(), kind);
-      }
-      else {
-        area.registerExtensionPoint(name, aClass.getName(), kind);
-      }
+      area.registerExtensionPoint(name, aClass.getName(), kind, isDynamic);
     }
   }
 
-  @SuppressWarnings("deprecation")
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+    registerExtensionPoint(Extensions.getRootArea(), extensionPointName.getName(), aClass);
   }
 
-  @SuppressWarnings("deprecation")
   public static <T> void registerApplicationDynamicExtensionPoint(@NotNull String extensionPointName, @NotNull Class<? extends T> aClass) {
-    registerDynamicExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass, true);
   }
 
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
+    if (descriptor == null) {
+      PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+      return;
+    }
+
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
+    ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
+    if (extensionPoints != null) {
+      areaImpl.registerExtensionPoints(extensionPoints, descriptor);
+    }
+    descriptor.registerExtensions(areaImpl.extensionPoints, descriptor.appContainerDescriptor, null);
   }
 
   @NotNull

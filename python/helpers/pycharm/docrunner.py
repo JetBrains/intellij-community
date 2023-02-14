@@ -84,8 +84,8 @@ class DocTestRunner(doctest.DocTestRunner):
   Special runner for doctests,
   overrides __run method to report results using TeamcityDocTestResult
   """
-  def __init__(self, verbose=None, optionflags=0):
-    doctest.DocTestRunner.__init__(self, verbose, optionflags)
+  def __init__(self, checker=None, verbose=None, optionflags=0):
+    doctest.DocTestRunner.__init__(self, checker=checker, verbose=verbose, optionflags=optionflags)
     self.stream = sys.stdout
     self.result = TeamcityDocTestResult(self.stream)
     #self.result.messages.testMatrixEntered()
@@ -204,12 +204,12 @@ runner = DocTestRunner()
 
 
 def _load_file(moduleName, fileName):
-  if sys.version_info >= (3, 3):
-      from importlib import machinery
-      return machinery.SourceFileLoader(moduleName, fileName).load_module()
-  else:
-    import imp
-    return imp.load_source(moduleName, fileName)
+    if sys.version_info >= (3, 5):
+        import importlib
+        return importlib.import_module(moduleName, fileName)
+    else:
+        import imp
+        return imp.load_source(moduleName, fileName)
 
 def loadSource(fileName):
   """

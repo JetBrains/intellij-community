@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -64,8 +64,8 @@ public final class ClasspathHelper {
   }
 
   private static void appendType(StringBuilder sb, VarType type) {
-    sb.append(type.value.replace('/', '.'));
-    for (int i = 0; i < type.arrayDim; i++) {
+    sb.append(type.getValue().replace('/', '.'));
+    for (int i = 0; i < type.getArrayDim(); i++) {
       sb.append("[]");
     }
   }

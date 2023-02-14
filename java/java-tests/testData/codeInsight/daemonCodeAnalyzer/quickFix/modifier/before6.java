@@ -1,4 +1,4 @@
-// "Make 'i' not static" "true"
+// "Make 'i' not static" "true-preview"
 import java.io.*;
 
 class a {

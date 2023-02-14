@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.tooltips;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +26,11 @@ public interface TooltipActionProvider {
   boolean SHOW_FIXES_DEFAULT_VALUE = true;
 
   @Nullable
-  TooltipAction getTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
+  TooltipAction getTooltipAction(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull PsiFile psiFile);
 
 
   @Nullable
-  static TooltipAction calcTooltipAction(@NotNull final HighlightInfo info, @NotNull Editor editor) {
-    if (!Registry.is("ide.tooltip.show.with.actions")) return null;
-
-    Project project = editor.getProject();
-    if (project == null) return null;
-
+  static TooltipAction calcTooltipAction(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Editor editor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
 

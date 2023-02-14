@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,8 +69,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
    * @return states that can be set by {@link TaskRepository#setTaskState(Task, CustomTaskState)}
    * @deprecated Use {@link TaskRepository#getAvailableTaskStates(Task)} instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public EnumSet<TaskState> getPossibleTaskStates() {
     return EnumSet.noneOf(TaskState.class);
   }

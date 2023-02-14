@@ -17,7 +17,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * configuration file.
  */
 public abstract class ModuleExtension implements Disposable {
-  /**
-   * @deprecated don't enumerate extensions in the plugin, use {@link ModuleRootModel#getModuleExtension(Class)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
-
   /**
    * <b>Note:</b> don't call this method directly from client code. Use approach below instead:
    * <pre>
@@ -68,8 +60,7 @@ public abstract class ModuleExtension implements Disposable {
   /**
    * @deprecated Please implement PersistentStateComponent instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void readExternal(@NotNull Element element) {
     throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
@@ -77,8 +68,7 @@ public abstract class ModuleExtension implements Disposable {
   /**
    * @deprecated Please implement PersistentStateComponent instead.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void writeExternal(@NotNull Element element) {
     throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }

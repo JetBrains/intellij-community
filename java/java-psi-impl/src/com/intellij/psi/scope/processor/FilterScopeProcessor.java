@@ -58,8 +58,8 @@ public class FilterScopeProcessor<T> implements PsiScopeProcessor {
     return true;
   }
 
+  @SuppressWarnings("unchecked")
   protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-    //noinspection unchecked
     myResults.add((T)element);
   }
 

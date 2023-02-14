@@ -30,9 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
   private MockAbstractVcs myVcs;
   private MockCommittedChangesProvider myProvider;

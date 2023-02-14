@@ -243,20 +243,17 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
 
   @Nullable
   private static GraphicsConfiguration getConfiguration(@Nullable Object object) {
-    if (object instanceof Project) {
-      Project project = (Project)object;
+    if (object instanceof Project project) {
       object = WindowManager.getInstance().getFrame(project);
       if (object == null) LOG.warn("cannot find a project frame for " + project);
     }
-    if (object instanceof Window) {
-      Window window = (Window)object;
+    if (object instanceof Window window) {
       GraphicsConfiguration configuration = window.getGraphicsConfiguration();
       if (configuration != null) return configuration;
       object = ScreenUtil.getScreenDevice(window.getBounds());
       if (object == null) LOG.warn("cannot find a device for " + window);
     }
-    if (object instanceof GraphicsDevice) {
-      GraphicsDevice device = (GraphicsDevice)object;
+    if (object instanceof GraphicsDevice device) {
       object = device.getDefaultConfiguration();
       if (object == null) LOG.warn("cannot find a configuration for " + device);
     }

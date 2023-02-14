@@ -153,14 +153,52 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
   }
   
   public void testYield() {
-    doTest("class Main {\n" +
-           "  void test() {\n" +
-           "    this.yield();\n" +
-           "    /*'this' is unnecessary in this context*/this/**/.yield1();\n" +
-           "  }\n" +
-           "  \n" +
-           "  void yield() {}\n" +
-           "  void yield1() {}\n" +
+    doTest("""
+             class Main {
+               void test() {
+                 this.yield();
+                 /*'this' is unnecessary in this context*/this/**/.yield1();
+               }
+              \s
+               void yield() {}
+               void yield1() {}
+             }""");
+  }
+
+  public void testNewExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = /*'this' is unnecessary in this context*/this/**/.new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewParenthesizedExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = (/*'this' is unnecessary in this context*/this/**/).new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewQualifiedExpression(){
+    doTest("class Main {" +
+           "  class Nested {}" +
+           "  void test(){" +
+           "    Nested nested = (/*'Main.this' is unnecessary in this context*/Main.this/**/).new Nested();" +
+           "  }" +
+           "}");
+  }
+
+  public void testNewExpressionIsIgnored(){
+    doTest("class Outer {" +
+           "  class Nested {" +
+           "    void test(){" +
+           "      Outer.this.new Nested();" +
+           "    }" +
+           "  }" +
            "}");
   }
 

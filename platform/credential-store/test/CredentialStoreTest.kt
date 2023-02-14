@@ -2,14 +2,23 @@
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AssumptionViolatedException
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.Timeout
 import java.io.Closeable
+import java.util.concurrent.TimeUnit
 
 internal class CredentialStoreTest {
+  @Rule
+  fun timeout() = Timeout(20, TimeUnit.SECONDS)
+  @Rule
+  fun application() = ApplicationRule()
+
   private val TEST_SERVICE_NAME = generateServiceName("Test", "test")
 
   @Test fun linux() {
@@ -124,7 +133,6 @@ internal class CredentialStoreTest {
     store.set(CredentialAttributes(serviceName, userName, isPasswordMemoryOnly = true), Credentials(userName, pass))
 
     val credentials = store.get(CredentialAttributes(serviceName, userName))
-    @Suppress("UsePropertyAccessSyntax")
     assertThat(credentials).isNotNull()
     assertThat(credentials!!.userName).isEqualTo(userName)
     assertThat(credentials.password).isNullOrEmpty()

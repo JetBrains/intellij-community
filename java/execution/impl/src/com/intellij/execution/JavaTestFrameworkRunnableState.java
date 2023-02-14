@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -23,11 +23,12 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,23 +46,21 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -91,9 +90,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
   }
+  public static ParamsGroup getOrCreateJigsawOptions(JavaParameters parameters) {
+    ParamsGroup group = getJigsawOptions(parameters);
+    if (group != null) {
+      return group;
+    }
+    
+    return parameters.getVMParametersList().addParamsGroup(JIGSAW_OPTIONS);
+  }
 
-  protected ServerSocket myServerSocket;
-  protected AsyncPromise<String> myPortPromise;
+  private @Nullable TargetBoundServerSocket myTargetBoundServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
 
@@ -101,7 +107,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
   @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
-  @Nullable private volatile TargetEnvironment.LocalPortBinding myPortBindingForSocket;
+
+  @Nullable
+  protected final ServerSocket getServerSocket() {
+    return myTargetBoundServerSocket != null ? myTargetBoundServerSocket.getServerSocket() : null;
+  }
 
   public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
     this.remoteConnectionCreator = remoteConnectionCreator;
@@ -110,7 +120,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Nullable
   @Override
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-    return remoteConnectionCreator == null ? super.createRemoteConnection(environment) : remoteConnectionCreator.createRemoteConnection(environment);
+    return remoteConnectionCreator == null
+           ? super.createRemoteConnection(environment)
+           : remoteConnectionCreator.createRemoteConnection(environment);
   }
 
   @Override
@@ -122,23 +134,25 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     super(environment);
   }
 
-  @NotNull protected abstract String getFrameworkName();
+  @NotNull
+  protected abstract String getFrameworkName();
 
-  @NotNull protected abstract String getFrameworkId();
+  @NotNull
+  protected abstract String getFrameworkId();
 
   protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
-  @NotNull protected abstract T getConfiguration();
+  @NotNull
+  protected abstract T getConfiguration();
 
-  @Nullable protected abstract TestSearchScope getScope();
-
-  @NotNull protected abstract String getForkMode();
+  @Nullable
+  protected abstract TestSearchScope getScope();
 
   @NotNull
-  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
-    appendForkInfo(executor);
-    appendRepeatMode();
+  protected abstract String getForkMode();
 
+  @NotNull
+  private OSProcessHandler createHandler(SMTestRunnerResultsForm viewer) throws ExecutionException {
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
@@ -166,26 +180,28 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return processHandler;
   }
 
+  /**
+   * Should start without explicit read lock so modal or bg progress to download additional dependencies may work normally
+   */
+  public void downloadAdditionalDependencies(JavaParameters javaParameters) throws ExecutionException { }
+
   @Override
-  public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+  public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     // Don't call getJavaParameters() because it will perform too much initialization
     WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(getJdk());
-    return config == null ? null : new WslTargetEnvironmentFactory(config);
+    return config == null ? null : new WslTargetEnvironmentRequest(config);
   }
 
-  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) {
-    if (myServerSocket != null) {
-      boolean local = remoteEnvironment instanceof LocalTargetEnvironment;
-      int port = local ? myServerSocket.getLocalPort() : remoteEnvironment.getLocalPortBindings().get(myPortBindingForSocket).getPort();
-      myPortPromise.setResult(String.valueOf(port));
-   }
+  public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
+    if (myTargetBoundServerSocket != null) {
+      myTargetBoundServerSocket.bind(remoteEnvironment);
+    }
   }
 
   /**
    * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated(forRemoval = true)
   public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
     return null;
   }
@@ -204,14 +220,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @Override
   public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
-                                              @Nullable TargetEnvironmentConfiguration configuration,
                                               @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     myTargetProgressIndicator = targetProgressIndicator;
     T myConfiguration = getConfiguration();
     if (myConfiguration.getProjectPathOnTarget() != null) {
       request.setProjectPathOnTarget(myConfiguration.getProjectPathOnTarget());
     }
-    super.prepareTargetEnvironmentRequest(request, configuration, targetProgressIndicator);
+    super.prepareTargetEnvironmentRequest(request, targetProgressIndicator);
   }
 
   /**
@@ -228,10 +243,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull
   @Override
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
-    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request, configuration);
+
+    downloadAdditionalDependencies(getJavaParameters());
+    appendForkInfo(getEnvironment().getExecutor());
+    appendRepeatMode();
+
+    TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
     if (inputFile != null) {
       commandLineBuilder.setInputFile(request.getDefaultVolume().createUpload(inputFile.getAbsolutePath()));
@@ -250,12 +269,21 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
+    testConsoleProperties.setIdBasedTestTree(isIdBasedTestTree());
 
-    final BaseTestsOutputConsoleView consoleView = UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
-    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+    final BaseTestsOutputConsoleView testConsole =
+      UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
+    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)testConsole).getResultsViewer();
+
+    final ConsoleView consoleView = JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+      getConfiguration(),
+      getRunnerSettings(),
+      testConsole,
+      executor
+    );
     Disposer.register(getConfiguration().getProject(), consoleView);
 
-    OSProcessHandler handler = createHandler(executor, viewer);
+    OSProcessHandler handler = createHandler(viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);
@@ -287,7 +315,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
     });
 
-    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
+    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(testConsole);
     LOG.assertTrue(rerunFailedTestsAction != null);
     rerunFailedTestsAction.setModelProvider(() -> viewer);
 
@@ -332,16 +360,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     finally {
       getConfiguration().setProgramParameters(parameters);
     }
-    configureClasspath(javaParameters);
-    javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
-    javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
+    ReadAction.run(() -> {
+      configureClasspath(javaParameters);
+      javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
+      javaParameters.setShortenCommandLine(getConfiguration().getShortenCommandLine(), project);
 
-    for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
-      patcher.patchJavaParameters(project, module, javaParameters);
-    }
+      for (JUnitPatcher patcher : JUNIT_PATCHER_EP.getExtensionList()) {
+        patcher.patchJavaParameters(project, module, javaParameters);
+      }
 
-    JavaRunConfigurationExtensionManager.getInstance()
-      .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
+      JavaRunConfigurationExtensionManager.getInstance()
+        .updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings(), getEnvironment().getExecutor());
+    });
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
@@ -352,6 +382,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
 
     return javaParameters;
+  }
+
+  @Override
+  protected boolean isReadActionRequired() {
+    return false;
   }
 
   protected List<String> getNamedParams(String parameters) {
@@ -384,14 +419,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
           final String actionName = executor.getActionName();
-          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured", actionName));
+          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured",
+                                                                actionName));
         }
-      } else {
+      }
+      else {
         return;
       }
-    } else if (isExecutorDisabledInForkedMode()) {
+    }
+    else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName, StringUtil.toLowerCase(actionName)));
+      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName,
+                                                            StringUtil.toLowerCase(actionName)));
     }
 
     final JavaParameters javaParameters = getJavaParameters();
@@ -454,7 +493,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
     RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
-    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration().getAlternativeJrePath() : null;
+    final String jreHome = getTargetEnvironmentRequest() == null && getConfiguration().isAlternativeJrePathEnabled()
+                           ? getConfiguration().getAlternativeJrePath()
+                           : null;
     final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
     Module module = configurationModule.getModule();
     if (configureByModule(module)) {
@@ -472,33 +513,32 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
     return DumbService.getInstance(module.getProject())
-      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
+      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module, inTests));
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {
     if (!useModulePath()) return;
-    PsiJavaModule testModule = findJavaModule(module, true);
-    if (testModule != null) {
-      //adding the test module explicitly as it is unreachable from `idea.rt`
-      ParametersList vmParametersList = javaParameters
-        .getVMParametersList()
-        .addParamsGroup(JIGSAW_OPTIONS)
-        .getParametersList();
+    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
+      PsiJavaModule testModule = findJavaModule(module, true);
+      if (testModule != null) {
+        //adding the test module explicitly as it is unreachable from `idea.rt`
+        ParametersList vmParametersList = javaParameters
+          .getVMParametersList()
+          .addParamsGroup(JIGSAW_OPTIONS)
+          .getParametersList();
 
-      vmParametersList.add("--add-modules");
-      vmParametersList.add(testModule.getName());
-      //setup module path
-      PathsList classPath = javaParameters.getClassPath();
-      PathsList modulePath = javaParameters.getModulePath();
-      modulePath.addAll(classPath.getPathList());
-      classPath.clear();
-    }
-    else {
-      PsiJavaModule prodModule = findJavaModule(module, false);
-      if (prodModule != null) {
-        splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
+        vmParametersList.add("--add-modules");
+        vmParametersList.add(testModule.getName());
+        //setup module path
+        JavaParametersUtil.putDependenciesOnModulePath(javaParameters, testModule, true);
       }
-    }
+      else {
+        PsiJavaModule prodModule = findJavaModule(module, false);
+        if (prodModule != null) {
+          splitDepsBetweenModuleAndClasspath(javaParameters, module, prodModule);
+        }
+      }
+    });
   }
 
   /**
@@ -509,10 +549,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     CompilerModuleExtension compilerExt = CompilerModuleExtension.getInstance(module);
     if (compilerExt == null) return;
 
-    PathsList modulePath = javaParameters.getModulePath();
-    PathsList classPath = javaParameters.getClassPath();
-
-    putDependenciesOnModulePath(modulePath, classPath, prodModule);
+    JavaParametersUtil.putDependenciesOnModulePath(javaParameters, prodModule, true);
 
     ParametersList vmParametersList = javaParameters.getVMParametersList()
       .addParamsGroup(JIGSAW_OPTIONS)
@@ -523,7 +560,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     VirtualFile testOutput = compilerExt.getCompilerOutputPathForTests();
     if (testOutput != null) {
       vmParametersList.add("--patch-module");
-      vmParametersList.add(prodModuleName + "=" + testOutput.getPath());
+      vmParametersList.add(new CompositeParameterTargetedValue().addLocalPart(prodModuleName + "=").addPathPart(testOutput.getPath()));
     }
 
     //ensure test dependencies missing from production module descriptor are available in tests
@@ -550,7 +587,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   /**
    * called on EDT
    */
-  protected static void collectSubPackages(List<String> options, PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
+  protected static void collectSubPackages(List<String> options, @NotNull PsiPackage aPackage, GlobalSearchScope globalSearchScope) {
     if (aPackage.getClasses(globalSearchScope).length > 0) {
       options.add(aPackage.getQualifiedName());
     }
@@ -560,52 +597,13 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  protected static void putDependenciesOnModulePath(PathsList modulePath,
-                                                    PathsList classPath,
-                                                    PsiJavaModule prodModule) {
-    Set<PsiJavaModule> allRequires = JavaModuleGraphUtil.getAllDependencies(prodModule);
-    allRequires.add(prodModule);    //put production output on the module path as well
-    JarFileSystem jarFS = JarFileSystem.getInstance();
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(prodModule.getProject());
-    allRequires.stream()
-      .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
-      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
-      .filter(Objects::nonNull)
-      .forEach(file -> putOnModulePath(modulePath, classPath, file));
-  }
-
-  private static void putOnModulePath(PathsList modulePath, PathsList classPath, VirtualFile virtualFile) {
-    String path = PathUtil.getLocalPath(virtualFile.getPath());
-    if (classPath.getPathList().contains(path)) {
-      classPath.remove(path);
-      modulePath.add(path);
-    }
-  }
-
-  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
-                                               ProjectFileIndex fileIndex,
-                                               JarFileSystem jarFileSystem) {
-    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
-
-    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
-    if (moduleDependency == null) {
-      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
-    }
-
-    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
-    return moduleExtension != null ? moduleExtension.getCompilerOutputPath() : null;
-  }
-
   protected void createServerSocket(JavaParameters javaParameters) {
     try {
-      myServerSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
-      myPortPromise = new AsyncPromise<>();
-      javaParameters.getProgramParametersList().add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(myServerSocket.getLocalPort()), myPortPromise));
-      TargetEnvironmentRequest request = getTargetEnvironmentRequest();
-      if (request != null) {
-        myPortBindingForSocket = new TargetEnvironment.LocalPortBinding(myServerSocket.getLocalPort(), null);
-        request.getLocalPortBindings().add(myPortBindingForSocket);
-      }
+      myTargetBoundServerSocket = TargetBoundServerSocket.fromRequest(getTargetEnvironmentRequest());
+      int localPort = myTargetBoundServerSocket.getLocalPort();
+      AsyncPromise<String> hostPortPromise = myTargetBoundServerSocket.getHostPortPromise();
+      javaParameters.getProgramParametersList()
+        .add(new CompositeParameterTargetedValue("-socket").addTargetPart(String.valueOf(localPort), hostPortPromise));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -719,7 +717,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) {
+  private static void writeClasspath(PrintWriter wWriter, JavaParameters parameters) { //todo TargetValue expected
     wWriter.println(parameters.getClassPath().getPathsString());
     wWriter.println(parameters.getModulePath().getPathsString());
     ParamsGroup paramsGroup = getJigsawOptions(parameters);
@@ -749,5 +747,92 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected boolean useModulePath() {
     return true;
+  }
+
+  private final static class TargetBoundServerSocket {
+    private final int myLocalPort;
+    private final @Nullable TargetEnvironment.LocalPortBinding myLocalPortBinding;
+
+    /**
+     * Guards {@link #myServerSocket}.
+     */
+    private final @NotNull Object myLock = new Object();
+    private @Nullable ServerSocket myServerSocket;
+
+    private final @NotNull AsyncPromise<String> myHostPortPromise = new AsyncPromise<>();
+
+    private TargetBoundServerSocket(int localPort) {
+      myLocalPortBinding = null;
+      myLocalPort = localPort;
+    }
+
+    private TargetBoundServerSocket(@NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
+      myLocalPortBinding = localPortBinding;
+      myLocalPort = localPortBinding.getLocal();
+    }
+
+    public int getLocalPort() {
+      return myLocalPort;
+    }
+
+    public @NotNull AsyncPromise<String> getHostPortPromise() {
+      return myHostPortPromise;
+    }
+
+    public void bind(@NotNull TargetEnvironment targetEnvironment) throws ExecutionException {
+      String hostPort;
+      try {
+        String serverHost;
+        boolean local = targetEnvironment instanceof LocalTargetEnvironment;
+        if (local) {
+          serverHost = "127.0.0.1";
+          hostPort = String.valueOf(myLocalPort);
+        }
+        else {
+          ResolvedPortBinding resolvedPortBinding = targetEnvironment.getLocalPortBindings().get(myLocalPortBinding);
+          serverHost = resolvedPortBinding.getLocalEndpoint().getHost();
+          HostPort targetHostPort = resolvedPortBinding.getTargetEndpoint();
+          hostPort = targetHostPort.getHost() + ":" + targetHostPort.getPort();
+        }
+        createServerSocketImpl(serverHost);
+      }
+      catch (IOException e) {
+        throw new ExecutionException(e);
+      }
+      myHostPortPromise.setResult(hostPort);
+    }
+
+    private @NotNull ServerSocket createServerSocketImpl(@NotNull String host) throws IOException {
+      synchronized (myLock) {
+        if (myServerSocket != null) {
+          throw new IllegalStateException("Server socket already created");
+        }
+        ServerSocket socket = new ServerSocket(myLocalPort, 0, InetAddress.getByName(host));
+        myServerSocket = socket;
+        return socket;
+      }
+    }
+
+    public @NotNull ServerSocket getServerSocket() {
+      synchronized (myLock) {
+        if (myServerSocket == null) {
+          throw new IllegalStateException("Server socket must be resolved");
+        }
+        return myServerSocket;
+      }
+    }
+
+    @NotNull
+    public static TargetBoundServerSocket fromRequest(@Nullable TargetEnvironmentRequest targetEnvironmentRequest) throws IOException {
+      int serverPort = NetUtils.findAvailableSocketPort();
+      if (targetEnvironmentRequest != null) {
+        TargetEnvironment.LocalPortBinding localPortBinding = new TargetEnvironment.LocalPortBinding(serverPort, null);
+        targetEnvironmentRequest.getLocalPortBindings().add(localPortBinding);
+        return new TargetBoundServerSocket(localPortBinding);
+      }
+      else {
+        return new TargetBoundServerSocket(serverPort);
+      }
+    }
   }
 }

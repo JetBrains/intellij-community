@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.filetype
 
 import com.intellij.icons.AllIcons
@@ -13,6 +13,6 @@ object EditorConfigFileType : LanguageFileType(EditorConfigLanguage) {
   override fun getName() = EditorConfigFileConstants.FILETYPE_NAME
   override fun getDescription() = EditorConfigBundle.get("file.type.description")
   override fun getDefaultExtension() = EditorConfigFileConstants.FILE_EXTENSION
-  override fun getIcon(): Icon? = AllIcons.Nodes.Editorconfig
+  override fun getIcon(): Icon = AllIcons.Nodes.Editorconfig
   override fun getCharset(file: VirtualFile, content: ByteArray): String = CharsetToolkit.UTF8
 }

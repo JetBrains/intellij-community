@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.HtmlChunk;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +11,7 @@ import static com.intellij.ui.SimpleColoredComponent.formatLink;
 import static com.intellij.ui.SimpleColoredComponent.formatText;
 
 /** @deprecated the class is no longer used in API; use {@link SimpleColoredRenderer} instead */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T> {
   private @Nls StringBuilder myText;
 

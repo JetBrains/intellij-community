@@ -31,9 +31,6 @@ import java.util.List;
 import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgCommitTest extends HgPlatformTest {
 
   @Override

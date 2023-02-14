@@ -8,9 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class CodeStyleSettingsServiceImpl implements CodeStyleSettingsService {
   @Override
@@ -59,20 +57,13 @@ public class CodeStyleSettingsServiceImpl implements CodeStyleSettingsService {
 
   @Override
   public @NotNull List<? extends CustomCodeStyleSettingsFactory> getCustomCodeStyleSettingsFactories() {
-    List<CustomCodeStyleSettingsFactory> result = new ArrayList<>();
-    result.addAll(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
+    List<CustomCodeStyleSettingsFactory> result = new ArrayList<>(CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList());
     result.addAll(LanguageCodeStyleSettingsProvider.getSettingsPagesProviders());
     return result;
   }
 
   @Override
   public @NotNull List<? extends LanguageCodeStyleProvider> getLanguageCodeStyleProviders() {
-    return LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList();
-  }
-
-  @Override
-  @Deprecated
-  public @NotNull Set<? extends CustomCodeStyleSettingsFactory> getSettingsPagesProviders() {
-    return Collections.emptySet();
+    return LanguageCodeStyleSettingsProvider.getAllProviders();
   }
 }

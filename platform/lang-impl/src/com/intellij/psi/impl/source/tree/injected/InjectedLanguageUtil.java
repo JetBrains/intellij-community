@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +39,9 @@ import java.util.List;
  */
 @Deprecated
 public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
+  /**
+   * {@link InjectedLanguageManager#FRANKENSTEIN_INJECTION}
+   */
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
   private static final Comparator<PsiFile> LONGEST_INJECTION_HOST_RANGE_COMPARATOR = Comparator.comparing(
@@ -146,12 +149,11 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
                                                         @Nullable Caret hostCaret,
                                                         @Nullable final PsiFile injectedFile) {
-    if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
+    if (injectedFile == null || !(hostEditor instanceof EditorImpl) || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
-    if (!(document instanceof DocumentWindowImpl)) return hostEditor;
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
+    if (!(document instanceof DocumentWindowImpl documentWindow)) return hostEditor;
     if (hostCaret != null && hostCaret.hasSelection()) {
       int selstart = hostCaret.getSelectionStart();
       if (selstart != -1) {
@@ -193,20 +195,6 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return InjectedLanguageEditorUtil.getTopLevelEditor(editor);
   }
 
-  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {
-    PsiFile injectedFile = element.getContainingFile();
-    if (injectedFile == null) return false;
-    Project project = injectedFile.getProject();
-    InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(project);
-    if (!languageManager.isInjectedFragment(injectedFile)) return false;
-    TextRange elementRange = element.getTextRange();
-    List<TextRange> edibles = languageManager.intersectWithAllEditableFragments(injectedFile, elementRange);
-    int combinedEdiblesLength = edibles.stream().mapToInt(TextRange::getLength).sum();
-
-    return combinedEdiblesLength != elementRange.getLength();
-  }
-
-
   public static int hostToInjectedUnescaped(DocumentWindow window, int hostOffset) {
     Place shreds = ((DocumentWindowImpl)window).getShreds();
     Segment hostRangeMarker = shreds.get(0).getHostRangeMarker();
@@ -231,7 +219,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
         int inHost = hostOffset - currentRange.getStartOffset();
         if (escaper != null && escaper.decode(rangeInsideHost, chars)) {
           int found = ObjectUtils.binarySearch(
-            0, inHost, index -> Comparing.compare(escaper.getOffsetInHost(index, TextRange.create(0, host.getTextLength())), inHost));
+            0, inHost, index -> Integer.compare(escaper.getOffsetInHost(index, TextRange.create(0, host.getTextLength())), inHost));
           return unescaped + (found >= 0 ? found : -found - 1);
         }
         return unescaped + inHost;
@@ -287,7 +275,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   @Nullable
   public static PsiFile getCachedInjectedFileWithLanguage(@NotNull PsiElement element, @NotNull Language language) {
     if (!element.isValid()) return null;
-    PsiFile containingFile = element.getContainingFile();
+    PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(element.getContainingFile());
     if (containingFile == null || !containingFile.isValid()) return null;
     return InjectedLanguageManager.getInstance(containingFile.getProject())
       .getCachedInjectedDocumentsInRange(containingFile, element.getTextRange())

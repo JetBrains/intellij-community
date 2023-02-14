@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.PyLoopStatement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyContinueStatementImpl extends PyElementImpl implements PyContinueStatement {
   public PyContinueStatementImpl(ASTNode astNode) {
     super(astNode);

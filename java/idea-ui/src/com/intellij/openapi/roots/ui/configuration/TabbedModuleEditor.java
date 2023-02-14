@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
-/**
- * @author ksafonov
- */
 public abstract class TabbedModuleEditor extends ModuleEditor {
 
   private static final String SELECTED_EDITOR_KEY = TabbedModuleEditor.class.getName() + ".selectedEditor";

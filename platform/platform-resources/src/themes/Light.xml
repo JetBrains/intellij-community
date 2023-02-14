@@ -16,6 +16,7 @@
     <option name="TEARLINE_COLOR" value="d4d4d4" />
     <option name="GUTTER_BACKGROUND" value="f2f2f2" />
     <option name="FOLDED_TEXT_BORDER_COLOR" value="ADD9C7" deuteranopia="b3b3b3" protanopia="b3b3b3"/>
+    <option name="GRID_STRIPE_COLOR" value="f5f8fe" />
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
@@ -259,6 +260,17 @@
     <option name="GO_TYPE_REFERENCE">
       <value>
         <option name="FOREGROUND" value="336ecc" />
+      </value>
+    </option>
+    <option name="GO_COMMENT_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="525252"/>
+      </value>
+    </option>
+    <option name="GO_SHADOWING_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="708c00" deuteranopia="0" protanopia="0"/>
+        <option name="FONT_TYPE" value="0" deuteranopia="3" protanopia="3"/>
       </value>
     </option>
     <option name="GROOVY_KEYWORD" baseAttributes="JAVA_KEYWORD" />

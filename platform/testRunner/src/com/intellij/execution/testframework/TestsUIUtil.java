@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppIcon;
@@ -28,21 +30,16 @@ import java.awt.*;
 import java.util.List;
 
 public final class TestsUIUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Test Runner");
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final @NonNls String TESTS = "tests";
-
-  static {
-    //pre-register notification group for Run ToolWindow to show it in notifications settings
-    NotificationGroup.toolWindowGroup(getTestResultsNotificationDisplayId(ToolWindowId.RUN), ToolWindowId.RUN);
-  }
 
   private TestsUIUtil() {
   }
 
   public static boolean isMultipleSelectionImpossible(DataContext dataContext) {
-    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTree) {
       final TreePath[] selectionPaths = ((JTree)component).getSelectionPaths();
       if (selectionPaths == null || selectionPaths.length == 0) {
@@ -54,6 +51,11 @@ public final class TestsUIUtil {
           return true;
         }
       }
+      return false;
+    }
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && !editor.getSelectionModel().hasSelection() && editor.getCaretModel().getCaretCount() < 2) {
+      return true;
     }
     return false;
   }
@@ -113,21 +115,14 @@ public final class TestsUIUtil {
     final String balloonText = testResultPresentation.getBalloonText();
     final MessageType type = testResultPresentation.getType();
 
-    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), windowId)) {
-      String displayId = getTestResultsNotificationDisplayId(windowId);
-      NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
-      if (group == null) {
-        group = NotificationGroup.toolWindowGroup(displayId, windowId);
-      }
-      group.createNotification(balloonText, type).notify(project);
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(windowId);
+    if (toolWindow != null && !toolWindow.isVisible()) {
+      NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Test Results");
+      group.createNotification(balloonText, type).setToolWindowId(windowId).notify(project);
     }
 
     NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
-  }
-
-  private static @NonNls String getTestResultsNotificationDisplayId(@NotNull String toolWindowId) {
-    return "Test Results: " + toolWindowId;
   }
 
   @NlsContexts.NotificationContent

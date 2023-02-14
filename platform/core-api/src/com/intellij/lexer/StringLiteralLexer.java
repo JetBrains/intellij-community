@@ -258,7 +258,7 @@ public class StringLiteralLexer extends LexerBase {
    * <p>When overriding this method, you most likely will need to also override {@link StringLiteralLexer#getTokenType}
    * to return proper type for the sequences located here.</p>
    */
-  protected int locateAdditionalEscapeSequence(@SuppressWarnings("unused") int start, @SuppressWarnings("unused") int indexOfCharAfterSlash) {
+  protected int locateAdditionalEscapeSequence(int start, int indexOfCharAfterSlash) {
     return -1;
   }
 

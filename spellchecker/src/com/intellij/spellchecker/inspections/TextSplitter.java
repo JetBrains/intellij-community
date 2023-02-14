@@ -33,8 +33,17 @@ public class TextSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("(&[^;]+;)|(([#]|0x[0-9]*)?\\p{L}+'?\\p{L}[_\\p{L}]*)");
-
+  private static final String letter = "(\\p{L}\\p{Mn}*)";
+  private static final String xmlEntity = "(&.+?;)";
+  // using possessive quantifiers ++ and *+ to avoid SOE on large inputs
+  // see https://blog.sonarsource.com/crafting-regexes-to-avoid-stack-overflows/
+  private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile(
+    xmlEntity + "|" +
+    "(#|0x\\d*)?" + // an optional prefix
+    letter + "++" + // some letters
+    "('" + letter + ")?" + // if there's an apostrophe, it should be followed by a letter
+    "(_|" + letter + ")*+" // more letters and underscores
+  );
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {

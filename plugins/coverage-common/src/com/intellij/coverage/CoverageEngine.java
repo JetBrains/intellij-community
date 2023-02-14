@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
+import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
@@ -8,14 +9,18 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -117,7 +122,6 @@ public abstract class CoverageEngine {
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
    *
-   *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
    * @param coverageDataFileProvider Coverage raw data file provider
@@ -127,7 +131,6 @@ public abstract class CoverageEngine {
    * @param coverageByTestEnabled    Collect coverage for test option
    * @param tracingEnabled           Tracing option
    * @param trackTestFolders         Track test folders option
-   * @param project
    * @return Suite
    */
   @Nullable
@@ -146,7 +149,6 @@ public abstract class CoverageEngine {
    *
    * @param covRunner                Coverage Runner
    * @param name                     Suite name
-   * @param coverageDataFileProvider
    * @param config                   Coverage engine configuration
    * @return Suite
    */
@@ -189,9 +191,6 @@ public abstract class CoverageEngine {
   /**
    * E.g. all *.class files for java source file with several classes
    *
-   *
-   * @param srcFile
-   * @param module
    * @return files
    */
   @NotNull
@@ -205,8 +204,6 @@ public abstract class CoverageEngine {
   /**
    * When output directory is empty we probably should recompile source and then choose suite again
    *
-   * @param module
-   * @param chooseSuiteAction
    * @return True if should stop and wait compilation (e.g. for Java). False if we can ignore output (e.g. for Ruby)
    */
   public abstract boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
@@ -216,9 +213,6 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g. java class qualified name by *.class file of some Java class in corresponding source file
    *
-   * @param outputFile
-   * @param sourceFile
-   * @return
    */
   @Nullable
   public String getQualifiedName(@NotNull final File outputFile,
@@ -230,8 +224,6 @@ public abstract class CoverageEngine {
    * Returns the list of qualified names of classes generated from a particular source file.
    * (The concept of "qualified name" is specific to each coverage engine but it should be
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
-   * @param sourceFile
-   * @return
    */
   @NotNull
   public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
@@ -240,11 +232,6 @@ public abstract class CoverageEngine {
    * Decide include a file or not in coverage report if coverage data isn't available for the file. E.g file wasn't touched by coverage
    * util
    *
-   * @param qualifiedName
-   * @param outputFile
-   * @param sourceFile
-   * @param suite
-   * @return
    */
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
                                                 @NotNull final File outputFile,
@@ -256,7 +243,6 @@ public abstract class CoverageEngine {
   /**
    * Collect code lines if untouched file should be included in coverage information. These lines will be marked as uncovered.
    *
-   * @param suite
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
   @Nullable
@@ -314,6 +300,16 @@ public abstract class CoverageEngine {
                                                        @NotNull final CoverageSuitesBundle currentSuite) {
     final ExportToHTMLDialog dialog = new ExportToHTMLDialog(project, true);
     dialog.setTitle(CoverageBundle.message("generate.coverage.report.for", currentSuite.getPresentableName()));
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    if (StringUtil.isEmpty(settings.OUTPUT_DIRECTORY)) {
+      final VirtualFile file = ProjectUtil.guessProjectDir(project);
+      if (file != null) {
+        final String path = file.getCanonicalPath();
+        if (path != null) {
+          settings.OUTPUT_DIRECTORY = FileUtil.toSystemDependentName(path) + File.separator + "htmlReport";
+        }
+      }
+    }
 
     return dialog;
   }
@@ -368,15 +364,15 @@ public abstract class CoverageEngine {
     return null;
   }
 
-  public boolean isInLibraryClasses(Project project, VirtualFile file) {
+  public boolean isInLibraryClasses(final Project project, final VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
   }
 
   public boolean isInLibrarySource(Project project, VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    return projectFileIndex.isInLibrarySource(file);
+    return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
   }
 }

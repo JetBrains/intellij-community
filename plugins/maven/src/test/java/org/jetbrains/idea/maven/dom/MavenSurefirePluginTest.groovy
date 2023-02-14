@@ -4,10 +4,8 @@ package org.jetbrains.idea.maven.dom
 
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
 
   @Override
@@ -19,6 +17,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     myIndicesFixture.setUp();
   }
 
+  @Test
   void testCompletion() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -48,6 +47,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "main", "test")
   }
 
+  @Test 
   void testCompletionSurefireProperties() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -73,6 +73,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
   }
 
+  @Test 
   void testCompletionSurefirePropertiesOutsideConfiguration() {
     configureProjectPom("""
   <groupId>simpleMaven</groupId>
@@ -99,6 +100,7 @@ class MavenSurefirePluginTest extends MavenDomWithIndicesTestCase {
     assertCompletionVariants(myProjectPom)
   }
 
+  @Test 
   void testSurefirePropertiesHighlighting() {
     importProject("""
   <groupId>simpleMaven</groupId>

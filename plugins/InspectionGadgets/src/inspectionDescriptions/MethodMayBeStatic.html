@@ -1,20 +1,30 @@
 <html>
 <body>
-Reports any methods which may safely be made <b>static</b>.
-A method may be <b>static</b> if it is not <b>synchronized</b>, it does not reference any of its class' non static methods
-and non static fields and is not overridden in a sub class.
+Reports methods that can safely be made <code>static</code>.
+Making methods static when possible can reduce memory consumption and improve your code quality.
+<p>A method can be <code>static</code> if:</p>
+<ul>
+  <li>
+    it is not <code>synchronized</code>, <code>native</code> or <code>abstract</code>,
+  </li>
+  <li>
+    does not reference any of non-static methods and non-static fields from the containing class,
+  </li>
+  <li>
+    is not an override and is not overridden in a subclass.
+  </li>
+</ul>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to inspect only <b>private</b>
-or <b>final</b> methods, which increases the
-performance of this inspection.
-<p>
-Use the second checkbox to ignore empty methods.
-<p>
-Use the third checkbox to ignore default methods in interface when using Java 8 or higher
-<p>
-Use the fourth checkbox to let the quick fix replace instance qualifiers with class references
-in calls to methods which are made <b>static</b>.
-<p>
+<p>Use the following options to configure the inspection:</p>
+<ul>
+  <li>Whether to report only <code>private</code> and <code>final</code> methods, which increases the performance of this inspection.</li>
+  <li>Whether to ignore empty methods.</li>
+  <li>Whether to ignore default methods in interface when using Java 8 or higher.</li>
+  <li>
+    Whether to let the quick-fix replace instance qualifiers with class references
+    in calls to methods which are made <code>static</code>,
+    that is, call <code>myClass.m()</code> would be replaced with <code>MyClass.m()</code>.
+  </li>
+</ul>
 </body>
 </html>

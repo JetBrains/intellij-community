@@ -25,8 +25,6 @@ import java.lang.annotation.RetentionPolicy;
  * To be used together with {@link ExtendClass}.
  *
  * If specified, a 'create from usage' quick fix will create class based on the {@link #value()} template.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClassTemplate {

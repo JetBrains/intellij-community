@@ -21,14 +21,13 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
@@ -41,7 +40,7 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory {
   private static final Logger LOG = Logger.getInstance(FormatterImpl.class);
 
-  private final AtomicReference<FormattingProgressTask> myProgressTask = new AtomicReference<>();
+  private final AtomicReference<FormattingProgressCallback> myProgressTask = new AtomicReference<>();
 
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
@@ -80,7 +79,7 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public void setProgressTask(@NotNull FormattingProgressTask progressIndicator) {
+  public void setProgressTask(@NotNull FormattingProgressCallback progressIndicator) {
     if (!FormatterUtil.isFormatterCalledExplicitly()) {
       return;
     }
@@ -262,7 +261,7 @@ public class FormatterImpl extends FormatterEx
 
   private void execute(@NotNull SequentialTask task) {
     Application application = ApplicationManager.getApplication();
-    FormattingProgressTask progressTask = myProgressTask.getAndSet(null);
+    FormattingProgressCallback progressTask = myProgressTask.getAndSet(null);
     if (progressTask == null || !application.isDispatchThread() || application.isUnitTestMode()) {
       task.prepare();
       while (!task.isDone()) {
@@ -271,7 +270,9 @@ public class FormatterImpl extends FormatterEx
     }
     else {
       progressTask.setTask(task);
-      ProgressManager.getInstance().run(progressTask);
+      if (progressTask  instanceof SequentialModalProgressTask) {
+        ProgressManager.getInstance().run((SequentialModalProgressTask)progressTask);
+      }
     }
   }
 
@@ -460,6 +461,37 @@ public class FormatterImpl extends FormatterEx
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return null; // handing empty document case
     final FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, affectedRange, offset);
+    return generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+  }
+
+  @Override
+  @Nullable
+  public List<String> getLineIndents(final FormattingModel model,
+                                     final CodeStyleSettings settings,
+                                     final CommonCodeStyleSettings.IndentOptions indentOptions) {
+    final FormattingDocumentModel documentModel = model.getDocumentModel();
+    final Block block = model.getRootBlock();
+    if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
+
+    Document document = model.getDocumentModel().getDocument();
+    FormatProcessor processor = buildProcessorAndWrapBlocks(model, settings, indentOptions, block.getTextRange(), 0);
+
+    int lines = document.getLineCount();
+    List<String> indents = new ArrayList<>(lines);
+    for (int i = 0; i < lines; i++) {
+      int offset = document.getLineStartOffset(i);
+      String indent = generateIndentWhitespace(processor, indentOptions, documentModel, offset);
+      indents.add(indent != null ? indent : "");
+    }
+
+    return indents;
+  }
+
+  @Nullable
+  private String generateIndentWhitespace(FormatProcessor processor,
+                                          CommonCodeStyleSettings.IndentOptions indentOptions,
+                                          FormattingDocumentModel documentModel,
+                                          int offset) {
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
@@ -554,6 +586,11 @@ public class FormatterImpl extends FormatterEx
   @Override
   public Indent getSmartIndent(@NotNull Indent.Type type) {
     return new ExpandableIndent(type);
+  }
+
+  @Override
+  public Indent getSmartIndent(@NotNull Indent.Type type, boolean relativeToDirectParent) {
+    return new ExpandableIndent(type, relativeToDirectParent);
   }
 
   @Override
@@ -704,5 +741,17 @@ public class FormatterImpl extends FormatterEx
   @NotNull
   public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
     return new DummyFormattingModel(element);
+  }
+
+  @Override
+  public boolean isEligibleForVirtualFormatting(@NotNull PsiElement context) {
+    return VirtualFormattingImplKt.isEligibleForVirtualFormatting(context);
+  }
+
+  @Override
+  @Nullable
+  public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
+                                                         @Nullable FormattingModelBuilder originalModel) {
+    return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

@@ -51,7 +51,7 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       checkSwitchBlock(expression);
     }
 
@@ -65,12 +65,10 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
       final PsiStatement[] statements = body.getStatements();
       final LocalVariableAccessVisitor visitor = new LocalVariableAccessVisitor(variablesInPreviousBranches);
       for (final PsiStatement child : statements) {
-        if (child instanceof PsiDeclarationStatement) {
-          final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+        if (child instanceof PsiDeclarationStatement declarationStatement) {
           final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
           for (final PsiElement declaredElement : declaredElements) {
-            if (declaredElement instanceof PsiLocalVariable) {
-              final PsiLocalVariable localVariable = (PsiLocalVariable)declaredElement;
+            if (declaredElement instanceof PsiLocalVariable localVariable) {
               variablesInCurrentBranch.add(localVariable);
             }
           }
@@ -99,10 +97,9 @@ public class SwitchStatementWithConfusingDeclarationInspection extends BaseInspe
           return;
         }
         final PsiElement element = referenceExpression.resolve();
-        if (!(element instanceof PsiLocalVariable)) {
+        if (!(element instanceof PsiLocalVariable accessedVariable)) {
           return;
         }
-        final PsiLocalVariable accessedVariable = (PsiLocalVariable)element;
         if (myVariablesInPreviousBranches.contains(accessedVariable)) {
           myVariablesInPreviousBranches.remove(accessedVariable);
           registerVariableError(accessedVariable);

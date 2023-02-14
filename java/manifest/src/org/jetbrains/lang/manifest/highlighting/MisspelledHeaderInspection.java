@@ -24,19 +24,15 @@
  */
 package org.jetbrains.lang.manifest.highlighting;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.engine.Suggestion;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.EditDistance;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -45,11 +41,9 @@ import org.jetbrains.lang.manifest.ManifestBundle;
 import org.jetbrains.lang.manifest.header.HeaderParserRepository;
 import org.jetbrains.lang.manifest.psi.Header;
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -60,7 +54,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int TYPO_DISTANCE = 2;
 
   @XCollection(elementName = "header")
-  public final Set<String> CUSTOM_HEADERS = CollectionFactory.createCaseInsensitiveStringSet();
+  public final List<String> CUSTOM_HEADERS = new ArrayList<>();
 
   private final HeaderParserRepository myRepository;
 
@@ -74,8 +68,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof Header) {
-          Header header = (Header)element;
+        if (element instanceof Header header) {
           String headerName = header.getName();
 
           SortedSet<Suggestion> matches = new TreeSet<>();
@@ -102,9 +95,9 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
         }
       }
 
-      private void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
+      private static void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
         for (String candidate : headers) {
-          int distance = EditDistance.optimalAlignment(headerName, candidate, false);
+          int distance = EditDistance.optimalAlignment(headerName, candidate, false, MAX_DISTANCE);
           if (distance <= MAX_DISTANCE) {
             matches.add(new Suggestion(candidate, distance));
           }
@@ -114,35 +107,8 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new OptionsPanel(CUSTOM_HEADERS);
-  }
-
-  private static class OptionsPanel extends JPanel {
-    OptionsPanel(final Set<? super String> headers) {
-      super(new BorderLayout(5, 5));
-
-      add(new JLabel(ManifestBundle.message("inspection.header.ui.label")), BorderLayout.NORTH);
-
-      final JTextArea area = new JTextArea("");
-      add(area, BorderLayout.CENTER);
-      if (!headers.isEmpty()) {
-        area.setText(StringUtil.join(new TreeSet<>(headers), "\n"));
-      }
-
-      area.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          headers.clear();
-          for (String line : StringUtil.split(area.getText(), "\n")) {
-            String header = line.trim();
-            if (!header.isEmpty()) {
-              headers.add(header);
-            }
-          }
-        }
-      });
-    }
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
   }
 
   private static final class HeaderRenameQuickFix extends AbstractManifestQuickFix {
@@ -167,9 +133,9 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
   private static final class CustomHeaderQuickFix extends AbstractManifestQuickFix {
     private final String myHeaderName;
-    private final Collection<? super String> myHeaders;
+    private final Collection<String> myHeaders;
 
-    private CustomHeaderQuickFix(Header header, Collection<? super String> headers) {
+    private CustomHeaderQuickFix(Header header, Collection<String> headers) {
       super(header);
       myHeaderName = header.getName();
       myHeaders = headers;
@@ -186,6 +152,13 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
       myHeaders.add(myHeaderName);
 
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      List<String> updated = new ArrayList<>(myHeaders);
+      updated.add(myHeaderName);
+      return IntentionPreviewInfo.addListOption(updated, myHeaderName, ManifestBundle.message("inspection.header.ui.label"));
     }
 
     @Override

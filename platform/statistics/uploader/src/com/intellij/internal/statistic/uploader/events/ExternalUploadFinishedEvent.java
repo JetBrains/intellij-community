@@ -8,8 +8,8 @@ import java.util.Objects;
 public class ExternalUploadFinishedEvent extends ExternalSystemEvent {
   private final String myError;
 
-  public ExternalUploadFinishedEvent(long timestamp, @Nullable String error) {
-    super(ExternalSystemEventType.FINISHED, timestamp);
+  public ExternalUploadFinishedEvent(long timestamp, @Nullable String error, @Nullable String recorderId) {
+    super(ExternalSystemEventType.FINISHED, timestamp, recorderId);
     myError = error;
   }
 

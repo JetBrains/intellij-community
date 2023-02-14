@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.psi.PsiReference
@@ -19,8 +19,8 @@ class TopInferenceContext : InferenceContext {
     return CachedValuesManager.getProjectPsiDependentCache(element, computation)
   }
 
-  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, R>, incomplete: Boolean): R? {
-    return ResolveCache.getInstance(ref.element.project).resolveWithCaching<T, R>(ref, resolver, true, incomplete)
+  override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, Array<R>>, incomplete: Boolean): Array<R>? {
+    return ResolveCache.getInstance(ref.element.project).resolveWithCaching(ref, resolver, true, incomplete)
   }
 
   override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType>): PsiType? {

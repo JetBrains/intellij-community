@@ -101,11 +101,11 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
 
     @Override
     public Class<?> getColumnClass(final int columnIndex) {
-      switch (columnIndex) {
-        case SCOPE_COLUMN: return String.class;
-        case SEVERITY_COLUMN: return HighlightDisplayLevel.class;
-        default: throw new IllegalArgumentException();
-      }
+      return switch (columnIndex) {
+        case SCOPE_COLUMN -> String.class;
+        case SEVERITY_COLUMN -> HighlightDisplayLevel.class;
+        default -> throw new IllegalArgumentException();
+      };
     }
 
     @Override
@@ -121,12 +121,11 @@ public class ScopesAndSeveritiesHintTable extends JBTable {
     @Override
     public Object getValueAt(final int rowIndex, final int columnIndex) {
       final String scopeName = myScopes.get(rowIndex);
-      switch (columnIndex) {
-        case SCOPE_COLUMN:
-          return myDefaultScopeName.equals(scopeName) ? "Everywhere else" : scopeName;
-        case SEVERITY_COLUMN: return myScopeToAverageSeverityMap.get(scopeName);
-        default: throw new IllegalArgumentException();
-      }
+      return switch (columnIndex) {
+        case SCOPE_COLUMN -> myDefaultScopeName.equals(scopeName) ? "Everywhere else" : scopeName;
+        case SEVERITY_COLUMN -> myScopeToAverageSeverityMap.get(scopeName);
+        default -> throw new IllegalArgumentException();
+      };
 
     }
   }

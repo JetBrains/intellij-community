@@ -111,7 +111,7 @@ class SourceResolver(private val rawSources: List<String>,
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
   var path = url
   if (!FileUtil.isAbsolute(url) && url.isNotEmpty() && url[0] != '/') {
-    val basePath = baseUrl.path
+    val basePath = ScriptDebuggerUrls.toFilePath(baseUrl) ?: baseUrl.path
     if (baseUrlIsFile) {
       val lastSlashIndex = basePath.lastIndexOf('/')
       val pathBuilder = StringBuilder()
@@ -134,7 +134,7 @@ fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String 
 // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
 fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrlIsFile: Boolean = true): Url {
   if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-    return ScriptDebuggerUrls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
+    return ScriptDebuggerUrls.toLocalFileUrl(url)
   }
   else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") ||
            url.startsWith("javascript:") || url.startsWith("webpack:")) {

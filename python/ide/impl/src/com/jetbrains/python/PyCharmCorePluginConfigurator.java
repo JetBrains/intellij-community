@@ -10,8 +10,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.console.PyConsoleOptions;
 
 /**
  * Initialize PyCharm.
@@ -56,6 +59,11 @@ final class PyCharmCorePluginConfigurator implements ApplicationInitializedListe
 
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V7")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
+    }
+
+    if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V8")) {
+      propertiesComponent.setValue("PyCharm.InitialConfiguration.V8", true);
+      PyConsoleOptions.getInstance(ProjectManager.getInstance().getDefaultProject()).setCommandQueueEnabled(PlatformUtils.isDataSpell());
     }
 
     ActionManager.getInstance().unregisterAction("RunAnything");

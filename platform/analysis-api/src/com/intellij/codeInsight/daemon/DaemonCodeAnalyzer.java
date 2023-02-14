@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.lang.annotation.Annotation;
@@ -21,7 +20,7 @@ import java.util.Collection;
  */
 public abstract class DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzer getInstance(Project project) {
-    return project.getComponent(DaemonCodeAnalyzer.class);
+    return project.getService(DaemonCodeAnalyzer.class);
   }
 
   public abstract void settingsChanged();
@@ -50,7 +49,7 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 
-  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>("DAEMON_EVENT_TOPIC", DaemonListener.class, Topic.BroadcastDirection.NONE);
+  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>(DaemonListener.class, Topic.BroadcastDirection.NONE, true);
 
   public interface DaemonListener {
     /**
@@ -107,13 +106,5 @@ public abstract class DaemonCodeAnalyzer {
                                                     @NotNull Collection<? extends AnnotatorStatistics> statistics,
                                                     @NotNull PsiFile file) {
     }
-  }
-
-  /**
-   * @deprecated Use {@link DaemonListener} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract static class DaemonListenerAdapter implements DaemonListener {
   }
 }

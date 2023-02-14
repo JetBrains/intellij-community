@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -94,23 +95,24 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       return;
     }
 
-    myProvider.filterElements(pattern, element -> {
-      if (progressIndicator.isCanceled()) return false;
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      myProvider.filterElements(pattern, element -> {
+        if (progressIndicator.isCanceled()) return false;
 
-      if (!myDisabledActions &&
-          element.value instanceof GotoActionModel.ActionWrapper &&
-          !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
-        return true;
-      }
+        if (element == null) {
+          LOG.error("Null action has been returned from model");
+          return true;
+        }
 
-      if (element == null) {
-        LOG.error("Null action has been returned from model");
-        return true;
-      }
+        final boolean isActionWrapper = element.value instanceof GotoActionModel.ActionWrapper;
+        if (!myDisabledActions && isActionWrapper && !((GotoActionModel.ActionWrapper)element.value).isAvailable()) {
+          return true;
+        }
 
-      FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
-      return consumer.process(descriptor);
-    });
+        final var descriptor = new FoundItemDescriptor<GotoActionModel.MatchedValue>(element, element.getMatchingDegree());
+        return consumer.process(descriptor);
+      });
+    }, progressIndicator);
   }
 
   @NotNull
@@ -149,23 +151,21 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   @Override
   public Object getDataForItem(@NotNull GotoActionModel.MatchedValue element, @NotNull String dataId) {
-    if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
-      return getAction(element);
-    }
+    return SetShortcutAction.SELECTED_ACTION.is(dataId) ? getAction(element) : null;
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
-      AnAction action = getAction(element);
-      if (action != null) {
-        String description = action.getTemplatePresentation().getDescription();
-        if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
-          String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
-          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
-        }
-        return description;
-      }
+  @Override
+  public @Nullable String getItemDescription(@NotNull GotoActionModel.MatchedValue element) {
+    AnAction action = getAction(element);
+    if (action == null) {
+      return null;
     }
-
-    return null;
+    String description = action.getTemplatePresentation().getDescription();
+    if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
+      String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
+      return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
+    }
+    return description;
   }
 
   @Override
@@ -177,8 +177,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
     Object selected = item.value;
 
-    if (selected instanceof BooleanOptionDescription) {
-      final BooleanOptionDescription option = (BooleanOptionDescription)selected;
+    if (selected instanceof BooleanOptionDescription option) {
       if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
         myModel.clearCaches(); // release references to plugin actions so that the plugin can be unloaded successfully
         myProvider.clearIntentions();
@@ -229,13 +228,8 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     public SearchEverywhereContributor<GotoActionModel.MatchedValue> createContributor(@NotNull AnActionEvent initEvent) {
       return new ActionSearchEverywhereContributor(
         initEvent.getProject(),
-        initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+        initEvent.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
         initEvent.getData(CommonDataKeys.EDITOR));
-    }
-
-    @Override
-    public @NotNull SearchEverywhereTabDescriptor getTab() {
-      return SearchEverywhereTabDescriptor.IDE;
     }
   }
 }

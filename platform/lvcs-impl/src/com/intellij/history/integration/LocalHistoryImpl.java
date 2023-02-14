@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.*;
@@ -12,13 +12,15 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +34,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
 
 public final class LocalHistoryImpl extends LocalHistory implements Disposable {
+  private static final String DAYS_TO_KEEP = "localHistory.daysToKeep";
+
+  private int myDaysToKeep = AdvancedSettings.getInt(DAYS_TO_KEEP);
+  private boolean myDisabled;
   private ChangeList myChangeList;
   private LocalHistoryFacade myVcs;
   private IdeaGateway myGateway;
@@ -55,13 +61,28 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
       return;
     }
 
-    // initialize persistent f
+    // too early for Registry
+    if (SystemProperties.getBooleanProperty("lvcs.disable.local.history", false)) {
+      LocalHistoryLog.LOG.warn("Local history is disabled");
+      myDisabled = true;
+      return;
+    }
+
+    // initialize persistent fs
     @SuppressWarnings("unused")
     PersistentFS instance = PersistentFS.getInstance();
 
     ShutDownTracker.getInstance().registerShutdownTask(() -> doDispose());
 
     initHistory();
+    app.getMessageBus().simpleConnect().subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
+      @Override
+      public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
+        if (id.equals(DAYS_TO_KEEP)) {
+          myDaysToKeep = (int) newValue;
+        }
+      }
+    });
     isInitialized.set(true);
   }
 
@@ -100,7 +121,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   private void doDispose() {
     if (!isInitialized.getAndSet(false)) return;
 
-    long period = Registry.intValue("localHistory.daysToKeep") * 1000L * 60L * 60L * 24L;
+    long period = myDaysToKeep * 1000L * 60L * 60L * 24L;
     LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     myChangeList.close();
@@ -163,8 +184,10 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   @Override
   public byte @Nullable [] getByteContent(@NotNull VirtualFile f, @NotNull FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
-    if (!myGateway.areContentChangesVersioned(f)) return null;
-    return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());
+    return ReadAction.compute(() -> {
+      if (!myGateway.areContentChangesVersioned(f)) return null;
+      return new ByteContentRetriever(myGateway, myVcs, f, c).getResult();
+    });
   }
 
   @Override
@@ -174,6 +197,10 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
 
   private boolean isInitialized() {
     return isInitialized.get();
+  }
+
+  public boolean isDisabled() {
+    return myDisabled;
   }
 
   @Nullable
@@ -186,7 +213,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     return myGateway;
   }
 
-  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) throws LocalHistoryException{
+  private void revertToLabel(@NotNull Project project, @NotNull VirtualFile f, @NotNull LabelImpl impl) throws LocalHistoryException {
     HistoryDialogModel dirHistoryModel = f.isDirectory()
                                          ? new DirectoryHistoryDialogModel(project, myGateway, myVcs, f)
                                          : new EntireFileHistoryDialogModel(project, myGateway, myVcs, f);

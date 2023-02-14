@@ -18,11 +18,12 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,13 +95,17 @@ public abstract class ActionButtonLook {
   }
 
   public void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet()) return;
+    Color color = getStateBackground(component, state);
+    if (color == null) return;
     Rectangle rect = new Rectangle(component.getSize());
     JBInsets.removeFrom(rect, component.getInsets());
-    Color color = state == ActionButtonComponent.NORMAL ? component.getBackground() :
+    paintLookBackground(g, rect, color);
+  }
+
+  protected @Nullable Color getStateBackground(JComponent component, int state) {
+    return state == ActionButtonComponent.NORMAL ? (component.isBackgroundSet() ? component.getBackground() : null) :
                   state == ActionButtonComponent.PUSHED ? JBUI.CurrentTheme.ActionButton.pressedBackground() :
                   JBUI.CurrentTheme.ActionButton.hoverBackground();
-    paintLookBackground(g, rect, color);
   }
 
   public void paintBackground(Graphics g, JComponent component, Color color) {
@@ -136,14 +141,13 @@ public abstract class ActionButtonLook {
     return button.getPopState();
   }
 
-  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
-    Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
-    Insets i = actionButton.getInsets();
-    JBInsets.removeFrom(rect, i);
+  public @NotNull Icon getDisabledIcon(@NotNull Icon icon) {
+    return IconLoader.getDisabledIcon(icon);
+  }
 
-    int x = i.left + (rect.width - icon.getIconWidth()) / 2;
-    int y = i.top + (rect.height - icon.getIconHeight()) / 2;
-    paintIcon(g, actionButton, icon, x, y);
+  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
+    Point iconPos = getIconPosition(actionButton, icon);
+    paintIcon(g, actionButton, icon, iconPos.x, iconPos.y);
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon, int x, int y) {
@@ -151,11 +155,47 @@ public abstract class ActionButtonLook {
   }
 
   /**
-   * @deprecated Use {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon, int, int)}
+   * @param originalIcon the same icon that was passed to {@link ActionButtonLook#paintIcon(Graphics, ActionButtonComponent, Icon)}.
+   *                     It is used to calculate position for arrow icon.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
-    icon.paintIcon(null, g, x, y);
+  public void paintDownArrow(Graphics g, ActionButtonComponent actionButton, Icon originalIcon, Icon arrowIcon) {
+    Point iconPos = getIconPosition(actionButton, originalIcon);
+    int arrowIconX = iconPos.x + 1 + (originalIcon.getIconWidth() - arrowIcon.getIconWidth());
+    int arrowIconY = iconPos.y + 1 + (originalIcon.getIconHeight() - arrowIcon.getIconHeight());
+    arrowIcon.paintIcon(actionButton instanceof Component ? (Component)actionButton : null, g, arrowIconX, arrowIconY);
+  }
+
+  @ActionButtonComponent.ButtonState
+  public static int getButtonState(
+    boolean isEnabled,
+    boolean isHovered,
+    boolean isFocused,
+    boolean isPressedByMouse,
+    boolean isPressedByKeyboard
+  ) {
+    if (!isEnabled) return ActionButtonComponent.NORMAL;
+
+    if (isPressedByMouse || isPressedByKeyboard) {
+      return ActionButtonComponent.PUSHED;
+    }
+    else if (isHovered) {
+      return ActionButtonComponent.POPPED;
+    }
+    else if (isFocused) {
+      return ActionButtonComponent.SELECTED;
+    }
+    else {
+      return ActionButtonComponent.NORMAL;
+    }
+  }
+
+  private static Point getIconPosition(ActionButtonComponent actionButton, Icon icon) {
+    Rectangle rect = new Rectangle(actionButton.getWidth(), actionButton.getHeight());
+    Insets i = actionButton.getInsets();
+    JBInsets.removeFrom(rect, i);
+
+    int x = i.left + (rect.width - icon.getIconWidth()) / 2;
+    int y = i.top + (rect.height - icon.getIconHeight()) / 2;
+    return new Point(x, y);
   }
 }

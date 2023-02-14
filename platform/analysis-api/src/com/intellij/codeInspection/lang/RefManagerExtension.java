@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
@@ -19,6 +20,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 
+
+/**
+ * An extension to manage the reference graph (see {@link RefManager}).
+ */
 public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
@@ -28,7 +33,10 @@ public interface RefManagerExtension<T> {
     return Collections.singleton(getLanguage());
   }
 
-  @Deprecated
+  /**
+   * @deprecated override {@link #getLanguages()}
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   Language getLanguage();
 
@@ -45,7 +53,6 @@ public interface RefManagerExtension<T> {
    * The method finds problem container (ex: method, class, file) that used to be shown as inspection view tree node.
    * This method will be called if  {@link LocalInspectionTool#getProblemElement(PsiElement)} returns null or PsiFile instance for specific inspection tool.
    *
-   * @param psiElement
    * @return container element for given psiElement
    */
   @Nullable

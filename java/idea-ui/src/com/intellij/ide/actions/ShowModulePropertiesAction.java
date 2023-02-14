@@ -33,4 +33,9 @@ public class ShowModulePropertiesAction extends AnAction{
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     e.getPresentation().setVisible(project != null && module != null);
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

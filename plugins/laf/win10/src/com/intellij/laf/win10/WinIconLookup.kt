@@ -5,8 +5,11 @@ import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.LafIconLookup
 import javax.swing.Icon
 
-private class WinDirProvider : DirProvider() {
-  override fun dir(): String = "/icons/"
+private object WinDirProvider : DirProvider() {
+  override val defaultExtension: String
+    get() = "svg"
+
+  override fun dir() = "icons/"
 }
 
 object WinIconLookup {
@@ -18,14 +21,12 @@ object WinIconLookup {
               enabled: Boolean = true,
               editable: Boolean = false,
               pressed: Boolean = false): Icon {
-
     return LafIconLookup.findIcon(name,
                                   selected = selected,
                                   focused = focused,
                                   enabled = enabled,
                                   editable = editable,
                                   pressed = pressed,
-                                  isThrowErrorIfNotFound = true,
-                                  dirProvider = WinDirProvider()) ?: AllIcons.Actions.Stub
+                                  dirProvider = WinDirProvider) ?: AllIcons.Actions.Stub
   }
 }

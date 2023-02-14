@@ -3,6 +3,7 @@
 package com.intellij.lang.ant.config;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -38,7 +39,6 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   }
 
   /**
-   * @param project
    * @return prefix for all ant actions registered withing this project
    */
   public static String getActionIdPrefix(Project project) {
@@ -74,8 +74,8 @@ public abstract class AntConfiguration extends SimpleModificationTracker {
   @Nullable
   public abstract AntBuildFile findBuildFileByActionId(final String id);
 
-  public abstract boolean executeTargetBeforeCompile(DataContext context);
+  public abstract boolean executeTargetBeforeCompile(CompileContext compileContext, DataContext dataContext);
 
-  public abstract boolean executeTargetAfterCompile(DataContext context);
+  public abstract boolean executeTargetAfterCompile(CompileContext compileContext, DataContext dataContext);
 
 }

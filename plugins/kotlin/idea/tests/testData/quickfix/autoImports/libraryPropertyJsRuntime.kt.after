@@ -1,0 +1,10 @@
+// "Import property 'localStorage'" "true"
+// JS
+
+package test
+
+import kotlinx.browser.localStorage
+
+fun foo() {
+    localStorage
+}

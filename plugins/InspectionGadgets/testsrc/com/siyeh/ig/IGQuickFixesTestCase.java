@@ -5,15 +5,20 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 /**
  * @author anna
  */
+@TestDataPath("$CONTENT_ROOT/../test")
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
   protected String myDefaultHint = null;
   protected String myRelativePath = null;
@@ -85,7 +90,14 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     IntentionAction action = myFixture.getAvailableIntention(hint);
     assertNotNull(action);
-    myFixture.launchAction(action);
+    Path previewPath = Path.of(myFixture.getTestDataPath(), getRelativePath(), testName + ".preview.java");
+    if (Files.exists(previewPath)) {
+      String previewText = myFixture.getIntentionPreviewText(action);
+      assertSameLinesWithFile(previewPath.toString(), previewText);
+      myFixture.launchAction(action);
+    } else {
+      myFixture.checkPreviewAndLaunchAction(action);
+    }
     myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
   }
 
@@ -117,7 +129,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     myFixture.configureByText(fileName, before);
     IntentionAction intention = myFixture.getAvailableIntention(hint);
     assertNotNull(intention);
-    myFixture.launchAction(intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
     myFixture.checkResult(after);
   }
 

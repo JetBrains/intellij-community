@@ -40,37 +40,41 @@ public class NonStaticInnerClassInSecureContextElementMergerTest extends LightJa
     myProfile.setToolEnabled("PrivateMemberAccessBetweenOuterAndInnerClass", true);
     final Element out = new Element("profile");
     myProfile.writeExternal(out);
-    assertEquals("<profile version=\"1.0\">\n" +
-                 "  <option name=\"myName\" value=\"Test\" />\n" +
-                 "  <inspection_tool class=\"PrivateMemberAccessBetweenOuterAndInnerClass\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-                 "</profile>", JDOMUtil.writeElement(out));
+    assertEquals("""
+                   <profile version="1.0">
+                     <option name="myName" value="Test" />
+                     <inspection_tool class="PrivateMemberAccessBetweenOuterAndInnerClass" enabled="true" level="WARNING" enabled_by_default="true" />
+                   </profile>""", JDOMUtil.writeElement(out));
   }
 
   public void testNotMerged() throws IOException, JDOMException {
     final Element in = JDOMUtil.load(
-      "<profile version=\"1.0\">\n" +
-      "  <option name=\"myName\" value=\"Test\" />\n" +
-      "  <inspection_tool class=\"NonStaticInnerClassInSecureContext\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-      "</profile>");
+      """
+        <profile version="1.0">
+          <option name="myName" value="Test" />
+          <inspection_tool class="NonStaticInnerClassInSecureContext" enabled="true" level="WARNING" enabled_by_default="true" />
+        </profile>""");
     myProfile.readExternal(in);
     assertTrue(myProfile.getToolsOrNull("PrivateMemberAccessBetweenOuterAndInnerClass", null).isEnabled());
     myProfile.setToolEnabled("PrivateMemberAccessBetweenOuterAndInnerClass", false);
     final Element out = new Element("profile");
     myProfile.writeExternal(out);
-    assertEquals("<profile version=\"1.0\">\n" +
-                 "  <option name=\"myName\" value=\"Test\" />\n" +
-                 "  <inspection_tool class=\"NonStaticInnerClassInSecureContext\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-                 "  <inspection_tool class=\"PrivateMemberAccessBetweenOuterAndInnerClassMerged\" />\n" +
-                 "</profile>", JDOMUtil.writeElement(out));
+    assertEquals("""
+                   <profile version="1.0">
+                     <option name="myName" value="Test" />
+                     <inspection_tool class="NonStaticInnerClassInSecureContext" enabled="true" level="WARNING" enabled_by_default="true" />
+                     <inspection_tool class="PrivateMemberAccessBetweenOuterAndInnerClassMerged" />
+                   </profile>""", JDOMUtil.writeElement(out));
   }
 
   public void testMerged() throws IOException, JDOMException {
     final Element in = JDOMUtil.load(
-      "<profile version=\"1.0\">\n" +
-      "  <option name=\"myName\" value=\"Test\" />\n" +
-      "  <inspection_tool class=\"NonStaticInnerClassInSecureContext\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-      "  <inspection_tool class=\"PrivateMemberAccessBetweenOuterAndInnerClassMerged\" />\n" +
-      "</profile>");
+      """
+        <profile version="1.0">
+          <option name="myName" value="Test" />
+          <inspection_tool class="NonStaticInnerClassInSecureContext" enabled="true" level="WARNING" enabled_by_default="true" />
+          <inspection_tool class="PrivateMemberAccessBetweenOuterAndInnerClassMerged" />
+        </profile>""");
     myProfile.readExternal(in);
     assertFalse(myProfile.getToolsOrNull("PrivateMemberAccessBetweenOuterAndInnerClass", null).isEnabled());
   }

@@ -1,4 +1,4 @@
-// "Collapse repeating annotations" "true"
+// "Collapse repeating annotations" "true-preview"
 
 @X<caret>YZ(data = 1)
 @XYZ(data = {2, 3})

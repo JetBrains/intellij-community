@@ -6,9 +6,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class GroovyExpectedTypesContributor {
   public abstract List<TypeConstraint> calculateTypeConstraints(@NotNull GrExpression expression);
 }

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemBundle extends DynamicBundle {
   @NonNls public static final String PATH_TO_BUNDLE = "messages.ExternalSystemBundle";
   private static final ExternalSystemBundle BUNDLE = new ExternalSystemBundle();

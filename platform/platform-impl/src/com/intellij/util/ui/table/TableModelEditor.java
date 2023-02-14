@@ -2,6 +2,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -105,7 +106,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
       return item != null && ((DialogItemEditor<T>)itemEditor).isEditable(item);
     });
 
-    if (((DialogItemEditor)itemEditor).isUseDialogToAdd()) {
+    if (((DialogItemEditor<?>)itemEditor).isUseDialogToAdd()) {
       toolbarDecorator.setAddAction(button -> {
         T item = createElement();
         ((DialogItemEditor<T>)itemEditor).edit(item, item1 -> {
@@ -248,6 +249,10 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
           TableUtil.updateScroller(table);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       }
     ).createPanel();

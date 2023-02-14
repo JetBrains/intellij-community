@@ -13,15 +13,16 @@ public class MapReplaceableByEnumMapFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(new MapReplaceableByEnumMapInspection());
     myRelativePath = "performance/map_replaceable_with_enum_map";
     myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "EnumMap");
-    myFixture.addClass("package java.util;\n" +
-                       "\n" +
-                       "public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>\n" +
-                       "  implements java.io.Serializable, Cloneable\n" +
-                       "{\n" +
-                       "  public EnumMap(Class<K> keyType) {\n" +
-                       "    \n" +
-                       "  }\n" +
-                       "}");
+    myFixture.addClass("""
+                         package java.util;
+
+                         public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V>
+                           implements java.io.Serializable, Cloneable
+                         {
+                           public EnumMap(Class<K> keyType) {
+                            \s
+                           }
+                         }""");
 
   }
 

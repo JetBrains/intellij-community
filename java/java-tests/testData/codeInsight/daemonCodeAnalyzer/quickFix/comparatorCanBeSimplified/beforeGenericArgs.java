@@ -1,4 +1,4 @@
-// "Replace with 'Entry.comparingByKey()'" "true"
+// "Replace with 'Entry.comparingByKey()'" "true-preview"
 
 import java.util.Comparator;
 import java.util.List;

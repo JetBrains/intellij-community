@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Gregory.Shrago
+ * Consider using {@link java.util.function.BiPredicate} instead.
  */
 @FunctionalInterface
 public interface PairProcessor<S, T> {
   boolean process(S s, T t);
-
 
   @NotNull
   static <S,T> PairProcessor<S,T> alwaysFalse() {

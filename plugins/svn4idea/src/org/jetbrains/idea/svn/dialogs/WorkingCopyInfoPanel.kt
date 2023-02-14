@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs
 
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.HtmlPanel
-import com.intellij.util.ui.UIUtil.getLabelFont
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.idea.svn.NestedCopyType
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.WorkingCopyFormat
@@ -20,7 +20,7 @@ private class WorkingCopyInfoPanel : HtmlPanel() {
   var info: WCInfo? = null
   var upgradeFormats: Collection<WorkingCopyFormat> = emptyList()
 
-  override fun getBodyFont(): Font = getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.getLabelFont()
   override fun getBody(): String = getBodyHtml().toString()
   override fun hyperlinkUpdate(e: HyperlinkEvent) = Unit
 

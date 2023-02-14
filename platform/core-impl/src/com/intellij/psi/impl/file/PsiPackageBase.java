@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.lang.ASTNode;
@@ -14,10 +14,10 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +49,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return myQualifiedName.hashCode();
   }
 
-  @NotNull
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return myQualifiedName;
   }
 
@@ -66,8 +65,8 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  public RowIcon getElementIcon(final int elementFlags) {
-    return IconManager.getInstance().createLayeredIcon(this, PlatformIcons.PACKAGE_ICON, elementFlags);
+  public RowIcon getElementIcon(int elementFlags) {
+    return IconManager.getInstance().createLayeredIcon(this, IconManager.getInstance().getPlatformIcon(PlatformIcons.Package), elementFlags);
   }
 
   @Override
@@ -86,8 +85,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @Nullable
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  public @Nullable PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     checkSetName(name);
     PsiDirectory[] dirs = getDirectories();
     for (PsiDirectory dir : dirs) {
@@ -121,20 +119,17 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @Nullable
-  public PsiElement getParent() {
+  public @Nullable PsiElement getParent() {
     return getParentPackage();
   }
 
   @Override
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     return null;
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return null;
   }
 
@@ -159,8 +154,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   }
 
   @Override
-  @Nullable
-  public String getText() {
+  public @Nullable String getText() {
     return null;
   }
 

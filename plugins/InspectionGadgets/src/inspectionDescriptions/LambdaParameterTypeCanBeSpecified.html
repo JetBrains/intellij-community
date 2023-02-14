@@ -1,15 +1,16 @@
 <html>
 <body>
-Reports lambda parameters which don't have their type specified. The quick-fix adds the type declaration to the lambda parameters.
+Reports lambda parameters that do not have their type specified and suggests
+adding the missing type declarations.
 <p>Example:</p>
-<pre>
-  Function&lt;String, Integer&gt; length = a -> a.length();
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
-  Function&lt;String, Integer&gt; length = (String a) -> a.length();
-</pre>
+<pre><code>
+  Function&lt;String, Integer&gt; length = a -&gt; a.length();
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  Function&lt;String, Integer&gt; length = (String a) -&gt; a.length();
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 </body>
 </html>

@@ -126,9 +126,8 @@ public final class DevkitActionsUtil {
   }
 
   /**
-   * @throws IncorrectOperationException
    */
-  public static void checkCanCreateClass(PsiDirectory directory, String name) {
+  public static void checkCanCreateClass(@NotNull PsiDirectory directory, String name) {
     PsiDirectory currentDir = directory;
     String packageName = StringUtil.getPackageName(name);
     if (!packageName.isEmpty()) {

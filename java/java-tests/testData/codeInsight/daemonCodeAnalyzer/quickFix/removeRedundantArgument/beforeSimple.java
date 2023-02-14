@@ -1,4 +1,4 @@
-// "Remove redundant arguments to call 'method(int, String)'" "true"
+// "Remove redundant arguments to call 'method(int, String)'" "true-preview"
 class A {
   public A() {
     method(5, "",//before arg to delete

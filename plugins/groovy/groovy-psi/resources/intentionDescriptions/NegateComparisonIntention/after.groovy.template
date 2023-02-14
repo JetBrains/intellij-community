@@ -1,4 +1,5 @@
-public class X {
+class X {
   void f(a,  b) {
-    if (!(b >= a)) return;
+    if (<spot>!(b >= a)</spot>) return
+  }
 }

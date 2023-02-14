@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,16 +14,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.StringTokenizer;
 
-/**
- * @author yole
- */
+
 public class XmlElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance(XmlElementSignatureProvider.class);
 
   @Override
   public String getSignature(@NotNull PsiElement element) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
       PsiElement parent = tag.getParent();
 
       StringBuilder buffer = new StringBuilder();

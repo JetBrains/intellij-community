@@ -47,7 +47,7 @@ public class ConnectionResourceInspectionTest extends LightJavaInspectionTestCas
 
       "package javax.microedition.io;" +
       "public interface Connection {" +
-      "  public void close() throws java.io.IOException;" +
+      "  void close() throws java.io.IOException;" +
       "}"
     };
   }

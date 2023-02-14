@@ -1,0 +1,12 @@
+// WITH_STDLIB
+
+class WithVarArg(vararg zz: String) {
+
+    val x: List<String>
+
+    init {
+        x = listOf(*zz)
+    }
+
+    fun foo() {}
+}

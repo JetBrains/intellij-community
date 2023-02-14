@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.FileASTNode;
@@ -31,10 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-/**
- * @author max
- * @author yole
- */
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
 public class PyStubsTest extends PyTestCase {
 
@@ -355,9 +351,9 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(fooPyFile);
     final Document fooDocument = fooPyFile.getViewProvider().getDocument();
     assertNotNull(fooDocument);
-    final Collection<PyClass> classes = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+    final Collection<PyClass> classes = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
     assertEquals(0, classes.size());
-    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> fooDocument.setText("class Foo: pass"));
+    WriteCommandAction.writeCommandAction(project, fooPyFile).run(() -> fooDocument.setText("class Foo123: pass"));
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(fooDocument);
     documentManager.performForCommittedDocument(fooDocument, () -> {
@@ -372,7 +368,7 @@ public class PyStubsTest extends PyTestCase {
       finally {
         DumbServiceImpl.getInstance(project).setDumb(false);
       }
-      final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo", project, GlobalSearchScope.allScope(project));
+      final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());
     });
   }
@@ -899,7 +895,6 @@ public class PyStubsTest extends PyTestCase {
   // PY-27398
   public void testDataclassField() {
     final PyFile file1 = getTestFile("dataclassField/a.py");
-    final PyFile file2 = getTestFile("dataclassField/dataclasses.py");
     final PyFile file3 = getTestFile("dataclassField/b.py");
 
     final DataclassFieldChecker checker = new DataclassFieldChecker(file1.findTopLevelClass("A"));
@@ -914,7 +909,6 @@ public class PyStubsTest extends PyTestCase {
     checker.check("i", false, false, true);
 
     assertNotParsed(file1);
-    assertNotParsed(file2);
     assertNotParsed(file3);
   }
 
@@ -922,7 +916,18 @@ public class PyStubsTest extends PyTestCase {
   public void testAttrsField() {
     final PyFile file = getTestFile();
 
-    final DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+    DataclassFieldChecker checker = new DataclassFieldChecker(file.findTopLevelClass("A"));
+    checker.check("a", true, false, true);
+    checker.check("b", false, true, true);
+    checker.check("c", false, false, true);
+    checker.check("d", false, false, false);
+    checker.check("e", false, false, false);
+    checker.check("f", false, false, false);
+    checker.check("g", false, false, true);
+    checker.check("h", false, true, true);
+    checker.check("i", false, false, true);
+
+    checker = new DataclassFieldChecker(file.findTopLevelClass("B"));
     checker.check("a", true, false, true);
     checker.check("b", false, true, true);
     checker.check("c", false, false, true);

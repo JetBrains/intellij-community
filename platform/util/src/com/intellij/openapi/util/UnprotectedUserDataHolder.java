@@ -10,7 +10,6 @@ import java.util.Map;
 /**
  * Non thread safe version of {@link UserDataHolderBase}.
  */
-@SuppressWarnings("deprecation")
 public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolderUnprotected {
 
   private Map<Key, Object> myUserData;

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -167,6 +166,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (pathToFile() == null) {
         VirtualFile selectedFile = FileChooser.chooseFile(FILE_DESCRIPTOR, myComponent, getEventProject(e), null);
@@ -281,6 +285,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myRunner != null) {
         myRunner.stop();
@@ -304,6 +313,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRunner == null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class RunOnFameActivationAction extends AnAction {
@@ -318,6 +332,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       runOnFrame();
     }
@@ -329,7 +348,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     myLog.setText(null);
 
     JFrame frame = getFrame();
-    Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
+    Component c = WindowManager.getInstance().getFocusedComponent(frame);
     if (c == null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
     }
@@ -419,20 +438,13 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     UIUtil.invokeLaterIfNeeded(() -> {
       if (!forced && (context != null && context.isDisposed())) return;
 
-      switch (type) {
-        case message:
-          addInfo(text, currentLine, MESSAGE_COLOR, depth);
-          break;
-        case error:
-          addInfo(text, currentLine, ERROR_COLOR, depth);
-          break;
-        case code:
-          addInfo(text, currentLine, CODE_COLOR, depth);
-          break;
-        case test:
-          addInfo(text, currentLine, TEST_COLOR, depth);
-          break;
-      }
+      Color color = switch (type) {
+        case message -> MESSAGE_COLOR;
+        case error -> ERROR_COLOR;
+        case code -> CODE_COLOR;
+        case test -> TEST_COLOR;
+      };
+      addInfo(text, currentLine, color, depth);
     });
   }
 
@@ -456,7 +468,8 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
 
   @State(
     name = "PlaybackDebugger",
-    storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS)
+    storages = @Storage(value = "playbackDebugger.xml", roamingType = RoamingType.PER_OS),
+    category = SettingsCategory.TOOLS
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<PlaybackDebuggerState> {
     @Attribute

@@ -11,9 +11,6 @@ import java.util.EnumSet;
 
 import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
 
-/**
- * @author ven
- */
 public interface ClassHint {
   Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
   Key<Argument> RECEIVER = Key.create("groovy.resolve.receiver");

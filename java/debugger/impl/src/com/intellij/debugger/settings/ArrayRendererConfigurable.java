@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -59,31 +60,23 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       throw new ConfigurationException(JavaDebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
     }
 
-    if (newStartIndex >= 0 && newEndIndex >= 0) {
-      if (newStartIndex > newEndIndex) {
-        int currentStartIndex = renderer.START_INDEX;
-        int currentEndIndex = renderer.END_INDEX;
-        newEndIndex = newStartIndex + (currentEndIndex - currentStartIndex);
-      }
+    if (newLimit <= 0) {
+      newLimit = 1;
+    }
 
-      if(newLimit <= 0) {
-        newLimit = 1;
-      }
-
-      if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
-        final int answer = Messages.showOkCancelDialog(
-          myPanel.getRootPane(),
-          JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
-          JavaDebuggerBundle.message("title.range.too.big"),
-          Messages.getWarningIcon());
-        if(answer != Messages.OK) {
-          return;
-        }
+    if (showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
+      final int answer = Messages.showOkCancelDialog(
+        myPanel.getRootPane(),
+        JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
+        JavaDebuggerBundle.message("title.range.too.big"),
+        Messages.getWarningIcon());
+      if (answer != Messages.OK) {
+        return;
       }
     }
 
-    renderer.START_INDEX   = newStartIndex;
-    renderer.END_INDEX     = newEndIndex;
+    renderer.START_INDEX = newStartIndex;
+    renderer.END_INDEX = newEndIndex;
     renderer.ENTRIES_LIMIT = newLimit;
   }
 
@@ -97,7 +90,6 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
 
     final FontMetrics fontMetrics = myStartIndex.getFontMetrics(myStartIndex.getFont());
     final Dimension minSize = new Dimension(myStartIndex.getPreferredSize());
-    //noinspection HardCodedStringLiteral
     minSize.width = fontMetrics.stringWidth("AAAAA");
     myStartIndex.setMinimumSize(minSize);
     myEndIndex.setMinimumSize(minSize);
@@ -115,14 +107,16 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
     myPanel.add(myStartIndex, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
     myPanel.add(endIndexLabel, new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
-    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myPanel.add(myEndIndex, new GridBagConstraints(3, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                                   JBInsets.emptyInsets(), 0, 0));
 
     myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
     myPanel.add(new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
     // push other components up
-    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+                                                     JBInsets.emptyInsets(), 0, 0));
 
     final DocumentListener listener = new DocumentListener() {
       private void updateEntriesLimit() {
@@ -137,16 +131,19 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myIndexUpdateEnabled = state;
         }
       }
+
       @Override
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void insertUpdate (DocumentEvent e) {
+      public void insertUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void removeUpdate (DocumentEvent e) {
+      public void removeUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
     };
@@ -165,6 +162,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myEntriesLimitUpdateEnabled = state;
         }
       }
+
       @Override
       public void insertUpdate(DocumentEvent e) {
         updateEndIndex();

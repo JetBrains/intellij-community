@@ -1,9 +1,7 @@
 import sys
-from typing import Dict
 
-if sys.version_info >= (3, 2):
-    codes: Dict[str, int]
-    messages: Dict[int, str]
+codes: dict[str, int]
+messages: dict[int, str]
 
 XML_ERROR_ABORTED: str
 XML_ERROR_ASYNC_ENTITY: str
@@ -42,3 +40,10 @@ XML_ERROR_UNDEFINED_ENTITY: str
 XML_ERROR_UNEXPECTED_STATE: str
 XML_ERROR_UNKNOWN_ENCODING: str
 XML_ERROR_XML_DECL: str
+if sys.version_info >= (3, 11):
+    XML_ERROR_RESERVED_PREFIX_XML: str
+    XML_ERROR_RESERVED_PREFIX_XMLNS: str
+    XML_ERROR_RESERVED_NAMESPACE_URI: str
+    XML_ERROR_INVALID_ARGUMENT: str
+    XML_ERROR_NO_BUFFER: str
+    XML_ERROR_AMPLIFICATION_LIMIT_BREACH: str

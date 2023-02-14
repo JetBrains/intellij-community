@@ -1,31 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
-import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
 import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsUtil
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val ML_ENABLED_NOTIFICATION_SHOWN_KEY = "completion.ml.enabled.notification.shown"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
 
@@ -74,52 +64,18 @@ object RankingSupport {
     val settings = CompletionMLRankingSettings.getInstance()
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
+    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
+
     if (application.isEAP && experimentInfo.inExperiment && !experimentStatus.isDisabled()) {
       settings.updateShowDiffInExperiment(experimentInfo.shouldShowArrows)
     }
 
-    val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    showNotificationAboutMLOnce(shouldSort, provider.isEnabledByDefault)
-
     return shouldSort
-  }
-
-  private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean) {
-    if (shouldSort && isEnabledByDefault && (PlatformUtils.isWebStorm() || PlatformUtils.isGoIde())) {
-      val properties = PropertiesComponent.getInstance()
-      if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
-        properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
-        MLEnabledNotification().notify(null)
-      }
-    }
   }
 
   @TestOnly
   fun enableInTests(parentDisposable: Disposable) {
     enabledInTests = true
     Disposer.register(parentDisposable, Disposable { enabledInTests = false })
-  }
-
-  private class MLEnabledNotification : Notification(
-    MLCompletionBundle.message("ml.completion.notification.groupId"),
-    MLCompletionBundle.message("ml.completion.notification.title"),
-    MLCompletionBundle.message("ml.completion.notification.ml.enabled.content"),
-    NotificationType.INFORMATION
-  ) {
-    init {
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.enable.decorations")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          val settings = CompletionMLRankingSettings.getInstance()
-          settings.isShowDiffEnabled = true
-          settings.isDecorateRelevantEnabled = true
-          notification.expire()
-        }
-      })
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
-        }
-      })
-    }
   }
 }

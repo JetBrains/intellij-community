@@ -42,8 +42,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
       Properties systemProperties = new Properties();
 
       for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-        if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
-          String key = (String)entry.getKey();
+        if (entry.getKey() instanceof String key && entry.getValue() instanceof String) {
           if (!key.startsWith("idea.")) {
             systemProperties.setProperty(key, (String)entry.getValue());
           }

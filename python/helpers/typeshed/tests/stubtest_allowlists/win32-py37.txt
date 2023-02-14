@@ -1,0 +1,20 @@
+ # The following methods were changed in point releases from Python 3.6 to 3.9
+ # as part of a security fix. These excludes can be removed when the GitHub
+ # action workflow uses Python versions that include the fix (adding a
+ # separator argument).
+cgi.FieldStorage.__init__
+cgi.parse
+cgi.parse_multipart
+urllib.parse.parse_qs
+urllib.parse.parse_qsl
+
+os.startfile
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.group
+pathlib.WindowsPath.owner

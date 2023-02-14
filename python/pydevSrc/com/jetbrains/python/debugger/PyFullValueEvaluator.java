@@ -12,8 +12,6 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
   /**
    * @param linkText     text of the link what will be appended to a variables tree node text
-   * @param debugProcess
-   * @param expression
    */
   protected PyFullValueEvaluator(@Nls String linkText, @NotNull PyFrameAccessor debugProcess, @NotNull String expression) {
     super(linkText);

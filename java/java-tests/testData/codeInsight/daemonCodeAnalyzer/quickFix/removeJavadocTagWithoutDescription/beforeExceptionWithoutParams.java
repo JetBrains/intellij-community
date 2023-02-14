@@ -1,4 +1,4 @@
-// "Remove '@exception' tag" "true"
+// "Remove '@exception' tag" "true-preview"
 
 class Foo {
   /**

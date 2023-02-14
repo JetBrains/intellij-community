@@ -17,7 +17,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -30,6 +29,12 @@ import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class CopyElementAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -37,9 +42,7 @@ public class CopyElementAction extends AnAction {
     if (project == null) {
       return;
     }
-
-    CommandProcessor.getInstance().executeCommand(project, () -> PsiDocumentManager.getInstance(project).commitAllDocuments(), "", null
-    );
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 

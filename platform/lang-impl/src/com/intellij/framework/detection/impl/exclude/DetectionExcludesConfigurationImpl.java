@@ -7,6 +7,7 @@ import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExclud
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -148,6 +149,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
     final Iterator<VirtualFile> iterator = files.iterator();
     while (iterator.hasNext()) {
+      ProgressManager.checkCanceled();
       VirtualFile file = iterator.next();
       if (isFileExcluded(file, frameworkType.getId())) {
         iterator.remove();

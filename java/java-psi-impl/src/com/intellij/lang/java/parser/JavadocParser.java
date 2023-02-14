@@ -19,7 +19,9 @@ public final class JavadocParser {
   private static final TokenSet TAG_VALUES_SET = TokenSet.create(
     JavaDocTokenType.DOC_TAG_VALUE_TOKEN, JavaDocTokenType.DOC_TAG_VALUE_COMMA, JavaDocTokenType.DOC_TAG_VALUE_DOT,
     JavaDocTokenType.DOC_TAG_VALUE_LPAREN, JavaDocTokenType.DOC_TAG_VALUE_RPAREN, JavaDocTokenType.DOC_TAG_VALUE_SHARP_TOKEN,
-    JavaDocTokenType.DOC_TAG_VALUE_LT, JavaDocTokenType.DOC_TAG_VALUE_GT);
+    JavaDocTokenType.DOC_TAG_VALUE_LT, JavaDocTokenType.DOC_TAG_VALUE_GT, JavaDocTokenType.DOC_TAG_VALUE_COLON,
+    JavaDocTokenType.DOC_TAG_VALUE_QUOTE
+  );
 
   private static final TokenSet INLINE_TAG_BORDERS_SET = TokenSet.create(
     JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
@@ -31,6 +33,7 @@ public final class JavadocParser {
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
+  private static final String SNIPPET_TAG = "@snippet";
   private static final Set<String> REFERENCE_TAGS = ContainerUtil.set("@throws", "@exception", "@provides", "@uses");
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
@@ -119,7 +122,11 @@ public final class JavadocParser {
         }
       }
 
-      tag.done(JavaDocElementType.DOC_INLINE_TAG);
+      if (SNIPPET_TAG.equals(inlineTagName)) {
+        tag.done(JavaDocElementType.DOC_SNIPPET_TAG);
+      } else {
+        tag.done(JavaDocElementType.DOC_INLINE_TAG);
+      }
     }
     else if (TAG_VALUES_SET.contains(tokenType)) {
       if (SEE_TAG.equals(tagName) && !isInline ||
@@ -139,6 +146,9 @@ public final class JavadocParser {
       else if (JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_5) && VALUE_TAG.equals(tagName) && isInline) {
         parseSeeTagValue(builder, true);
       }
+      else if (SNIPPET_TAG.equals(tagName) && isInline) {
+        parseSnippetTagValue(builder);
+      }
       else {
         parseSimpleTagValue(builder);
       }
@@ -146,6 +156,97 @@ public final class JavadocParser {
     else {
       remapAndAdvance(builder);
     }
+  }
+
+  private static void parseSnippetTagValue(PsiBuilder builder) {
+    // we are right after @snippet
+    PsiBuilder.Marker snippetValue = builder.mark();
+
+    // recovery, when "foo" goes right after @snippet
+    while (true) {
+      IElementType token = getTokenType(builder);
+      if (token != JavaDocTokenType.DOC_TAG_VALUE_QUOTE) {
+        break;
+      }
+      builder.advanceLexer();
+    }
+
+    IElementType tokenType = getTokenType(builder);
+    if (tokenType == JavaDocTokenType.DOC_TAG_VALUE_COLON) {
+      JavaParserUtil.emptyElement(builder, JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_LIST);
+      parseSnippetTagBody(builder);
+    } else if (tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+      parseSnippetAttributeList(builder);
+      if (builder.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_COLON) {
+        parseSnippetTagBody(builder);
+      }
+    } else {
+      IElementType current = getTokenType(builder);
+      while (current != null && current != JavaDocTokenType.DOC_INLINE_TAG_END) {
+        builder.advanceLexer();
+        current = getTokenType(builder);
+      }
+    }
+    snippetValue.done(JavaDocElementType.DOC_SNIPPET_TAG_VALUE);
+  }
+
+  private static void parseSnippetTagBody(PsiBuilder builder) {
+    PsiBuilder.Marker body = builder.mark();
+    assert getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_COLON;
+    builder.advanceLexer();
+    while (true) {
+      IElementType tokenType = getTokenType(builder);
+      if (tokenType == null || tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
+        break;
+      }
+      builder.advanceLexer();
+    }
+    body.done(JavaDocElementType.DOC_SNIPPET_BODY);
+  }
+
+  private static void parseSnippetAttributeList(PsiBuilder builder) {
+    PsiBuilder.Marker attributeList = builder.mark();
+    outer:
+    while (true) {
+      IElementType type = getTokenType(builder);
+      while (type != JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+        // recovery
+        if (type !=  JavaDocTokenType.DOC_TAG_VALUE_QUOTE) {
+          break outer;
+        }
+        builder.advanceLexer();
+        type = getTokenType(builder);
+      }
+      parseSnippetAttribute(builder);
+    }
+    attributeList.done(JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_LIST);
+  }
+
+  private static void parseSnippetAttribute(PsiBuilder builder) {
+    PsiBuilder.Marker attribute = builder.mark();
+    assert builder.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN;
+    builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME);
+    builder.advanceLexer();
+    getTokenType(builder); // skipping spaces
+    if ("=".equals(builder.getTokenText())) {
+      builder.advanceLexer();
+      IElementType afterEqToken = getTokenType(builder);
+      if (afterEqToken == JavaDocTokenType.DOC_TAG_VALUE_QUOTE) {
+        PsiBuilder.Marker quotedValue = builder.mark();
+        builder.advanceLexer();
+        if(getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+          builder.advanceLexer();
+        }
+        if(getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_QUOTE) {
+          builder.advanceLexer();
+        }
+        quotedValue.collapse(JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE);
+      } else if (afterEqToken == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+        builder.remapCurrentToken(JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE);
+        builder.advanceLexer();
+      }
+    }
+    attribute.done(JavaDocElementType.DOC_SNIPPET_ATTRIBUTE);
   }
 
   private static void parseSeeTagValue(PsiBuilder builder, boolean allowBareFieldReference) {

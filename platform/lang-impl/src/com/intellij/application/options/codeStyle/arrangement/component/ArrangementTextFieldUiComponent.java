@@ -28,13 +28,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementTextFieldUiComponent extends AbstractArrangementUiComponent {
 
   @NotNull private final JBTextField myTextField = new JBTextField(20);
-  @NotNull private final Alarm       myAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Alarm       myAlarm     = new Alarm();
 
   @NotNull private final ArrangementSettingsToken myToken;
 

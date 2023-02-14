@@ -41,18 +41,6 @@ private val MODULE_TO_PATH_NEW: Map<String, String> = mapOf(
   "estimator" to ESTIMATOR
 )
 
-// after 2.0.0a0 but before 2.0.0rc0
-private val MODULE_TO_PATH_2_OLD: Map<String, String> = mapOf(
-  "tools" to "tensorflow.tools",
-
-  "initializers" to "tensorflow.python.keras.api._v2.keras.initializers",
-  "losses" to "tensorflow.python.keras.api._v2.keras.losses",
-  "metrics" to "tensorflow.python.keras.api._v2.keras.metrics",
-  "optimizers" to "tensorflow.python.keras.api._v2.keras.optimizers",
-
-  "summary" to "tensorboard.summary._tf.summary"
-)
-
 // after 2.0.0rc0
 private val MODULE_TO_PATH_2_NEW: Map<String, String> = mapOf(
   "initializers" to "tensorflow_core.python.keras.api._v2.keras.initializers",
@@ -72,16 +60,11 @@ internal fun getTensorFlowPathConfig(sdk: Sdk?): Pair<Map<String, String>, Strin
     pyRequirementVersionSpec(PyRequirementRelation.GTE, "1.15.0rc0"),
     pyRequirementVersionSpec(PyRequirementRelation.LT, "2.0.0a0")
   )
-  val v2WithOldConfig = listOf(
-    pyRequirementVersionSpec(PyRequirementRelation.GTE, "2.0.0a0"),
-    pyRequirementVersionSpec(PyRequirementRelation.LT, "2.0.0rc0")
-  )
 
   val version = pkg.version
   return when {
     v1WithOldConfig.all { it.matches(version) } -> getTensorFlowPathConfig("1", true)
     v1WithNewConfig.all { it.matches(version) } -> getTensorFlowPathConfig("1", false)
-    v2WithOldConfig.all { it.matches(version) } -> getTensorFlowPathConfig("2", true)
     else -> getTensorFlowPathConfig(version.substringBefore('.', defaultVersion), false)
   }
 }
@@ -107,8 +90,7 @@ private fun getTensorFlowPathConfig(version: String, old: Boolean): Pair<Map<Str
   val preprocessedModuleToPath = moduleToPath.mapValuesTo(LinkedHashMap()) { (_, path) -> path.replaceFirst("[__VERSION__]", version) }
 
   if (version == "2") {
-    val append = if (old) MODULE_TO_PATH_2_OLD else MODULE_TO_PATH_2_NEW
-    preprocessedModuleToPath += append
+    preprocessedModuleToPath += MODULE_TO_PATH_2_NEW
   }
 
   return preprocessedModuleToPath to othersPath.replaceFirst("[__VERSION__]", version)

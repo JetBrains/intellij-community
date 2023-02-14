@@ -1,52 +1,43 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.naming;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.options.CommonOptionPanes;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiPackageStatement;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
+import com.siyeh.ig.PackageGlobalInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-public class PackageNamingConventionInspection extends BaseGlobalInspection {
+public class PackageNamingConventionInspection extends PackageGlobalInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 3;
   private static final int DEFAULT_MAX_LENGTH = 16;
   private static final String DEFAULT_NAME = "<default>";
+  private static final String DEFAULT_REGEX = "[a-z]*";
   /**
    * @noinspection PublicField
    */
   @NonNls
-  public String m_regex = "[a-z]*";
+  public String m_regex = DEFAULT_REGEX;
 
   /**
    * @noinspection PublicField
@@ -61,13 +52,11 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
+  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
+                                                           @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefPackage)) {
-      return null;
-    }
-    @NonNls final String name = StringUtil.getShortName(refEntity.getQualifiedName());
+    @NonNls final String name = StringUtil.getShortName(refPackage.getQualifiedName());
     if (DEFAULT_NAME.equals(name)) {
       return null;
     }
@@ -102,8 +91,21 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
+  public @NotNull OptPane getOptionsPane() {
+    return CommonOptionPanes.conventions("m_minLength", "m_maxLength", "m_regex");
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onValueSet("m_regex", value -> {
+      try {
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+      catch (PatternSyntaxException ignore) {
+        m_regex = DEFAULT_REGEX;
+        m_regexPattern = Pattern.compile(m_regex);
+      }
+    });
   }
 
   boolean isValid(String name) {
@@ -151,7 +153,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
       return new BaseInspectionVisitor() {
 
         @Override
-        public void visitPackageStatement(PsiPackageStatement statement) {
+        public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
           final PsiJavaCodeReferenceElement reference = statement.getPackageReference();
           if (reference == null) {
             return;

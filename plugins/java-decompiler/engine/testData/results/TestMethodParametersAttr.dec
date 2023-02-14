@@ -1,30 +1,41 @@
-package decompiler;
+package pkg;
 
 public class TestMethodParametersAttr {
    TestMethodParametersAttr(int p01) {
-   }// 19
+      System.out.print(p01);// 5
+   }
 
    void m1(int p02) {
-   }// 20
+      System.out.print(p02);// 6
+   }
 
    static void m2(int p03) {
-   }// 21
+      System.out.print(p03);// 7
+   }
 
    void local() {
       class Local {
          Local(int p31) {
-         }// 36
+            System.out.print(p31);
+         }// 22
 
          void m(int p32) {
-         }// 37
+            System.out.print(p32);// 23
+         }
       }
 
-   }// 39
+   }// 25
+
+   static enum E1 {
+      private E1(int p71) {
+         System.out.print(p71);// 44
+      }
+   }
 
    abstract static class C4 {
-      abstract void m1(int p51);
+      abstract void m1(int p61);
 
-      abstract void m2(final int p52);
+      abstract void m2(final int p62);
    }
 
    abstract class C3 {
@@ -41,85 +52,119 @@ public class TestMethodParametersAttr {
 
    static class C2 {
       C2(int p21) {
-      }// 29
+         System.out.print(p21);// 15
+      }
 
       void m1(int p22) {
-      }// 30
+         System.out.print(p22);// 16
+      }
 
       static void m2(int p23) {
-      }// 31
+         System.out.print(p23);// 17
+      }
    }
 
    class C1 {
       C1(int p11) {
-      }// 24
+         System.out.print(p11);
+      }// 10
 
       void m(int p12) {
-      }// 25
+         System.out.print(p12);// 11
+      }
    }
 }
 
-class 'decompiler/TestMethodParametersAttr' {
+class 'pkg/TestMethodParametersAttr' {
    method '<init> (I)V' {
       4      4
+      8      4
+      b      5
    }
 
    method 'm1 (I)V' {
-      0      7
+      0      8
+      4      8
+      7      9
    }
 
    method 'm2 (I)V' {
-      0      10
+      0      12
+      4      12
+      7      13
    }
 
    method 'local ()V' {
-      0      21
+      0      26
    }
 }
 
-class 'decompiler/TestMethodParametersAttr$1Local' {
-   method '<init> (Ldecompiler/TestMethodParametersAttr;I)V' {
-      9      15
+class 'pkg/TestMethodParametersAttr$1Local' {
+   method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
+      9      18
+      d      18
+      10      19
    }
 
    method 'm (I)V' {
-      0      18
+      0      22
+      4      22
+      7      23
    }
 }
 
-class 'decompiler/TestMethodParametersAttr$C2' {
+class 'pkg/TestMethodParametersAttr$E1' {
+   method '<init> (Ljava/lang/String;II)V' {
+      6      30
+      a      30
+      d      31
+   }
+}
+
+class 'pkg/TestMethodParametersAttr$C2' {
    method '<init> (I)V' {
-      4      43
+      4      54
+      8      54
+      b      55
    }
 
    method 'm1 (I)V' {
-      0      46
+      0      58
+      4      58
+      7      59
    }
 
    method 'm2 (I)V' {
-      0      49
+      0      62
+      4      62
+      7      63
    }
 }
 
-class 'decompiler/TestMethodParametersAttr$C1' {
-   method '<init> (Ldecompiler/TestMethodParametersAttr;I)V' {
-      9      54
+class 'pkg/TestMethodParametersAttr$C1' {
+   method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
+      9      68
+      d      68
+      10      69
    }
 
    method 'm (I)V' {
-      0      57
+      0      72
+      4      72
+      7      73
    }
 }
 
 Lines mapping:
-19 <-> 5
-20 <-> 8
-21 <-> 11
-24 <-> 55
-25 <-> 58
-29 <-> 44
-30 <-> 47
-31 <-> 50
-36 <-> 16
-37 <-> 19
-39 <-> 22
+5 <-> 5
+6 <-> 9
+7 <-> 13
+10 <-> 70
+11 <-> 73
+15 <-> 55
+16 <-> 59
+17 <-> 63
+22 <-> 20
+23 <-> 23
+25 <-> 27
+44 <-> 31

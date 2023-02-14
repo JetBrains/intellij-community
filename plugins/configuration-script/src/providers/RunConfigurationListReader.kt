@@ -102,7 +102,6 @@ internal class RunConfigurationListReader(private val processor: (factory: Confi
     else if (node is SequenceNode) {
       // array of child
       for (itemNode in node.value) {
-        @Suppress("IfThenToSafeAccess")
         if (itemNode is MappingNode) {
           readRunConfiguration(optionsClass, itemNode, factory)
         }

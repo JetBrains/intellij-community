@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
@@ -36,7 +35,6 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -55,14 +53,9 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   public HotSwapProgressImpl(Project project) {
     super(project);
     assert EventQueue.isDispatchThread();
-    myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, new PerformInBackgroundOption() {
-      @Override
-      public boolean shouldStartInBackground() {
-        return DebuggerSettings.getInstance().HOTSWAP_IN_BACKGROUND;
-      }
-    }, null, null, true);
+    myProgressWindow = new BackgroundableProcessIndicator(getProject(), myTitle, null, null, true);
     myProgressWindow.setIndeterminate(false);
-    myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase(){
+    myProgressWindow.addStateDelegate(new AbstractProgressIndicatorExBase() {
       @Override
       public void cancel() {
         super.cancel();
@@ -92,54 +85,54 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     List<String> warnings = getMessages(MessageCategory.WARNING);
 
     if (!errors.isEmpty()) {
-      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors, true), NotificationType.ERROR);
+      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.errors"), buildMessage(errors), true, NotificationType.ERROR);
     }
-    else if (!warnings.isEmpty()){
-      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings, true), NotificationType.WARNING);
+    else if (!warnings.isEmpty()) {
+      notifyUser(JavaDebuggerBundle.message("status.hot.swap.completed.with.warnings"), buildMessage(warnings), true,
+                 NotificationType.WARNING);
     }
-    else if (!myMessages.isEmpty()){
+    else if (!myMessages.isEmpty()) {
       List<String> messages = new ArrayList<>();
       for (IntIterator iterator = myMessages.keySet().iterator(); iterator.hasNext(); ) {
         messages.addAll(getMessages(iterator.nextInt()));
       }
-      notifyUser("", buildMessage(messages, false), NotificationType.INFORMATION);
+      notifyUser("", buildMessage(messages), false, NotificationType.INFORMATION);
     }
   }
 
-  private void notifyUser(@NlsContexts.NotificationTitle String title, @NlsContexts.NotificationContent String message, NotificationType type) {
-    NotificationListener notificationListener = null;
+  private void notifyUser(@NlsContexts.NotificationTitle String title,
+                          @NlsContexts.NotificationContent String message,
+                          boolean withRestart,
+                          NotificationType type) {
+    Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
     if (SoftReference.dereference(mySessionRef) != null) {
-      notificationListener = new HotSwapNotificationListener(mySessionRef);
-    }
-    NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
-  }
-
-  private static class HotSwapNotificationListener extends NotificationListener.Adapter {
-    final WeakReference<XDebugSession> mySessionRef;
-
-    HotSwapNotificationListener(WeakReference<XDebugSession> sessionRef) {
-      mySessionRef = sessionRef;
-    }
-
-    @Override
-    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      XDebugSession session = SoftReference.dereference(mySessionRef);
-      if (session == null) {
-        return;
-      }
-      notification.expire();
-      switch (event.getDescription()) {
-        case "stop":
-          session.stop();
-          break;
-        case "restart":
-          ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
-          if (environment != null) {
-            ExecutionUtil.restart(environment);
+      notification.addAction(new NotificationAction(JavaDebuggerBundle.message("status.hot.swap.completed.stop")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          XDebugSession session = SoftReference.dereference(mySessionRef);
+          if (session != null) {
+            notification.expire();
+            session.stop();
           }
-          break;
+        }
+      });
+      if (withRestart) {
+        notification.addAction(new NotificationAction(JavaDebuggerBundle.message("status.hot.swap.completed.restart")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            XDebugSession session = SoftReference.dereference(mySessionRef);
+            if (session != null) {
+              notification.expire();
+              ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
+              if (environment != null) {
+                ExecutionUtil.restart(environment);
+              }
+            }
+          }
+        });
       }
     }
+    notification.setImportant(false).notify(getProject());
   }
 
   public void setSessionForActions(@NotNull DebuggerSession session) {
@@ -150,15 +143,8 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
 
-  private @NlsSafe String buildMessage(List<String> messages, boolean withRestart) {
-    StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
-    if (SoftReference.dereference(mySessionRef) != null) {
-      res.append("\n").append(JavaDebuggerBundle.message("status.hot.swap.completed.stop"));
-      if (withRestart) {
-        res.append("&nbsp;&nbsp;&nbsp;&nbsp;").append(JavaDebuggerBundle.message("status.hot.swap.completed.restart"));
-      }
-    }
-    return res.toString();
+  private static @NlsSafe String buildMessage(List<String> messages) {
+    return StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n");
   }
 
   @Override
@@ -189,17 +175,16 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   public void setTitle(final @NlsContexts.ProgressTitle @NotNull String text) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setTitle(text);
+        myProgressWindow.setTitle(text);
       }
     }, myProgressWindow.getModalityState());
-
   }
 
   @Override
   public void setFraction(final double v) {
     DebuggerInvocationUtil.invokeLater(getProject(), () -> {
       if (!myProgressWindow.isCanceled() && myProgressWindow.isRunning()) {
-      myProgressWindow.setFraction(v);
+        myProgressWindow.setFraction(v);
       }
     }, myProgressWindow.getModalityState());
   }
@@ -210,7 +195,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
   }
 
   public ProgressIndicator getProgressIndicator() {
-     return myProgressWindow;
+    return myProgressWindow;
   }
 
   @Override

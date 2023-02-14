@@ -15,7 +15,8 @@
  */
 package com.jetbrains.rest.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.Nls;
@@ -37,11 +38,6 @@ public abstract class RestInspection extends LocalInspectionTool {
   @Override
   public String getShortName() {
     return getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   @Override

@@ -243,8 +243,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   public static Pair<PsiElement, TextRange> getNameIdentifierRangeInCurrentRoot(@NotNull PsiFile file, @NotNull PsiElement element) {
     if (element instanceof PomTargetPsiElement) {
       final PomTarget target = ((PomTargetPsiElement)element).getTarget();
-      if (target instanceof PsiDeclaredTarget) {
-        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+      if (target instanceof PsiDeclaredTarget declaredTarget) {
         final TextRange range = declaredTarget.getNameIdentifierRange();
         if (range != null) {
           if (range.getStartOffset() < 0 || range.getLength() <= 0) {
@@ -273,30 +272,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   }
 
   /**
-   * @deprecated internal API
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void doHighlightElements(@NotNull Editor editor,
-                                         PsiElement @NotNull [] elements,
-                                         @NotNull TextAttributes attributes,
-                                         boolean clearHighlights) {
-    HighlightManager highlightManager = HighlightManager.getInstance(editor.getProject());
-    List<TextRange> textRanges = new ArrayList<>(elements.length);
-    for (PsiElement element : elements) {
-      TextRange range = element.getTextRange();
-      // injection occurs
-      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
-      textRanges.add(range);
-    }
-    highlightRanges(highlightManager, editor, attributes, null, clearHighlights, textRanges);
-  }
-
-  /**
    * @deprecated Use the overload with TextAttributesKey
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static void highlightRanges(@NotNull HighlightManager highlightManager,
                                      @NotNull Editor editor,
                                      @NotNull TextAttributes attributes,
@@ -347,7 +325,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)HighlightManager.getInstance(editor.getProject())).getHighlighters(editor);
     int caretOffset = editor.getCaretModel().getOffset();
     for (RangeHighlighter highlighter : highlighters) {
-      if (TextRange.create(highlighter).grown(1).contains(caretOffset)) {
+      if (highlighter.getTextRange().grown(1).contains(caretOffset)) {
         return true;
       }
     }
@@ -369,7 +347,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     int j = 0;
     while (i < highlighters.length && j < rangesToHighlight.size()) {
       RangeHighlighter highlighter = highlighters[i];
-      TextRange highlighterRange = TextRange.create(highlighter);
+      TextRange highlighterRange = highlighter.getTextRange();
       TextRange refRange = rangesToHighlight.get(j);
       if (refRange.equals(highlighterRange) &&
           highlighter.getLayer() == HighlighterLayer.SELECTION - 1 &&
@@ -403,7 +381,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     highlightRanges(highlightManager, editor, attributesKey, clearHighlights, textRanges);
   }
 
-  @SuppressWarnings("unused") // NB don't deprecate this method while PsiSymbolReference is @Experimental
+  // NB don't deprecate this method while PsiSymbolReference is @Experimental
   @NotNull
   public static List<TextRange> collectRangesToHighlight(@NotNull PsiReference ref, @NotNull List<TextRange> result) {
     collectHighlightRanges(ref, result);

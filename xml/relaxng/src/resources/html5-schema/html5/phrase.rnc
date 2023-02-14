@@ -402,7 +402,7 @@ referrerpolicy =
 		element br { br.inner & br.attrs }
 	br.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	common.attrs.aria.role.presentation?
 		)
 	br.inner =
 		( empty )
@@ -415,7 +415,7 @@ referrerpolicy =
 		element wbr { wbr.inner & wbr.attrs }
 	wbr.attrs =
 		(	common.attrs
-		&	common.attrs.aria?
+		&	common.attrs.aria.role.presentation?
 		)
 	wbr.inner =
 		( empty )

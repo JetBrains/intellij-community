@@ -15,16 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Nikolay Matveev
- */
 public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
   @NotNull
   @Override
@@ -47,8 +43,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
         String projectLineSeparator = FileDocumentManager.getInstance().getLineSeparator(null, project);
         Set<String> allLineSeparators = LoadTextUtil.detectAllLineSeparators(virtualFile);
         if (allLineSeparators.size() > 1 || !allLineSeparators.isEmpty() && !allLineSeparators.contains(projectLineSeparator)) {
-          List<String> allSorted = new ArrayList<>(allLineSeparators);
-          Collections.sort(allSorted);
+          List<String> allSorted = ContainerUtil.sorted(allLineSeparators);
           String presentableSeparators = StringUtil.join(allSorted, sep->StringUtil.escapeStringCharacters(sep), ", ");
           holder.registerProblem(
             file,

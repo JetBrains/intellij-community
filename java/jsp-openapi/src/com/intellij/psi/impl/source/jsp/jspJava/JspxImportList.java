@@ -17,8 +17,5 @@ package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiImportList;
 
-/**
- * @author peter
- */
 public interface JspxImportList extends PsiImportList {
 }

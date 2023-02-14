@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public final class JavaCoverageSuite extends BaseCoverageSuite {
   private String[] myFilters;
   private String mySuiteToMerge;
@@ -43,9 +40,9 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
   private final CoverageEngine myCoverageEngine;
 
   //read external only
-  public JavaCoverageSuite(@NotNull final JavaCoverageEngine coverageSupportProvider) {
+  public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
     super();
-    myCoverageEngine = coverageSupportProvider;
+    myCoverageEngine = coverageEngine;
   }
 
   public JavaCoverageSuite(final String name,
@@ -57,7 +54,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
                            final boolean tracingEnabled,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
-                           @NotNull final JavaCoverageEngine coverageSupportProvider,
+                           @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
           tracingEnabled, trackTestFolders,
@@ -65,7 +62,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
 
     myFilters = filters;
     myExcludePatterns = excludePatterns;
-    myCoverageEngine = coverageSupportProvider;
+    myCoverageEngine = coverageEngine;
   }
 
   public String @NotNull [] getFilteredPackageNames() {
@@ -213,7 +210,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
     }
     final String[] filteredPackageNames = getFilteredPackageNames();
     for (final String packName : filteredPackageNames) {
-      if (PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
+      if (packName.isEmpty() || PsiNameHelper.isSubpackageOf(packageFQName, packName)) {
         return true;
       }
     }

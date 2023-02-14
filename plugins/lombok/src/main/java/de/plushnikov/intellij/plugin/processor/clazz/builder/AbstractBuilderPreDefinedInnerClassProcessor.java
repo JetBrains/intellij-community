@@ -5,8 +5,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -32,7 +32,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       final PsiClass psiParentClass = parentClass.get();
       final PsiAnnotation psiBuilderAnnotation = builderAnnotation.get();
       // use parent class as source!
-      if (validate(psiBuilderAnnotation, psiParentClass, ProblemEmptyBuilder.getInstance())) {
+      if (validate(psiBuilderAnnotation, psiParentClass, new ProblemProcessingSink())) {
         return processAnnotation(psiParentClass, null, psiBuilderAnnotation, psiClass, nameHint);
       }
     } else if (parentClass.isPresent()) {
@@ -41,7 +41,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       for (PsiMethod psiMethod : psiMethods) {
         final PsiAnnotation psiBuilderAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
         if (null != psiBuilderAnnotation) {
-          final String builderClassNameOfThisMethod = getBuilderHandler().getBuilderClassName(psiParentClass, psiBuilderAnnotation, psiMethod);
+          final String builderClassNameOfThisMethod = BuilderHandler.getBuilderClassName(psiParentClass, psiBuilderAnnotation, psiMethod);
           // check we found right method for this existing builder class
           if (Objects.equals(builderClassNameOfThisMethod, psiClass.getName())) {
             return processAnnotation(psiParentClass, psiMethod, psiBuilderAnnotation, psiClass, nameHint);
@@ -56,7 +56,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
                                                      @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
                                                      @Nullable String nameHint) {
     // use parent class as source!
-    final String builderClassName = getBuilderHandler().getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
+    final String builderClassName = BuilderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
@@ -67,7 +67,9 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     return result;
   }
 
-  protected abstract BuilderHandler getBuilderHandler();
+  protected BuilderHandler getBuilderHandler() {
+    return new BuilderHandler();
+  }
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 
@@ -79,7 +81,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     return getBuilderHandler().validate(psiClass, psiAnnotation, builder);
   }
 

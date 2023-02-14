@@ -8,14 +8,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import kotlin.streams.toList
 
 @ApiStatus.Internal
 interface ExperimentModelProvider : RankingModelProvider {
   fun experimentGroupNumber(): Int
 
   companion object {
-    private val EP_NAME: ExtensionPointName<RankingModelProvider> = ExtensionPointName("com.intellij.completion.ml.model")
+    private val EP_NAME = ExtensionPointName<RankingModelProvider>("com.intellij.completion.ml.model")
 
     @JvmStatic
     fun findProvider(language: Language, groupNumber: Int): RankingModelProvider? {
@@ -35,11 +34,11 @@ interface ExperimentModelProvider : RankingModelProvider {
     fun RankingModelProvider.match(language: Language, groupNumber: Int): Boolean =
       isLanguageSupported(language) && (this !is ExperimentModelProvider || experimentGroupNumber() == groupNumber)
 
-    fun availableProviders(): List<RankingModelProvider> = EP_NAME.extensions().toList()
+    fun availableProviders(): List<RankingModelProvider> = EP_NAME.extensionList
 
     @JvmStatic
     fun enabledByDefault(): List<String> {
-      return availableProviders().filter { it.isEnabledByDefault }.map { it.id }.toList()
+      return availableProviders().asSequence().filter { it.isEnabledByDefault }.map { it.id }.toList()
     }
 
     @TestOnly

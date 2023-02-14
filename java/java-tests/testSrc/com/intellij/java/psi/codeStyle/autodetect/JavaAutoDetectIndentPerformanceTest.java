@@ -44,7 +44,7 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     Ref<IndentOptions> ref = Ref.create();
     long fileLoadTime = TimeoutUtil.measureExecutionTime(() -> configureByFile(getFileNameWithExtension()));
 
-    long detectingTime = TimeoutUtil.measureExecutionTime(() -> ref.set(detectIndentOptions(getFile())));
+    long detectingTime = TimeoutUtil.measureExecutionTime(() -> ref.set(detectIndentOptions(getVFile(), getEditor().getDocument())));
     double ratio = (double)detectingTime / fileLoadTime;
     if (ratio > 0.3) {
       TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
@@ -60,18 +60,18 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
   
   public void testBigHotFile() {
     configureByFile(getFileNameWithExtension());
-    detectIndentOptions(getFile());
+    detectIndentOptions(getVFile(), getEditor().getDocument());
     
     PlatformTestUtil
       .startPerformanceTest("Detecting indent on hot file", 180,
-                            () -> AbstractIndentAutoDetectionTest.detectIndentOptions(getFile()))
+                            () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
       .assertTiming();
   }
   
   public void testBigOneLineFile() {
     configureByFile("oneLine.json");
     long time = TimeoutUtil.measureExecutionTime(
-      () -> AbstractIndentAutoDetectionTest.detectIndentOptions(getFile()));
+      () -> detectIndentOptions(getVFile(), getEditor().getDocument()));
     assertTrue(time < 40);
   }
 }

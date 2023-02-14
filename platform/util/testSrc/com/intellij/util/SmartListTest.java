@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,52 +59,57 @@ public class SmartListTest {
   }
 
   @Test(expected = IndexOutOfBoundsException.class)
-  public void testFourElement() {
+  public void testFourElement() throws Exception {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
-    assertThat(l.getModificationCount()).isEqualTo(modCount);
+    assertThat(getModificationCount(l)).isEqualTo(modCount);
     l.add(1);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     l.add(2);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     l.add(3);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     l.add(4);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l).hasSize(4);
     assertThat(l.get(0)).isEqualTo(1);
     assertThat(l.get(1)).isEqualTo(2);
     assertThat(l.get(2)).isEqualTo(3);
     assertThat(l.get(3)).isEqualTo(4);
-    assertThat(l.getModificationCount()).isEqualTo(modCount);
+    assertThat(getModificationCount(l)).isEqualTo(modCount);
 
     l.remove(2);
     assertThat(l).hasSize(3);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l.toString()).isEqualTo("[1, 2, 4]");
 
     l.set(2, 3);
     assertThat(l).hasSize(3);
-    assertThat(l.getModificationCount()).isEqualTo(modCount);
+    assertThat(getModificationCount(l)).isEqualTo(modCount);
     assertThat(l.toString()).isEqualTo("[1, 2, 3]");
 
     l.clear();
     assertThat(l).isEmpty();
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l.toString()).isEqualTo("[]");
 
     l.set(1, 3);
   }
 
-  @SuppressWarnings("RedundantOperationOnEmptyContainer")
+  private static int getModificationCount(SmartList<?> l) throws Exception {
+    Field field = AbstractList.class.getDeclaredField("modCount");
+    field.setAccessible(true);
+    return (int)field.get(l);
+  }
+
   @Test(expected = IndexOutOfBoundsException.class)
-  public void testFourElement2() {
+  public void testFourElement2() throws Exception {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
 
     l.clear();
     assertThat(l).isEmpty();
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l.toString()).isEqualTo("[]");
 
     Iterator<Integer> iterator = l.iterator();
@@ -117,7 +123,7 @@ public class SmartListTest {
     assertThat(iterator.next()).isEqualTo(-2);
     assertThat(iterator.hasNext()).isFalse();
 
-    l.get(1);
+    assertThat(l.get(1)).isEqualTo(-2);
   }
 
   @SuppressWarnings({"CollectionAddedToSelf", "RedundantOperationOnEmptyContainer"})
@@ -148,49 +154,49 @@ public class SmartListTest {
   }
 
   @Test
-  public void testAddIndexedEmpty() {
+  public void testAddIndexedEmpty() throws Exception {
     SmartList<Integer> l = new SmartList<>();
     int modCount = 0;
     l.add(0, 1);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l).hasSize(1);
     assertThat(l.get(0)).isEqualTo(1);
   }
 
   @Test
-  public void testAddIndexedOneElement() {
+  public void testAddIndexedOneElement() throws Exception {
     SmartList<Integer> l = new SmartList<>(0);
     assertThat(l).hasSize(1);
 
-    int modCount = l.getModificationCount();
+    int modCount = getModificationCount(l);
     l.add(0, 42);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l).hasSize(2);
     assertThat(l.get(0)).isEqualTo(42);
     assertThat(l.get(1)).isEqualTo(0);
   }
 
   @Test
-  public void testAddIndexedOverOneElement() {
+  public void testAddIndexedOverOneElement() throws Exception {
     SmartList<Integer> l = new SmartList<>(0);
     assertThat(l).hasSize(1);
 
-    int modCount = l.getModificationCount();
+    int modCount = getModificationCount(l);
     l.add(1, 42);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l).hasSize(2);
     assertThat(l.get(0)).isEqualTo(0);
     assertThat(l.get(1)).isEqualTo(42);
   }
 
   @Test
-  public void testAddIndexedOverTwoElements() {
+  public void testAddIndexedOverTwoElements() throws Exception {
     SmartList<Integer> l = new SmartList<>(0, 1);
     assertThat(l).hasSize(2);
 
-    int modCount = l.getModificationCount();
+    int modCount = getModificationCount(l);
     l.add(1, 42);
-    assertThat(l.getModificationCount()).isEqualTo(++modCount);
+    assertThat(getModificationCount(l)).isEqualTo(++modCount);
     assertThat(l).hasSize(3);
     assertThat(l.get(0)).isEqualTo(0);
     assertThat(l.get(1)).isEqualTo(42);
@@ -296,11 +302,11 @@ public class SmartListTest {
 
     checkForEach(list);
 
-    assertThat(list).isEqualTo(new SmartList<>(new Integer(1)));
-    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1))));
-    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1))));
-    assertThat(list).isEqualTo(Arrays.asList(new Integer(1)));
-    assertThat(list).isEqualTo(Collections.singletonList(new Integer(1)));
+    assertThat(list).isEqualTo(new SmartList<>(1));
+    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(1)));
+    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(1)));
+    assertThat(list).isEqualTo(Arrays.asList(1));
+    assertThat(list).isEqualTo(Collections.singletonList(1));
 
     assertThat(list).isNotEqualTo(new SmartList<>());
     assertThat(list).isNotEqualTo(new ArrayList<>());
@@ -316,15 +322,15 @@ public class SmartListTest {
 
     checkForEach(list);
 
-    assertThat(list).isEqualTo(new SmartList<>(new Integer(1), null, new Integer(3)));
-    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
-    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), null, new Integer(3))));
-    assertThat(list).isEqualTo(Arrays.asList(new Integer(1), null, new Integer(3)));
+    assertThat(list).isEqualTo(new SmartList<>(1, null, 3));
+    assertThat(list).isEqualTo(new ArrayList<>(Arrays.asList(1, null, 3)));
+    assertThat(list).isEqualTo(new LinkedList<>(Arrays.asList(1, null, 3)));
+    assertThat(list).isEqualTo(Arrays.asList(1, null, 3));
 
-    assertThat(list).isNotEqualTo(new SmartList<>(new Integer(1), new Integer(2), new Integer(3)));
-    assertThat(list).isNotEqualTo(new ArrayList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
-    assertThat(list).isNotEqualTo(new LinkedList<>(Arrays.asList(new Integer(1), new Integer(2), new Integer(3))));
-    assertThat(list).isNotEqualTo(Arrays.asList(new Integer(1), new Integer(2), new Integer(3)));
+    assertThat(list).isNotEqualTo(new SmartList<>(1, 2, 3));
+    assertThat(list).isNotEqualTo(new ArrayList<>(Arrays.asList(1, 2, 3)));
+    assertThat(list).isNotEqualTo(new LinkedList<>(Arrays.asList(1, 2, 3)));
+    assertThat(list).isNotEqualTo(Arrays.asList(1, 2, 3));
   }
 
   private static <T> void checkForEach(@NotNull List<T> list) {
@@ -332,5 +338,61 @@ public class SmartListTest {
     //noinspection UseBulkOperation
     list.forEach(integer -> checkList.add(integer));
     assertThat(list).isEqualTo(checkList);
+  }
+
+  @Test
+  public void removeRange() throws Exception {
+    SmartList<Integer> list = new SmartList<>();
+    assertThat(getModificationCount(list)).isEqualTo(0);
+
+    removeRange(list, 0, 0);
+    assertThat(list).isEqualTo(Collections.emptyList());
+
+    int expectedMC = getModificationCount(list);
+    list.add(0);
+    assertThat(getModificationCount(list)).isEqualTo(++expectedMC);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 0, 0);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 1, 1);
+    expectedMC = getModificationCount(list); // it's a moot point whether we should increment modCount on idempotent removeRange()
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    removeRange(list, 0, 1);
+    assertThat(list).isEmpty();
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.emptyList());
+
+    list.addAll(Arrays.asList(0, 1));
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    expectedMC = getModificationCount(list);
+    assertThat(list).isEqualTo(Arrays.asList(0,1));
+
+    removeRange(list, 0, 1);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.singletonList(1));
+
+    list.add(0, 0);
+    assertThat(getModificationCount(list)).isEqualTo(++expectedMC);
+    assertThat(list).isEqualTo(Arrays.asList(0,1));
+
+    removeRange(list, 1, 2);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC++);
+    assertThat(list).isEqualTo(Collections.singletonList(0));
+
+    list.addAll(Arrays.asList(1, 2, 3));
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    expectedMC = getModificationCount(list);
+    assertThat(list).isEqualTo(Arrays.asList(0,1,2,3));
+
+    removeRange(list, 1, 3);
+    assertThat(getModificationCount(list)).isGreaterThan(expectedMC);
+    assertThat(list).isEqualTo(Arrays.asList(0, 3));
+  }
+
+  private static void removeRange(SmartList<Integer> list, int fromIndex, int toIndex) {
+    list.subList(fromIndex, toIndex).clear();
   }
 }

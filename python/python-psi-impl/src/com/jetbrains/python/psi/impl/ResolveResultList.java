@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* @author yole
-*/
 public class ResolveResultList extends ArrayList<RatedResolveResult> {
   public static List<RatedResolveResult> to(PsiElement element) {
     if (element== null) {

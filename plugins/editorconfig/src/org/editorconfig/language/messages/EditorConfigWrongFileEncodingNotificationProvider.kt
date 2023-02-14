@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
 import com.intellij.ide.util.PropertiesComponent
@@ -17,33 +17,48 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction
 import com.intellij.openapi.vfs.encoding.EncodingUtil
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import java.util.*
+import java.util.function.Function
+import javax.swing.JComponent
 
-class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
-  override fun getKey() = KEY
-
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
-    fileEditor as? TextEditor ?: return null
-    val editor = fileEditor.editor
-    if (editor.getUserData(HIDDEN_KEY) != null) return null
+class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
     if (file.charset == Charsets.UTF_8) return null
-    return buildPanel(project, editor, file)
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    if (document == null) return null
+    val text = document.text
+    val isSafeToConvert = isSafeToConvertTo(file, text)
+    val isSafeToReload = isSafeToReloadIn(file, text)
+    return Function { createNotificationPanel(file, it, project, isSafeToConvert, isSafeToReload) }
   }
 
-  private fun buildPanel(project: Project, editor: Editor, file: VirtualFile): EditorNotificationPanel? {
-    val result = EditorNotificationPanel{ editor.colorsScheme }
+  private fun createNotificationPanel(file: VirtualFile,
+                                      fileEditor: FileEditor,
+                                      project: Project,
+                                      isSafeToConvert: EncodingUtil.Magic8,
+                                      isSafeToReload: EncodingUtil.Magic8): EditorNotificationPanel? {
+    if (fileEditor !is TextEditor) return null
+    val editor = fileEditor.editor
+    if (editor.getUserData(HIDDEN_KEY) != null) return null
+    return buildPanel(project, editor, file, isSafeToConvert, isSafeToReload)
+  }
+
+  private fun buildPanel(project: Project,
+                         editor: Editor,
+                         file: VirtualFile,
+                         isSafeToConvert: EncodingUtil.Magic8,
+                         isSafeToReload: EncodingUtil.Magic8): EditorNotificationPanel {
+    val result = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Warning)
     result.text(EditorConfigBundle.get("notification.encoding.message"))
 
     val convert = EditorConfigBundle["notification.action.convert"]
     result.createActionLabel(convert) {
-      val text = editor.document.text
-      val isSafeToConvert = isSafeToConvertTo(file, text)
-      val isSafeToReload = isSafeToReloadIn(file, text)
       ChangeFileEncodingAction.changeTo(project, editor.document, editor, file, Charsets.UTF_8, isSafeToConvert, isSafeToReload)
     }
 
@@ -112,7 +127,6 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
   }
 
   private companion object {
-    private val KEY = Key.create<EditorNotificationPanel>("editorconfig.wrong.encoding.notification")
     private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.encoding.notification.hidden")
     private const val DISABLE_KEY = "editorconfig.wrong.encoding.notification.disabled"
   }

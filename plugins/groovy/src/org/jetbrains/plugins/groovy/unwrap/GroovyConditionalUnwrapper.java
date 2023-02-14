@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 
 import java.util.List;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyConditionalUnwrapper extends GroovyUnwrapper {
   public GroovyConditionalUnwrapper() {
     super(JavaBundle.message("unwrap.conditional"));
@@ -22,7 +19,7 @@ public class GroovyConditionalUnwrapper extends GroovyUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return e.getParent();
   }

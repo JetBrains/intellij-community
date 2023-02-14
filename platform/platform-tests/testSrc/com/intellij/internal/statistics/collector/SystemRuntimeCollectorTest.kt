@@ -1,113 +1,33 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.collector
 
 import com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector
-import com.intellij.testFramework.HeavyPlatformTestCase
-import org.junit.Assert
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-class SystemRuntimeCollectorTest : HeavyPlatformTestCase() {
+class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
+  @Test fun smoke() {
+    val metrics = SystemRuntimeCollector().getMetrics().map { it.eventId to it.data.build() }
+    fun metric(list: List<Pair<String, Map<String, Any>>>, id: String): Map<String, Any> {
+      return list.find { it.first == id }?.second ?: throw AssertionError("No '${id}' in ${list.map { it.first }}")
+    }
 
-  @Test
-  fun `test round down method`() {
-    Assert.assertEquals(0, SystemRuntimeCollector.roundDown(0, 10, 30, 50, 100, 200))
-    Assert.assertEquals(0, SystemRuntimeCollector.roundDown(9, 10, 30, 50, 100, 200))
-    Assert.assertEquals(10, SystemRuntimeCollector.roundDown(10, 10, 30, 50, 100, 200))
-    Assert.assertEquals(10, SystemRuntimeCollector.roundDown(15, 10, 30, 50, 100, 200))
-    Assert.assertEquals(100, SystemRuntimeCollector.roundDown(100, 10, 30, 50, 100, 200))
-    Assert.assertEquals(100, SystemRuntimeCollector.roundDown(105, 10, 30, 50, 100, 200))
-    Assert.assertEquals(100, SystemRuntimeCollector.roundDown(150, 10, 30, 50, 100, 200))
-    Assert.assertEquals(50, SystemRuntimeCollector.roundDown(99, 10, 30, 50, 100, 200))
-    Assert.assertEquals(200, SystemRuntimeCollector.roundDown(200, 10, 30, 50, 100, 200))
-    Assert.assertEquals(200, SystemRuntimeCollector.roundDown(201, 10, 30, 50, 100, 200))
-    Assert.assertEquals(200, SystemRuntimeCollector.roundDown(2010, 10, 30, 50, 100, 200))
-    Assert.assertEquals(200, SystemRuntimeCollector.roundDown(Long.MAX_VALUE, 10, 30, 50, 100, 200))
+    val cores = metric(metrics, "cores")
+    assertThat(cores["value"]).isIn(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)
 
-    Assert.assertEquals(0, SystemRuntimeCollector.roundDown(4, 0, 30, 50, 100, 200))
-    Assert.assertEquals(30, SystemRuntimeCollector.roundDown(30, 0, 30, 50, 100, 200))
-    Assert.assertEquals(30, SystemRuntimeCollector.roundDown(31, 0, 30, 50, 100, 200))
+    val ram = metric(metrics, "memory.size")
+    assertThat(ram["gigabytes"]).isIn(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)
 
-    Assert.assertEquals(-1, SystemRuntimeCollector.roundDown(31, -1, 30, 50, 100, 200))
-    Assert.assertEquals(-1, SystemRuntimeCollector.roundDown(31, -10, 30, 50, 100, 200))
-  }
+    val gc = metric(metrics, "garbage.collector")
+    assertThat(gc["name"]).isNotNull.isNotEqualTo("Other")
 
-  @Test
-  fun `test convert xmx option`() {
-    //512, 750, 1000, 1024, 1500, 2000, 2048, 3000, 4000, 4096, 6000, 8000
-    assertMb("Xmx", 0, SystemRuntimeCollector.convertOptionToData("-Xmx511m"))
-    assertMb("Xmx", 0, SystemRuntimeCollector.convertOptionToData("-Xmx10m"))
+    val jvm = metric(metrics, "jvm")
+    assertThat(jvm["arch"]).isNotNull.isNotIn("other", "unknown")
+    assertThat(jvm["vendor"]).isNotNull.isNotEqualTo("Other")
 
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx512m"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx550M"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx530"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx524288K"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx524289k"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx536870913B"))
-    assertMb("Xmx", 512, SystemRuntimeCollector.convertOptionToData("-Xmx536870923b"))
-
-    assertMb("Xmx", 750, SystemRuntimeCollector.convertOptionToData("-Xmx750m"))
-    assertMb("Xmx", 750, SystemRuntimeCollector.convertOptionToData("-Xmx750M"))
-    assertMb("Xmx", 750, SystemRuntimeCollector.convertOptionToData("-Xmx999m"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1024m"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1050M"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1073"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1048576k"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1048576K"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1048576K"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1073741824b"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1073741824B"))
-    assertMb("Xmx", 1024, SystemRuntimeCollector.convertOptionToData("-Xmx1G"))
-    assertMb("Xmx", 2048, SystemRuntimeCollector.convertOptionToData("-Xmx2g"))
-    assertMb("Xmx", 2048, SystemRuntimeCollector.convertOptionToData("-Xmx2G"))
-
-    assertMb("Xmx", 8000, SystemRuntimeCollector.convertOptionToData("-Xmx8000M"))
-    assertMb("Xmx", 8000, SystemRuntimeCollector.convertOptionToData("-Xmx8G"))
-    assertMb("Xmx", 8000, SystemRuntimeCollector.convertOptionToData("-Xmx9000m"))
-    assertMb("Xmx", 8000, SystemRuntimeCollector.convertOptionToData("-Xmx10G"))
-
-    assertMb("Xmx", 8000, SystemRuntimeCollector.convertOptionToData("-Xmx100G"))
-  }
-
-  @Test
-  fun `test convert xms option`() {
-    //64, 128, 256, 512
-    assertMb("Xms", 64, SystemRuntimeCollector.convertOptionToData("-Xms64m"))
-    assertMb("Xms", 128, SystemRuntimeCollector.convertOptionToData("-Xms129m"))
-    assertMb("Xms", 128, SystemRuntimeCollector.convertOptionToData("-Xms136"))
-    assertMb("Xms", 128, SystemRuntimeCollector.convertOptionToData("-Xms132096k"))
-    assertMb("Xms", 512, SystemRuntimeCollector.convertOptionToData("-Xms750m"))
-    assertMb("Xms", 512, SystemRuntimeCollector.convertOptionToData("-Xms750M"))
-    assertMb("Xms", 512, SystemRuntimeCollector.convertOptionToData("-Xms2G"))
-  }
-
-  @Test
-  fun `test convert SoftRefLRUPolicyMSPerMB option`() {
-    //50, 100
-    assertMb("SoftRefLRUPolicyMSPerMB", 0, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=10m"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 50, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=50m"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 50, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=55M"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 50, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB55M"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 50, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=101376k"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 100, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=104857600"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 100, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=104857600b"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 100, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=204857600b"))
-    assertMb("SoftRefLRUPolicyMSPerMB", 100, SystemRuntimeCollector.convertOptionToData("-XX:SoftRefLRUPolicyMSPerMB=200G"))
-  }
-
-  @Test
-  fun `test convert ReservedCodeCacheSize option`() {
-    //240, 300, 400, 500
-    assertMb("ReservedCodeCacheSize", 0, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=10"))
-    assertMb("ReservedCodeCacheSize", 240, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=250"))
-    assertMb("ReservedCodeCacheSize", 240, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=250M"))
-    assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=500m"))
-    assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=1500m"))
-    assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=1536000K"))
-  }
-
-  private fun assertMb(name: String, sizeMb: Long, actual: Pair<String, Long>?) {
-    Assert.assertNotNull(actual)
-    Assert.assertEquals(name, actual!!.first)
-    Assert.assertEquals(sizeMb, actual.second)
+    val mem = metrics.asSequence().filter { it.first == "jvm.option" }.map { it.second["name"]!! to it.second["value"] }.toMap()
+    mem["Xms"]?.let { assertThat(it).isIn(64L, 128L, 256L, 512L) }
+    mem["Xmx"]?.let { assertThat(it).isIn(512L, 750L, 1000L, 1024L, 1500L, 2000L, 2048L, 3000L, 4000L, 4096L, 6000L, 8000L) }
   }
 }

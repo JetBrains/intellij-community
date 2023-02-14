@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ import org.jetbrains.annotations.NotNull;
 public class ExpandBooleanIntention extends MutablyNamedIntention {
 
   @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("expand.boolean.intention.family.name");
+  }
+
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new ExpandBooleanPredicate();
@@ -47,10 +52,9 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
 
   @Override
   public void processIntention(@NotNull PsiElement element) {
-    if (!(element instanceof PsiStatement)) {
+    if (!(element instanceof PsiStatement statement)) {
       return;
     }
-    final PsiStatement statement = (PsiStatement)element;
     final Project project = element.getProject();
     if (ExpandBooleanPredicate.isBooleanAssignment(statement)) {
       final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)statement;
@@ -69,8 +73,7 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
         (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, element);
       final PsiExpression condition = newIfStatement.getCondition();
       assert condition != null;
-      if (condition instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      if (condition instanceof PsiBinaryExpression binaryExpression) {
         final PsiExpression operand = binaryExpression.getROperand();
         if (operand != null) {
           operand.replace(rhs);
@@ -102,10 +105,9 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
     else if (ExpandBooleanPredicate.isBooleanDeclaration(statement)) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
       final PsiElement declaredElement = declarationStatement.getDeclaredElements()[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
+      if (!(declaredElement instanceof PsiLocalVariable variable)) {
         return;
       }
-      final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
       final PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
         return;

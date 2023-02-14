@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -45,6 +46,11 @@ public class AnnotateRevisionAction extends AnnotateRevisionActionBase implement
           VcsBundle.messagePointer("annotate.action.description"),
           AllIcons.Actions.Annotate);
     setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Nullable
@@ -102,5 +108,12 @@ public class AnnotateRevisionAction extends AnnotateRevisionActionBase implement
     if (!historySession.isContentAvailable(revision)) return null;
 
     return revision;
+  }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    Editor editor = getEditor(e);
+    if (editor == null) return -1;
+    return editor.getCaretModel().getLogicalPosition().line;
   }
 }

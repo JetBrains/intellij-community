@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.*;
-import static com.intellij.json.JsonParserDefinition.JSON_CONTAINERS;
+import static com.intellij.json.JsonTokenSets.JSON_CONTAINERS;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_COLON;
 import static com.intellij.json.formatter.JsonCodeStyleSettings.ALIGN_PROPERTY_ON_VALUE;
 import static com.intellij.json.psi.JsonPsiUtil.hasElementType;

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddReturnFix implements IntentionActionWithFixAllOption {
+public class AddReturnFix implements IntentionActionWithFixAllOption, HighPriorityAction {
   private final PsiParameterListOwner myMethod;
 
 
@@ -156,8 +157,7 @@ public class AddReturnFix implements IntentionActionWithFixAllOption {
         PsiCodeBlock body = ObjectUtils.tryCast(myMethod.getBody(), PsiCodeBlock.class);
         if (body != null) {
           PsiStatement[] statements = body.getStatements();
-          if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement) {
-            PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statements[0];
+          if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement expressionStatement) {
             PsiExpression expression = expressionStatement.getExpression();
             PsiType expressionType = expression.getType();
 

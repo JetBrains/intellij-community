@@ -35,7 +35,7 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
                                    String classpath,
                                    List<String> moduleOptions,
                                    String repeatCount, int result, final String filters) throws Exception {
-    final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<String, Map<String, List<String>>>();
+    final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<>();
     for (String className : classNames) {
       classes.put(className, null);
     }

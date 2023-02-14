@@ -37,9 +37,10 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testCountedLoopWithOverflow() { doTest(); }
 
   public void testLongRangeAnnotation() {
-    myFixture.addClass("package javax.annotation;\n" +
-                       "\n" +
-                       "public @interface Nonnegative {}");
+    myFixture.addClass("""
+                         package javax.annotation;
+
+                         public @interface Nonnegative {}""");
     doTest();
   }
 
@@ -78,6 +79,16 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   public void testWidenMismatch() { doTest(); }
   public void testDontWidenPlusInLoop() { doTest(); }
   public void testCollectionAddRemove() { doTest(); }
+
+  public void testCollectionRemoveIf() { doTest(); }
+
   public void testRelationsOnAddition() { doTest(); }
   public void testModSpecialCase() { doTest(); }
+  public void testArrayAccessWithCastInCountedLoop() { doTest(); }
+  public void testFloatingPointRanges() { doTest(); }
+  public void testFloatingPointCasts() { doTest(); }
+  public void testFloatingPointMaxLoop() { doTest(); }
+  public void testStringIndexOfRelation() { doTest(); }
+  public void testIncompleteLoop() { doTest(); }
+  public void testTwoFlagsMixed() { doTest(); }
 }

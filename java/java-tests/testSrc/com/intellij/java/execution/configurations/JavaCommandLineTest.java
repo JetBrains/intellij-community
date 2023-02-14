@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.io.IdeUtilIoBundle;
+import com.intellij.util.lang.JavaVersion;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -82,6 +83,25 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     commandLineString = javaParameters.toCommandLine().getCommandLineString();
     commandLineString = removeClassPath(commandLineString, "-classpath ..");
     assertFalse(containsClassPath(commandLineString));
+  }
+
+  @Test
+  public void testWithStdEncoding() throws CantRunException {
+    JavaParameters parameters = new JavaParameters();
+    parameters.setMainClass("FakeMain");
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(18)));
+    assertTrue(parameters.toCommandLine().getCommandLineString().contains("-Dsun.stdout.encoding="));
+    
+    parameters.setJdk(IdeaTestUtil.getMockJdk17());
+    assertFalse(parameters.toCommandLine().getCommandLineString().contains("-Dsun.stdout.encoding="));
+    
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(18)));
+    String consoleEncoding = "-Dsun.stdout.encoding=UTF-8";
+    parameters.getVMParametersList().add(consoleEncoding);
+    String commandLineString = parameters.toCommandLine().getCommandLineString();
+    int i = commandLineString.indexOf(consoleEncoding);
+    assertTrue(i > 0);
+    assertFalse(commandLineString.indexOf(consoleEncoding, i + consoleEncoding.length()) > 0);
   }
 
   private static boolean containsClassPath(String commandLineString) {

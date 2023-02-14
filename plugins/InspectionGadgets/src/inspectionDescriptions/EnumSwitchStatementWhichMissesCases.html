@@ -1,10 +1,36 @@
 <html>
 <body>
-Reports <code>switch</code> statements
-over enumerated types which do not include all of the enumerated type's elements as cases.
+Reports <code>switch</code> statements over enumerated types that are not exhaustive.
+<p><b>Example:</b></p>
+<pre><code>
+  <b>enum</b> AlphaBetaGamma {
+    A, B, C;
+
+    <b>void</b> x(AlphaBetaGamma e) {
+      <b>switch</b> (e) {
+
+      }
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>enum</b> AlphaBetaGamma {
+    A, B, C;
+
+    <b>void</b> x(AlphaBetaGamma e) {
+      <b>switch</b> (e) {
+        <b>case</b> A -> {}
+        <b>case</b> B -> {}
+        <b>case</b> C -> {}
+      }
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore <code>switch</code> statements which have a <code>default</code> branch.
+Use the <b>Ignore switch statements with a default branch </b> option to ignore <code>switch</code>
+  statements that have a <code>default</code> branch.
 <p>
 
 </body>

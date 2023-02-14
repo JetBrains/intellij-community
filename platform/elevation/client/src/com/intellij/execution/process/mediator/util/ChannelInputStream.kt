@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.onClosed
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.InputStream
@@ -51,13 +52,12 @@ class ChannelInputStream(private val readChannel: ReceiveChannel<ByteString>) : 
     var chunk = carryChunk
     try {
       do {
-        val nextChunk = readChannel.poll() ?: break
+        val nextChunk = readChannel.tryReceive()
+                          .onClosed { if (it is CancellationException) throw IOException(it) }
+                          .getOrNull() ?: break
         chunk = chunk.concat(nextChunk)
       }
       while (true)
-    }
-    catch (e: CancellationException) {
-      throw IOException(e)
     }
     finally {
       carryChunk = chunk

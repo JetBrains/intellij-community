@@ -1,0 +1,9139 @@
+[ {
+  "group": "nodes",
+  "data": {
+    "id": "cQZ",
+    "n": "AngularJS"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "QZ",
+    "name": "intellij.angularJS",
+    "n": "i.angularJS",
+    "package": null,
+    "sourceModule": "intellij.angularJS",
+    "descriptor": "contrib/AngularJS/resources/META-INF/plugin.xml",
+    "pluginId": "AngularJS",
+    "parent": "cQZ",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "YE",
+    "name": "intellij.angularJS/diagram",
+    "n": "i.angularJS/diagram",
+    "package": "org.angularjs.diagram",
+    "sourceModule": "intellij.angularJS",
+    "descriptor": "contrib/AngularJS/resources/intellij.angularJS.diagram.xml",
+    "parent": "cQZ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "9d",
+    "name": "intellij.aopCommon",
+    "n": "i.aopCommon",
+    "package": "com.intellij.aop",
+    "sourceModule": "intellij.aopCommon",
+    "descriptor": "plugins/aop-common/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.aop",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cJ6",
+    "n": "com.intellij.clion"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "J6",
+    "name": "intellij.clion",
+    "n": "i.clion",
+    "package": null,
+    "sourceModule": "intellij.clion",
+    "descriptor": "CIDR/clion/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.clion",
+    "parent": "cJ6",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rI",
+    "name": "intellij.profiler.clion",
+    "n": "i.profiler.clion",
+    "package": "com.intellij.profiler.clion",
+    "sourceModule": "intellij.profiler.clion",
+    "descriptor": "plugins/profiler/clion/resources/intellij.profiler.clion.xml",
+    "parent": "cJ6",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Oc",
+    "name": "intellij.cloudFormation",
+    "n": "i.cloudFormation",
+    "package": "com.intellij.aws.cloudformation",
+    "sourceModule": "intellij.cloudFormation",
+    "descriptor": "contrib/CloudFormation/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "AWSCloudFormation",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c7x",
+    "n": "Docker"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7x",
+    "name": "intellij.clouds.docker.impl",
+    "n": "i.clouds.docker.impl",
+    "package": "com.intellij.docker",
+    "sourceModule": "intellij.clouds.docker.impl",
+    "descriptor": "plugins/Docker/resources/META-INF/plugin.xml",
+    "pluginId": "Docker",
+    "parent": "c7x",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Jm",
+    "name": "intellij.clouds.docker.java",
+    "n": "i.clouds.docker.java",
+    "package": "com.intellij.docker.java",
+    "sourceModule": "intellij.clouds.docker.java",
+    "descriptor": "plugins/Docker/Docker-java-impl/resources/intellij.clouds.docker.java.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tU",
+    "name": "intellij.clouds.docker.compose",
+    "n": "i.clouds.docker.compose",
+    "package": "com.intellij.docker.composeFile",
+    "sourceModule": "intellij.clouds.docker.compose",
+    "descriptor": "plugins/Docker/Docker-compose/resources/intellij.clouds.docker.compose.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "dI",
+    "name": "intellij.clouds.docker.file",
+    "n": "i.clouds.docker.file",
+    "package": "com.intellij.docker.dockerFile",
+    "sourceModule": "intellij.clouds.docker.file",
+    "descriptor": "plugins/Docker/Docker-file/resources/intellij.clouds.docker.file.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ra",
+    "name": "intellij.clouds.docker.remoteRun",
+    "n": "i.clouds.docker.remoteRun",
+    "package": "com.intellij.docker.remote",
+    "sourceModule": "intellij.clouds.docker.remoteRun",
+    "descriptor": "plugins/Docker/Docker-remote-run/resources/intellij.clouds.docker.remoteRun.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c9",
+    "name": "intellij.clouds.docker.ssh",
+    "n": "i.clouds.docker.ssh",
+    "package": "com.intellij.docker.ssh",
+    "sourceModule": "intellij.clouds.docker.ssh",
+    "descriptor": "plugins/Docker/Docker-ssh/resources/intellij.clouds.docker.ssh.xml",
+    "parent": "c7x",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cup",
+    "n": "com.intellij.kubernetes"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "up",
+    "name": "intellij.clouds.kubernetes",
+    "n": "i.clouds.kubernetes",
+    "package": "com.intellij.kubernetes",
+    "sourceModule": "intellij.clouds.kubernetes",
+    "descriptor": "plugins/kubernetes/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.kubernetes",
+    "parent": "cup",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "RP",
+    "name": "intellij.clouds.kubernetes.charts.gotpl",
+    "n": "i.clouds.kubernetes.charts.gotpl",
+    "package": "com.intellij.kubernetes.helm.gotpl",
+    "sourceModule": "intellij.clouds.kubernetes.charts.gotpl",
+    "descriptor": "plugins/kubernetes/charts-gotpl/resources/intellij.clouds.kubernetes.charts.gotpl.xml",
+    "parent": "cup",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c17",
+    "n": "org.coffeescript"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "17",
+    "name": "intellij.coffeescript",
+    "n": "i.coffeescript",
+    "package": "org.coffeescript",
+    "sourceModule": "intellij.coffeescript",
+    "descriptor": "plugins/coffeescript/coffeescript-core/resources/META-INF/plugin.xml",
+    "pluginId": "org.coffeescript",
+    "parent": "c17",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rP",
+    "name": "intellij.coffeescript/watcher",
+    "n": "i.coffeescript/watcher",
+    "package": "org.coffeescript.watcher",
+    "sourceModule": "intellij.coffeescript",
+    "descriptor": "plugins/coffeescript/coffeescript-core/resources/intellij.coffeescript.watcher.xml",
+    "parent": "c17",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZY",
+    "name": "intellij.completionMlRanking",
+    "n": "i.completionMlRanking",
+    "package": "com.intellij.completion.ml",
+    "sourceModule": "intellij.completionMlRanking",
+    "descriptor": "community/plugins/completion-ml-ranking/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.completion.ml.ranking",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "w4",
+    "name": "intellij.configurationScript",
+    "n": "i.configurationScript",
+    "package": "com.intellij.configurationScript",
+    "sourceModule": "intellij.configurationScript",
+    "descriptor": "community/plugins/configuration-script/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.configurationScript",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cLX",
+    "n": "com.intellij.database"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "LX",
+    "name": "intellij.database.plugin",
+    "n": "i.database.plugin",
+    "package": null,
+    "sourceModule": "intellij.database.plugin",
+    "descriptor": "dbe/plugin/META-INF/plugin.xml",
+    "pluginId": "com.intellij.database",
+    "parent": "cLX",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Zu",
+    "name": "intellij.database.diagrams",
+    "n": "i.database.diagrams",
+    "package": "com.intellij.database.diagram",
+    "sourceModule": "intellij.database.diagrams",
+    "descriptor": "dbe/database/diagrams/resources/intellij.database.diagrams.xml",
+    "parent": "cLX",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cBv",
+    "n": "com.intellij.diagram"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Bv",
+    "name": "intellij.diagram.impl",
+    "n": "i.diagram.impl",
+    "package": "com.intellij.uml",
+    "sourceModule": "intellij.diagram.impl",
+    "descriptor": "plugins/uml/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.diagram",
+    "parent": "cBv",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "lR",
+    "name": "intellij.diagram.java",
+    "n": "i.diagram.java",
+    "package": "com.intellij.uml.java",
+    "sourceModule": "intellij.diagram.java",
+    "descriptor": "plugins/uml/java/resources/intellij.diagram.java.xml",
+    "parent": "cBv",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ns",
+    "name": "intellij.diagram.impl/vcs",
+    "n": "i.diagram.impl/vcs",
+    "package": "com.intellij.uml.diff",
+    "sourceModule": "intellij.diagram.impl",
+    "descriptor": "plugins/uml/resources/intellij.diagram.impl.vcs.xml",
+    "parent": "cBv",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Py",
+    "name": "intellij.diagram.properties",
+    "n": "i.diagram.properties",
+    "package": "com.intellij.uml.properties",
+    "sourceModule": "intellij.diagram.properties",
+    "descriptor": "plugins/uml/properties/resources/intellij.diagram.properties.xml",
+    "parent": "cBv",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "e7",
+    "name": "intellij.downburst",
+    "n": "i.downburst",
+    "package": "com.intellij.downburst",
+    "sourceModule": "intellij.downburst",
+    "descriptor": "plugins/downburst/resources/META-INF/plugin.xml",
+    "pluginId": "Downburst",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cHS",
+    "n": "com.intellij.sisyphus"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HS",
+    "name": "intellij.exceptionAnalyzer",
+    "n": "i.exceptionAnalyzer",
+    "package": "com.intellij.sisyphus",
+    "sourceModule": "intellij.exceptionAnalyzer",
+    "descriptor": "plugins/exception-analyzer/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.sisyphus",
+    "parent": "cHS",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "de",
+    "name": "intellij.exceptionAnalyzer/profiler",
+    "n": "i.exceptionAnalyzer/profiler",
+    "package": "com.intellij.sisyphus.profiler",
+    "sourceModule": "intellij.exceptionAnalyzer",
+    "descriptor": "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.profiler.xml",
+    "parent": "cHS",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xq",
+    "name": "intellij.exceptionAnalyzer/git",
+    "n": "i.exceptionAnalyzer/git",
+    "package": "com.intellij.sisyphus.git",
+    "sourceModule": "intellij.exceptionAnalyzer",
+    "descriptor": "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.git.xml",
+    "parent": "cHS",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "dn",
+    "name": "intellij.featuresTrainer",
+    "n": "i.featuresTrainer",
+    "package": "training",
+    "sourceModule": "intellij.featuresTrainer",
+    "descriptor": "community/plugins/ide-features-trainer/res/META-INF/plugin.xml",
+    "pluginId": "training",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cuY",
+    "n": "com.intellij.plugins.watcher"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uY",
+    "name": "intellij.fileWatcher",
+    "n": "i.fileWatcher",
+    "package": "com.intellij.plugins.watcher",
+    "sourceModule": "intellij.fileWatcher",
+    "descriptor": "plugins/fileWatcher/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.plugins.watcher",
+    "parent": "cuY",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Wz",
+    "name": "intellij.fileWatcher/webDeployment",
+    "n": "i.fileWatcher/webDeployment",
+    "package": "com.intellij.plugins.watcher.deployment",
+    "sourceModule": "intellij.fileWatcher",
+    "descriptor": "plugins/fileWatcher/resources/intellij.fileWatcher.webDeployment.xml",
+    "parent": "cuY",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gR",
+    "name": "intellij.freemarker",
+    "n": "i.freemarker",
+    "package": "com.intellij.freemarker",
+    "sourceModule": "intellij.freemarker",
+    "descriptor": "plugins/freemarker/core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.freemarker",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "vW",
+    "name": "intellij.go.ide",
+    "n": "i.go.ide",
+    "package": "com.goide.ide",
+    "sourceModule": "intellij.go.ide",
+    "descriptor": "goland/intellij-go/ide/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.go.ide",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cae",
+    "n": "org.jetbrains.plugins.go"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ae",
+    "name": "intellij.go.plugin",
+    "n": "i.go.plugin",
+    "package": "com.goide",
+    "sourceModule": "intellij.go.plugin",
+    "descriptor": "goland/intellij-go/plugin/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.go",
+    "parent": "cae",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "m2",
+    "name": "intellij.go.template.integration",
+    "n": "i.go.template.integration",
+    "package": "com.goide.template.integration",
+    "sourceModule": "intellij.go.template.integration",
+    "descriptor": "goland/intellij-go/template-integration/resources/intellij.go.template.integration.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pj",
+    "name": "intellij.go.terminal",
+    "n": "i.go.terminal",
+    "package": "com.goide.terminal",
+    "sourceModule": "intellij.go.terminal",
+    "descriptor": "goland/intellij-go/go-terminal/resources/intellij.go.terminal.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "30",
+    "name": "intellij.go.shell",
+    "n": "i.go.shell",
+    "package": "com.goide.sh",
+    "sourceModule": "intellij.go.shell",
+    "descriptor": "goland/intellij-go/go-shell/resources/intellij.go.shell.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "lQ",
+    "name": "intellij.go.coverage",
+    "n": "i.go.coverage",
+    "package": "com.goide.execution.testing.coverage",
+    "sourceModule": "intellij.go.coverage",
+    "descriptor": "goland/intellij-go/go-coverage/resources/intellij.go.coverage.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "j5",
+    "name": "intellij.go.copyright",
+    "n": "i.go.copyright",
+    "package": "com.goide.copyright",
+    "sourceModule": "intellij.go.copyright",
+    "descriptor": "goland/intellij-go/go-copyright/resources/intellij.go.copyright.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "9e",
+    "name": "intellij.go.watchers",
+    "n": "i.go.watchers",
+    "package": "com.goide.watchers",
+    "sourceModule": "intellij.go.watchers",
+    "descriptor": "goland/intellij-go/go-watchers/resources/intellij.go.watchers.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tK",
+    "name": "intellij.go.featuresTrainer",
+    "n": "i.go.featuresTrainer",
+    "package": "com.goide.training",
+    "sourceModule": "intellij.go.featuresTrainer",
+    "descriptor": "goland/intellij-go/go-features-trainer/resources/intellij.go.featuresTrainer.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "qK",
+    "name": "intellij.go.grazie",
+    "n": "i.go.grazie",
+    "package": "com.goide.grazie",
+    "sourceModule": "intellij.go.grazie",
+    "descriptor": "goland/intellij-go/go-grazie/resources/intellij.go.grazie.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7H",
+    "name": "intellij.go.completionMlRanking",
+    "n": "i.go.completionMlRanking",
+    "package": "com.goide.completion.ml",
+    "sourceModule": "intellij.go.completionMlRanking",
+    "descriptor": "goland/intellij-go/go-completion-ml-ranking/resources/intellij.go.completionMlRanking.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "l8",
+    "name": "intellij.go.sharedIndexes",
+    "n": "i.go.sharedIndexes",
+    "package": "com.goide.index.shared",
+    "sourceModule": "intellij.go.sharedIndexes",
+    "descriptor": "goland/intellij-go/go-shared-indexes/resources/intellij.go.sharedIndexes.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "VF",
+    "name": "intellij.go.diagram",
+    "n": "i.go.diagram",
+    "package": "com.goide.diagram",
+    "sourceModule": "intellij.go.diagram",
+    "descriptor": "goland/intellij-go/go-diagram/resources/intellij.go.diagram.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rq",
+    "name": "intellij.go.profiler",
+    "n": "i.go.profiler",
+    "package": "com.goide.profiler",
+    "sourceModule": "intellij.go.profiler",
+    "descriptor": "goland/intellij-go/profiler/resources/intellij.go.profiler.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "chz",
+    "n": "org.jetbrains.plugins.go.sharedIndexes.bundled"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hz",
+    "name": "intellij.go.sharedIndexes.bundled",
+    "n": "i.go.sharedIndexes.bundled",
+    "package": "com.goide.index.shared.bundled",
+    "sourceModule": "intellij.go.sharedIndexes.bundled",
+    "descriptor": "goland/intellij-go/go-shared-indexes-bundled/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.go.sharedIndexes.bundled",
+    "parent": "chz",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "iY",
+    "name": "intellij.go.sharedIndexes.bundled/sharedCore",
+    "n": "i.go.sharedIndexes.bundled/sharedCore",
+    "package": "com.goide.index.shared.bundled.gosdk",
+    "sourceModule": "intellij.go.sharedIndexes.bundled",
+    "descriptor": "goland/intellij-go/go-shared-indexes-bundled/resources/intellij.go.sharedIndexes.bundled.sharedCore.xml",
+    "parent": "chz",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Aa",
+    "name": "intellij.go.template",
+    "n": "i.go.template",
+    "package": "com.goide.template",
+    "sourceModule": "intellij.go.template",
+    "descriptor": "goland/intellij-go/template/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.go-template",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cFJ",
+    "n": "org.jetbrains.idea.gradle.ext"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "FJ",
+    "name": "intellij.gradle.ext",
+    "n": "i.gradle.ext",
+    "package": "org.jetbrains.idea.gradle.ext",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.idea.gradle.ext",
+    "parent": "cFJ",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "QD",
+    "name": "intellij.gradle.ext/profiler",
+    "n": "i.gradle.ext/profiler",
+    "package": "org.jetbrains.idea.gradle.ext.profiler",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.profiler.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ut",
+    "name": "intellij.gradle.ext/diagram",
+    "n": "i.gradle.ext/diagram",
+    "package": "org.jetbrains.idea.gradle.ext.uml",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.diagram.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "5n",
+    "name": "intellij.gradle.ext/docker.remoteRun",
+    "n": "i.gradle.ext/docker.remoteRun",
+    "package": "org.jetbrains.idea.gradle.ext.remote.docker",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.docker.remoteRun.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Bb",
+    "name": "intellij.gradle.ext/remote-run",
+    "n": "i.gradle.ext/remote-run",
+    "package": "org.jetbrains.idea.gradle.ext.remote.run",
+    "sourceModule": "intellij.gradle.ext",
+    "descriptor": "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.remote-run.xml",
+    "parent": "cFJ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c05",
+    "n": "com.intellij.javaee.gradle"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "05",
+    "name": "intellij.gradle.javaee",
+    "n": "i.gradle.javaee",
+    "package": "com.intellij.javaee.gradle",
+    "sourceModule": "intellij.gradle.javaee",
+    "descriptor": "plugins/javaee/gradle-integration/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee.gradle",
+    "parent": "c05",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "yH",
+    "name": "intellij.gradle.javaee/javaee",
+    "n": "i.gradle.javaee/javaee",
+    "package": "com.intellij.javaee.gradle.javaee",
+    "sourceModule": "intellij.gradle.javaee",
+    "descriptor": "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.xml",
+    "parent": "c05",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "yC",
+    "name": "intellij.gradle.javaee/javaee.web",
+    "n": "i.gradle.javaee/javaee.web",
+    "package": "com.intellij.javaee.gradle.javaeeWeb",
+    "sourceModule": "intellij.gradle.javaee",
+    "descriptor": "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.web.xml",
+    "parent": "c05",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c49",
+    "n": "tanvd.grazi"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "49",
+    "name": "intellij.grazie",
+    "n": "i.grazie",
+    "package": "com.intellij.grazie",
+    "sourceModule": "intellij.grazie",
+    "descriptor": "community/plugins/grazie/resources/META-INF/plugin.xml",
+    "pluginId": "tanvd.grazi",
+    "parent": "c49",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Uo",
+    "name": "intellij.grazie.java",
+    "n": "i.grazie.java",
+    "package": "com.intellij.grazie.ide.language.java",
+    "sourceModule": "intellij.grazie.java",
+    "descriptor": "community/plugins/grazie/java/src/main/resources/intellij.grazie.java.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "jh",
+    "name": "intellij.grazie.json",
+    "n": "i.grazie.json",
+    "package": "com.intellij.grazie.ide.language.json",
+    "sourceModule": "intellij.grazie.json",
+    "descriptor": "community/plugins/grazie/json/src/main/resources/intellij.grazie.json.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "e9",
+    "name": "intellij.grazie.markdown",
+    "n": "i.grazie.markdown",
+    "package": "com.intellij.grazie.ide.language.markdown",
+    "sourceModule": "intellij.grazie.markdown",
+    "descriptor": "community/plugins/grazie/markdown/src/main/resources/intellij.grazie.markdown.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "I3",
+    "name": "intellij.grazie.properties",
+    "n": "i.grazie.properties",
+    "package": "com.intellij.grazie.ide.language.properties",
+    "sourceModule": "intellij.grazie.properties",
+    "descriptor": "community/plugins/grazie/properties/src/main/resources/intellij.grazie.properties.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HP",
+    "name": "intellij.grazie.xml",
+    "n": "i.grazie.xml",
+    "package": "com.intellij.grazie.ide.language.xml",
+    "sourceModule": "intellij.grazie.xml",
+    "descriptor": "community/plugins/grazie/xml/main/resources/intellij.grazie.xml.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Sw",
+    "name": "intellij.grazie.yaml",
+    "n": "i.grazie.yaml",
+    "package": "com.intellij.grazie.ide.language.yaml",
+    "sourceModule": "intellij.grazie.yaml",
+    "descriptor": "community/plugins/grazie/yaml/main/resources/intellij.grazie.yaml.xml",
+    "parent": "c49",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cPH",
+    "n": "org.intellij.groovy"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "PH",
+    "name": "intellij.groovy",
+    "n": "i.groovy",
+    "package": "org.jetbrains.plugins.groovy",
+    "sourceModule": "intellij.groovy",
+    "descriptor": "community/plugins/groovy/src/META-INF/plugin.xml",
+    "pluginId": "org.intellij.groovy",
+    "parent": "cPH",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Y3",
+    "name": "intellij.groovy/ant",
+    "n": "i.groovy/ant",
+    "package": "org.jetbrains.plugins.groovy.gant.ant",
+    "sourceModule": "intellij.groovy",
+    "descriptor": "community/plugins/groovy/resources/intellij.groovy.ant.xml",
+    "parent": "cPH",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hV",
+    "name": "intellij.groovy/byte-code-viewer",
+    "n": "i.groovy/byte-code-viewer",
+    "package": "org.jetbrains.plugins.groovy.byteCodeViewer",
+    "sourceModule": "intellij.groovy",
+    "descriptor": "community/plugins/groovy/resources/intellij.groovy.byte-code-viewer.xml",
+    "parent": "cPH",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ccq",
+    "n": "org.intellij.grails"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cq",
+    "name": "intellij.groovy.grails",
+    "n": "i.groovy.grails",
+    "package": "org.jetbrains.plugins.grails",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/META-INF/plugin.xml",
+    "pluginId": "org.intellij.grails",
+    "parent": "ccq",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ti",
+    "name": "intellij.groovy.grails/copyright",
+    "n": "i.groovy.grails/copyright",
+    "package": "org.jetbrains.plugins.grails.copyright",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.copyright.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pt",
+    "name": "intellij.groovy.grails/i18n",
+    "n": "i.groovy.grails/i18n",
+    "package": "org.jetbrains.plugins.grails.i18n",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.i18n.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "BI",
+    "name": "intellij.groovy.grails/maven",
+    "n": "i.groovy.grails/maven",
+    "package": "org.jetbrains.plugins.grails.maven",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.maven.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ul",
+    "name": "intellij.groovy.grails/hibernate",
+    "n": "i.groovy.grails/hibernate",
+    "package": "org.jetbrains.plugins.grails.hibernate",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.hibernate.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mX",
+    "name": "intellij.groovy.grails/intellilang",
+    "n": "i.groovy.grails/intellilang",
+    "package": "org.jetbrains.plugins.grails.injection",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.intellilang.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "B2",
+    "name": "intellij.groovy.grails/coverage",
+    "n": "i.groovy.grails/coverage",
+    "package": "org.jetbrains.plugins.grails.runner.coverage",
+    "sourceModule": "intellij.groovy.grails",
+    "descriptor": "plugins/groovy/resources/intellij.groovy.grails.coverage.xml",
+    "parent": "ccq",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cCF",
+    "n": "com.intellij.grpc"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "CF",
+    "name": "intellij.grpc",
+    "n": "i.grpc",
+    "package": "com.intellij.grpc",
+    "sourceModule": "intellij.grpc",
+    "descriptor": "plugins/frameworks/grpc/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.grpc",
+    "parent": "cCF",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "T4",
+    "name": "intellij.grpc/intelliLang",
+    "n": "i.grpc/intelliLang",
+    "package": "com.intellij.grpc.restClient.mimeType",
+    "sourceModule": "intellij.grpc",
+    "descriptor": "plugins/frameworks/grpc/resources/intellij.grpc.intelliLang.xml",
+    "parent": "cCF",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6U",
+    "name": "intellij.guice",
+    "n": "i.guice",
+    "package": "com.intellij.guice",
+    "sourceModule": "intellij.guice",
+    "descriptor": "plugins/frameworks/Guice/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.guice",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cmS",
+    "n": "org.jetbrains.plugins.haml"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mS",
+    "name": "intellij.haml",
+    "n": "i.haml",
+    "package": "org.jetbrains.plugins.haml",
+    "sourceModule": "intellij.haml",
+    "descriptor": "plugins/haml/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.haml",
+    "parent": "cmS",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "DZ",
+    "name": "intellij.haml/css",
+    "n": "i.haml/css",
+    "package": "org.jetbrains.plugins.haml.css",
+    "sourceModule": "intellij.haml",
+    "descriptor": "plugins/haml/resources/intellij.haml.css.xml",
+    "parent": "cmS",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "so",
+    "name": "intellij.haml/watcher",
+    "n": "i.haml/watcher",
+    "package": "org.jetbrains.plugins.haml.watcher",
+    "sourceModule": "intellij.haml",
+    "descriptor": "plugins/haml/resources/intellij.haml.watcher.xml",
+    "parent": "cmS",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "L2",
+    "name": "intellij.helidon",
+    "n": "i.helidon",
+    "package": "com.intellij.helidon",
+    "sourceModule": "intellij.helidon",
+    "descriptor": "plugins/frameworks/helidon/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.helidon",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cJt",
+    "n": "com.intellij"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Jt",
+    "name": "intellij.idea.ultimate.resources",
+    "n": "i.idea.ultimate.resources",
+    "package": null,
+    "sourceModule": "intellij.idea.ultimate.resources",
+    "descriptor": "ultimate/ultimate-resources/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij",
+    "parent": "cJt",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZS",
+    "name": "intellij.profiler.ultimate.ideaAsyncProfiler",
+    "n": "i.profiler.ultimate.ideaAsyncProfiler",
+    "package": "com.intellij.profiler.ultimate.async",
+    "sourceModule": "intellij.profiler.ultimate.ideaAsyncProfiler",
+    "descriptor": "plugins/profiler/ultimate/idea-async-profiler/resources/intellij.profiler.ultimate.ideaAsyncProfiler.xml",
+    "parent": "cJt",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "TN",
+    "name": "intellij.profiler.common",
+    "n": "i.profiler.common",
+    "package": "com.intellij.profiler",
+    "sourceModule": "intellij.profiler.common",
+    "descriptor": "plugins/profiler/common/resources/intellij.profiler.common.xml",
+    "parent": "cJt",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Se",
+    "name": "intellij.profiler.ultimate",
+    "n": "i.profiler.ultimate",
+    "package": "com.intellij.profiler.ultimate",
+    "sourceModule": "intellij.profiler.ultimate",
+    "descriptor": "plugins/profiler/ultimate/resources/intellij.profiler.ultimate.xml",
+    "parent": "cJt",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "M4",
+    "name": "intellij.indexing.shared.ultimate.plugin.bundled",
+    "n": "i.indexing.shared.ultimate.plugin.bundled",
+    "package": "com.intellij.indexing.shared.ultimate.license",
+    "sourceModule": "intellij.indexing.shared.ultimate.plugin.bundled",
+    "descriptor": "plugins/shared-indexes/ultimate.plugin.bundled/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.indexing.shared",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "AL",
+    "name": "intellij.jade",
+    "n": "i.jade",
+    "package": "com.jetbrains.plugins.jade",
+    "sourceModule": "intellij.jade",
+    "descriptor": "plugins/Jade/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.plugins.jade",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "F7",
+    "name": "intellij.java.byteCodeViewer",
+    "n": "i.java.byteCodeViewer",
+    "package": "com.intellij.byteCodeViewer",
+    "sourceModule": "intellij.java.byteCodeViewer",
+    "descriptor": "community/plugins/ByteCodeViewer/resources/META-INF/plugin.xml",
+    "pluginId": "ByteCodeViewer",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6w",
+    "name": "intellij.java.pwa",
+    "n": "i.java.pwa",
+    "package": "com.intellij.analysis.pwa.java",
+    "sourceModule": "intellij.java.pwa",
+    "descriptor": "plugins/pwa/java-pwa/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.analysis.pwa.java",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZX",
+    "name": "intellij.javaFX.css",
+    "n": "i.javaFX.css",
+    "package": "org.jetbrains.plugins.javaFX",
+    "sourceModule": "intellij.javaFX.css",
+    "descriptor": "plugins/javaFX-CSS/src/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.javaFX",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cQG",
+    "n": "com.intellij.microservices.java.clients"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "QG",
+    "name": "intellij.javaHttpClients",
+    "n": "i.javaHttpClients",
+    "package": "com.intellij.javahttp",
+    "sourceModule": "intellij.javaHttpClients",
+    "descriptor": "plugins/frameworks/java-http-clients/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.java.clients",
+    "parent": "cQG",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "RH",
+    "name": "intellij.javaHttpClients/retrofit",
+    "n": "i.javaHttpClients/retrofit",
+    "package": "com.intellij.javahttp.retrofit.httpClient",
+    "sourceModule": "intellij.javaHttpClients",
+    "descriptor": "plugins/frameworks/java-http-clients/resources/intellij.javaHttpClients.retrofit.xml",
+    "parent": "cQG",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cSp",
+    "n": "com.intellij.javaee.app.servers.integration"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Sp",
+    "name": "intellij.javaee.app.servers.impl",
+    "n": "i.javaee.app.servers.impl",
+    "package": null,
+    "sourceModule": "intellij.javaee.app.servers.impl",
+    "descriptor": "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee.app.servers.integration",
+    "parent": "cSp",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "NV",
+    "name": "intellij.javaee.app.servers.impl/profiler",
+    "n": "i.javaee.app.servers.impl/profiler",
+    "package": "com.intellij.javaee.appServers.run.profiler",
+    "sourceModule": "intellij.javaee.app.servers.impl",
+    "descriptor": "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/intellij.javaee.app.servers.impl.profiler.xml",
+    "parent": "cSp",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ci7",
+    "n": "Tomcat"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "i7",
+    "name": "intellij.javaee.appServers.tomcat",
+    "n": "i.javaee.appServers.tomcat",
+    "package": null,
+    "sourceModule": "intellij.javaee.appServers.tomcat",
+    "descriptor": "plugins/tomcat/resources/META-INF/plugin.xml",
+    "pluginId": "Tomcat",
+    "parent": "ci7",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1U",
+    "name": "intellij.javaee.appServers.tomcat/profiler",
+    "n": "i.javaee.appServers.tomcat/profiler",
+    "package": "org.jetbrains.idea.tomcat.profiler",
+    "sourceModule": "intellij.javaee.appServers.tomcat",
+    "descriptor": "plugins/tomcat/resources/intellij.javaee.appServers.tomcat.profiler.xml",
+    "parent": "ci7",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c1u",
+    "n": "Weblogic"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1u",
+    "name": "intellij.javaee.appServers.weblogic",
+    "n": "i.javaee.appServers.weblogic",
+    "package": "com.intellij.javaee.weblogic",
+    "sourceModule": "intellij.javaee.appServers.weblogic",
+    "descriptor": "plugins/weblogic/resources/META-INF/plugin.xml",
+    "pluginId": "Weblogic",
+    "parent": "c1u",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "X5",
+    "name": "intellij.javaee.appServers.weblogic/ejb",
+    "n": "i.javaee.appServers.weblogic/ejb",
+    "package": "com.intellij.javaee.weblogic.ejb",
+    "sourceModule": "intellij.javaee.appServers.weblogic",
+    "descriptor": "plugins/weblogic/resources/intellij.javaee.appServers.weblogic.ejb.xml",
+    "parent": "c1u",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Yg",
+    "name": "intellij.javaee.beanValidation",
+    "n": "i.javaee.beanValidation",
+    "package": "com.intellij.beanValidation",
+    "sourceModule": "intellij.javaee.beanValidation",
+    "descriptor": "plugins/javaee/bean-validation/bv-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.beanValidation",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cck",
+    "n": "com.intellij.cdi"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ck",
+    "name": "intellij.javaee.cdi",
+    "n": "i.javaee.cdi",
+    "package": "com.intellij.cdi",
+    "sourceModule": "intellij.javaee.cdi",
+    "descriptor": "plugins/javaee/cdi/cdi-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.cdi",
+    "parent": "cck",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eI",
+    "name": "intellij.javaee.cdi/diagram",
+    "n": "i.javaee.cdi/diagram",
+    "package": "com.intellij.cdi.diagram",
+    "sourceModule": "intellij.javaee.cdi",
+    "descriptor": "plugins/javaee/cdi/cdi-core/resources/intellij.javaee.cdi.diagram.xml",
+    "parent": "cck",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cXe",
+    "n": "com.intellij.javaee.ejb"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Xe",
+    "name": "intellij.javaee.ejb.impl",
+    "n": "i.javaee.ejb.impl",
+    "package": "com.intellij.javaee.ejb",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee.ejb",
+    "parent": "cXe",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "pA",
+    "name": "intellij.javaee.ejb.impl/diagram",
+    "n": "i.javaee.ejb.impl/diagram",
+    "package": "com.intellij.javaee.ejb.diagram",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.diagram.xml",
+    "parent": "cXe",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mi",
+    "name": "intellij.javaee.ejb.impl/jpa",
+    "n": "i.javaee.ejb.impl/jpa",
+    "package": "com.intellij.javaee.ejb.ql",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.jpa.xml",
+    "parent": "cXe",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "k9",
+    "name": "intellij.javaee.ejb.impl/intellijLang",
+    "n": "i.javaee.ejb.impl/intellijLang",
+    "package": "com.intellij.javaee.ejb.intelliLang",
+    "sourceModule": "intellij.javaee.ejb.impl",
+    "descriptor": "plugins/javaee/ejb/ejb-impl/resources/intellij.javaee.ejb.impl.intellijLang.xml",
+    "parent": "cXe",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cX0",
+    "n": "com.jetbrains.restWebServices"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "X0",
+    "name": "intellij.javaee.jax.rs",
+    "n": "i.javaee.jax.rs",
+    "package": "com.intellij.ws.rest",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.restWebServices",
+    "parent": "cX0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "g2",
+    "name": "intellij.javaee.jax.rs/cdi",
+    "n": "i.javaee.jax.rs/cdi",
+    "package": "com.intellij.ws.rest.cdi",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.cdi.xml",
+    "parent": "cX0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZC",
+    "name": "intellij.javaee.jax.rs/http-client",
+    "n": "i.javaee.jax.rs/http-client",
+    "package": "com.intellij.ws.rest.providers.httpClient",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.http-client.xml",
+    "parent": "cX0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c5",
+    "name": "intellij.javaee.jax.rs/intellijLang",
+    "n": "i.javaee.jax.rs/intellijLang",
+    "package": "com.intellij.ws.rest.intelliLang",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.intellijLang.xml",
+    "parent": "cX0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "GA",
+    "name": "intellij.javaee.jax.ws",
+    "n": "i.javaee.jax.ws",
+    "package": "com.intellij.ws.xml",
+    "sourceModule": "intellij.javaee.jax.ws",
+    "descriptor": "plugins/javaee/web-services/ws/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.jax.ws",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "coF",
+    "n": "com.intellij.javaee.jpa"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "oF",
+    "name": "intellij.javaee.jpa.impl",
+    "n": "i.javaee.jpa.impl",
+    "package": "com.intellij.jpa",
+    "sourceModule": "intellij.javaee.jpa.impl",
+    "descriptor": "plugins/javaee/jpa/jpa-impl/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee.jpa",
+    "parent": "coF",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "X2",
+    "name": "intellij.javaee.jpa.impl/diagram",
+    "n": "i.javaee.jpa.impl/diagram",
+    "package": "com.intellij.jpa.diagram",
+    "sourceModule": "intellij.javaee.jpa.impl",
+    "descriptor": "plugins/javaee/jpa/jpa-impl/resources/intellij.javaee.jpa.impl.diagram.xml",
+    "parent": "coF",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "FR",
+    "name": "intellij.javaee.jsf",
+    "n": "i.javaee.jsf",
+    "package": "com.intellij.jsf",
+    "sourceModule": "intellij.javaee.jsf",
+    "descriptor": "plugins/javaee/jsf/jsf-core/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jsf",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wv",
+    "name": "intellij.javaee.persistence.impl",
+    "n": "i.javaee.persistence.impl",
+    "package": "com.intellij.persistence",
+    "sourceModule": "intellij.javaee.persistence.impl",
+    "descriptor": "plugins/javaee/persistence/persistence-impl/META-INF/plugin.xml",
+    "pluginId": "com.intellij.persistence",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cs7",
+    "n": "com.intellij.javaee"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "s7",
+    "name": "intellij.javaee.platform.impl",
+    "n": "i.javaee.platform.impl",
+    "package": "com.intellij.javaee",
+    "sourceModule": "intellij.javaee.platform.impl",
+    "descriptor": "plugins/javaee/core/javaee-platform/javaee-impl/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee",
+    "parent": "cs7",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Rz",
+    "name": "intellij.javaee.langInjection",
+    "n": "i.javaee.langInjection",
+    "package": "com.intellij.javaee.langInjection",
+    "sourceModule": "intellij.javaee.langInjection",
+    "descriptor": "plugins/javaee/IntelliLang/resources/intellij.javaee.langInjection.xml",
+    "parent": "cs7",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gE",
+    "name": "intellij.webDeployment.transport",
+    "n": "i.webDeployment.transport",
+    "package": "com.jetbrains.plugins.webDeployment.transport",
+    "sourceModule": "intellij.webDeployment.transport",
+    "descriptor": "plugins/javaee/webDeployment-transport/resources/intellij.webDeployment.transport.xml",
+    "parent": "cs7",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ML",
+    "name": "intellij.javaee.platform.impl/database",
+    "n": "i.javaee.platform.impl/database",
+    "package": "com.intellij.javaee.dataSource",
+    "sourceModule": "intellij.javaee.platform.impl",
+    "descriptor": "plugins/javaee/core/javaee-platform/javaee-impl/resources/intellij.javaee.platform.impl.database.xml",
+    "parent": "cs7",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "fx",
+    "name": "intellij.javaee.web.impl",
+    "n": "i.javaee.web.impl",
+    "package": "com.intellij.javaee.web",
+    "sourceModule": "intellij.javaee.web.impl",
+    "descriptor": "plugins/javaee/web/web-impl/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.javaee.web",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cPN",
+    "n": "JavaScript"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "PN",
+    "name": "intellij.javascript.impl",
+    "n": "i.javascript.impl",
+    "package": null,
+    "sourceModule": "intellij.javascript.impl",
+    "descriptor": "plugins/JavaScriptLanguage/src/META-INF/plugin.xml",
+    "pluginId": "JavaScript",
+    "parent": "cPN",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HW",
+    "name": "intellij.javascript.impl/diagrams",
+    "n": "i.javascript.impl/diagrams",
+    "package": "com.intellij.lang.javascript.modules.diagram",
+    "sourceModule": "intellij.javascript.impl",
+    "descriptor": "plugins/JavaScriptLanguage/src/intellij.javascript.impl.diagrams.xml",
+    "parent": "cPN",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cn5",
+    "n": "com.intellij.jboss.arquillian"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "n5",
+    "name": "intellij.jboss.arquillian",
+    "n": "i.jboss.arquillian",
+    "package": "com.intellij.plugins.jboss.arquillian",
+    "sourceModule": "intellij.jboss.arquillian",
+    "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-core/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jboss.arquillian",
+    "parent": "cn5",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wD",
+    "name": "intellij.jboss.arquillian.junit",
+    "n": "i.jboss.arquillian.junit",
+    "package": "com.intellij.plugins.jboss.arquillian.junit",
+    "sourceModule": "intellij.jboss.arquillian.junit",
+    "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-junit/src/intellij.jboss.arquillian.junit.xml",
+    "parent": "cn5",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rq1",
+    "name": "intellij.jboss.arquillian.testng",
+    "n": "i.jboss.arquillian.testng",
+    "package": "com.intellij.plugins.jboss.arquillian.testng",
+    "sourceModule": "intellij.jboss.arquillian.testng",
+    "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-testng/src/intellij.jboss.arquillian.testng.xml",
+    "parent": "cn5",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cPz",
+    "n": "com.intellij.jbpm"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pz",
+    "name": "intellij.jboss.jbpm",
+    "n": "i.jboss.jbpm",
+    "package": "com.intellij.jboss.bpmn",
+    "sourceModule": "intellij.jboss.jbpm",
+    "descriptor": "plugins/frameworks/jboss/bpmn/jbpm/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jbpm",
+    "parent": "cPz",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "UK",
+    "name": "intellij.jboss.jbpm/jsp",
+    "n": "i.jboss.jbpm/jsp",
+    "package": "com.intellij.jboss.bpmn.jpdl.el",
+    "sourceModule": "intellij.jboss.jbpm",
+    "descriptor": "plugins/frameworks/jboss/bpmn/jbpm/resources/intellij.jboss.jbpm.jsp.xml",
+    "parent": "cPz",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "v4",
+    "name": "intellij.less",
+    "n": "i.less",
+    "package": "org.jetbrains.plugins.less",
+    "sourceModule": "intellij.less",
+    "descriptor": "plugins/less/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.less",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c2z",
+    "n": "org.jetbrains.idea.maven.ext"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "2z",
+    "name": "intellij.maven.ext",
+    "n": "i.maven.ext",
+    "package": "org.jetbrains.idea.maven.ext",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.idea.maven.ext",
+    "parent": "c2z",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wG",
+    "name": "intellij.maven.ext/profiler",
+    "n": "i.maven.ext/profiler",
+    "package": "org.jetbrains.idea.maven.ext.profiler",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.profiler.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7j",
+    "name": "intellij.maven.ext/remoteRun",
+    "n": "i.maven.ext/remoteRun",
+    "package": "org.jetbrains.idea.maven.ext.remoteRun",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.remoteRun.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "WW",
+    "name": "intellij.maven.ext/javaee",
+    "n": "i.maven.ext/javaee",
+    "package": "org.jetbrains.idea.maven.ext.jee",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "og",
+    "name": "intellij.maven.ext/javaee-ejb",
+    "n": "i.maven.ext/javaee-ejb",
+    "package": "org.jetbrains.idea.maven.ext.javaee.ejb",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee-ejb.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "h4",
+    "name": "intellij.maven.ext/javaee-web",
+    "n": "i.maven.ext/javaee-web",
+    "package": "org.jetbrains.idea.maven.ext.javaee.web",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.javaee-web.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "BV",
+    "name": "intellij.maven.ext/uml",
+    "n": "i.maven.ext/uml",
+    "package": "org.jetbrains.idea.maven.ext.uml",
+    "sourceModule": "intellij.maven.ext",
+    "descriptor": "plugins/maven-ext/src/main/resources/intellij.maven.ext.uml.xml",
+    "parent": "c2z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "caK",
+    "n": "com.intellij.micronaut"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "aK",
+    "name": "intellij.micronaut",
+    "n": "i.micronaut",
+    "package": "com.intellij.micronaut",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.micronaut",
+    "parent": "caK",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Zb",
+    "name": "intellij.micronaut/yaml",
+    "n": "i.micronaut/yaml",
+    "package": "com.intellij.micronaut.config.yaml",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.yaml.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "V3",
+    "name": "intellij.micronaut/javaee-jpa",
+    "n": "i.micronaut/javaee-jpa",
+    "package": "com.intellij.micronaut.data",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.javaee-jpa.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6K",
+    "name": "intellij.micronaut/maven",
+    "n": "i.micronaut/maven",
+    "package": "com.intellij.micronaut.run.maven",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.maven.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "de1",
+    "name": "intellij.micronaut/gradle",
+    "n": "i.micronaut/gradle",
+    "package": "com.intellij.micronaut.run.gradle",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.gradle.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "8C",
+    "name": "intellij.micronaut/restClient",
+    "n": "i.micronaut/restClient",
+    "package": "com.intellij.micronaut.provider.http.httpClient",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.restClient.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "U5",
+    "name": "intellij.micronaut/intelliLang",
+    "n": "i.micronaut/intelliLang",
+    "package": "com.intellij.micronaut.intelliLang",
+    "sourceModule": "intellij.micronaut",
+    "descriptor": "plugins/frameworks/micronaut/micronaut-core/resources/intellij.micronaut.intelliLang.xml",
+    "parent": "caK",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cJI",
+    "n": "com.intellij.microservices.config"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JI",
+    "name": "intellij.microservices.config",
+    "n": "i.microservices.config",
+    "package": "com.intellij.microservices.config",
+    "sourceModule": "intellij.microservices.config",
+    "descriptor": "plugins/microservices/microservices-config/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.config",
+    "parent": "cJI",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "60",
+    "name": "intellij.microservices.config/yaml",
+    "n": "i.microservices.config/yaml",
+    "package": "com.intellij.microservices.config.yaml",
+    "sourceModule": "intellij.microservices.config",
+    "descriptor": "plugins/microservices/microservices-config/resources/intellij.microservices.config.yaml.xml",
+    "parent": "cJI",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cs0",
+    "n": "com.intellij.microservices.ui"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "s0",
+    "name": "intellij.microservices.ui",
+    "n": "i.microservices.ui",
+    "package": "com.intellij.microservices.ui",
+    "sourceModule": "intellij.microservices.ui",
+    "descriptor": "plugins/microservices/microservices-ui/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.ui",
+    "parent": "cs0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mH",
+    "name": "intellij.microservices.ui/diagram",
+    "n": "i.microservices.ui/diagram",
+    "package": "com.intellij.microservices.ui.diagrams",
+    "sourceModule": "intellij.microservices.ui",
+    "descriptor": "plugins/microservices/microservices-ui/resources/intellij.microservices.ui.diagram.xml",
+    "parent": "cs0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cNn",
+    "n": "org.jetbrains.plugins.node-remote-interpreter"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Nn",
+    "name": "intellij.nodeJS.remoteInterpreter",
+    "n": "i.nodeJS.remoteInterpreter",
+    "package": "com.jetbrains.nodejs.remote",
+    "sourceModule": "intellij.nodeJS.remoteInterpreter",
+    "descriptor": "plugins/NodeJS/node-remote-interpreter/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.node-remote-interpreter",
+    "parent": "cNn",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ea",
+    "name": "intellij.nodeJS.remoteInterpreter/docker",
+    "n": "i.nodeJS.remoteInterpreter/docker",
+    "package": "com.jetbrains.nodejs.remote.docker",
+    "sourceModule": "intellij.nodeJS.remoteInterpreter",
+    "descriptor": "plugins/NodeJS/node-remote-interpreter/resources/intellij.nodeJS.remoteInterpreter.docker.xml",
+    "parent": "cNn",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cq0",
+    "n": "com.jetbrains.packagesearch.intellij-plugin"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "q0",
+    "name": "intellij.packageSearch",
+    "n": "i.packageSearch",
+    "package": "com.jetbrains.packagesearch",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.packagesearch.intellij-plugin",
+    "parent": "cq0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "7q",
+    "name": "intellij.packageSearch/gradle",
+    "n": "i.packageSearch/gradle",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.gradle",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.gradle.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "En",
+    "name": "intellij.packageSearch/kotlin",
+    "n": "i.packageSearch/kotlin",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.kotlin",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.kotlin.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "a0",
+    "name": "intellij.packageSearch/maven",
+    "n": "i.packageSearch/maven",
+    "package": "com.jetbrains.packagesearch.intellij.plugin.maven",
+    "sourceModule": "intellij.packageSearch",
+    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.maven.xml",
+    "parent": "cq0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cT41",
+    "n": "com.jetbrains.performancePlugin"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "T41",
+    "name": "intellij.performanceTesting",
+    "n": "i.performanceTesting",
+    "package": "com.jetbrains.performancePlugin",
+    "sourceModule": "intellij.performanceTesting",
+    "descriptor": "plugins/performanceTesting/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.performancePlugin",
+    "parent": "cT41",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HP1",
+    "name": "intellij.performanceTesting/profilers",
+    "n": "i.performanceTesting/profilers",
+    "package": "com.jetbrains.performancePlugin.profilers.impl",
+    "sourceModule": "intellij.performanceTesting",
+    "descriptor": "plugins/performanceTesting/resources/intellij.performanceTesting.profilers.xml",
+    "parent": "cT41",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HX",
+    "name": "intellij.php.docker",
+    "n": "i.php.docker",
+    "package": "com.jetbrains.php.remote.docker",
+    "sourceModule": "intellij.php.docker",
+    "descriptor": "phpstorm/phpstorm-docker/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.phpstorm-docker",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "qt",
+    "name": "intellij.phpspec",
+    "n": "i.phpspec",
+    "package": "com.jetbrains.php.phpspec",
+    "sourceModule": "intellij.phpspec",
+    "descriptor": "phpstorm/phpspec/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.php.phpspec",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "jH",
+    "name": "intellij.play",
+    "n": "i.play",
+    "package": "com.intellij.play",
+    "sourceModule": "intellij.play",
+    "descriptor": "plugins/frameworks/play/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.play",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "3J",
+    "name": "intellij.properties",
+    "n": "i.properties",
+    "package": "com.intellij.lang.properties",
+    "sourceModule": "intellij.properties",
+    "descriptor": "community/plugins/properties/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.properties",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cgk",
+    "n": "idea.plugin.protoeditor"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gk",
+    "name": "intellij.protoeditor",
+    "n": "i.protoeditor",
+    "package": "com.intellij.protobuf",
+    "sourceModule": "intellij.protoeditor",
+    "descriptor": "contrib/protobuf/resources/META-INF/plugin.xml",
+    "pluginId": "idea.plugin.protoeditor",
+    "parent": "cgk",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "IF",
+    "name": "intellij.protoeditor.go",
+    "n": "i.protoeditor.go",
+    "package": "com.intellij.protobuf.go",
+    "sourceModule": "intellij.protoeditor.go",
+    "descriptor": "contrib/protobuf/protoeditor-go/resources/intellij.protoeditor.go.xml",
+    "parent": "cgk",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "AZ",
+    "name": "intellij.protoeditor.python",
+    "n": "i.protoeditor.python",
+    "package": "com.intellij.protobuf.python",
+    "sourceModule": "intellij.protoeditor.python",
+    "descriptor": "contrib/protobuf/protoeditor-python/resources/intellij.protoeditor.python.xml",
+    "parent": "cgk",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mN",
+    "name": "intellij.protoeditor.jvm",
+    "n": "i.protoeditor.jvm",
+    "package": "com.intellij.protobuf.jvm",
+    "sourceModule": "intellij.protoeditor.jvm",
+    "descriptor": "contrib/protobuf/protoeditor-jvm/resources/intellij.protoeditor.jvm.xml",
+    "parent": "cgk",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c45",
+    "n": "com.intellij.lang.puppet"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "45",
+    "name": "intellij.puppet",
+    "n": "i.puppet",
+    "package": "com.intellij.lang.puppet",
+    "sourceModule": "intellij.puppet",
+    "descriptor": "plugins/puppet/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.lang.puppet",
+    "parent": "c45",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6D",
+    "name": "intellij.puppet/yaml",
+    "n": "i.puppet/yaml",
+    "package": "com.intellij.lang.puppet.ide.navigation.plugins.facts.yaml",
+    "sourceModule": "intellij.puppet",
+    "descriptor": "plugins/puppet/resources/intellij.puppet.yaml.xml",
+    "parent": "c45",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Mg",
+    "name": "intellij.pwa.core",
+    "n": "i.pwa.core",
+    "package": "com.intellij.analysis.pwa",
+    "sourceModule": "intellij.pwa.core",
+    "descriptor": "plugins/pwa/core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.analysis.pwa",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "che",
+    "n": "Pythonid"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "he",
+    "name": "intellij.python.plugin",
+    "n": "i.python.plugin",
+    "package": null,
+    "sourceModule": "intellij.python.plugin",
+    "descriptor": "python/pluginSrc/META-INF/plugin.xml",
+    "pluginId": "Pythonid",
+    "parent": "che",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "I6",
+    "name": "intellij.python.docker",
+    "n": "i.python.docker",
+    "package": "com.jetbrains.python.docker",
+    "sourceModule": "intellij.python.docker",
+    "descriptor": "python/python-docker/resources/intellij.python.docker.xml",
+    "parent": "che",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Sp1",
+    "name": "intellij.python.profiler",
+    "n": "i.python.profiler",
+    "package": "com.jetbrains.python.profiler",
+    "sourceModule": "intellij.python.profiler",
+    "descriptor": "python/profiler/resources/intellij.python.profiler.xml",
+    "parent": "che",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cQl",
+    "n": "com.intellij.quarkus"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ql",
+    "name": "intellij.quarkus",
+    "n": "i.quarkus",
+    "package": "com.intellij.quarkus",
+    "sourceModule": "intellij.quarkus",
+    "descriptor": "plugins/frameworks/quarkus/quarkus-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.quarkus",
+    "parent": "cQl",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "v2",
+    "name": "intellij.quarkus/yaml",
+    "n": "i.quarkus/yaml",
+    "package": "com.intellij.quarkus.config.yaml",
+    "sourceModule": "intellij.quarkus",
+    "descriptor": "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.yaml.xml",
+    "parent": "cQl",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ea",
+    "name": "intellij.quarkus/maven",
+    "n": "i.quarkus/maven",
+    "package": "com.intellij.quarkus.run.maven",
+    "sourceModule": "intellij.quarkus",
+    "descriptor": "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.maven.xml",
+    "parent": "cQl",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "YL",
+    "name": "intellij.quarkus/gradle",
+    "n": "i.quarkus/gradle",
+    "package": "com.intellij.quarkus.run.gradle",
+    "sourceModule": "intellij.quarkus",
+    "descriptor": "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.gradle.xml",
+    "parent": "cQl",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Op",
+    "name": "intellij.quarkus/docker",
+    "n": "i.quarkus/docker",
+    "package": "com.intellij.quarkus.run.docker",
+    "sourceModule": "intellij.quarkus",
+    "descriptor": "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.docker.xml",
+    "parent": "cQl",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "py",
+    "name": "intellij.reactivestreams.core",
+    "n": "i.reactivestreams.core",
+    "package": "com.intellij.reactivestreams",
+    "sourceModule": "intellij.reactivestreams.core",
+    "descriptor": "plugins/frameworks/reactive/reactive-streams-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.reactivestreams",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xs",
+    "name": "intellij.remoteRun",
+    "n": "i.remoteRun",
+    "package": "com.jetbrains.plugins.remotesdk",
+    "sourceModule": "intellij.remoteRun",
+    "descriptor": "plugins/remote-run/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.remote-run",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cYg1",
+    "n": "com.jetbrains.restClient"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Yg1",
+    "name": "intellij.restClient",
+    "n": "i.restClient",
+    "package": "com.intellij.httpClient",
+    "sourceModule": "intellij.restClient",
+    "descriptor": "plugins/restClient/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.restClient",
+    "parent": "cYg1",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eh",
+    "name": "intellij.restClient/intelliLang",
+    "n": "i.restClient/intelliLang",
+    "package": "com.intellij.httpClient.injection",
+    "sourceModule": "intellij.restClient",
+    "descriptor": "plugins/restClient/resources/intellij.restClient.intelliLang.xml",
+    "parent": "cYg1",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "KV",
+    "name": "intellij.restClient/javaScript",
+    "n": "i.restClient/javaScript",
+    "package": "com.intellij.httpClient.js",
+    "sourceModule": "intellij.restClient",
+    "descriptor": "plugins/restClient/resources/intellij.restClient.javaScript.xml",
+    "parent": "cYg1",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6Y",
+    "name": "intellij.restClient/microservicesUI",
+    "n": "i.restClient/microservicesUI",
+    "package": "com.intellij.httpClient.microservices",
+    "sourceModule": "intellij.restClient",
+    "descriptor": "plugins/restClient/resources/intellij.restClient.microservicesUI.xml",
+    "parent": "cYg1",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c2K",
+    "n": "org.jetbrains.plugins.ruby"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "2K",
+    "name": "intellij.ruby.plugin",
+    "n": "i.ruby.plugin",
+    "package": "org.jetbrains.plugins.ruby",
+    "sourceModule": "intellij.ruby.plugin",
+    "descriptor": "ruby/pluginResources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.ruby",
+    "parent": "c2K",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uu",
+    "name": "intellij.ruby.remoteInterpreter",
+    "n": "i.ruby.remoteInterpreter",
+    "package": "org.jetbrains.plugins.ruby.remote.impl",
+    "sourceModule": "intellij.ruby.remoteInterpreter",
+    "descriptor": "ruby/remote-interpreter/resources/intellij.ruby.remoteInterpreter.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "GA1",
+    "name": "intellij.ruby.copyright",
+    "n": "i.ruby.copyright",
+    "package": "org.jetbrains.plugins.ruby.copyright",
+    "sourceModule": "intellij.ruby.copyright",
+    "descriptor": "ruby/ruby-copyright/resources/intellij.ruby.copyright.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1I",
+    "name": "intellij.ruby.coverage",
+    "n": "i.ruby.coverage",
+    "package": "org.jetbrains.plugins.ruby.coverage",
+    "sourceModule": "intellij.ruby.coverage",
+    "descriptor": "ruby/coverage/ruby-coverage-common/resources/intellij.ruby.coverage.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "P5",
+    "name": "intellij.ruby.database",
+    "n": "i.ruby.database",
+    "package": "org.jetbrains.plugins.ruby.rails.database.impl",
+    "sourceModule": "intellij.ruby.database",
+    "descriptor": "ruby/ruby-database/resources/intellij.ruby.database.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HP2",
+    "name": "intellij.ruby.puppet.shared",
+    "n": "i.ruby.puppet.shared",
+    "package": "com.intellij.lang.puppet.rubyShared",
+    "sourceModule": "intellij.ruby.puppet.shared",
+    "descriptor": "ruby/ruby-puppet-shared/src/intellij.ruby.puppet.shared.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Jp",
+    "name": "intellij.ruby.java",
+    "n": "i.ruby.java",
+    "package": "org.jetbrains.plugins.ruby.java",
+    "sourceModule": "intellij.ruby.java",
+    "descriptor": "ruby/ruby-java/resources/intellij.ruby.java.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "5r",
+    "name": "intellij.ruby.puppet.java",
+    "n": "i.ruby.puppet.java",
+    "package": "com.intellij.lang.puppet.ruby.java.ide.project.idea",
+    "sourceModule": "intellij.ruby.puppet.java",
+    "descriptor": "ruby/ruby-puppet-java/resources/intellij.ruby.puppet.java.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "oO",
+    "name": "intellij.ruby.cucumber",
+    "n": "i.ruby.cucumber",
+    "package": "org.jetbrains.plugins.ruby.cucumber",
+    "sourceModule": "intellij.ruby.cucumber",
+    "descriptor": "ruby/ruby-cucumber/resources/intellij.ruby.cucumber.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pz1",
+    "name": "intellij.ruby.cucumber.java",
+    "n": "i.ruby.cucumber.java",
+    "package": "org.jetbrains.plugins.ruby.cucumber.java.run",
+    "sourceModule": "intellij.ruby.cucumber.java",
+    "descriptor": "ruby/ruby-plugin-cucumber/resources/intellij.ruby.cucumber.java.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "qc",
+    "name": "intellij.ruby.uml",
+    "n": "i.ruby.uml",
+    "package": "com.intellij.diagram.ruby",
+    "sourceModule": "intellij.ruby.uml",
+    "descriptor": "ruby/ruby-uml/resources/intellij.ruby.uml.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ch",
+    "name": "intellij.ruby.wsl",
+    "n": "i.ruby.wsl",
+    "package": "com.intellij.wsl.remote.ruby",
+    "sourceModule": "intellij.ruby.wsl",
+    "descriptor": "ruby/ruby-wsl/resources/intellij.ruby.wsl.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JW",
+    "name": "intellij.ruby.docker",
+    "n": "i.ruby.docker",
+    "package": "com.intellij.docker.remote.ruby",
+    "sourceModule": "intellij.ruby.docker",
+    "descriptor": "ruby/ruby-docker/resources/intellij.ruby.docker.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hA",
+    "name": "intellij.ruby.terminal",
+    "n": "i.ruby.terminal",
+    "package": "org.jetbrains.plugins.ruby.terminal",
+    "sourceModule": "intellij.ruby.terminal",
+    "descriptor": "ruby/ruby-terminal/resources/intellij.ruby.terminal.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eN",
+    "name": "intellij.ruby.puppet",
+    "n": "i.ruby.puppet",
+    "package": "com.intellij.lang.puppet.ruby",
+    "sourceModule": "intellij.ruby.puppet",
+    "descriptor": "ruby/ruby-puppet/resources/intellij.ruby.puppet.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "J4",
+    "name": "intellij.ruby.performanceTesting",
+    "n": "i.ruby.performanceTesting",
+    "package": "org.jetbrains.ruby.performanceTesting",
+    "sourceModule": "intellij.ruby.performanceTesting",
+    "descriptor": "ruby/performanceTesting/src/intellij.ruby.performanceTesting.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Jp1",
+    "name": "intellij.ruby.intelliLang",
+    "n": "i.ruby.intelliLang",
+    "package": "org.jetbrains.plugins.ruby.ruby.intelliLang",
+    "sourceModule": "intellij.ruby.intelliLang",
+    "descriptor": "ruby/ruby-intelliLang/resources/intellij.ruby.intelliLang.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "jl",
+    "name": "intellij.ruby.featuresTrainer",
+    "n": "i.ruby.featuresTrainer",
+    "package": "org.jetbrains.ruby.ift",
+    "sourceModule": "intellij.ruby.featuresTrainer",
+    "descriptor": "contrib/ide-features-trainer/ruby-features-trainer/resources/intellij.ruby.featuresTrainer.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "LD",
+    "name": "intellij.ruby.haml",
+    "n": "i.ruby.haml",
+    "package": "org.jetbrains.plugins.haml.ruby",
+    "sourceModule": "intellij.ruby.haml",
+    "descriptor": "ruby/ruby-haml/resources/intellij.ruby.haml.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "WF",
+    "name": "intellij.ruby.slim",
+    "n": "i.ruby.slim",
+    "package": "org.jetbrains.plugins.slim.ruby",
+    "sourceModule": "intellij.ruby.slim",
+    "descriptor": "ruby/ruby-slim/resources/intellij.ruby.slim.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "V31",
+    "name": "intellij.profiler.ruby",
+    "n": "i.profiler.ruby",
+    "package": "com.intellij.profiler.ruby",
+    "sourceModule": "intellij.profiler.ruby",
+    "descriptor": "plugins/profiler/ruby/resources/intellij.profiler.ruby.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Fa",
+    "name": "intellij.ruby.fileWatcher",
+    "n": "i.ruby.fileWatcher",
+    "package": "org.jetbrains.plugins.ruby.watcher",
+    "sourceModule": "intellij.ruby.fileWatcher",
+    "descriptor": "ruby/ruby-fileWatcher/resources/intellij.ruby.fileWatcher.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hE",
+    "name": "intellij.ruby.css",
+    "n": "i.ruby.css",
+    "package": "org.jetbrains.plugins.ruby.css",
+    "sourceModule": "intellij.ruby.css",
+    "descriptor": "ruby/ruby-css/resources/intellij.ruby.css.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "YF",
+    "name": "intellij.ruby.sass",
+    "n": "i.ruby.sass",
+    "package": "org.jetbrains.plugins.ruby.sass",
+    "sourceModule": "intellij.ruby.sass",
+    "descriptor": "ruby/ruby-sass/resources/intellij.ruby.sass.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "55",
+    "name": "intellij.ruby.javascriptDebugger",
+    "n": "i.ruby.javascriptDebugger",
+    "package": "com.intellij.javascript.debugger.rails",
+    "sourceModule": "intellij.ruby.javascriptDebugger",
+    "descriptor": "ruby/ruby-javascript-debugger/resources/intellij.ruby.javascriptDebugger.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ug",
+    "name": "intellij.ruby.javascript",
+    "n": "i.ruby.javascript",
+    "package": "org.jetbrains.plugins.ruby.erb.js",
+    "sourceModule": "intellij.ruby.javascript",
+    "descriptor": "ruby/ruby-javascript/resources/intellij.ruby.javascript.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "YP",
+    "name": "intellij.safe.push",
+    "n": "i.safe.push",
+    "package": "com.intellij.safepush",
+    "sourceModule": "intellij.safe.push",
+    "descriptor": "plugins/safe-push/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.idea.safepush",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ctR",
+    "n": "com.intellij.selenium"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tR",
+    "name": "intellij.selenium",
+    "n": "i.selenium",
+    "package": "com.intellij.selenium",
+    "sourceModule": "intellij.selenium",
+    "descriptor": "plugins/frameworks/selenium/selenium/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.selenium",
+    "parent": "ctR",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ha",
+    "name": "intellij.selenium.jvm",
+    "n": "i.selenium.jvm",
+    "package": "com.intellij.selenium.jvm",
+    "sourceModule": "intellij.selenium.jvm",
+    "descriptor": "plugins/frameworks/selenium/selenium-jvm/resources/intellij.selenium.jvm.xml",
+    "parent": "ctR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "fo",
+    "name": "intellij.selenium.docker",
+    "n": "i.selenium.docker",
+    "package": "com.intellij.selenium.docker",
+    "sourceModule": "intellij.selenium.docker",
+    "descriptor": "plugins/frameworks/selenium/selenium-docker/resources/intellij.selenium.docker.xml",
+    "parent": "ctR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Qs",
+    "name": "intellij.selenium.python",
+    "n": "i.selenium.python",
+    "package": "com.intellij.selenium.python",
+    "sourceModule": "intellij.selenium.python",
+    "descriptor": "plugins/frameworks/selenium/selenium-python/resources/intellij.selenium.python.xml",
+    "parent": "ctR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cv41",
+    "n": "com.jetbrains.sh"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "v41",
+    "name": "intellij.sh",
+    "n": "i.sh",
+    "package": "com.intellij.sh",
+    "sourceModule": "intellij.sh",
+    "descriptor": "community/plugins/sh/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.sh",
+    "parent": "cv41",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ae",
+    "name": "intellij.sh/terminal",
+    "n": "i.sh/terminal",
+    "package": "com.intellij.sh.run.terminal",
+    "sourceModule": "intellij.sh",
+    "descriptor": "community/plugins/sh/resources/intellij.sh.terminal.xml",
+    "parent": "cv41",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "XQ",
+    "name": "intellij.sh/copyright",
+    "n": "i.sh/copyright",
+    "package": "com.intellij.sh.copyright",
+    "sourceModule": "intellij.sh",
+    "descriptor": "community/plugins/sh/resources/intellij.sh.copyright.xml",
+    "parent": "cv41",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "WL",
+    "name": "intellij.slim",
+    "n": "i.slim",
+    "package": "org.jetbrains.plugins.slim",
+    "sourceModule": "intellij.slim",
+    "descriptor": "plugins/slim-lang/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.slim",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cmA",
+    "n": "com.jetbrains.space"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mA",
+    "name": "intellij.space",
+    "n": "i.space",
+    "package": "com.intellij.space",
+    "sourceModule": "intellij.space",
+    "descriptor": "plugins/space/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.space",
+    "parent": "cmA",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wI",
+    "name": "intellij.space.kotlin",
+    "n": "i.space.kotlin",
+    "package": "com.intellij.space.kotlin",
+    "sourceModule": "intellij.space.kotlin",
+    "descriptor": "plugins/space/kotlin/resources/intellij.space.kotlin.xml",
+    "parent": "cmA",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wr",
+    "name": "intellij.space.index",
+    "n": "i.space.index",
+    "package": "com.intellij.space.index",
+    "sourceModule": "intellij.space.index",
+    "descriptor": "plugins/space/index/resources/intellij.space.index.xml",
+    "parent": "cmA",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Er",
+    "name": "intellij.space.java",
+    "n": "i.space.java",
+    "package": "com.intellij.space.java",
+    "sourceModule": "intellij.space.java",
+    "descriptor": "plugins/space/java/resources/intellij.space.java.xml",
+    "parent": "cmA",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cA0",
+    "n": "jetbrains.team.auth"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "A0",
+    "name": "intellij.space.auth",
+    "n": "i.space.auth",
+    "package": "com.intellij.auth.jetbrains.team",
+    "sourceModule": "intellij.space.auth",
+    "descriptor": "plugins/space-auth/resources/META-INF/plugin.xml",
+    "pluginId": "jetbrains.team.auth",
+    "parent": "cA0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hC",
+    "name": "intellij.space.auth/jps-caches",
+    "n": "i.space.auth/jps-caches",
+    "package": "com.intellij.auth.jetbrains.team.jpsCaches",
+    "sourceModule": "intellij.space.auth",
+    "descriptor": "plugins/space-auth/resources/intellij.space.auth.jps-caches.xml",
+    "parent": "cA0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tX",
+    "name": "intellij.space.auth/shared-indices",
+    "n": "i.space.auth/shared-indices",
+    "package": "com.intellij.auth.jetbrains.team.sharedIndexes",
+    "sourceModule": "intellij.space.auth",
+    "descriptor": "plugins/space-auth/resources/intellij.space.auth.shared-indices.xml",
+    "parent": "cA0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "d9",
+    "name": "intellij.space.auth/exception-analyzer",
+    "n": "i.space.auth/exception-analyzer",
+    "package": "com.intellij.auth.jetbrains.team.exceptionAnalyzer",
+    "sourceModule": "intellij.space.auth",
+    "descriptor": "plugins/space-auth/resources/intellij.space.auth.exception-analyzer.xml",
+    "parent": "cA0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ccj",
+    "n": "com.intellij.spring.batch"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cj",
+    "name": "intellij.spring.batch",
+    "n": "i.spring.batch",
+    "package": "com.intellij.spring.batch",
+    "sourceModule": "intellij.spring.batch",
+    "descriptor": "plugins/spring/spring-batch/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.batch",
+    "parent": "ccj",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "QO",
+    "name": "intellij.spring.batch/javaee-integration",
+    "n": "i.spring.batch/javaee-integration",
+    "package": "com.intellij.spring.batch.el",
+    "sourceModule": "intellij.spring.batch",
+    "descriptor": "plugins/spring/spring-batch/resources/intellij.spring.batch.javaee-integration.xml",
+    "parent": "ccj",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cLR",
+    "n": "com.intellij.spring.boot"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "LR",
+    "name": "intellij.spring.boot.core",
+    "n": "i.spring.boot.core",
+    "package": "com.intellij.spring.boot",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.boot",
+    "parent": "cLR",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "b8",
+    "name": "intellij.spring.boot.core/jsp",
+    "n": "i.spring.boot.core/jsp",
+    "package": "com.intellij.spring.boot.model.autoconfigure.jam.el",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.jsp.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Kg",
+    "name": "intellij.spring.boot.core/mvc",
+    "n": "i.spring.boot.core/mvc",
+    "package": "com.intellij.spring.boot.mvc",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.mvc.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Xe1",
+    "name": "intellij.spring.boot.cloud",
+    "n": "i.spring.boot.cloud",
+    "package": "com.intellij.spring.boot.cloud",
+    "sourceModule": "intellij.spring.boot.cloud",
+    "descriptor": "plugins/spring/spring-boot/spring-cloud/spring-boot-cloud/resources/intellij.spring.boot.cloud.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "pl",
+    "name": "intellij.spring.boot.cloud.stream",
+    "n": "i.spring.boot.cloud.stream",
+    "package": "com.intellij.spring.boot.cloud.stream",
+    "sourceModule": "intellij.spring.boot.cloud.stream",
+    "descriptor": "plugins/spring/spring-boot/spring-cloud/spring-boot-cloud-stream/resources/intellij.spring.boot.cloud.stream.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ck1",
+    "name": "intellij.spring.boot.cloud.stream.el",
+    "n": "i.spring.boot.cloud.stream.el",
+    "package": "com.intellij.spring.boot.cloud.stream.el",
+    "sourceModule": "intellij.spring.boot.cloud.stream.el",
+    "descriptor": "plugins/spring/spring-boot/spring-cloud/spring-boot-cloud-stream-el/resources/intellij.spring.boot.cloud.stream.el.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "5v",
+    "name": "intellij.spring.boot.configYaml",
+    "n": "i.spring.boot.configYaml",
+    "package": "com.intellij.spring.boot.application.yaml",
+    "sourceModule": "intellij.spring.boot.configYaml",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-config-yaml/resources/intellij.spring.boot.configYaml.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "XO",
+    "name": "intellij.spring.boot.core/diagram",
+    "n": "i.spring.boot.core/diagram",
+    "package": "com.intellij.spring.boot.run.lifecycle.beans.diagram",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.diagram.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4q",
+    "name": "intellij.spring.boot.run",
+    "n": "i.spring.boot.run",
+    "package": "com.intellij.spring.boot.run",
+    "sourceModule": "intellij.spring.boot.run",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-run/resources/intellij.spring.boot.run.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "bk",
+    "name": "intellij.spring.boot.core/intelliLang",
+    "n": "i.spring.boot.core/intelliLang",
+    "package": "com.intellij.spring.boot.intelliLang",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.intelliLang.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "v5",
+    "name": "intellij.spring.boot.initializr",
+    "n": "i.spring.boot.initializr",
+    "package": "com.intellij.spring.boot.initializr",
+    "sourceModule": "intellij.spring.boot.initializr",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-initializr/resources/intellij.spring.boot.initializr.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "hJ",
+    "name": "intellij.spring.boot.core/gradle",
+    "n": "i.spring.boot.core/gradle",
+    "package": "com.intellij.spring.boot.initializr.gradle",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.gradle.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "EP",
+    "name": "intellij.spring.boot.core/maven",
+    "n": "i.spring.boot.core/maven",
+    "package": "com.intellij.spring.boot.initializr.maven",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.maven.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Mj",
+    "name": "intellij.spring.boot.core/shared-indices",
+    "n": "i.spring.boot.core/shared-indices",
+    "package": "com.intellij.spring.boot.initializr.indexing",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.shared-indices.xml",
+    "parent": "cLR",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c2Z",
+    "n": "com.intellij.spring"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "2Z",
+    "name": "intellij.spring.core",
+    "n": "i.spring.core",
+    "package": "com.intellij.spring",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring",
+    "parent": "c2Z",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6z",
+    "name": "intellij.spring.core/hibernate-integration",
+    "n": "i.spring.core/hibernate-integration",
+    "package": "com.intellij.spring.persistence.integration.hibernate",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.hibernate-integration.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wC",
+    "name": "intellij.spring.core/el",
+    "n": "i.spring.core/el",
+    "package": "com.intellij.spring.el",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.el.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gi",
+    "name": "intellij.spring.core/aop-integration",
+    "n": "i.spring.core/aop-integration",
+    "package": "com.intellij.spring.aop",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.aop-integration.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "or",
+    "name": "intellij.spring.core/jsf",
+    "n": "i.spring.core/jsf",
+    "package": "com.intellij.spring.jsf",
+    "sourceModule": "intellij.spring.core",
+    "descriptor": "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.jsf.xml",
+    "parent": "c2Z",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cG9",
+    "n": "com.intellij.spring.data"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "G9",
+    "name": "intellij.spring.data",
+    "n": "i.spring.data",
+    "package": "com.intellij.spring.data",
+    "sourceModule": "intellij.spring.data",
+    "descriptor": "plugins/spring/spring-data/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.data",
+    "parent": "cG9",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "5T",
+    "name": "intellij.spring.data/el",
+    "n": "i.spring.data/el",
+    "package": "com.intellij.spring.data.commons.ql",
+    "sourceModule": "intellij.spring.data",
+    "descriptor": "plugins/spring/spring-data/resources/intellij.spring.data.el.xml",
+    "parent": "cG9",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cnQ",
+    "n": "com.intellij.spring.integration"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "nQ",
+    "name": "intellij.spring.integration.core",
+    "n": "i.spring.integration.core",
+    "package": "com.intellij.spring.integration",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.integration",
+    "parent": "cnQ",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "UP",
+    "name": "intellij.spring.integration.core/el",
+    "n": "i.spring.integration.core/el",
+    "package": "com.intellij.spring.integration.injection.el",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.el.xml",
+    "parent": "cnQ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Bf",
+    "name": "intellij.spring.integration.core/security",
+    "n": "i.spring.integration.core/security",
+    "package": "com.intellij.spring.integration.model.xml.security",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.security.xml",
+    "parent": "cnQ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "dz",
+    "name": "intellij.spring.integration.core/groovy",
+    "n": "i.spring.integration.core/groovy",
+    "package": "com.intellij.spring.integration.injection.groovy",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.groovy.xml",
+    "parent": "cnQ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6J",
+    "name": "intellij.spring.integration.core/xpath",
+    "n": "i.spring.integration.core/xpath",
+    "package": "com.intellij.spring.integration.injection.xpath",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.xpath.xml",
+    "parent": "cnQ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ug1",
+    "name": "intellij.spring.integration.core/diagram",
+    "n": "i.spring.integration.core/diagram",
+    "package": "com.intellij.spring.integration.diagram",
+    "sourceModule": "intellij.spring.integration.core",
+    "descriptor": "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.diagram.xml",
+    "parent": "cnQ",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "v51",
+    "name": "intellij.spring.messaging",
+    "n": "i.spring.messaging",
+    "package": "com.intellij.spring.messaging",
+    "sourceModule": "intellij.spring.messaging",
+    "descriptor": "plugins/spring/spring-messaging/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.messaging",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cnx",
+    "n": "com.intellij.spring.mvc"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "nx",
+    "name": "intellij.spring.mvc.impl",
+    "n": "i.spring.mvc.impl",
+    "package": "com.intellij.spring.mvc",
+    "sourceModule": "intellij.spring.mvc.impl",
+    "descriptor": "plugins/spring/spring-mvc-support/spring-mvc/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.mvc",
+    "parent": "cnx",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xS",
+    "name": "intellij.spring.mvc.impl/el",
+    "n": "i.spring.mvc.impl/el",
+    "package": "com.intellij.spring.mvc.el",
+    "sourceModule": "intellij.spring.mvc.impl",
+    "descriptor": "plugins/spring/spring-mvc-support/spring-mvc/resources/intellij.spring.mvc.impl.el.xml",
+    "parent": "cnx",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cik",
+    "n": "com.intellij.spring.security"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ik",
+    "name": "intellij.spring.security",
+    "n": "i.spring.security",
+    "package": "com.intellij.spring.security",
+    "sourceModule": "intellij.spring.security",
+    "descriptor": "plugins/spring/spring-security/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.security",
+    "parent": "cik",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Tk",
+    "name": "intellij.spring.security/el",
+    "n": "i.spring.security/el",
+    "package": "com.intellij.spring.security.el",
+    "sourceModule": "intellij.spring.security",
+    "descriptor": "plugins/spring/spring-security/resources/intellij.spring.security.el.xml",
+    "parent": "cik",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c2j",
+    "n": "com.intellij.spring.webflow"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "2j",
+    "name": "intellij.spring.webflow",
+    "n": "i.spring.webflow",
+    "package": "com.intellij.spring.webflow",
+    "sourceModule": "intellij.spring.webflow",
+    "descriptor": "plugins/spring/spring-webflow/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.webflow",
+    "parent": "c2j",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "sY",
+    "name": "intellij.spring.webflow/mvc",
+    "n": "i.spring.webflow/mvc",
+    "package": "com.intellij.spring.webflow.mvc",
+    "sourceModule": "intellij.spring.webflow",
+    "descriptor": "plugins/spring/spring-webflow/resources/intellij.spring.webflow.mvc.xml",
+    "parent": "c2j",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "62",
+    "name": "intellij.spring.webflow/diagram",
+    "n": "i.spring.webflow/diagram",
+    "package": "com.intellij.spring.webflow.diagram",
+    "sourceModule": "intellij.spring.webflow",
+    "descriptor": "plugins/spring/spring-webflow/resources/intellij.spring.webflow.diagram.xml",
+    "parent": "c2j",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cTf",
+    "n": "com.intellij.spring.websocket"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Tf",
+    "name": "intellij.spring.websocket",
+    "n": "i.spring.websocket",
+    "package": "com.intellij.spring.websocket",
+    "sourceModule": "intellij.spring.websocket",
+    "descriptor": "plugins/spring/spring-websocket/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.spring.websocket",
+    "parent": "cTf",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "sv",
+    "name": "intellij.spring.websocket/js",
+    "n": "i.spring.websocket/js",
+    "package": "com.intellij.spring.websocket.js",
+    "sourceModule": "intellij.spring.websocket",
+    "descriptor": "plugins/spring/spring-websocket/resources/intellij.spring.websocket.js.xml",
+    "parent": "cTf",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xm",
+    "name": "intellij.struts2",
+    "n": "i.struts2",
+    "package": "com.intellij.struts2",
+    "sourceModule": "intellij.struts2",
+    "descriptor": "contrib/struts2/plugin/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.struts2",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cnC",
+    "n": "com.intellij.swagger"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "nC",
+    "name": "intellij.swagger",
+    "n": "i.swagger",
+    "package": "com.intellij.swagger",
+    "sourceModule": "intellij.swagger",
+    "descriptor": "plugins/frameworks/swagger/swagger-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.swagger",
+    "parent": "cnC",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "kf",
+    "name": "intellij.swagger/endpoints",
+    "n": "i.swagger/endpoints",
+    "package": "com.intellij.swagger.providers.endpoints",
+    "sourceModule": "intellij.swagger",
+    "descriptor": "plugins/frameworks/swagger/swagger-core/resources/intellij.swagger.endpoints.xml",
+    "parent": "cnC",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "sf",
+    "name": "intellij.thymeleaf",
+    "n": "i.thymeleaf",
+    "package": "com.intellij.thymeleaf",
+    "sourceModule": "intellij.thymeleaf",
+    "descriptor": "plugins/frameworks/thymeleaf/thymeleaf-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.thymeleaf",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cJP",
+    "n": "Git4Idea"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JP",
+    "name": "intellij.vcs.git",
+    "n": "i.vcs.git",
+    "package": "git4idea",
+    "sourceModule": "intellij.vcs.git",
+    "descriptor": "community/plugins/git4idea/resources/META-INF/plugin.xml",
+    "pluginId": "Git4Idea",
+    "parent": "cJP",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cIV",
+    "n": "org.jetbrains.plugins.github"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "IV",
+    "name": "intellij.vcs.github",
+    "n": "i.vcs.github",
+    "package": "org.jetbrains.plugins.github",
+    "sourceModule": "intellij.vcs.github",
+    "descriptor": "community/plugins/github/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.github",
+    "parent": "cIV",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4t",
+    "name": "intellij.vcs.github/tracker",
+    "n": "i.vcs.github/tracker",
+    "package": "org.jetbrains.plugins.github.tasks",
+    "sourceModule": "intellij.vcs.github",
+    "descriptor": "community/plugins/github/resources/intellij.vcs.github.tracker.xml",
+    "parent": "cIV",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cE9",
+    "n": "org.jetbrains.plugins.vue"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "E9",
+    "name": "intellij.vuejs",
+    "n": "i.vuejs",
+    "package": "org.jetbrains.vuejs",
+    "sourceModule": "intellij.vuejs",
+    "descriptor": "contrib/vuejs/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.vue",
+    "parent": "cE9",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "df",
+    "name": "intellij.vuejs/prettier",
+    "n": "i.vuejs/prettier",
+    "package": "org.jetbrains.vuejs.libraries.prettier",
+    "sourceModule": "intellij.vuejs",
+    "descriptor": "contrib/vuejs/resources/intellij.vuejs.prettier.xml",
+    "parent": "cE9",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "BD",
+    "name": "intellij.vuejs/copyright",
+    "n": "i.vuejs/copyright",
+    "package": "org.jetbrains.vuejs.copyright",
+    "sourceModule": "intellij.vuejs",
+    "descriptor": "contrib/vuejs/resources/intellij.vuejs.copyright.xml",
+    "parent": "cE9",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "IH",
+    "name": "intellij.w3validators",
+    "n": "i.w3validators",
+    "package": "org.jetbrains.w3validators",
+    "sourceModule": "intellij.w3validators",
+    "descriptor": "plugins/w3validators/src/META-INF/plugin.xml",
+    "pluginId": "W3Validators",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cxc",
+    "n": "com.jetbrains.plugins.webDeployment"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xc",
+    "name": "intellij.webDeployment",
+    "n": "i.webDeployment",
+    "package": "com.jetbrains.plugins.webDeployment",
+    "sourceModule": "intellij.webDeployment",
+    "descriptor": "plugins/webDeployment/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.plugins.webDeployment",
+    "parent": "cxc",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ff",
+    "name": "intellij.webDeployment/phpStorm",
+    "n": "i.webDeployment/phpStorm",
+    "package": "com.jetbrains.plugins.webDeployment.phpStorm",
+    "sourceModule": "intellij.webDeployment",
+    "descriptor": "plugins/webDeployment/resources/intellij.webDeployment.phpStorm.xml",
+    "parent": "cxc",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZR",
+    "name": "intellij.wsl.remoteSdk",
+    "n": "i.wsl",
+    "package": "com.intellij.wsl.remoteSdk",
+    "sourceModule": "intellij.wsl.remoteSdk",
+    "descriptor": "plugins/wsl-remote-sdk/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.wsl",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pc",
+    "name": "intellij.wsl.fs.helper",
+    "n": "i.wsl.fs.helper",
+    "package": "com.intellij.wsl.fs",
+    "sourceModule": "intellij.wsl.fs.helper",
+    "descriptor": "plugins/wsl-file-system-helper/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.wsl.fs",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "cV",
+    "name": "intellij.yaml",
+    "n": "i.yaml",
+    "package": "org.jetbrains.yaml",
+    "sourceModule": "intellij.yaml",
+    "descriptor": "community/plugins/yaml/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.yaml",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "vF",
+    "name": "util.android-studio.android-studio-roboscope-plugin",
+    "n": "util.android-studio.android-studio-roboscope-plugin",
+    "package": "org.jetbrains.kotlin.util.androidStudio.roboscope",
+    "sourceModule": "util.android-studio.android-studio-roboscope-plugin",
+    "descriptor": "plugins/kotlin/tools/android-studio/android-studio-roboscope-plugin/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.kotlin.androidStudio.roboscope",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "S9",
+    "name": "intellij.java.plugin",
+    "n": "i.java.plugin",
+    "package": null,
+    "sourceModule": "intellij.java.plugin",
+    "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.java",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "sk",
+    "name": "com.intellij.modules.json",
+    "n": "c.i.m.json",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "eZ",
+    "name": "com.intellij.modules.remoteServers",
+    "n": "c.i.m.remoteServers",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Rw",
+    "name": "com.intellij.modules.ssh",
+    "n": "c.i.m.ssh",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "KQ",
+    "name": "com.intellij.modules.vcs",
+    "n": "c.i.m.vcs",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "It",
+    "name": "com.intellij.modules.xml",
+    "n": "c.i.m.xml",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "pF",
+    "name": "com.intellij.modules.go-capable",
+    "n": "c.i.m.go-capable",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "6X",
+    "name": "intellij.terminal",
+    "n": "i.terminal",
+    "package": null,
+    "sourceModule": "intellij.terminal",
+    "descriptor": "community/plugins/terminal/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.terminal",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rS",
+    "name": "com.intellij.modules.coverage",
+    "n": "c.i.m.coverage",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "EG",
+    "name": "intellij.copyright",
+    "n": "i.copyright",
+    "package": null,
+    "sourceModule": "intellij.copyright",
+    "descriptor": "community/plugins/copyright/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.copyright",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1t",
+    "name": "intellij.indexing.shared",
+    "n": "i.indexing.shared",
+    "package": null,
+    "sourceModule": "intellij.indexing.shared",
+    "descriptor": "plugins/shared-indexes/core/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.indexing.shared.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "87",
+    "name": "intellij.gradle.java",
+    "n": "i.gradle.java",
+    "package": null,
+    "sourceModule": "intellij.gradle.java",
+    "descriptor": "community/plugins/gradle/java/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.gradle",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Rt",
+    "name": "intellij.markdown",
+    "n": "i.markdown",
+    "package": null,
+    "sourceModule": "intellij.markdown",
+    "descriptor": "community/plugins/markdown/resource/META-INF/plugin.xml",
+    "pluginId": "org.intellij.plugins.markdown",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4E",
+    "name": "intellij.ant",
+    "n": "i.ant",
+    "package": null,
+    "sourceModule": "intellij.ant",
+    "descriptor": "community/plugins/ant/resources/META-INF/plugin.xml",
+    "pluginId": "AntSupport",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "RM",
+    "name": "intellij.javaee.jsp.base.impl",
+    "n": "i.javaee.jsp.base.impl",
+    "package": null,
+    "sourceModule": "intellij.javaee.jsp.base.impl",
+    "descriptor": "plugins/jsp/jsp-base-impl/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jsp",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "MU",
+    "name": "intellij.java.i18n",
+    "n": "i.java.i18n",
+    "package": null,
+    "sourceModule": "intellij.java.i18n",
+    "descriptor": "community/plugins/java-i18n/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.java-i18n",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Up",
+    "name": "intellij.maven",
+    "n": "i.maven",
+    "package": null,
+    "sourceModule": "intellij.maven",
+    "descriptor": "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.idea.maven",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ep",
+    "name": "intellij.hibernate",
+    "n": "i.hibernate",
+    "package": null,
+    "sourceModule": "intellij.hibernate",
+    "descriptor": "plugins/frameworks/hibernate/hibernate-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.hibernate",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HN",
+    "name": "intellij.platform.langInjection",
+    "n": "i.platform.langInjection",
+    "package": null,
+    "sourceModule": "intellij.platform.langInjection",
+    "descriptor": "community/plugins/IntelliLang/src/META-INF/plugin.xml",
+    "pluginId": "org.intellij.intelliLang",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "J7",
+    "name": "com.intellij.modules.microservices",
+    "n": "c.i.m.microservices",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Pn",
+    "name": "intellij.css.impl",
+    "n": "i.css.impl",
+    "package": null,
+    "sourceModule": "intellij.css.impl",
+    "descriptor": "CSS/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.css",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1s",
+    "name": "intellij.microservices.uast",
+    "n": "i.microservices.uast",
+    "package": null,
+    "sourceModule": "intellij.microservices.uast",
+    "descriptor": "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.uast",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JM",
+    "name": "intellij.jboss",
+    "n": "i.jboss",
+    "package": null,
+    "sourceModule": "intellij.jboss",
+    "descriptor": "plugins/frameworks/jboss/jboss-core/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jboss.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "w3",
+    "name": "intellij.junit",
+    "n": "i.junit",
+    "package": null,
+    "sourceModule": "intellij.junit",
+    "descriptor": "community/plugins/junit/resources/META-INF/plugin.xml",
+    "pluginId": "JUnit",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4Y",
+    "name": "intellij.testng",
+    "n": "i.testng",
+    "package": null,
+    "sourceModule": "intellij.testng",
+    "descriptor": "community/plugins/testng/resources/META-INF/plugin.xml",
+    "pluginId": "TestNG-J",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "gg",
+    "name": "intellij.javascript.debugger",
+    "n": "i.javascript.debugger",
+    "package": null,
+    "sourceModule": "intellij.javascript.debugger",
+    "descriptor": "plugins/JavaScriptDebugger/resources/META-INF/plugin.xml",
+    "pluginId": "JavaScriptDebugger",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "kL",
+    "name": "intellij.nodeJS",
+    "n": "i.nodeJS",
+    "package": null,
+    "sourceModule": "intellij.nodeJS",
+    "descriptor": "plugins/NodeJS/resources/META-INF/plugin.xml",
+    "pluginId": "NodeJS",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "RP1",
+    "name": "kotlin.idea",
+    "n": "kotlin.idea",
+    "package": null,
+    "sourceModule": "kotlin.idea",
+    "descriptor": "community/plugins/kotlin/resources-descriptors/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.kotlin",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Rm",
+    "name": "intellij.php.impl",
+    "n": "i.php.impl",
+    "package": null,
+    "sourceModule": "intellij.php.impl",
+    "descriptor": "phpstorm/php/src/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.php",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uT",
+    "name": "intellij.php.remoteInterpreter",
+    "n": "i.php.remoteInterpreter",
+    "package": null,
+    "sourceModule": "intellij.php.remoteInterpreter",
+    "descriptor": "phpstorm/phpstorm-remote-interpreter/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.phpstorm-remote-interpreter",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "43",
+    "name": "com.intellij.modules.python",
+    "n": "c.i.m.python",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "M0",
+    "name": "intellij.platform.images",
+    "n": "i.platform.images",
+    "package": null,
+    "sourceModule": "intellij.platform.images",
+    "descriptor": "community/images/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.platform.images",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uy",
+    "name": "com.intellij.modules.ruby-capable",
+    "n": "c.i.m.ruby-capable",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Fa1",
+    "name": "com.intellij.modules.database",
+    "n": "c.i.m.database",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "DI",
+    "name": "intellij.gherkin",
+    "n": "i.gherkin",
+    "package": null,
+    "sourceModule": "intellij.gherkin",
+    "descriptor": "contrib/cucumber/resources/META-INF/plugin.xml",
+    "pluginId": "gherkin",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "tn",
+    "name": "intellij.sass",
+    "n": "i.sass",
+    "package": null,
+    "sourceModule": "intellij.sass",
+    "descriptor": "plugins/sass/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.plugins.sass",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Jw",
+    "name": "intellij.xpath",
+    "n": "i.xpath",
+    "package": null,
+    "sourceModule": "intellij.xpath",
+    "descriptor": "community/plugins/xpath/xpath-view/src/META-INF/plugin.xml",
+    "pluginId": "XPathView",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "MW",
+    "name": "intellij.tasks.core",
+    "n": "i.tasks.core",
+    "package": null,
+    "sourceModule": "intellij.tasks.core",
+    "descriptor": "community/plugins/tasks/tasks-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.tasks",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "iE",
+    "name": "intellij.prettierJS",
+    "n": "i.prettierJS",
+    "package": null,
+    "sourceModule": "intellij.prettierJS",
+    "descriptor": "contrib/prettierJS/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.prettierJS",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uu1",
+    "name": "com.intellij.modules.phpstorm",
+    "n": "c.i.m.phpstorm",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QZ_YE",
+    "source": "QZ",
+    "target": "YE",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "J6_rI",
+    "source": "J6",
+    "target": "rI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_Jm",
+    "source": "7x",
+    "target": "Jm",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_tU",
+    "source": "7x",
+    "target": "tU",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_dI",
+    "source": "7x",
+    "target": "dI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_ra",
+    "source": "7x",
+    "target": "ra",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_c9",
+    "source": "7x",
+    "target": "c9",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "up_RP",
+    "source": "up",
+    "target": "RP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "17_rP",
+    "source": "17",
+    "target": "rP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LX_Zu",
+    "source": "LX",
+    "target": "Zu",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_lR",
+    "source": "Bv",
+    "target": "lR",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_Ns",
+    "source": "Bv",
+    "target": "Ns",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bv_Py",
+    "source": "Bv",
+    "target": "Py",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HS_de",
+    "source": "HS",
+    "target": "de",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HS_xq",
+    "source": "HS",
+    "target": "xq",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "uY_Wz",
+    "source": "uY",
+    "target": "Wz",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_m2",
+    "source": "ae",
+    "target": "m2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_Pj",
+    "source": "ae",
+    "target": "Pj",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_30",
+    "source": "ae",
+    "target": "30",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_lQ",
+    "source": "ae",
+    "target": "lQ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_j5",
+    "source": "ae",
+    "target": "j5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_9e",
+    "source": "ae",
+    "target": "9e",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_tK",
+    "source": "ae",
+    "target": "tK",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_qK",
+    "source": "ae",
+    "target": "qK",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_7H",
+    "source": "ae",
+    "target": "7H",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_l8",
+    "source": "ae",
+    "target": "l8",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_VF",
+    "source": "ae",
+    "target": "VF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_rq",
+    "source": "ae",
+    "target": "rq",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hz_iY",
+    "source": "hz",
+    "target": "iY",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_QD",
+    "source": "FJ",
+    "target": "QD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_Ut",
+    "source": "FJ",
+    "target": "Ut",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_5n",
+    "source": "FJ",
+    "target": "5n",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_Bb",
+    "source": "FJ",
+    "target": "Bb",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "05_yH",
+    "source": "05",
+    "target": "yH",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "05_yC",
+    "source": "05",
+    "target": "yC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_Uo",
+    "source": "49",
+    "target": "Uo",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_jh",
+    "source": "49",
+    "target": "jh",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_e9",
+    "source": "49",
+    "target": "e9",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_I3",
+    "source": "49",
+    "target": "I3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_HP",
+    "source": "49",
+    "target": "HP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "49_Sw",
+    "source": "49",
+    "target": "Sw",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_Y3",
+    "source": "PH",
+    "target": "Y3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_hV",
+    "source": "PH",
+    "target": "hV",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_ti",
+    "source": "cq",
+    "target": "ti",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_Pt",
+    "source": "cq",
+    "target": "Pt",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_BI",
+    "source": "cq",
+    "target": "BI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_ul",
+    "source": "cq",
+    "target": "ul",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_mX",
+    "source": "cq",
+    "target": "mX",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_B2",
+    "source": "cq",
+    "target": "B2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "CF_T4",
+    "source": "CF",
+    "target": "T4",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_DZ",
+    "source": "mS",
+    "target": "DZ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mS_so",
+    "source": "mS",
+    "target": "so",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jt_ZS",
+    "source": "Jt",
+    "target": "ZS",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jt_TN",
+    "source": "Jt",
+    "target": "TN",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jt_Se",
+    "source": "Jt",
+    "target": "Se",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QG_RH",
+    "source": "QG",
+    "target": "RH",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sp_NV",
+    "source": "Sp",
+    "target": "NV",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "i7_1U",
+    "source": "i7",
+    "target": "1U",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "1u_X5",
+    "source": "1u",
+    "target": "X5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck_eI",
+    "source": "ck",
+    "target": "eI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_pA",
+    "source": "Xe",
+    "target": "pA",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_mi",
+    "source": "Xe",
+    "target": "mi",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_k9",
+    "source": "Xe",
+    "target": "k9",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_g2",
+    "source": "X0",
+    "target": "g2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_ZC",
+    "source": "X0",
+    "target": "ZC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_c5",
+    "source": "X0",
+    "target": "c5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_X2",
+    "source": "oF",
+    "target": "X2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_Rz",
+    "source": "s7",
+    "target": "Rz",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_gE",
+    "source": "s7",
+    "target": "gE",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_ML",
+    "source": "s7",
+    "target": "ML",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PN_HW",
+    "source": "PN",
+    "target": "HW",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_wD",
+    "source": "n5",
+    "target": "wD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_rq1",
+    "source": "n5",
+    "target": "rq1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pz_UK",
+    "source": "Pz",
+    "target": "UK",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_wG",
+    "source": "2z",
+    "target": "wG",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_7j",
+    "source": "2z",
+    "target": "7j",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_WW",
+    "source": "2z",
+    "target": "WW",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_og",
+    "source": "2z",
+    "target": "og",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_h4",
+    "source": "2z",
+    "target": "h4",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_BV",
+    "source": "2z",
+    "target": "BV",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_Zb",
+    "source": "aK",
+    "target": "Zb",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_V3",
+    "source": "aK",
+    "target": "V3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_6K",
+    "source": "aK",
+    "target": "6K",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_de1",
+    "source": "aK",
+    "target": "de1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_8C",
+    "source": "aK",
+    "target": "8C",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_U5",
+    "source": "aK",
+    "target": "U5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_60",
+    "source": "JI",
+    "target": "60",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s0_mH",
+    "source": "s0",
+    "target": "mH",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_Ea",
+    "source": "Nn",
+    "target": "Ea",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_7q",
+    "source": "q0",
+    "target": "7q",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_En",
+    "source": "q0",
+    "target": "En",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_a0",
+    "source": "q0",
+    "target": "a0",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T41_j0",
+    "source": "T41",
+    "target": "j0",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T41_HP1",
+    "source": "T41",
+    "target": "HP1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_IF",
+    "source": "gk",
+    "target": "IF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_AZ",
+    "source": "gk",
+    "target": "AZ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gk_mN",
+    "source": "gk",
+    "target": "mN",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "45_6D",
+    "source": "45",
+    "target": "6D",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "he_I6",
+    "source": "he",
+    "target": "I6",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "he_Sp1",
+    "source": "he",
+    "target": "Sp1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_v2",
+    "source": "Ql",
+    "target": "v2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_ea",
+    "source": "Ql",
+    "target": "ea",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_YL",
+    "source": "Ql",
+    "target": "YL",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_Op",
+    "source": "Ql",
+    "target": "Op",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_eh",
+    "source": "Yg1",
+    "target": "eh",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_KV",
+    "source": "Yg1",
+    "target": "KV",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_6Y",
+    "source": "Yg1",
+    "target": "6Y",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_uu",
+    "source": "2K",
+    "target": "uu",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_GA1",
+    "source": "2K",
+    "target": "GA1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_1I",
+    "source": "2K",
+    "target": "1I",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_P5",
+    "source": "2K",
+    "target": "P5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_HP2",
+    "source": "2K",
+    "target": "HP2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_Jp",
+    "source": "2K",
+    "target": "Jp",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_5r",
+    "source": "2K",
+    "target": "5r",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_oO",
+    "source": "2K",
+    "target": "oO",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_Pz1",
+    "source": "2K",
+    "target": "Pz1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_qc",
+    "source": "2K",
+    "target": "qc",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_Ch",
+    "source": "2K",
+    "target": "Ch",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_JW",
+    "source": "2K",
+    "target": "JW",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_hA",
+    "source": "2K",
+    "target": "hA",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_eN",
+    "source": "2K",
+    "target": "eN",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_J4",
+    "source": "2K",
+    "target": "J4",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_Jp1",
+    "source": "2K",
+    "target": "Jp1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_jl",
+    "source": "2K",
+    "target": "jl",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_LD",
+    "source": "2K",
+    "target": "LD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_WF",
+    "source": "2K",
+    "target": "WF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_V31",
+    "source": "2K",
+    "target": "V31",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_Fa",
+    "source": "2K",
+    "target": "Fa",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_hE",
+    "source": "2K",
+    "target": "hE",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_YF",
+    "source": "2K",
+    "target": "YF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_55",
+    "source": "2K",
+    "target": "55",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_ug",
+    "source": "2K",
+    "target": "ug",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_Ha",
+    "source": "tR",
+    "target": "Ha",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_fo",
+    "source": "tR",
+    "target": "fo",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_Qs",
+    "source": "tR",
+    "target": "Qs",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v41_Ae",
+    "source": "v41",
+    "target": "Ae",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v41_XQ",
+    "source": "v41",
+    "target": "XQ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_wI",
+    "source": "mA",
+    "target": "wI",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_wr",
+    "source": "mA",
+    "target": "wr",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_Er",
+    "source": "mA",
+    "target": "Er",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "A0_hC",
+    "source": "A0",
+    "target": "hC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "A0_tX",
+    "source": "A0",
+    "target": "tX",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "A0_d9",
+    "source": "A0",
+    "target": "d9",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cj_QO",
+    "source": "cj",
+    "target": "QO",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_b8",
+    "source": "LR",
+    "target": "b8",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_Kg",
+    "source": "LR",
+    "target": "Kg",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_Xe1",
+    "source": "LR",
+    "target": "Xe1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_pl",
+    "source": "LR",
+    "target": "pl",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_ck1",
+    "source": "LR",
+    "target": "ck1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_5v",
+    "source": "LR",
+    "target": "5v",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_XO",
+    "source": "LR",
+    "target": "XO",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_4q",
+    "source": "LR",
+    "target": "4q",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_bk",
+    "source": "LR",
+    "target": "bk",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_v5",
+    "source": "LR",
+    "target": "v5",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_hJ",
+    "source": "LR",
+    "target": "hJ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_EP",
+    "source": "LR",
+    "target": "EP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_Mj",
+    "source": "LR",
+    "target": "Mj",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_6z",
+    "source": "2Z",
+    "target": "6z",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_wC",
+    "source": "2Z",
+    "target": "wC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_gi",
+    "source": "2Z",
+    "target": "gi",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_or",
+    "source": "2Z",
+    "target": "or",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "G9_5T",
+    "source": "G9",
+    "target": "5T",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_UP",
+    "source": "nQ",
+    "target": "UP",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_Bf",
+    "source": "nQ",
+    "target": "Bf",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_dz",
+    "source": "nQ",
+    "target": "dz",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_6J",
+    "source": "nQ",
+    "target": "6J",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_ug1",
+    "source": "nQ",
+    "target": "ug1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_xS",
+    "source": "nx",
+    "target": "xS",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ik_Tk",
+    "source": "ik",
+    "target": "Tk",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_sY",
+    "source": "2j",
+    "target": "sY",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_62",
+    "source": "2j",
+    "target": "62",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tf_sv",
+    "source": "Tf",
+    "target": "sv",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nC_kf",
+    "source": "nC",
+    "target": "kf",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JP_TO",
+    "source": "JP",
+    "target": "TO",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_4t",
+    "source": "IV",
+    "target": "4t",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "E9_df",
+    "source": "E9",
+    "target": "df",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "E9_BD",
+    "source": "E9",
+    "target": "BD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_Ff",
+    "source": "xc",
+    "target": "Ff",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YE_Bv",
+    "source": "YE",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YE_HW",
+    "source": "YE",
+    "target": "HW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "9d_S9",
+    "source": "9d",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rI_TN",
+    "source": "rI",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Oc_cV",
+    "source": "Oc",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_sk",
+    "source": "7x",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7x_eZ",
+    "source": "7x",
+    "target": "eZ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jm_S9",
+    "source": "Jm",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tU_cV",
+    "source": "tU",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "c9_Rw",
+    "source": "c9",
+    "target": "Rw",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "up_cV",
+    "source": "up",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "up_tU",
+    "source": "up",
+    "target": "tU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "up_sk",
+    "source": "up",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "RP_Aa",
+    "source": "RP",
+    "target": "Aa",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "17_PN",
+    "source": "17",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rP_uY",
+    "source": "rP",
+    "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zu_Bv",
+    "source": "Zu",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "lR_S9",
+    "source": "lR",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ns_KQ",
+    "source": "Ns",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Py_3J",
+    "source": "Py",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "e7_7x",
+    "source": "e7",
+    "target": "7x",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HS_S9",
+    "source": "HS",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "de_Se",
+    "source": "de",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xq_JP",
+    "source": "xq",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "uY_It",
+    "source": "uY",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Wz_xc",
+    "source": "Wz",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gR_S9",
+    "source": "gR",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gR_3J",
+    "source": "gR",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vW_ae",
+    "source": "vW",
+    "target": "ae",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ae_pF",
+    "source": "ae",
+    "target": "pF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "m2_Aa",
+    "source": "m2",
+    "target": "Aa",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pj_6X",
+    "source": "Pj",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "30_v41",
+    "source": "30",
+    "target": "v41",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "lQ_rS",
+    "source": "lQ",
+    "target": "rS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "j5_EG",
+    "source": "j5",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "9e_uY",
+    "source": "9e",
+    "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tK_dn",
+    "source": "tK",
+    "target": "dn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "qK_49",
+    "source": "qK",
+    "target": "49",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7H_ZY",
+    "source": "7H",
+    "target": "ZY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "l8_M4",
+    "source": "l8",
+    "target": "M4",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "VF_Bv",
+    "source": "VF",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rq_TN",
+    "source": "rq",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hz_ae",
+    "source": "hz",
+    "target": "ae",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "iY_1t",
+    "source": "iY",
+    "target": "1t",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FJ_87",
+    "source": "FJ",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QD_Se",
+    "source": "QD",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ut_Bv",
+    "source": "Ut",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5n_ra",
+    "source": "5n",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bb_xs",
+    "source": "Bb",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "05_87",
+    "source": "05",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "05_s7",
+    "source": "05",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "yH_s7",
+    "source": "yH",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "yC_fx",
+    "source": "yC",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Uo_S9",
+    "source": "Uo",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jh_sk",
+    "source": "jh",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "e9_Rt",
+    "source": "e9",
+    "target": "Rt",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "I3_3J",
+    "source": "I3",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HP_It",
+    "source": "HP",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sw_cV",
+    "source": "Sw",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_3J",
+    "source": "PH",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "PH_S9",
+    "source": "PH",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Y3_4E",
+    "source": "Y3",
+    "target": "4E",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hV_F7",
+    "source": "hV",
+    "target": "F7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_s7",
+    "source": "cq",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_RM",
+    "source": "cq",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_PH",
+    "source": "cq",
+    "target": "PH",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_3J",
+    "source": "cq",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_2Z",
+    "source": "cq",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cq_87",
+    "source": "cq",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ti_EG",
+    "source": "ti",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pt_MU",
+    "source": "Pt",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "BI_Up",
+    "source": "BI",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ul_ep",
+    "source": "ul",
+    "target": "ep",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mX_HN",
+    "source": "mX",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "B2_rS",
+    "source": "B2",
+    "target": "rS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "CF_J7",
+    "source": "CF",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "CF_gk",
+    "source": "CF",
+    "target": "gk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "CF_Yg1",
+    "source": "CF",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "CF_sk",
+    "source": "CF",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T4_eh",
+    "source": "T4",
+    "target": "eh",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T4_HN",
+    "source": "T4",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T4_Yg1",
+    "source": "T4",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6U_3J",
+    "source": "6U",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6U_S9",
+    "source": "6U",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "DZ_Pn",
+    "source": "DZ",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "so_uY",
+    "source": "so",
+    "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "L2_S9",
+    "source": "L2",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "L2_J7",
+    "source": "L2",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "L2_ck",
+    "source": "L2",
+    "target": "ck",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "L2_1s",
+    "source": "L2",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Se_TN",
+    "source": "Se",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Se_ZS",
+    "source": "Se",
+    "target": "ZS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Se_S9",
+    "source": "Se",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "M4_1t",
+    "source": "M4",
+    "target": "1t",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "AL_It",
+    "source": "AL",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "AL_Pn",
+    "source": "AL",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "AL_PN",
+    "source": "AL",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "F7_S9",
+    "source": "F7",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6w_Mg",
+    "source": "6w",
+    "target": "Mg",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6w_S9",
+    "source": "6w",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QG_S9",
+    "source": "QG",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QG_J7",
+    "source": "QG",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QG_1s",
+    "source": "QG",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QG_HN",
+    "source": "QG",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "RH_Yg1",
+    "source": "RH",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "NV_Se",
+    "source": "NV",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "1U_Se",
+    "source": "1U",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "1u_s7",
+    "source": "1u",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "1u_Sp",
+    "source": "1u",
+    "target": "Sp",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X5_Xe",
+    "source": "X5",
+    "target": "Xe",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg_s7",
+    "source": "Yg",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg_It",
+    "source": "Yg",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck_s7",
+    "source": "ck",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck_oF",
+    "source": "ck",
+    "target": "oF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck_It",
+    "source": "ck",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eI_Bv",
+    "source": "eI",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_S9",
+    "source": "Xe",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_MU",
+    "source": "Xe",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_3J",
+    "source": "Xe",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_Pn",
+    "source": "Xe",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Xe_s7",
+    "source": "Xe",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "pA_Bv",
+    "source": "pA",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "pA_wv",
+    "source": "pA",
+    "target": "wv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mi_oF",
+    "source": "mi",
+    "target": "oF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "k9_HN",
+    "source": "k9",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_S9",
+    "source": "X0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_s7",
+    "source": "X0",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_J7",
+    "source": "X0",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_1s",
+    "source": "X0",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "g2_ck",
+    "source": "g2",
+    "target": "ck",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ZC_Yg1",
+    "source": "ZC",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "c5_HN",
+    "source": "c5",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "GA_s7",
+    "source": "GA",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "GA_S9",
+    "source": "GA",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "GA_J7",
+    "source": "GA",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "GA_1s",
+    "source": "GA",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_S9",
+    "source": "oF",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_It",
+    "source": "oF",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_MU",
+    "source": "oF",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_3J",
+    "source": "oF",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_s7",
+    "source": "oF",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_wv",
+    "source": "oF",
+    "target": "wv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_LX",
+    "source": "oF",
+    "target": "LX",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oF_Pn",
+    "source": "oF",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X2_Bv",
+    "source": "X2",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FR_s7",
+    "source": "FR",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FR_Sp",
+    "source": "FR",
+    "target": "Sp",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FR_fx",
+    "source": "FR",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FR_RM",
+    "source": "FR",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "FR_PN",
+    "source": "FR",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_S9",
+    "source": "wv",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_3J",
+    "source": "wv",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_Bv",
+    "source": "wv",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wv_LX",
+    "source": "wv",
+    "target": "LX",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_S9",
+    "source": "s7",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_MU",
+    "source": "s7",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s7_3J",
+    "source": "s7",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Rz_HN",
+    "source": "Rz",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gE_xc",
+    "source": "gE",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ML_LX",
+    "source": "ML",
+    "target": "LX",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_S9",
+    "source": "fx",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_It",
+    "source": "fx",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_MU",
+    "source": "fx",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_3J",
+    "source": "fx",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_Pn",
+    "source": "fx",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_s7",
+    "source": "fx",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_Sp",
+    "source": "fx",
+    "target": "Sp",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fx_J7",
+    "source": "fx",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HW_Bv",
+    "source": "HW",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_JM",
+    "source": "n5",
+    "target": "JM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_Up",
+    "source": "n5",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wD_w3",
+    "source": "wD",
+    "target": "w3",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wD_Up",
+    "source": "wD",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rq1_4Y",
+    "source": "rq1",
+    "target": "4Y",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rq1_Up",
+    "source": "rq1",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pz_s7",
+    "source": "Pz",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pz_Bv",
+    "source": "Pz",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "UK_RM",
+    "source": "UK",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_s7",
+    "source": "Hm",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_Xe",
+    "source": "Hm",
+    "target": "Xe",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_RM",
+    "source": "Hm",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Hm_FR",
+    "source": "Hm",
+    "target": "FR",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ng_Hm",
+    "source": "Ng",
+    "target": "Hm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vY_Hm",
+    "source": "vY",
+    "target": "Hm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v4_Pn",
+    "source": "v4",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2z_Up",
+    "source": "2z",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wG_Se",
+    "source": "wG",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7j_xs",
+    "source": "7j",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "WW_s7",
+    "source": "WW",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "WW_fx",
+    "source": "WW",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "og_WW",
+    "source": "og",
+    "target": "WW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "og_Xe",
+    "source": "og",
+    "target": "Xe",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "h4_WW",
+    "source": "h4",
+    "target": "WW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "h4_fx",
+    "source": "h4",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "BV_Bv",
+    "source": "BV",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_S9",
+    "source": "aK",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_J7",
+    "source": "aK",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_3J",
+    "source": "aK",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_JI",
+    "source": "aK",
+    "target": "JI",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "aK_1s",
+    "source": "aK",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zb_cV",
+    "source": "Zb",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Zb_60",
+    "source": "Zb",
+    "target": "60",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "V3_oF",
+    "source": "V3",
+    "target": "oF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6K_Up",
+    "source": "6K",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "de1_87",
+    "source": "de1",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "8C_Yg1",
+    "source": "8C",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "U5_HN",
+    "source": "U5",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_S9",
+    "source": "JI",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JI_3J",
+    "source": "JI",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "60_cV",
+    "source": "60",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s0_J7",
+    "source": "s0",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mH_Bv",
+    "source": "mH",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_xc",
+    "source": "Nn",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_xs",
+    "source": "Nn",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_PN",
+    "source": "Nn",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_gg",
+    "source": "Nn",
+    "target": "gg",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Nn_kL",
+    "source": "Nn",
+    "target": "kL",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ea_ra",
+    "source": "Ea",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_S9",
+    "source": "q0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "q0_8B",
+    "source": "q0",
+    "target": "8B",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "7q_87",
+    "source": "7q",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "En_RP1",
+    "source": "En",
+    "target": "RP1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "a0_Up",
+    "source": "a0",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "j0_S9",
+    "source": "j0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "j0_Se",
+    "source": "j0",
+    "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HP1_TN",
+    "source": "HP1",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "kP_87",
+    "source": "kP",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "kP_T41",
+    "source": "kP",
+    "target": "T41",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jU_Up",
+    "source": "jU",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jU_T41",
+    "source": "jU",
+    "target": "T41",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_ra",
+    "source": "HX",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_7x",
+    "source": "HX",
+    "target": "7x",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_Rm",
+    "source": "HX",
+    "target": "Rm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_uT",
+    "source": "HX",
+    "target": "uT",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_xs",
+    "source": "HX",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HX_xc",
+    "source": "HX",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "qt_Rm",
+    "source": "qt",
+    "target": "Rm",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "qt_cV",
+    "source": "qt",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jH_PH",
+    "source": "jH",
+    "target": "PH",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "3J_It",
+    "source": "3J",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IF_ae",
+    "source": "IF",
+    "target": "ae",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "AZ_43",
+    "source": "AZ",
+    "target": "43",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mN_S9",
+    "source": "mN",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6D_cV",
+    "source": "6D",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Mg_T41",
+    "source": "Mg",
+    "target": "T41",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "I6_ra",
+    "source": "I6",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sp1_Bv",
+    "source": "Sp1",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sp1_TN",
+    "source": "Sp1",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_S9",
+    "source": "Ql",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_J7",
+    "source": "Ql",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_3J",
+    "source": "Ql",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_JI",
+    "source": "Ql",
+    "target": "JI",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_ck",
+    "source": "Ql",
+    "target": "ck",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_X0",
+    "source": "Ql",
+    "target": "X0",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ql_1s",
+    "source": "Ql",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v2_cV",
+    "source": "v2",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v2_60",
+    "source": "v2",
+    "target": "60",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ea_Up",
+    "source": "ea",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YL_87",
+    "source": "YL",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Op_ra",
+    "source": "Op",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "py_S9",
+    "source": "py",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xs_xc",
+    "source": "xs",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xs_6X",
+    "source": "xs",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_It",
+    "source": "Yg1",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_J7",
+    "source": "Yg1",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Yg1_M0",
+    "source": "Yg1",
+    "target": "M0",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eh_HN",
+    "source": "eh",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "KV_PN",
+    "source": "KV",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6Y_s0",
+    "source": "6Y",
+    "target": "s0",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_cV",
+    "source": "2K",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_uy",
+    "source": "2K",
+    "target": "uy",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "uu_xs",
+    "source": "uu",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "GA1_EG",
+    "source": "GA1",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "1I_rS",
+    "source": "1I",
+    "target": "rS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "P5_Fa1",
+    "source": "P5",
+    "target": "Fa1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "HP2_45",
+    "source": "HP2",
+    "target": "45",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jp_S9",
+    "source": "Jp",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5r_S9",
+    "source": "5r",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5r_45",
+    "source": "5r",
+    "target": "45",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5r_HP2",
+    "source": "5r",
+    "target": "HP2",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "oO_DI",
+    "source": "oO",
+    "target": "DI",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pz1_oO",
+    "source": "Pz1",
+    "target": "oO",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Pz1_Jp",
+    "source": "Pz1",
+    "target": "Jp",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "qc_Bv",
+    "source": "qc",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ch_ZR",
+    "source": "Ch",
+    "target": "ZR",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ch_uu",
+    "source": "Ch",
+    "target": "uu",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JW_ra",
+    "source": "JW",
+    "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JW_uu",
+    "source": "JW",
+    "target": "uu",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JW_1I",
+    "source": "JW",
+    "target": "1I",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hA_6X",
+    "source": "hA",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eN_45",
+    "source": "eN",
+    "target": "45",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "eN_HP2",
+    "source": "eN",
+    "target": "HP2",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "J4_T41",
+    "source": "J4",
+    "target": "T41",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jp1_HN",
+    "source": "Jp1",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jl_dn",
+    "source": "jl",
+    "target": "dn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LD_mS",
+    "source": "LD",
+    "target": "mS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "WF_WL",
+    "source": "WF",
+    "target": "WL",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "V31_TN",
+    "source": "V31",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Fa_uY",
+    "source": "Fa",
+    "target": "uY",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hE_Pn",
+    "source": "hE",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YF_tn",
+    "source": "YF",
+    "target": "tn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "55_gg",
+    "source": "55",
+    "target": "gg",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ug_PN",
+    "source": "ug",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YP_KQ",
+    "source": "YP",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YP_JP",
+    "source": "YP",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_sk",
+    "source": "tR",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_HN",
+    "source": "tR",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_3J",
+    "source": "tR",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_Pn",
+    "source": "tR",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tR_Jw",
+    "source": "tR",
+    "target": "Jw",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ha_S9",
+    "source": "Ha",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ha_sk",
+    "source": "Ha",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ha_HN",
+    "source": "Ha",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ha_3J",
+    "source": "Ha",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "fo_7x",
+    "source": "fo",
+    "target": "7x",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Qs_43",
+    "source": "Qs",
+    "target": "43",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ae_6X",
+    "source": "Ae",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XQ_EG",
+    "source": "XQ",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "WL_Pn",
+    "source": "WL",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "p3_KQ",
+    "source": "p3",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "p3_JP",
+    "source": "p3",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_KQ",
+    "source": "mA",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_JP",
+    "source": "mA",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mA_Rt",
+    "source": "mA",
+    "target": "Rt",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wI_RP1",
+    "source": "wI",
+    "target": "RP1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wr_M4",
+    "source": "wr",
+    "target": "M4",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Er_S9",
+    "source": "Er",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hC_QD1",
+    "source": "hC",
+    "target": "QD1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "tX_M4",
+    "source": "tX",
+    "target": "M4",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "d9_HS",
+    "source": "d9",
+    "target": "HS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "cj_2Z",
+    "source": "cj",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QO_RM",
+    "source": "QO",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "QO_wC",
+    "source": "QO",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_2Z",
+    "source": "LR",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "LR_JI",
+    "source": "LR",
+    "target": "JI",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "b8_wC",
+    "source": "b8",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "b8_RM",
+    "source": "b8",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Kg_4q",
+    "source": "Kg",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Kg_nx",
+    "source": "Kg",
+    "target": "nx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "pl_nQ",
+    "source": "pl",
+    "target": "nQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck1_wC",
+    "source": "ck1",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck1_UP",
+    "source": "ck1",
+    "target": "UP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck1_pl",
+    "source": "ck1",
+    "target": "pl",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ck1_RM",
+    "source": "ck1",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5v_60",
+    "source": "5v",
+    "target": "60",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5v_cV",
+    "source": "5v",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XO_Bv",
+    "source": "XO",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XO_4q",
+    "source": "XO",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "bk_HN",
+    "source": "bk",
+    "target": "HN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v5_4q",
+    "source": "v5",
+    "target": "4q",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hJ_v5",
+    "source": "hJ",
+    "target": "v5",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "hJ_87",
+    "source": "hJ",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "EP_v5",
+    "source": "EP",
+    "target": "v5",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "EP_Up",
+    "source": "EP",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Mj_v5",
+    "source": "Mj",
+    "target": "v5",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Mj_1t",
+    "source": "Mj",
+    "target": "1t",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_MU",
+    "source": "2Z",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_3J",
+    "source": "2Z",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_J7",
+    "source": "2Z",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2Z_1s",
+    "source": "2Z",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6z_ep",
+    "source": "6z",
+    "target": "ep",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wC_RM",
+    "source": "wC",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "gi_9d",
+    "source": "gi",
+    "target": "9d",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "or_wC",
+    "source": "or",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "or_FR",
+    "source": "or",
+    "target": "FR",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "G9_2Z",
+    "source": "G9",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "G9_s7",
+    "source": "G9",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "G9_oF",
+    "source": "G9",
+    "target": "oF",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5T_RM",
+    "source": "5T",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "5T_wC",
+    "source": "5T",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_2Z",
+    "source": "nQ",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nQ_s7",
+    "source": "nQ",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "UP_RM",
+    "source": "UP",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "UP_wC",
+    "source": "UP",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Bf_ik",
+    "source": "Bf",
+    "target": "ik",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "dz_PH",
+    "source": "dz",
+    "target": "PH",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "6J_Jw",
+    "source": "6J",
+    "target": "Jw",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ug1_Bv",
+    "source": "ug1",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v51_2Z",
+    "source": "v51",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v51_J7",
+    "source": "v51",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v51_1s",
+    "source": "v51",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_MU",
+    "source": "nx",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_3J",
+    "source": "nx",
+    "target": "3J",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_s7",
+    "source": "nx",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_fx",
+    "source": "nx",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_RM",
+    "source": "nx",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_J7",
+    "source": "nx",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_1s",
+    "source": "nx",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nx_2Z",
+    "source": "nx",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xS_wC",
+    "source": "xS",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ik_9d",
+    "source": "ik",
+    "target": "9d",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ik_2Z",
+    "source": "ik",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ik_gi",
+    "source": "ik",
+    "target": "gi",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ik_s7",
+    "source": "ik",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tk_RM",
+    "source": "Tk",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tk_wC",
+    "source": "Tk",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_2Z",
+    "source": "2j",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_ik",
+    "source": "2j",
+    "target": "ik",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_s7",
+    "source": "2j",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_RM",
+    "source": "2j",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2j_wC",
+    "source": "2j",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "sY_nx",
+    "source": "sY",
+    "target": "nx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "62_Bv",
+    "source": "62",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tf_2Z",
+    "source": "Tf",
+    "target": "2Z",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tf_v51",
+    "source": "Tf",
+    "target": "v51",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Tf_s7",
+    "source": "Tf",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "sv_PN",
+    "source": "sv",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xm_s7",
+    "source": "xm",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xm_fx",
+    "source": "xm",
+    "target": "fx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xm_PN",
+    "source": "xm",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xm_MU",
+    "source": "xm",
+    "target": "MU",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nC_J7",
+    "source": "nC",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nC_cV",
+    "source": "nC",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "nC_sk",
+    "source": "nC",
+    "target": "sk",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "kf_s0",
+    "source": "kf",
+    "target": "s0",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "sf_PN",
+    "source": "sf",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "sf_s7",
+    "source": "sf",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "sf_RM",
+    "source": "sf",
+    "target": "RM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JP_KQ",
+    "source": "JP",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "TO_6X",
+    "source": "TO",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_JP",
+    "source": "IV",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_Rt",
+    "source": "IV",
+    "target": "Rt",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "4t_MW",
+    "source": "4t",
+    "target": "MW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "E9_PN",
+    "source": "E9",
+    "target": "PN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "E9_Pn",
+    "source": "E9",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "df_iE",
+    "source": "df",
+    "target": "iE",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "BD_EG",
+    "source": "BD",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IH_Pn",
+    "source": "IH",
+    "target": "Pn",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IH_It",
+    "source": "IH",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_It",
+    "source": "xc",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_KQ",
+    "source": "xc",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xc_Rw",
+    "source": "xc",
+    "target": "Rw",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ff_uu1",
+    "source": "Ff",
+    "target": "uu1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ZR_xs",
+    "source": "ZR",
+    "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vF_S9",
+    "source": "vF",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vF_w3",
+    "source": "vF",
+    "target": "w3",
+    "type": 0
+  }
+} ]

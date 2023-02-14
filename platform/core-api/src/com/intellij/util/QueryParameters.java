@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface to be (optionally, but preferably) implemented by {@link QueryExecutor} parameters to provide additional data.
- *
- * @author peter
  */
 public interface QueryParameters {
   @Nullable default Project getProject() {

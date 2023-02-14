@@ -7,11 +7,11 @@ The repository contains sources code of SimagePlugins as well as demo maya proje
 [W<fold text='...'>hat is this repository for](#what-is-this-repository-for)
 
 <fold text='unordered list: - [What is this reposi...k-to)'>- [What is this repository for](#what-is-this-repository-for)
-- [How do I get set up](#how-do-i-get-set-up)
-  <fold text='unordered list:   - [Requirements](#re...bles)'>  - [Requirements](#requirements)
+<fold text='- [How do I get set up...bles)'>- [How do I get set up](#how-do-i-get-set-up)
+    - [Requirements](#requirements)
     - [Environment Variables](#environment-variables)</fold>
-- [Plugin List](#plugin-list)
-  <fold text='unordered list:   - [MxBezier3scalar](...rmer)'>  - [MxBezier3scalar](#mxbezier3scalar)
+<fold text='- [Plugin List](#plugi...rmer)'>- [Plugin List](#plugin-list)
+    - [MxBezier3scalar](#mxbezier3scalar)
     - [PushDeformer](#pushdeformer)
     - [NoiseDeformer](#noisedeformer)
     - [SmoothDeformer](#smoothdeformer)</fold>
@@ -19,7 +19,7 @@ The repository contains sources code of SimagePlugins as well as demo maya proje
 
 <!-- /TOC </fold>-->
 
-<fold text='h2: ## What is this repository for'><fold text='h2: ## What is this repository for'>## What is this repository for
+<fold text='h2: ## What is this repository for'>## What is this repository for
 
 <fold text='unordered list: - Maya plugins for Sim... beta'>- Maya plugins for Simage Animation & Media Limited
 - Version: 0.0.1 beta</fold></fold>
@@ -146,4 +146,4 @@ deformer -type "Simage_SmoothDeformer"
 
 <fold text='unordered list: - Max Tong: maxtong198...e.hk>'>- Max Tong: maxtong198776@gmail.com
 
-- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold></fold>
+- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold>

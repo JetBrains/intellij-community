@@ -36,7 +36,7 @@ public class UnnecessarySuperfluousUnboxing {
     }
 
     Integer boxcutter(Integer i) {
-      return <warning descr="Unnecessary unboxing 'i.intValue()'">i.intValue()</warning>;
+      return i.<warning descr="Unnecessary unboxing">intValue</warning>();
     }
 }
 

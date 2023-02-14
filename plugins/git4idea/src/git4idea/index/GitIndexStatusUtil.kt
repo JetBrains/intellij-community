@@ -56,8 +56,23 @@ const val NUL = "\u0000"
  */
 
 @Throws(VcsException::class)
-fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
-              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<GitFileStatus> {
+fun getStatus(project: Project,
+              root: VirtualFile,
+              files: List<FilePath> = emptyList(),
+              withRenames: Boolean,
+              withUntracked: Boolean,
+              withIgnored: Boolean): List<GitFileStatus> {
+  return getFileStatus(project, root, files, withRenames, withUntracked, withIgnored)
+    .map { GitFileStatus(root, it) }
+}
+
+@Throws(VcsException::class)
+fun getFileStatus(project: Project,
+                  root: VirtualFile,
+                  files: List<FilePath>,
+                  withRenames: Boolean,
+                  withUntracked: Boolean,
+                  withIgnored: Boolean): List<LightFileStatus.StatusRecord> {
   val h = GitUtil.createHandlerWithPaths(files) {
     val h = GitLineHandler(project, root, GitCommand.STATUS)
     h.setSilent(true)
@@ -67,7 +82,7 @@ fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = empty
   }
 
   val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
-  return parseGitStatusOutput(output).map { GitFileStatus(root, it) }
+  return parseGitStatusOutput(output)
 }
 
 @Throws(VcsException::class)
@@ -130,6 +145,7 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
   while (it.hasNext()) {
     val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
+    if (line.startsWith("starting fsmonitor-daemon in ")) continue // skip debug output from experimental daemon in git-for-windows-2.33
     // format: XY_filename where _ stands for space.
     if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file
       throwGFE(GitBundle.message("status.exception.message.line.is.too.short"), output, line, '0', '0')

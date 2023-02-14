@@ -1,186 +1,115 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.ResizeableMappedFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public final class PersistentFSRecordsStorage {
-  private static final int PARENT_OFFSET = 0;
-  private static final int PARENT_SIZE = 4;
-  private static final int NAME_OFFSET = PARENT_OFFSET + PARENT_SIZE;
-  private static final int NAME_SIZE = 4;
-  private static final int FLAGS_OFFSET = NAME_OFFSET + NAME_SIZE;
-  private static final int FLAGS_SIZE = 4;
-  private static final int ATTR_REF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
-  private static final int ATTR_REF_SIZE = 4;
-  private static final int CONTENT_OFFSET = ATTR_REF_OFFSET + ATTR_REF_SIZE;
-  private static final int CONTENT_SIZE = 4;
-  private static final int TIMESTAMP_OFFSET = CONTENT_OFFSET + CONTENT_SIZE;
-  private static final int TIMESTAMP_SIZE = 8;
-  private static final int MOD_COUNT_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
-  private static final int MOD_COUNT_SIZE = 4;
-  private static final int LENGTH_OFFSET = MOD_COUNT_OFFSET + MOD_COUNT_SIZE;
-  private static final int LENGTH_SIZE = 8;
+@ApiStatus.Internal
+public interface PersistentFSRecordsStorage {
+  /**
+   * @return id of newly allocated record
+   */
+  int allocateRecord();
 
-  static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
-  private static final byte[] ZEROES = new byte[RECORD_SIZE];
+  void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
-  @NotNull
-  private final ResizeableMappedFile myFile;
+  int getAttributeRecordId(int fileId) throws IOException;
 
-  public PersistentFSRecordsStorage(@NotNull ResizeableMappedFile file) {
-    myFile = file;
-  }
+  int getParent(int fileId) throws IOException;
 
-  int getGlobalModCount() {
-    return myFile.getInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET);
-  }
+  void setParent(int fileId, int parentId) throws IOException;
 
-  int incGlobalModCount() {
-    final int count = getGlobalModCount() + 1;
-    myFile.putInt(PersistentFSHeaders.HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
-    return count;
-  }
+  int getNameId(int fileId) throws IOException;
 
-  long getTimestamp() {
-    return myFile.getLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET);
-  }
+  void setNameId(int fileId, int nameId) throws IOException;
 
-  void setVersion(int version) {
-    myFile.putInt(PersistentFSHeaders.HEADER_VERSION_OFFSET, version);
-    myFile.putLong(PersistentFSHeaders.HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
-  }
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  boolean setFlags(int fileId, int flags) throws IOException;
 
-  int getVersion() {
-    return myFile.getInt(PersistentFSHeaders.HEADER_VERSION_OFFSET);
-  }
+  //TODO RC: boolean updateFlags(fileId, int maskBits, boolean riseOrClean)
 
-  void setConnectionStatus(int connectionStatus) {
-    myFile.putInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-  }
+  long getLength(int fileId) throws IOException;
 
-  int getConnectionStatus() {
-    return myFile.getInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
-  }
 
-  int getNameId(int id) {
-    assert id > 0 : id;
-    return getRecordInt(id, NAME_OFFSET);
-  }
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  boolean setLength(int fileId, long length) throws IOException;
 
-  void setNameId(int id, int nameId) {
-    PersistentFSConnection.ensureIdIsValid(nameId);
-    putRecordInt(id, NAME_OFFSET, nameId);
-  }
+  long getTimestamp(int fileId) throws IOException;
 
-  int getParent(int id) {
-    return getRecordInt(id, PARENT_OFFSET);
-  }
 
-  void setParent(int id, int parent) {
-    putRecordInt(id, PARENT_OFFSET, parent);
-  }
+  /**
+   * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
+   */
+  boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
-  int getModCount(int id) {
-    return getRecordInt(id, MOD_COUNT_OFFSET);
-  }
+  int getModCount(int fileId) throws IOException;
 
-  @PersistentFS.Attributes
-  int doGetFlags(int id) {
-    return getRecordInt(id, FLAGS_OFFSET);
-  }
+  //TODO RC: why we need this method? Record modification is detected by actual modification -- there
+  //         are (seems to) no way to modify record bypassing it.
+  //         We use the method to mark file record modified there something derived is modified -- e.g.
+  //         children attribute or content. This looks suspicious to me: why we need to update _file_
+  //         record version in those cases?
+  void markRecordAsModified(int fileId) throws IOException;
 
-  void setFlags(int id, @PersistentFS.Attributes int flags) {
-    putRecordInt(id, FLAGS_OFFSET, flags);
-  }
+  int getContentRecordId(int fileId) throws IOException;
 
-  void setModCount(int id, int value) {
-    putRecordInt(id, MOD_COUNT_OFFSET, value);
-  }
+  boolean setContentRecordId(int fileId, int recordId) throws IOException;
 
-  int getContentRecordId(int fileId) {
-    return getRecordInt(fileId, CONTENT_OFFSET);
-  }
+  @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
-  void setContentRecordId(int id, int value) {
-    putRecordInt(id, CONTENT_OFFSET, value);
-  }
+  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
+  //         it makes it harder to implement a storage in a lock-free way
 
-  int getAttributeRecordId(int id) {
-    return getRecordInt(id, ATTR_REF_OFFSET);
-  }
+  /**
+   * Fills all record fields in one shot
+   */
+  void fillRecord(int fileId,
+                  long timestamp,
+                  long length,
+                  int flags,
+                  int nameId,
+                  int parentId,
+                  boolean overwriteAttrRef) throws IOException;
 
-  void setAttributeRecordId(int id, int value) {
-    putRecordInt(id, ATTR_REF_OFFSET, value);
-  }
+  void cleanRecord(int fileId) throws IOException;
 
-  long getTimestamp(int id) {
-    return myFile.getLong(getOffset(id, TIMESTAMP_OFFSET));
-  }
+  /* ======================== STORAGE HEADER ============================================================================== */
 
-  boolean putTimeStamp(int id, long value) {
-    int timeStampOffset = getOffset(id, TIMESTAMP_OFFSET);
-    if (myFile.getLong(timeStampOffset) != value) {
-      myFile.putLong(timeStampOffset, value);
-      return true;
-    }
-    return false;
-  }
+  long getTimestamp() throws IOException;
 
-  long getLength(int id) {
-    return myFile.getLong(getOffset(id, LENGTH_OFFSET));
-  }
+  void setConnectionStatus(int code) throws IOException;
 
-  boolean putLength(int id, long value) {
-    int lengthOffset = getOffset(id, LENGTH_OFFSET);
-    if (myFile.getLong(lengthOffset) != value) {
-      myFile.putLong(lengthOffset, value);
-      return true;
-    }
-    return false;
-  }
+  int getConnectionStatus() throws IOException;
 
-  void cleanRecord(int id) {
-    myFile.put(((long)id) * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
-  }
+  void setVersion(int version) throws IOException;
 
-  private int getRecordInt(int id, int offset) {
-    return myFile.getInt(getOffset(id, offset));
-  }
+  int getVersion() throws IOException;
 
-  private void putRecordInt(int id, int offset, int value) {
-    myFile.putInt(getOffset(id, offset), value);
-  }
+  int getGlobalModCount();
 
-  private static int getOffset(int id, int offset) {
-    return id * RECORD_SIZE + offset;
-  }
+  /**
+   * @return length of underlying file storage, in bytes
+   */
+  long length();
 
-  long length() {
-    return myFile.length();
-  }
+  boolean isDirty();
 
-  void close() {
-    try {
-      myFile.close();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  // TODO add a synchronization or requirement to be called on the loading
+  @SuppressWarnings("UnusedReturnValue")
+  boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
 
-  void force() {
-    try {
-      myFile.force();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  void force() throws IOException;
 
-  boolean isDirty() {
-    return myFile.isDirty();
+  void close() throws IOException;
+
+  @FunctionalInterface
+  interface FsRecordProcessor {
+    void process(int fileId, int nameId, int flags, int parentId, boolean corrupted);
   }
 }

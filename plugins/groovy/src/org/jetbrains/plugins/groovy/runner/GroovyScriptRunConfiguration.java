@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
@@ -40,7 +40,6 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.JdomKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,16 +49,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
 import org.jetbrains.plugins.groovy.runner.util.CommonProgramRunConfigurationParametersDelegate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
-/**
- * @author peter
- */
 public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
 
@@ -126,9 +119,8 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     if (scriptFile == null) return null;
 
     final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(scriptFile);
-    if (!(psiFile instanceof GroovyFile)) return null;
+    if (!(psiFile instanceof GroovyFile groovyFile)) return null;
 
-    final GroovyFile groovyFile = (GroovyFile)psiFile;
     if (groovyFile.isScript()) {
       return GroovyScriptUtil.getScriptType(groovyFile).getRunner();
     }
@@ -243,8 +235,7 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
       return new RefactoringElementAdapter() {
         @Override
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-          if (newElement instanceof GroovyFile) {
-            GroovyFile file = (GroovyFile)newElement;
+          if (newElement instanceof GroovyFile file) {
             setScriptPath(ScriptFileUtil.getScriptFilePath(file.getVirtualFile()));
           }
         }

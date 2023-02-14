@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.NonExtendable
 interface ExternalSystemProjectTracker {
 
   /**
@@ -39,20 +39,29 @@ interface ExternalSystemProjectTracker {
   fun remove(id: ExternalSystemProjectId)
 
   /**
-   * Marks project settings dirty
-   * It allows to schedule unconditional project refresh
+   * Marks project settings as dirty.
    */
   fun markDirty(id: ExternalSystemProjectId)
 
   /**
-   * Schedules incremental project refresh
+   * Marks all external project settings as dirty
+   * @see markDirty(ExternalSystemProjectId)
+   */
+  fun markDirtyAllProjects()
+
+  /**
+   * Schedules project reload, may be skipped if project is up-to-date, project is being reloaded or VCS is being updated.
+   * Use [markDirtyAllProjects] for force project reload.
    */
   fun scheduleProjectRefresh()
 
   /**
-   * Schedules update of reload notification status
+   * Schedules project reload or notification update.
+   * I.e. marks this place as safe to start auto-reload.
+   *
+   * @see scheduleProjectRefresh
    */
-  fun scheduleProjectNotificationUpdate()
+  fun scheduleChangeProcessing()
 
   companion object {
     @JvmStatic

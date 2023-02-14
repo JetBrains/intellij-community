@@ -112,8 +112,12 @@ public abstract class Entry {
 
   private static void buildPath(Entry e, StringBuilder builder) {
     if (e == null) return;
-    buildPath(e.getParent(), builder);
-    if (builder.length() > 0 && builder.charAt(builder.length() - 1) != Paths.DELIM) builder.append(Paths.DELIM);
+    Entry parent = e.getParent();
+    buildPath(parent, builder);
+    String pName = parent == null ? "" : parent.getName();
+    if (builder.length() > 0 && (pName.length() != 1 || pName.charAt(0) != Paths.DELIM)) {
+      builder.append(Paths.DELIM);
+    }
     builder.append(e.getNameSequence());
   }
 

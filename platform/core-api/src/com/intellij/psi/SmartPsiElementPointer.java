@@ -42,7 +42,7 @@ public interface SmartPsiElementPointer<E extends PsiElement> extends Pointer<E>
 
   /**
    * @return the range in the document. For committed document, it's the same as {@link #getPsiRange()}, for non-committed documents
-   * the ranges may be changed (like in {@link com.intellij.openapi.editor.RangeMarker}) or even invalidated. In the latter case returns null.
+   * the ranges may be changed (like in {@link com.intellij.openapi.editor.RangeMarker}) or even invalidated. In the latter case, returns null.
    * Returns null for invalid pointers.
    */
   @Nullable

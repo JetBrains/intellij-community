@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -13,7 +13,7 @@ import java.util.concurrent.ForkJoinPool;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractInspectionToolStarter implements ApplicationStarter {
-  protected InspectionApplication myApplication;
+  private InspectionApplication myApplication;
   protected InspectionToolCmdlineOptions myOptions;
 
   protected abstract AbstractInspectionCmdlineOptions createCmdlineOptions();
@@ -67,11 +67,14 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     myOptions.beforeStartup();
 
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    InspectionApplication.LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors() + "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+    InspectionApplication.LOG.info(
+      "CPU cores: " + Runtime.getRuntime().availableProcessors() + "; " +
+      "ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; " +
+      "factory: " + ForkJoinPool.commonPool().getFactory());
 
     myApplication.startup();
   }
@@ -85,7 +88,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     return opts.getVerboseLevelProperty() > 0;
   }
 
-  protected void printArgs(@NotNull List<String> args, @NotNull StringBuilder buff) {
+  private static void printArgs(@NotNull List<String> args, @NotNull StringBuilder buff) {
     if (args.size() < 2) {
       buff.append(" no arguments");
     }
@@ -94,7 +97,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     }
   }
 
-  protected void printHelpAndExit(@NotNull List<String> args, final InspectionToolCmdlineOptions opts) {
+  private static void printHelpAndExit(@NotNull List<String> args, final InspectionToolCmdlineOptions opts) {
     final StringBuilder buff = new StringBuilder();
     buff.append("\n");
     buff.append("Invalid options or syntax:");

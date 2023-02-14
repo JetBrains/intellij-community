@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.structureView.StructureView;
@@ -86,11 +85,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     return model;
   }
 
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("c", IdeBundle.message("search.everywhere.filter.classes.description"), this);
-  }
-
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
@@ -141,7 +135,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {
-            NavigationUtil.activateFileWithPsiElement(psi, openInCurrentWindow(modifiers));
+            NavigationUtil.activateFileWithPsiElement(psi, false);
             delegate.navigate(true);
 
           }
@@ -296,7 +290,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new ClassSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new ClassSearchEverywhereContributor(initEvent));
     }
   }
 

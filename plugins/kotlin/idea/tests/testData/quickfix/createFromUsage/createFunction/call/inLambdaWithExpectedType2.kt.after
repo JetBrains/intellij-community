@@ -1,0 +1,13 @@
+// "Create function 'createMe'" "true"
+fun param(p: () -> Boolean) {
+}
+
+fun use(){
+    param {
+        createMe()
+    }
+}
+
+fun createMe(): Boolean {
+    TODO("Not yet implemented")
+}

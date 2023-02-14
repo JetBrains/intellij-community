@@ -7,13 +7,12 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.rmi.RemoteServer
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.pom.Navigatable
@@ -48,7 +47,6 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val parameters = super.createJavaParameters()
     val wslParams = toWslParameters(parameters)
     wslParams.vmParametersList.add("-D${RemoteServer.SERVER_HOSTNAME}=${remoteHost}")
-    wslParams.vmParametersList.add("-Didea.maven.knownPort=true")
     wslParams.vmParametersList.add("-Didea.maven.wsl=true")
     return wslParams
   }
@@ -71,24 +69,16 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
 
   override fun startProcess(): ProcessHandler {
     val wslConfig = WslTargetEnvironmentConfiguration(myWslDistribution)
-    val myEnvFactory = WslTargetEnvironmentFactory(wslConfig)
+    val request = WslTargetEnvironmentRequest(wslConfig)
 
     val wslParams = createJavaParameters()
-    val request = myEnvFactory.createRequest()
     val languageRuntime = JavaLanguageRuntimeConfiguration()
 
     var jdkHomePath = myJdk.homePath
     val projectJdkHomePath = ProjectRootManager.getInstance(myProject).projectSdk?.homePath
     if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
         projectJdkHomePath) != myWslDistribution) {
-      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
-        override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
-        override val description: String = SyncBundle.message(
-          "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
-          "maven.sync.wsl.jdk.fix") + "</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
-        override fun getNavigatable(project: Project): Navigatable? = null
-      }, MessageEvent.Kind.WARNING)
+      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(BuildIssueWslJdk(), MessageEvent.Kind.WARNING)
     }
     else if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
         projectJdkHomePath) == myWslDistribution) {
@@ -116,18 +106,12 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     }
 
     languageRuntime.homePath = wslPath ?: "/usr"
-    myEnvFactory.targetConfiguration.addLanguageRuntime(languageRuntime)
-    val setup = JdkCommandLineSetup(request, myEnvFactory.targetConfiguration)
-    setup.setupCommandLine(wslParams)
-    setup.setupJavaExePath(wslParams)
+    request.configuration.addLanguageRuntime(languageRuntime)
 
-    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig)
+    val builder = wslParams.toCommandLine(request)
     builder.setWorkingDirectory(workingDirectory)
 
-    val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,
-                                                               TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
-
-    setup.provideEnvironment(wslEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
+    val wslEnvironment = request.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
     val manager = MavenProjectsManager.getInstance(myProject)
     val commandLine = builder.build()
@@ -136,4 +120,13 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val process = wslEnvironment.createProcess(commandLine, MavenProgressIndicator(myProject, manager::getSyncConsole).indicator)
     return MavenWslProcessHandler(process, commandPresentation, myWslDistribution)
   }
+}
+
+class BuildIssueWslJdk : BuildIssue {
+  override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
+  override val description: String = SyncBundle.message(
+    "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
+    "maven.sync.wsl.jdk.fix") + "</a>"
+  override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
+  override fun getNavigatable(project: Project): Navigatable? = null
 }

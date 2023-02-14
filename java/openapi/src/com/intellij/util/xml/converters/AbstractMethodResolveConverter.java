@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public abstract class AbstractMethodResolveConverter<ParentType extends DomElement> extends ResolvingConverter<PsiMethod> {
   public static final String ALL_METHODS = "*";
   private final Class<? extends ParentType> myDomMethodClass;

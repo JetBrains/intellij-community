@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template
 
 import com.intellij.codeInsight.template.impl.MacroCallNode
@@ -22,7 +22,7 @@ class LiveTemplateDynamicTest : LightPlatformCodeInsightTestCase() {
 
     val disposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, disposable)
-    Macro.EP_NAME.getPoint().registerExtension(FooBarMacro(), disposable)
+    Macro.EP_NAME.point.registerExtension(FooBarMacro(), disposable)
     assertTrue(variable.expression is MacroCallNode)
     assertTrue(variable.defaultValueExpression is MacroCallNode)
 
@@ -37,7 +37,7 @@ class LiveTemplateDynamicTest : LightPlatformCodeInsightTestCase() {
     override fun getPresentableName(): String = "Foo Bar"
 
 
-    override fun calculateResult(params: Array<out Expression>, context: ExpressionContext?): Result? {
+    override fun calculateResult(params: Array<out Expression>, context: ExpressionContext?): Result {
       return TextResult("Foo Bar")
     }
   }

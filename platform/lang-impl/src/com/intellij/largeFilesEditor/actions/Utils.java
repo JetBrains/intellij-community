@@ -4,7 +4,7 @@ package com.intellij.largeFilesEditor.actions;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,7 @@ final class Utils {
   }
 
   private static FileEditor getFileEditor(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.FILE_EDITOR);
+    return e.getData(PlatformCoreDataKeys.FILE_EDITOR);
   }
 
   private static Editor getEditor(AnActionEvent e) {

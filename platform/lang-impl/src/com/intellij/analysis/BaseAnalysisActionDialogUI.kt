@@ -3,9 +3,12 @@ package com.intellij.analysis
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 
@@ -16,31 +19,41 @@ internal class BaseAnalysisActionDialogUI {
             inspectTestSource: JCheckBox,
             analyzeInjectedCode: JCheckBox,
             buttons: ArrayList<JRadioButton>,
-            disposable: Disposable): JPanel {
+            disposable: Disposable,
+            additionalPanel: JComponent?,
+  ): JPanel {
 
     return panel {
-      titledRow(scopeTitle) {
-        for (item in viewItems) {
-          row {
-            cell {
-
+      group(scopeTitle) {
+        buttonsGroup {
+          for (item in viewItems) {
+            row {
               buttons.add(item.button)
-              item.button()
+              cell(item.button).apply {
+                if (item.additionalComponents.any()) gap(RightGap.SMALL)
+              }
               for (component in item.additionalComponents) {
                 if (component is Disposable) {
                   Disposer.register(disposable, component)
                 }
-                component()
+                cell(component)
+                  .align(AlignX.FILL)
               }
             }
           }
         }
 
-
         row {
-          cell {
-            inspectTestSource()
-            analyzeInjectedCode()
+          cell(inspectTestSource)
+          cell(analyzeInjectedCode)
+        }
+      }
+
+      if (additionalPanel != null) {
+        panel {
+          row {
+            cell(additionalPanel)
+              .align(AlignX.FILL)
           }
         }
       }

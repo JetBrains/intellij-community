@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -20,12 +20,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -33,28 +33,23 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   private VirtualFile myRoot;
 
   @Before
-  public void setUp() {
-    assumeSymLinkCreationIsSupported();
+  public void setUp() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File d1 = createTestDir(tempDir.getRoot(), "d1");
-    File d11 = createTestDir(d1, "d11");
-    createTestFile(d11, "f11.1");
-    createTestFile(d11, "f11.2");
-    createTestFile(d1, "f1.1");
-    createTestDir(d1, "d12");
-    File d13 = createTestDir(d1, "d13");
-    createTestFile(d13, "f13.1");
-    createTestFile(d13, "f13.2");
-    File d2 = createTestDir(tempDir.getRoot(), "d2");
-    createTestFile(d2, "f2.1");
-    createTestFile(d2, "f2.2");
-    File d3 = createTestDir(tempDir.getRoot(), "d3");
+    tempDir.newFile("d1/f1.1");
+    tempDir.newFile("d1/d11/f11.1");
+    tempDir.newFile("d1/d11/f11.2");
+    tempDir.newDirectory("d1/d12");
+    tempDir.newFile("d1/d13/f13.1");
+    tempDir.newFile("d1/d13/f13.2");
+    tempDir.newFile("d2/f2.1");
+    tempDir.newFile("d2/f2.2");
+    tempDir.newDirectory("d3");
 
-    createSymLink(d11.getPath(), d1.getPath() + "/d11_link");
-    createSymLink(d3.getPath(), d3.getPath() + "/d3_rec_link");
+    Files.createSymbolicLink(tempDir.getRootPath().resolve("d1/d11_link"), Path.of("d11"));
+    Files.createSymbolicLink(tempDir.getRootPath().resolve("d3/d3_rec_link"), Path.of(".."));
 
-    myRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir.getRoot());
-    assertNotNull(tempDir.getRoot().toString(), myRoot);
+    myRoot = tempDir.getVirtualFileRoot();
   }
 
   @After
@@ -66,42 +61,44 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
   public void visitAll() {
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      <- f13.1 [4]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              <- f13.1 [4]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -109,37 +106,39 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> "d11".equals(file.getName()) ? VirtualFileVisitor.SKIP_CHILDREN : VirtualFileVisitor.CONTINUE,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      <- f13.1 [4]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              <- f13.1 [4]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -147,33 +146,35 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> file.isDirectory() ? VirtualFileVisitor.CONTINUE : VirtualFileVisitor.SKIP_CHILDREN,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      -> f11.2 [3]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      -> f11.2 [3]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.1 [3]\n" +
-      "      -> f13.2 [3]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    -> f2.2 [2]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              -> f11.2 [3]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              -> f11.2 [3]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.1 [3]
+              -> f13.2 [3]
+            <- d13 [3]
+            -> f1.1 [2]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            -> f2.2 [2]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -185,21 +186,23 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
         return "f11.1".equals(file.getName()) ? skip.get() : VirtualFileVisitor.CONTINUE;
       },
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   @Test
@@ -207,10 +210,12 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       file -> "f11.1".equals(file.getName()) ? myRoot : VirtualFileVisitor.CONTINUE,
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+        """);
   }
 
   @Test
@@ -221,42 +226,50 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
         return VirtualFileVisitor.CONTINUE;
       },
       null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+        """);
   }
 
   @Test
   public void depthLimit() {
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "<- / [1]\n",
+      """
+        -> / [0]
+        <- / [1]
+        """,
       VirtualFileVisitor.limit(0)
     );
 
     doTest(
       null, null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n",
+      """
+        -> / [0]
+          -> d1 [1]
+          <- d1 [2]
+          -> d2 [1]
+          <- d2 [2]
+          -> d3 [1]
+          <- d3 [2]
+        <- / [1]
+        """,
       VirtualFileVisitor.ONE_LEVEL_DEEP
     );
 
     doTest(
       null, null,
-      "-> d1 [0]\n" +
-      "<- d1 [1]\n" +
-      "-> d2 [0]\n" +
-      "<- d2 [1]\n" +
-      "-> d3 [0]\n" +
-      "<- d3 [1]\n",
+      """
+        -> d1 [0]
+        <- d1 [1]
+        -> d2 [0]
+        <- d2 [1]
+        -> d3 [0]
+        <- d3 [1]
+        """,
       VirtualFileVisitor.SKIP_ROOT, VirtualFileVisitor.ONE_LEVEL_DEEP);
   }
 
@@ -265,40 +278,42 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
     doTest(
       null,
       file -> "d13".equals(file.getName()) ? Collections.singletonList(file.getChildren()[1]) : null,
-      "-> / [0]\n" +
-      "  -> d1 [1]\n" +
-      "    -> d11 [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11 [3]\n" +
-      "    -> d11_link [2]\n" +
-      "      -> f11.1 [3]\n" +
-      "      <- f11.1 [4]\n" +
-      "      -> f11.2 [3]\n" +
-      "      <- f11.2 [4]\n" +
-      "    <- d11_link [3]\n" +
-      "    -> d12 [2]\n" +
-      "    <- d12 [3]\n" +
-      "    -> d13 [2]\n" +
-      "      -> f13.2 [3]\n" +
-      "      <- f13.2 [4]\n" +
-      "    <- d13 [3]\n" +
-      "    -> f1.1 [2]\n" +
-      "    <- f1.1 [3]\n" +
-      "  <- d1 [2]\n" +
-      "  -> d2 [1]\n" +
-      "    -> f2.1 [2]\n" +
-      "    <- f2.1 [3]\n" +
-      "    -> f2.2 [2]\n" +
-      "    <- f2.2 [3]\n" +
-      "  <- d2 [2]\n" +
-      "  -> d3 [1]\n" +
-      "    -> d3_rec_link [2]\n" +
-      "    <- d3_rec_link [3]\n" +
-      "  <- d3 [2]\n" +
-      "<- / [1]\n");
+      """
+        -> / [0]
+          -> d1 [1]
+            -> d11 [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11 [3]
+            -> d11_link [2]
+              -> f11.1 [3]
+              <- f11.1 [4]
+              -> f11.2 [3]
+              <- f11.2 [4]
+            <- d11_link [3]
+            -> d12 [2]
+            <- d12 [3]
+            -> d13 [2]
+              -> f13.2 [3]
+              <- f13.2 [4]
+            <- d13 [3]
+            -> f1.1 [2]
+            <- f1.1 [3]
+          <- d1 [2]
+          -> d2 [1]
+            -> f2.1 [2]
+            <- f2.1 [3]
+            -> f2.2 [2]
+            <- f2.2 [3]
+          <- d2 [2]
+          -> d3 [1]
+            -> d3_rec_link [2]
+            <- d3_rec_link [3]
+          <- d3 [2]
+        <- / [1]
+        """);
   }
 
   private static class AbortException extends RuntimeException { }
@@ -322,9 +337,8 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
           return true;
         }
 
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           if (!visited.add(file)) {
             throw new AssertionError(file + " already visited");
           }
@@ -350,9 +364,8 @@ public class VirtualFileVisitorTest extends BareTestFixtureTestCase {
           backLog.put(file, s);
         }
 
-        @Nullable
         @Override
-        public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
           return iterable != null ? iterable.fun(file) : super.getChildrenIterable(file);
         }
       });

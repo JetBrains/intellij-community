@@ -10,10 +10,17 @@ import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+
+import java.util.Objects;
 
 /**
  * @author anna
@@ -29,6 +36,20 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
     setDefault(project.isDefault() ? true : null);
+    project.getMessageBus().connect().subscribe(WorkspaceModelTopics.CHANGED,
+      new WorkspaceModelChangeListener() {
+        @Override
+        public void changed(@NotNull VersionedStorageChange event) {
+          if (event.getChanges(JavaModuleSettingsEntity.class).stream().anyMatch(change ->
+            change instanceof EntityChange.Replaced<?> &&
+            !Objects.equals(((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getOldEntity().getLanguageLevelId(),
+                            ((EntityChange.Replaced<JavaModuleSettingsEntity>)change).getNewEntity().getLanguageLevelId())
+          )) {
+            languageLevelsChanged();
+          }
+        }
+      }
+    );
   }
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {

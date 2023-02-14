@@ -11,6 +11,7 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
+import org.gradle.api.file.RegularFile
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
@@ -18,8 +19,8 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
+import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
-import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -29,11 +30,16 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
+import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
  * @author Vladislav.Soroka
@@ -44,12 +50,15 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
   public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
+  public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
+  public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
-  static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
+  static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
     @NotNull
     @Override
-    Map<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new HashMap<Project, ExternalProject>()
+    ConcurrentMap<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+      return new ConcurrentHashMap<Project, ExternalProject>()
     }
   }
 
@@ -68,13 +77,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def cache = context.getData(PROJECTS_PROVIDER)
     def tasksFactory = context.getData(TASKS_PROVIDER)
     def sourceSetFinder = new SourceSetCachedFinder(context)
-    return doBuild(modelName, project, cache, tasksFactory, sourceSetFinder)
+    return doBuild(modelName, project, context, cache, tasksFactory, sourceSetFinder)
   }
 
   @Nullable
   private static Object doBuild(final String modelName,
                                 final Project project,
-                                Map<Project, ExternalProject> cache,
+                                ModelBuilderContext context,
+                                ConcurrentMap<Project, ExternalProject> cache,
                                 TasksFactory tasksFactory,
                                 SourceSetCachedFinder sourceSetFinder) {
     ExternalProject externalProject = cache[project]
@@ -99,7 +109,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, resolveSourceSetDependencies, sourceSetFinder)
+    defaultExternalProject.sourceSets = getSourceSets(project, context, resolveSourceSetDependencies, sourceSetFinder)
     defaultExternalProject.tasks = getTasks(project, tasksFactory)
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
     defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
@@ -108,7 +118,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
     final Map<String, DefaultExternalProject> childProjects = new TreeMap<String, DefaultExternalProject>()
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), cache, tasksFactory, sourceSetFinder)
+      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), context, cache, tasksFactory, sourceSetFinder)
       if (externalProjectChild instanceof DefaultExternalProject) {
         childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
       }
@@ -118,9 +128,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     defaultExternalProject.setChildProjects(childProjects)
-    cache.put(project, defaultExternalProject)
-
-    defaultExternalProject
+    def calculatedProject = cache.putIfAbsent(project, defaultExternalProject)
+    return calculatedProject != null ? calculatedProject : defaultExternalProject
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
@@ -189,6 +198,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @CompileDynamic
   private static Map<String, DefaultExternalSourceSet> getSourceSets(Project project,
+                                                                     ModelBuilderContext context,
                                                                      boolean resolveSourceSetDependencies,
                                                                      SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
@@ -204,13 +214,35 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def downloadJavadoc = false
     def downloadSources = true
 
+    def testSourceSets = []
+
+    def testingExtensionClass = null
+    try {
+      testingExtensionClass =
+        project.getPlugins().findPlugin("jvm-test-suite")?.getClass()?.classLoader?.loadClass("org.gradle.testing.base.TestingExtension")
+    }
+    catch (Exception ignore) {
+    }
+
+    if (is74OrBetter
+      && project.hasProperty("testing")
+      && testingExtensionClass != null
+      && testingExtensionClass.isAssignableFrom(project.testing.getClass())) {
+      testSourceSets = project.testing.suites.collect { it.getSources() }
+    }
+
     if (ideaPluginModule) {
       generatedSourceDirs =
         ideaPluginModule.hasProperty("generatedSourceDirs") ? new LinkedHashSet<>(ideaPluginModule.generatedSourceDirs) : null
       ideaSourceDirs = new LinkedHashSet<>(ideaPluginModule.sourceDirs)
       ideaResourceDirs = ideaPluginModule.hasProperty("resourceDirs") ? new LinkedHashSet<>(ideaPluginModule.resourceDirs) : []
-      ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
-      ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      if (is74OrBetter) {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSources.files)
+        ideaTestResourceDirs = new LinkedHashSet<>(ideaPluginModule.testResources.files)
+      } else {
+        ideaTestSourceDirs = new LinkedHashSet<>(ideaPluginModule.testSourceDirs)
+        ideaTestResourceDirs = ideaPluginModule.hasProperty("testResourceDirs") ? new LinkedHashSet<>(ideaPluginModule.testResourceDirs) : []
+      }
       downloadJavadoc = ideaPluginModule.downloadJavadoc
       downloadSources = ideaPluginModule.downloadSources
     }
@@ -230,20 +262,37 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       return result
     }
 
-    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
-    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, 'processTestResources')
+    def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, context, 'processResources')
+    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = getFilters(project, context, 'processTestResources')
     //def (javaIncludes,javaExcludes) = getFilters(project,'compileJava')
 
     def additionalIdeaGenDirs = [] as Collection<File>
     if (generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
       additionalIdeaGenDirs.addAll(generatedSourceDirs)
     }
-    sourceSets.all { SourceSet sourceSet ->
+    sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
 
       def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
       if (javaCompileTask instanceof JavaCompile) {
+        if (is67OrBetter) {
+          def compiler = javaCompileTask.javaCompiler
+          if (compiler.present) {
+            try {
+              def metadata = compiler.get().metadata
+              def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
+              boolean isFallbackToolchain = is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain();
+              boolean isJavaHomeCompiler = configuredInstallationPath != null && configuredInstallationPath == System.getProperty("java.home");
+              if (!isJavaHomeCompiler && !isFallbackToolchain) {
+                externalSourceSet.jdkInstallationPath = configuredInstallationPath
+              }
+            } catch (Throwable e) {
+              project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
+              project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
+            }
+          }
+        }
         externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
         externalSourceSet.preview = javaCompileTask.options.compilerArgs.contains("--enable-preview")
         externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility
@@ -255,19 +304,15 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
       def jarTask = project.tasks.findByName(sourceSet.jarTaskName)
       if (jarTask instanceof AbstractArchiveTask) {
-        externalSourceSet.artifacts = [jarTask.archivePath]
+        externalSourceSet.artifacts = [ is67OrBetter ?
+                                        ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
+                                        jarTask.archivePath ]
       }
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      if (ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
-        resourcesDirectorySet.addGradleOutputDir(ideaPluginOutDir)
-      }
-      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
-        resourcesDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
-      }
       if (is4OrBetter) {
         if (sourceSet.output.resourcesDir) {
           resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
@@ -288,19 +333,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
       def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ||
                                                               (!resolveSourceSetDependencies && SourceSet.TEST_SOURCE_SET_NAME !=
-                                                               sourceSet.name) ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
+                                                               sourceSet.name) ? "production" : toCamelCase(sourceSet.name, true)))
       resourcesDirectorySet.outputDir = new File(ideaOutDir, "resources")
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      if (ideaPluginOutDir && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name) {
-        javaDirectorySet.addGradleOutputDir(ideaPluginOutDir)
-      }
-      if (ideaPluginTestOutDir && SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
-        javaDirectorySet.addGradleOutputDir(ideaPluginTestOutDir)
-      }
       if (is4OrBetter) {
         for (File outDir : sourceSet.output.classesDirs.files) {
           javaDirectorySet.addGradleOutputDir(outDir)
@@ -359,8 +398,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
       else {
         boolean isTestSourceSet = false
+        boolean explicitlyMarkedAsTests = ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)
+        boolean knownTestingSourceSet = testSourceSets.contains(sourceSet)
         if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
-          && ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)) {
+          && (explicitlyMarkedAsTests || knownTestingSourceSet)) {
           javaDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
           resourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
           sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
@@ -563,7 +604,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   }
 
   @CompileDynamic
-  static List<List> getFilters(Project project, String taskName) {
+  static List<List> getFilters(Project project, ModelBuilderContext context, String taskName) {
     def includes = []
     def excludes = []
     def filterReaders = [] as List<ExternalFilter>
@@ -577,63 +618,76 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       return [includes, excludes, filterReaders]
     }
 
-    try {
-      if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
-        //noinspection GrUnresolvedAccess
-        def properties = filterableTask.getMainSpec().properties
-        def copyActions = properties?.allCopyActions ?: properties?.copyActions
-
-        if (copyActions) {
-          copyActions.each { Action<? super FileCopyDetails> action ->
-            def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
-            if (filterClass != null) {
-              //noinspection GrUnresolvedAccess
-              def filterType = filterClass.name
-              def filter = [filterType: filterType] as DefaultExternalFilter
-
-              def props = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
-              if (props != null) {
-                  if ('org.apache.tools.ant.filters.ExpandProperties' == filterType && props['project']) {
-                    if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties)
-                  }
-                  else {
-                    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props)
-                  }
-              }
-              filterReaders << filter
-            }
-            else if (action.class.simpleName == 'RenamingCopyAction' && action.hasProperty('transformer')) {
-              //noinspection GrUnresolvedAccess
-              if (action.transformer.hasProperty('matcher') && action?.transformer?.hasProperty('replacement')) {
-                //noinspection GrUnresolvedAccess
-                String pattern = action?.transformer?.matcher?.pattern()?.pattern ?: action?.transformer?.pattern?.pattern
-                //noinspection GrUnresolvedAccess
-                String replacement = action?.transformer?.replacement
-                def filter = [filterType: 'RenamingCopyFilter'] as DefaultExternalFilter
-                if (pattern && replacement) {
-                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
-                  filterReaders << filter
-                }
-              }
-            }
-//          else {
-//            project.logger.error(
-//              ErrorMessageBuilder.create(project, "Resource configuration errors")
-//                .withDescription("Unsupported copy action found: " + action.class.name).build())
-//          }
-          }
+    if (filterableTask instanceof ContentFilterable && filterableTask.metaClass.respondsTo(filterableTask, "getMainSpec")) {
+      //noinspection GrUnresolvedAccess
+      def properties = filterableTask.getMainSpec().properties
+      def copyActions = properties?.allCopyActions ?: properties?.copyActions
+      copyActions?.each { Action<? super FileCopyDetails> action ->
+        def filter = getFilter(project, context, action)
+        if (filter != null) {
+          filterReaders << filter
         }
       }
-    }
-    catch (Exception ignore) {
-//      project.logger.error(
-//        ErrorMessageBuilder.create(project, e, "Resource configuration errors")
-//          .withDescription("Unable to resolve resources filtering configuration").build())
     }
 
     return [includes, excludes, filterReaders]
   }
 
+  private static ExternalFilter getFilter(Project project, ModelBuilderContext context, Action<? super FileCopyDetails> action) {
+    try {
+      if ('RenamingCopyAction' == action.class.simpleName) {
+        return getRenamingCopyFilter(action)
+      }
+      else {
+        return getCommonFilter(action)
+      }
+    }
+    catch (Exception ignored) {
+      context.report(project, ErrorMessageBuilder.create(project, "Resource configuration errors")
+        .withDescription("Cannot resolve resource filtering of " + action.class.simpleName + ". " +
+                         "IDEA may fail to build project. " +
+                         "Consider using delegated build (enabled by default).")
+        .buildMessage())
+    }
+    return null
+  }
+
+  @CompileDynamic
+  private static ExternalFilter getCommonFilter(Action<? super FileCopyDetails> action) {
+    def filterClass = findPropertyWithType(action, Class, 'filterType', 'val$filterType', 'arg$2', 'arg$1')
+    if (filterClass == null) {
+      throw new IllegalArgumentException("Unsupported action found: " + action.class.name)
+    }
+
+    def filterType = filterClass.name
+    def properties = findPropertyWithType(action, Map, 'properties', 'val$properties', 'arg$1')
+    if ('org.apache.tools.ant.filters.ExpandProperties' == filterType) {
+      if (properties != null && properties['project'] != null) {
+        properties = properties['project'].properties
+      }
+    }
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = filterType
+    if (properties != null) {
+      filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(properties)
+    }
+    return filter
+  }
+
+  @CompileDynamic
+  private static ExternalFilter getRenamingCopyFilter(Action<? super FileCopyDetails> action) {
+    assert 'RenamingCopyAction' == action.class.simpleName
+
+    def pattern = action.transformer.matcher?.pattern()?.pattern() ?:
+                  action.transformer.pattern?.pattern()
+    def replacement = action.transformer.replacement
+
+    def filter = new DefaultExternalFilter()
+    filter.filterType = 'RenamingCopyFilter'
+    filter.propertiesAsJsonMap = new GsonBuilder().create().toJson([pattern: pattern, replacement: replacement])
+    return filter
+  }
 
   static <T> T findPropertyWithType(Object self, Class<T> type, String... propertyNames) {
     for (String name in propertyNames) {
@@ -643,7 +697,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
           field.setAccessible(true)
           return field.get(self) as T
         }
-      } catch (NoSuchFieldException ignored) {
+      }
+      catch (NoSuchFieldException ignored) {
       }
     }
     return null

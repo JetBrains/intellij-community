@@ -4,8 +4,10 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +36,14 @@ public final class ReorderingUtils {
   public static ThreeState canExtract(@NotNull PsiExpression ancestor, @NotNull PsiExpression expression) {
     if (expression == ancestor) return ThreeState.YES;
     if (PsiUtil.isConstantExpression(expression)) return ThreeState.YES;
+    for (PsiVariable variable : VariableAccessUtils.collectUsedVariables(expression)) {
+      if (variable instanceof PsiPatternVariable &&
+          PsiTreeUtil.isAncestor(ancestor, variable, true) &&
+          !PsiTreeUtil.isAncestor(expression, variable, true)) {
+        // Pattern variable is used which is declared inside ancestor; cannot reorder
+        return ThreeState.NO;
+      }
+    }
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
       PsiExpression gParent = ObjectUtils.tryCast(parent.getParent(), PsiCallExpression.class);
@@ -66,8 +76,7 @@ public final class ReorderingUtils {
         return canExtract(ancestor, expressionParent);
       }
     }
-    if (expressionParent instanceof PsiConditionalExpression) {
-      PsiConditionalExpression ternary = (PsiConditionalExpression)expressionParent;
+    if (expressionParent instanceof PsiConditionalExpression ternary) {
       PsiExpression condition = ternary.getCondition();
       if (condition == expression) {
         return canExtract(ancestor, expressionParent);
@@ -90,8 +99,7 @@ public final class ReorderingUtils {
       if (PsiUtil.isIncrementDecrementOperation(expressionParent)) return ThreeState.NO;
       return canExtract(ancestor, expressionParent);
     }
-    if (expressionParent instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)expressionParent;
+    if (expressionParent instanceof PsiPolyadicExpression polyadic) {
       PsiExpression[] operands = polyadic.getOperands();
       int index = ArrayUtil.indexOf(operands, expression);
       if (index == 0) {
@@ -152,8 +160,7 @@ public final class ReorderingUtils {
         EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, expression)) {
       return true;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList.isEmpty()) return false;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
@@ -285,8 +292,7 @@ public final class ReorderingUtils {
 
     @Override
     boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
-      if (condition instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)condition;
+      if (condition instanceof PsiMethodCallExpression call) {
         List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
         if (contracts.isEmpty()) return false;
         for (MethodContract contract : contracts) {
@@ -304,14 +310,13 @@ public final class ReorderingUtils {
         }
         return false;
       }
-      if (condition instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
+      if (condition instanceof PsiBinaryExpression binOp) {
+        RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
-          DfaValue leftVal = myFactory.createValue(left);
-          DfaValue rightVal = myFactory.createValue(right);
+          DfaValue leftVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, left);
+          DfaValue rightVal = JavaDfaValueFactory.getExpressionDfaValue(myFactory, right);
           if (leftVal == null || rightVal == null) return false;
           DfaCondition value1 = leftVal.cond(relationType, rightVal);
           DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);
@@ -331,13 +336,12 @@ public final class ReorderingUtils {
     }
 
     static ContractFailExceptionProblem from(PsiExpression expression) {
-      if (expression instanceof PsiCallExpression) {
-        PsiCallExpression call = (PsiCallExpression)expression;
+      if (expression instanceof PsiCallExpression call) {
         PsiMethod method = call.resolveMethod();
         List<? extends MethodContract> contracts = DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(call));
         contracts = ContainerUtil.filter(contracts, c -> c.getReturnValue().isFail() && c.getConditions().size() == 1);
         if (contracts.isEmpty()) return null;
-        DfaValueFactory factory = new DfaValueFactory(expression.getProject(), null);
+        DfaValueFactory factory = new DfaValueFactory(expression.getProject());
         List<DfaRelation> conditions = new ArrayList<>();
         for (MethodContract contract : contracts) {
           ContractValue condition = contract.getConditions().get(0);
@@ -415,6 +419,7 @@ public final class ReorderingUtils {
 
   private static boolean isErroneous(PsiElement element) {
     return element instanceof PsiErrorElement ||
+           element instanceof OuterLanguageElement ||
            element instanceof PsiLiteralExpression &&
            PsiLiteralUtil.isUnsafeLiteral((PsiLiteralExpression)element);
   }
@@ -422,6 +427,12 @@ public final class ReorderingUtils {
   public static boolean isSideEffectFree(PsiExpression expression, boolean allowNpe) {
     // Disallow anything which may throw or produce side effect
     return PsiTreeUtil.processElements(expression, element -> {
+      if (element instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)element).resolveMethod();
+        if (method == null || !JavaMethodContractUtil.isPure(method)) return false;
+        PsiClass aClass = method.getContainingClass();
+        return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+      }
       if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
           element instanceof PsiTypeCastExpression || isErroneous(element)) {
         return false;
@@ -430,13 +441,12 @@ public final class ReorderingUtils {
         return false;
       }
       if (element instanceof PsiSwitchExpression) {
-        // We cannot correctly process possible NPE in switch selector expression inside 
-        // ConditionCoveredByFurtherConditionInspection.computeOperandValues, 
+        // We cannot correctly process possible NPE in switch selector expression inside
+        // ConditionCoveredByFurtherConditionInspection.computeOperandValues,
         // so let's conservatively assume that the exception is possible
         return false;
       }
-      if (element instanceof PsiReferenceExpression) {
-        PsiReferenceExpression ref = (PsiReferenceExpression)element;
+      if (element instanceof PsiReferenceExpression ref) {
         if (!allowNpe) {
           PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ref.getQualifierExpression());
           if (qualifier != null && NullabilityUtil.getExpressionNullability(qualifier) != Nullability.NOT_NULL) {
@@ -454,8 +464,7 @@ public final class ReorderingUtils {
           return false;
         }
       }
-      if (element instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression expr = (PsiPolyadicExpression)element;
+      if (element instanceof PsiPolyadicExpression expr) {
         IElementType type = expr.getOperationTokenType();
         if (type.equals(JavaTokenType.DIV) || type.equals(JavaTokenType.PERC)) {
           PsiExpression[] operands = expr.getOperands();

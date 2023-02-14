@@ -1,51 +1,48 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+
 package com.intellij.idea
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
-import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
-import com.intellij.ide.customize.CustomizeIDEWizardDialog
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.internal.inspector.UiInspectorAction
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
-import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.PlatformUtils
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.accessibility.ScreenReader
-import java.awt.EventQueue
-import java.beans.PropertyChangeListener
+import kotlinx.coroutines.*
 import java.nio.file.Path
+import java.util.*
 import javax.swing.JOptionPane
 
-open class IdeStarter : ApplicationStarter {
+open class IdeStarter : ModernApplicationStarter() {
   companion object {
-    private var filesToLoad: List<Path> = emptyList()
-    private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
+    private var filesToLoad: List<Path> = Collections.emptyList()
+    private var uriToOpen: String? = null
 
     @JvmStatic
     fun openFilesOnLoading(value: List<Path>) {
@@ -53,243 +50,226 @@ open class IdeStarter : ApplicationStarter {
     }
 
     @JvmStatic
-    fun setWizardStepsProvider(provider: CustomizeIDEWizardStepsProvider) {
-      wizardStepProvider = provider
+    fun openUriOnLoading(value: String) {
+      uriToOpen = value
     }
   }
 
-  override fun isHeadless() = false
+  override val isHeadless: Boolean
+    get() = false
 
-  override fun getCommandName(): String? = null
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
+  override val commandName: String?
+    get() = null
 
-  final override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+  override suspend fun start(args: List<String>) {
+    coroutineScope {
+      val app = ApplicationManagerEx.getApplicationEx()
+      val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
+      openProjectIfNeeded(args = args, app = app, lifecyclePublisher = lifecyclePublisher)
 
-  override fun main(args: List<String>) {
-    val app = ApplicationManagerEx.getApplicationEx()
+      launch { reportPluginErrors() }
 
-    assert(!app.isDispatchThread)
+      StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+      lifecyclePublisher.appStarted()
 
-    if (app.isLightEditMode && !app.isHeadlessEnvironment) {
-      // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
-      // so, preload
-      AppExecutorUtil.getAppExecutorService().execute {
-        ActionManager.getInstance()
+      if (!app.isHeadlessEnvironment) {
+        postOpenUiTasks()
       }
     }
+  }
 
-    val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
-
-    // Event queue should not be changed during initialization of application components.
-    // It also cannot be changed before initialization of application components because IdeEventQueue uses other
-    // application components. So it is proper to perform replacement only here.
-    // out of EDT
-    val windowManager = WindowManagerEx.getInstanceEx()
-    app.invokeLater {
-      runMainActivity("IdeEventQueue informing about WindowManager") {
-        IdeEventQueue.getInstance().setWindowManager(windowManager)
-      }
+  @OptIn(IntellijInternalApi::class)
+  protected open suspend fun openProjectIfNeeded(args: List<String>,
+                                                 app: ApplicationEx,
+                                                 lifecyclePublisher: AppLifecycleListener) {
+    val frameInitActivity = startActivity("frame initialization")
+    frameInitActivity.runChild("app frame created callback") {
+      lifecyclePublisher.appFrameCreated(args)
     }
 
-    val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
-    val needToOpenProject: Boolean
-    if (isStandaloneLightEdit) {
-      needToOpenProject = true
-    }
-    else {
-      frameInitActivity.runChild("app frame created callback") {
-        lifecyclePublisher.appFrameCreated(args)
-      }
-
-      // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-      if (app.isHeadlessEnvironment) {
-        needToOpenProject = false
-      }
-      else {
-        val willOpenProject = (args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart())
-                              && JetBrainsProtocolHandler.getCommand() == null
-        needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
-      }
-
+    // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
+    if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
+      LifecycleUsageTriggerCollector.onIdeStart()
+      return
+    }
 
-      NonUrgentExecutor.getInstance().execute {
-        LifecycleUsageTriggerCollector.onIdeStart()
+    if (app.isInternal) {
+      @Suppress("DEPRECATION")
+      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        UiInspectorAction.initGlobalInspector()
       }
+    }
+
+    @Suppress("DEPRECATION")
+    app.coroutineScope.launch {
+      LifecycleUsageTriggerCollector.onIdeStart()
+    }
+
+    if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
+      frameInitActivity.end()
+      processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
+      return
+    }
+
+    val recentProjectManager = RecentProjectsManager.getInstance()
+    val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
+    val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
+    val needToOpenProject = willOpenProject || showWelcomeFrame(lifecyclePublisher)
+    frameInitActivity.end()
+
+    if (!needToOpenProject) {
+      return
     }
 
     val project = when {
-      !needToOpenProject -> null
-      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+      filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(filesToLoad, "IdeStarter")
       args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
       else -> null
     }
 
-    lifecyclePublisher.appStarting(project)
-
-    if (needToOpenProject && project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-      val recentProjectManager = RecentProjectsManager.getInstance()
-      var openLightEditFrame = isStandaloneLightEdit
-      if (recentProjectManager.willReopenProjectOnStart()) {
-        if (recentProjectManager.reopenLastProjectsOnStart()) {
-          openLightEditFrame = false
-        }
-        else if (!isStandaloneLightEdit) {
-          WelcomeFrame.showIfNoProjectOpened()
+    when {
+      project != null -> {
+        return
+      }
+      willReopenRecentProjectOnStart -> {
+        if (!recentProjectManager.reopenLastProjectsOnStart()) {
+          WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
         }
       }
+      else -> {
+        WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+      }
+    }
+  }
 
-      if (openLightEditFrame) {
+  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
+    val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
+    ApplicationManager.getApplication().invokeLater {
+      showWelcomeFrameTask.run()
+      lifecyclePublisher.welcomeScreenDisplayed()
+    }
+    return false
+  }
+
+  private suspend fun processUriParameter(uri: String, lifecyclePublisher: AppLifecycleListener) {
+    val result = CommandLineProcessor.processProtocolCommand(uri)
+    if (result.exitCode == ProtocolHandler.PLEASE_QUIT) {
+      withContext(Dispatchers.EDT) {
+        ApplicationManagerEx.getApplicationEx().exit(false, true)
+      }
+    }
+    else if (result.exitCode != ProtocolHandler.PLEASE_NO_UI) {
+      WelcomeFrame.showIfNoProjectOpened(lifecyclePublisher)
+    }
+  }
+
+  internal class StandaloneLightEditStarter : IdeStarter() {
+    override suspend fun openProjectIfNeeded(args: List<String>,
+                                             app: ApplicationEx,
+                                             lifecyclePublisher: AppLifecycleListener) {
+      val project = when {
+        filesToLoad.isNotEmpty() -> ProjectUtil.openOrImportFilesAsync(list = filesToLoad, location = "MacMenu")
+        args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
+        else -> null
+      }
+
+      if (project != null) {
+        return
+      }
+
+      val recentProjectManager = RecentProjectsManager.getInstance()
+      val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
+      if (!isOpened) {
         ApplicationManager.getApplication().invokeLater {
           LightEditService.getInstance().showEditorWindow()
         }
       }
     }
-
-    reportPluginErrors()
-
-    if (!app.isHeadlessEnvironment) {
-      postOpenUiTasks(app)
-    }
-
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
-    lifecyclePublisher.appStarted()
-
-    if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-    }
-  }
-
-  private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
-    val doShowWelcomeFrame = if (willOpenProject) null else WelcomeFrame.prepareToShow()
-    // do not show Customize IDE Wizard [IDEA-249516]
-    val wizardStepProvider = wizardStepProvider
-    if (wizardStepProvider == null || System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() != true) {
-      if (doShowWelcomeFrame == null) {
-        return true
-      }
-
-      ApplicationManager.getApplication().invokeLater {
-        doShowWelcomeFrame.run()
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }
-      return false
-    }
-
-    // temporary until 211 release
-    val stepDialogName = System.getProperty("idea.temp.change.ide.wizard")
-                         ?: ApplicationInfoImpl.getShadowInstance().customizeIDEWizardDialog
-    ApplicationManager.getApplication().invokeLater {
-      val wizardDialog: CommonCustomizeIDEWizardDialog?
-      if (stepDialogName.isNullOrBlank()) {
-        wizardDialog = CustomizeIDEWizardDialog(wizardStepProvider, null, false, true)
-      }
-      else {
-        wizardDialog = try {
-          Class.forName(stepDialogName).getConstructor(StartupUtil.AppStarter::class.java)
-            .newInstance(null) as CommonCustomizeIDEWizardDialog
-        }
-        catch (e: Throwable) {
-          Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e)
-          null
-        }
-      }
-
-      wizardDialog?.showIfNeeded()
-
-      if (doShowWelcomeFrame != null) {
-        doShowWelcomeFrame.run()
-        lifecyclePublisher.welcomeScreenDisplayed()
-      }
-    }
-    return false
   }
 }
 
-private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
-  val currentDirectory = System.getenv(SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
+  val currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
   @Suppress("SSBasedInspection")
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
-    ApplicationManager.getApplication().invokeAndWait {
-      result.showErrorIfFailed()
+    withContext(Dispatchers.EDT) {
+      result.showError()
       ApplicationManager.getApplication().exit(true, true, false)
     }
   }
   return result.project
 }
 
-private fun postOpenUiTasks(app: Application) {
+private fun CoroutineScope.postOpenUiTasks() {
+  if (PluginManagerCore.isRunningFromSources()) {
+    AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+  }
+
   if (SystemInfoRt.isMac) {
-    NonUrgentExecutor.getInstance().execute {
+    launch {
       runActivity("mac touchbar on app init") {
-        TouchBarsManager.onApplicationInitialized()
-        if (TouchBarsManager.isTouchBarAvailable()) {
-          CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, IdeBundle.message("settings.menus.group.touch.bar"))
-        }
+        TouchbarSupport.onApplicationLoaded()
       }
     }
   }
   else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
-    NonUrgentExecutor.getInstance().execute {
+    launch {
       runActivity("input method disabling on Linux") {
         disableInputMethodsIfPossible()
       }
     }
   }
 
-  invokeLaterWithAnyModality("system dock menu") {
-    SystemDock.updateMenu()
+  launch {
+    // first apply in the scope of IdeStarter
+    service<ScreenReaderStateManager>().apply()
   }
-  invokeLaterWithAnyModality("ScreenReader") {
-    val generalSettings = GeneralSettings.getInstance()
-    generalSettings.addPropertyChangeListener(GeneralSettings.PROP_SUPPORT_SCREEN_READERS, app, PropertyChangeListener { e ->
-      ScreenReader.setActive(e.newValue as Boolean)
-    })
-    ScreenReader.setActive(generalSettings.isSupportScreenReaders)
+
+  launch {
+    startSystemHealthMonitor()
   }
 }
 
-private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
-  EventQueue.invokeLater {
-    runActivity(name, task = task)
+@Service(Service.Level.APP)
+private class ScreenReaderStateManager(coroutineScope: CoroutineScope) {
+  init {
+    coroutineScope.launch {
+      GeneralSettings.getInstance().propertyChangedFlow.collect {
+        if (it == GeneralSettings.PropertyNames.supportScreenReaders) {
+          apply()
+        }
+      }
+    }
+  }
+
+  suspend fun apply() {
+    withContext(Dispatchers.EDT) {
+      ScreenReader.setActive(GeneralSettings.getInstance().isSupportScreenReaders)
+    }
   }
 }
 
-private fun reportPluginErrors() {
+private suspend fun reportPluginErrors() {
   val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
   if (pluginErrors.isEmpty()) {
     return
   }
 
-  ApplicationManager.getApplication().invokeLater({
+  withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR) { notification, event ->
-      notification.expire()
-
-      val description = event.description
-      if (PluginManagerCore.EDIT == description) {
-        PluginManagerConfigurable.showPluginConfigurable(
-          WindowManagerEx.getInstanceEx().findFrameFor(null)?.component,
-          null,
-          emptyList(),
-        )
-        return@Notification
+    @Suppress("DEPRECATION")
+    NotificationGroupManager.getInstance().getNotificationGroup(
+      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
+      .setListener { notification, event ->
+        notification.expire()
+        PluginManagerMain.onEvent(event.description)
       }
-
-      if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false)
-      }
-      else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true)
-        @Suppress("SSBasedInspection")
-        PluginManagerMain.notifyPluginsUpdated(null)
-      }
-
-      PluginManagerCore.ourPluginsToEnable = null
-      PluginManagerCore.ourPluginsToDisable = null
-    }.notify(null)
-  }, ModalityState.NON_MODAL)
+      .notify(null)
+  }
 }

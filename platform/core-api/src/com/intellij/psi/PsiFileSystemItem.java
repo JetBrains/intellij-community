@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a file or directory which can be renamed.
- *
- * @author ven
  */
 public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigatablePsiElement {
   boolean isDirectory();

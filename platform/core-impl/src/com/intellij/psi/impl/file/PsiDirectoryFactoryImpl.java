@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.file;
 
@@ -11,9 +11,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   private final Project myProject;
 
@@ -28,7 +26,7 @@ public final class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
 
   @Override
   @NotNull
-  public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
+  public String getQualifiedName(@NotNull PsiDirectory directory, boolean presentable) {
     if (presentable) {
       return FileUtil.getLocationRelativeToUserHome(directory.getVirtualFile().getPresentableUrl());
     }

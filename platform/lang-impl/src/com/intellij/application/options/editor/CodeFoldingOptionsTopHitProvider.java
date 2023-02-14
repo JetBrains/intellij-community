@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.application.options.editor.CodeFoldingConfigurable.applyCodeFoldingSettingsChanges;
-
 final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvider.ApplicationLevelProvider {
   @NotNull
   @Override
@@ -44,7 +42,7 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
         @Override
         public void setOptionState(boolean enabled) {
           instance.setFoldingOutlineShown(enabled);
-          ApplicationManager.getApplication().invokeLater(() -> applyCodeFoldingSettingsChanges(), ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> CodeFoldingConfigurable.applyCodeFoldingSettingsChanges(), ModalityState.NON_MODAL);
         }
       }
     );

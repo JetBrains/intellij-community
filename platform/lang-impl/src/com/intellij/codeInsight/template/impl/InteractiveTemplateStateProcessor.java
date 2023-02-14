@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -127,7 +127,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     }
   }
 
-  private void runLookup(TemplateState state, final List<TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
+  private void runLookup(TemplateState state, final List<? extends TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
                          @Nullable @NlsContexts.PopupAdvertisement String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
     if (state.isDisposed()) return;
 
@@ -173,7 +173,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     });
   }
 
-  private static void insertSingleItem(Editor editor, List<TemplateExpressionLookupElement> lookupItems) {
+  private static void insertSingleItem(Editor editor, List<? extends TemplateExpressionLookupElement> lookupItems) {
     TemplateExpressionLookupElement first = lookupItems.get(0);
     EditorModificationUtil.insertStringAtCaret(editor, first.getLookupString());
     first.handleTemplateInsert(lookupItems, Lookup.AUTO_INSERT_SELECT_CHAR);
@@ -278,7 +278,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
     PsiComment comment = null;
     try {
-      comment = PsiParserFacade.SERVICE.getInstance(project).createLineOrBlockCommentFromText(language, "");
+      comment = PsiParserFacade.getInstance(project).createLineOrBlockCommentFromText(language, "");
     }
     catch (Throwable ignored) {
     }

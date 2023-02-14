@@ -16,7 +16,7 @@ public interface VcsIgnoreManager {
   void removeRunConfigurationFromVcsIgnore(@NotNull @NlsSafe String configurationName);
 
   /**
-   * Check if the file could be potentially ignored. However this doesn't mean that the file is ignored in VCS.
+   * Check if the file could be potentially ignored. However, this doesn't mean that the file is ignored in VCS.
    * To check if the file ignored use {@link ChangeListManager#isIgnoredFile(VirtualFile)}
    *
    * @param file to check

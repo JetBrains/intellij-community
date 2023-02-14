@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -12,19 +14,24 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.VcsActions
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vcs.impl.RepositoryBrowserPanel.Companion.REPOSITORY_BROWSER_DATA_KEY
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
@@ -34,41 +41,57 @@ import java.io.File
 import javax.swing.Icon
 import javax.swing.JPanel
 
-const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
+object RepositoryBrowser {
+  const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
 
-fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
-  val toolWindowManager = ToolWindowManager.getInstance(project)
-  val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager, project)
+  fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val repoToolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: registerRepositoriesToolWindow(toolWindowManager)
 
-  for (content in repoToolWindow.contentManager.contents) {
-    val component = content.component as? RepositoryBrowserPanel ?: continue
-    if (component.root == root) {
-      repoToolWindow.contentManager.setSelectedContent(content)
-      return
+    for (content in repoToolWindow.contentManager.contents) {
+      val component = content.component as? RepositoryBrowserPanel ?: continue
+      if (component.root == root) {
+        repoToolWindow.contentManager.setSelectedContent(content)
+        return
+      }
     }
+
+    val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
+
+    val content = ContentFactory.getInstance().createContent(contentPanel, title, true)
+    repoToolWindow.contentManager.addContent(content)
+    repoToolWindow.contentManager.setSelectedContent(content, true)
+    repoToolWindow.activate(null)
   }
 
-  val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
+  private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
+    val toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = TOOLWINDOW_ID,
+      anchor = ToolWindowAnchor.LEFT,
+      canCloseContent = true,
+      canWorkInDumbMode = true,
+      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") },
+      icon = getIcon()
+    ))
+    ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
+    return toolWindow
+  }
 
-  val content = ContentFactory.SERVICE.getInstance().createContent(contentPanel, title, true)
-  repoToolWindow.contentManager.addContent(content)
-  repoToolWindow.contentManager.setSelectedContent(content, true)
-  repoToolWindow.activate(null)
+  private fun getIcon(): Icon? = when {
+    ExperimentalUI.isNewUI() -> IconLoader.getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
+    else -> null
+  }
 }
-
-private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager, project: Project): ToolWindow {
-  val toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.LEFT, project, true)
-  ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
-  return toolWindow
-}
-
-val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
 
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
-  val localRoot: VirtualFile
+  private val localRoot: VirtualFile
 ) : JPanel(BorderLayout()), DataProvider, Disposable {
+  companion object {
+    val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
+  }
+
   private val fileSystemTree: FileSystemTreeImpl
 
   init {
@@ -88,8 +111,6 @@ class RepositoryBrowserPanel(
       }
     }
     fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-      @Suppress("OverridingDeprecatedMember")
-      override fun useNewAsyncModel() = true
     }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles
@@ -103,7 +124,7 @@ class RepositoryBrowserPanel(
     actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
     fileSystemTree.registerMouseListener(actionGroup)
 
-    val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree)
+    val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree, true)
 
     add(scrollPane, BorderLayout.CENTER)
   }
@@ -147,6 +168,10 @@ class RepositoryBrowserPanel(
 }
 
 class DiffRepoWithLocalAction : AnActionExtensionProvider {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun isActive(e: AnActionEvent): Boolean {
     return e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
   }
@@ -158,8 +183,9 @@ class DiffRepoWithLocalAction : AnActionExtensionProvider {
 
   override fun actionPerformed(e: AnActionEvent) {
     val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
-    val changes = repoBrowser.getSelectionAsChanges()
-    ShowDiffAction.showDiffForChange(repoBrowser.project, changes)
+    val selection = ListSelection.createAt(repoBrowser.getSelectionAsChanges(), 0)
+      .asExplicitSelection()
+    ShowDiffAction.showDiffForChange(repoBrowser.project, selection)
   }
 }
 

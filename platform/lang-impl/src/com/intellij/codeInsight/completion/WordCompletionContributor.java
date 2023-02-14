@@ -1,21 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,13 +24,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-
-  public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
-
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
     return (DumbService.isDumb(file.getProject()) &&
             LanguageWordCompletion.INSTANCE.isWordCompletionInDumbModeEnabled(file.getLanguage())) ||
@@ -64,7 +57,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     final CompletionResultSet plainResultSet = result.withPrefixMatcher(CompletionUtil.findAlphanumericPrefix(parameters));
     consumeAllWords(position, startOffset, word -> {
       if (!realExcludes.contains(word)) {
-        final LookupElement item = LookupElementBuilder.create(word);
+        final LookupElement item = createWordSuggestion(word);
         javaResultSet.addElement(item);
         plainResultSet.addElement(item);
       }
@@ -108,7 +101,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
             public void visitElement(@NotNull PsiElement each) {
               String valueText = ElementManipulators.getValueText(each);
               if (StringUtil.isNotEmpty(valueText) && !realExcludes.contains(valueText)) {
-                final LookupElement item = LookupElementBuilder.create(valueText);
+                final LookupElement item = createWordSuggestion(valueText);
                 fullStringResult.addElement(item);
               }
             }
@@ -120,12 +113,17 @@ public class WordCompletionContributor extends CompletionContributor implements 
     });
   }
 
+  private static LookupElement createWordSuggestion(String word) {
+    return LookupElementBuilder.create(word)
+      .withIcon(AllIcons.Nodes.Word);
+  }
+
   private static boolean shouldPerformWordCompletion(CompletionParameters parameters) {
     if (parameters.getInvocationCount() == 0) {
       return false;
     }
 
-    if (parameters.getOriginalFile().getUserData(FORBID_WORD_COMPLETION) != null) {
+    if (Boolean.TRUE.equals(parameters.getOriginalFile().getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 
@@ -172,7 +170,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
                                       boolean allowEmptyPrefix) {
     if (!allowEmptyPrefix && StringUtil.isEmpty(CompletionUtil.findJavaIdentifierPrefix(context, offset))) return;
     CharSequence chars = context.getContainingFile().getViewProvider().getContents(); // ??
-    Set<CharSequence> words = new THashSet<>(chars.length()/8);
+    Set<CharSequence> words = new HashSet<>(chars.length()/8);
     IdTableBuilding.scanWords((charSeq, charsArray, start, end) -> {
       if (start > offset || offset > end) {
         CharSequence sequence = charSeq.subSequence(start, end);

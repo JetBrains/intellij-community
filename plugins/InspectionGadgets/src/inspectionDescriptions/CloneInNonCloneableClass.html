@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports classes which override the
-<b>clone()</b> method, but which do not implement the <b>Cloneable</b> interface.
+Reports classes that override the
+<code>clone()</code> method but don't implement the <code>Cloneable</code> interface.
 This usually represents a programming error.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate if this inspection should only warn on <b>public</b> methods.
-Classes designed for inheritance may choose to override <b>clone</b>() and declare it <b>protected</b>
-without implementing <b>Cloneable</b> to give subclasses the choice to implement it.
-<p>
-
+  Use the <b>Only warn on 'public' clone methods</b> option to ignore methods that aren't <code>public</code>.</p>
+<p>For classes designed to be inherited, you may choose to override <code>clone()</code> and declare it as <code>protected</code>
+without implementing the <code>Cloneable</code> interface and decide whether to implement the <code>Cloneable</code> interface in subclasses.
+</p>
 </body>
 </html>

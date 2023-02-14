@@ -32,6 +32,6 @@ public class CapturingCleanerInspectionTest extends LightJavaCodeInsightFixtureT
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/cleanerCapturingThis";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/cleanerCapturingThis/before18";
   }
 }

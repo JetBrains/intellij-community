@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -271,18 +273,24 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
-    final Color fg;
+    JTextField textField = myHomeComponent.getTextField();
     if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {
-      final File homeDir = new File(absolutePath);
-      boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-      fg = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory
-           ? UIUtil.getFieldForegroundColor()
-           : PathEditor.INVALID_COLOR;
+      new Task.Backgroundable(myProject, ProjectBundle.message("sdk.configure.checking.home.path.validity"), false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          final File homeDir = new File(absolutePath);
+          boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
+          final boolean valid = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory;
+          SwingUtilities.invokeLater(() -> {
+            textField.setForeground(valid ? UIUtil.getFieldForegroundColor()
+                                          : PathEditor.INVALID_COLOR);
+          });
+        }
+      }.queue();
     }
     else {
-      fg = UIUtil.getFieldForegroundColor();
+      textField.setForeground(UIUtil.getFieldForegroundColor());
     }
-    myHomeComponent.getTextField().setForeground(fg);
   }
 
   private void doSelectHomePath() {

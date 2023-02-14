@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,32 +12,29 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @ApiStatus.NonExtendable
 public abstract class ProjectLocator {
   // called very often by StubUpdatingIndex
-  private static ProjectLocator ourInstance = CachedSingletonsRegistry.markCachedField(ProjectLocator.class);
+  private static final Supplier<ProjectLocator> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(ProjectLocator.class);
+  });
 
   private static final ThreadLocal<Map<VirtualFile, Project>> ourPreferredProjects = ThreadLocal.withInitial(() -> new HashMap<>());
 
   public static ProjectLocator getInstance() {
-    ProjectLocator result = ourInstance;
-    if (result == null) {
-      result = ApplicationManager.getApplication().getService(ProjectLocator.class);
-      ourInstance = result;
-    }
-    return result;
+    return ourInstance.get();
   }
 
   /**
    * Returns an open project which contains the given file.
    * This is a guess-method, so if several projects contain the file, only one will be returned.
-   * Also a project may be returned though it doesn't contain the file for sure (see implementations).
    * @param file file to be located in projects.
    * @return project which probably contains the file, or null if couldn't guess (for example, there are no open projects).
    */
   @Nullable
-  public abstract Project guessProjectForFile(@Nullable VirtualFile file);
+  public abstract Project guessProjectForFile(@NotNull VirtualFile file);
 
   /**
   * Gets all open projects containing the given file.

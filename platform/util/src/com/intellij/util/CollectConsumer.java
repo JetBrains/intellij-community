@@ -5,9 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public class CollectConsumer<T> implements Consumer<T>, java.util.function.Consumer<T> {
   private final Collection<T> myResult;
 

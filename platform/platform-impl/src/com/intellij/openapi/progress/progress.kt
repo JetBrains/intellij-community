@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 
 inline fun runModalTask(@Nls(capitalization = Nls.Capitalization.Title) title: String,
@@ -22,7 +23,7 @@ inline fun createModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
   }
 }
 
-inline fun runBackgroundableTask(@Nls(capitalization = Nls.Capitalization.Title) title: String,
+inline fun runBackgroundableTask(@NlsContexts.ProgressTitle title: String,
                                  project: Project? = null,
                                  cancellable: Boolean = true,
                                  crossinline task: (indicator: ProgressIndicator) -> Unit) {

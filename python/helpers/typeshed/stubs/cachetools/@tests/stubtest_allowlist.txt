@@ -1,0 +1,22 @@
+cachetools.Cache.get
+
+# stubs omit defaulted arguments that are meant to be optimizations, not provided by user
+cachetools.FIFOCache.__delitem__
+cachetools.FIFOCache.__setitem__
+cachetools.LFUCache.__delitem__
+cachetools.LFUCache.__getitem__
+cachetools.LFUCache.__setitem__
+cachetools.LRUCache.__delitem__
+cachetools.LRUCache.__getitem__
+cachetools.LRUCache.__setitem__
+cachetools.MRUCache.__delitem__
+cachetools.MRUCache.__getitem__
+cachetools.MRUCache.__setitem__
+cachetools.TLRUCache.__delitem__
+cachetools.TLRUCache.__getitem__
+cachetools.TLRUCache.__setitem__
+cachetools.TTLCache.__delitem__
+cachetools.TTLCache.__getitem__
+cachetools.TTLCache.__setitem__
+cachetools._TimedCache.__len__
+cachetools._TimedCache.__repr__

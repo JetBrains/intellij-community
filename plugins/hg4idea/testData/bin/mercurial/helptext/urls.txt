@@ -1,0 +1,76 @@
+Valid URLs are of the form::
+
+  local/filesystem/path[#revision]
+  file://local/filesystem/path[#revision]
+  http://[user[:pass]@]host[:port]/[path][#revision]
+  https://[user[:pass]@]host[:port]/[path][#revision]
+  ssh://[user@]host[:port]/[path][#revision]
+  path://pathname
+
+Paths in the local filesystem can either point to Mercurial
+repositories or to bundle files (as created by :hg:`bundle` or
+:hg:`incoming --bundle`). See also :hg:`help paths`.
+
+An optional identifier after # indicates a particular branch, tag, or
+changeset to use from the remote repository. See also :hg:`help
+revisions`.
+
+Some features, such as pushing to http:// and https:// URLs are only
+possible if the feature is explicitly enabled on the remote Mercurial
+server.
+
+Note that the security of HTTPS URLs depends on proper configuration of
+web.cacerts.
+
+Some notes about using SSH with Mercurial:
+
+- SSH requires an accessible shell account on the destination machine
+  and a copy of hg in the remote path or specified with remotecmd.
+- path is relative to the remote user's home directory by default. Use
+  an extra slash at the start of a path to specify an absolute path::
+
+    ssh://example.com//tmp/repository
+
+- Mercurial doesn't use its own compression via SSH; the right thing
+  to do is to configure it in your ~/.ssh/config, e.g.::
+
+    Host *.mylocalnetwork.example.com
+      Compression no
+    Host *
+      Compression yes
+
+  Alternatively specify "ssh -C" as your ssh command in your
+  configuration file or with the --ssh command line option.
+
+These URLs can all be stored in your configuration file with path
+aliases under the [paths] section like so::
+
+  [paths]
+  alias1 = URL1
+  alias2 = URL2
+  ...
+
+You can then use the alias for any command that uses a URL (for
+example :hg:`pull alias1` will be treated as :hg:`pull URL1`).
+
+Two path aliases are special because they are used as defaults when
+you do not provide the URL to a command:
+
+default:
+  When you create a repository with hg clone, the clone command saves
+  the location of the source repository as the new repository's
+  'default' path. This is then used when you omit path from push- and
+  pull-like commands (including incoming and outgoing).
+
+default-push:
+  The push command will look for a path named 'default-push', and
+  prefer it over 'default' if both are defined.
+
+These alias can also be use in the `path://` scheme::
+
+  [paths]
+  alias1 = URL1
+  alias2 = path://alias1
+  ...
+
+check :hg:`help config.paths` for details about the behavior of such "sub-path".

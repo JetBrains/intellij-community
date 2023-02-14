@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -10,11 +10,11 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.SwingUndoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener, @Nullable Disposable parent) {
     super(field, browseActionListener);
     if (!(field instanceof JBTextField)) {
-      UIUtil.addUndoRedoActions(field);
+      SwingUndoUtil.addUndoRedoActions(field);
     }
     installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), parent);
   }
@@ -72,18 +72,19 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
                                        @Nullable Disposable parent) {
     final Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
+    FileChooserFactory instance = FileChooserFactory.getInstance();
+    if (instance != null) {
+      instance.installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
+    }
   }
 
-  @NotNull
-  public JTextField getTextField() {
+  public @NotNull JTextField getTextField() {
     return getChildComponent();
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return StringUtil.notNullize(getTextField().getText());
+  public @NotNull String getText() {
+    return Strings.notNullize(getTextField().getText());
   }
 
   @Override

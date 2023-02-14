@@ -3,8 +3,9 @@ package training.dsl.impl
 
 import training.dsl.LessonContext
 import training.dsl.TaskContext
+import training.learn.course.KLesson
 
-class LessonContextImpl(private val executor: LessonExecutor): LessonContext() {
+internal class LessonContextImpl(private val executor: LessonExecutor) : LessonContext() {
   override fun task(taskContent: TaskContext.() -> Unit) {
     executor.task(taskContent)
   }
@@ -12,4 +13,6 @@ class LessonContextImpl(private val executor: LessonExecutor): LessonContext() {
   override fun waitBeforeContinue(delayMillis: Int) {
     executor.waitBeforeContinue(delayMillis)
   }
+
+  override val lesson: KLesson = executor.lesson
 }

@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.testFramework.VfsTestUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 final class TestSources {
@@ -43,7 +44,7 @@ final class TestSources {
     return JavaPsiFacade.getInstance(myProject).findPackage(name);
   }
 
-  public @NotNull PsiClass createClass(@NotNull String className, @NotNull String code) {
+  public @NotNull PsiClass createClass(@NotNull String className, @NotNull @Language("JAVA") String code) {
     VfsTestUtil.createFile(mySrc, className + ".java", code + System.lineSeparator());
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
   }

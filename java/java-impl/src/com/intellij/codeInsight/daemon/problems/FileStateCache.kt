@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems
 
 import com.intellij.openapi.Disposable
@@ -16,7 +16,9 @@ class FileStateCache : Disposable {
 
   private val cache: SLRUMap<SmartPsiElementPointer<PsiFile>, PrivateFileState> = SLRUMap(100, 50)
 
-  object SERVICE {
+  companion object {
+
+    @JvmStatic
     fun getInstance(project: Project): FileStateCache = project.getService(FileStateCache::class.java)
   }
 

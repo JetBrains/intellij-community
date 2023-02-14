@@ -23,9 +23,6 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class CapitalizeAndUnderscoreMacro extends MacroBase {
 
   public CapitalizeAndUnderscoreMacro() {

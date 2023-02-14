@@ -68,7 +68,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myEnumName == null) {
         return;
       }
@@ -81,7 +81,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
   private static class ArrayCreationExpressionVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
 
       final PsiType type = expression.getType();

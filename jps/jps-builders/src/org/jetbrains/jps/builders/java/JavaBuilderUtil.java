@@ -6,10 +6,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,6 @@ public final class JavaBuilderUtil {
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);
@@ -158,7 +156,6 @@ public final class JavaBuilderUtil {
    * @param filesToCompile   files compiled in this round
    * @param markDirtyRound   compilation round at which dirty files should be visible to builders
    * @return true if additional compilation pass is required, false otherwise
-   * @throws Exception
    */
   private static boolean updateMappings(CompileContext context,
                                         final Mappings delta,
@@ -375,7 +372,10 @@ public final class JavaBuilderUtil {
   }
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
-    CompileScope scope = context.getScope();
+    return isForcedRecompilationAllJavaModules(context.getScope());
+  }
+
+  public static boolean isForcedRecompilationAllJavaModules(CompileScope scope) {
     return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) &&
            scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.TEST);
   }
@@ -414,7 +414,7 @@ public final class JavaBuilderUtil {
     if (!dirtyFilesHolder.hasRemovedFiles()) {
       return Collections.emptySet();
     }
-    final Set<String> removed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> removed = CollectionFactory.createFilePathSet();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }

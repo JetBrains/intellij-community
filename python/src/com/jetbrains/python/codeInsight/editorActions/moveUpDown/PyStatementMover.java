@@ -91,7 +91,7 @@ public class PyStatementMover extends LineMover {
     if (nearLine >= document.getLineCount() || nearLine <= 0) return false;
     final PyStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
-      final Pair<String,String> quotes = PyStringLiteralUtil.getQuotes(stringLiteralExpression.getText());
+      final Pair<String,String> quotes = PyStringLiteralCoreUtil.getQuotes(stringLiteralExpression.getText());
       if (quotes != null && (quotes.first.equals("'''") || quotes.first.equals("\"\"\""))) {
         final String text1 = document.getText(TextRange.create(start, end)).trim();
         final String text2 = document.getText(TextRange.create(document.getLineStartOffset(nearLine), document.getLineEndOffset(nearLine))).trim();
@@ -341,6 +341,8 @@ public class PyStatementMover extends LineMover {
         final CaretModel caretModel = editor.getCaretModel();
 
         final int selectionStart = selectionModel.getSelectionStart();
+        final LogicalPosition selectionBeforeMoveStart = editor.offsetToLogicalPosition(selectionStart);
+        final LogicalPosition selectionBeforeMoveEnd = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
         boolean isSelectionStartAtCaret = caretModel.getOffset() == selectionStart;
         final SelectionContainer selectionLen = getSelectionLenContainer(editor, ((MyLineRange)toMove));
 
@@ -354,8 +356,12 @@ public class PyStatementMover extends LineMover {
         else {
           offset = moveInOut(((MyLineRange)toMove), editor, info);
         }
+        final LogicalPosition positionOffsetAfterMove = editor.offsetToLogicalPosition(offset);
         restoreCaretAndSelection(file, editor, isSelectionStartAtCaret, hasSelection, selectionLen,
-                                 shift, offset, (MyLineRange)toMove);
+                                 shift, offset, (MyLineRange)toMove,
+                                 selectionBeforeMoveStart,
+                                 selectionBeforeMoveEnd,
+                                 positionOffsetAfterMove);
         info.toMove2 = info.toMove;   //do not move further
       });
     }
@@ -388,7 +394,10 @@ public class PyStatementMover extends LineMover {
 
   private static void restoreCaretAndSelection(@NotNull final PsiFile file, @NotNull final Editor editor, boolean selectionStartAtCaret,
                                                boolean hasSelection, @NotNull final SelectionContainer selectionContainer, int shift,
-                                               int offset, @NotNull final MyLineRange toMove) {
+                                               int offset, @NotNull final MyLineRange toMove,
+                                               LogicalPosition selectionBeforeMoveStart,
+                                               LogicalPosition selectionBeforeMoveEnd,
+                                               LogicalPosition positionOffsetAfterMove) {
     final Document document = editor.getDocument();
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
@@ -427,13 +436,31 @@ public class PyStatementMover extends LineMover {
     caretModel.moveToOffset(newCaretOffset);
 
     if (hasSelection) {
-      if (selectionStartAtCaret) {
-        int newSelectionEnd = newCaretOffset + selectionLen;
-        selectionModel.setSelection(newCaretOffset, newSelectionEnd);
+      int selectionLinesDiff = selectionBeforeMoveEnd.line - selectionBeforeMoveStart.line;
+      if (selectionLinesDiff > 1) {
+        int endOffsetColumn = selectionBeforeMoveEnd.column;
+        if (endOffsetColumn > 0) endOffsetColumn += positionOffsetAfterMove.column - selectionBeforeMoveStart.column;
+        int startOffsetColumn = positionOffsetAfterMove.column;
+        if (selectionBeforeMoveStart.column == 0) startOffsetColumn = 0;
+        int startOffset = editor.logicalPositionToOffset(new LogicalPosition(positionOffsetAfterMove.line, startOffsetColumn));
+        int endOffset = editor.logicalPositionToOffset(new LogicalPosition(positionOffsetAfterMove.line + selectionLinesDiff, endOffsetColumn));
+        selectionModel.setSelection(startOffset, endOffset);
+        if (selectionStartAtCaret) {
+          caretModel.moveToOffset(startOffset);
+        }
+        else {
+          caretModel.moveToOffset(endOffset);
+        }
       }
       else {
-        int newSelectionStart = newCaretOffset - selectionLen;
-        selectionModel.setSelection(newSelectionStart, newCaretOffset);
+        if (selectionStartAtCaret) {
+          int newSelectionEnd = newCaretOffset + selectionLen;
+          selectionModel.setSelection(newCaretOffset, newSelectionEnd);
+        }
+        else {
+          int newSelectionStart = newCaretOffset - selectionLen;
+          selectionModel.setSelection(newSelectionStart, newCaretOffset);
+        }
       }
     }
   }
@@ -597,7 +624,7 @@ public class PyStatementMover extends LineMover {
   }
 
   // use to keep elements
-  static class MyLineRange extends LineRange {
+  public static class MyLineRange extends LineRange {
     private final PsiElement myStartElement;
     private final PsiElement myEndElement;
     int size = 0;
@@ -616,14 +643,25 @@ public class PyStatementMover extends LineMover {
         PsiElement counter = myStartElement;
         while (counter != myEndElement && counter != null) {
           size += 1;
-          if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment))
+          if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment)) {
             statementsSize += 1;
+          }
           counter = counter.getNextSibling();
         }
         size += 1;
-        if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment))
+        if (!(counter instanceof PsiWhiteSpace) && !(counter instanceof PsiComment)) {
           statementsSize += 1;
+        }
       }
+    }
+
+    @NotNull
+    public PsiElement getStartElement() {
+      return myStartElement;
+    }
+
+    public PsiElement getEndElement() {
+      return myEndElement;
     }
   }
 
@@ -638,8 +676,9 @@ public class PyStatementMover extends LineMover {
       myAtTheBeginning = atTheBeginning;
     }
   }
+
   // Use when element scope changed
-  static class ScopeRange extends LineRange {
+  public static class ScopeRange extends LineRange {
     private final PsiElement myScope;
     @NotNull private final PsiElement myAnchor;
     private final boolean addBefore;

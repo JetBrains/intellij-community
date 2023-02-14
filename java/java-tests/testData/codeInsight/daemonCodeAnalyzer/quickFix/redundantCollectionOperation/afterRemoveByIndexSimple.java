@@ -1,4 +1,4 @@
-// "Use removal by object" "true"
+// "Use removal by object" "true-preview"
 import java.util.List;
 
 class Test {

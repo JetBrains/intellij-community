@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.kt</file>
+    <line>11</line>
+    <highlighted_element>const val T = &quot;T&quot;</highlighted_element>
+    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
+    <description>Field has no usages.</description>
+  </problem>
+</problems>

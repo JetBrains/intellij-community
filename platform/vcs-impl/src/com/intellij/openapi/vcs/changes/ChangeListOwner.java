@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface ChangeListOwner {
-  void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<Change> changes);
+
   void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
+
   Project getProject();
 }

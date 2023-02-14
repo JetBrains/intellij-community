@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,8 @@ public final class ConstantNode extends Expression {
   private final Result myValue;
   private final LookupElement[] myLookupElements;
 
+  private final @Nullable @NlsContexts.PopupAdvertisement String myPopupAdvertisement;
+
   public ConstantNode(@NotNull String value) {
     this(new TextResult(value));
   }
@@ -27,7 +30,12 @@ public final class ConstantNode extends Expression {
   }
 
   private ConstantNode(@Nullable Result value, LookupElement @NotNull ... lookupElements) {
+    this(value, null, lookupElements);
+  }
+
+  private ConstantNode(@Nullable Result value, @Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement, LookupElement @NotNull ... lookupElements) {
     myValue = value;
+    myPopupAdvertisement = popupAdvertisement;
     myLookupElements = lookupElements;
   }
 
@@ -47,6 +55,10 @@ public final class ConstantNode extends Expression {
     return new ConstantNode(myValue, ContainerUtil.map2Array(lookupElements, LookupElement.class, LookupElementBuilder::create));
   }
 
+  public ConstantNode withPopupAdvertisement(@Nullable @NlsContexts.PopupAdvertisement String popupAdvertisement){
+    return new ConstantNode(myValue, popupAdvertisement, myLookupElements);
+  }
+
   @Override
   public Result calculateResult(ExpressionContext context) {
     return myValue;
@@ -62,4 +74,8 @@ public final class ConstantNode extends Expression {
     return myLookupElements;
   }
 
+  @Override
+  public @Nullable @NlsContexts.PopupAdvertisement String getAdvertisingText() {
+    return myPopupAdvertisement;
+  }
 }

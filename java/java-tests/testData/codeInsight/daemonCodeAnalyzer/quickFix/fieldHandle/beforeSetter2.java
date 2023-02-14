@@ -1,4 +1,4 @@
-// "Replace with 'findSetter'" "true"
+// "Replace with 'findSetter'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

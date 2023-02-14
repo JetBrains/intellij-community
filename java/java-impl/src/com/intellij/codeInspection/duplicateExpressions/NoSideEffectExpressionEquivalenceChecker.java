@@ -7,9 +7,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Pavel.Dolgov
- */
 class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
 
   @Override

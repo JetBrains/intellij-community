@@ -1,13 +1,14 @@
 <html>
 <body>
-This inspection is intended for Java ME and other highly resource constrained environments.
-Applying the results of this inspection without consideration might have negative effects on code clarity and design.
-<p>
-Reports any Java ME Connection resource which is not opened in front of a <b>try</b>
-block and closed in the corresponding <b>finally</b> block. Such resources may
-be inadvertently leaked if an exception is thrown before the resource is closed.
-  <!-- tooltip end -->
-<p>
-
+Reports Java ME <code>javax.microedition.io.Connection</code> resources that are not opened in front of a <code>try</code> block and
+closed in the corresponding <code>finally</code> block. Such resources may be inadvertently leaked if an exception is thrown before the
+resource is closed.
+<p><b>Example:</b></p>
+<pre><code>
+  void example() throws IOException {
+    Connection c = Connector.open("foo");
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

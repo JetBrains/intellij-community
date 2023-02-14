@@ -92,7 +92,7 @@ final class RemoteBreakpointImpl extends UnicastRemoteObject implements RemoteBr
   }
 
   public static List<RemoteBreakpoint> convert(List<? extends Breakpoint> list) throws RemoteException {
-    final ArrayList<RemoteBreakpoint> breakpoints = new ArrayList<RemoteBreakpoint>(list.size());
+    final ArrayList<RemoteBreakpoint> breakpoints = new ArrayList<>(list.size());
     for (Breakpoint breakpoint : list) {
       breakpoints.add(create(breakpoint));
     }

@@ -25,6 +25,11 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);
@@ -91,7 +96,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       boolean svnMappedToBase = false;
       for (VcsDirectoryMapping mapping : mappings) {
         final String vcs = mapping.getVcs();
-        if (vcs != null && vcs.length() > 0) {
+        if (vcs.length() > 0) {
           notMapped = false;
           if (SvnVcs.VCS_NAME.equals(vcs)) {
             if (mapping.isDefaultMapping() || baseDir.getPath().equals(mapping.getDirectory())) {

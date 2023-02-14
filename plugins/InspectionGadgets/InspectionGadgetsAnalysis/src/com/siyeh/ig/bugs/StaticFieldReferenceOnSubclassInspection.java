@@ -61,7 +61,7 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier name = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiIdentifier.class);
       if (name == null) return;
       final PsiReferenceExpression expression = ObjectUtils.tryCast(name.getParent(), PsiReferenceExpression.class);
@@ -80,25 +80,23 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
   private static class StaticFieldOnSubclassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiElement qualifier = expression.getQualifier();
       if (!(qualifier instanceof PsiReferenceExpression)) {
         return;
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiElement qualifierReferent = ((PsiReferenceExpression)qualifier).resolve();
-      if (!(qualifierReferent instanceof PsiClass)) {
+      if (!(qualifierReferent instanceof PsiClass referencedClass)) {
         return;
       }
-      final PsiClass referencedClass = (PsiClass)qualifierReferent;
       final PsiClass declaringClass = field.getContainingClass();
       if (declaringClass == null || declaringClass.equals(referencedClass)) {
         return;

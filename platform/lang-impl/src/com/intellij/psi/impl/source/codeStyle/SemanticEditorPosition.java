@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.Language;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +136,7 @@ public final class SemanticEditorPosition {
     skipParentheses(true, leftParenthesis, rightParenthesis);
   }
 
-  protected void skipParentheses(boolean forward, @NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+  private void skipParentheses(boolean forward, @NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
     int parenLevel = 0;
     while (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -234,9 +235,7 @@ public final class SemanticEditorPosition {
   public boolean isAtAnyOf(SyntaxElement @NotNull ... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
-      for (SyntaxElement element : syntaxElements) {
-        if (element.equals(currElement)) return true;
-      }
+      return ArrayUtil.contains(currElement, syntaxElements);
     }
     return false;
   }

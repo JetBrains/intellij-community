@@ -14,7 +14,6 @@ import javax.swing.*;
 
 /**
  * TODO: Add description
- * User: dcheryasov
  */
 public class PythonLookupElement extends LookupElement implements Comparable<LookupElement>{
 
@@ -92,7 +91,7 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
     presentation.setItemTextBold(isBold);
     presentation.setTailText(getTailText());

@@ -11,8 +11,8 @@ import java.util.List;
  * Class that provides constant list of possible notification ids.
  * If extension is registered in the platform or in a plugin built with IntelliJ Ultimate,
  * these ids will be registered in statistic metadata repository automatically.
- *
- * Otherwise, create a YT issue in FUS project or use com.intellij.notification.impl.NotificationGroupEP#notificationIds
+ * <p>
+ * Otherwise, create a YT issue in FUS project or use {@link NotificationGroupEP#notificationIds}.
  */
 @ApiStatus.Internal
 public interface NotificationIdsHolder {
@@ -20,7 +20,8 @@ public interface NotificationIdsHolder {
 
   /**
    * List of notificationIds which should be recorded in feature usage statistics.
-   * @see Notification#displayId
+   *
+   * @see Notification#getDisplayId
    */
   List<String> getNotificationIds();
 }

@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any calls to <code>Throwable.initCause()</code> where the exception constructor also takes a <code>Throwable</code> cause argument.
-In this case, the <code>initCause()</code> call can be removed and its argument added to the call to the exception's constructor.
-<p>Example:</p>
-<pre>
+Reports calls to <code>Throwable.initCause()</code> where an exception constructor also takes a <code>Throwable cause</code> argument.
+<p>In this case, the <code>initCause()</code> call can be removed and its argument can be added to the call to the exception's constructor.</p>
+<p><b>Example:</b></p>
+<pre><code>
   try {
       process();
   }
@@ -12,9 +12,9 @@ In this case, the <code>initCause()</code> call can be removed and its argument 
     wrapper.initCause(ex); // Unnecessary call to 'Throwable.initCause()'
     throw wrapper;
   }
-</pre>
-<p>A quick-fix is provided to pass the cause to constructor:</p>
-<pre>
+</code></pre>
+<p>A quick-fix is available to pass the cause argument to the constructor. After the quick-fix is applied:</p>
+<pre><code>
   try {
       process();
   }
@@ -22,9 +22,7 @@ In this case, the <code>initCause()</code> call can be removed and its argument 
     RuntimeException wrapper = new RuntimeException("Error while processing", ex);
     throw wrapper;
   }
-</pre>
+  </code></pre>
 <!-- tooltip end -->
-<p>
-<small>New in 2016.1</small>
 </body>
 </html>

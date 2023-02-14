@@ -62,7 +62,7 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       @NonNls final String methodName = method.getName();
       if (!"toString".equals(methodName)) {
@@ -93,12 +93,14 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
       final FieldUsedVisitor visitor = new FieldUsedVisitor(fields, methods);
       method.accept(visitor);
       for (PsiField field : visitor.getUnusedFields()) {
+        if (!field.isPhysical()) continue;
         final String fieldName = field.getName();
         myHolder.registerProblem(field.getNameIdentifier(),
                                  JavaAnalysisBundle.message("inspection.field.not.used.in.to.string.description2", fieldName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes());
       }
       for (PsiMethod unusedMethod : visitor.getUnusedMethods()) {
+        if (!unusedMethod.isPhysical()) continue;
         final PsiIdentifier identifier = unusedMethod.getNameIdentifier();
         final PsiElement target = identifier == null ? unusedMethod : identifier;
         myHolder.registerProblem(target,
@@ -118,18 +120,16 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (myUnusedFields.isEmpty() && myUnusedMethods.isEmpty()) {
         return;
       }
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (target instanceof PsiField) {
-        final PsiField field = (PsiField)target;
+      if (target instanceof PsiField field) {
         myUnusedFields.remove(field);
       }
-      else if (target instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)target;
+      else if (target instanceof PsiMethod method) {
         if (usesReflection(method)) {
           myUnusedFields.clear();
           myUnusedMethods.clear();

@@ -30,16 +30,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class SuperMethodWarningUtil {
   public static final Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
@@ -90,14 +85,11 @@ public final class SuperMethodWarningUtil {
       parentInterface,
       method.getContainingClass().isInterface(),
       ArrayUtilRt.toStringArray(superClasses));
-    switch (shouldIncludeBase) {
-      case Messages.YES:
-        return methodTargetCandidates;
-      case Messages.NO:
-        return new PsiMethod[] {method};
-      default:
-        return PsiMethod.EMPTY_ARRAY;
-    }
+    return switch (shouldIncludeBase) {
+      case Messages.YES -> methodTargetCandidates;
+      case Messages.NO -> new PsiMethod[]{method};
+      default -> PsiMethod.EMPTY_ARRAY;
+    };
   }
 
   @NotNull
@@ -127,18 +119,6 @@ public final class SuperMethodWarningUtil {
 
 
   public static PsiMethod checkSuperMethod(@NotNull PsiMethod method) {
-    return checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
-  }
-
-  /**
-   * @deprecated Use {@link SuperMethodWarningUtil#checkSuperMethod(PsiMethod)} instead. 
-   * 
-   * Custom action word doesn't work well with translations thus is replaced with "refactor"
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static PsiMethod checkSuperMethod(@NotNull PsiMethod method, 
-                                           @SuppressWarnings("unused") @NotNull String actionString) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return method;
@@ -152,18 +132,18 @@ public final class SuperMethodWarningUtil {
 
     int useSuperMethod = showDialog(
       method.getProject(),
-      actionString,
+      RefactoringBundle.message("to.refactor"),
       DescriptiveNameUtil.getDescriptiveName(method),
       containingClass.isInterface() || superMethod.hasModifierProperty(PsiModifier.ABSTRACT),
       containingClass.isInterface(),
       aClass.isInterface(),
       containingClass.getQualifiedName()
     );
-    switch (useSuperMethod) {
-      case Messages.YES: return superMethod;
-      case Messages.NO: return method;
-      default: return null;
-    }
+    return switch (useSuperMethod) {
+      case Messages.YES -> superMethod;
+      case Messages.NO -> method;
+      default -> null;
+    };
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
@@ -206,7 +186,7 @@ public final class SuperMethodWarningUtil {
                                  containingClass.isInterface() && !aClass.isInterface() ? 0 : 1, 
                                  SymbolPresentationUtil.getSymbolPresentableText(containingClass));
     }
-    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
+    JBPopupFactory.getInstance().createPopupChooserBuilder(List.of(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)

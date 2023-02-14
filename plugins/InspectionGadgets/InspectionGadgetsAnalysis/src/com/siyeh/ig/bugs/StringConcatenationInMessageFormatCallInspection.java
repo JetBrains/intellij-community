@@ -65,17 +65,15 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
       final PsiElement parent = binaryExpression.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
+      if (!(parent instanceof PsiExpressionList expressionList)) {
         return;
       }
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) {
@@ -103,8 +101,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
 
     @Nullable
     private static PsiExpression addParameter(PsiExpression expression, int parameterNumber) {
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      if (expression instanceof PsiBinaryExpression binaryExpression) {
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs == null) {
           return null;
@@ -116,8 +113,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
         rhs.replace(newExpression);
         return expression;
       }
-      else if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+      else if (expression instanceof PsiLiteralExpression literalExpression) {
         final Object value = literalExpression.getValue();
         if (!(value instanceof String)) {
           return null;
@@ -140,7 +136,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
   private static class StringConcatenationInMessageFormatCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isMessageFormatCall(expression)) {
         return;
@@ -167,13 +163,12 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
       if (formatArgumentType == null || !formatArgumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
-      if (!(formatArgument instanceof PsiBinaryExpression)) {
+      if (!(formatArgument instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
       if (PsiUtil.isConstantExpression(formatArgument)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)formatArgument;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiType lhsType = lhs.getType();
       if (lhsType == null || !lhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -193,15 +188,13 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
         return false;
       }
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+      if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifierExpression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         return false;
       }
-      final PsiClass aClass = (PsiClass)target;
       return InheritanceUtil.isInheritor(aClass, "java.text.MessageFormat");
     }
   }

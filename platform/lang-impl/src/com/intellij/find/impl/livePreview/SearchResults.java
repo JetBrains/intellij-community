@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 
@@ -58,14 +58,15 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
         moveCursorTo(occurrenceAtCaret, false, false);
         myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getSelectionModel().removeSelection();
+        if (myFindModel.isGlobal()) {
+          myEditor.getSelectionModel().removeSelection();
+        }
         notifyCursorMoved();
       }
     }
   }
 
   public enum Direction {UP, DOWN}
-
 
   private final List<SearchResultsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -92,6 +93,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
   private boolean myUpdating;
+  private SearchResults.Direction myPendingSearch;
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
@@ -105,7 +107,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
-  public void setNotFoundState(boolean isForward) {
+  private void setNotFoundState(boolean isForward) {
     myNotFoundState = true;
     FindModel findModel = new FindModel();
     findModel.copyFrom(myFindModel);
@@ -208,8 +210,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection,
-                                  @Nullable final TextRange next, final int stamp) {
+  ActionCallback updateThreadSafe(@NotNull FindModel findModel, boolean toChangeSelection, @Nullable TextRange next, int stamp) {
     if (myDisposed) return ActionCallback.DONE;
 
     ActionCallback result = new ActionCallback();
@@ -268,7 +269,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private static void getSelection(final Editor editor, final FutureResult<int[]> starts, final FutureResult<int[]> ends) {
+  private static void getSelection(Editor editor, FutureResult<int[]> starts, FutureResult<int[]> ends) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       SelectionModel selection = editor.getSelectionModel();
       starts.set(selection.getBlockSelectionStarts());
@@ -297,7 +298,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     int maxOffset = Math.min(range.getEndOffset(), charSequence.length());
     FindManager findManager = FindManager.getInstance(getProject());
 
-    while (true) {
+    while (offset < maxOffset) {
       FindResult result;
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
@@ -309,19 +310,12 @@ public class SearchResults implements DocumentListener, CaretListener {
       }
       if (result == null || !result.isStringFound()) break;
       final int newOffset = result.getEndOffset();
-      if (result.getEndOffset() > maxOffset) break;
+      if (newOffset > maxOffset) break;
       if (offset == newOffset) {
-        if (offset < maxOffset - 1) {
-          offset++;
-        }
-        else {
-          results.add(result);
-          break;
-        }
+        offset++; // skip zero-width result
       }
       else {
         offset = newOffset;
-        if (offset == result.getStartOffset()) ++offset; // skip zero width result
       }
       results.add(result);
     }
@@ -359,6 +353,16 @@ public class SearchResults implements DocumentListener, CaretListener {
       notifyCursorMoved();
     }
     notifyUpdateFinished();
+    Direction dir = myPendingSearch;
+    if (dir != null && next == null) {
+      if (dir == Direction.DOWN) {
+        nextOccurrence(false);
+      }
+      else {
+        prevOccurrence(false);
+      }
+    }
+    myPendingSearch = null;
   }
 
   private void updateSelection(boolean removePreviousSelection, boolean removeAllPreviousSelections, boolean adjustScrollPosition) {
@@ -580,7 +584,10 @@ public class SearchResults implements DocumentListener, CaretListener {
       notifyCursorMoved();
     }
     else {
-      if (myFindModel == null) return;
+      if (myFindModel == null) {
+        myPendingSearch = Direction.UP;
+        return;
+      }
       boolean processFromTheBeginning = false;
       if (myNotFoundState) {
         myNotFoundState = false;
@@ -616,7 +623,10 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   public void nextOccurrence(boolean retainOldSelection) {
-    if (myFindModel == null) return;
+    if (myFindModel == null) {
+      myPendingSearch = Direction.DOWN;
+      return;
+    }
     nextOccurrence(false, myCursor, true, false, retainOldSelection);
     push();
   }
@@ -655,7 +665,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  public void moveCursorTo(FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
+  private void moveCursorTo(FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
     if (next != null && !mySelectionManager.isSelected(next)) {
       retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
       myCursor = next;

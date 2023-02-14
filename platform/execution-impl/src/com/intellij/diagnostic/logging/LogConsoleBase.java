@@ -12,21 +12,38 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.components.panels.FlowLayoutWrapper;
+import com.intellij.ui.components.panels.HorizontalLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -45,15 +59,12 @@ import java.io.Reader;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance(LogConsoleBase.class);
 
-  private JPanel mySearchComponent;
-  private JComboBox myLogFilterCombo;
-  private JPanel myTextFilterWrapper;
+  private final JPanel mySearchComponent;
+  private final JComboBox<LogFilter> myLogFilterCombo;
+  private final JPanel myTextFilterWrapper;
 
   private volatile boolean myDisposed;
   private ConsoleView myConsole;
@@ -65,7 +76,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private final Project myProject;
   private @NlsContexts.TabTitle String myTitle = null;
   private boolean myWasInitialized;
-  private final JPanel myTopComponent = new JPanel(new BorderLayout());
   private ActionGroup myActions;
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
@@ -115,6 +125,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myConsole.attachToProcess(myProcessHandler);
     myDisposed = false;
     myModel.addFilterListener(this);
+
+    mySearchComponent = new NonOpaquePanel(new BorderLayout());
+    myLogFilterCombo = new ComboBox<>();
+    myLogFilterCombo.setOpaque(false);
+    myTextFilterWrapper = new NonOpaquePanel();
+
+    mySearchComponent.add(myLogFilterCombo, BorderLayout.WEST);
+    mySearchComponent.add(myTextFilterWrapper, BorderLayout.CENTER);
   }
 
   @Override
@@ -136,37 +154,27 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return reader;
   }
 
-  private JComponent createToolbar() {
-    String customFilter = myModel.getCustomFilter();
-
-    myFilter.reset();
-    myFilter.setSelectedItem(customFilter != null ? customFilter : "");
+  private void registerShiftTab() {
     // Don't override Shift-TAB if screen reader is active. It is unclear why overriding
     // Shift-TAB was necessary in the first place.
     // See https://github.com/JetBrains/intellij-community/commit/a36a3a00db97e4d5b5c112bb4136a41d9435f667
     if (!ScreenReader.isActive()) {
       new AnAction() {
         {
-          registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
-                                    LogConsoleBase.this);
+          var shiftTabShortcut = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK));
+          registerCustomShortcutSet(shiftTabShortcut, LogConsoleBase.this);
         }
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
-          myFilter.requestFocusInWindow();
+          var console = ComponentUtil.getParentOfType(ConsoleWithFloatingToolbar.class, getConsoleNotNull().getComponent());
+          if (console != null) {
+            console.myFloatingToolbar.scheduleShow();
+          }
+          getTextFilterComponent().requestFocusInWindow();
         }
       };
     }
-
-    if (myBuildInActions) {
-      final JComponent tbComp =
-        ActionManager.getInstance().createActionToolbar("LogConsole", getOrCreateActions(), true).getComponent();
-      myTopComponent.add(tbComp, BorderLayout.CENTER);
-      myTopComponent.add(getSearchComponent(), BorderLayout.EAST);
-    }
-
-
-    return myTopComponent;
   }
 
   public ActionGroup getOrCreateActions() {
@@ -212,10 +220,123 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
-      add(getConsoleNotNull().getComponent(), BorderLayout.CENTER);
-      add(createToolbar(), BorderLayout.NORTH);
+      var console = getConsoleNotNull().getComponent();
+      if (myBuildInActions) {
+        var search = getSearchComponent();
+        var group = getOrCreateActions();
+        if (search != null) {
+          group = addSearchFilter(group, search);
+        }
+        add(new ConsoleWithFloatingToolbar(console, group, this), BorderLayout.CENTER);
+      } else {
+        add(console, BorderLayout.CENTER);
+      }
+      registerShiftTab();
     }
     return this;
+  }
+
+  private ActionGroup addSearchFilter(ActionGroup origin, @NotNull JComponent searchComponent) {
+    var filterAction = new ToggleSearchFilterAction() {
+      @Override
+      protected @NotNull JComponent getSearchFilterComponent() {
+        return searchComponent;
+      }
+
+      @Override
+      protected boolean isModified(@NotNull JComponent component) {
+        if (myLogFilterCombo.getSelectedIndex() > 0) {
+          return true;
+        }
+        var textFilterComponent = getTextFilterComponent();
+        if (textFilterComponent instanceof FilterComponent) {
+          String filterText = ((FilterComponent)textFilterComponent).getFilter();
+          return StringUtil.isNotEmpty(filterText);
+        }
+        return false;
+      }
+    };
+    return new DefaultActionGroup(origin, filterAction);
+  }
+
+  private static final class ConsoleWithFloatingToolbar extends JBLayeredPane {
+    private final static int TOP_OFFSET = 25;
+    private final static int RIGHT_OFFSET = 20;
+
+    private final @NotNull JComponent myComponent;
+    private final @NotNull FloatingToolbar myFloatingToolbar;
+
+    private ConsoleWithFloatingToolbar(@NotNull JComponent component, @NotNull ActionGroup actions, @NotNull Disposable disposable) {
+      myComponent = component;
+      myFloatingToolbar = new FloatingToolbar(component, actions, disposable);
+
+      add(myComponent, JLayeredPane.DEFAULT_LAYER);
+      add(myFloatingToolbar, JLayeredPane.POPUP_LAYER);
+    }
+
+    @Override
+    public void doLayout() {
+      Rectangle bounds = getBounds();
+      myComponent.setBounds(0, 0, bounds.width, bounds.height);
+      var toolbarSize = myFloatingToolbar.getPreferredSize();
+      myFloatingToolbar.setBounds(
+        bounds.width - toolbarSize.width - RIGHT_OFFSET,
+        TOP_OFFSET - (toolbarSize.height - ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height) / 2,
+        toolbarSize.width,
+        toolbarSize.height
+      );
+    }
+  }
+
+  private static abstract class ToggleSearchFilterAction extends ToggleAction implements CustomComponentAction {
+    ToggleSearchFilterAction() {
+      super(() -> ExecutionBundle.message("log.toggle.filter.component"), new LayeredIcon(AllIcons.General.Filter, null));
+    }
+
+    protected @NotNull abstract JComponent getSearchFilterComponent();
+
+    protected boolean isModified(@NotNull JComponent component) {
+      return false;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return Toggleable.isSelected(e.getPresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      Toggleable.setSelected(e.getPresentation(), state);
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      var button = new ActionButton(this, presentation, "LogSearchFilterToolbar", ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      var panel = new NonOpaquePanel();
+      panel.setBorder(new JBEmptyBorder(0, 2, 0, 2));
+      panel.setLayout(new HorizontalLayout(4, SwingConstants.CENTER));
+      panel.add(getSearchFilterComponent());
+      panel.add(new FlowLayoutWrapper(button));
+      return panel;
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component,
+                                      @NotNull Presentation presentation) {
+      component.setVisible(presentation.isVisible());
+      component.setEnabled(presentation.isEnabled());
+      getSearchFilterComponent().setVisible(Toggleable.isSelected(presentation));
+      var icon = presentation.getIcon();
+      if (icon instanceof LayeredIcon && ((LayeredIcon)icon).getIconCount() == 2) {
+        ((LayeredIcon)icon).setIcon(isModified(component) ? AllIcons.Nodes.TabAlert : null, 1);
+        presentation.setIcon(icon);
+      }
+    }
   }
 
   public abstract boolean isActive();
@@ -498,7 +619,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Override
   public JComponent getSearchComponent() {
-    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[0])));
+    myLogFilterCombo.setModel(new DefaultComboBoxModel<>(myFilters.toArray(new LogFilter[0])));
     resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
       @Override

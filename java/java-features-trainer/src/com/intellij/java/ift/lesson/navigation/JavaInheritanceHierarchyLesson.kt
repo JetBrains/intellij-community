@@ -18,9 +18,11 @@ import training.learn.course.KLesson
 
 class JavaInheritanceHierarchyLesson
   : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name")) {
-  override val existedFile: String = "src/InheritanceHierarchySample.java"
+  override val sampleFilePath: String = "src/InheritanceHierarchySample.java"
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     caret("foo(demo)")
 
     actionTask("GotoImplementation") {
@@ -57,8 +59,8 @@ class JavaInheritanceHierarchyLesson
 
     task("GotoImplementation") {
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.invoke.implementations.again", icon(AllIcons.Gutter.ImplementedMethod),
-                                 action(it)))
-      triggerByUiComponentAndHighlight { ui: InplaceButton ->
+                                     action(it)))
+      triggerAndFullHighlight().component { ui: InplaceButton ->
         ui.toolTipText == IdeBundle.message("show.in.find.window.button.name")
       }
       restoreIfModifiedOrMoved()
@@ -73,7 +75,7 @@ class JavaInheritanceHierarchyLesson
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.open.in.find.tool.window", findToolWindow(),
                                      icon(ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND,
                                                                                                  AllIcons.General.Pin_tab))))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: BaseLabel ->
+      triggerUI().component { ui: BaseLabel ->
         ui.text == (CodeInsightBundle.message("goto.implementation.findUsages.title", "foo")) ||
         ui.text == (JavaAnalysisBundle.message("navigate.to.overridden.methods.title", "foo"))
       }
@@ -115,12 +117,12 @@ class JavaInheritanceHierarchyLesson
     }
 
     text(JavaLessonsBundle.message("java.inheritance.hierarchy.last.note",
-                               action("GotoImplementation"),
-                               action("GotoSuperMethod"),
-                               action("MethodHierarchy"),
-                               action("TypeHierarchy"),
-                               action("GotoAction"),
-                               strong("hierarchy")))
+                                   action("GotoImplementation"),
+                                   action("GotoSuperMethod"),
+                                   action("MethodHierarchy"),
+                                   action("TypeHierarchy"),
+                                   action("GotoAction"),
+                                   strong("hierarchy")))
   }
 
   private fun TaskRuntimeContext.atDeclarationPosition(): Boolean {
@@ -131,4 +133,9 @@ class JavaInheritanceHierarchyLesson
 
   private fun TaskContext.findToolWindow() = strong(UIBundle.message("tool.window.name.find"))
   private fun TaskContext.hierarchyToolWindow() = strong(UIBundle.message("tool.window.name.hierarchy"))
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(JavaLessonsBundle.message("java.inheritance.hierarchy.help.link"),
+         LessonUtil.getHelpLink("viewing-structure-and-hierarchy-of-the-source-code.html")),
+  )
 }

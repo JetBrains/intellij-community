@@ -94,11 +94,6 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
     return myPanel.myWholePanel;
   }
 
-  @Override
-  protected void dispose() {
-    super.dispose();
-  }
-
   protected static class Panel {
     JRadioButton mySelfSignedRadioButton;
     JRadioButton mySignedByKeyRadioButton;

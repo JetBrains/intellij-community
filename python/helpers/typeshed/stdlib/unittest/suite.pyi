@@ -1,11 +1,12 @@
 import unittest.case
 import unittest.result
-from typing import Iterable, Iterator, List, Union
+from collections.abc import Iterable, Iterator
+from typing_extensions import TypeAlias
 
-_TestType = Union[unittest.case.TestCase, TestSuite]
+_TestType: TypeAlias = unittest.case.TestCase | TestSuite
 
 class BaseTestSuite(Iterable[_TestType]):
-    _tests: List[unittest.case.TestCase]
+    _tests: list[unittest.case.TestCase]
     _removed_tests: int
     def __init__(self, tests: Iterable[_TestType] = ...) -> None: ...
     def __call__(self, result: unittest.result.TestResult) -> unittest.result.TestResult: ...
@@ -15,6 +16,7 @@ class BaseTestSuite(Iterable[_TestType]):
     def debug(self) -> None: ...
     def countTestCases(self) -> int: ...
     def __iter__(self) -> Iterator[_TestType]: ...
+    def __eq__(self, other: object) -> bool: ...
 
 class TestSuite(BaseTestSuite):
     def run(self, result: unittest.result.TestResult, debug: bool = ...) -> unittest.result.TestResult: ...

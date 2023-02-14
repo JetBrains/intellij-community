@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 @ApiStatus.Internal
-public class TargetDebuggerConnectionUtil {
+public final class TargetDebuggerConnectionUtil {
   private TargetDebuggerConnectionUtil() {}
 
   @Nullable
@@ -63,8 +63,7 @@ public class TargetDebuggerConnectionUtil {
    */
   @Nullable
   public static TargetDebuggerConnection prepareDebuggerConnection(@NotNull JavaCommandLineState javaCommandLineState,
-                                                                   @NotNull TargetEnvironmentRequest request,
-                                                                   @Nullable TargetEnvironmentConfiguration configuration) {
+                                                                   @NotNull TargetEnvironmentRequest request) {
     final int remotePort;
     JavaParameters javaParameters;
     try {
@@ -84,7 +83,7 @@ public class TargetDebuggerConnectionUtil {
     try {
       final String remoteAddressForVmParams;
 
-      final boolean java9plus = Optional.ofNullable(configuration)
+      final boolean java9plus = Optional.ofNullable(request.getConfiguration())
         .map(TargetEnvironmentConfiguration::getRuntimes)
         .map(list -> list.findByType(JavaLanguageRuntimeConfiguration.class))
         .map(JavaLanguageRuntimeConfiguration::getJavaVersionString)
@@ -95,7 +94,8 @@ public class TargetDebuggerConnectionUtil {
 
       if (java9plus) {
         // IDEA-225182 - hack: pass "host:port" to construct correct VM params, then adjust the connection
-        remoteAddressForVmParams = "*:" + remotePort;
+        // IDEA-265364 - enforce ipv4 here with explicit 0.0.0.0 address
+        remoteAddressForVmParams = "0.0.0.0:" + remotePort;
       }
       else {
         remoteAddressForVmParams = String.valueOf(remotePort);

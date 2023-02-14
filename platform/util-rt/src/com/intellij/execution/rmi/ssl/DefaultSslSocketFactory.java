@@ -19,7 +19,7 @@ public final class DefaultSslSocketFactory extends DelegateSslSocketFactory {
   }
 
   public DefaultSslSocketFactory(String trustEveryone) throws GeneralSecurityException {
-    this(Boolean.valueOf(trustEveryone));
+    this(Boolean.parseBoolean(trustEveryone));
   }
 
   @NotNull

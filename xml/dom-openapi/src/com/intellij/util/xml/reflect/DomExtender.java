@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * <li>{@code domClass} - the DOM element class for which this extender will be called, must be equal to {@link T}</li>
  * <li>{@code extenderClass} - this class qualified name</li>
  * </ul>
- *
- * @author peter
  */
 public abstract class DomExtender<T extends DomElement> {
 

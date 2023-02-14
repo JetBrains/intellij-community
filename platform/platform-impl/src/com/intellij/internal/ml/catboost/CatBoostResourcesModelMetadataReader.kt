@@ -4,7 +4,7 @@ package com.intellij.internal.ml.catboost
 import com.intellij.internal.ml.InconsistentMetadataException
 import com.intellij.internal.ml.ResourcesModelMetadataReader
 
-internal class CatBoostResourcesModelMetadataReader(metadataHolder: Class<*>,
+class CatBoostResourcesModelMetadataReader(metadataHolder: Class<*>,
                                            featuresDirectory: String,
                                            private val modelDirectory: String) : ResourcesModelMetadataReader(metadataHolder, featuresDirectory) {
 

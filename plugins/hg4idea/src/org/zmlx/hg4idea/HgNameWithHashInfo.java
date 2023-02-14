@@ -24,7 +24,6 @@ import java.util.Objects;
  * Used for storing branch information from repository internal hg files, f.e.  branchheads, bookmarks
  *
  * @see org.zmlx.hg4idea.repo.HgRepositoryReader
- * @author Nadya Zabrodina
  */
 public class HgNameWithHashInfo {
 

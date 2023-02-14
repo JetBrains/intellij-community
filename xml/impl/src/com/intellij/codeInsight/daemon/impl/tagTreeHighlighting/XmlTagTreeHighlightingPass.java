@@ -45,9 +45,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
 
@@ -238,7 +235,8 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   @NotNull
   private static HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
     TextAttributes attributes = new TextAttributes(null, color, null, null, Font.PLAIN);
-    return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes).severity(HighlightSeverity.INFORMATION).createUnconditionally();
+    return HighlightInfo.newHighlightInfo(TYPE).range(range).textAttributes(attributes)
+      .severity(HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY).createUnconditionally();
   }
 
   @NotNull

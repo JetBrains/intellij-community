@@ -28,9 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
-/**
- * @author Denis Zhdanov
- */
 abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup {
   private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareInputStreamTransferableData.class);
 
@@ -48,23 +45,8 @@ abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStrea
   }
 
   @Override
-  public DataFlavor getFlavor() {
+  public @Nullable DataFlavor getFlavor() {
     return myDataFlavor;
-  }
-
-  @Override
-  public int getOffsetCount() {
-    return 0;
-  }
-
-  @Override
-  public int getOffsets(int[] offsets, int index) {
-    return index;
-  }
-
-  @Override
-  public int setOffsets(int[] offsets, int index) {
-    return index;
   }
 
   @Override

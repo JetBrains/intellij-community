@@ -23,7 +23,6 @@ public class ToggleTemporaryLineBreakpointAction extends XDebuggerActionBase imp
   public ToggleTemporaryLineBreakpointAction() {
     super(true);
   }
-
   @Override
   @NotNull
   protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {

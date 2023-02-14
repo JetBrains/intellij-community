@@ -5,19 +5,19 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SetInspectionOptionFix;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SortedCollectionWithNonComparableKeysInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> COLLECTIONS = Set.of(
@@ -25,12 +25,11 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
 
   public boolean IGNORE_TYPE_PARAMETERS;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters"), this,
-      "IGNORE_TYPE_PARAMETERS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_TYPE_PARAMETERS",
+               JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters")));
   }
 
   @NotNull
@@ -38,7 +37,7 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         if (expression.getAnonymousClass() != null || expression.isArrayCreation() ||
             expression.getArgumentList() == null || !expression.getArgumentList().isEmpty()) {
           return;
@@ -58,7 +57,8 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
           fix = new SetInspectionOptionFix(SortedCollectionWithNonComparableKeysInspection.this, "IGNORE_TYPE_PARAMETERS", message, true);
         }
         if (InheritanceUtil.isInheritor(elementType, CommonClassNames.JAVA_LANG_COMPARABLE)) return;
-        holder.registerProblem(expression, JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.message"), fix);
+        holder.registerProblem(expression, JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.message"),
+                               LocalQuickFix.notNullElements(fix));
       }
     };
   }

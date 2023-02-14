@@ -1,0 +1,17 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
+// WITH_STDLIB
+
+package test
+
+import test.MyEnum.*
+
+enum class MyEnum {
+    A, B, C, D, E
+}
+
+fun main() {
+    A
+    MyEnum.valueOf("A")
+    MyEnum.values()
+    MyEnum.entries
+}

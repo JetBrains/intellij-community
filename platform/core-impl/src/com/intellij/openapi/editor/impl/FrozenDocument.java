@@ -15,9 +15,6 @@ import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
   @Nullable private volatile SoftReference<LineSet> myLineSet;
@@ -40,7 +37,8 @@ public class FrozenDocument implements DocumentEx {
     return lineSet;
   }
 
-  public FrozenDocument applyEvent(DocumentEvent event, int newStamp) {
+  @NotNull
+  public FrozenDocument applyEvent(@NotNull DocumentEvent event, int newStamp) {
     final int offset = event.getOffset();
     final int oldEnd = offset + event.getOldLength();
     ImmutableCharSequence newText = myText.replace(offset, oldEnd, event.getNewFragment());

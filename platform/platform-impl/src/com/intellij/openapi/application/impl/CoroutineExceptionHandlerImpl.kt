@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.diagnostic.Logger
@@ -13,10 +13,16 @@ import kotlin.coroutines.CoroutineContext
  * to handle any uncaught exceptions thrown by coroutines launched in the [kotlinx.coroutines.GlobalScope].
  */
 class CoroutineExceptionHandlerImpl : AbstractCoroutineContextElement(CoroutineExceptionHandler), CoroutineExceptionHandler {
-  override fun handleException(context: CoroutineContext, exception: Throwable) {
-    if (exception is ProcessCanceledException) return
 
-    kotlin.runCatching { LOG.error("Unhandled exception in $context", exception) }
+  override fun handleException(context: CoroutineContext, exception: Throwable) {
+    if (exception is ProcessCanceledException) {
+      return
+    }
+    try {
+      LOG.error("Unhandled exception in $context", exception)
+    }
+    catch (ignored: Throwable) {
+    }
   }
 
   companion object {

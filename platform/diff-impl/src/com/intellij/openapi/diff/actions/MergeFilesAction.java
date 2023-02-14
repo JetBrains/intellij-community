@@ -6,10 +6,7 @@ import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -25,21 +22,26 @@ public class MergeFilesAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     DataContext context = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null){
+    if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
     }
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    if (files == null || files.length != 3){
+    if (files == null || files.length != 3) {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext context = e.getDataContext();
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    if (files == null || files.length != 3){
+    if (files == null || files.length != 3) {
       return;
     }
 

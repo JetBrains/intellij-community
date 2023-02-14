@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class NestedMethodCallInspection extends BaseInspection {
 
   /**
@@ -41,12 +44,11 @@ public class NestedMethodCallInspection extends BaseInspection {
   public boolean ignoreGetterCalls = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("nested.method.call.ignore.option"), "m_ignoreFieldInitializations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.static.methods"), "ignoreStaticMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.calls.to.property.getters"), "ignoreGetterCalls");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreFieldInitializations", InspectionGadgetsBundle.message("nested.method.call.ignore.option")),
+      checkbox("ignoreStaticMethods", InspectionGadgetsBundle.message("ignore.calls.to.static.methods")),
+      checkbox("ignoreGetterCalls", InspectionGadgetsBundle.message("ignore.calls.to.property.getters")));
   }
 
   @Override

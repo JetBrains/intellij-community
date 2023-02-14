@@ -15,15 +15,13 @@
  */
 package com.intellij.codeInspection.deprecation
 
-import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.ObjectUtils
 import com.siyeh.InspectionGadgetsBundle
 import org.jetbrains.annotations.Nls
 
@@ -43,6 +41,7 @@ private fun generateQualifierText(expr: PsiReferenceExpression,
 }
 
 internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMethod: PsiMethod) : LocalQuickFixOnPsiElement(expr) {
+  @SafeFieldForPreview
   private val myReplacementMethodPointer =
     SmartPointerManager.getInstance(replacementMethod.project).createSmartPsiElementPointer(replacementMethod)
   private val myReplacementText =
@@ -58,7 +57,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    val expr = ObjectUtils.tryCast(startElement, PsiMethodCallExpression::class.java) ?: return
+    val expr = (startElement as? PsiMethodCallExpression) ?: return
     val replacementMethod = myReplacementMethodPointer.element ?: return
 
     val qualifierText = generateQualifierText(expr.methodExpression, replacementMethod)
@@ -68,20 +67,21 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     val replaced = expr.replace(newMethodCall) as PsiMethodCallExpression
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced.methodExpression)
   }
-
-  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-    val method = myReplacementMethodPointer.element
-    val expr = startElement as PsiMethodCallExpression?
-    if (method == null || expr == null) return null
-    return ReplaceMethodCallFix(PsiTreeUtil.findSameElementInCopy(expr, target), method)
-  }
 }
 
-internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementField: PsiField) : LocalQuickFixOnPsiElement(expr) {
-  private val myReplacementMethodPointer =
-    SmartPointerManager.getInstance(replacementField.project).createSmartPsiElementPointer(replacementField)
+internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacementMember: PsiMember) : LocalQuickFixOnPsiElement(expr) {
+  @SafeFieldForPreview
+  private val myReplacementMemberPointer =
+    SmartPointerManager.getInstance(replacementMember.project).createSmartPsiElementPointer(replacementMember)
   private val myReplacementText =
-    PsiFormatUtil.formatVariable(replacementField, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY)
+    when (replacementMember) {
+      is PsiField -> PsiFormatUtil.formatVariable(
+        replacementMember, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY)
+      is PsiMethod -> PsiFormatUtil.formatMethod(
+        replacementMember, PsiSubstitutor.EMPTY, 
+        PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS, 0)
+      else -> throw IllegalArgumentException()
+    }
 
   override fun getFamilyName(): String {
     return InspectionGadgetsBundle.message("replace.field.reference.fix.family.name")
@@ -92,13 +92,13 @@ internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacemen
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    val expr = ObjectUtils.tryCast(startElement, PsiReferenceExpression::class.java) ?: return
-    val replacementField = myReplacementMethodPointer.element ?: return
+    val expr = (startElement as? PsiReferenceExpression) ?: return
+    val replacementMember = myReplacementMemberPointer.element ?: return
 
-    val qualifierText = generateQualifierText(expr, replacementField)
+    val qualifierText = generateQualifierText(expr, replacementMember)
 
-    val replaced = expr.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(qualifierText + replacementField.name, expr))
+    val replaced = expr.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(
+      qualifierText + replacementMember.name + (if (replacementMember is PsiMethod) "()" else ""), expr))
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced)
   }
-
 }

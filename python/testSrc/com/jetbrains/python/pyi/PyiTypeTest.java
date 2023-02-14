@@ -30,9 +30,6 @@ import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author vlan
- */
 public class PyiTypeTest extends PyTestCase {
 
   private Disposable myDisposable;
@@ -88,7 +85,7 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testFunctionReturnType() {
-    doTest("Optional[int]");
+    doTest("int | None");
   }
 
   public void testFunctionType() {
@@ -114,12 +111,12 @@ public class PyiTypeTest extends PyTestCase {
 
   // PY-22808
   public void testOverloadedNotMatchedType() {
-    doTest("Union[list, Any]");
+    doTest("list | Any");
   }
 
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
-    doTest("Union[dict[str, Any], list]");
+    doTest("dict[str, Any] | list");
   }
 
   public void testGenericClassDefinitionInOtherFile() {

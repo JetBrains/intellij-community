@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static git4idea.GitNotificationIdsHolder.PULL_FAILED;
-import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
 import static java.util.Collections.singletonList;
 
 public class GitPull extends GitMergeAction {
@@ -141,7 +140,7 @@ public class GitPull extends GitMergeAction {
     return () -> {
       final List<String> urls = remote.getUrls();
 
-      GitLineHandler h = new GitLineHandler(project, root, GitCommand.PULL, REBASE_CONFIG_PARAMS);
+      GitLineHandler h = new GitLineHandler(project, root, GitCommand.PULL);
       h.setUrls(urls);
       h.addParameters("--no-stat");
 

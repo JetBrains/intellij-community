@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -9,22 +9,21 @@ import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.navigation.TargetPresentation
-import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
+import com.intellij.ui.list.createTargetPopup
 import com.intellij.usages.UsageTarget
 import org.jetbrains.annotations.ApiStatus
 
 /* This file contains weird logic so Symbols will work with PsiElements and UsageTargets. */
 
-private val TARGET_VARIANTS: DataKey<List<TargetVariant>> = DataKey.create("search.target.variants")
-
-internal fun allTargets(dataContext: DataContext): List<TargetVariant> = dataContext.getData(TARGET_VARIANTS) ?: emptyList()
+internal fun allTargets(dataContext: DataContext): List<TargetVariant> {
+  return targetVariants(dataContext)
+}
 
 internal interface UsageVariantHandler {
   fun handleTarget(target: SearchTarget)
@@ -51,7 +50,7 @@ internal fun findShowUsages(project: Project,
       allTargets.single().handle(handler)
     }
     else -> {
-      chooseTargetPopup(popupTitle, allTargets, TargetVariant::presentation) {
+      createTargetPopup(popupTitle, allTargets, TargetVariant::presentation) {
         it.handle(handler)
       }.showInBestPositionFor(dataContext)
     }
@@ -64,7 +63,7 @@ internal sealed class TargetVariant {
 }
 
 internal class SearchTargetVariant(private val target: SearchTarget) : TargetVariant() {
-  override val presentation: TargetPresentation get() = target.presentation
+  override val presentation: TargetPresentation get() = target.presentation()
   override fun handle(handler: UsageVariantHandler): Unit = handler.handleTarget(target)
 }
 

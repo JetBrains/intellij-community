@@ -1,7 +1,8 @@
 import selectors
-from typing import Optional
 
 from . import base_events
 
+__all__ = ("BaseSelectorEventLoop",)
+
 class BaseSelectorEventLoop(base_events.BaseEventLoop):
-    def __init__(self, selector: Optional[selectors.BaseSelector] = ...) -> None: ...
+    def __init__(self, selector: selectors.BaseSelector | None = ...) -> None: ...

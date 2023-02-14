@@ -7,7 +7,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -21,6 +20,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import java.util.List;
 
 /**
+ * Import maven compiler configuration for different compilerIds if the related IDE compilers support is available.
  * @author Vladislav.Soroka
  */
 public interface MavenCompilerExtension {
@@ -51,12 +51,14 @@ public interface MavenCompilerExtension {
                                          @NotNull MavenEmbedderWrapper embedder,
                                          @NotNull ResolveContext context) throws MavenProcessCanceledException { return false; }
 
+  @Nullable
+  default String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }
+
   default void configureOptions(CompilerOptions compilerOptions,
                                 Module module,
                                 MavenProject mavenProject,
                                 List<String> compilerArgs) {
-    if(compilerOptions instanceof JpsJavaCompilerOptions){
-      JpsJavaCompilerOptions javaCompilerOptions = (JpsJavaCompilerOptions)compilerOptions;
+    if (compilerOptions instanceof JpsJavaCompilerOptions javaCompilerOptions) {
 
       CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(module.getProject());
       compilerConfiguration.setAdditionalOptions(javaCompilerOptions, module, compilerArgs);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -31,10 +32,13 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
@@ -46,6 +50,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   private String myRawValue;
   private XFullValueEvaluator myFullValueEvaluator;
+  private final @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> myAdditionalHyperLinks = new ArrayList<>();
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
 
@@ -69,12 +74,6 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
     XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
-  }
-
-  @Override
-  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator,
-                              @NonNls @Nullable String value, boolean hasChildren) {
-    XValueNodePresentationConfigurator.setPresentation(icon, type, separator, value, hasChildren, this);
   }
 
   @Override
@@ -132,7 +131,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
             return;
           }
 
-          if (!showAsInlay(session, position, document)) {
+          if (!showAsInlay(session, position)) {
             data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
             myTree.updateEditor();
@@ -148,9 +147,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  private boolean showAsInlay(XDebugSession session, XSourcePosition position, Document document) {
+  private boolean showAsInlay(XDebugSession session, XSourcePosition position) {
     if (Registry.is("debugger.show.values.use.inlays")) {
-      if (position.getLine() >= 0 && XDebuggerInlayUtil.createLineEndInlay(this, session, position.getFile(), position, document)) {
+      if (position.getLine() >= 0 &&
+          XDebuggerInlayUtil.getInstance(session.getProject()).createLineEndInlay(this, session, position)) {
         return true;
       }
     }
@@ -163,6 +163,19 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     invokeNodeUpdate(() -> {
       myFullValueEvaluator = fullValueEvaluator;
       fireNodeChanged();
+    });
+  }
+
+  public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
+    invokeNodeUpdate(() -> {
+      myAdditionalHyperLinks.add(link);
+      fireNodeChanged();
+    });
+  }
+
+  public void clearAdditionalHyperlinks() {
+    invokeNodeUpdate(() -> {
+      myAdditionalHyperLinks.clear();
     });
   }
 
@@ -219,6 +232,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
+  /** always compute evaluate expression from the base value container to avoid recalculation for watches
+   * @see WatchNodeImpl#getValueContainer()
+   */
+  @NotNull
+  public final Promise<XExpression> calculateEvaluationExpression() {
+    return myValueContainer.calculateEvaluationExpression();
+  }
+
   @Nullable
   public XFullValueEvaluator getFullValueEvaluator() {
     return myFullValueEvaluator;
@@ -247,6 +268,19 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       };
     }
     return null;
+  }
+
+  @Override
+  public void appendToComponent(@NotNull ColoredTextContainer component) {
+    super.appendToComponent(component);
+
+    for (XDebuggerTreeNodeHyperlink hyperlink : getAdditionalLinks()) {
+      component.append(hyperlink.getLinkText(), hyperlink.getTextAttributes(), hyperlink);
+    }
+  }
+
+  private @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
+    return myAdditionalHyperLinks;
   }
 
   @Override

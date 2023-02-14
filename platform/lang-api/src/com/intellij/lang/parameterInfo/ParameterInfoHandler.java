@@ -16,12 +16,22 @@ package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * This extension is used to implement support for 'Parameter Info' action for a specific language. That action shows a popup with
+ * information about formal method parameters, when caret is located at method invocation site.<p>
+ * The extension should implement methods finding target method's PSI element based on caret position
+ * ({@link #findElementForParameterInfo(CreateParameterInfoContext)} and
+ * {@link #findElementForUpdatingParameterInfo(UpdateParameterInfoContext)}, the former also should specify information about all method
+ * overloads to display), method to select currently used overload and parameter caret is currently on
+ * ({@link #updateParameterInfo(Object, UpdateParameterInfoContext)}), method defining the presentation of popup elements
+ * ({@link #updateUI(Object, ParameterInfoUIContext)} and method to actually show the popup
+ * ({@link #showParameterInfo(Object, CreateParameterInfoContext)});
+ */
 public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
 
   /**
@@ -31,7 +41,11 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
    */
   @Nullable
   ParameterOwner findElementForParameterInfo(@NotNull CreateParameterInfoContext context);
-  // Usually context.showHint
+
+  /**
+   * This method is called to show parameter info popup. Usually it just invokes
+   * {@link CreateParameterInfoContext#showHint(PsiElement, int, ParameterInfoHandler)}.
+   */
   void showParameterInfo(@NotNull final ParameterOwner element, @NotNull CreateParameterInfoContext context);
 
   /**
@@ -80,28 +94,23 @@ public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElemen
   default void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {}
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default @Nullable String getParameterCloseChars() { return null; }
 
   /** @deprecated not used */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean tracksParameterIndex() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default boolean couldShowInLookup() { return false; }
 
   /** @deprecated unused */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   default Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }

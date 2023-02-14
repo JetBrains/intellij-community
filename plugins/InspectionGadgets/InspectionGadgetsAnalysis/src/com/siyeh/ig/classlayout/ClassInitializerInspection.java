@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -33,10 +33,11 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassInitializerInspection extends BaseInspection {
 
@@ -55,10 +56,10 @@ public class ClassInitializerInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("class.initializer.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.initializer.option"), this, "onlyWarnWhenConstructor");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnWhenConstructor", InspectionGadgetsBundle.message("class.initializer.option")));
   }
 
 
@@ -86,17 +87,16 @@ public class ClassInitializerInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement brace = descriptor.getPsiElement();
       final PsiElement parent = brace.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiClassInitializer)) {
+      if (!(grandParent instanceof PsiClassInitializer initializer)) {
         return;
       }
-      final PsiClassInitializer initializer = (PsiClassInitializer)grandParent;
       final PsiClass aClass = initializer.getContainingClass();
       if (aClass == null) {
         return;
@@ -132,13 +132,7 @@ public class ClassInitializerInspection extends BaseInspection {
         addDefaultConstructorFix.invoke(aClass.getProject(), null, aClass.getContainingFile());
       }
       constructors = aClass.getConstructors();
-      return removeChainedConstructors(ContainerUtil.newArrayList(constructors));
-    }
-
-    @NotNull
-    private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-      constructors.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
-      return constructors;
+      return ContainerUtil.filter(constructors, constructor -> JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
     }
   }
 
@@ -150,7 +144,7 @@ public class ClassInitializerInspection extends BaseInspection {
   private class ClassInitializerVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
       super.visitClassInitializer(initializer);
       if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
         return;

@@ -1,6 +1,13 @@
 <html>
 <body>
-Reports methods and method hierarchies where the return value appears to
-be always the same constant.
+Reports methods and method hierarchies that always return the same constant.
+<p><b>Example:</b></p>
+<pre><code>
+  class X {
+    int xxx() {
+      return 0;
+    }
+  }
+</code></pre>
 </body>
 </html>

@@ -1,0 +1,2 @@
+KtClass: B
+PsiClassImpl: C

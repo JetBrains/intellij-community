@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -11,9 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 import static com.intellij.find.actions.FindUsagesKt.findUsages;
 import static com.intellij.find.actions.ResolverKt.allTargets;
@@ -21,10 +22,19 @@ import static com.intellij.find.actions.ResolverKt.findShowUsages;
 
 public class FindUsagesAction extends AnAction {
 
-  static final DataKey<List<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
+  /**
+   * @see SearchTargetsDataRule
+   */
+  @Experimental
+  public static final DataKey<Collection<SearchTarget>> SEARCH_TARGETS = DataKey.create("search.targets");
 
   public FindUsagesAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected boolean toShowDialog() {

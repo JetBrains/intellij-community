@@ -25,18 +25,18 @@ import org.zmlx.hg4idea.HgNameWithHashInfo;
 import java.util.*;
 
 public class HgRepoInfo {
-  @NotNull private String myCurrentBranch = HgRepository.DEFAULT_BRANCH;
+  @NotNull private final String myCurrentBranch;
   @Nullable private final String myTipRevision;
   @Nullable private final String myCurrentRevision;
   @NotNull private final Repository.State myState;
-  @Nullable private String myCurrentBookmark = null;
-  @NotNull private Map<String, LinkedHashSet<Hash>> myBranches = Collections.emptyMap();
-  @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
-  @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
-  @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
-  @NotNull private Set<HgNameWithHashInfo> mySubrepos = Collections.emptySet();
-  @NotNull private List<HgNameWithHashInfo> myMQApplied = Collections.emptyList();
-  @NotNull private List<String> myMqNames = Collections.emptyList();
+  @Nullable private final String myCurrentBookmark;
+  @NotNull private final Map<String, LinkedHashSet<Hash>> myBranches;
+  @NotNull private final Set<HgNameWithHashInfo> myBookmarks;
+  @NotNull private final Set<HgNameWithHashInfo> myTags;
+  @NotNull private final Set<HgNameWithHashInfo> myLocalTags;
+  @NotNull private final Set<HgNameWithHashInfo> mySubrepos;
+  @NotNull private final List<HgNameWithHashInfo> myMQApplied;
+  @NotNull private final List<String> myMqNames;
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,

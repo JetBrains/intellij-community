@@ -2,25 +2,38 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import junit.framework.TestCase
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 
-abstract class PropertyTestCase : TestCase() {
+abstract class PropertyTestCase {
+
   private lateinit var propertyGraph: PropertyGraph
 
-  override fun setUp() {
+  @BeforeEach
+  fun setUp() {
     propertyGraph = PropertyGraph()
   }
 
-  protected fun <T> property(initial: () -> T): GraphProperty<T> {
-    return GraphPropertyImpl(propertyGraph, initial)
+  protected fun <T> property(initial: () -> T): GraphProperty<T> =
+    propertyGraph.lazyProperty(initial)
+
+  fun <T> ObservableMutableProperty<T>.dependsOn(property: ObservableProperty<T>, update: () -> T) {
+    propertyGraph.dependsOn(this, property) { update() }
   }
 
-  protected fun <T> assertProperty(property: GraphProperty<T>, value: T, isPropagationBlocked: Boolean) {
-    Assert.assertEquals(isPropagationBlocked, propertyGraph.isPropagationBlocked(property))
-    Assert.assertEquals(value, property.get())
+  fun afterGraphPropagation(listener: () -> Unit) {
+    propertyGraph.afterPropagation(listener)
+  }
+
+  protected fun <T> assertProperty(property: ObservableProperty<T>, value: T) {
+    Assertions.assertEquals(value, property.get())
+  }
+
+  protected fun <T> assertProperties(properties: List<ObservableProperty<T>>, vararg values: T) {
+    Assertions.assertEquals(values.toList(), properties.map { it.get() })
   }
 
   protected fun <E> generate(times: Int, generate: (Int) -> E) = (0 until times).map(generate)

@@ -23,16 +23,18 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider;
+
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 
 public class AddManagedFilesAction extends MavenAction {
   @Override
@@ -47,7 +49,7 @@ public class AddManagedFilesAction extends MavenAction {
     }
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
-      public boolean isFileSelectable(VirtualFile file) {
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
         return super.isFileSelectable(file) && !manager.isManagedFile(file);
       }
 
@@ -70,7 +72,7 @@ public class AddManagedFilesAction extends MavenAction {
             openProjectProvider.linkToExistingProject(projectFile, project);
           }
           else {
-            String projectPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFile.getPath()));
+            String projectPath = getPresentablePath(projectFile.getPath());
             String message = projectFile.isDirectory()
                              ? MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
                              : MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath);

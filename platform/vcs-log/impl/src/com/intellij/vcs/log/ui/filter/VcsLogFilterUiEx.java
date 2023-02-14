@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataPack;
@@ -37,7 +37,7 @@ public interface VcsLogFilterUiEx extends VcsLogFilterUi {
   ActionGroup createActionGroup();
 
   @NotNull
-  SearchTextField getTextFilterComponent();
+  SearchFieldWithExtension getTextFilterComponent();
 
   /**
    * Informs the filter UI components that the actual VcsLogDataPack has been updated (e.g. due to a log refresh).

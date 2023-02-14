@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -42,6 +42,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public ApplicationConfigurable(@NotNull Project project) {
     myProject = project;
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    JavaCodeFragment.VisibilityChecker visibilityChecker = getVisibilityChecker(myModuleSelector);
+    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, visibilityChecker));
 
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
@@ -60,8 +62,10 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector.applyTo(configuration);
 
     String className = getMainClassField().getText();
-    PsiClass aClass = myModuleSelector.findClass(className);
-    configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    if (!className.equals(getInitialMainClassName(configuration))) {
+      PsiClass aClass = myModuleSelector.findClass(className);
+      configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    }
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
     configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
@@ -83,12 +87,17 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
 
-    getMainClassField().setText(configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "");
+    getMainClassField().setText(getInitialMainClassName(configuration));
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
     hideUnsupportedFieldsIfNeeded();
+  }
+
+  @NotNull
+  private String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
+    return configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "";
   }
 
   public EditorTextFieldWithBrowseButton getMainClassField() {
@@ -107,18 +116,15 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
   private void createUIComponents() {
     myMainClass = new LabeledComponent<>();
-    JavaCodeFragment.VisibilityChecker visibilityChecker = getVisibilityChecker(myModuleSelector);
-    myMainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, visibilityChecker));
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
   @NotNull
-  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(ConfigurationModuleSelector selector) {
+  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
-      if (declaration instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)declaration;
+      if (declaration instanceof PsiClass aClass) {
         if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||
-            place.getParent() != null && selector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
+            place != null && place.getParent() != null && selector.findClass(aClass.getQualifiedName()) != null) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }
       }

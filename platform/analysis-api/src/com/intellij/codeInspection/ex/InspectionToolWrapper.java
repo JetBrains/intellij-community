@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.DynamicBundle;
@@ -10,12 +10,14 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Set;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
 
@@ -36,7 +40,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   protected T myTool;
   protected final E myEP;
-  @Nullable private HighlightDisplayKey myDisplayKey;
+  private @Nullable HighlightDisplayKey myDisplayKey;
+
+  private volatile Set<String> applicableToLanguages; // lazy initialized
 
   protected InspectionToolWrapper(@NotNull E ep) {
     this(null, ep);
@@ -69,11 +75,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     getTool().initialize(context);
   }
 
-  @NotNull
-  public abstract InspectionToolWrapper<T, E> createCopy();
+  public abstract @NotNull InspectionToolWrapper<T, E> createCopy();
 
-  @NotNull
-  public T getTool() {
+  public @NotNull T getTool() {
     T tool = myTool;
     if (tool == null) {
       //noinspection unchecked
@@ -93,8 +97,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
    * @see #applyToDialects()
    * @see #isApplicable(Language)
    */
-  @Nullable
-  public String getLanguage() {
+  public @Nullable String getLanguage() {
     return myEP == null ? null : myEP.language;
   }
 
@@ -103,50 +106,34 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public boolean isApplicable(@NotNull Language language) {
-    String langId = getLanguage();
-    return isApplicable(language, langId);
-  }
+    String myLangId = getLanguage();
+    if (myLangId == null || myLangId.isBlank() || "any".equals(myLangId)) return true;
 
-  private boolean isApplicable(@NotNull Language language, String toolLang) {
-    if (toolLang == null) {
-      return true;
+    Set<String> languages = applicableToLanguages;
+    if (languages == null) {
+      applicableToLanguages = languages = ToolLanguageUtil.getAllMatchingLanguages(myLangId, applyToDialects());
     }
-    if (language.getID().equals(toolLang)) {
-      return true;
-    }
-    if (applyToDialects()) {
-      if (language.isKindOf(toolLang)) {
-        return true;
-      }
 
-      Language toolLanguage = Language.findLanguageByID(toolLang);
-      if (toolLanguage instanceof MetaLanguage) {
-        for (Language lang : ((MetaLanguage)toolLanguage).getMatchingLanguages()) {
-          if (isApplicable(language, lang.getID())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return languages.contains(language.getID());
   }
 
   public boolean isCleanupTool() {
     return myEP != null ? myEP.cleanupTool : getTool() instanceof CleanupLocalInspectionTool;
   }
 
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
-  public String getID() {
+  public @Nullable String getDefaultEditorAttributes() {
+    return myEP == null ? getTool().getEditorAttributesKey() : myEP.editorAttributes;
+  }
+
+  public @NotNull String getID() {
     return getShortName();
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getDisplayName() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
     }
@@ -156,9 +143,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  @NotNull
-  @Nls
-  public String getGroupDisplayName() {
+  public @NotNull @Nls String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();
     }
@@ -172,8 +157,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().isEnabledByDefault() : myEP.enabledByDefault;
   }
 
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
 
@@ -204,7 +188,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getTool().loadDescription();
   }
 
-  private InputStream getDescriptionStream() {
+  private @Nullable InputStream getDescriptionStream() {
     Application app = ApplicationManager.getApplication();
     String fileName = getDescriptionFileName();
 
@@ -215,35 +199,29 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       return ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);
     }
 
-    return myEP.getPluginDescriptor().getPluginClassLoader().getResourceAsStream("inspectionDescriptions/" + fileName);
+    return getPluginClassLoaderStream(myEP.getPluginDescriptor().getPluginClassLoader(),
+                                      fileName);
   }
 
-  @Nullable
-  private static InputStream getLanguagePluginStream(@NotNull String fileName) {
+  private static @Nullable InputStream getLanguagePluginStream(@NotNull String fileName) {
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
     if (langBundle == null) return null;
 
     PluginDescriptor langPluginDescriptor = langBundle.pluginDescriptor;
-    if (langPluginDescriptor == null) return null;
-
-    ClassLoader classLoader = langPluginDescriptor.getPluginClassLoader();
-    if (classLoader == null) return null;
-
-    return classLoader.getResourceAsStream("inspectionDescriptions/" + fileName);
+    return langPluginDescriptor != null ?
+           getPluginClassLoaderStream(langPluginDescriptor.getPluginClassLoader(), fileName) :
+           null;
   }
 
-  @NotNull
-  private String getDescriptionFileName() {
+  private @NotNull String getDescriptionFileName() {
     return getShortName() + ".html";
   }
 
-  @NotNull
-  public final String getFolderName() {
+  public final @NotNull String getFolderName() {
     return getShortName();
   }
 
-  @NotNull
-  public Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  public @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
   }
 
@@ -275,5 +253,21 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       myDisplayKey = key = HighlightDisplayKey.find(getShortName());
     }
     return key;
+  }
+
+  public boolean isApplicable(Collection<ProjectType> projectTypes) {
+    if (myEP == null) return true;
+
+    String projectType = myEP.projectType;
+    if (projectType == null) return true;
+
+    return ProjectTypeService.hasProjectType(projectTypes, projectType);
+  }
+
+  private static @Nullable InputStream getPluginClassLoaderStream(@Nullable ClassLoader classLoader,
+                                                                  @NotNull @NlsSafe String fileName) {
+    return classLoader != null ?
+           classLoader.getResourceAsStream("inspectionDescriptions/" + fileName) :
+           null;
   }
 }

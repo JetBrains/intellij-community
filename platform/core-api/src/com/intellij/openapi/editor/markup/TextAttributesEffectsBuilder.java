@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,7 +59,7 @@ public final class TextAttributesEffectsBuilder {
    * If current state has underline and we applying attributes with wave underline, underline effect will be removed.
    */
   @NotNull
-  public final TextAttributesEffectsBuilder coverWith(@NotNull TextAttributes attributes) {
+  public TextAttributesEffectsBuilder coverWith(@NotNull TextAttributes attributes) {
     attributes.forEachAdditionalEffect(this::coverWith);
     coverWith(attributes.getEffectType(), attributes.getEffectColor());
     return this;
@@ -69,7 +69,7 @@ public final class TextAttributesEffectsBuilder {
    * Applies effects from {@code attributes} if effect slots are not used.
    */
   @NotNull
-  public final TextAttributesEffectsBuilder slipUnder(@NotNull TextAttributes attributes) {
+  public TextAttributesEffectsBuilder slipUnder(@NotNull TextAttributes attributes) {
     slipUnder(attributes.getEffectType(), attributes.getEffectColor());
     attributes.forEachAdditionalEffect(this::slipUnder);
     return this;

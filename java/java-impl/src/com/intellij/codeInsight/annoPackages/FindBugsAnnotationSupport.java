@@ -11,13 +11,10 @@ class FindBugsAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList("edu.umd.cs.findbugs.annotations.NonNull");
-      case NULLABLE:
-        return Collections.singletonList("edu.umd.cs.findbugs.annotations.Nullable");
-      default:
-        return Collections.emptyList();
-    }
+    return switch (nullability) {
+      case NOT_NULL -> Collections.singletonList("edu.umd.cs.findbugs.annotations.NonNull");
+      case NULLABLE -> Collections.singletonList("edu.umd.cs.findbugs.annotations.Nullable");
+      default -> Collections.emptyList();
+    };
   }
 }

@@ -2,13 +2,16 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.newui.ListPluginComponent;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.ui.components.labels.LinkLabel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -56,6 +59,13 @@ public class LinkPanel {
       myLinkLabel.setText(text);
       myLinkLabel.setVisible(true);
     }
+  }
+
+  public void showWithBrowseUrl(@NotNull @Nls String text, boolean addAugments, @NotNull Supplier<String> urlProvider) {
+    show(text, () -> {
+      String url = urlProvider.get();
+      BrowserUtil.browse(addAugments ? IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url) : url);
+    });
   }
 
   public void hide() {

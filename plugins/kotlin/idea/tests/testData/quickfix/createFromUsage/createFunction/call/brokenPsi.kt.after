@@ -1,0 +1,14 @@
+// "Create extension function 'X.Companion.callSomethingNew'" "true"
+
+private fun X.Companion.callSomethingNew(i: Int) {
+    <selection>TODO("Not yet implemented")<caret></selection>
+}
+
+class X {
+    fun callee() {
+        X.callSomethingNew(123)
+    }
+
+    companion object
+
+    fun test(x:Int): Unit {

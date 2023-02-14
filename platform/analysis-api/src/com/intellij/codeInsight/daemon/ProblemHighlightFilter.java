@@ -38,7 +38,6 @@ public abstract class ProblemHighlightFilter {
   private static boolean shouldProcess(PsiFile psiFile, boolean onTheFly) {
     if (psiFile == null) return true;
 
-    return !ContainerUtil
-      .exists(EP_NAME.getExtensionList(), filter -> onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile));
+    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile));
   }
 }

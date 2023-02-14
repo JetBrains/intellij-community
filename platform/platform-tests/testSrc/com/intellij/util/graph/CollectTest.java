@@ -2,7 +2,6 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.ArrayUtilRt;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -38,7 +37,7 @@ public class CollectTest extends GraphTestCase {
     graph.put("b", "acd");
     graph.put("c", "abd");
     graph.put("d", "abc");
-    Set<String> nodes = new THashSet<>();
+    Set<String> nodes = new HashSet<>();
     nodes.add("a");
     getAlgorithmsInstance().collectOutsRecursively(initGraph(graph), "a", nodes);
     assertThat(nodes.size()).isEqualTo(1);

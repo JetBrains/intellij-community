@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * In the described case a class implementing {@code PairedBraceMatcher} may also implement this aspect to
  * perform its own specific checks.
  * </p>
- *
- * @author Rustam Vishnyakov
  */
 public interface BraceMatcherTerminationAspect {
   /**

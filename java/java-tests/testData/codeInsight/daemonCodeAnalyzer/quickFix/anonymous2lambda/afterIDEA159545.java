@@ -1,4 +1,4 @@
-// "Replace with lambda" "true"
+// "Replace with lambda" "true-preview"
 
 class MyTest {
   void addEventListener(EventListener<? extends Event> listener) { }

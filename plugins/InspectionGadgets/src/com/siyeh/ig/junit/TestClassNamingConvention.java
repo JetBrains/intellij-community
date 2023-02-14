@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
@@ -27,18 +28,28 @@ import org.jetbrains.annotations.NonNls;
 
 public class TestClassNamingConvention extends NamingConvention<PsiClass> {
 
-  private static final int DEFAULT_MIN_LENGTH = 8;
-  private static final int DEFAULT_MAX_LENGTH = 64;
+  private static final int DEFAULT_MIN_LENGTH = 5;
+  private static final int DEFAULT_MAX_LENGTH = 255;
   @NonNls public static final String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*|IT(.*)|(.*)IT(Case)?", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 
   @Override
   public boolean isApplicable(PsiClass member) {
-    if (member instanceof PsiTypeParameter) return false;
+    if (member instanceof PsiTypeParameter) {
+      return false;
+    }
+    if (!member.hasModifierProperty(PsiModifier.STATIC) && member.getContainingClass() != null) {
+      return false;
+    }
     TestFramework framework = TestFrameworks.detectFramework(member);
     return framework instanceof JavaTestFramework && framework.isTestClass(member) && !((JavaTestFramework)framework).isSuiteClass(member);
   }

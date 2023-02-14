@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler.impl;
 
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.UUID;
 
-public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
+public final class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance(CompileContextImpl.class);
   private final Project myProject;
   private final CompilerTask myBuildSession;
@@ -74,8 +74,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
-  @NotNull
-  public CompilerTask getBuildSession() {
+  public @NotNull CompilerTask getBuildSession() {
     return myBuildSession;
   }
 
@@ -88,8 +87,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -100,7 +98,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
-    final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
+    CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable, moduleNames);
     if (msg != null) {
       addToProblemsView(msg);
     }
@@ -152,14 +150,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  @Nullable
-  public String getRebuildReason() {
+  public @Nullable String getRebuildReason() {
     return myRebuildReason;
   }
 
   @Override
-  @NotNull
-  public ProgressIndicator getProgressIndicator() {
+  public @NotNull ProgressIndicator getProgressIndicator() {
     return myBuildSession.getIndicator();
   }
 

@@ -7,9 +7,6 @@ import com.intellij.util.AbstractQuery;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author peter
-*/
 public class SearchRequestQuery extends AbstractQuery<PsiReference> {
   private final Project myProject;
   private final SearchRequestCollector myRequests;

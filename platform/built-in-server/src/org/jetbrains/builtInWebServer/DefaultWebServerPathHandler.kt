@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
@@ -22,10 +23,11 @@ import java.nio.file.Paths
 import java.util.regex.Pattern
 
 val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
+private val WEB_SERVER_FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
-                       project: Project,
+                       project: Project?,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
                        projectName: String,
@@ -35,12 +37,20 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     val isSignedRequest = request.isSignedRequest()
     val extraHeaders = validateToken(request, channel, isSignedRequest) ?: return true
+    // Check project validity after token validation to avoid info disclosure
+    if (project == null) {
+      HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+      return true
+    }
 
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path, defaultPathQuery)
       if (pathInfo == null) {
+        if (FavIconHttpRequestHandler.sendDefaultFavIcon(decodedRawPath, request, context)) {
+          return true
+        }
         HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true
       }
@@ -103,7 +113,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
 
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
-    for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
+    for (fileHandler in WEB_SERVER_FILE_HANDLER_EP_NAME.extensionList) {
       LOG.runAndLogException {
         if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
@@ -139,7 +149,7 @@ private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpReque
 }
 
 private fun canBeAccessedDirectly(path: String): Boolean {
-  for (fileHandler in WebServerFileHandler.EP_NAME.extensionList) {
+  for (fileHandler in WEB_SERVER_FILE_HANDLER_EP_NAME.extensionList) {
     for (ext in fileHandler.pageFileExtensions) {
       if (FileUtilRt.extensionEquals(path, ext)) {
         return true

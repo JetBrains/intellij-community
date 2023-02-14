@@ -9,9 +9,7 @@ import com.intellij.util.containers.Convertor;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
-/**
- * @author yole
- */
+
 final class TreeUIHelperImpl extends TreeUIHelper {
   @Override
   public void installToolTipHandler(final JTree tree) {
@@ -33,7 +31,7 @@ final class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public void installTreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> convertor, boolean canExpand) {
-    new TreeSpeedSearch(tree, convertor, canExpand);
+    new TreeSpeedSearch(tree, canExpand, convertor.asFunction());
   }
 
   @Override

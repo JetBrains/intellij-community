@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
-/**
- * @author ilyas
- */
 public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
   private final String @NotNull [] myAnnotations;
   private final StringRef myName;

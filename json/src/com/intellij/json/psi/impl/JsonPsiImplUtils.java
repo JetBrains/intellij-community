@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonLanguage;
-import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
@@ -25,6 +24,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
 
 public final class JsonPsiImplUtils {
   static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
@@ -54,7 +55,7 @@ public final class JsonPsiImplUtils {
   }
 
   public static boolean isQuotedString(@NotNull JsonLiteral literal) {
-    return literal.getNode().findChildByType(JsonParserDefinition.STRING_LITERALS) != null;
+    return literal.getNode().findChildByType(STRING_LITERALS) != null;
   }
 
   @Nullable

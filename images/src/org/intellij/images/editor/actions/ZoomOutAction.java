@@ -15,6 +15,7 @@
  */
 package org.intellij.images.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
@@ -47,5 +48,10 @@ public final class ZoomOutAction extends AnAction implements DumbAware {
             ImageZoomModel zoomModel = decorator.getZoomModel();
             e.getPresentation().setEnabled(zoomModel.canZoomOut());
         }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 }

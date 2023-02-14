@@ -5,7 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/eawtstub_src.zip!/src" />
+      <root url="jar://$PROJECT_DIR$/lib/src/eawtstub_src.zip!/main/java" />
     </SOURCES>
   </library>
 </component>

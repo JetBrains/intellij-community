@@ -17,24 +17,20 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Supplier;
 
 abstract class ChangeViewTypeActionBase extends ChangeHierarchyViewActionBase {
-  ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
-    this(() -> shortDescription, () -> longDescription, icon);
-  }
-
-  ChangeViewTypeActionBase(@NotNull Supplier<String> shortDescription, @NotNull Supplier<String> longDescription, final Icon icon) {
+  ChangeViewTypeActionBase(@NotNull Supplier<String> shortDescription, @NotNull Supplier<String> longDescription, Icon icon) {
     super(shortDescription, longDescription, icon);
   }
 
   @Override
-  protected TypeHierarchyBrowserBase getHierarchyBrowser(DataContext context) {
-    return UIUtil.getParentOfType(TypeHierarchyBrowserBase.class, context.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+  protected @Nullable TypeHierarchyBrowserBase getHierarchyBrowser(@NotNull DataContext dataContext) {
+    return ObjectUtils.tryCast(super.getHierarchyBrowser(dataContext), TypeHierarchyBrowserBase.class);
   }
 }

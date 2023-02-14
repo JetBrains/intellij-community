@@ -1,13 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+@ReviseWhenPortedToJDK("11") // rewrite to VarHandles to avoid smelling AtomicREference inheritance
+@Transient
 public class UserDataHolderBase extends AtomicReference<KeyFMap> implements UserDataHolderEx {
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
@@ -48,8 +52,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
     return t;
   }
 
-  @NotNull
-  protected KeyFMap getUserMap() {
+  protected @NotNull KeyFMap getUserMap() {
     return get();
   }
 
@@ -103,8 +106,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   @Override
-  @NotNull
-  public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
+  public @NotNull <T> T putUserDataIfAbsent(final @NotNull Key<T> key, final @NotNull T value) {
     while (true) {
       KeyFMap map = getUserMap();
       T oldValue = map.get(key);

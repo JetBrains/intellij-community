@@ -31,20 +31,31 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
   fun <T> writeList(data: Collection<T>, itemClass: Class<T>, configuration: WriteConfiguration = versionedFileDefaultWriteConfiguration) {
     file.safeOutputStream().use {
       val out = if (isCompressed) LZ4FrameOutputStream(it, LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB) else it
-      ObjectSerializer.instance.serializer.writeVersioned(data, out, version, configuration, ParameterizedTypeImpl(data.javaClass, itemClass))
+      ObjectSerializer.instance.serializer.writeVersioned(obj = data,
+                                                          out = out,
+                                                          expectedVersion = version,
+                                                          configuration = configuration,
+                                                          originalType = ParameterizedTypeImpl(data.javaClass, itemClass))
     }
   }
 
   @Throws(IOException::class, SerializationException::class)
   @JvmOverloads
   @Suppress("UNCHECKED_CAST")
-  fun <T> readList(itemClass: Class<T>, configuration: ReadConfiguration = ReadConfiguration(), renameToCorruptedOnError: Boolean = true): List<T>? =
-    readAndHandleErrors(ArrayList::class.java, configuration, ParameterizedTypeImpl(ArrayList::class.java, itemClass), renameToCorruptedOnError) as List<T>?
+  fun <T> readList(itemClass: Class<T>,
+                   configuration: ReadConfiguration = ReadConfiguration(),
+                   renameToCorruptedOnError: Boolean = true): List<T>? {
+    return readAndHandleErrors(objectClass = ArrayList::class.java,
+                               configuration = configuration,
+                               originalType = ParameterizedTypeImpl(ArrayList::class.java, itemClass),
+                               renameToCorruptedOnError = renameToCorruptedOnError) as List<T>?
+  }
 
   @Throws(IOException::class, SerializationException::class)
   @JvmOverloads
-  fun <T : Any> read(objectClass: Class<T>, beanConstructed: BeanConstructed? = null): T? =
-    readAndHandleErrors(objectClass, ReadConfiguration(beanConstructed = beanConstructed))
+  fun <T : Any> read(objectClass: Class<T>, beanConstructed: BeanConstructed? = null): T? {
+    return readAndHandleErrors(objectClass = objectClass, configuration = ReadConfiguration(beanConstructed = beanConstructed))
+  }
 
   private fun <T : Any> readAndHandleErrors(objectClass: Class<T>,
                                             configuration: ReadConfiguration,

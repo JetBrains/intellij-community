@@ -26,9 +26,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-/**
- * @author Denis Zhdanov
- */
 public abstract class AbstractSyntaxAwareReader extends Reader {
 
   private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReader.class);

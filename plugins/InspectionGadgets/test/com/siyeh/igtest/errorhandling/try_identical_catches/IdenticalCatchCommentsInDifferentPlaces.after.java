@@ -17,7 +17,8 @@ class C {
     }
     catch (IllegalMonitorStateException e) /*skip*/ {
       //
-    } catch (ClassCastException e) { }
+    }
+    catch (ClassCastException e) { }
     catch // other
     (RuntimeException e) {
       //skip

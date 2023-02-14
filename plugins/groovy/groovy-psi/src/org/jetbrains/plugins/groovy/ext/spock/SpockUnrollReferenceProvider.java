@@ -19,9 +19,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Sergey Evdokimov
- */
 public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
 
   private static final Pattern PATTERN = Pattern.compile("\\#([\\w_]+)");
@@ -39,9 +36,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     if (!(argumentList instanceof GrAnnotationArgumentList)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement eAnnotation = argumentList.getParent();
-    if (!(eAnnotation instanceof GrAnnotation)) return PsiReference.EMPTY_ARRAY;
-
-    GrAnnotation annotation = (GrAnnotation)eAnnotation;
+    if (!(eAnnotation instanceof GrAnnotation annotation)) return PsiReference.EMPTY_ARRAY;
 
     String shortName = annotation.getShortName();
     if (!shortName.equals(UNROLL) && !shortName.equals(SPOCK_LANG_UNROLL)) return PsiReference.EMPTY_ARRAY;
@@ -50,9 +45,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     if (!(modifierList instanceof GrModifierList)) return PsiReference.EMPTY_ARRAY;
 
     PsiElement eMethod = modifierList.getParent();
-    if (!(eMethod instanceof GrMethod)) return PsiReference.EMPTY_ARRAY;
-
-    final GrMethod method = (GrMethod)eMethod;
+    if (!(eMethod instanceof GrMethod method)) return PsiReference.EMPTY_ARRAY;
 
     TextRange rangeInElement = ElementManipulators.getValueTextRange(element);
 

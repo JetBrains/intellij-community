@@ -44,29 +44,35 @@ public class SelectionReverterTest extends IntegrationTestCase {
   }
 
   public void testBasics() throws Exception {
-    String before = "public class Bar {\n" +
-                    "  public String foo() {\n" +
-                    "    return \"old\";\n" +
-                    "  }\n" +
-                    "}\n";
-    String after = "public class NewBar {\n" +
-                   "  public String foo() {\n" +
-                   "    return \"new\";\n" +
-                   "  }\n" +
-                   "  public abstract bar();\n" +
-                   "}\n";
+    String before = """
+      public class Bar {
+        public String foo() {
+          return "old";
+        }
+      }
+      """;
+    String after = """
+      public class NewBar {
+        public String foo() {
+          return "new";
+        }
+        public abstract bar();
+      }
+      """;
 
     setBinaryContent(f, before.getBytes(StandardCharsets.UTF_8));
     setBinaryContent(f, after.getBytes(StandardCharsets.UTF_8));
 
     revertToPreviousRevision(2, 2);
     
-    String expected = "public class NewBar {\n" +
-                      "  public String foo() {\n" +
-                      "    return \"old\";\n" +
-                      "  }\n" +
-                      "  public abstract bar();\n" +
-                      "}\n";
+    String expected = """
+      public class NewBar {
+        public String foo() {
+          return "old";
+        }
+        public abstract bar();
+      }
+      """;
     assertEquals(expected, new String(f.contentsToByteArray(), StandardCharsets.UTF_8));
   }
 

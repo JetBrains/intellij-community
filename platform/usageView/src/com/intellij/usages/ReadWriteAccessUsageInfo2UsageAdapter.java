@@ -1,60 +1,59 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector.Access;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.rules.MergeableUsage;
-import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implements ReadWriteAccessUsage{
-  private final byte initialRwLevel; // 0,1,2 -> R, W, RW
-  private byte myRwLevel;
+public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter implements ReadWriteAccessUsage {
 
-  public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, final boolean accessedForReading, final boolean accessedForWriting) {
+  /**
+   * Ordinal of {@link Access}
+   */
+  private final byte myInitialRwAccess;
+  private volatile byte myRwAccess;
+
+  public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, @NotNull Access rwAccess) {
     super(usageInfo);
-    initialRwLevel = myRwLevel = (byte)((accessedForReading ? 1 : 0) | (accessedForWriting ? 2 : 0));
-    computeIcon();
+    myRwAccess = myInitialRwAccess = (byte)rwAccess.ordinal();
+  }
+
+  /**
+   * @deprecated use {@link #ReadWriteAccessUsageInfo2UsageAdapter(UsageInfo, Access)}
+   */
+  @Deprecated
+  public ReadWriteAccessUsageInfo2UsageAdapter(@NotNull UsageInfo usageInfo, boolean accessedForReading, boolean accessedForWriting) {
+    this(usageInfo, getRwAccess(accessedForReading, accessedForWriting));
   }
 
   private static class RW {
+    /**
+     * Mapping from ordinal of {@link Access} to Icon.
+     */
     private static final Icon[] ICONS = {
       PlatformIcons.VARIABLE_READ_ACCESS,
-      PlatformIcons.VARIABLE_READ_ACCESS,
       PlatformIcons.VARIABLE_WRITE_ACCESS,
-      PlatformIcons.VARIABLE_RW_ACCESS};
+      PlatformIcons.VARIABLE_RW_ACCESS
+    };
   }
 
-  private void computeIcon() {
-    myIcon = RW.ICONS[myRwLevel];
+  @Override
+  protected @Nullable Icon computeIcon() {
+    return RW.ICONS[myRwAccess];
   }
 
   @Override
   public boolean merge(@NotNull MergeableUsage other) {
     boolean merged = super.merge(other);
     if (merged && other instanceof ReadWriteAccessUsageInfo2UsageAdapter) {
-      myRwLevel |= ((ReadWriteAccessUsageInfo2UsageAdapter)other).myRwLevel;
-      computeIcon();
+      Access newRwAccess = mergeRwAccess(rwAccess(), ((ReadWriteAccessUsageInfo2UsageAdapter)other).rwAccess());
+      myRwAccess = (byte)newRwAccess.ordinal();
     }
     return merged;
   }
@@ -62,18 +61,21 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
   @Override
   public void reset() {
     super.reset();
-    myRwLevel = initialRwLevel;
-    computeIcon();
+    myRwAccess = myInitialRwAccess;
+  }
+
+  private @NotNull Access rwAccess() {
+    return Access.values()[myRwAccess];
   }
 
   @Override
   public boolean isAccessedForWriting() {
-    return BitUtil.isSet(myRwLevel, 2);
+    return rwAccess() != Access.Read;
   }
 
   @Override
   public boolean isAccessedForReading() {
-    return BitUtil.isSet(myRwLevel, 1);
+    return rwAccess() != Access.Write;
   }
 
   @Override
@@ -81,13 +83,32 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ReadWriteAccessUsageInfo2UsageAdapter adapter = (ReadWriteAccessUsageInfo2UsageAdapter)o;
-    return initialRwLevel == adapter.initialRwLevel &&
-           myRwLevel == adapter.myRwLevel
-      && this.getUsageInfo().equals(((ReadWriteAccessUsageInfo2UsageAdapter)o).getUsageInfo());
+    return myInitialRwAccess == adapter.myInitialRwAccess &&
+           myRwAccess == adapter.myRwAccess
+           && this.getUsageInfo().equals(((ReadWriteAccessUsageInfo2UsageAdapter)o).getUsageInfo());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(initialRwLevel, myRwLevel, getUsageInfo());
+    return Objects.hash(myInitialRwAccess, myRwAccess, getUsageInfo());
+  }
+
+  private static @NotNull Access mergeRwAccess(@NotNull Access left, @NotNull Access right) {
+    return left == right ? left : Access.ReadWrite;
+  }
+
+  private static @NotNull Access getRwAccess(boolean accessedForReading, boolean accessedForWriting) {
+    if (accessedForReading && accessedForWriting) {
+      return Access.ReadWrite;
+    }
+    else if (accessedForReading) {
+      return Access.Read;
+    }
+    else if (accessedForWriting) {
+      return Access.Write;
+    }
+    else {
+      throw new IllegalArgumentException("At least one of 'accessedForReading' or 'accessedForWriting' must be 'true'");
+    }
   }
 }

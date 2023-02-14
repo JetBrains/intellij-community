@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.ApplicationInitializedListener;
@@ -15,7 +15,7 @@ import javax.swing.*;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
 
-public class ImportOldConfigsUsagesCollector extends CounterUsagesCollector {
+final class ImportOldConfigsUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 4);
   private static final EventId2<ImportOldConfigType, Boolean> IMPORT_DIALOG_SHOWN_EVENT =
     EVENT_GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType.class), Boolean("config_folder_exists"));
@@ -41,7 +41,7 @@ public class ImportOldConfigsUsagesCollector extends CounterUsagesCollector {
     }
   }
 
-  public static class ImportOldConfigsState {
+  static final class ImportOldConfigsState {
     private static final ImportOldConfigsState ourInstance = new ImportOldConfigsState();
 
     public static @NotNull ImportOldConfigsState getInstance() {

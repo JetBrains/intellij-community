@@ -21,9 +21,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 public abstract class ImplicitVariableImpl extends LightVariableBase implements ImplicitVariable {
 
   public ImplicitVariableImpl(PsiManager manager, PsiIdentifier nameIdentifier, PsiType type, boolean writable, PsiElement scope) {

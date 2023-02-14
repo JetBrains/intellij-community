@@ -42,9 +42,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
-/**
- * @author yole
- */
+
 public class PyPsiFacadeImpl extends PyPsiFacade {
   private final Project myProject;
 
@@ -123,8 +121,7 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @NotNull
   @Override
   public LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
     }
 

@@ -14,6 +14,10 @@ class PythonSdkTypeTest {
   @Test
   fun testIsCustomPythonSdkHomePath() {
     softly
+      .assertThat(PythonSdkType.isCustomPythonSdkHomePath("\\\\wsl$\\Debian\\usr\\bin\\python"))
+      .describedAs("Custom Python SDK home path prefix may point to the wsl")
+      .isTrue
+    softly
       .assertThat(PythonSdkType.isCustomPythonSdkHomePath("docker://python:latest/python"))
       .describedAs("Custom Python SDK home path prefix might contain latin characters")
       .isTrue

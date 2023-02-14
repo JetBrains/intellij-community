@@ -2,9 +2,8 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.Stack;
 import com.intellij.xml.XmlElementsGroup;
-
-import java.util.Stack;
 
 /**
  * @author Dmitry Avdeev

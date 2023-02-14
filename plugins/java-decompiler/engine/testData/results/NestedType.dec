@@ -1,0 +1,94 @@
+package pkg;
+
+public class NestedType {
+   public void doSomething() {
+      Foo foo = new Foo();// 5
+      Foo.Bar bar = new Foo.Bar();// 6
+      System.out.println(foo);// 7
+      System.out.println(bar);// 8
+      new FooBar();
+      System.out.println(foo);// 11
+   }// 12
+
+   static class Foo {
+      public void doSomething() {
+         Bar fooBar = new Bar();// 16
+         FooBar.Bar<String, String> fooBarBar = new FooBar.Bar();// 17
+         System.out.println(fooBar);// 18
+         System.out.println(fooBarBar);// 19
+      }// 20
+
+      static class Bar {
+      }
+   }
+
+   static class FooBar<T> {
+      public void doSomething() {
+         Foo.Bar fooBar = new Foo.Bar();// 27
+         Bar<String, String> fooBarBar = new Bar();// 28
+         System.out.println(fooBar);// 29
+         System.out.println(fooBarBar);// 30
+      }// 31
+
+      static class Bar<T, E> {
+      }
+   }
+}
+
+class 'pkg/NestedType' {
+   method 'doSomething ()V' {
+      7      4
+      f      5
+      10      6
+      14      6
+      17      7
+      1b      7
+      26      9
+      2a      9
+      2d      10
+   }
+}
+
+class 'pkg/NestedType$Foo' {
+   method 'doSomething ()V' {
+      7      14
+      f      15
+      10      16
+      14      16
+      17      17
+      1b      17
+      1e      18
+   }
+}
+
+class 'pkg/NestedType$FooBar' {
+   method 'doSomething ()V' {
+      7      26
+      f      27
+      10      28
+      14      28
+      17      29
+      1b      29
+      1e      30
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+7 <-> 7
+8 <-> 8
+11 <-> 10
+12 <-> 11
+16 <-> 15
+17 <-> 16
+18 <-> 17
+19 <-> 18
+20 <-> 19
+27 <-> 27
+28 <-> 28
+29 <-> 29
+30 <-> 30
+31 <-> 31
+Not mapped:
+10

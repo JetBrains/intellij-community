@@ -29,9 +29,6 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Alexey.Ivanov
- */
 public class ReplaceExceptPartQuickFix implements LocalQuickFix {
   @NotNull
   @Override

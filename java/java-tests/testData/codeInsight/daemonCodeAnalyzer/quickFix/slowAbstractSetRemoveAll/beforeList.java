@@ -1,4 +1,4 @@
-// "Replace with 'removals.forEach(source::remove)'" "true"
+// "Replace with 'removals.forEach(source::remove)'" "true-preview"
 
 import java.util.*;
 

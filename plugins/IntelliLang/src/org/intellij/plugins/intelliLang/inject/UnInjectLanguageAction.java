@@ -3,6 +3,7 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +33,11 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.uninject.language.action.preview"));
+  }
+
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -58,8 +64,7 @@ public final class UnInjectLanguageAction implements IntentionAction, LowPriorit
     if (psiFile == null) {
       PsiReference reference = file.findReferenceAt(offset);
       if (reference == null) return;
-      if (reference.getElement() instanceof PsiLanguageInjectionHost) {
-        PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)reference.getElement();
+      if (reference.getElement() instanceof PsiLanguageInjectionHost host) {
         for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
           if (support.isApplicableTo(host) && support.removeInjectionInPlace(host)) {
             PsiManager.getInstance(project).dropPsiCaches();

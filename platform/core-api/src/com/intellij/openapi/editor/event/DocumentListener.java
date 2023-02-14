@@ -39,12 +39,12 @@ public interface DocumentListener extends EventListener {
   }
 
   /**
-   * Notifies about {@link Document#setInBulkUpdate(boolean) bulk mode} being enabled.
+   * Notifies about {@link Document#isInBulkUpdate() bulk mode} being started
    */
   default void bulkUpdateStarting(@NotNull Document document) {}
 
   /**
-   * Notifies about {@link Document#setInBulkUpdate(boolean) bulk mode} being disabled.
+   * Notifies about {@link Document#isInBulkUpdate() bulk mode} being finished
    */
   default void bulkUpdateFinished(@NotNull Document document) {}
 }

@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
-import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.RememberCheckBoxState
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.CheckBox
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.io.encodeUrlQueryParameter
 import com.intellij.util.text.nullize
 import java.awt.Component
@@ -27,22 +27,32 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
                else DiagnosticBundle.message("error.report.auth.prompt")
   val userField = JTextField(credentials?.userName)
   val passwordField = JPasswordField(credentials?.getPasswordAsString())
-  val rememberCheckBox = CheckBox(UIBundle.message("auth.remember.cb"), remember)
+  lateinit var rememberCheckBox: JBCheckBox
 
   val panel = panel {
-    noteRow(prompt)
-    row(DiagnosticBundle.message("error.report.auth.user")) { userField(growPolicy = GrowPolicy.SHORT_TEXT) }
-    row(DiagnosticBundle.message("error.report.auth.pass")) { passwordField() }
     row {
-      rememberCheckBox()
-      right {
-        link(DiagnosticBundle.message("error.report.auth.restore")) {
-          val userName = userField.text.trim().encodeUrlQueryParameter()
-          BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=$userName")
-        }
-      }
+      text(prompt)
     }
-    noteRow(DiagnosticBundle.message("error.report.auth.enlist", "https://account.jetbrains.com/login?signup"))
+    row(DiagnosticBundle.message("error.report.auth.user")) {
+      cell(userField)
+        .align(AlignX.FILL)
+    }
+    row(DiagnosticBundle.message("error.report.auth.pass")) {
+      cell(passwordField)
+        .align(AlignX.FILL)
+    }
+    row("") {
+      rememberCheckBox = checkBox(UIBundle.message("auth.remember.cb"))
+        .applyToComponent { isSelected = remember }
+        .component
+      link(DiagnosticBundle.message("error.report.auth.restore")) {
+        val userName = userField.text.trim().encodeUrlQueryParameter()
+        BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=$userName")
+      }.align(AlignX.RIGHT)
+    }
+    row {
+      text(DiagnosticBundle.message("error.report.auth.enlist"))
+    }
   }
 
   val dialog = dialog(

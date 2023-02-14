@@ -17,7 +17,6 @@ package git4idea.branch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.BRANCH_CREATE_ROLLBACK_SUCCESS
@@ -48,7 +47,7 @@ internal class GitCreateBranchOperation(
         markSuccessful(repository)
       }
       else {
-        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result.errorOutputAsJoinedString)
+        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result)
         fatalErrorHappened = true
       }
     }

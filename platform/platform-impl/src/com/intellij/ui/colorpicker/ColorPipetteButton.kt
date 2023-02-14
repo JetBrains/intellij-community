@@ -30,23 +30,32 @@ class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private
     addActionListener { pipette.pick(MyCallback(colorPickerModel)) }
   }
 
+  var currentState = PipetteState.NONE
+
+  enum class PipetteState {PICKED, UPDATING, NONE}
+
   private inner class MyCallback(val model: ColorPickerModel): ColorPipette.Callback {
 
     private val originalColor = model.color
 
     override fun picked(pickedColor: Color) {
+      currentState = PipetteState.PICKED
       model.setColor(pickedColor, this@ColorPipetteButton)
       model.firePipettePicked(pickedColor)
+      currentState = PipetteState.NONE
     }
 
     override fun update(updatedColor: Color) {
+      currentState = PipetteState.UPDATING
       model.setColor(updatedColor, this@ColorPipetteButton)
       model.firePipetteUpdated(updatedColor)
     }
 
     override fun cancel() {
+      currentState = PipetteState.PICKED
       model.setColor(originalColor, this@ColorPipetteButton)
       model.firePipetteCancelled()
+      currentState = PipetteState.NONE
     }
   }
 }

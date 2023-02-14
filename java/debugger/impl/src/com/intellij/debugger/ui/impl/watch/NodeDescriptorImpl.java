@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -12,9 +11,11 @@ import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.sun.jdi.*;
-import org.jetbrains.annotations.Nullable;
+import com.sun.jdi.InconsistentDebugInfoException;
+import com.sun.jdi.InvalidStackFrameException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,15 +26,12 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public static final String UNKNOWN_VALUE_MESSAGE = "";
   public boolean myIsExpanded = false;
   public boolean myIsSelected = false;
-  public boolean myIsVisible  = false;
-  public boolean myIsSynthetic = false;
+  public boolean myIsVisible = false;
 
   private EvaluateException myEvaluateException;
   private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;
 
   private Map<Key, Object> myUserData;
-
-  private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<>("ValueMarkupMap");
 
   @Override
   public String getName() {
@@ -41,7 +39,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Override
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData == null) {
       return null;
     }
@@ -50,14 +48,14 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Override
-  public <T> void putUserData(Key<T> key, T value) {
-    if(myUserData == null) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
+    if (myUserData == null) {
       myUserData = new HashMap<>();
     }
     myUserData.put(key, value);
   }
 
-  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener){
+  public void updateRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) {
     updateRepresentationNoNotify(context, labelListener);
     labelListener.labelChanged();
   }
@@ -84,7 +82,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         if (e.getCause() instanceof InterruptedException) {
           throw e;
         }
-        if (context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+        if (context != null && context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
           LOG.debug(e);
         }
         else {
@@ -102,11 +100,10 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
-    if (descriptor instanceof NodeDescriptorImpl) {
-      final NodeDescriptorImpl that = (NodeDescriptorImpl)descriptor;
+    if (descriptor instanceof NodeDescriptorImpl that) {
       myIsExpanded = that.myIsExpanded;
       myIsSelected = that.myIsSelected;
-      myIsVisible  = that.myIsVisible;
+      myIsVisible = that.myIsVisible;
       myUserData = that.myUserData != null ? new HashMap<>(that.myUserData) : null;
 
       // TODO introduce unified way to handle this
@@ -151,18 +148,5 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     displayAs(oldDescriptor);
-  }
-
-  @Nullable
-  public static Map<ObjectReference, ValueMarkup> getMarkupMap(final DebugProcess process) {
-    if (process == null) {
-      return null;
-    }
-    Map<ObjectReference, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
-    if (map == null) {
-      map = new HashMap<>();
-      process.putUserData(MARKUP_MAP_KEY, map);
-    }
-    return map;
   }
 }

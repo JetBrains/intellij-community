@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -25,11 +24,6 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   private EditorHighlighter myHighlighter;
   private Document myDocument;
   private final ArrayList<Editor> myEditorsToRelease = new ArrayList<>();
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_15_PREVIEW;
-  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -152,12 +146,13 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testEnteringSomeQuotes() {
-    Editor editor = initDocument("class C {\n" +
-                                 "  void foo() {\n" +
-                                 "    first();\n" +
-                                 "    second();\n" +
-                                 "  }\n" +
-                                 "}");
+    Editor editor = initDocument("""
+                                   class C {
+                                     void foo() {
+                                       first();
+                                       second();
+                                     }
+                                   }""");
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       myDocument.insertString(myDocument.getText().lastIndexOf("first"), "'''");
       myDocument.insertString(myDocument.getText().lastIndexOf("second"), " ");
@@ -166,8 +161,10 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testUnicodeEscapeSequence() {
-    String prefix = "class A {\n" +
-                    "  String s = \"\"\"\n";
+    String prefix = """
+      class A {
+        String s = ""\"
+      """;
     initDocument(prefix +
                  "\\uuuuu005c\\\"\"\";\n" +
                  "}");
@@ -178,8 +175,10 @@ public class JavaHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testUnicodeBackslashEscapesUnicodeSequence() {
-    String prefix = "class A {\n" +
-               "  String s = \"\"\"\n";
+    String prefix = """
+      class A {
+        String s = ""\"
+      """;
     initDocument(prefix +
                  "\\u005c\\u0040\"\"\";\n" +
                  "}");

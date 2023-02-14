@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.util;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -77,30 +76,6 @@ public final class InterpreterUtil {
     HashSet<Object> set = new HashSet<>(c1);
     set.removeAll(c2);
     return (set.size() == 0);
-  }
-
-  public static boolean equalObjects(Object first, Object second) {
-    return first == null ? second == null : first.equals(second);
-  }
-
-  public static boolean equalLists(List<?> first, List<?> second) {
-    if (first == null) {
-      return second == null;
-    }
-    else if (second == null) {
-      return false;
-    }
-
-    if (first.size() == second.size()) {
-      for (int i = 0; i < first.size(); i++) {
-        if (!equalObjects(first.get(i), second.get(i))) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    return false;
   }
 
   public static String makeUniqueKey(String name, String descriptor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.util;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
@@ -60,7 +61,7 @@ public class FileTypeUtil implements Disposable {
     boolean allowSeparator = getInstance().allowSeparators(type);
     String filler = options.getFiller();
     if (!allowSeparator) {
-      if (options.getFiller() == LanguageOptions.DEFAULT_FILLER) {
+      if (Strings.areSameInstance(options.getFiller(), LanguageOptions.DEFAULT_FILLER)) {
         filler = "~";
       }
     }
@@ -79,7 +80,7 @@ public class FileTypeUtil implements Disposable {
     StringBuilder pre = new StringBuilder(5);
     StringBuilder leader = new StringBuilder(5);
     StringBuilder post = new StringBuilder(5);
-    if (filler == LanguageOptions.DEFAULT_FILLER) {
+    if (Strings.areSameInstance(filler, LanguageOptions.DEFAULT_FILLER)) {
       filler = open.substring(open.length() - 1);
     }
     int offset = 0;
@@ -183,7 +184,8 @@ public class FileTypeUtil implements Disposable {
       }
     }
 
-    return preview.substring(0, preview.length() - 1);
+    return preview.length() > 0 ? preview.substring(0, preview.length() - 1) 
+                                : preview.toString();
   }
 
   public static boolean isSupportedFile(@NotNull VirtualFile file) {

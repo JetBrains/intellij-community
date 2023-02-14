@@ -13,8 +13,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -725,8 +725,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testLiveTemplate() {
     final Template template = TemplateManager.getInstance(getProject()).createTemplate("foo", "zzz");
     template.addTextSegment("FooFactory.createFoo()");
-    final SmartCompletionContextType completionContextType =
-      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
+    SmartCompletionContextType completionContextType = TemplateContextTypes.getByClass(SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
     CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     doTest();
@@ -1155,27 +1154,31 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testBreakLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) break <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) break foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) break foo;<caret>
+        }}""");
   }
 
   public void testContinueLabel() {
     myFixture.configureByText(
       "a.java",
-      "class a{{\n" +
-      "  foo: while (true) continue <caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue <caret>
+        }}""");
     complete();
     myFixture.checkResult(
-      "class a{{\n" +
-      "  foo: while (true) continue foo;<caret>\n" +
-      "}}");
+      """
+        class a{{
+          foo: while (true) continue foo;<caret>
+        }}""");
   }
 
   @NeedsIndex.SmartMode(reason = "For now ConstructorInsertHandler.createOverrideRunnable doesn't work in dumb mode")
@@ -1479,4 +1482,24 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoSemicolonAfterNonLastVariableInitializer() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testSuggestExceptionTypes() {
+    myFixture.configureByText("Test.java", """
+      import java.io.*;
+
+      class X {
+        void test() {
+          try {
+            new FileInputStream("/etc/passwd");
+          }
+          catch(<caret>)
+        }
+      }
+      class MyException extends FileNotFoundException {}
+      class My2Exception extends MyException {}""");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.assertPreferredCompletionItems(0, "FileNotFoundException", "IOException", "Exception", "Throwable",
+                                             "MyException", "My2Exception",
+                                             "RuntimeException", "ArithmeticException", "ArrayIndexOutOfBoundsException");
+  }
 }

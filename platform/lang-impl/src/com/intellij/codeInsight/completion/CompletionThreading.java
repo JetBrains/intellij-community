@@ -20,9 +20,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author peter
- */
 interface CompletionThreading {
 
   Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable);

@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.logger
 
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventSerializer
+import com.intellij.internal.statistic.eventLog.escape
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEventIsValid
 import com.intellij.internal.statistics.StatisticsTestEventValidator.isValid
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Test
-import java.lang.IllegalStateException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -93,13 +93,12 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithAllSymbolsToEscapeInName() {
-    val event = newEvent()
-    event.event.addData("my.key", "value")
-    event.event.addData("my:", "value")
-    event.event.addData(";mykey", "value")
-    event.event.addData("another'key", "value")
-    event.event.addData("se\"cond\"", "value")
-    event.event.addData("a'l\"l;s:y.s,t\tem symbols", "value")
+    val event = newEvent(data = hashMapOf("my.key" to "value",
+      "my:" to "value",
+      ";mykey" to "value",
+      "another'key" to "value",
+      "se\"cond\"" to "value",
+      "a'l\"l;s:y.s,t\tem symbols" to "value"))
 
     val expected = HashMap<String, Any>()
     expected["my_key"] = "value"
@@ -112,13 +111,12 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithAllSymbolsToEscapeInEventDataValue() {
-    val event = newEvent()
-    event.event.addData("my.key", "v.alue")
-    event.event.addData("my:", "valu:e")
-    event.event.addData(";mykey", ";value")
-    event.event.addData("another'key", "value'")
-    event.event.addData("se\"cond\"", "v\"alue")
-    event.event.addData("a'l\"l;s:y.s,t\tem symbols", "fin\"a'l :v;'a\" l,u\te")
+    val event = newEvent(data = hashMapOf("my.key" to "v.alue",
+      "my:" to "valu:e",
+      ";mykey" to ";value",
+      "another'key" to "value'",
+      "se\"cond\"" to "v\"alue",
+      "a'l\"l;s:y.s,t\tem symbols" to "fin\"a'l :v;'a\" l,u\te"))
 
     val expected = HashMap<String, Any>()
     expected["my_key"] = "v.alue"
@@ -132,8 +130,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithTabInNameEscaping() {
-    val event = newEvent()
-    event.event.addData("my key", "value")
+    val event = newEvent(data = hashMapOf("my key" to "value"))
 
     val data = HashMap<String, Any>()
     data["my_key"] = "value"
@@ -142,8 +139,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithTabInValueEscaping() {
-    val event = newEvent()
-    event.event.addData("key", "my value")
+    val event = newEvent(data = hashMapOf("key" to "my value"))
 
     val data = HashMap<String, Any>()
     data["key"] = "my value"
@@ -152,10 +148,11 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInNameEscaping() {
-    val event = newEvent()
-    event.event.addData("my\uFFFDkey", "value")
-    event.event.addData("some\u013C\u02BE\u037C", "value")
-    event.event.addData("\u013C\u037Ckey", "value")
+    val event = newEvent(data = hashMapOf(
+      "my\uFFFDkey" to "value",
+      "some\u013C\u02BE\u037C" to "value",
+      "\u013C\u037Ckey" to "value"
+    ))
 
     val data = HashMap<String, Any>()
     data["my?key"] = "value"
@@ -166,10 +163,11 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInValueEscaping() {
-    val event = newEvent()
-    event.event.addData("first-key", "my\uFFFDvalue")
-    event.event.addData("second-key", "some\u013C\u02BE\u037C")
-    event.event.addData("third-key", "\u013C\u037Cvalue")
+    val event = newEvent(data = hashMapOf(
+      "first-key" to "my\uFFFDvalue",
+      "second-key" to "some\u013C\u02BE\u037C",
+      "third-key" to "\u013C\u037Cvalue"
+    ))
 
     val data = HashMap<String, Any>()
     data["first-key"] = "my?value"
@@ -180,8 +178,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInListValueEscaping() {
-    val event = newEvent()
-    event.event.addData("key", listOf("my\uFFFDvalue", "some\u013C\u02BE\u037Cvalue", "\u013C\u037Cvalue"))
+    val event = newEvent(data = hashMapOf("key" to listOf("my\uFFFDvalue", "some\u013C\u02BE\u037Cvalue", "\u013C\u037Cvalue")))
 
     val data = HashMap<String, Any>()
     data["key"] = listOf("my?value", "some???value", "??value")
@@ -190,8 +187,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInObjectEscaping() {
-    val event = newEvent()
-    event.event.addData("key", mapOf("fo\uFFFDo" to "foo\uFFDDValue"))
+    val event = newEvent(data = hashMapOf("key" to mapOf("fo\uFFFDo" to "foo\uFFDDValue")))
 
     val data = HashMap<String, Any>()
     data["key"] = mapOf("fo?o" to "foo?Value")
@@ -200,8 +196,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInObjectListEscaping() {
-    val event = newEvent()
-    event.event.addData("key", listOf(mapOf("fo\uFFFDo" to "foo\uFFDDValue"), mapOf("ba\uFFFDr" to "bar\uFFDDValue")))
+    val event = newEvent(data = hashMapOf("key" to listOf(mapOf("fo\uFFFDo" to "foo\uFFDDValue"), mapOf("ba\uFFFDr" to "bar\uFFDDValue"))))
 
     val data = HashMap<String, Any>()
     data["key"] = listOf(mapOf("fo?o" to "foo?Value"), mapOf("ba?r" to "bar?Value"))
@@ -210,8 +205,7 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventDataWithUnicodeInNestedObjectEscaping() {
-    val event = newEvent()
-    event.event.addData("key", mapOf("fo\uFFFDo" to mapOf("ba\uFFFDr" to "bar\uFFDDValue")))
+    val event = newEvent(data = hashMapOf("key" to mapOf("fo\uFFFDo" to mapOf("ba\uFFFDr" to "bar\uFFDDValue"))))
 
     val data = HashMap<String, Any>()
     data["key"] = mapOf("fo?o" to mapOf("ba?r" to "bar?Value"))
@@ -233,7 +227,7 @@ class FeatureEventLogEscapingTest {
   private fun testEventEscaping(event: LogEvent, expectedGroupId: String,
                                 expectedEventId: String,
                                 expectedData: Map<String, Any> = HashMap()) {
-    val json = Gson().fromJson(LogEventSerializer.toString(event), JsonObject::class.java)
+    val json = Gson().fromJson(LogEventSerializer.toString(event.escape()), JsonObject::class.java)
     assertLogEventIsValid(json, false)
 
     assertEquals(expectedGroupId, json.getAsJsonObject("group").get("id").asString)

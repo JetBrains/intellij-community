@@ -11,7 +11,7 @@ public class JaCoCoRunnerTest {
   @Test
   public void excludeIncludePatterns() {
     SimpleJavaParameters javaParameters = new SimpleJavaParameters();
-    new JaCoCoCoverageRunner().appendCoverageArgument("a", null, new String[]{"org.*", "com.*"}, javaParameters, true, true, null);
+    new JaCoCoCoverageRunner().appendCoverageArgument("a", null, new String[]{"org.*", "com.*"}, javaParameters, true, true, null, null);
     Assert.assertTrue(Pattern.compile("-javaagent:(.*)jacocoagent(.*).jar=destfile=a,append=false,excludes=org\\.\\*:com\\.\\*")
                         .matcher(String.join("", javaParameters.getTargetDependentParameters().toLocalParameters())).matches());
   }

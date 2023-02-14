@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports lambda expressions with code block bodies when expression-style bodies can be used.
-The result of transformation is shorter and more clear.
+Reports lambda expressions with code block bodies when expression-style bodies can be used instead.
+The result of the conversion is shorter and more clear.
 <p>Example:</p>
-<pre>
+<pre><code>
   Comparable&lt;String&gt; c = o -> {return 0;};
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   Comparable&lt;String&gt; c = o -> 0;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

@@ -2,13 +2,22 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
-import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+
+import java.util.Collections;
 
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
@@ -46,15 +55,26 @@ public class GradleProjectResolverUtilTest {
 
   @NotNull
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
-    Module module = mock(Module.class);
+    ModuleBridge module = mock(ModuleBridge.class);
     Project project = mock(Project.class);
     when(module.getProject()).thenReturn(project);
-    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerImpl(module);
+    MutableEntityStorage builder = MutableEntityStorage.create();
+    ModuleEntity moduleEntity =
+      builder.addEntity(ModuleEntity.create("m", Collections.emptyList(), NonPersistentEntitySource.INSTANCE, moduleBuilder -> {
+        moduleBuilder.setExModuleOptions(ExternalSystemModuleOptionsEntity.create(NonPersistentEntitySource.INSTANCE, externalBuilder -> {
+          externalBuilder.setExternalSystem(SYSTEM_ID.getId());
+          externalBuilder.setExternalSystemModuleType(moduleType);
+          externalBuilder.setLinkedProjectId(projectId);
+          return Unit.INSTANCE;
+        }));
+        return Unit.INSTANCE;
+      }));
+    ModuleManagerBridgeImpl.getMutableModuleMap(builder).addMapping(moduleEntity, module);
+    when(module.getEntityStorage()).thenReturn(new VersionedEntityStorageOnStorage(builder.toSnapshot()));
+    
+    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerBridge(module);
     when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);
 
-    when(module.getOptionValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)).thenReturn(SYSTEM_ID.getId());
-    when(module.getOptionValue("external.system.module.type")).thenReturn(moduleType);
-    when(module.getOptionValue("external.linked.project.id")).thenReturn(projectId);
     return module;
   }
 }

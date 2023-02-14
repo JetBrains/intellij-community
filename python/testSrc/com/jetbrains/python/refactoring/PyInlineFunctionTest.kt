@@ -37,7 +37,7 @@ class PyInlineFunctionTest : PyTestCase() {
     try {
       if (isReferenceError) {
         val reference = TargetElementUtil.findReference(myFixture.editor)
-        PyInlineFunctionProcessor(myFixture.project, myFixture. editor, element as PyFunction, reference, myInlineThis = true, removeDeclaration = false).run()
+        PyInlineFunctionProcessor(myFixture.project, myFixture. editor, element as PyFunction, reference, myInlineThisOnly = true, removeDeclaration = false).run()
       }
       else {
         PyInlineFunctionHandler.getInstance().inlineElement(myFixture.project, myFixture.editor, element)

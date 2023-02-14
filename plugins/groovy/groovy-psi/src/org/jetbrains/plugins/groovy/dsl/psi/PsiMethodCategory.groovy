@@ -19,9 +19,6 @@ package org.jetbrains.plugins.groovy.dsl.psi
 import com.intellij.psi.*
 import org.jetbrains.annotations.Nullable
 
-/**
- * @author ilyas
- */
 class PsiMethodCategory implements PsiEnhancerCategory {
 
   @Nullable

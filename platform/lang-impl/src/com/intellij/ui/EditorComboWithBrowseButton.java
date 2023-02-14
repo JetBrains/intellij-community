@@ -11,8 +11,9 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * @author ven
+ * @deprecated Not needed and not used in IJ project
  */
+@Deprecated
 public class EditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public EditorComboWithBrowseButton(final ActionListener browseActionListener,
                                      final String text,

@@ -1,102 +1,147 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
 
+  private final Project myProject;
+  private final @NotNull WeakReference<XDebugSessionImpl> mySessionRef;
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final ComboBox<XExecutionStack> myThreadComboBox;
   private final Object2IntMap<XExecutionStack> myExecutionStacksWithSelection = new Object2IntOpenHashMap<>();
+  private final AutoScrollToSourceHandler myFrameSelectionHandler;
   private XExecutionStack mySelectedStack;
   private int mySelectedFrameIndex;
   private Rectangle myVisibleRect;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
-  private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
   private boolean myThreadsCalculated;
   private boolean myRefresh;
 
-  public XFramesView(@NotNull Project project) {
+  public XFramesView(@NotNull XDebugSessionImpl session) {
+    myProject = session.getProject();
+    mySessionRef = new WeakReference<>(session);
     myMainPanel = new JPanel(new BorderLayout());
 
-    myFramesList = new XDebuggerFramesList(project);
-    myFramesList.addListSelectionListener(new ListSelectionListener() {
+    myFrameSelectionHandler = new AutoScrollToSourceHandler() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myListenersEnabled && !e.getValueIsAdjusting() && mySelectedFrameIndex != myFramesList.getSelectedIndex()) {
-          processFrameSelection(getSession(e), true);
-        }
-      }
-    });
-    myFramesList.addMouseListener(new MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      protected boolean isAutoScrollMode() { return myListenersEnabled; }
+
       @Override
-      public void mouseReleased(final MouseEvent e) {
+      protected void setAutoScrollMode(boolean state) { }
+
+      @Override
+      protected boolean needToCheckFocus() { return false; }
+
+      @RequiresEdt
+      @Override
+      protected void scrollToSource(@NotNull Component list) {
         if (myListenersEnabled) {
-          int i = myFramesList.locationToIndex(e.getPoint());
-          if (i != -1 && myFramesList.isSelectedIndex(i)) {
-            processFrameSelection(getSession(e), true);
-          }
+          processFrameSelection(getSession(), true);
         }
       }
-    });
+    };
+    myFramesList = new XDebuggerFramesList(myProject) {
+      @Override
+      protected @NotNull OccurenceInfo goOccurrence(int step) {
+        OccurenceInfo info = super.goOccurrence(step);
+        ScrollingUtil.ensureIndexIsVisible(this, getSelectedIndex(), step);
+        return info;
+      }
+
+      @Override
+      protected @NotNull Navigatable getSelectedFrameNavigatable() {
+        Navigatable navigatable = super.getSelectedFrameNavigatable();
+        return new NavigatableAdapter() {
+          @Override
+          public void navigate(boolean requestFocus) {
+            if (navigatable != null && navigatable.canNavigate()) navigatable.navigate(requestFocus);
+            handleFrameSelection();
+          }
+        };
+      }
+
+      @Override
+      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+        XSourcePosition position = session.getFrameSourcePosition(frame);
+        return position != null ? position.createNavigatable(session.getProject()) : null;
+      }
+    };
+    myFrameSelectionHandler.install(myFramesList);
+    EditSourceOnDoubleClickHandler.install(myFramesList);
 
     myFramesList.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
+        int i = myFramesList.locationToIndex(new Point(x, y));
+        if (i != -1) myFramesList.selectFrame(i);
         ActionManager actionManager = ActionManager.getInstance();
         ActionGroup group = (ActionGroup)actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP);
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
+        actionManager.createActionPopupMenu("XDebuggerFramesList", group).getComponent().show(comp, x, y);
       }
     });
 
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+    ScrollingUtil.installActions(myFramesList, myMainPanel, false);
 
-    myThreadComboBox = new ComboBox<>();
+    myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);
     myThreadComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       if (value != null) {
@@ -117,10 +162,11 @@ public final class XFramesView extends XDebugView {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           Object item = e.getItem();
           if (item != mySelectedStack && item instanceof XExecutionStack) {
-            XDebugSession session = getSession(e);
+            XDebugSession session = getSession();
             if (session != null) {
               myRefresh = false;
               updateFrames((XExecutionStack)item, session, null, false);
+              XDebuggerActionsCollector.threadSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
             }
           }
         }
@@ -148,7 +194,7 @@ public final class XFramesView extends XDebugView {
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        XDebugSession session = getSession(e);
+        XDebugSession session = getSession();
         XSuspendContext context = session == null ? null : session.getSuspendContext();
         if (context != null && !myThreadsCalculated) {
           myBuilder = new ThreadsBuilder();
@@ -163,13 +209,52 @@ public final class XFramesView extends XDebugView {
       }
     };
 
-    myToolbar = createToolbar();
+    ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();
-    myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
-    myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+    toolbar.setOpaque(false);
+    ((XDebuggerEmbeddedComboBox<XExecutionStack>)myThreadComboBox).setExtension(toolbar);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
+    if (myMainPanel.getLayout() instanceof BorderLayout) {
+      String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+      String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
+      String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
+      if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
+        String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
+        var hint = new MyAdPanel(message, p -> {
+          myMainPanel.remove(p);
+          myMainPanel.revalidate();
+          PropertiesComponent.getInstance().setValue(propKey, false, true);
+        });
+        myMainPanel.add(hint, BorderLayout.SOUTH);
+      }
+    }
+  }
+
+  public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
+    myFramesList.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_SPACE || key == KeyEvent.VK_RIGHT) {
+          handleFrameSelection();
+          ApplicationManager.getApplication().invokeLater(() -> handler.accept(myFramesList.getSelectedFrame()));
+        }
+      }
+    });
+  }
+
+  private void handleFrameSelection() {
+    myFrameSelectionHandler.onMouseClicked(myFramesList);
+  }
+
+  @Nullable
+  @NlsSafe
+  private static String getShortcutText(@NotNull @NonNls String actionId) {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+    if (shortcut == null) return null;
+    return KeymapUtil.getShortcutText(shortcut);
   }
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
@@ -242,15 +327,12 @@ public final class XFramesView extends XDebugView {
   private ActionToolbarImpl createToolbar() {
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesList));
-    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesList));
-
     framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myFramesList);
     return toolbar;
   }
 
@@ -261,7 +343,7 @@ public final class XFramesView extends XDebugView {
   private void withCurrentBuilder(Consumer<? super StackFramesListBuilder> consumer) {
     StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
     if (builder != null) {
-      consumer.consume(builder);
+      consumer.accept(builder);
     }
   }
 
@@ -320,9 +402,11 @@ public final class XFramesView extends XDebugView {
       if (invisible != (myThreadComboBox.getParent() == null)) {
         if (invisible) {
           myThreadsPanel.remove(myThreadComboBox);
+          myThreadsPanel.setBorder(null);
         }
         else {
           myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+          myThreadsPanel.setBorder(new CustomLineBorder(0, 0, 1, 0));
         }
         myThreadsPanel.revalidate();
       }
@@ -391,8 +475,17 @@ public final class XFramesView extends XDebugView {
   public void dispose() {
   }
 
+  private @Nullable XDebugSessionImpl getSession() {
+    return mySessionRef.get();
+  }
+
   public JPanel getMainPanel() {
     return myMainPanel;
+  }
+
+  @Override
+  public JComponent getMainComponent() {
+    return getMainPanel();
   }
 
   private void processFrameSelection(XDebugSession session, boolean force) {
@@ -405,6 +498,9 @@ public final class XFramesView extends XDebugView {
       if (session != null) {
         if (force || (!myRefresh && session.getCurrentStackFrame() != selected)) {
           session.setCurrentStackFrame(mySelectedStack, (XStackFrame)selected, mySelectedFrameIndex == 0);
+          if (force) {
+            XDebuggerActionsCollector.frameSelected.log(XDebuggerActionsCollector.PLACE_FRAMES_VIEW);
+          }
         }
       }
     }
@@ -528,27 +624,23 @@ public final class XFramesView extends XDebugView {
     }
 
     private boolean selectCurrentFrame() {
-      if (myToSelect instanceof XStackFrame) {
-        if (!Objects.equals(myFramesList.getSelectedValue(), myToSelect) && myFramesList.getModel().contains(myToSelect)) {
-          myFramesList.setSelectedValue(myToSelect, true);
-          processFrameSelection(mySession, false);
-          myListenersEnabled = true;
-          return true;
-        }
+      if (selectFrame(myToSelect)) {
+        myListenersEnabled = true;
+        processFrameSelection(mySession, false);
+        return true;
+      }
+      return false;
+    }
+
+    private boolean selectFrame(Object toSelect) {
+      if (toSelect instanceof XStackFrame) {
+        if (myFramesList.selectFrame((XStackFrame)toSelect)) return true;
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
           LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
         }
       }
-      else if (myToSelect instanceof Integer) {
-        int selectedFrameIndex = (int)myToSelect;
-        if (myFramesList.getSelectedIndex() != selectedFrameIndex &&
-            myFramesList.getElementCount() > selectedFrameIndex &&
-            myFramesList.getModel().getElementAt(selectedFrameIndex) != null) {
-          myFramesList.setSelectedIndex(selectedFrameIndex);
-          processFrameSelection(mySession, false);
-          myListenersEnabled = true;
-          return true;
-        }
+      else if (toSelect instanceof Integer) {
+        if (myFramesList.selectFrame((int)toSelect)) return true;
       }
       return false;
     }
@@ -563,6 +655,34 @@ public final class XFramesView extends XDebugView {
         model.add((Object)null);
       }
       return selectCurrentFrame();
+    }
+  }
+
+  private static class MyAdPanel extends BorderLayoutPanel {
+
+    MyAdPanel(@NotNull @NlsContexts.Label String message, @NotNull Consumer<? super MyAdPanel> closeListener) {
+      var label = new JBLabel(message, UIUtil.ComponentStyle.SMALL);
+      label.setForeground(UIUtil.getContextHelpForeground());
+      label.setToolTipText(message);
+      var closeButton = new JButton();
+      closeButton.setText(null);
+      closeButton.setOpaque(false);
+      closeButton.setBorder(null);
+      closeButton.setBorderPainted(false);
+      closeButton.setContentAreaFilled(false);
+      closeButton.setIcon(AllIcons.Actions.Close);
+      closeButton.setRolloverIcon(AllIcons.Actions.CloseDarkGrey);
+      closeButton.setToolTipText(CommonBundle.getCloseButtonText());
+      closeButton.addActionListener(e -> {
+        closeListener.accept(this);
+      });
+      var dim = new Dimension(AllIcons.Actions.Close.getIconHeight(), AllIcons.Actions.Close.getIconWidth());
+      closeButton.setPreferredSize(dim);
+
+      addToCenter(label);
+      addToRight(closeButton);
+
+      setBorder(JBUI.Borders.empty(3, 8, 3, 4));
     }
   }
 }

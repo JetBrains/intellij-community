@@ -15,9 +15,6 @@
  */
 package com.intellij.util.treeWithCheckedNodes;
 
-/**
- * @author irengrig
- */
 public enum TreeNodeState {
   SELECTED,CLEAR,HAVE_SELECTED_ABOVE,HAVE_SELECTED_BELOW
 }

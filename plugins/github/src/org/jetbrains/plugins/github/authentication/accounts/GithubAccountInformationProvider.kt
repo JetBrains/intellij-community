@@ -1,25 +1,38 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.accounts
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.disposingScope
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import java.io.IOException
-import java.util.concurrent.TimeUnit
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 
 /**
  * Loads the account information or provides it from cache
  * TODO: more abstraction
  */
-class GithubAccountInformationProvider {
+class GithubAccountInformationProvider : Disposable {
 
-  private val informationCache = CacheBuilder.newBuilder()
-    .expireAfterAccess(30, TimeUnit.MINUTES)
+  private val informationCache = Caffeine.newBuilder()
+    .expireAfterWrite(Duration.of(30, ChronoUnit.MINUTES))
     .build<GithubAccount, GithubAuthenticatedUser>()
+
+  init {
+    disposingScope().launch {
+      service<GHAccountManager>().accountsState.collect {
+        informationCache.invalidateAll()
+      }
+    }
+  }
 
   @RequiresBackgroundThread
   @Throws(IOException::class)
@@ -34,9 +47,7 @@ class GithubAccountInformationProvider {
     }
   }
 
-  class AccountTokenListener : AccountTokenChangedListener {
-    override fun tokenChanged(account: GithubAccount) {
-      getInstance().informationCache.invalidate(account)
-    }
+  override fun dispose() {
+    informationCache.invalidateAll()
   }
 }

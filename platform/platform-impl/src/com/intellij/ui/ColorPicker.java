@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -48,6 +49,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.image.BufferedImage;
@@ -59,7 +61,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author pegov
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
@@ -442,7 +443,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                                                              IdeBundle.message("command.name.apply.color"),
                                                                              groupId);
         alarm.cancelAllRequests();
-        alarm.addRequest(() -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply), 150);
+        Runnable request = () -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply);
+        if (source instanceof ColorPipetteButton && ((ColorPipetteButton)source).getCurrentState() == ColorPipetteButton.PipetteState.UPDATING) {
+          alarm.addRequest(request, 150);
+        } else {
+          request.run();
+        }
       }
     };
 
@@ -1000,7 +1006,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       saveRecentColors(myRecentColors);
     }
 
-    private static void saveRecentColors(List<Color> recentColors) {
+    private static void saveRecentColors(List<? extends Color> recentColors) {
       final List<String> values = new ArrayList<>();
       for (Color recentColor : recentColors) {
         if (recentColor == null) break;
@@ -1011,7 +1017,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       PropertiesComponent.getInstance().setValue(COLOR_CHOOSER_COLORS_KEY, values.isEmpty() ? null : StringUtil.join(values, ",,,"), null);
     }
 
-    private static List<Color> appendColor(Color color, List<Color> recentColors, int maxSize) {
+    private static List<Color> appendColor(Color color, List<? extends Color> recentColors, int maxSize) {
       ArrayList<Color> colors = new ArrayList<>(recentColors);
       colors.remove(color);
       colors.add(0, color);
@@ -1114,7 +1120,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText(IdeBundle.message("button.choose"));
+      setOKButtonText(listeners == null || listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
       super.init();
     }
 
@@ -1141,6 +1147,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myColorPicker.appendRecentColor();
       myColorPicker.saveRecentColors();
 
+      if (myListeners != null && myListeners.isEmpty()) {
+        String color = StringUtil.toUpperCase(ColorUtil.toHex(myColorPicker.myColor));
+        CopyPasteManager.getInstance().setContents(new StringSelection(color));
+      }
       super.doOKAction();
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity
 
 import com.intellij.icons.AllIcons.Actions.Run_anything
@@ -7,9 +7,8 @@ import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.ERROR
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.SUCCESS
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType.INFORMATION
-import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -21,10 +20,9 @@ import com.intellij.openapi.util.NlsActions
  *
  * @param V see [RunAnythingProvider]
  */
-abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
+abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<V>() {
 
-  private val RUN_ANYTHING_GROUP_ID = NotificationGroup.createIdWithTitle("Run Anything", IdeBundle.message(
-    "run.anything.custom.activity.notification.group.id"))
+  private val runAnythingGroup = NotificationGroupManager.getInstance().getNotificationGroup("Run Anything")
 
   private val notificationConfigurators = LinkedHashMap<ExecutionStatus, NotificationBuilder.() -> Unit>()
 
@@ -54,7 +52,7 @@ abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
     val builder = NotificationBuilder(dataContext, value)
     val notification = builder.apply(configure).build()
     val project = fetchProject(dataContext)
-    Notifications.Bus.notify(notification, project)
+    notification.notify(project)
   }
 
   protected fun notification(after: ExecutionStatus = SUCCESS, configure: NotificationBuilder.() -> Unit) {
@@ -66,14 +64,14 @@ abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
 
     var title: String? = null
     var subtitle: String? = null
-    var content: String? = null
+    lateinit var content: String
 
     fun action(@NlsActions.ActionText name: String, perform: () -> Unit) {
       actions.add(ActionData(name, perform))
     }
 
     fun build(): Notification {
-      val notification = Notification(RUN_ANYTHING_GROUP_ID, Run_anything, title, subtitle, content, INFORMATION, null)
+      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(Run_anything).setTitle(title, subtitle)
       for (actionData in actions) {
         val action = object : AnAction(actionData.name) {
           override fun actionPerformed(e: AnActionEvent) {

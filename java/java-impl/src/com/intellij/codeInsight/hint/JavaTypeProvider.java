@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +94,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
       if (!values.isEmpty()) {
         infoLines.add(Pair.create(
           JavaBundle.message("type.information.value"),
-          StreamEx.of(values).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningOr())));
+          StreamEx.of(values).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningOr())));
       } else {
         if (dfType instanceof DfAntiConstantType) {
           List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
@@ -113,26 +102,32 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           if (!nonValues.isEmpty()) {
             infoLines.add(Pair.create(
               JavaBundle.message("type.information.not.equal.to"),
-              StreamEx.of(nonValues).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
+              StreamEx.of(nonValues).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
           }
         }
         if (dfType instanceof DfIntegralType) {
-          String rangeText = ((DfIntegralType)dfType).getRange().getPresentationText(type);
-          if (!rangeText.equals(JavaAnalysisBundle.message("long.range.set.presentation.any"))) {
+          String rangeText = JvmPsiRangeSetUtil.getPresentationText(((DfIntegralType)dfType).getRange(), type);
+          if (!rangeText.equals(InspectionsBundle.message("long.range.set.presentation.any"))) {
             infoLines.add(Pair.create(JavaBundle.message("type.information.range"), rangeText));
           }
         }
-        else if (dfType instanceof DfReferenceType) {
-          DfReferenceType refType = (DfReferenceType)dfType;
+        else if (dfType instanceof DfFloatingPointType && !(dfType instanceof DfConstantType)) {
+          String presentation = dfType.toString().replaceFirst("^(double|float) ?", ""); //NON-NLS
+          if (!presentation.isEmpty()) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.range"), presentation));
+          }
+        }
+        else if (dfType instanceof DfReferenceType refType) {
           infoLines.add(Pair.create(JavaBundle.message("type.information.nullability"), refType.getNullability().getPresentationName()));
           infoLines.add(Pair.create(JavaBundle.message("type.information.constraints"), refType.getConstraint().getPresentationText(type)));
           if (refType.getMutability() != Mutability.UNKNOWN) {
             infoLines.add(Pair.create(JavaBundle.message("type.information.mutability"), refType.getMutability().getPresentationName()));
           }
-          infoLines.add(Pair.create(JavaBundle.message("type.information.locality"), 
+          infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
                                     refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
           SpecialField field = refType.getSpecialField();
-          if (field != null) {
+          // ENUM_ORDINAL is not precise enough yet, and could be confusing for users
+          if (field != null && field != SpecialField.ENUM_ORDINAL) {
             infoLines.add(Pair.create(field.getPresentationName(), field.getPresentationText(refType.getSpecialFieldType(), type)));
           }
         }
@@ -141,7 +136,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     infoLines.removeIf(pair -> pair.getSecond().isEmpty());
     if (!infoLines.isEmpty()) {
       infoLines.add(0, Pair.create(JavaBundle.message("type.information.type"), basicType));
-      HtmlChunk[] rows = StreamEx.of(infoLines).map(pair -> makeHtmlRow(pair.getFirst(), pair.getSecond())).toArray(HtmlChunk.class);
+      HtmlChunk[] rows = ContainerUtil.map2Array(infoLines, HtmlChunk.class, pair -> makeHtmlRow(pair.getFirst(), pair.getSecond()));
       return HtmlChunk.tag("table").children(rows).toString();
     }
     return basicType;

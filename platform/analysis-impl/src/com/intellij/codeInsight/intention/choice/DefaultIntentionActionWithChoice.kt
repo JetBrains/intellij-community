@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.choice
 
 import com.intellij.codeInsight.intention.IntentionActionWithChoice
@@ -15,7 +15,6 @@ interface DefaultIntentionActionWithChoice : IntentionActionWithChoice<ChoiceTit
    * Use this function to add intention-action with choice to
    * problem descriptor
    */
-  @JvmDefault
   fun getAllAsFixes(): List<LocalQuickFix> {
     val result = ArrayList<LocalQuickFix>()
     result.add(title)

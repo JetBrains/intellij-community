@@ -40,6 +40,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
+@ApiStatus.Internal
+public class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperlinkInfo {
   private final List<? extends VirtualFile> myVirtualFiles;
   private final int myLineNumber;
   private final Project myProject;
@@ -147,6 +149,10 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
   public OpenFileDescriptor getDescriptor() {
     VirtualFile file = getPreferredFile();
     return file != null ? new OpenFileDescriptor(myProject, file, myLineNumber, 0) : null;
+  }
+
+  public List<? extends VirtualFile> getFilesVariants() {
+    return myVirtualFiles;
   }
 
   @Nullable

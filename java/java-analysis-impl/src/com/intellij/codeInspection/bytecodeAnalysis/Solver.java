@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,14 +21,14 @@ final class ELattice<T extends Enum<T>> {
     this.top = top;
   }
 
-  final T join(T x, T y) {
+  T join(T x, T y) {
     if (x == bot) return y;
     if (y == bot) return x;
     if (x == y) return x;
     return top;
   }
 
-  final T meet(T x, T y) {
+  T meet(T x, T y) {
     if (x == top) return y;
     if (y == top) return x;
     if (x == y) return x;
@@ -202,14 +203,11 @@ final class Solver {
   }
 
   Value negate(Value value) {
-    switch (value) {
-      case True:
-        return Value.False;
-      case False:
-        return Value.True;
-      default:
-        return value;
-    }
+    return switch (value) {
+      case True -> Value.False;
+      case False -> Value.True;
+      default -> value;
+    };
   }
 
   Map<EKey, Value> solve() {

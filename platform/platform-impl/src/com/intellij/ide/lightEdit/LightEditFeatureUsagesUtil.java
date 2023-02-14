@@ -1,23 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public final class LightEditFeatureUsagesUtil {
+public final class LightEditFeatureUsagesUtil extends CounterUsagesCollector {
 
-  private final static String USAGE_GROUP_ID = "light.edit";
-
-  private final static String OPEN_FILE_EVENT_ID    = "open.file";
-  private final static String OPEN_FILE_EVENT_PLACE = "open_place";
-
-  private final static String AUTOSAVE_MODE_EVENT_ID     = "autosave.mode";
-  private final static String AUTOSAVE_MODE_ENABLED_FLAG = "enabled";
-
-  private final static String OPEN_IN_PROJECT_EVENT_ID = "open.in.project";
-  private final static String OPEN_IN_PROJECT_STATUS   = "project_status";
+  private static final EventLogGroup GROUP = new EventLogGroup("light.edit", 3);
+  private static final EventId1<OpenPlace> OPEN_FILE_EVENT_ID =
+    GROUP.registerEvent("open.file", EventFields.Enum("open_place", OpenPlace.class));
+  private final static EventId1<Boolean> AUTO_SAVE_MODE_EVENT_ID = GROUP.registerEvent("autosave.mode", EventFields.Boolean("enabled"));
+  private final static EventId1<ProjectStatus> OPEN_IN_PROJECT_EVENT_ID =
+    GROUP.registerEvent("open.in.project", EventFields.Enum("project_status", ProjectStatus.class));
 
   public enum OpenPlace {
     CommandLine,
@@ -36,26 +34,20 @@ public final class LightEditFeatureUsagesUtil {
   private LightEditFeatureUsagesUtil() {
   }
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
   public static void logFileOpen(@Nullable Project project, OpenPlace openPlace) {
-    FUCounterUsageLogger.getInstance().logEvent(project,
-      USAGE_GROUP_ID,
-      OPEN_FILE_EVENT_ID,
-      new FeatureUsageData().addData(OPEN_FILE_EVENT_PLACE, openPlace.name()));
+    OPEN_FILE_EVENT_ID.log(project, openPlace);
   }
 
-  public static void logAutosaveModeChanged(boolean isAutosave) {
-    FUCounterUsageLogger.getInstance().logEvent(
-      USAGE_GROUP_ID,
-      AUTOSAVE_MODE_EVENT_ID,
-      new FeatureUsageData().addData(AUTOSAVE_MODE_ENABLED_FLAG, isAutosave));
+  public static void logAutosaveModeChanged(boolean isAutoSave) {
+    AUTO_SAVE_MODE_EVENT_ID.log(isAutoSave);
   }
 
-  public static void logOpenFileInProject(@Nullable Project project,
-                                          ProjectStatus projectStatus) {
-    FUCounterUsageLogger.getInstance().logEvent(project,
-      USAGE_GROUP_ID,
-      OPEN_IN_PROJECT_EVENT_ID,
-      new FeatureUsageData().addData(OPEN_IN_PROJECT_STATUS, projectStatus.name()));
+  public static void logOpenFileInProject(@Nullable Project project, ProjectStatus projectStatus) {
+    OPEN_IN_PROJECT_EVENT_ID.log(project, projectStatus);
   }
-
 }

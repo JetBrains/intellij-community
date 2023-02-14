@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl.url
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.URLUtil
+import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.storage.impl.IntIdGenerator
 import com.intellij.workspaceModel.storage.impl.VirtualFileNameStore
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -22,24 +21,45 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   @Synchronized
   override fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return getEmptyUrl()
-    return add(url, getProtocol(url))
+    return add(url)
+  }
+
+  override fun findByUrl(url: String): VirtualFileUrl? {
+    return findBySegments(splitNames(url)) 
+  }
+
+  @Synchronized
+  override fun fromUrlSegments(urls: List<String>): VirtualFileUrl {
+    if (urls.isEmpty()) return getEmptyUrl()
+    return addSegments(null, urls)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
-    return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
+    return fromUrl("file://${toSystemIndependentName(path)}")
+  }
+
+  private fun toSystemIndependentName(fileName: String): String {
+    return fileName.replace('\\', '/')
   }
 
   @Synchronized
   override fun getParentVirtualUrl(vfu: VirtualFileUrl): VirtualFileUrl? {
     vfu as VirtualFileUrlImpl
-    return id2NodeMapping.get(vfu.id)?.parent?.getVirtualFileUrl(this, getProtocol(vfu.url))
+    return id2NodeMapping.get(vfu.id)?.parent?.getVirtualFileUrl(this)
   }
 
   @Synchronized
   override fun getSubtreeVirtualUrlsById(vfu: VirtualFileUrl): List<VirtualFileUrl>  {
     vfu as VirtualFileUrlImpl
-    val protocol = getProtocol(vfu.url)
-    return id2NodeMapping.get(vfu.id).getSubtreeNodes().map { it.getVirtualFileUrl(this, protocol) }
+    return id2NodeMapping.get(vfu.id).getSubtreeNodes().map { it.getVirtualFileUrl(this) }
+  }
+
+  override fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+    val node = synchronized(this) { id2NodeMapping.get ((url as VirtualFileUrlImpl).id) }
+    return node.processChildrenRecursively {
+      val childUrl = synchronized(this) { it.getVirtualFileUrl (this) }
+      processor(childUrl)
+    }
   }
 
   @Synchronized
@@ -69,15 +89,21 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   @Synchronized
   internal fun append(parentVfu: VirtualFileUrl, relativePath: String): VirtualFileUrl {
     parentVfu as VirtualFileUrlImpl
-    return add(relativePath, getProtocol(parentVfu.url), id2NodeMapping.get(parentVfu.id))
+    return add(relativePath, id2NodeMapping.get(parentVfu.id))
   }
 
-  protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl, protocol: String?): VirtualFileUrl {
+  protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)
   }
 
-  internal fun add(path: String, protocol: String? = null, parentNode: FilePathNode? = null): VirtualFileUrl {
+  fun getCachedVirtualFileUrls(): List<VirtualFileUrl> = id2NodeMapping.values.mapNotNull(FilePathNode::getCachedVirtualFileUrl)
+
+  internal fun add(path: String, parentNode: FilePathNode? = null): VirtualFileUrl {
     val segments = splitNames(path)
+    return addSegments(parentNode, segments)
+  }
+
+  private fun addSegments(parentNode: FilePathNode?, segments: List<String>): VirtualFileUrl {
     var latestNode: FilePathNode? = parentNode ?: findRootNode(segments.first())
     val latestElement = segments.size - 1
     for (index in segments.indices) {
@@ -90,7 +116,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) {
           rootNode.addChild(newNode)
-          return newNode.getVirtualFileUrl(this, protocol)
+          return newNode.getVirtualFileUrl(this)
         }
         latestNode = newNode
         rootNode.addChild(newNode)
@@ -99,7 +125,7 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
 
       if (latestNode === findRootNode(latestNode.contentId)) {
         if (latestNode.contentId == nameId) {
-          if (index == latestElement) return latestNode.getVirtualFileUrl(this, protocol)
+          if (index == latestElement) return latestNode.getVirtualFileUrl(this)
           continue
         }
       }
@@ -112,15 +138,24 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
         latestNode.addChild(newNode)
         latestNode = newNode
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return newNode.getVirtualFileUrl(this, protocol)
+        if (index == latestElement) return newNode.getVirtualFileUrl(this)
       }
       else {
         // If it's the latest name of folder or files, save entity Id as node value
-        if (index == latestElement) return node.getVirtualFileUrl(this, protocol)
+        if (index == latestElement) return node.getVirtualFileUrl(this)
         latestNode = node
       }
     }
     return getEmptyUrl()
+  }
+  
+  private fun findBySegments(segments: List<String>): VirtualFileUrl? {
+    var currentNode = rootNode
+    for (segment in segments) {
+      val nameId = fileNameStore.getIdForName(segment) ?: return null
+      currentNode = currentNode.findChild(nameId) ?: return null
+    }
+    return currentNode.getCachedVirtualFileUrl()
   }
 
   internal fun remove(path: String) {
@@ -155,12 +190,12 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     val latestPathNode = findLatestFilePathNode(oldPath)
     if (latestPathNode == null) return
     remove(oldPath)
-    add(newPath, getProtocol(newPath))
+    add(newPath)
   }
 
   private fun getEmptyUrl(): VirtualFileUrl {
     if (emptyUrl == null) {
-      emptyUrl = createVirtualFileUrl(0, this, null)
+      emptyUrl = createVirtualFileUrl(0, this)
     }
     return emptyUrl!!
   }
@@ -202,11 +237,6 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private fun findRootNode(contentId: Int): FilePathNode? = rootNode.findChild(contentId)
 
   private fun splitNames(path: String): List<String> = path.split('/', '\\')
-
-  private fun getProtocol(url: String): String? {
-    val protocolEnd = url.indexOf(URLUtil.SCHEME_SEPARATOR)
-    return if (protocolEnd != -1) url.substring(0, protocolEnd) else null
-  }
 
   fun print() = rootNode.print()
 
@@ -254,6 +284,23 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       }
       return subtreeNodes
     }
+    
+    fun processChildrenRecursively(processor: (FilePathNode) -> TreeNodeProcessingResult): Boolean {
+      val childrenCopy = synchronized(this@VirtualFileUrlManagerImpl) { children?.clone() }
+      childrenCopy?.forEach { child ->
+        when (processor(child)) {
+          TreeNodeProcessingResult.CONTINUE -> {
+            if (!child.processChildrenRecursively(processor)) {
+              return false
+            }
+          } 
+          TreeNodeProcessingResult.SKIP_CHILDREN -> {}
+          TreeNodeProcessingResult.SKIP_TO_PARENT -> return true
+          TreeNodeProcessingResult.STOP -> return false
+        }
+      }
+      return true
+    }
 
     fun addChild(newNode: FilePathNode) {
       createChildrenList()
@@ -264,13 +311,15 @@ open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
       children?.remove(node)
     }
 
-    fun getVirtualFileUrl(virtualFileUrlManager: VirtualFileUrlManagerImpl, protocol: String?): VirtualFileUrl {
+    fun getVirtualFileUrl(virtualFileUrlManager: VirtualFileUrlManagerImpl): VirtualFileUrl {
       val cachedValue = virtualFileUrl
       if (cachedValue != null) return cachedValue
-      val url = virtualFileUrlManager.createVirtualFileUrl(nodeId, virtualFileUrlManager, protocol)
+      val url = virtualFileUrlManager.createVirtualFileUrl(nodeId, virtualFileUrlManager)
       virtualFileUrl = url
       return url
     }
+
+    fun getCachedVirtualFileUrl(): VirtualFileUrl? = virtualFileUrl
 
     fun isEmpty() = children == null || children!!.isEmpty()
 

@@ -1,13 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
+import com.intellij.find.ngrams.TrigramIndex
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
+
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.RunsInEdt
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.UsefulTestCase.assertTrue
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
 
@@ -16,14 +28,17 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
   @Test
   fun `excluded files must not be indexed`() {
+    lateinit var excludedJava: FileSpec
+
     projectModelRule.createJavaModule("moduleName") {
       content("contentRoot") {
         excluded("excluded") {
-          file("ExcludedFile.java", "class ExcludedFile {}")
+          excludedJava = file("ExcludedFile.java", "class ExcludedFile {}")
         }
       }
     }
     assertIndexableFiles()
+    assertHasNoIndexes(excludedJava.file)
   }
 
   @Test
@@ -78,7 +93,7 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
       sdkModificator.addRoot(sdkRoot.file, OrderRootType.CLASSES)
     }
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
@@ -111,11 +126,11 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
     val additionalLibraryRootsProvider = object : AdditionalLibraryRootsProvider() {
       override fun getAdditionalProjectLibraries(project: Project) = listOf(
-        SyntheticLibrary.newImmutableLibrary(
-          listOf(targetSources.file),
-          listOf(targetBinaries.file),
-          emptySet(),
-          null
+        SyntheticLibrary.newImmutableLibrary("test",
+                                             listOf(targetSources.file),
+                                             listOf(targetBinaries.file),
+                                             emptySet(),
+                                             null
         )
       )
     }
@@ -156,4 +171,66 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
     assertIndexableFiles(projectFile.file, appFile.file)
   }
 
+  @Test
+  fun `nested content root's excluded file should be indexed after nested content root removal`() {
+    // no java plugin here, so we use plain text files
+    val parentContentRootFileName = "ParentContentRootFile.txt"
+    val nestedContentRootFileName = "NestedContentRootFile.txt"
+    val excludedFileName = "ExcludedFile.txt"
+    lateinit var parentContentRootFile: FileSpec
+    lateinit var nestedContentRoot: ModuleRootSpec
+    lateinit var nestedContentRootFile: FileSpec
+    lateinit var excludedDir: DirectorySpec
+    val module = projectModelRule.createJavaModule("moduleName") {
+      content("parentContentRoot") {
+        parentContentRootFile = file(parentContentRootFileName, "class ParentContentRootFile {}")
+        nestedContentRoot = content("nestedContentRoot") {
+          nestedContentRootFile = file(nestedContentRootFileName, "class NestedContentRootFile {}")
+          excludedDir = dir("excluded") {}
+        }
+      }
+    }
+    ModuleRootModificationUtil.updateExcludedFolders(module, nestedContentRoot.file, emptyList(), listOf(excludedDir.file.url))
+    val excludedFile = FileSpec(excludedDir.specPath / excludedFileName, "class ExcludedFile {}".toByteArray())
+    excludedDir.addChild(excludedFileName, excludedFile)
+    excludedFile.generate(excludedDir.file, excludedFileName)
+
+    val fileBasedIndex = FileBasedIndex.getInstance()
+    assertIndexableFiles(parentContentRootFile.file, nestedContentRootFile.file)
+    // Currently order of checks masks the fact,
+    // that called before calls to content-dependent indices on files in question,
+    // content-independent indices won't return those files
+    fileBasedIndex.assertHasDataInIndex(nestedContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertHasDataInIndex(parentContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertNoDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
+                           parentContentRootFile.file, nestedContentRootFile.file)
+    assertContainsElements(FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
+                           parentContentRootFile.file, nestedContentRootFile.file)
+
+    PsiTestUtil.removeContentEntry(module, nestedContentRoot.file)
+    assertIndexableFiles(parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
+    fileBasedIndex.assertHasDataInIndex(nestedContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertHasDataInIndex(parentContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertHasDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+
+    assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
+                           parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
+    assertContainsElements(FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
+                           parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
+  }
+
+  private fun FileBasedIndex.assertHasDataInIndex(file: VirtualFile, vararg indexIds: ID<*, *>) {
+    for (indexId in indexIds) {
+      val values = getFileData(indexId, file, project).values
+      assertTrue("No data is found in $indexId for ${file.name}", !values.isEmpty())
+    }
+  }
+
+  private fun FileBasedIndex.assertNoDataInIndex(file: VirtualFile, vararg indexIds: ID<*, *>) {
+    for (indexId in indexIds) {
+      val values = getFileData(indexId, file, project).values
+      assertTrue("Some data found in " + indexId + " for " + file.name, values.isEmpty())
+    }
+  }
 }

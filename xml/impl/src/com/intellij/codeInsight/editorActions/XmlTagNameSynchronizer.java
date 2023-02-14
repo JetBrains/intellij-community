@@ -32,7 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
@@ -64,7 +64,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
 
-  private XmlTagNameSynchronizer() {}
+  private XmlTagNameSynchronizer() { }
 
   private static void createSynchronizerFor(Editor editor) {
     Project project = editor.getProject();
@@ -174,7 +174,7 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       myEditor.getDocument().addDocumentListener(this, this);
       myEditor.getCaretModel().addCaretListener(this, this);
       myEditor.putUserData(SYNCHRONIZER_KEY, this);
-      for (Caret caret: myEditor.getCaretModel().getAllCarets()) {
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
         Couple<RangeMarker> markers = getMarkers(caret);
         if (markers != null) {
           allMarkers.add(markers.first);
@@ -326,17 +326,18 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     void beforeCommandFinished() {
       CaretAction action = caret -> {
         Couple<RangeMarker> markers = getMarkers(caret);
-        if (markers == null || !markers.first.isValid() || !markers.second.isValid()) return;
         final Document document = myEditor.getDocument();
+        if (markers == null
+            || !markers.first.isValid()
+            || !markers.second.isValid()
+            || getNameToReplace(document, markers) == null) {
+          return;
+        }
+
         final Runnable apply = () -> {
-          final RangeMarker leader = markers.first;
-          final RangeMarker support = markers.second;
-          if (document.getTextLength() < leader.getEndOffset()) {
-            return;
-          }
-          final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
-          if (document.getTextLength() >= support.getEndOffset() &&
-              !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+          final String name = getNameToReplace(document, markers);
+          if (name != null) {
+            final RangeMarker support = markers.second;
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         };
@@ -364,10 +365,24 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       }
     }
 
+    private static @Nullable String getNameToReplace(final Document document, @NotNull Couple<RangeMarker> markers) {
+      final RangeMarker leader = markers.first;
+      final RangeMarker support = markers.second;
+      if (document.getTextLength() < leader.getEndOffset()) {
+        return null;
+      }
+      final String name = document.getText(leader.getTextRange());
+      if (document.getTextLength() >= support.getEndOffset() &&
+          !name.equals(document.getText(support.getTextRange()))) {
+        return name;
+      }
+      return null;
+    }
+
     private RangeMarker findSupport(RangeMarker leader, PsiFile file, Document document) {
-      final TextRange leaderRange = new TextRange(leader.getStartOffset(), leader.getEndOffset());
+      final TextRange leaderRange = leader.getTextRange();
       final int offset = leader.getStartOffset();
-      PsiElement element = findNameElement(InjectedLanguageUtil.findElementAtNoCommit(file, offset));
+      PsiElement element = findNameElement(InjectedLanguageUtilBase.findElementAtNoCommit(file, offset));
       TextRange support = findSupportRange(element);
       if (!isSupportRangeValid(document, leaderRange, support) &&
           file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
@@ -437,8 +452,20 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
       if (prev == '<') {
         int nextCharPos = StringUtil.skipWhitespaceForward(contents, offset);
         if (nextCharPos >= 0 && nextCharPos < length && contents.charAt(nextCharPos) == '>') {
-          // Try to find matching empty closing tag
-          int endTagStart = StringUtil.indexOf(contents, '<', nextCharPos, range.getEndOffset());
+          // We look for the next opening tag and start to search for the closing empty tag after the end of the next tag's pair
+          int nextTagStart = StringUtil.indexOf(contents, '<', nextCharPos, range.getEndOffset());
+          int nextTagFirstChar = contents.charAt(StringUtil.skipWhitespaceForward(contents, nextTagStart + 1));
+
+          int searchStart = nextCharPos;
+          if (nextTagFirstChar != '/' && nextTagFirstChar != '>') {
+            PsiFile file = element.getContainingFile();
+            TextRange nextTagsPair = findSupportRange(findNameElement(InjectedLanguageUtilBase.findElementAtNoCommit(file, nextTagStart)));
+            if (nextTagsPair != null && nextTagsPair.getEndOffset() > nextCharPos) {
+              searchStart = nextTagsPair.getEndOffset();
+            }
+          }
+
+          int endTagStart = StringUtil.indexOf(contents, '<', searchStart, range.getEndOffset());
           int endTagEnd = endTagStart > 0 && endTagStart < length - 1 && contents.charAt(endTagStart + 1) == '/'
                           ? StringUtil.skipWhitespaceForward(contents, endTagStart + 2) : -1;
           if (endTagEnd > 0 && endTagEnd < length && contents.charAt(endTagEnd) == '>') {

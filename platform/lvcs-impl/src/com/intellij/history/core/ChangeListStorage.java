@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.util.Consumer;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChangeListStorage {
@@ -12,7 +12,7 @@ public interface ChangeListStorage {
   long nextId();
 
   @Nullable
-  ChangeSetHolder readPrevious(int id, TIntHashSet recursionGuard);
+  ChangeSetHolder readPrevious(int id, IntSet recursionGuard);
 
   void purge(long period, int intervalBetweenActivities, Consumer<? super ChangeSet> processor);
 

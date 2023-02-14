@@ -37,13 +37,13 @@ class TServer(object):
 class TSimpleServer(TServer):
     """Simple single-threaded server that just pumps around one transport."""
 
-    def __init__(self, *args):
-        TServer.__init__(self, *args)
+    def __init__(self, *args, **kwargs):
+        TServer.__init__(self, *args, **kwargs)
         self.closed = False
 
     def serve(self):
         self.trans.listen()
-        while True:
+        while not self.closed:
             client = self.trans.accept()
             itrans = self.itrans_factory.get_transport(client)
             otrans = self.otrans_factory.get_transport(client)
@@ -78,7 +78,7 @@ class TThreadedServer(TServer):
             try:
                 client = self.trans.accept()
                 t = threading.Thread(target=self.handle, args=(client,))
-                t.setDaemon(self.daemon)
+                t.daemon = self.daemon
                 t.start()
             except KeyboardInterrupt:
                 raise

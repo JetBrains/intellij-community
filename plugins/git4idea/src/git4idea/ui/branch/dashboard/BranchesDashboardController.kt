@@ -13,11 +13,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ThreeState
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchType
@@ -29,12 +31,11 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.dashboard.BranchesDashboardUtil.anyIncomingOutgoingState
 import kotlin.properties.Delegates
 
-internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")
-
 internal class BranchesDashboardController(private val project: Project,
                                            private val ui: BranchesDashboardUi) : Disposable, DataProvider {
 
   private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
+  private val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener { rootsToFilter = ui.getRootsToFilter() }
   private val logUiPropertiesListener = object: VcsLogUiProperties.PropertiesChangeListener {
     override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
       if (property == SHOW_GIT_BRANCHES_LOG_PROPERTY) {
@@ -47,10 +48,22 @@ internal class BranchesDashboardController(private val project: Project,
   val remoteBranches = hashSetOf<BranchInfo>()
   var showOnlyMy: Boolean by Delegates.observable(false) { _, old, new -> if (old != new) updateBranchesIsMyState() }
 
+  private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
+    if (new != null && old != null && old != new) {
+      ui.updateBranchesTree(false)
+    }
+  }
+
   init {
     Disposer.register(ui, this)
-    project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, DvcsBranchManagerListener {
-      updateBranchesIsFavoriteState()
+    project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
+      override fun branchFavoriteSettingsChanged() {
+        updateBranchesIsFavoriteState()
+      }
+
+      override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
+        toggleGrouping(key, state)
+      }
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
@@ -61,6 +74,7 @@ internal class BranchesDashboardController(private val project: Project,
   override fun dispose() {
     localBranches.clear()
     remoteBranches.clear()
+    rootsToFilter = null
   }
 
   fun updateLogBranchFilter() {
@@ -113,14 +127,14 @@ internal class BranchesDashboardController(private val project: Project,
     else {
       ui.refreshTreeModel()
     }
-    return changed
+    return true
   }
 
   private fun reloadBranches(force: Boolean): Boolean {
     ui.startLoadingBranches()
 
-    val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
-    val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project)
+    val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
+    val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
     val localChanged = force || localBranches.size != newLocalBranches.size || !localBranches.containsAll(newLocalBranches)
     val remoteChanged = force || remoteBranches.size != newRemoteBranches.size || !remoteBranches.containsAll(newRemoteBranches)
 
@@ -225,6 +239,11 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun removeLogUiPropertiesListener(vcsLogUiProperties: VcsLogUiProperties) {
     vcsLogUiProperties.removeChangeListener(logUiPropertiesListener)
+  }
+
+  fun registerLogUiFilterListener(logFilterUi: VcsLogFilterUiEx) {
+    logFilterUi.addFilterListener(logUiFilterListener)
+    logUiFilterListener.onFiltersChanged()
   }
 
   override fun getData(dataId: String): Any? {

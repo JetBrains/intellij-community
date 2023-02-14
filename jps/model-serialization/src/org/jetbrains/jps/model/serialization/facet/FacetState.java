@@ -41,7 +41,7 @@ public final class FacetState {
     return myConfiguration;
   }
 
-  @Attribute(value = SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
   public String getExternalSystemId() {
     return myExternalSystemId;
   }

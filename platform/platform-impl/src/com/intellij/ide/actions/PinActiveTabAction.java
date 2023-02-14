@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -59,17 +60,13 @@ public class PinActiveTabAction extends DumbAwareAction {
 
     e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.General.Pin_tab : null);
     Toggleable.setSelected(e.getPresentation(), selected);
-
-    String text;
-    // add the word "active" if the target tab is current
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || handler != null && handler.isActiveTab) {
-      text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
-    }
-    else {
-      text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
-    }
-    e.getPresentation().setText(text);
+    e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     e.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   protected Handler getHandler(@NotNull AnActionEvent e) {
@@ -141,18 +138,20 @@ public class PinActiveTabAction extends DumbAwareAction {
     ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
     if (window == null) return null;
 
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     Content result = ObjectUtils.doIfNotNull(ComponentUtil.getParentOfType(BaseLabel.class, component), BaseLabel::getContent);
     if (result == null) {
-      result = ObjectUtils.doIfNotNull(window.getContentManager(), ContentManager::getSelectedContent);
+      InternalDecoratorImpl decorator = InternalDecoratorImpl.findNearestDecorator(component);
+      if (decorator != null) {
+        result = ObjectUtils.doIfNotNull(decorator.getContentManager(), ContentManager::getSelectedContent);
+      }
     }
     return result != null && result.isPinnable() ? result : null;
   }
 
   @Nullable
   private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) file = window.getSelectedFile();
+    VirtualFile file = window.getSelectedFile();
     if (file != null && window.isFileOpen(file)) return file;
     return null;
   }

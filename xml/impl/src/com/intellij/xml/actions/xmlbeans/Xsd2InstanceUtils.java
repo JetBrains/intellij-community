@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class Xsd2InstanceUtils {
+public final class Xsd2InstanceUtils {
     public static String generate(String[] args) {
         Set flags = new HashSet();
         Set opts = new HashSet();
@@ -97,7 +97,7 @@ public class Xsd2InstanceUtils {
             StringBuilder out = new StringBuilder("Schema compilation errors: ");
             Collection errors = e.getErrors();
             for (Object error : errors) out.append("\n").append(error);
-              throw new IllegalArgumentException(out.toString());
+            throw new IllegalArgumentException(out.toString());
           }
         }
 
@@ -125,8 +125,7 @@ public class Xsd2InstanceUtils {
   public static XmlElementDescriptor getDescriptor(XmlTag tag, String elementName) {
     final PsiMetaData metaData = tag.getMetaData();
 
-    if (metaData instanceof XmlNSDescriptorImpl) {
-      final XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
+    if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
       return nsDescriptor.getElementDescriptor(elementName, nsDescriptor.getDefaultNamespace());
     }
 
@@ -135,8 +134,7 @@ public class Xsd2InstanceUtils {
 
   public static List<String> addVariantsFromRootTag(XmlTag rootTag) {
     PsiMetaData metaData = rootTag.getMetaData();
-    if (metaData instanceof XmlNSDescriptorImpl) {
-      XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl) metaData;
+    if (metaData instanceof XmlNSDescriptorImpl nsDescriptor) {
 
       List<String> elementDescriptors = new ArrayList<>();
       XmlElementDescriptor[] rootElementsDescriptors = nsDescriptor.getRootElementsDescriptors(PsiTreeUtil.getParentOfType(rootTag, XmlDocument.class));
@@ -170,7 +168,7 @@ public class Xsd2InstanceUtils {
         }
       }
 
-      @Override public void visitXmlAttribute(XmlAttribute xmlAttribute) {
+      @Override public void visitXmlAttribute(@NotNull XmlAttribute xmlAttribute) {
         boolean replaced = false;
 
         if (xmlAttribute.isNamespaceDeclaration()) {

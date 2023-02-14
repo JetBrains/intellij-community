@@ -1,23 +1,188 @@
 # lock.py - simple advisory locking scheme for mercurial
 #
-# Copyright 2005, 2006 Matt Mackall <mpm@selenic.com>
+# Copyright 2005, 2006 Olivia Mackall <olivia@selenic.com>
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-import util, error
-import errno, os, socket, time
+from __future__ import absolute_import
+
+import contextlib
+import errno
+import os
+import signal
+import socket
+import time
 import warnings
 
+from .i18n import _
+from .pycompat import getattr
+
+from . import (
+    encoding,
+    error,
+    pycompat,
+    util,
+)
+
+from .utils import procutil
+
+
+def _getlockprefix():
+    """Return a string which is used to differentiate pid namespaces
+
+    It's useful to detect "dead" processes and remove stale locks with
+    confidence. Typically it's just hostname. On modern linux, we include an
+    extra Linux-specific pid namespace identifier.
+    """
+    result = encoding.strtolocal(socket.gethostname())
+    if pycompat.sysplatform.startswith(b'linux'):
+        try:
+            result += b'/%x' % os.stat(b'/proc/self/ns/pid').st_ino
+        except OSError as ex:
+            if ex.errno not in (errno.ENOENT, errno.EACCES, errno.ENOTDIR):
+                raise
+    return result
+
+
+@contextlib.contextmanager
+def _delayedinterrupt():
+    """Block signal interrupt while doing something critical
+
+    This makes sure that the code block wrapped by this context manager won't
+    be interrupted.
+
+    For Windows developers: It appears not possible to guard time.sleep()
+    from CTRL_C_EVENT, so please don't use time.sleep() to test if this is
+    working.
+    """
+    assertedsigs = []
+    blocked = False
+    orighandlers = {}
+
+    def raiseinterrupt(num):
+        if num == getattr(signal, 'SIGINT', None) or num == getattr(
+            signal, 'CTRL_C_EVENT', None
+        ):
+            raise KeyboardInterrupt
+        else:
+            raise error.SignalInterrupt
+
+    def catchterm(num, frame):
+        if blocked:
+            assertedsigs.append(num)
+        else:
+            raiseinterrupt(num)
+
+    try:
+        # save handlers first so they can be restored even if a setup is
+        # interrupted between signal.signal() and orighandlers[] =.
+        for name in [
+            b'CTRL_C_EVENT',
+            b'SIGINT',
+            b'SIGBREAK',
+            b'SIGHUP',
+            b'SIGTERM',
+        ]:
+            num = getattr(signal, name, None)
+            if num and num not in orighandlers:
+                orighandlers[num] = signal.getsignal(num)
+        try:
+            for num in orighandlers:
+                signal.signal(num, catchterm)
+        except ValueError:
+            pass  # in a thread? no luck
+
+        blocked = True
+        yield
+    finally:
+        # no simple way to reliably restore all signal handlers because
+        # any loops, recursive function calls, except blocks, etc. can be
+        # interrupted. so instead, make catchterm() raise interrupt.
+        blocked = False
+        try:
+            for num, handler in orighandlers.items():
+                signal.signal(num, handler)
+        except ValueError:
+            pass  # in a thread?
+
+    # re-raise interrupt exception if any, which may be shadowed by a new
+    # interrupt occurred while re-raising the first one
+    if assertedsigs:
+        raiseinterrupt(assertedsigs[0])
+
+
+def trylock(ui, vfs, lockname, timeout, warntimeout, *args, **kwargs):
+    """return an acquired lock or raise an a LockHeld exception
+
+    This function is responsible to issue warnings and or debug messages about
+    the held lock while trying to acquires it."""
+
+    def printwarning(printer, locker):
+        """issue the usual "waiting on lock" message through any channel"""
+        # show more details for new-style locks
+        if b':' in locker:
+            host, pid = locker.split(b":", 1)
+            msg = _(
+                b"waiting for lock on %s held by process %r on host %r\n"
+            ) % (
+                pycompat.bytestr(l.desc),
+                pycompat.bytestr(pid),
+                pycompat.bytestr(host),
+            )
+        else:
+            msg = _(b"waiting for lock on %s held by %r\n") % (
+                l.desc,
+                pycompat.bytestr(locker),
+            )
+        printer(msg)
+
+    l = lock(vfs, lockname, 0, *args, dolock=False, **kwargs)
+
+    debugidx = 0 if (warntimeout and timeout) else -1
+    warningidx = 0
+    if not timeout:
+        warningidx = -1
+    elif warntimeout:
+        warningidx = warntimeout
+
+    delay = 0
+    while True:
+        try:
+            l._trylock()
+            break
+        except error.LockHeld as inst:
+            if delay == debugidx:
+                printwarning(ui.debug, inst.locker)
+            if delay == warningidx:
+                printwarning(ui.warn, inst.locker)
+            if timeout <= delay:
+                raise error.LockHeld(
+                    errno.ETIMEDOUT, inst.filename, l.desc, inst.locker
+                )
+            time.sleep(1)
+            delay += 1
+
+    l.delay = delay
+    if l.delay:
+        if 0 <= warningidx <= l.delay:
+            ui.warn(_(b"got lock after %d seconds\n") % l.delay)
+        else:
+            ui.debug(b"got lock after %d seconds\n" % l.delay)
+    if l.acquirefn:
+        l.acquirefn()
+    return l
+
+
 class lock(object):
-    '''An advisory lock held by one process to control access to a set
+    """An advisory lock held by one process to control access to a set
     of files.  Non-cooperating processes or incorrectly written scripts
     can ignore Mercurial's locking scheme and stomp all over the
     repository, so don't do that.
 
     Typically used via localrepository.lock() to lock the repository
     store (.hg/store/) or localrepository.wlock() to lock everything
-    else under .hg/.'''
+    else under .hg/."""
 
     # lock is symlink on platforms that support it, file on others.
 
@@ -29,21 +194,49 @@ class lock(object):
 
     _host = None
 
-    def __init__(self, file, timeout=-1, releasefn=None, desc=None):
-        self.f = file
+    def __init__(
+        self,
+        vfs,
+        fname,
+        timeout=-1,
+        releasefn=None,
+        acquirefn=None,
+        desc=None,
+        signalsafe=True,
+        dolock=True,
+    ):
+        self.vfs = vfs
+        self.f = fname
         self.held = 0
         self.timeout = timeout
         self.releasefn = releasefn
+        self.acquirefn = acquirefn
         self.desc = desc
-        self.postrelease  = []
-        self.pid = os.getpid()
-        self.lock()
+        if signalsafe:
+            self._maybedelayedinterrupt = _delayedinterrupt
+        else:
+            self._maybedelayedinterrupt = util.nullcontextmanager
+        self.postrelease = []
+        self.pid = self._getpid()
+        if dolock:
+            self.delay = self.lock()
+            if self.acquirefn:
+                self.acquirefn()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        success = all(a is None for a in (exc_type, exc_value, exc_tb))
+        self.release(success=success)
 
     def __del__(self):
         if self.held:
-            warnings.warn("use lock.release instead of del lock",
-                    category=DeprecationWarning,
-                    stacklevel=2)
+            warnings.warn(
+                "use lock.release instead of del lock",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
 
             # ensure the lock will be removed
             # even if recursive locking did occur
@@ -51,41 +244,110 @@ class lock(object):
 
         self.release()
 
+    def _getpid(self):
+        # wrapper around procutil.getpid() to make testing easier
+        return procutil.getpid()
+
     def lock(self):
         timeout = self.timeout
         while True:
             try:
-                self.trylock()
-                return 1
-            except error.LockHeld, inst:
+                self._trylock()
+                return self.timeout - timeout
+            except error.LockHeld as inst:
                 if timeout != 0:
                     time.sleep(1)
                     if timeout > 0:
                         timeout -= 1
                     continue
-                raise error.LockHeld(errno.ETIMEDOUT, inst.filename, self.desc,
-                                     inst.locker)
+                raise error.LockHeld(
+                    errno.ETIMEDOUT, inst.filename, self.desc, inst.locker
+                )
 
-    def trylock(self):
+    def _trylock(self):
         if self.held:
             self.held += 1
             return
         if lock._host is None:
-            lock._host = socket.gethostname()
-        lockname = '%s:%s' % (lock._host, self.pid)
-        while not self.held:
+            lock._host = _getlockprefix()
+        lockname = b'%s:%d' % (lock._host, self.pid)
+        retry = 5
+        while not self.held and retry:
+            retry -= 1
             try:
-                util.makelock(lockname, self.f)
-                self.held = 1
-            except (OSError, IOError), why:
+                with self._maybedelayedinterrupt():
+                    self.vfs.makelock(lockname, self.f)
+                    self.held = 1
+            except (OSError, IOError) as why:
                 if why.errno == errno.EEXIST:
-                    locker = self.testlock()
+                    locker = self._readlock()
+                    if locker is None:
+                        continue
+
+                    locker = self._testlock(locker)
                     if locker is not None:
-                        raise error.LockHeld(errno.EAGAIN, self.f, self.desc,
-                                             locker)
+                        raise error.LockHeld(
+                            errno.EAGAIN,
+                            self.vfs.join(self.f),
+                            self.desc,
+                            locker,
+                        )
                 else:
-                    raise error.LockUnavailable(why.errno, why.strerror,
-                                                why.filename, self.desc)
+                    raise error.LockUnavailable(
+                        why.errno, why.strerror, why.filename, self.desc
+                    )
+
+        if not self.held:
+            # use empty locker to mean "busy for frequent lock/unlock
+            # by many processes"
+            raise error.LockHeld(
+                errno.EAGAIN, self.vfs.join(self.f), self.desc, b""
+            )
+
+    def _readlock(self):
+        """read lock and return its value
+
+        Returns None if no lock exists, pid for old-style locks, and host:pid
+        for new-style locks.
+        """
+        try:
+            return self.vfs.readlock(self.f)
+        except (OSError, IOError) as why:
+            if why.errno == errno.ENOENT:
+                return None
+            raise
+
+    def _lockshouldbebroken(self, locker):
+        if locker is None:
+            return False
+        try:
+            host, pid = locker.split(b":", 1)
+        except ValueError:
+            return False
+        if host != lock._host:
+            return False
+        try:
+            pid = int(pid)
+        except ValueError:
+            return False
+        if procutil.testpid(pid):
+            return False
+        return True
+
+    def _testlock(self, locker):
+        if not self._lockshouldbebroken(locker):
+            return locker
+
+        # if locker dead, break lock.  must do this with another lock
+        # held, or can race and break valid lock.
+        try:
+            with lock(self.vfs, self.f + b'.break', timeout=0):
+                locker = self._readlock()
+                if not self._lockshouldbebroken(locker):
+                    return locker
+                self.vfs.unlink(self.f)
+        except error.LockError:
+            return locker
 
     def testlock(self):
         """return id of locker if lock is valid, else None.
@@ -98,34 +360,10 @@ class lock(object):
         The lock file is only deleted when None is returned.
 
         """
-        try:
-            locker = util.readlock(self.f)
-        except OSError, why:
-            if why.errno == errno.ENOENT:
-                return None
-            raise
-        try:
-            host, pid = locker.split(":", 1)
-        except ValueError:
-            return locker
-        if host != lock._host:
-            return locker
-        try:
-            pid = int(pid)
-        except ValueError:
-            return locker
-        if util.testpid(pid):
-            return locker
-        # if locker dead, break lock.  must do this with another lock
-        # held, or can race and break valid lock.
-        try:
-            l = lock(self.f + '.break', timeout=0)
-            util.unlink(self.f)
-            l.release()
-        except error.LockError:
-            return locker
+        locker = self._readlock()
+        return self._testlock(locker)
 
-    def release(self):
+    def release(self, success=True):
         """release the lock and execute callback function if any
 
         If the lock has been acquired multiple times, the actual release is
@@ -134,17 +372,24 @@ class lock(object):
             self.held -= 1
         elif self.held == 1:
             self.held = 0
-            if os.getpid() != self.pid:
+            if self._getpid() != self.pid:
                 # we forked, and are not the parent
                 return
-            if self.releasefn:
-                self.releasefn()
             try:
-                util.unlink(self.f)
-            except OSError:
-                pass
+                if self.releasefn:
+                    self.releasefn()
+            finally:
+                try:
+                    self.vfs.unlink(self.f)
+                except OSError:
+                    pass
+            # The postrelease functions typically assume the lock is not held
+            # at all.
             for callback in self.postrelease:
-                callback()
+                callback(success)
+            # Prevent double usage and help clear cycles.
+            self.postrelease = None
+
 
 def release(*locks):
     for lock in locks:

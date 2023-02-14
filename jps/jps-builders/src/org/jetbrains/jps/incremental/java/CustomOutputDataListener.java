@@ -29,9 +29,6 @@ public interface CustomOutputDataListener {
 
   /**
    * Custom data passed through DiagnosticOutputConsumer object with pluginId == thisExtension.getId() will be passed to this method
-   * @param context
-   * @param dataName
-   * @param content
    */
   void processData(CompileContext context, @Nullable String dataName, byte @NotNull [] content);
 }

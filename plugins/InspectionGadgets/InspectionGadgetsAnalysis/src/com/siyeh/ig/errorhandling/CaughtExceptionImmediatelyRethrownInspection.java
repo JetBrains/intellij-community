@@ -27,10 +27,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection {
@@ -63,10 +63,10 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
   private static class CaughtExceptionImmediatelyRethrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(statement.getException());
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
       final PsiStatement previousStatement = PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
@@ -78,17 +78,14 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
         // e.g. if (notsure) throw e;
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiParameter)) {
+      if (!(target instanceof PsiParameter parameter)) {
         return;
       }
-      final PsiParameter parameter = (PsiParameter)target;
       final PsiElement declarationScope = parameter.getDeclarationScope();
-      if (!(declarationScope instanceof PsiCatchSection)) {
+      if (!(declarationScope instanceof PsiCatchSection catchSection)) {
         return;
       }
-      final PsiCatchSection catchSection = (PsiCatchSection)declarationScope;
       final PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
       if (block == null) {
         return;
@@ -120,7 +117,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
         index++;
       }
       final PsiType type = parameter.getType();
-      final Set<PsiClass> parameterClasses = new THashSet<>();
+      final Set<PsiClass> parameterClasses = new HashSet<>();
       processExceptionClasses(type, aClass -> {
         parameterClasses.add(aClass);
         return true;
@@ -160,13 +157,11 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
           processor.process(aClass);
         }
       }
-      else if (type instanceof PsiDisjunctionType) {
-        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+      else if (type instanceof PsiDisjunctionType disjunctionType) {
         for (PsiType disjunction : disjunctionType.getDisjunctions()) {
-          if (!(disjunction instanceof PsiClassType)) {
+          if (!(disjunction instanceof PsiClassType classType)) {
             continue;
           }
-          final PsiClassType classType = (PsiClassType)disjunction;
           final PsiClass aClass = classType.resolve();
           if (aClass != null) {
             processor.process(aClass);

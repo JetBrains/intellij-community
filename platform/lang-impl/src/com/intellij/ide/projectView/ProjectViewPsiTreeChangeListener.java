@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,7 +80,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       if (parent == null) break;
       if (parent instanceof PsiFile) {
         VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
-        if (virtualFile != null && virtualFile.getFileType() != FileTypes.PLAIN_TEXT) {
+        if (virtualFile != null && !FileTypeRegistry.getInstance().isFileOfType(virtualFile, FileTypes.PLAIN_TEXT)) {
           // adding a class within a file causes a new node to appear in project view => entire dir should be updated
           parent = ((PsiFile)parent).getContainingDirectory();
           if (parent == null) break;
@@ -118,26 +105,24 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     PsiElement element = event.getElement();
-    if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
-      addSubtreeToUpdateByRoot();
-    }
-    else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-      if (!addSubtreeToUpdateByElementFile(element) && element instanceof PsiFile) {
-        addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory());
-      }
-    }
-    else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){
-      if (element instanceof PsiDirectory && isFlattenPackages()){
+    switch (propertyName) {
+      case PsiTreeChangeEvent.PROP_ROOTS, PsiTreeChangeEvent.PROP_FILE_TYPES, PsiTreeChangeEvent.PROP_UNLOADED_PSI -> 
         addSubtreeToUpdateByRoot();
-        return;
+      case PsiTreeChangeEvent.PROP_WRITABLE -> {
+        if (!addSubtreeToUpdateByElementFile(element) && element instanceof PsiFile) {
+          addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory());
+        }
       }
-      final PsiElement parent = element.getParent();
-      if (parent == null || !addSubtreeToUpdateByElementFile(parent)) {
-        addSubtreeToUpdateByElementFile(element);
+      case PsiTreeChangeEvent.PROP_FILE_NAME, PsiTreeChangeEvent.PROP_DIRECTORY_NAME -> {
+        if (element instanceof PsiDirectory && isFlattenPackages()) {
+          addSubtreeToUpdateByRoot();
+          return;
+        }
+        final PsiElement parent = element.getParent();
+        if (parent == null || !addSubtreeToUpdateByElementFile(parent)) {
+          addSubtreeToUpdateByElementFile(element);
+        }
       }
-    }
-    else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES) || propertyName.equals(PsiTreeChangeEvent.PROP_UNLOADED_PSI)) {
-      addSubtreeToUpdateByRoot();
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
@@ -13,6 +14,7 @@ import java.awt.Component
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   for (flag in flags) {
     when (flag) {
@@ -59,7 +61,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
         //.pushX()
       }
 
-      component is JScrollPane || component.isPanelWithToolbar() -> {
+      component is JScrollPane || component.isPanelWithToolbar() || component.isToolbarDecoratorPanel() -> {
         // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
         cc.grow()
           .pushY()
@@ -86,4 +88,8 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 private fun Component.isPanelWithToolbar(): Boolean {
   return this is JPanel && componentCount == 1 &&
          (getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null
+}
+
+private fun Component.isToolbarDecoratorPanel(): Boolean {
+  return this is JPanel && getClientProperty(ToolbarDecorator.DECORATOR_KEY) != null
 }

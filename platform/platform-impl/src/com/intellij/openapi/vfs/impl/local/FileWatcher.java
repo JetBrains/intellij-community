@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.application.options.RegistryManager;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -13,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,14 +55,9 @@ public final class FileWatcher {
     }
   }
 
-  private static @NotNull ExecutorService executor() {
-    boolean async = RegistryManager.getInstance().is("vfs.filewatcher.works.in.async.way");
-    return async ? AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1) : ConcurrencyUtil.newSameThreadExecutorService();
-  }
-
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
-  private final ExecutorService myFileWatcherExecutor = executor();
+  private final ExecutorService myFileWatcherExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("File Watcher", 1);
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
   private volatile CanonicalPathMap myPathMap = CanonicalPathMap.empty();
@@ -110,7 +101,7 @@ public final class FileWatcher {
   }
 
   public boolean isSettingRoots() {
-    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seem to be an acceptable race
+    Future<?> lastTask = myLastTask.get();  // a new task may come after the read, but this seems to be an acceptable race
     if (lastTask != null && !lastTask.isDone()) {
       return true;
     }
@@ -167,11 +158,14 @@ public final class FileWatcher {
   public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
-    NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File Watcher Messages");
-    String title = ApplicationBundle.message("watcher.slow.sync");
-    ApplicationManager.getApplication().invokeLater(
-      () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
-      ModalityState.NON_MODAL);
+    String title = IdeCoreBundle.message("watcher.slow.sync");
+    Notification notification = new Notification("File Watcher Messages", title, cause, NotificationType.WARNING)
+      .setSuggestionType(true);
+    if (listener != null) {
+      //noinspection deprecation
+      notification.setListener(listener);
+    }
+    notification.notify(null);
   }
 
   boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
@@ -203,11 +197,6 @@ public final class FileWatcher {
       PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.resetChangedPaths());
 
       return dirtyPaths;
-    }
-
-    @Override
-    public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
-      registerManualWatchRoots(new Object(), roots);
     }
 
     @Override
@@ -312,15 +301,15 @@ public final class FileWatcher {
   public static final String RESET = "(reset)";
   public static final String OTHER = "(other)";
 
-  private volatile Consumer<String> myTestNotifier;
+  private volatile Consumer<? super String> myTestNotifier;
 
   private void notifyOnEvent(String path) {
-    Consumer<String> notifier = myTestNotifier;
+    Consumer<? super String> notifier = myTestNotifier;
     if (notifier != null) notifier.accept(path);
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<String> notifier) throws Exception {
+  public void startup(@Nullable Consumer<? super String> notifier) throws Exception {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {

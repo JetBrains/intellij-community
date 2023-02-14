@@ -1,11 +1,18 @@
 <html>
 <body>
-Reports on any call to <b>Object.wait()</b>
-for which no call to a corresponding <b>Object.notify()</b> or
-<b>Object.notifyAll()</b>
-can be found. Only calls which target fields of the current class are reported by this inspection.
-<!-- tooltip end -->
-<p>
+Reports calls to <code>Object.wait()</code>, for which no call to the corresponding <code>Object.notify()</code> or
+<code>Object.notifyAll()</code> can be found.
+<p>This inspection only reports calls with qualifiers referencing fields of the current class.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  public class Foo {
+    public Object foo = new Object();
 
+    void bar() throws InterruptedException {
+      this.foo.wait();
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

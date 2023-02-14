@@ -214,9 +214,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
                 if (element instanceof QNameElement) {
                     final PsiReference[] references = element.getReferences();
                     for (PsiReference reference : references) {
-                        if (reference instanceof PrefixReference) {
-                            final PrefixReference prefixReference = (PrefixReference)reference;
-                            if (prefixReference.isUnresolved()) {
+                        if (reference instanceof PrefixReference prefixReference) {
+                          if (prefixReference.isUnresolved()) {
                                 prefixes.add(prefixReference.getPrefix());
                             }
                         }

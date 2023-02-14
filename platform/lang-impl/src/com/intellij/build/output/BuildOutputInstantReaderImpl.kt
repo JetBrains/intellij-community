@@ -82,7 +82,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   private val appendedLineProcessor = object : LineProcessor() {
     override fun process(line: String) {
-      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream") }
+      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream", line) }
       try {
         while (state.get() != State.Closed) {
           if (state.compareAndSet(State.Idle, State.Running)) {
@@ -143,7 +143,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
       if (line != null || state.get() == State.Closed) break
       if (!waitIfNotClosed) return null
     }
-    if (line == null) return line
+    if (line == null) return null
     readLinesBuffer.addFirst(line)
     if (readLinesBuffer.size > pushBackBufferSize) {
       readLinesBuffer.removeLast()

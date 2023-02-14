@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -186,6 +187,66 @@ public final class JavaSharedImplUtil {
       newType.acceptTree(new GeneratedMarkerVisitor());
       newType.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(type));
       CodeEditUtil.replaceChild(variableElement, type, newType);
+    }
+  }
+
+  @NotNull
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
+    PsiElement parent = variable.getPattern().getParent();
+    if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)
+        && !(parent instanceof PsiDeconstructionList) && !(parent instanceof PsiPatternGuard)) {
+      return parent;
+    }
+    return getInstanceOfPartDeclarationScope(parent);
+  }
+
+  @Nullable
+  public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiInstanceOfExpression instanceOfExpression) {
+    return getInstanceOfPartDeclarationScope(instanceOfExpression);
+  }
+
+  private static PsiElement getInstanceOfPartDeclarationScope(@NotNull PsiElement parent) {
+    boolean negated = false;
+    for (PsiElement nextParent = parent.getParent(); ; parent = nextParent, nextParent = parent.getParent()) {
+      if (nextParent instanceof PsiParenthesizedExpression) continue;
+      if (nextParent instanceof PsiForeachStatementBase ||
+        nextParent instanceof PsiConditionalExpression && parent == ((PsiConditionalExpression)nextParent).getCondition()) {
+        return nextParent;
+      }
+      if (nextParent instanceof PsiPrefixExpression &&
+          ((PsiPrefixExpression)nextParent).getOperationTokenType().equals(JavaTokenType.EXCL)) {
+        negated = !negated;
+        continue;
+      }
+      if (nextParent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)nextParent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) && !negated || tokenType.equals(JavaTokenType.OROR) && negated) continue;
+      }
+      if (nextParent instanceof PsiIfStatement) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiConditionalLoopStatement) {
+        if (!negated) return nextParent;
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiSwitchLabelStatementBase) {
+        while (nextParent.getParent() instanceof PsiLabeledStatement) {
+          nextParent = nextParent.getParent();
+        }
+        return nextParent.getParent();
+      }
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList || nextParent instanceof PsiPatternGuard ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
+        continue;
+      }
+      return parent;
     }
   }
 

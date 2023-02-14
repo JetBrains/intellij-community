@@ -1,18 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.util.BitUtil.isSet
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
+import javax.swing.KeyStroke
 
 private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDown
 
@@ -20,10 +24,15 @@ private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDow
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
 internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
+  private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
+  private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
+
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = event.project != null
+    event.presentation.isEnabled = event.project != null && !isControlTabDisabled(event)
     event.presentation.isVisible = forward == null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
@@ -41,17 +50,19 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
 
 internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesAction(false)
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
-internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : DumbAwareAction() {
+internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = event.project != null
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected } ?: run {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files")
-      SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 
@@ -59,6 +70,10 @@ internal abstract class BaseRecentFilesAction(val onlyEditedFiles: Boolean) : Du
 internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -73,6 +88,10 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
@@ -109,6 +128,10 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
 
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = getFileList(event) != null
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -166,7 +189,7 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
   private val wasMetaDown = true == event?.isMetaDown
   val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
 
-  val initialModifiers = if (!isEnabled) null
+  private val initialModifiers = if (!isEnabled) null
   else StringBuilder().apply {
     if (wasAltDown) append("alt ")
     if (wasAltGraphDown) append("altGraph ")
@@ -174,17 +197,28 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
     if (wasMetaDown) append("meta ")
   }.toString()
 
-  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let {
-    when (it) {
-      in KeyEvent.VK_0..KeyEvent.VK_9 -> it.toChar().toString()
-      in KeyEvent.VK_A..KeyEvent.VK_Z -> it.toChar().toString()
-      else -> null
-    }
+  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
+
+  fun getForbiddenMnemonic(keyStroke: KeyStroke) = when {
+    isSet(keyStroke.modifiers, InputEvent.ALT_DOWN_MASK) != wasAltDown -> null
+    isSet(keyStroke.modifiers, InputEvent.ALT_GRAPH_DOWN_MASK) != wasAltGraphDown -> null
+    isSet(keyStroke.modifiers, InputEvent.CTRL_DOWN_MASK) != wasControlDown -> null
+    isSet(keyStroke.modifiers, InputEvent.META_DOWN_MASK) != wasMetaDown -> null
+    else -> getMnemonic(keyStroke.keyCode)
+  }
+
+  private fun getMnemonic(keyCode: Int) = when (keyCode) {
+    in KeyEvent.VK_0..KeyEvent.VK_9 -> keyCode.toChar().toString()
+    in KeyEvent.VK_A..KeyEvent.VK_Z -> keyCode.toChar().toString()
+    else -> null
   }
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {
     val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)
-    return CustomShortcutSet.fromStrings(keys.map { modifiers + it })
+    val list = mutableListOf<String>()
+    keys.mapTo(list) { modifiers + it }
+    keys.mapTo(list) { modifiers + "shift " + it }
+    return CustomShortcutSet.fromStrings(list)
   }
 
   override fun keyReleased(keyEvent: KeyEvent) {

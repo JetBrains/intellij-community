@@ -54,18 +54,11 @@ final class JBCefEventUtils {
   }
 
   public static int convertCefKeyEventType(CefKeyEvent cefKeyEvent) {
-    switch (cefKeyEvent.type) {
-      case KEYEVENT_RAWKEYDOWN:
-      case KEYEVENT_KEYDOWN:
-        return KeyEvent.KEY_PRESSED;
-      case KEYEVENT_KEYUP:
-        return KeyEvent.KEY_RELEASED;
-      case KEYEVENT_CHAR:
-        return KeyEvent.KEY_TYPED;
-      default:
-        assert false;
-        return -1; // not reachable
-    }
+    return switch (cefKeyEvent.type) {
+      case KEYEVENT_RAWKEYDOWN, KEYEVENT_KEYDOWN -> KeyEvent.KEY_PRESSED;
+      case KEYEVENT_KEYUP -> KeyEvent.KEY_RELEASED;
+      case KEYEVENT_CHAR -> KeyEvent.KEY_TYPED;
+    };
   }
 
   public static int convertCefKeyEventKeyCode(CefKeyEvent cefKeyEvent) {

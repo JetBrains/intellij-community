@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -44,7 +44,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
         return;
@@ -74,8 +74,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
     }
 
     private static boolean isValidGuard(PsiExpression expression, PsiElement context) {
-      if (expression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      if (expression instanceof PsiReferenceExpression referenceExpression) {
         final JavaResolveResult result = referenceExpression.advancedResolve(false);
         if (!result.isAccessible() || !result.isValidResult()) {
           return false;
@@ -86,10 +85,9 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
           // checking qualifier
           return target != null;
         }
-        if (!(target instanceof PsiField)) {
+        if (!(target instanceof PsiField field)) {
           return false;
         }
-        final PsiField field = (PsiField)target;
         final PsiType type = field.getType();
         if (type instanceof PsiPrimitiveType) {
           return false;
@@ -97,8 +95,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         return qualifier == null || isValidGuard(qualifier, context);
       }
-      else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         if (!argumentList.isEmpty()) {
           return false;
@@ -108,10 +105,9 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
           return false;
         }
         final PsiElement element = result.getElement();
-        if (!(element instanceof PsiMethod)) {
+        if (!(element instanceof PsiMethod method)) {
           return false;
         }
-        final PsiMethod method = (PsiMethod)element;
         final PsiType type = method.getReturnType();
         if (type instanceof PsiPrimitiveType) {
           return false;
@@ -120,8 +116,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
         final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
         return qualifierExpression == null || isValidGuard(qualifierExpression, context);
       }
-      else if (expression instanceof PsiThisExpression) {
-        final PsiThisExpression thisExpression = (PsiThisExpression)expression;
+      else if (expression instanceof PsiThisExpression thisExpression) {
         final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
         if (qualifier == null) {
           return true;
@@ -131,20 +126,17 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
           return false;
         }
         final PsiElement target = result.getElement();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass aClass)) {
           return false;
         }
-        final PsiClass aClass = (PsiClass)target;
         return InheritanceUtil.hasEnclosingInstanceInScope(aClass, context, false, false);
       }
-      else if (expression instanceof PsiClassObjectAccessExpression) {
-        final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)expression;
+      else if (expression instanceof PsiClassObjectAccessExpression classObjectAccessExpression) {
         final PsiTypeElement operand = classObjectAccessExpression.getOperand();
         final PsiType type = operand.getType();
-        if (!(type instanceof PsiClassType)) {
+        if (!(type instanceof PsiClassType classType)) {
           return false;
         }
-        final PsiClassType classType = (PsiClassType)type;
         final PsiClass target = classType.resolve();
         return target != null;
       }
@@ -152,7 +144,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
     }
 
     @Override
-    public void visitDocTag(PsiDocTag psiDocTag) {
+    public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
         return;

@@ -1,28 +1,162 @@
-from _typeshed import SupportsItems
-from typing import Iterable, Optional, Text, Tuple, Union
+from typing import Any
 
 from .models import Response
-from .sessions import _Data
+from .sessions import (
+    RequestsCookieJar,
+    _Auth,
+    _Cert,
+    _Data,
+    _Files,
+    _HeadersMapping,
+    _HooksInput,
+    _Params,
+    _TextMapping,
+    _Timeout,
+    _Verify,
+)
 
-_ParamsMappingKeyType = Union[Text, bytes, int, float]
-_ParamsMappingValueType = Union[Text, bytes, int, float, Iterable[Union[Text, bytes, int, float]], None]
-
-def request(method: str, url: str, **kwargs) -> Response: ...
-def get(
-    url: Union[Text, bytes],
-    params: Optional[
-        Union[
-            SupportsItems[_ParamsMappingKeyType, _ParamsMappingValueType],
-            Tuple[_ParamsMappingKeyType, _ParamsMappingValueType],
-            Iterable[Tuple[_ParamsMappingKeyType, _ParamsMappingValueType]],
-            Union[Text, bytes],
-        ]
-    ] = ...,
-    **kwargs,
+def request(
+    method: str | bytes,
+    url: str | bytes,
+    *,
+    params: _Params | None = ...,
+    data: _Data | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
 ) -> Response: ...
-def options(url: Union[Text, bytes], **kwargs) -> Response: ...
-def head(url: Union[Text, bytes], **kwargs) -> Response: ...
-def post(url: Union[Text, bytes], data: _Data = ..., json=..., **kwargs) -> Response: ...
-def put(url: Union[Text, bytes], data: _Data = ..., json=..., **kwargs) -> Response: ...
-def patch(url: Union[Text, bytes], data: _Data = ..., json=..., **kwargs) -> Response: ...
-def delete(url: Union[Text, bytes], **kwargs) -> Response: ...
+def get(
+    url: str | bytes,
+    params: _Params | None = ...,
+    *,
+    data: _Data | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...
+def options(
+    url: str | bytes,
+    *,
+    params: _Params | None = ...,
+    data: _Data | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...
+def head(
+    url: str | bytes,
+    *,
+    params: _Params | None = ...,
+    data: _Data | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...
+def post(
+    url: str | bytes,
+    data: _Data | None = ...,
+    json: Any | None = ...,
+    *,
+    params: _Params | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+) -> Response: ...
+def put(
+    url: str | bytes,
+    data: _Data | None = ...,
+    *,
+    params: _Params | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...
+def patch(
+    url: str | bytes,
+    data: _Data | None = ...,
+    *,
+    params: _Params | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...
+def delete(
+    url: str | bytes,
+    *,
+    params: _Params | None = ...,
+    data: _Data | None = ...,
+    headers: _HeadersMapping | None = ...,
+    cookies: RequestsCookieJar | _TextMapping | None = ...,
+    files: _Files | None = ...,
+    auth: _Auth | None = ...,
+    timeout: _Timeout | None = ...,
+    allow_redirects: bool = ...,
+    proxies: _TextMapping | None = ...,
+    hooks: _HooksInput | None = ...,
+    stream: bool | None = ...,
+    verify: _Verify | None = ...,
+    cert: _Cert | None = ...,
+    json: Any | None = ...,
+) -> Response: ...

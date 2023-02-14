@@ -4,9 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- */
 public final class HorizontalScrollBarEditorCustomization extends SimpleEditorCustomization {
 
   public static final HorizontalScrollBarEditorCustomization ENABLED = new HorizontalScrollBarEditorCustomization(true);

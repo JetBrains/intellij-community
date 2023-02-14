@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 
 import static org.jetbrains.plugins.groovy.util.TestUtils.disableAstLoading
 
-/**
- * @author peter
- */
 class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testEnumConstant() {

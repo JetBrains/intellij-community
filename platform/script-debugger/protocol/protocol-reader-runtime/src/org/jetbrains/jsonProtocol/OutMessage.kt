@@ -2,7 +2,6 @@
 package org.jetbrains.jsonProtocol
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.util.containers.isNullOrEmpty
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
@@ -108,10 +107,10 @@ open class OutMessage {
     writer.name(name)
     writer.beginArray()
     var isNotFirst = false
-    for (item in value!!) {
+    for (item in value) {
       try {
         if (isNotFirst) {
-          buffer.writeByte(','.toInt()).writeByte(' '.toInt())
+          buffer.writeByte(','.code).writeByte(' '.code)
         }
         else {
           isNotFirst = true

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,8 +38,8 @@ public abstract class RunAnythingAnActionProvider<V extends AnAction> extends Ru
 
   private static void performRunAnythingAction(@NotNull AnAction action, @NotNull DataContext dataContext) {
     ApplicationManager.getApplication().invokeLater(
-      () -> IdeFocusManager.getInstance(RunAnythingUtil.fetchProject(dataContext))
-                           .doWhenFocusSettlesDown(() -> performAction(action, dataContext)));
+      () -> IdeFocusManager.getInstance(RunAnythingUtil.fetchProject(dataContext)).doWhenFocusSettlesDown(
+        () -> performAction(action, dataContext), ModalityState.current()));
   }
 
   private static void performAction(@NotNull AnAction action, @NotNull DataContext dataContext) {

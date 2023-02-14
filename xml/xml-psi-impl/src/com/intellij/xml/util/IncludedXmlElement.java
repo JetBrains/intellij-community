@@ -29,9 +29,6 @@ import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class IncludedXmlElement<T extends XmlElement> extends LightElement implements XmlElement {
   private final PsiAnchor myOriginal;
   private SoftReference<T> myRef;

@@ -1,0 +1,9 @@
+PyFile:PatternMatchingVariableTypeDeclarationLooksLikeIncompleteMatchStatement.py
+  PyTypeDeclarationStatement
+    PyTargetExpression: match
+      PsiElement(Py:IDENTIFIER)('match')
+    PyAnnotation
+      PsiElement(Py:COLON)(':')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: case
+        PsiElement(Py:IDENTIFIER)('case')

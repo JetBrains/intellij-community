@@ -21,10 +21,6 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- * @author Keith Lea
- */
 public class PythonParserDefinition implements ParserDefinition {
 
   @Override
@@ -66,12 +62,11 @@ public class PythonParserDefinition implements ParserDefinition {
   @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
-    if (type instanceof PyElementType) {
-      PyElementType pyElType = (PyElementType)type;
+    if (type instanceof PyElementType pyElType) {
       return pyElType.createElement(node);
     }
     else if (type instanceof PyStubElementType) {
-      return ((PyStubElementType)type).createElement(node);
+      return ((PyStubElementType<?, ?>)type).createElement(node);
     }
     return new ASTWrapperPsiElement(node);
   }

@@ -43,9 +43,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class ComponentItemDialog extends DialogWrapper {
   private JPanel myPanel;
   private final ComponentWithBrowseButton<EditorTextField> myTfClassName;
@@ -77,7 +74,6 @@ public final class ComponentItemDialog extends DialogWrapper {
 
   /**
    * @param itemToBeEdited item to be edited. If user closes dialog by "OK" button then
-   * @param oneOff
    */
   public ComponentItemDialog(final Project project, final Component parent, @NotNull ComponentItem itemToBeEdited, final boolean oneOff) {
     super(parent, false);

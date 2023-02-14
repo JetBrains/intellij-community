@@ -27,18 +27,16 @@ import com.jetbrains.python.inspections.quickfix.StatementEffectFunctionCallQuic
 import com.jetbrains.python.inspections.quickfix.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyStatementEffectInspection extends PyInspection {
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   @Override
@@ -48,8 +46,8 @@ public class PyStatementEffectInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -96,8 +94,7 @@ public class PyStatementEffectInspection extends PyInspection {
           return true;
         }
       }
-      else if (expression instanceof PyBinaryExpression) {
-        final PyBinaryExpression binary = (PyBinaryExpression)expression;
+      else if (expression instanceof PyBinaryExpression binary) {
 
         final PyElementType operator = binary.getOperator();
         if (PyTokenTypes.COMPARISON_OPERATIONS.contains(operator)) return false;
@@ -126,16 +123,13 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyConditionalExpression) {
-        PyConditionalExpression conditionalExpression = (PyConditionalExpression)expression;
+      else if (expression instanceof PyConditionalExpression conditionalExpression) {
         return hasEffect(conditionalExpression.getTruePart()) || hasEffect(conditionalExpression.getFalsePart());
       }
-      else if (expression instanceof PyParenthesizedExpression) {
-        PyParenthesizedExpression parenthesizedExpression = (PyParenthesizedExpression)expression;
+      else if (expression instanceof PyParenthesizedExpression parenthesizedExpression) {
         return hasEffect(parenthesizedExpression.getContainedExpression());
       }
-      else if (expression instanceof PyReferenceExpression) {
-        PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
+      else if (expression instanceof PyReferenceExpression referenceExpression) {
         ResolveResult[] results = referenceExpression.getReference(getResolveContext()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
@@ -154,8 +148,7 @@ public class PyStatementEffectInspection extends PyInspection {
           }
         }
       }
-      else if (expression instanceof PyPrefixExpression) {
-        final PyPrefixExpression prefixExpr = (PyPrefixExpression)expression;
+      else if (expression instanceof PyPrefixExpression prefixExpr) {
         return prefixExpr.getOperator() == PyTokenTypes.AWAIT_KEYWORD;
       }
       else if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {

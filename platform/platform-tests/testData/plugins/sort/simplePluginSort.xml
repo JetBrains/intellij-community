@@ -72,6 +72,7 @@
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://missing0.xml">
+    <id>missing0</id>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://missing1.xml">

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -23,7 +24,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project
   if (isIncludeFilePath) {
     val projectHomeUrl = PathUtil.toSystemDependentName(project.basePath)
     result = when {
-      projectHomeUrl != null && result.startsWith(projectHomeUrl) -> "...${result.substring(projectHomeUrl.length)}"
+      projectHomeUrl != null && result.startsWith(projectHomeUrl) -> ELLIPSIS + result.substring(projectHomeUrl.length)
       else -> FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
@@ -88,20 +88,20 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
       super.visitEnumConstant(enumConstant);
       visitCall(enumConstant);
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression call) {
+    public void visitCallExpression(@NotNull PsiCallExpression call) {
       super.visitCallExpression(call);
       visitCall(call);
     }
 
       private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
-      if (PsiType.NULL.equals(type)) {
+      if (PsiTypes.nullType().equals(type)) {
         checkArray = false;
       }
       else if (type instanceof PsiArrayType) {
@@ -125,12 +125,11 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
         return null;
       }
       final PsiType type1 = lastParameter.getType();
-      if (!(type1 instanceof PsiEllipsisType)) {
+      if (!(type1 instanceof PsiEllipsisType ellipsisType)) {
         return null;
       }
 
-      final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
-      final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
+        final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
       final PsiType componentType = arrayType.getComponentType();
       if (checkArray) {
         if (!componentType.equals(TypeUtils.getObjectType(call))) {
@@ -155,11 +154,15 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       final PsiType type = lastArgument.getType();
 
-      PsiArrayType arrayType = getSuspiciousVarargType(call, type, call::resolveMethod);
+      final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+      PsiArrayType arrayType = getSuspiciousVarargType(call, type, () -> (PsiMethod)resolveResult.getElement());
       if (arrayType == null) {
         return;
       }
-      registerError(lastArgument, lastArgument, arrayType.getComponentType(), arrayType);
+      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      final PsiType componentType = substitutor.substitute(arrayType.getComponentType());
+      final PsiType substitutedArrayType = substitutor.substitute(arrayType);
+      registerError(lastArgument, lastArgument, componentType, substitutedArrayType);
     }
   }
 }

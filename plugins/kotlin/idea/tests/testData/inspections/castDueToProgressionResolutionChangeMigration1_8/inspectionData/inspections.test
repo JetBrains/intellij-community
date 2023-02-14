@@ -1,0 +1,3 @@
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.migration.CastDueToProgressionResolutionChangeMigrationInspection
+// LANGUAGE_VERSION: 1.8
+// WITH_STDLIB

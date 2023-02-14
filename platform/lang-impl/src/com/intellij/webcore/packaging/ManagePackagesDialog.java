@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -78,6 +79,12 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
                               @Nullable final PackageManagementService.Listener packageListener) {
+    this(project, packageManagementService, packageListener, new PackagesNotificationPanel());
+  }
+
+  public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
+                              @Nullable final PackageManagementService.Listener packageListener,
+                              @NotNull final PackagesNotificationPanel notificationPanel) {
     super(project, true);
     myProject = project;
     myController = packageManagementService;
@@ -86,7 +93,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     init();
     setTitle(IdeBundle.message("available.packages.dialog.title"));
     myPackages = new JBList();
-    myNotificationArea = new PackagesNotificationPanel();
+    myNotificationArea = notificationPanel;
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
     final AnActionButton reloadButton =
@@ -110,6 +117,10 @@ public class ManagePackagesDialog extends DialogWrapper {
             }, ModalityState.any());
           }
         });
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
     myListSpeedSearch = new ListSpeedSearch(myPackages, o -> {
@@ -197,8 +208,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof RepoPackage) {
-          RepoPackage repoPackage = (RepoPackage)pyPackage;
+        if (pyPackage instanceof RepoPackage repoPackage) {
 
           String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {

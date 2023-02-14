@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -11,7 +12,6 @@ import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
-import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,67 +23,61 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class ServerType<C extends ServerConfiguration> {
-  public static final ExtensionPointName<ServerType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
-  private final String myId;
 
-  protected ServerType(String id) {
+  public static final ExtensionPointName<ServerType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remoteServer.type");
+
+  private final @NotNull @NonNls String myId;
+
+  protected ServerType(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public final String getId() {
+  public final @NotNull @NonNls String getId() {
     return myId;
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public abstract String getPresentableName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName();
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getDeploymentConfigurationTypePresentableName() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getDeploymentConfigurationTypePresentableName() {
     return CloudBundle.message("server.type.deployment.configuration.typ.presentable.name.0.deployment", getPresentableName());
   }
 
   /**
    * This method must be overridden and a proper ID must be returned from it (it'll be used as a key in run configuration file).
    */
-  @NotNull @NonNls
-  public String getDeploymentConfigurationFactoryId() {
-    DeprecatedMethodException.reportDefaultImplementation(getClass(), "getDeploymentConfigurationFactoryId",
-      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized but return value of this method must not be localized.");
+  public @NotNull @NonNls String getDeploymentConfigurationFactoryId() {
+    PluginException.reportDeprecatedDefault(
+      getClass(), "getDeploymentConfigurationFactoryId",
+      "The default implementation delegates to 'getDeploymentConfigurationTypePresentableName' which is supposed to be localized," +
+      " but return value of this method must not be localized.");
     return getDeploymentConfigurationTypePresentableName();
   }
 
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settings.clouds";
   }
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
   /**
    * Returns whether the instance returned from {@link #createDefaultConfiguration()} has <em>reasonably good</em> chances to work correctly.
    * The auto-detected instance is <em>not</em> required to work perfectly, connection to it will be tested, and the instance will
    * be persisted only if the test is successful.
-   * <p/>
-   * The capability to auto-detect configurations will unlock UI elements which normally requires user to manually configure the server.
-   * E.g deployments for auto-detecting server types will be always shown in the 'New' popup in 'Edit Configurations' dialog.
+   * <p>
+   * The capability to auto-detect configurations will unlock UI elements which normally require user to manually configure the server.
+   * E.g. deployments for auto-detecting server types will always be shown in the 'New' popup in 'Edit Configurations' dialog.
    */
   public boolean canAutoDetectConfiguration() {
     return false;
   }
 
-  @NotNull
-  public abstract C createDefaultConfiguration();
+  public abstract @NotNull C createDefaultConfiguration();
 
-  @NotNull
-  public RemoteServerConfigurable createServerConfigurable(@NotNull C configuration) {
+  public @NotNull RemoteServerConfigurable createServerConfigurable(@NotNull C configuration) {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  public abstract DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);
+  public abstract @NotNull DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);
 
   /**
    * Returns list of the singleton deployment sources types available in addition to the project-dependent deployment sources
@@ -101,29 +95,24 @@ public abstract class ServerType<C extends ServerConfiguration> {
     return true;
   }
 
-  @NotNull
-  public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
+  public abstract @NotNull ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);
 
-  @NotNull
-  public ServerConnector<?> createConnector(@NotNull RemoteServer<C> server, @NotNull ServerTaskExecutor asyncTasksExecutor) {
+  public @NotNull ServerConnector<?> createConnector(@NotNull RemoteServer<C> server, @NotNull ServerTaskExecutor asyncTasksExecutor) {
     return createConnector(server.getConfiguration(), asyncTasksExecutor);
   }
 
   /**
    * @return a non-null instance of {@link DebugConnector} if the server supports deployment in debug mode
    */
-  @Nullable
-  public DebugConnector<?, ?> createDebugConnector() {
+  public @Nullable DebugConnector<?, ?> createDebugConnector() {
     return null;
   }
 
-  @NotNull
-  public Comparator<Deployment> getDeploymentComparator() {
+  public @NotNull Comparator<Deployment> getDeploymentComparator() {
     return Comparator.comparing(Deployment::getName);
   }
 
-  @Nullable
-  public String getCustomToolWindowId() {
+  public @Nullable String getCustomToolWindowId() {
     return null;
   }
 }

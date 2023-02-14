@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,15 +22,5 @@ public final class RunnerRegistry {
   @Deprecated
   public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
     return settings == null ? null : ProgramRunner.getRunner(executorId, settings);
-  }
-
-  /**
-   * @deprecated Use {@link ProgramRunner#findRunnerById(String)}
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ProgramRunner findRunnerById(@NotNull String id) {
-    return ProgramRunner.findRunnerById(id);
   }
 }

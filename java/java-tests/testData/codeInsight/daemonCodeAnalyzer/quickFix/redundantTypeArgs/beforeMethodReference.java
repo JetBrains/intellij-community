@@ -1,4 +1,4 @@
-// "Remove type arguments" "true"
+// "Remove type arguments" "true-preview"
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

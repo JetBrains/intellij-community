@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.BundleBase;
@@ -19,8 +19,6 @@ import java.util.ResourceBundle;
  * Provides type name for instances of given class.
  * <p/>
  * Register via {@code com.intellij.typeName} extension point.
- *
- * @author yole
  */
 public final class TypeNameEP implements PluginAware {
   public static final ExtensionPointName<TypeNameEP> EP_NAME = new ExtensionPointName<>("com.intellij.typeName");
@@ -60,7 +58,7 @@ public final class TypeNameEP implements PluginAware {
           bundleName = pluginDescriptor.getResourceBundleBaseName();
         }
         if (bundleName != null) {
-          ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, pluginDescriptor.getPluginClassLoader());
+          ResourceBundle bundle = DynamicBundle.getResourceBundle(pluginDescriptor.getClassLoader(), bundleName);
           return BundleBase.message(bundle, resourceKey);
         }
       }

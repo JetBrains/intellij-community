@@ -1,16 +1,47 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Chunk;
-import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public final class GraphAlgorithmsImpl extends GraphAlgorithms {
+
+  @Override
+  public @NotNull <Node> Collection<Node> findNodesWhichBelongToAnyPathBetweenTwoNodes(
+    @NotNull Graph<Node> graph,
+    @NotNull Node start,
+    @NotNull Node finish
+  ) {
+    final Set<Node> reachableFromStart = new HashSet<>();
+    final Set<Node> leadToFinish = new HashSet<>();
+
+    Dfs.performDfs(graph, start, reachableFromStart::add);
+    Dfs.performDfs(invertEdgeDirections(graph), finish, leadToFinish::add);
+
+    return ContainerUtil.intersection(reachableFromStart, leadToFinish);
+  }
+
+  @Override
+  public @NotNull <Node> Collection<Node> findNodeNeighbourhood(
+    @NotNull Graph<Node> graph,
+    @NotNull Node node,
+    int levelBound
+  ) {
+    final Set<Node> neighbourhood = new HashSet<>();
+    Bfs.performBfs(graph, node, (neighbour, level) -> {
+      if (level <= levelBound) {
+        neighbourhood.add(neighbour);
+      }
+    });
+    return neighbourhood;
+  }
 
   @Nullable
   @Override
@@ -29,6 +60,11 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node) {
     return new CycleFinder<>(graph).getNodeCycles(node);
+  }
+
+  @Override
+  public <Node> void iterateOverAllSimpleCycles(@NotNull Graph<Node> graph, @NotNull Consumer<? super List<Node>> cycleConsumer) {
+    new SimpleCyclesIterator<>(graph).iterateSimpleCycles(cycleConsumer);
   }
 
   @NotNull
@@ -52,7 +88,6 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
       public Iterator<Node> getOut(final Node n) {
         return graph.getIn(n);
       }
-
     };
   }
 
@@ -105,15 +140,16 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     if (!set.add(start)) {
       return;
     }
-    final Stack<Node> stack = new Stack<>();
-    stack.push(start);
-    while (!stack.empty()) {
-      final Node currentNode = stack.pop();
-      final Iterator<Node> successorIterator = graph.getOut(currentNode);
+
+    List<Node> stack = new ArrayList<>();
+    stack.add(start);
+    while (!stack.isEmpty()) {
+      Node currentNode = stack.remove(stack.size() - 1);
+      Iterator<Node> successorIterator = graph.getOut(currentNode);
       while (successorIterator.hasNext()) {
         Node successor = successorIterator.next();
         if (set.add(successor)) {
-          stack.push(successor);
+          stack.add(successor);
         }
       }
     }

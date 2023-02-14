@@ -48,6 +48,10 @@ import java.util.Collection;
 import java.util.Set;
 
 public class DeepCompareAction extends ToggleAction implements DumbAware {
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

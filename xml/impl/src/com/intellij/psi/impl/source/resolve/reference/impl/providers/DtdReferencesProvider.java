@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -237,6 +238,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     if (containingFile.getLanguage() == HTMLLanguage.INSTANCE ||
         containingFile.getLanguage() == XHTMLLanguage.INSTANCE ||
+        containingFile instanceof HtmlCompatibleFile ||
         containingFile.getViewProvider() instanceof TemplateLanguageFileViewProvider
       ) {
       return false;

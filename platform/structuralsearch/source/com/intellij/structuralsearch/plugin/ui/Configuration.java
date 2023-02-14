@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -41,7 +42,7 @@ public abstract class Configuration implements JDOMExternalizable {
   private String category;
   private boolean predefined;
   private long created;
-  private UUID uuid;
+  private String uuid;
   private String description;
   private String suppressId;
   private String problemDescriptor;
@@ -53,8 +54,6 @@ public abstract class Configuration implements JDOMExternalizable {
    *  - For user-defined configurations, the refName is null and getRefName returns the template name
    */
   private @NonNls String refName;
-
-  private transient String myCurrentVariableName;
 
   public Configuration() {
     name = "";
@@ -78,7 +77,7 @@ public abstract class Configuration implements JDOMExternalizable {
     suppressId = configuration.suppressId;
     problemDescriptor = configuration.problemDescriptor;
     order = configuration.order;
-    refName = configuration.refName;
+    refName = null; // copy never has a refName
   }
 
   @NotNull
@@ -91,7 +90,7 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public void setName(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String value) {
     if (uuid == null) {
-      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+      getUuid();
     }
     name = value;
   }
@@ -99,8 +98,9 @@ public abstract class Configuration implements JDOMExternalizable {
   @NotNull @Nls
   public String getTypeText() {
     final LanguageFileType type = getFileType();
-    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", type.getLanguage().getDisplayName())
-                          : SSRBundle.message("predefined.configuration.type.text.user.defined", type.getLanguage().getDisplayName());
+    final String name = type == null ? CoreBundle.message("filetype.unknown.display.name") : type.getLanguage().getDisplayName();
+    return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", name)
+                          : SSRBundle.message("predefined.configuration.type.text.user.defined", name);
   }
 
   @NotNull
@@ -124,11 +124,14 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   @NotNull
-  public UUID getUuid() {
-    return uuid == null ? (uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8))) : uuid;
+  public String getUuid() {
+    if (uuid == null) {
+      uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString();
+    }
+    return uuid;
   }
 
-  public void setUuid(@Nullable UUID uuid) {
+  public void setUuid(@Nullable String uuid) {
     this.uuid = uuid;
   }
 
@@ -149,7 +152,7 @@ public abstract class Configuration implements JDOMExternalizable {
   }
 
   public @NlsSafe @Nullable String getProblemDescriptor() {
-    return this.problemDescriptor;
+    return problemDescriptor;
   }
 
   public void setProblemDescriptor(String problemDescriptor) {
@@ -179,7 +182,7 @@ public abstract class Configuration implements JDOMExternalizable {
     final Attribute uuidAttribute = element.getAttribute(UUID_ATTRIBUTE_NAME);
     if (uuidAttribute != null) {
       try {
-        uuid = UUID.fromString(uuidAttribute.getValue());
+        uuid = uuidAttribute.getValue();
       }
       catch (IllegalArgumentException ignore) {}
     }
@@ -210,8 +213,8 @@ public abstract class Configuration implements JDOMExternalizable {
     if (created > 0) {
       element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
     }
-    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)))) {
-      element.setAttribute(UUID_ATTRIBUTE_NAME, uuid.toString());
+    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString())) {
+      element.setAttribute(UUID_ATTRIBUTE_NAME, uuid);
     }
     if (!StringUtil.isEmpty(description)) {
       element.setAttribute(DESCRIPTION_ATTRIBUTE_NAME, description);
@@ -245,17 +248,8 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public abstract void removeUnusedVariables();
 
-  public String getCurrentVariableName() {
-    return myCurrentVariableName;
-  }
-
-  public void setCurrentVariableName(String variableName) {
-    myCurrentVariableName = variableName;
-  }
-
   public boolean equals(Object configuration) {
-    if (!(configuration instanceof Configuration)) return false;
-    final Configuration other = (Configuration)configuration;
+    if (!(configuration instanceof Configuration other)) return false;
     return Objects.equals(category, other.category) && name.equals(other.name);
   }
 
@@ -267,20 +261,21 @@ public abstract class Configuration implements JDOMExternalizable {
   @NotNull
   public Icon getIcon() {
     final LanguageFileType type = getFileType();
-    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Any_type : type.getIcon();
+    return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Unknown : type.getIcon();
   }
 
+  @Nullable
   public LanguageFileType getFileType() {
     return getMatchOptions().getFileType();
   }
 
   @NotNull @NonNls
   public String getRefName() {
-    return refName == null ? name : refName;
+    return refName == null || !predefined ? name : refName;
   }
 
   public void setRefName(String refName) {
-    if (isPredefined())
+    if (predefined)
       this.refName = refName;
   }
 }

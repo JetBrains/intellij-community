@@ -1,7 +1,31 @@
 <html>
 <body>
-  Assume you have two traits which contains methods with the same signatures e.g. 'foo()' and you create a class 'MyImplementor' implementing both these traits. So the result of invoking
-  'new MyImplementor().foo()' can be unexpected.
-  Reports classes which have such a problem.
+Reports classes which implement two or more traits that contain methods with same signatures.
+<p>The result of calling such methods might be unexpected.</p>
+<p>The quick-fix adds an explicit overriding method.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  trait T1 {
+      def foo() {}
+  }
+
+  trait T2 {
+      def foo() {}
+  }
+
+  class X implements T1, T2 {}
+
+  // T2.foo() will be called
+  new X().foo()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class X implements T1, T2 {
+      @Override
+      Object foo() {
+          return T2.super.foo()
+      }
+  }
+</code></pre>
 </body>
 </html>

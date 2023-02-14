@@ -19,9 +19,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
-/**
- * @author peter
- */
 @CompileStatic
 class HippieCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 

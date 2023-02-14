@@ -19,16 +19,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author peter
-*/
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final MinusculeMatcher myCaseInsensitiveMatcher;
   private final boolean myCaseSensitive;
   private static boolean ourForceStartMatching;
   private final boolean myTypoTolerant;
-
 
   public CamelHumpMatcher(@NotNull final String prefix) {
     this(prefix, true);
@@ -45,6 +41,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
     myTypoTolerant = typoTolerant;
     myMatcher = createMatcher(myCaseSensitive);
     myCaseInsensitiveMatcher = createMatcher(false);
+  }
+
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
   }
 
   @Override

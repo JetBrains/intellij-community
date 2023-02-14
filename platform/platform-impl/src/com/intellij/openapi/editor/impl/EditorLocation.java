@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -14,7 +14,8 @@ class EditorLocation {
   private VisualPosition myVisualPosition;
   private LogicalPosition myLogicalPosition;
   private int myOffset = -1;
-  private int myVisualLineBaseY = -1;
+  private int[] myVisualLineYRange;
+  private FoldRegion myCollapsedRegion = NO_REGION;
 
   EditorLocation(@NotNull Editor editor, @NotNull Point point) {
     myEditor = editor;
@@ -32,11 +33,18 @@ class EditorLocation {
     return myVisualPosition;
   }
 
-  int getVisualLineBaseY() {
-    if (myVisualLineBaseY < 0) {
-      myVisualLineBaseY = myEditor.visualLineToY(getVisualPosition().line);
+  int getVisualLineStartY() {
+    if (myVisualLineYRange == null) {
+      myVisualLineYRange = myEditor.visualLineToYRange(getVisualPosition().line);
     }
-    return myVisualLineBaseY;
+    return myVisualLineYRange[0];
+  }
+
+  int getVisualLineEndY() {
+    if (myVisualLineYRange == null) {
+      myVisualLineYRange = myEditor.visualLineToYRange(getVisualPosition().line);
+    }
+    return myVisualLineYRange[1];
   }
 
   @NotNull LogicalPosition getLogicalPosition() {
@@ -52,4 +60,88 @@ class EditorLocation {
     }
     return myOffset;
   }
+
+  FoldRegion getCollapsedRegion() {
+    if (myCollapsedRegion == NO_REGION) {
+      myCollapsedRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(getOffset());
+    }
+    return myCollapsedRegion;
+  }
+
+  private static final FoldRegion NO_REGION = new FoldRegion() {
+    @Override
+    public boolean isExpanded() {
+      return false;
+    }
+
+    @Override
+    public void setExpanded(boolean expanded) {}
+
+    @Override
+    public @NotNull String getPlaceholderText() {
+      return "";
+    }
+
+    @Override
+    public Editor getEditor() {
+      return null;
+    }
+
+    @Override
+    public @Nullable FoldingGroup getGroup() {
+      return null;
+    }
+
+    @Override
+    public boolean shouldNeverExpand() {
+      return false;
+    }
+
+    @Override
+    public @NotNull Document getDocument() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getStartOffset() {
+      return 0;
+    }
+
+    @Override
+    public int getEndOffset() {
+      return 0;
+    }
+
+    @Override
+    public boolean isValid() {
+      return false;
+    }
+
+    @Override
+    public void setGreedyToLeft(boolean greedy) {}
+
+    @Override
+    public void setGreedyToRight(boolean greedy) {}
+
+    @Override
+    public boolean isGreedyToRight() {
+      return false;
+    }
+
+    @Override
+    public boolean isGreedyToLeft() {
+      return false;
+    }
+
+    @Override
+    public void dispose() {}
+
+    @Override
+    public <T> @Nullable T getUserData(@NotNull Key<T> key) {
+      return null;
+    }
+
+    @Override
+    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {}
+  };
 }

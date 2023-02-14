@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.*
@@ -12,6 +12,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A method visitor to be used in [UastVisitor].
  */
 interface UMethod : UDeclaration, PsiMethod {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiMethod
 
@@ -74,7 +76,6 @@ interface UMethod : UDeclaration, PsiMethod {
 
   override fun asLogString(): String = log("name = $name")
 
-  @JvmDefault
   val returnTypeReference: UTypeReferenceExpression?
     get() {
       val sourcePsi = sourcePsi ?: return null
@@ -90,6 +91,8 @@ interface UMethod : UDeclaration, PsiMethod {
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnnotationMethod
 
@@ -111,7 +114,3 @@ interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
 
   override fun asLogString(): String = log("name = $name")
 }
-
-@Deprecated("no more needed, use UMethod", ReplaceWith("UMethod"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-interface UMethodTypeSpecific : UMethod

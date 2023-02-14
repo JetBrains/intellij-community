@@ -1,28 +1,29 @@
 <html>
 <body>
 Reports method calls whose result is ignored.
-The following method calls are inspected:
-<ul>
-  <li>Calls to simple getters (which do nothing except return a field)</li>
-  <li>Calls to methods specified in the settings of this inspection</li>
-  <li>Calls to methods annotated with <code>org.jetbrains.annotations.Contract(pure=true)</code></li>
-  <li>Calls to methods annotated with .*.<code>CheckReturnValue</code></li>
-  <li>Calls to methods located in a class annotated with <code>javax.annotation.CheckReturnValue</code></li>
-  <li>Calls to methods located in a package annotated with <code>javax.annotation.CheckReturnValue</code></li>
-  <li>Optionally, all calls to non-library methods</li>
-</ul>
 <p>For many methods, ignoring the result is perfectly
-legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
-the result is likely an error include <code>java.io.inputStream.read()</code>,
-which returns the number of bytes actually read, and any method on
-<code>java.lang.String</code> or <code>java.math.BigInteger</code>. These methods do not produce side-effects and thus pointless if ignored.
+  legitimate, but for some it is almost certainly an error. Examples of methods where ignoring
+  the result is likely an error include <code>java.io.inputStream.read()</code>,
+  which returns the number of bytes actually read, and any method on
+  <code>java.lang.String</code> or <code>java.math.BigInteger</code>. These methods do not produce side-effects and thus pointless
+  if their result is ignored.
+</p>
+<p>The calls to the following methods are inspected:</p>
+<ul>
+  <li>Simple getters (which do nothing except return a field)</li>
+  <li>Methods specified in the settings of this inspection</li>
+  <li>Methods annotated with <code>org.jetbrains.annotations.Contract(pure=true)</code></li>
+  <li>Methods annotated with .*.<code>CheckReturnValue</code></li>
+  <li>Methods in a class or package annotated with <code>javax.annotation.CheckReturnValue</code></li>
+  <li>Optionally, all non-library methods</li>
+</ul>
+<p>Calls to methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation are not reported.
+
 <!-- tooltip end -->
 <p>
-Use the panel below to specify the names of the classes containing the methods and method name patterns of the methods you wish to check.
-Class names are specified using their fully-qualified names and apply to both the class and all its inheritors.
-Method name patterns use the Java regular expression syntax.
-<p>
-Use the checkbox below to report all calls to non-library methods whose result is ignored
+  Use the inspection settings to specify the classes to check.
+  Methods are matched by name or name pattern using Java regular expression syntax.
+  For classes, use fully-qualified names. Each entry applies to both the class and all its inheritors.
 <p>
 
 </body>

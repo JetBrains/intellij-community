@@ -4,6 +4,7 @@ package com.intellij.vcs.log.history
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind.*
@@ -14,11 +15,10 @@ import com.intellij.vcs.log.graph.asTestGraphString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
-import gnu.trove.TIntObjectHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
-import org.junit.Ignore
 import org.junit.Test
 
 class FileHistoryTest {
@@ -27,7 +27,7 @@ class FileHistoryTest {
     val baseController = BaseController(permanentGraphInfo)
     val filteredController = object : FilteredController(baseController, permanentGraphInfo, fileNamesData.getCommits()) {}
 
-    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, EMPTY_HISTORY)
+    val historyBuilder = FileHistoryBuilder(startCommit, startPath, fileNamesData, FileHistory.EMPTY)
     historyBuilder.accept(filteredController, permanentGraphInfo)
 
     val expectedResultGraph = graph(result)
@@ -473,8 +473,8 @@ class FileHistoryTest {
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
-  private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
-    Object2ObjectOpenCustomHashMap(FILE_PATH_HASHING_STRATEGY)
+  private val commitsMap: MutableMap<FilePath, Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>>> =
+    CollectionFactory.createCustomHashingStrategyMap(FILE_PATH_HASHING_STRATEGY)
   private val renamesMap: MultiMap<EdgeData<Int>, EdgeData<FilePath>> = MultiMap()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
@@ -483,7 +483,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
   }
 
   fun addChange(path: FilePath, commit: Int, changes: List<VcsLogPathsIndex.ChangeKind>, parents: List<Int>): FileNamesDataBuilder {
-    commitsMap.getOrPut(path) { TIntObjectHashMap() }.put(commit, parents.zip(changes).toIntObjectMap())
+    commitsMap.getOrPut(path) { Int2ObjectOpenHashMap() }.put(commit, parents.zip(changes).toIntObjectMap())
     return this
   }
 
@@ -495,8 +495,8 @@ private class FileNamesDataBuilder(private val path: FilePath) {
         }
       }
 
-      override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {
-        return commitsMap[path] ?: TIntObjectHashMap()
+      override fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<VcsLogPathsIndex.ChangeKind>> {
+        return commitsMap[path] ?: Int2ObjectOpenHashMap()
       }
     }.build()
   }
@@ -508,8 +508,8 @@ private fun FileNamesDataBuilder.addDetectedRename(parent: Int, child: Int, befo
     .addRename(parent, child, beforePath, afterPath)
 }
 
-private fun <T> List<Pair<Int, T>>.toIntObjectMap(): TIntObjectHashMap<T> {
-  val result = TIntObjectHashMap<T>()
+private fun <T> List<Pair<Int, T>>.toIntObjectMap(): Int2ObjectMap<T> {
+  val result = Int2ObjectOpenHashMap<T>()
   this.forEach { result.put(it.first, it.second) }
   return result
 }

@@ -1,0 +1,59 @@
+package pkg;
+
+public class TestIntVarMerge {
+   public int test1() {
+      int var1 = 7;// 5
+      var1 = 23 * var1;// 6
+      var1 *= 23;// 7
+      return var1;// 8
+   }
+
+   public void test2() {
+      int var1 = 3;// 12
+      System.out.println(var1);// 13
+      ++var1;// 14
+      System.out.println(var1);// 15
+      ++var1;// 16
+      System.out.println(var1);// 17
+   }// 18
+}
+
+class 'pkg/TestIntVarMerge' {
+   method 'test1 ()I' {
+      0      4
+      2      4
+      3      5
+      6      5
+      7      5
+      9      6
+      c      6
+      e      7
+   }
+
+   method 'test2 ()V' {
+      0      11
+      1      11
+      2      12
+      6      12
+      9      13
+      c      14
+      10      14
+      13      15
+      16      16
+      1a      16
+      1d      17
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+7 <-> 7
+8 <-> 8
+12 <-> 12
+13 <-> 13
+14 <-> 14
+15 <-> 15
+16 <-> 16
+17 <-> 17
+18 <-> 18

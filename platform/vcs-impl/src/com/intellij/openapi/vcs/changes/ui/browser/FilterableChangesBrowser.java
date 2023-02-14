@@ -2,15 +2,12 @@
 package com.intellij.openapi.vcs.changes.ui.browser;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
@@ -35,10 +32,10 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
   }
 
   private void updateTreeOnFilterChange() {
-    boolean oldKeepTreeState = myViewer.isKeepTreeState();
-    myViewer.setKeepTreeState(true);
+    ChangesTree.TreeStateStrategy<?> oldTreeStateStrategy = myViewer.getTreeStateStrategy();
+    myViewer.setTreeStateStrategy(ChangesTree.ALWAYS_KEEP);
     myViewer.rebuildTree();
-    myViewer.setKeepTreeState(oldKeepTreeState);
+    myViewer.setTreeStateStrategy(oldTreeStateStrategy);
     myViewer.expandDefaults();
 
     float progress = myChangesFilterer.getProgress();
@@ -93,7 +90,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
   protected @NotNull JComponent createCenterPanel() {
     JComponent centerPanel = super.createCenterPanel();
     myLoadingDecorator = new ProgressBarLoadingDecorator(JBUI.Panels.simplePanel(centerPanel), this,
-                                                         ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+                                                         ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     return myLoadingDecorator.getComponent();
   }
 

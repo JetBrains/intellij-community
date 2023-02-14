@@ -1,5 +1,6 @@
 import com.intellij.codeInspection.LocalInspectionTool;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection") // not relevant for this scenario
 class ALocalInspectionTool extends LocalInspectionTool {
   public String getShortName() {
     final Class aClass = getClass();

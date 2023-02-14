@@ -1,0 +1,6 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test.kt",
+  "newName": "Bar",
+  "enabledInK2": true
+}

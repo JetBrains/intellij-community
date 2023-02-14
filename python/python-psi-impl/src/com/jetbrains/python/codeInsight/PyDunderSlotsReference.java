@@ -29,9 +29,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyDunderSlotsReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
   public PyDunderSlotsReference(@NotNull PyStringLiteralExpression element) {
     super(element, element.getStringValueTextRanges().get(0));

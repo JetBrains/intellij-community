@@ -58,13 +58,10 @@ class GrChageSignatureUsageSearcher {
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiMethod method = myChangeInfo.getMethod();
-    if (method != null) {
-      findSimpleUsages(method, result);
+    findSimpleUsages(method, result);
 
-      final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
-      return UsageViewUtil.removeDuplicatedUsages(usageInfos);
-    }
-    return UsageInfo.EMPTY_ARRAY;
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
+    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
 
@@ -215,9 +212,8 @@ class GrChageSignatureUsageSearcher {
             new DefaultConstructorImplicitUsageInfo((GrMethod)element, ((GrMethod)element).getContainingClass(), method);
           result.add(implicitUsageInfo);
         }
-        else if (element instanceof PsiClass) {
+        else if (element instanceof PsiClass psiClass) {
           LOG.assertTrue(method.isConstructor());
-          final PsiClass psiClass = (PsiClass)element;
           if (psiClass instanceof GrAnonymousClassDefinition) {
             result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
             continue;

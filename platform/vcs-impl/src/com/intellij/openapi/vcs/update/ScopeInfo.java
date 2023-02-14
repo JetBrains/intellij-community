@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -55,7 +56,7 @@ public interface ScopeInfo {
     @Override
     public String getScopeName(VcsContext dataContext, final ActionInfo actionInfo) {
       FilePath[] roots = getRoots(dataContext, actionInfo);
-      if (roots == null || roots.length == 0) {
+      if (roots.length == 0) {
         return VcsBundle.message("update.files.scope.name");
       }
       boolean directory = roots[0].isDirectory();
@@ -84,7 +85,7 @@ public interface ScopeInfo {
     }
 
     @Override
-    public FilePath[] getRoots(VcsContext context, final ActionInfo actionInfo) {
+    public FilePath @NotNull [] getRoots(VcsContext context, final ActionInfo actionInfo) {
       return context.getSelectedFilePaths();
     }
 

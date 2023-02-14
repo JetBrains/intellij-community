@@ -8,7 +8,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-open class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
+class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
                                     private val visitor: AbstractUastNonRecursiveVisitor,
                                     private val directOnly: Boolean,
                                     private val uElementTypesHint: Array<Class<out UElement>>
@@ -22,17 +22,24 @@ open class UastHintedVisitorAdapter(private val plugin: UastLanguagePlugin,
   }
 
   companion object {
-
     @JvmStatic
     @JvmOverloads
     fun create(language: Language,
                visitor: AbstractUastNonRecursiveVisitor,
                uElementTypesHint: Array<Class<out UElement>>,
                directOnly: Boolean = true): PsiElementVisitor {
-      val uastLanguagePlugin = UastLanguagePlugin.byLanguage(language) ?: return EMPTY_VISITOR
-      return UastHintedVisitorAdapter(uastLanguagePlugin, visitor, directOnly, uElementTypesHint)
+      val plugin = UastLanguagePlugin.byLanguage(language) ?: return EMPTY_VISITOR
+      if (uElementTypesHint.size == 1) {
+        return object: PsiElementVisitor() {
+          override fun visitElement(element: PsiElement) {
+            val uElement = plugin.convertElementWithParent(element, uElementTypesHint[0]) ?: return
+            if (!directOnly || uElement.sourcePsi === element) {
+              uElement.accept(visitor)
+            }
+          }
+        }
+      }
+      return UastHintedVisitorAdapter(plugin, visitor, directOnly, uElementTypesHint)
     }
-
   }
-
 }

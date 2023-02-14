@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean ignoreClarification;
 
@@ -45,10 +47,10 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     );
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unnecessary.super.qualifier.option"), this, "ignoreClarification");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreClarification", JavaAnalysisBundle.message("inspection.unnecessary.super.qualifier.option")));
   }
 
   @Override
@@ -66,7 +68,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }
@@ -85,20 +87,18 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null) {
         return;
       }
       final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       final PsiElement grandParent = referenceExpression.getParent();
-      if (grandParent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
         if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
           return;
         }
@@ -129,7 +129,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
             final PsiElement classParent = containingClass.getParent();
             final String referenceText = referenceExpression.getReferenceName();
             if (referenceText != null) {
-              PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(expression.getProject())
+              PsiVariable variable = PsiResolveHelper.getInstance(expression.getProject())
                 .resolveAccessibleReferencedVariable(referenceText, classParent);
               if (variable != null && variable != referenceExpression.resolve()) {
                 return;
@@ -138,7 +138,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
           }
         }
       }
-      registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(expression);
     }
 
     private static boolean hasUnnecessarySuperQualifier(PsiReferenceExpression referenceExpression) {
@@ -147,10 +147,9 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
         return false;
       }
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField superField)) {
         return false;
       }
-      final PsiField superField = (PsiField)target;
       final PsiReferenceExpression copy = (PsiReferenceExpression)referenceExpression.copy();
       final PsiElement qualifier = copy.getQualifier();
       if (qualifier == null) {

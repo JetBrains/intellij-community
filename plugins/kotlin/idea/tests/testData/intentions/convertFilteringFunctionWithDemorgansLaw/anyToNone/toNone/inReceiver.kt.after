@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test2(list: List<Int>) {
+    (!list.none { it == 1 }).let { println(it) }
+}

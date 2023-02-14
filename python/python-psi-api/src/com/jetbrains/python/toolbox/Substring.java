@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
  * Regular java.lang.String objects share a single char buffer for results of substring(), trim(), etc., but the offset and count
  * fields of Strings are unfortunately private.
  *
- * @author vlan
  */
 public class Substring implements CharSequence {
   private static final Pattern RE_NL = Pattern.compile("(\\r?\\n)");

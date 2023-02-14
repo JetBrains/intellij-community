@@ -4,10 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -122,6 +119,11 @@ final class ServiceViewSourceScrollHelper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
@@ -131,7 +133,7 @@ final class ServiceViewSourceScrollHelper {
       select(Arrays.asList(editors).iterator());
     }
 
-    private void select(Iterator<FileEditor> editors) {
+    private void select(Iterator<? extends FileEditor> editors) {
       if (!editors.hasNext()) return;
 
       FileEditor editor = editors.next();

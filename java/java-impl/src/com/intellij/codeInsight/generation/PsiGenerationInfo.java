@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase implements GenerationInfo {
   private SmartPsiElementPointer<T> myMember;
   private final boolean myMergeIfExists;
@@ -74,15 +71,13 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
       if (modifierList != null && existingModifierList != null) {
         final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
         PsiElement annoAnchor = existingModifierList.getAnnotations().length > 0 ? existingModifierList.getAnnotations()[0] : existingModifierList.getFirstChild();
-        if (psiAnnotations.length > 0) {
-          for (PsiAnnotation annotation : psiAnnotations) {
-            final PsiAnnotation existingAnno = existingModifierList.findAnnotation(annotation.getQualifiedName());
-            if (existingAnno != null){
-              annoAnchor = existingAnno.replace(annotation);
-            }
-            else {
-              existingModifierList.addBefore(annotation, annoAnchor);
-            }
+        for (PsiAnnotation annotation : psiAnnotations) {
+          final PsiAnnotation existingAnno = existingModifierList.findAnnotation(annotation.getQualifiedName());
+          if (existingAnno != null) {
+            annoAnchor = existingAnno.replace(annotation);
+          }
+          else {
+            existingModifierList.addBefore(annotation, annoAnchor);
           }
         }
       }

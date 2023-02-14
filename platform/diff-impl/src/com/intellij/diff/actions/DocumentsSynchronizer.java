@@ -14,12 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
-abstract class DocumentsSynchronizer {
+public abstract class DocumentsSynchronizer {
   @NotNull protected final Document myDocument1;
   @NotNull protected final Document myDocument2;
   @Nullable private final Project myProject;
 
-  private boolean myDuringModification = false;
+  protected boolean myDuringModification = false;
 
   private final DocumentListener myListener1 = new DocumentListener() {
     @Override
@@ -68,8 +68,12 @@ abstract class DocumentsSynchronizer {
                                @NotNull final CharSequence newText) {
     try {
       myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)),
-                                                    DiffBundle.message("synchronize.document.and.its.fragment"), document);
+      CommandProcessor.getInstance().executeCommand(
+        myProject,
+        () -> ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText)),
+        DiffBundle.message("synchronize.document.and.its.fragment"),
+        document
+      );
     }
     finally {
       myDuringModification = false;

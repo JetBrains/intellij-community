@@ -19,7 +19,7 @@ public class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return !PsiUtil.isModuleFile(holder.getFile()) ? PsiElementVisitor.EMPTY_VISITOR : new JavaElementVisitor() {
       @Override
-      public void visitModule(PsiJavaModule module) {
+      public void visitModule(@NotNull PsiJavaModule module) {
         super.visitModule(module);
 
         PsiJavaModuleReferenceElement name = module.getNameIdentifier();

@@ -23,8 +23,6 @@ import com.intellij.openapi.ide.KillRingTransferable;
  * Generally, it removes currently selected text from the document and puts it to the {@link KillRingTransferable kill ring}.
  * <p/>
  * Thread-safe. 
- * 
- * @author Denis Zhdanov
  */
 public class KillRegionAction extends TextComponentEditorAction {
 

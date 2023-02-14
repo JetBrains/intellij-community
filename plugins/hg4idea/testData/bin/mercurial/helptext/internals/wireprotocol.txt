@@ -1,0 +1,1277 @@
+The Mercurial wire protocol is a request-response based protocol
+with multiple wire representations.
+
+Each request is modeled as a command name, a dictionary of arguments, and
+optional raw input. Command arguments and their types are intrinsic
+properties of commands. So is the response type of the command. This means
+clients can't always send arbitrary arguments to servers and servers can't
+return multiple response types.
+
+The protocol is synchronous and does not support multiplexing (concurrent
+commands).
+
+Handshake
+=========
+
+It is required or common for clients to perform a *handshake* when connecting
+to a server. The handshake serves the following purposes:
+
+* Negotiating protocol/transport level options
+* Allows the client to learn about server capabilities to influence
+  future requests
+* Ensures the underlying transport channel is in a *clean* state
+
+An important goal of the handshake is to allow clients to use more modern
+wire protocol features. By default, clients must assume they are talking
+to an old version of Mercurial server (possibly even the very first
+implementation). So, clients should not attempt to call or utilize modern
+wire protocol features until they have confirmation that the server
+supports them. The handshake implementation is designed to allow both
+ends to utilize the latest set of features and capabilities with as
+few round trips as possible.
+
+The handshake mechanism varies by transport and protocol and is documented
+in the sections below.
+
+HTTP Protocol
+=============
+
+Handshake
+---------
+
+The client sends a ``capabilities`` command request (``?cmd=capabilities``)
+as soon as HTTP requests may be issued.
+
+By default, the server responds with a version 1 capabilities string, which
+the client parses to learn about the server's abilities. The ``Content-Type``
+for this response is ``application/mercurial-0.1`` or
+``application/mercurial-0.2`` depending on whether the client advertised
+support for version ``0.2`` in its request. (Clients aren't supposed to
+advertise support for ``0.2`` until the capabilities response indicates
+the server's support for that media type. However, a client could
+conceivably cache this metadata and issue the capabilities request in such
+a way to elicit an ``application/mercurial-0.2`` response.)
+
+Clients wishing to switch to a newer API service may send an
+``X-HgUpgrade-<X>`` header containing a space-delimited list of API service
+names the client is capable of speaking. The request MUST also include an
+``X-HgProto-<X>`` header advertising a known serialization format for the
+response. ``cbor`` is currently the only defined serialization format.
+
+If the request contains these headers, the response ``Content-Type`` MAY
+be for a different media type. e.g. ``application/mercurial-cbor`` if the
+client advertises support for CBOR.
+
+The response MUST be deserializable to a map with the following keys:
+
+apibase
+   URL path to API services, relative to the repository root. e.g. ``api/``.
+
+apis
+   A map of API service names to API descriptors. An API descriptor contains
+   more details about that API. In the case of the HTTP Version 2 Transport,
+   it will be the normal response to a ``capabilities`` command.
+
+   Only the services advertised by the client that are also available on
+   the server are advertised.
+
+v1capabilities
+   The capabilities string that would be returned by a version 1 response.
+
+The client can then inspect the server-advertised APIs and decide which
+API to use, including continuing to use the HTTP Version 1 Transport.
+
+HTTP Version 1 Transport
+------------------------
+
+Commands are issued as HTTP/1.0 or HTTP/1.1 requests. Commands are
+sent to the base URL of the repository with the command name sent in
+the ``cmd`` query string parameter. e.g.
+``https://example.com/repo?cmd=capabilities``. The HTTP method is ``GET``
+or ``POST`` depending on the command and whether there is a request
+body.
+
+Command arguments can be sent multiple ways.
+
+The simplest is part of the URL query string using ``x-www-form-urlencoded``
+encoding (see Python's ``urllib.urlencode()``. However, many servers impose
+length limitations on the URL. So this mechanism is typically only used if
+the server doesn't support other mechanisms.
+
+If the server supports the ``httpheader`` capability, command arguments can
+be sent in HTTP request headers named ``X-HgArg-<N>`` where ``<N>`` is an
+integer starting at 1. A ``x-www-form-urlencoded`` representation of the
+arguments is obtained. This full string is then split into chunks and sent
+in numbered ``X-HgArg-<N>`` headers. The maximum length of each HTTP header
+is defined by the server in the ``httpheader`` capability value, which defaults
+to ``1024``. The server reassembles the encoded arguments string by
+concatenating the ``X-HgArg-<N>`` headers then URL decodes them into a
+dictionary.
+
+The list of ``X-HgArg-<N>`` headers should be added to the ``Vary`` request
+header to instruct caches to take these headers into consideration when caching
+requests.
+
+If the server supports the ``httppostargs`` capability, the client
+may send command arguments in the HTTP request body as part of an
+HTTP POST request. The command arguments will be URL encoded just like
+they would for sending them via HTTP headers. However, no splitting is
+performed: the raw arguments are included in the HTTP request body.
+
+The client sends a ``X-HgArgs-Post`` header with the string length of the
+encoded arguments data. Additional data may be included in the HTTP
+request body immediately following the argument data. The offset of the
+non-argument data is defined by the ``X-HgArgs-Post`` header. The
+``X-HgArgs-Post`` header is not required if there is no argument data.
+
+Additional command data can be sent as part of the HTTP request body. The
+default ``Content-Type`` when sending data is ``application/mercurial-0.1``.
+A ``Content-Length`` header is currently always sent.
+
+Example HTTP requests::
+
+    GET /repo?cmd=capabilities
+    X-HgArg-1: foo=bar&baz=hello%20world
+
+The request media type should be chosen based on server support. If the
+``httpmediatype`` server capability is present, the client should send
+the newest mutually supported media type. If this capability is absent,
+the client must assume the server only supports the
+``application/mercurial-0.1`` media type.
+
+The ``Content-Type`` HTTP response header identifies the response as coming
+from Mercurial and can also be used to signal an error has occurred.
+
+The ``application/mercurial-*`` media types indicate a generic Mercurial
+data type.
+
+The ``application/mercurial-0.1`` media type is raw Mercurial data. It is the
+predecessor of the format below.
+
+The ``application/mercurial-0.2`` media type is compression framed Mercurial
+data. The first byte of the payload indicates the length of the compression
+format identifier that follows. Next are N bytes indicating the compression
+format. e.g. ``zlib``. The remaining bytes are compressed according to that
+compression format. The decompressed data behaves the same as with
+``application/mercurial-0.1``.
+
+The ``application/hg-error`` media type indicates a generic error occurred.
+The content of the HTTP response body typically holds text describing the
+error.
+
+The ``application/mercurial-cbor`` media type indicates a CBOR payload
+and should be interpreted as identical to ``application/cbor``.
+
+Behavior of media types is further described in the ``Content Negotiation``
+section below.
+
+Clients should issue a ``User-Agent`` request header that identifies the client.
+The server should not use the ``User-Agent`` for feature detection.
+
+A command returning a ``string`` response issues a
+``application/mercurial-0.*`` media type and the HTTP response body contains
+the raw string value (after compression decoding, if used). A
+``Content-Length`` header is typically issued, but not required.
+
+A command returning a ``stream`` response issues a
+``application/mercurial-0.*`` media type and the HTTP response is typically
+using *chunked transfer* (``Transfer-Encoding: chunked``).
+
+HTTP Version 2 Transport
+------------------------
+
+**Experimental - feature under active development**
+
+Version 2 of the HTTP protocol is exposed under the ``/api/*`` URL space.
+It's final API name is not yet formalized.
+
+Commands are triggered by sending HTTP POST requests against URLs of the
+form ``<permission>/<command>``, where ``<permission>`` is ``ro`` or
+``rw``, meaning read-only and read-write, respectively and ``<command>``
+is a named wire protocol command.
+
+Non-POST request methods MUST be rejected by the server with an HTTP
+405 response.
+
+Commands that modify repository state in meaningful ways MUST NOT be
+exposed under the ``ro`` URL prefix. All available commands MUST be
+available under the ``rw`` URL prefix.
+
+Server adminstrators MAY implement blanket HTTP authentication keyed
+off the URL prefix. For example, a server may require authentication
+for all ``rw/*`` URLs and let unauthenticated requests to ``ro/*``
+URL proceed. A server MAY issue an HTTP 401, 403, or 407 response
+in accordance with RFC 7235. Clients SHOULD recognize the HTTP Basic
+(RFC 7617) and Digest (RFC 7616) authentication schemes. Clients SHOULD
+make an attempt to recognize unknown schemes using the
+``WWW-Authenticate`` response header on a 401 response, as defined by
+RFC 7235.
+
+Read-only commands are accessible under ``rw/*`` URLs so clients can
+signal the intent of the operation very early in the connection
+lifecycle. For example, a ``push`` operation - which consists of
+various read-only commands mixed with at least one read-write command -
+can perform all commands against ``rw/*`` URLs so that any server-side
+authentication requirements are discovered upon attempting the first
+command - not potentially several commands into the exchange. This
+allows clients to fail faster or prompt for credentials as soon as the
+exchange takes place. This provides a better end-user experience.
+
+Requests to unknown commands or URLS result in an HTTP 404.
+TODO formally define response type, how error is communicated, etc.
+
+HTTP request and response bodies use the ``hgrpc`` protocol for media
+exchange.` (See :hg:`help internals.wireprotocolrpc` for details of
+the protocol.) The entirety of the HTTP message body is 0 or more frames
+as defined by this protocol.
+
+Clients and servers MUST advertise the ``TBD`` media type via the
+``Content-Type`` request and response headers. In addition, clients MUST
+advertise this media type value in their ``Accept`` request header in all
+requests.
+TODO finalize the media type. For now, it is defined in wireprotoserver.py.
+
+Servers receiving requests without an ``Accept`` header SHOULD respond with
+an HTTP 406.
+
+Servers receiving requests with an invalid ``Content-Type`` header SHOULD
+respond with an HTTP 415.
+
+The command to run is specified in the POST payload as defined by ``hgrpc``.
+This is redundant with data already encoded in the URL. This is by design,
+so server operators can have better understanding about server activity from
+looking merely at HTTP access logs.
+
+In most circumstances, the command specified in the URL MUST match
+the command specified in the frame-based payload or the server will
+respond with an error. The exception to this is the special
+``multirequest`` URL. (See below.) In addition, HTTP requests
+are limited to one command invocation. The exception is the special
+``multirequest`` URL.
+
+The ``multirequest`` command endpoints (``ro/multirequest`` and
+``rw/multirequest``) are special in that they allow the execution of
+*any* command and allow the execution of multiple commands. If the
+HTTP request issues multiple commands across multiple frames, all
+issued commands will be processed by the server. Per the defined
+behavior of ``hgrpc```, commands may be issued interleaved and responses
+may come back in a different order than they were issued. Clients MUST
+be able to deal with this.
+
+SSH Protocol
+============
+
+Handshake
+---------
+
+For all clients, the handshake consists of the client sending 1 or more
+commands to the server using version 1 of the transport. Servers respond
+to commands they know how to respond to and send an empty response (``0\n``)
+for unknown commands (per standard behavior of version 1 of the transport).
+Clients then typically look for a response to the newest sent command to
+determine which transport version to use and what the available features for
+the connection and server are.
+
+Preceding any response from client-issued commands, the server may print
+non-protocol output. It is common for SSH servers to print banners, message
+of the day announcements, etc when clients connect. It is assumed that any
+such *banner* output will precede any Mercurial server output. So clients
+must be prepared to handle server output on initial connect that isn't
+in response to any client-issued command and doesn't conform to Mercurial's
+wire protocol. This *banner* output should only be on stdout. However,
+some servers may send output on stderr.
+
+Pre 0.9.1 clients issue a ``between`` command with the ``pairs`` argument
+having the value
+``0000000000000000000000000000000000000000-0000000000000000000000000000000000000000``.
+
+The ``between`` command has been supported since the original Mercurial
+SSH server. Requesting the empty range will return a ``\n`` string response,
+which will be encoded as ``1\n\n`` (value length of ``1`` followed by a newline
+followed by the value, which happens to be a newline).
+
+For pre 0.9.1 clients and all servers, the exchange looks like::
+
+   c: between\n
+   c: pairs 81\n
+   c: 0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+   s: 1\n
+   s: \n
+
+0.9.1+ clients send a ``hello`` command (with no arguments) before the
+``between`` command. The response to this command allows clients to
+discover server capabilities and settings.
+
+An example exchange between 0.9.1+ clients and a ``hello`` aware server looks
+like::
+
+   c: hello\n
+   c: between\n
+   c: pairs 81\n
+   c: 0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+   s: 324\n
+   s: capabilities: lookup changegroupsubset branchmap pushkey known getbundle ...\n
+   s: 1\n
+   s: \n
+
+And a similar scenario but with servers sending a banner on connect::
+
+   c: hello\n
+   c: between\n
+   c: pairs 81\n
+   c: 0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+   s: welcome to the server\n
+   s: if you find any issues, email someone@somewhere.com\n
+   s: 324\n
+   s: capabilities: lookup changegroupsubset branchmap pushkey known getbundle ...\n
+   s: 1\n
+   s: \n
+
+Note that output from the ``hello`` command is terminated by a ``\n``. This is
+part of the response payload and not part of the wire protocol adding a newline
+after responses. In other words, the length of the response contains the
+trailing ``\n``.
+
+Clients supporting version 2 of the SSH transport send a line beginning
+with ``upgrade`` before the ``hello`` and ``between`` commands. The line
+(which isn't a well-formed command line because it doesn't consist of a
+single command name) serves to both communicate the client's intent to
+switch to transport version 2 (transports are version 1 by default) as
+well as to advertise the client's transport-level capabilities so the
+server may satisfy that request immediately.
+
+The upgrade line has the form:
+
+    upgrade <token> <transport capabilities>
+
+That is the literal string ``upgrade`` followed by a space, followed by
+a randomly generated string, followed by a space, followed by a string
+denoting the client's transport capabilities.
+
+The token can be anything. However, a random UUID is recommended. (Use
+of version 4 UUIDs is recommended because version 1 UUIDs can leak the
+client's MAC address.)
+
+The transport capabilities string is a URL/percent encoded string
+containing key-value pairs defining the client's transport-level
+capabilities. The following capabilities are defined:
+
+proto
+   A comma-delimited list of transport protocol versions the client
+   supports. e.g. ``ssh-v2``.
+
+If the server does not recognize the ``upgrade`` line, it should issue
+an empty response and continue processing the ``hello`` and ``between``
+commands. Here is an example handshake between a version 2 aware client
+and a non version 2 aware server:
+
+   c: upgrade 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a proto=ssh-v2
+   c: hello\n
+   c: between\n
+   c: pairs 81\n
+   c: 0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+   s: 0\n
+   s: 324\n
+   s: capabilities: lookup changegroupsubset branchmap pushkey known getbundle ...\n
+   s: 1\n
+   s: \n
+
+(The initial ``0\n`` line from the server indicates an empty response to
+the unknown ``upgrade ..`` command/line.)
+
+If the server recognizes the ``upgrade`` line and is willing to satisfy that
+upgrade request, it replies to with a payload of the following form:
+
+   upgraded <token> <transport name>\n
+
+This line is the literal string ``upgraded``, a space, the token that was
+specified by the client in its ``upgrade ...`` request line, a space, and the
+name of the transport protocol that was chosen by the server. The transport
+name MUST match one of the names the client specified in the ``proto`` field
+of its ``upgrade ...`` request line.
+
+If a server issues an ``upgraded`` response, it MUST also read and ignore
+the lines associated with the ``hello`` and ``between`` command requests
+that were issued by the server. It is assumed that the negotiated transport
+will respond with equivalent requested information following the transport
+handshake.
+
+All data following the ``\n`` terminating the ``upgraded`` line is the
+domain of the negotiated transport. It is common for the data immediately
+following to contain additional metadata about the state of the transport and
+the server. However, this isn't strictly speaking part of the transport
+handshake and isn't covered by this section.
+
+Here is an example handshake between a version 2 aware client and a version
+2 aware server:
+
+   c:  upgrade 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a proto=ssh-v2
+   c:  hello\n
+   c:  between\n
+   c:  pairs 81\n
+   c:  0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
+   s: upgraded 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a ssh-v2\n
+   s: <additional transport specific data>
+
+The client-issued token that is echoed in the response provides a more
+resilient mechanism for differentiating *banner* output from Mercurial
+output. In version 1, properly formatted banner output could get confused
+for Mercurial server output. By submitting a randomly generated token
+that is then present in the response, the client can look for that token
+in response lines and have reasonable certainty that the line did not
+originate from a *banner* message.
+
+SSH Version 1 Transport
+-----------------------
+
+The SSH transport (version 1) is a custom text-based protocol suitable for
+use over any bi-directional stream transport. It is most commonly used with
+SSH.
+
+A SSH transport server can be started with ``hg serve --stdio``. The stdin,
+stderr, and stdout file descriptors of the started process are used to exchange
+data. When Mercurial connects to a remote server over SSH, it actually starts
+a ``hg serve --stdio`` process on the remote server.
+
+Commands are issued by sending the command name followed by a trailing newline
+``\n`` to the server. e.g. ``capabilities\n``.
+
+Command arguments are sent in the following format::
+
+    <argument> <length>\n<value>
+
+That is, the argument string name followed by a space followed by the
+integer length of the value (expressed as a string) followed by a newline
+(``\n``) followed by the raw argument value.
+
+Dictionary arguments are encoded differently::
+
+    <argument> <# elements>\n
+    <key1> <length1>\n<value1>
+    <key2> <length2>\n<value2>
+    ...
+
+Non-argument data is sent immediately after the final argument value. It is
+encoded in chunks::
+
+    <length>\n<data>
+
+Each command declares a list of supported arguments and their types. If a
+client sends an unknown argument to the server, the server should abort
+immediately. The special argument ``*`` in a command's definition indicates
+that all argument names are allowed.
+
+The definition of supported arguments and types is initially made when a
+new command is implemented. The client and server must initially independently
+agree on the arguments and their types. This initial set of arguments can be
+supplemented through the presence of *capabilities* advertised by the server.
+
+Each command has a defined expected response type.
+
+A ``string`` response type is a length framed value. The response consists of
+the string encoded integer length of a value followed by a newline (``\n``)
+followed by the value. Empty values are allowed (and are represented as
+``0\n``).
+
+A ``stream`` response type consists of raw bytes of data. There is no framing.
+
+A generic error response type is also supported. It consists of a an error
+message written to ``stderr`` followed by ``\n-\n``. In addition, ``\n`` is
+written to ``stdout``.
+
+If the server receives an unknown command, it will send an empty ``string``
+response.
+
+The server terminates if it receives an empty command (a ``\n`` character).
+
+If the server announces support for the ``protocaps`` capability, the client
+should issue a ``protocaps`` command after the initial handshake to annonunce
+its own capabilities. The client capabilities are persistent.
+
+SSH Version 2 Transport
+-----------------------
+
+**Experimental and under development**
+
+Version 2 of the SSH transport behaves identically to version 1 of the SSH
+transport with the exception of handshake semantics. See above for how
+version 2 of the SSH transport is negotiated.
+
+Immediately following the ``upgraded`` line signaling a switch to version
+2 of the SSH protocol, the server automatically sends additional details
+about the capabilities of the remote server. This has the form:
+
+   <integer length of value>\n
+   capabilities: ...\n
+
+e.g.
+
+   s: upgraded 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a ssh-v2\n
+   s: 240\n
+   s: capabilities: known getbundle batch ...\n
+
+Following capabilities advertisement, the peers communicate using version
+1 of the SSH transport.
+
+Capabilities
+============
+
+Servers advertise supported wire protocol features. This allows clients to
+probe for server features before blindly calling a command or passing a
+specific argument.
+
+The server's features are exposed via a *capabilities* string. This is a
+space-delimited string of tokens/features. Some features are single words
+like ``lookup`` or ``batch``. Others are complicated key-value pairs
+advertising sub-features. e.g. ``httpheader=2048``. When complex, non-word
+values are used, each feature name can define its own encoding of sub-values.
+Comma-delimited and ``x-www-form-urlencoded`` values are common.
+
+The following document capabilities defined by the canonical Mercurial server
+implementation.
+
+batch
+-----
+
+Whether the server supports the ``batch`` command.
+
+This capability/command was introduced in Mercurial 1.9 (released July 2011).
+
+branchmap
+---------
+
+Whether the server supports the ``branchmap`` command.
+
+This capability/command was introduced in Mercurial 1.3 (released July 2009).
+
+bundle2-exp
+-----------
+
+Precursor to ``bundle2`` capability that was used before bundle2 was a
+stable feature.
+
+This capability was introduced in Mercurial 3.0 behind an experimental
+flag. This capability should not be observed in the wild.
+
+bundle2
+-------
+
+Indicates whether the server supports the ``bundle2`` data exchange format.
+
+The value of the capability is a URL quoted, newline (``\n``) delimited
+list of keys or key-value pairs.
+
+A key is simply a URL encoded string.
+
+A key-value pair is a URL encoded key separated from a URL encoded value by
+an ``=``. If the value is a list, elements are delimited by a ``,`` after
+URL encoding.
+
+For example, say we have the values::
+
+  {'HG20': [], 'changegroup': ['01', '02'], 'digests': ['sha1', 'sha512']}
+
+We would first construct a string::
+
+  HG20\nchangegroup=01,02\ndigests=sha1,sha512
+
+We would then URL quote this string::
+
+  HG20%0Achangegroup%3D01%2C02%0Adigests%3Dsha1%2Csha512
+
+This capability was introduced in Mercurial 3.4 (released May 2015).
+
+changegroupsubset
+-----------------
+
+Whether the server supports the ``changegroupsubset`` command.
+
+This capability was introduced in Mercurial 0.9.2 (released December
+2006).
+
+This capability was introduced at the same time as the ``lookup``
+capability/command.
+
+compression
+-----------
+
+Declares support for negotiating compression formats.
+
+Presence of this capability indicates the server supports dynamic selection
+of compression formats based on the client request.
+
+Servers advertising this capability are required to support the
+``application/mercurial-0.2`` media type in response to commands returning
+streams. Servers may support this media type on any command.
+
+The value of the capability is a comma-delimited list of strings declaring
+supported compression formats. The order of the compression formats is in
+server-preferred order, most preferred first.
+
+The identifiers used by the official Mercurial distribution are:
+
+bzip2
+   bzip2
+none
+   uncompressed / raw data
+zlib
+   zlib (no gzip header)
+zstd
+   zstd
+
+This capability was introduced in Mercurial 4.1 (released February 2017).
+
+getbundle
+---------
+
+Whether the server supports the ``getbundle`` command.
+
+This capability was introduced in Mercurial 1.9 (released July 2011).
+
+httpheader
+----------
+
+Whether the server supports receiving command arguments via HTTP request
+headers.
+
+The value of the capability is an integer describing the max header
+length that clients should send. Clients should ignore any content after a
+comma in the value, as this is reserved for future use.
+
+This capability was introduced in Mercurial 1.9 (released July 2011).
+
+httpmediatype
+-------------
+
+Indicates which HTTP media types (``Content-Type`` header) the server is
+capable of receiving and sending.
+
+The value of the capability is a comma-delimited list of strings identifying
+support for media type and transmission direction. The following strings may
+be present:
+
+0.1rx
+   Indicates server support for receiving ``application/mercurial-0.1`` media
+   types.
+
+0.1tx
+   Indicates server support for sending ``application/mercurial-0.1`` media
+   types.
+
+0.2rx
+   Indicates server support for receiving ``application/mercurial-0.2`` media
+   types.
+
+0.2tx
+   Indicates server support for sending ``application/mercurial-0.2`` media
+   types.
+
+minrx=X
+   Minimum media type version the server is capable of receiving. Value is a
+   string like ``0.2``.
+
+   This capability can be used by servers to limit connections from legacy
+   clients not using the latest supported media type. However, only clients
+   with knowledge of this capability will know to consult this value. This
+   capability is present so the client may issue a more user-friendly error
+   when the server has locked out a legacy client.
+
+mintx=X
+   Minimum media type version the server is capable of sending. Value is a
+   string like ``0.1``.
+
+Servers advertising support for the ``application/mercurial-0.2`` media type
+should also advertise the ``compression`` capability.
+
+This capability was introduced in Mercurial 4.1 (released February 2017).
+
+httppostargs
+------------
+
+**Experimental**
+
+Indicates that the server supports and prefers clients send command arguments
+via a HTTP POST request as part of the request body.
+
+This capability was introduced in Mercurial 3.8 (released May 2016).
+
+known
+-----
+
+Whether the server supports the ``known`` command.
+
+This capability/command was introduced in Mercurial 1.9 (released July 2011).
+
+lfs
+---
+
+Indicates that the LFS extension is enabled on the server.  It makes no claims
+about the repository actually having LFS blobs committed to it.
+
+This capability was introduced by the LFS extension in Mercurial 4.5 (released
+Feb 2018).
+
+lfs-serve
+---------
+
+Indicates that the LFS extension is enabled on the server, and LFS blobs are
+committed to the remote repository.  (Specifically, it indicates that the 'lfs'
+requirement is present in the remote repository.)
+
+This capability was introduced by the LFS extension in Mercurial 4.8 (released
+Nov 2018).
+
+lookup
+------
+
+Whether the server supports the ``lookup`` command.
+
+This capability was introduced in Mercurial 0.9.2 (released December
+2006).
+
+This capability was introduced at the same time as the ``changegroupsubset``
+capability/command.
+
+partial-pull
+------------
+
+Indicates that the client can deal with partial answers to pull requests
+by repeating the request.
+
+If this parameter is not advertised, the server will not send pull bundles.
+
+This client capability was introduced in Mercurial 4.6.
+
+protocaps
+---------
+
+Whether the server supports the ``protocaps`` command for SSH V1 transport.
+
+This capability was introduced in Mercurial 4.6.
+
+pushkey
+-------
+
+Whether the server supports the ``pushkey`` and ``listkeys`` commands.
+
+This capability was introduced in Mercurial 1.6 (released July 2010).
+
+standardbundle
+--------------
+
+**Unsupported**
+
+This capability was introduced during the Mercurial 0.9.2 development cycle in
+2006. It was never present in a release, as it was replaced by the ``unbundle``
+capability. This capability should not be encountered in the wild.
+
+stream-preferred
+----------------
+
+If present the server prefers that clients clone using the streaming clone
+protocol (``hg clone --stream``) rather than the standard
+changegroup/bundle based protocol.
+
+This capability was introduced in Mercurial 2.2 (released May 2012).
+
+streamreqs
+----------
+
+Indicates whether the server supports *streaming clones* and the *requirements*
+that clients must support to receive it.
+
+If present, the server supports the ``stream_out`` command, which transmits
+raw revlogs from the repository instead of changegroups. This provides a faster
+cloning mechanism at the expense of more bandwidth used.
+
+The value of this capability is a comma-delimited list of repo format
+*requirements*. These are requirements that impact the reading of data in
+the ``.hg/store`` directory. An example value is
+``streamreqs=generaldelta,revlogv1`` indicating the server repo requires
+the ``revlogv1`` and ``generaldelta`` requirements.
+
+If the only format requirement is ``revlogv1``, the server may expose the
+``stream`` capability instead of the ``streamreqs`` capability.
+
+This capability was introduced in Mercurial 1.7 (released November 2010).
+
+stream
+------
+
+Whether the server supports *streaming clones* from ``revlogv1`` repos.
+
+If present, the server supports the ``stream_out`` command, which transmits
+raw revlogs from the repository instead of changegroups. This provides a faster
+cloning mechanism at the expense of more bandwidth used.
+
+This capability was introduced in Mercurial 0.9.1 (released July 2006).
+
+When initially introduced, the value of the capability was the numeric
+revlog revision. e.g. ``stream=1``. This indicates the changegroup is using
+``revlogv1``. This simple integer value wasn't powerful enough, so the
+``streamreqs`` capability was invented to handle cases where the repo
+requirements have more than just ``revlogv1``. Newer servers omit the
+``=1`` since it was the only value supported and the value of ``1`` can
+be implied by clients.
+
+unbundlehash
+------------
+
+Whether the ``unbundle`` commands supports receiving a hash of all the
+heads instead of a list.
+
+For more, see the documentation for the ``unbundle`` command.
+
+This capability was introduced in Mercurial 1.9 (released July 2011).
+
+unbundle
+--------
+
+Whether the server supports pushing via the ``unbundle`` command.
+
+This capability/command has been present since Mercurial 0.9.1 (released
+July 2006).
+
+Mercurial 0.9.2 (released December 2006) added values to the capability
+indicating which bundle types the server supports receiving. This value is a
+comma-delimited list. e.g. ``HG10GZ,HG10BZ,HG10UN``. The order of values
+reflects the priority/preference of that type, where the first value is the
+most preferred type.
+
+Content Negotiation
+===================
+
+The wire protocol has some mechanisms to help peers determine what content
+types and encoding the other side will accept. Historically, these mechanisms
+have been built into commands themselves because most commands only send a
+well-defined response type and only certain commands needed to support
+functionality like compression.
+
+Currently, only the HTTP version 1 transport supports content negotiation
+at the protocol layer.
+
+HTTP requests advertise supported response formats via the ``X-HgProto-<N>``
+request header, where ``<N>`` is an integer starting at 1 allowing the logical
+value to span multiple headers. This value consists of a list of
+space-delimited parameters. Each parameter denotes a feature or capability.
+
+The following parameters are defined:
+
+0.1
+   Indicates the client supports receiving ``application/mercurial-0.1``
+   responses.
+
+0.2
+   Indicates the client supports receiving ``application/mercurial-0.2``
+   responses.
+
+cbor
+   Indicates the client supports receiving ``application/mercurial-cbor``
+   responses.
+
+   (Only intended to be used with version 2 transports.)
+
+comp
+   Indicates compression formats the client can decode. Value is a list of
+   comma delimited strings identifying compression formats ordered from
+   most preferential to least preferential. e.g. ``comp=zstd,zlib,none``.
+
+   This parameter does not have an effect if only the ``0.1`` parameter
+   is defined, as support for ``application/mercurial-0.2`` or greater is
+   required to use arbitrary compression formats.
+
+   If this parameter is not advertised, the server interprets this as
+   equivalent to ``zlib,none``.
+
+Clients may choose to only send this header if the ``httpmediatype``
+server capability is present, as currently all server-side features
+consulting this header require the client to opt in to new protocol features
+advertised via the ``httpmediatype`` capability.
+
+A server that doesn't receive an ``X-HgProto-<N>`` header should infer a
+value of ``0.1``. This is compatible with legacy clients.
+
+A server receiving a request indicating support for multiple media type
+versions may respond with any of the supported media types. Not all servers
+may support all media types on all commands.
+
+Commands
+========
+
+This section contains a list of all wire protocol commands implemented by
+the canonical Mercurial server.
+
+See :hg:`help internals.wireprotocolv2` for information on commands exposed
+to the frame-based protocol.
+
+batch
+-----
+
+Issue multiple commands while sending a single command request. The purpose
+of this command is to allow a client to issue multiple commands while avoiding
+multiple round trips to the server therefore enabling commands to complete
+quicker.
+
+The command accepts a ``cmds`` argument that contains a list of commands to
+execute.
+
+The value of ``cmds`` is a ``;`` delimited list of strings. Each string has the
+form ``<command> <arguments>``. That is, the command name followed by a space
+followed by an argument string.
+
+The argument string is a ``,`` delimited list of ``<key>=<value>`` values
+corresponding to command arguments. Both the argument name and value are
+escaped using a special substitution map::
+
+   : -> :c
+   , -> :o
+   ; -> :s
+   = -> :e
+
+The response type for this command is ``string``. The value contains a
+``;`` delimited list of responses for each requested command. Each value
+in this list is escaped using the same substitution map used for arguments.
+
+If an error occurs, the generic error response may be sent.
+
+between
+-------
+
+(Legacy command used for discovery in old clients)
+
+Obtain nodes between pairs of nodes.
+
+The ``pairs`` arguments contains a space-delimited list of ``-`` delimited
+hex node pairs. e.g.::
+
+   a072279d3f7fd3a4aa7ffa1a5af8efc573e1c896-6dc58916e7c070f678682bfe404d2e2d68291a18
+
+Return type is a ``string``. Value consists of lines corresponding to each
+requested range. Each line contains a space-delimited list of hex nodes.
+A newline ``\n`` terminates each line, including the last one.
+
+branchmap
+---------
+
+Obtain heads in named branches.
+
+Accepts no arguments. Return type is a ``string``.
+
+Return value contains lines with URL encoded branch names followed by a space
+followed by a space-delimited list of hex nodes of heads on that branch.
+e.g.::
+
+    default a072279d3f7fd3a4aa7ffa1a5af8efc573e1c896 6dc58916e7c070f678682bfe404d2e2d68291a18
+    stable baae3bf31522f41dd5e6d7377d0edd8d1cf3fccc
+
+There is no trailing newline.
+
+branches
+--------
+
+(Legacy command used for discovery in old clients. Clients with ``getbundle``
+use the ``known`` and ``heads`` commands instead.)
+
+Obtain ancestor changesets of specific nodes back to a branch point.
+
+Despite the name, this command has nothing to do with Mercurial named branches.
+Instead, it is related to DAG branches.
+
+The command accepts a ``nodes`` argument, which is a string of space-delimited
+hex nodes.
+
+For each node requested, the server will find the first ancestor node that is
+a DAG root or is a merge.
+
+Return type is a ``string``. Return value contains lines with result data for
+each requested node. Each line contains space-delimited nodes followed by a
+newline (``\n``). The 4 nodes reported on each line correspond to the requested
+node, the ancestor node found, and its 2 parent nodes (which may be the null
+node).
+
+capabilities
+------------
+
+Obtain the capabilities string for the repo.
+
+Unlike the ``hello`` command, the capabilities string is not prefixed.
+There is no trailing newline.
+
+This command does not accept any arguments. Return type is a ``string``.
+
+This command was introduced in Mercurial 0.9.1 (released July 2006).
+
+changegroup
+-----------
+
+(Legacy command: use ``getbundle`` instead)
+
+Obtain a changegroup version 1 with data for changesets that are
+descendants of client-specified changesets.
+
+The ``roots`` arguments contains a list of space-delimited hex nodes.
+
+The server responds with a changegroup version 1 containing all
+changesets between the requested root/base nodes and the repo's head nodes
+at the time of the request.
+
+The return type is a ``stream``.
+
+changegroupsubset
+-----------------
+
+(Legacy command: use ``getbundle`` instead)
+
+Obtain a changegroup version 1 with data for changesetsets between
+client specified base and head nodes.
+
+The ``bases`` argument contains a list of space-delimited hex nodes.
+The ``heads`` argument contains a list of space-delimited hex nodes.
+
+The server responds with a changegroup version 1 containing all
+changesets between the requested base and head nodes at the time of the
+request.
+
+The return type is a ``stream``.
+
+clonebundles
+------------
+
+Obtains a manifest of bundle URLs available to seed clones.
+
+Each returned line contains a URL followed by metadata. See the
+documentation in the ``clonebundles`` extension for more.
+
+The return type is a ``string``.
+
+getbundle
+---------
+
+Obtain a bundle containing repository data.
+
+This command accepts the following arguments:
+
+heads
+   List of space-delimited hex nodes of heads to retrieve.
+common
+   List of space-delimited hex nodes that the client has in common with the
+   server.
+obsmarkers
+   Boolean indicating whether to include obsolescence markers as part
+   of the response. Only works with bundle2.
+bundlecaps
+   Comma-delimited set of strings defining client bundle capabilities.
+listkeys
+   Comma-delimited list of strings of ``pushkey`` namespaces. For each
+   namespace listed, a bundle2 part will be included with the content of
+   that namespace.
+cg
+   Boolean indicating whether changegroup data is requested.
+cbattempted
+   Boolean indicating whether the client attempted to use the *clone bundles*
+   feature before performing this request.
+bookmarks
+   Boolean indicating whether bookmark data is requested.
+phases
+   Boolean indicating whether phases data is requested.
+
+The return type on success is a ``stream`` where the value is bundle.
+On the HTTP version 1 transport, the response is zlib compressed.
+
+If an error occurs, a generic error response can be sent.
+
+Unless the client sends a false value for the ``cg`` argument, the returned
+bundle contains a changegroup with the nodes between the specified ``common``
+and ``heads`` nodes. Depending on the command arguments, the type and content
+of the returned bundle can vary significantly.
+
+The default behavior is for the server to send a raw changegroup version
+``01`` response.
+
+If the ``bundlecaps`` provided by the client contain a value beginning
+with ``HG2``, a bundle2 will be returned. The bundle2 data may contain
+additional repository data, such as ``pushkey`` namespace values.
+
+heads
+-----
+
+Returns a list of space-delimited hex nodes of repository heads followed
+by a newline. e.g.
+``a9eeb3adc7ddb5006c088e9eda61791c777cbf7c 31f91a3da534dc849f0d6bfc00a395a97cf218a1\n``
+
+This command does not accept any arguments. The return type is a ``string``.
+
+hello
+-----
+
+Returns lines describing interesting things about the server in an RFC-822
+like format.
+
+Currently, the only line defines the server capabilities. It has the form::
+
+    capabilities: <value>
+
+See above for more about the capabilities string.
+
+SSH clients typically issue this command as soon as a connection is
+established.
+
+This command does not accept any arguments. The return type is a ``string``.
+
+This command was introduced in Mercurial 0.9.1 (released July 2006).
+
+listkeys
+--------
+
+List values in a specified ``pushkey`` namespace.
+
+The ``namespace`` argument defines the pushkey namespace to operate on.
+
+The return type is a ``string``. The value is an encoded dictionary of keys.
+
+Key-value pairs are delimited by newlines (``\n``). Within each line, keys and
+values are separated by a tab (``\t``). Keys and values are both strings.
+
+lookup
+------
+
+Try to resolve a value to a known repository revision.
+
+The ``key`` argument is converted from bytes to an
+``encoding.localstr`` instance then passed into
+``localrepository.__getitem__`` in an attempt to resolve it.
+
+The return type is a ``string``.
+
+Upon successful resolution, returns ``1 <hex node>\n``. On failure,
+returns ``0 <error string>\n``. e.g.::
+
+   1 273ce12ad8f155317b2c078ec75a4eba507f1fba\n
+
+   0 unknown revision 'foo'\n
+
+known
+-----
+
+Determine whether multiple nodes are known.
+
+The ``nodes`` argument is a list of space-delimited hex nodes to check
+for existence.
+
+The return type is ``string``.
+
+Returns a string consisting of ``0``s and ``1``s indicating whether nodes
+are known. If the Nth node specified in the ``nodes`` argument is known,
+a ``1`` will be returned at byte offset N. If the node isn't known, ``0``
+will be present at byte offset N.
+
+There is no trailing newline.
+
+protocaps
+---------
+
+Notify the server about the client capabilities in the SSH V1 transport
+protocol.
+
+The ``caps`` argument is a space-delimited list of capabilities.
+
+The server will reply with the string ``OK``.
+
+pushkey
+-------
+
+Set a value using the ``pushkey`` protocol.
+
+Accepts arguments ``namespace``, ``key``, ``old``, and ``new``, which
+correspond to the pushkey namespace to operate on, the key within that
+namespace to change, the old value (which may be empty), and the new value.
+All arguments are string types.
+
+The return type is a ``string``. The value depends on the transport protocol.
+
+The SSH version 1 transport sends a string encoded integer followed by a
+newline (``\n``) which indicates operation result. The server may send
+additional output on the ``stderr`` stream that should be displayed to the
+user.
+
+The HTTP version 1 transport sends a string encoded integer followed by a
+newline followed by additional server output that should be displayed to
+the user. This may include output from hooks, etc.
+
+The integer result varies by namespace. ``0`` means an error has occurred
+and there should be additional output to display to the user.
+
+stream_out
+----------
+
+Obtain *streaming clone* data.
+
+The return type is either a ``string`` or a ``stream``, depending on
+whether the request was fulfilled properly.
+
+A return value of ``1\n`` indicates the server is not configured to serve
+this data. If this is seen by the client, they may not have verified the
+``stream`` capability is set before making the request.
+
+A return value of ``2\n`` indicates the server was unable to lock the
+repository to generate data.
+
+All other responses are a ``stream`` of bytes. The first line of this data
+contains 2 space-delimited integers corresponding to the path count and
+payload size, respectively::
+
+    <path count> <payload size>\n
+
+The ``<payload size>`` is the total size of path data: it does not include
+the size of the per-path header lines.
+
+Following that header are ``<path count>`` entries. Each entry consists of a
+line with metadata followed by raw revlog data. The line consists of::
+
+    <store path>\0<size>\n
+
+The ``<store path>`` is the encoded store path of the data that follows.
+``<size>`` is the amount of data for this store path/revlog that follows the
+newline.
+
+There is no trailer to indicate end of data. Instead, the client should stop
+reading after ``<path count>`` entries are consumed.
+
+unbundle
+--------
+
+Send a bundle containing data (usually changegroup data) to the server.
+
+Accepts the argument ``heads``, which is a space-delimited list of hex nodes
+corresponding to server repository heads observed by the client. This is used
+to detect race conditions and abort push operations before a server performs
+too much work or a client transfers too much data.
+
+The request payload consists of a bundle to be applied to the repository,
+similarly to as if :hg:`unbundle` were called.
+
+In most scenarios, a special ``push response`` type is returned. This type
+contains an integer describing the change in heads as a result of the
+operation. A value of ``0`` indicates nothing changed. ``1`` means the number
+of heads remained the same. Values ``2`` and larger indicate the number of
+added heads minus 1. e.g. ``3`` means 2 heads were added. Negative values
+indicate the number of fewer heads, also off by 1. e.g. ``-2`` means there
+is 1 fewer head.
+
+The encoding of the ``push response`` type varies by transport.
+
+For the SSH version 1 transport, this type is composed of 2 ``string``
+responses: an empty response (``0\n``) followed by the integer result value.
+e.g. ``1\n2``. So the full response might be ``0\n1\n2``.
+
+For the HTTP version 1 transport, the response is a ``string`` type composed
+of an integer result value followed by a newline (``\n``) followed by string
+content holding server output that should be displayed on the client (output
+hooks, etc).
+
+In some cases, the server may respond with a ``bundle2`` bundle. In this
+case, the response type is ``stream``. For the HTTP version 1 transport, the
+response is zlib compressed.
+
+The server may also respond with a generic error type, which contains a string
+indicating the failure.

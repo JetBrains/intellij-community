@@ -52,19 +52,25 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       }
     };
 
+    // trigger the instantiation of `JavaParameters` within `TestPackage` instance
+    aPackage.getJavaParameters();
+
+    LocalTargetEnvironment targetEnvironment = new LocalTargetEnvironment(new LocalTargetEnvironmentRequest());
+    aPackage.resolveServerSocketPort(targetEnvironment);
+
     //ensure no fork if single module is selected
-    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
+    aPackage.createSearchingForTestsTask(targetEnvironment).startSearch();
     File workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     assertEmpty(FileUtil.loadFile(workingDirsFile));
 
     //ensure fork when whole project is used
     persistentData.setScope(TestSearchScope.WHOLE_PROJECT);
-    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
+    aPackage.createSearchingForTestsTask(targetEnvironment).startSearch();
     workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     String file;
-    aPackage.createSearchingForTestsTask(new LocalTargetEnvironment(new LocalTargetEnvironmentRequest())).startSearch();
+    aPackage.createSearchingForTestsTask(targetEnvironment).startSearch();
     workingDirsFile = aPackage.getWorkingDirsFile();
     assertNotNull(workingDirsFile);
     file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);

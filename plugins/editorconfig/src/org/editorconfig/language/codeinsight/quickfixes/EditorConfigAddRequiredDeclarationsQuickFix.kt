@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight.quickfixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -18,6 +19,7 @@ class EditorConfigAddRequiredDeclarationsQuickFix(
   missingDescriptors: List<EditorConfigDeclarationDescriptor>,
   private val id: String
 ) : LocalQuickFix {
+  @SafeFieldForPreview
   private val missingKeys = missingDescriptors.mapNotNull {
     EditorConfigDescriptorUtil.getParentOfType<EditorConfigQualifiedKeyDescriptor>(it)
   }

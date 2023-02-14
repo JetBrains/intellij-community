@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -16,7 +16,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
   private static final String[] CLASS_SCOPE_KEYWORDS = {
-    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", "record", null};
+    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "default", "record", "sealed", "non-sealed", null};
   private static final String[] CLASS_SCOPE_KEYWORDS_2 = {
     "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract", "default", "record"};
   private static final String[] INTERFACE_SCOPE_KEYWORDS = {
@@ -36,19 +36,19 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
-  public void testFileScope2() { doTest(8, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope1() { doTest(6, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope2() { doTest(5, CLASS_SCOPE_KEYWORDS); }
+  public void testFileScope2() { doTest(10, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope1() { doTest(8, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
   public void testInnerClassScope() {
     doTest(11, CLASS_SCOPE_KEYWORDS_2); 
   }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
-  public void testAfterAnnotations() { doTest(7, "public", "final", "class", "interface", "abstract", "enum", "record", null); }
-  public void testAfterAnnotationsWithParams() { doTest(7, "public", "final", "class", "interface", "abstract", "enum", "record", null); }
+  public void testAfterAnnotations() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
+  public void testAfterAnnotationsWithParams() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
   public void testAfterAnnotationsWithParamsInClass() { doTest(7, "public", "private", "final", "class", "interface", "abstract", "enum"); }
-  public void testExtends1() { doTest(2, "extends", "implements", null); }
+  public void testExtends1() { doTest(3, "extends", "implements", "permits", null); }
   public void testExtends2() { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
   public void testExtends3() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
   public void testExtends4() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
@@ -150,7 +150,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
-  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW); doTest(2, "byte", "boolean"); }
+  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_16); doTest(2, "byte", "boolean"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
@@ -189,23 +189,31 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
-  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(); }
-  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "record"); }
+  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(); }
+  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "record"); }
   public void testNoLocalInterfaceAt15() {
     setLanguageLevel(LanguageLevel.JDK_15);  doTest(0);
   }
   public void testLocalInterface() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+    setLanguageLevel(LanguageLevel.JDK_16);  doTest();
   }
   public void testLocalEnum() {
-    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest();
+    setLanguageLevel(LanguageLevel.JDK_16);  doTest();
   }
-  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed"); }
+  public void testSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed"); }
   public void testNoSealedModifier() {setLanguageLevel(LanguageLevel.JDK_16);  doTest(1, "final"); }
-  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "permits"); }
-  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(0, "permits"); }
-  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
-  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);  doTest(1, "sealed");}
+  public void testPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "permits"); }
+  public void testPermitsListFinal() {
+    setLanguageLevel(LanguageLevel.JDK_17);
+    configureByTestName();
+    testByCount(0, "permits");
+    complete(2);
+    testByCount(1, "permits");
+  }
+  public void testPermitsListNoSealed() { setLanguageLevel(LanguageLevel.JDK_17); doTest(); }
+  public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(0, "permits"); }
+  public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
+  public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
 
   public void testOverwriteCatch() {
     configureByTestName();

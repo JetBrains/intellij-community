@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.Function;
+import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -25,6 +27,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   private boolean myNeedsMore = false;
   private boolean firstExecution = true;
   @NotNull private final PythonConsoleView myConsoleView;
+  private boolean isExecuting = false;
 
   public PythonDebugConsoleCommunication(@NotNull Project project,
                                          @NotNull PyDebugProcess debugProcess,
@@ -46,18 +49,13 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   }
 
   @Override
-  public boolean isWaitingForInput() {
-    return waitingForInput;
-  }
-
-  @Override
   public boolean needsMore() {
     return myNeedsMore;
   }
 
   @Override
   public boolean isExecuting() {
-    return false;
+    return isExecuting;
   }
 
   protected void exec(ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
@@ -69,17 +67,28 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+          ApplicationManager.getApplication()
+            .getService(CommandQueueForPythonConsoleService.class)
+            .removeCommand(PythonDebugConsoleCommunication.this, false);
+        }
       }
 
       @Override
       public void error(PyDebuggerException exception) {
         callback.error(exception);
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
+          ApplicationManager.getApplication()
+            .getService(CommandQueueForPythonConsoleService.class)
+            .removeCommand(PythonDebugConsoleCommunication.this, true);
+        }
       }
     });
   }
 
   @Override
   public void execInterpreter(ConsoleCodeFragment code, final Function<InterpreterResponse, Object> callback) {
+    isExecuting = true;
     if (waitingForInput) {
       final OutputStream processInput = myDebugProcess.getProcessHandler().getProcessInput();
       if (processInput != null) {
@@ -94,6 +103,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
         }
       }
       myNeedsMore = false;
+      isExecuting = false;
       waitingForInput = false;
       notifyCommandExecuted(waitingForInput);
 
@@ -105,6 +115,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
         public void ok(Pair<String, Boolean> executed) {
           boolean more = executed.second;
           myNeedsMore = more;
+          isExecuting = false;
           notifyCommandExecuted(more);
           callback.fun(new InterpreterResponse(more, isWaitingForInput()));
         }
@@ -112,6 +123,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
         @Override
         public void error(PyDebuggerException exception) {
           myNeedsMore = false;
+          isExecuting = false;
           notifyCommandExecuted(false);
           callback.fun(new InterpreterResponse(false, isWaitingForInput()));
         }
@@ -125,10 +137,9 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     super.notifyInputRequested();
   }
 
-
   @Override
   public void interrupt() {
-    throw new UnsupportedOperationException();
+    myDebugProcess.interruptDebugConsole();
   }
 
   public boolean isSuspended() {

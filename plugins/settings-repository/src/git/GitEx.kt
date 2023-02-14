@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -83,7 +83,6 @@ fun Repository.disableAutoCrLf(): Repository {
 fun Repository.commit(@NonNls message: String? = null, @NonNls reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
-    @Suppress("UsePropertyAccessSyntax")
     commitCommand.setMessage(message)
   }
   if (reflogComment != null) {
@@ -196,7 +195,7 @@ private fun getDefaultBranch(uri: String, credentialsProvider: JGitCredentialsPr
   val remoteHeadRef = remoteRefs.get(Constants.HEAD)
   if (remoteHeadRef != null) {
     for ((refName, ref) in remoteRefs) {
-      if (ref !== remoteHeadRef && ref.objectId == remoteHeadRef.objectId) {
+      if (ref !== remoteHeadRef && ref.objectId == remoteHeadRef.objectId && refName.startsWith(Constants.R_HEADS)) {
         return refName.removePrefix(Constants.R_HEADS)
       }
     }

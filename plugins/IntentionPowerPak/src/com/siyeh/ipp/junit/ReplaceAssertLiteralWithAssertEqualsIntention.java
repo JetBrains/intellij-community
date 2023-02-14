@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,11 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedIntention {
 
   @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.assert.literal.with.assert.equals.intention.family.name");
+  }
+
+  @Override
   protected String getTextForElement(PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = call.getArgumentList();
@@ -41,8 +46,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     assert methodName != null;
     final String postfix = methodName.substring("assert".length());
     final PsiExpression lastArgument = arguments[arguments.length - 1];
-    if (lastArgument instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)lastArgument;
+    if (lastArgument instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
@@ -100,8 +104,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
-    if (lastArgument instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)lastArgument;
+    if (lastArgument instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {

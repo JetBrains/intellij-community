@@ -1,30 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,12 +15,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBodyInspectionBase {
   @Override
-  protected InsertQuotedCharacterQuickFix createFix(PsiElement psiElement,
-                                                    int offsetInElement) {
-    return new InsertQuotedCharacterQuickFix(
-      psiElement,
-      offsetInElement
-    );
+  protected InsertQuotedCharacterQuickFix createFix(PsiElement psiElement, int offsetInElement) {
+    return new InsertQuotedCharacterQuickFix(psiElement, offsetInElement);
   }
 
   private static class InsertQuotedCharacterQuickFix extends LocalQuickFixOnPsiElement {
@@ -52,11 +30,7 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     @Override
     @NotNull
     public String getText() {
-      final String character = getXmlCharacter();
-
-      return character.equals("&")
-             ? XmlBundle.message("xml.quickfix.unescaped.xml.character.ampersand")
-             : XmlBundle.message("xml.quickfix.unescaped.xml.character.text", character);
+      return XmlBundle.message("xml.quickfix.unescaped.xml.character.text", getXmlCharacter());
     }
 
     @Override
@@ -69,20 +43,12 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       final PsiFile psiFile = startElement.getContainingFile();
       final TextRange range = startElement.getTextRange();
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(
-        project,
-        psiFile.getVirtualFile(),
-        range.getStartOffset() + startInElement
-      );
-
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-      if (editor == null) return;
 
       final String xmlCharacter = getXmlCharacter();
       String replacement = xmlCharacter.equals("&") ? AMP_ENTITY_REFERENCE : LT_ENTITY_REFERENCE;
       replacement = startElement.getText().replace(xmlCharacter, replacement);
 
-      InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().replaceString(
+      psiFile.getViewProvider().getDocument().replaceString(
         range.getStartOffset(),
         range.getEndOffset(),
         replacement

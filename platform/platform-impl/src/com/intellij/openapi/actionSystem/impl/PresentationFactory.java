@@ -1,32 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class PresentationFactory {
-  private final Map<AnAction, Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
+  private static final Key<Boolean> NEED_UPDATE_PRESENTATION = Key.create("NEED_UPDATE_PRESENTATION");
+  private final Map<AnAction, Presentation> myPresentations = CollectionFactory.createConcurrentWeakMap();
   private boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
@@ -35,23 +26,36 @@ public class PresentationFactory {
     ourAllFactories.add(this);
   }
 
-  @NotNull
-  public final Presentation getPresentation(@NotNull AnAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Presentation presentation = myAction2Presentation.get(action);
-    if (presentation == null || !action.isDefaultIcon()) {
+  public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
+    Presentation presentation = myPresentations.get(action);
+    boolean needUpdate = presentation != null && Boolean.TRUE.equals(presentation.getClientProperty(NEED_UPDATE_PRESENTATION));
+    if (presentation == null || needUpdate) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
         presentation = templatePresentation.clone();
-        myAction2Presentation.put(action, presentation);
+        presentation = ObjectUtils.notNull(myPresentations.putIfAbsent(action, presentation), presentation);
       }
-      if (!action.isDefaultIcon()) {
+      if (needUpdate) {
         presentation.setIcon(templatePresentation.getIcon());
         presentation.setDisabledIcon(templatePresentation.getDisabledIcon());
+        presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
       }
-      processPresentation(presentation);
+      processPresentation(presentation, action);
     }
     return presentation;
+  }
+
+  /**
+   * Get an unmodifiable collection of actions which this factory
+   * is currently storing {@link Presentation}s for.
+   */
+  @ApiStatus.Internal
+  public final @NotNull Collection<AnAction> getActions() {
+    return Collections.unmodifiableSet(myPresentations.keySet());
+  }
+
+  protected void processPresentation(@NotNull Presentation presentation, @NotNull AnAction action) {
+    processPresentation(presentation);
   }
 
   protected void processPresentation(@NotNull Presentation presentation) {
@@ -59,7 +63,7 @@ public class PresentationFactory {
 
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myAction2Presentation.clear();
+    myPresentations.clear();
     myNeedRebuild = true;
   }
 
@@ -74,6 +78,15 @@ public class PresentationFactory {
   public static void clearPresentationCaches() {
     for (PresentationFactory factory : ourAllFactories) {
       factory.reset();
+    }
+  }
+
+  public static void updatePresentation(@NotNull AnAction action)  {
+    for (PresentationFactory factory : ourAllFactories) {
+      Presentation presentation = factory.myPresentations.get(action);
+      if (presentation != null) {
+        presentation.putClientProperty(NEED_UPDATE_PRESENTATION, true);
+      }
     }
   }
 }

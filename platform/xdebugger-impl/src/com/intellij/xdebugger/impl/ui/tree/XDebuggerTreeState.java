@@ -68,8 +68,7 @@ public final class XDebuggerTreeState {
 
   @Nullable
   private static NodeInfo createNode(final XDebuggerTreeNode node, boolean selected) {
-    if (node instanceof RestorableStateNode) {
-      RestorableStateNode valueNode = (RestorableStateNode)node;
+    if (node instanceof RestorableStateNode valueNode) {
       if (valueNode.isComputed()) {
         return new NodeInfo(valueNode.getName(), valueNode.getRawValue(), selected);
       }

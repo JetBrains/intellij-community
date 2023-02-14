@@ -2,6 +2,7 @@
 package com.intellij.ide.actionMacro.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -21,5 +22,10 @@ final class PlaySavedMacros extends AnAction {
     } else {
       popup.showInFocusCenter();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to customize {@link ExternalSystemNotificationManager external system notifications} shown to end-user by the ide.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemNotificationExtension {
 

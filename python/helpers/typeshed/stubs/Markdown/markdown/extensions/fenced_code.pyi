@@ -1,4 +1,5 @@
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from markdown.extensions import Extension
 from markdown.preprocessors import Preprocessor
@@ -6,7 +7,7 @@ from markdown.preprocessors import Preprocessor
 class FencedCodeExtension(Extension): ...
 
 class FencedBlockPreprocessor(Preprocessor):
-    FENCED_BLOCK_RE: Pattern
+    FENCED_BLOCK_RE: Pattern[str]
     CODE_WRAP: str = ...
     LANG_TAG: str = ...
     checked_for_codehilite: bool = ...

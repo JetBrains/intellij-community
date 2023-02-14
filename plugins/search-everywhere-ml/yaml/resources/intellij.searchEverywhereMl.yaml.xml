@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.ide.actions.searcheverywhere.ml.yaml">
+
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.yaml"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistician key="searchEverywhere"
+                  implementationClass="com.intellij.ide.actions.searcheverywhere.ml.yaml.features.statistician.SEYamlKeyStatistician"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.yaml.features.SEYamlKeyFeaturesProvider"/>
+  </extensions>
+</idea-plugin>

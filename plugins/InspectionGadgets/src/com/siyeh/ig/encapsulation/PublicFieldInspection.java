@@ -16,8 +16,8 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,11 +28,11 @@ import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class PublicFieldInspection extends BaseInspection {
 
@@ -43,14 +43,12 @@ public class PublicFieldInspection extends BaseInspection {
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet("org.junit.runners.Parameterized.Parameter");
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.add(annotationsListControl, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("public.field.ignore.enum.type.fields.option"), "ignoreEnums");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreEnums", InspectionGadgetsBundle.message("public.field.ignore.enum.type.fields.option"))
+    );
   }
 
   @Override
@@ -98,8 +96,7 @@ public class PublicFieldInspection extends BaseInspection {
           return;
         }
         if (ignoreEnums) {
-          if (type instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)type;
+          if (type instanceof PsiClassType classType) {
             final PsiClass aClass = classType.resolve();
             if (aClass != null && aClass.isEnum()) {
               return;

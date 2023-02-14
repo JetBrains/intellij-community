@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.application.ApplicationManager
@@ -124,7 +124,7 @@ internal class SdkLookupImpl : SdkLookup {
           ApplicationManager.getApplication().assertIsNonDispatchThread()
           onSdkNameResolved(sdk)
 
-          ///we do not has a better API on SdkDownloadTracker to wait for a download
+          ///we do not have a better API on SdkDownloadTracker to wait for a download
           ///smarter than with a busy waiting. Need to re-implement the SdkDownloadTracker
           ///in a way to avoid heavy dependency on EDT (and modality state)
           try {
@@ -203,7 +203,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     //  we need to make sure there is no race conditions,
     // the SdkDownloadTracker has to use WriteAction to apply changes
     val action: () -> Boolean = invokeAndWaitIfNeeded {
-      //double checked to avoid
+      //double-checked to avoid
       if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@invokeAndWaitIfNeeded { false }
 
       onSdkNameResolved(sdk)
@@ -306,8 +306,9 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
     runSdkResolutionUnderProgress(rootProgressIndicator) { indicator ->
       try {
-        val resolvers = UnknownSdkResolver.EP_NAME.iterable
+        val resolvers = UnknownSdkResolver.EP_NAME.lazySequence()
           .mapNotNull { it.createResolver(project, indicator) }
+          .toList()
 
         indicator.checkCanceled()
 

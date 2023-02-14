@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,6 +26,7 @@ import java.util.Map;
  * @see com.intellij.openapi.application.Application
  * @see com.intellij.openapi.project.Project
  */
+@ApiStatus.NonExtendable
 public interface ComponentManager extends UserDataHolder, Disposable, AreaInstance {
   /**
    * @deprecated Use {@link #getComponent(Class)} instead.
@@ -47,17 +51,14 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @return {@code true} if there is a component with the specified interface class;
    * {@code false} otherwise
    */
-  default boolean hasComponent(@NotNull Class<?> interfaceClass) {
-    return getPicoContainer().getComponentAdapter(interfaceClass) != null;
-  }
+  boolean hasComponent(@NotNull Class<?> interfaceClass);
 
   /**
-   * @deprecated use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extension points</a> instead
+   * @deprecated Use ComponentManager API
    */
   @Deprecated
-  <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass);
-
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @NotNull PicoContainer getPicoContainer();
 
   @ApiStatus.Internal
@@ -107,23 +108,39 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   <T> T getService(@NotNull Class<T> serviceClass);
 
+  /**
+   * @deprecated Use override accepting {@link ClientKind} for better control over kinds of clients the services are requested for.
+   */
+  @ApiStatus.Experimental
+  @Deprecated
+  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, boolean includeLocal) {
+    return getServices(serviceClass, includeLocal ? ClientKind.ALL : ClientKind.REMOTE);
+  }
+
+  /**
+   * Collects all services registered with matching client="..." attribute in xml.
+   * Take a look at {@link com.intellij.openapi.client.ClientSession}
+   */
+  @ApiStatus.Experimental
+  default @NotNull <T> List<T> getServices(@NotNull Class<T> serviceClass, ClientKind client) {
+    T service = getService(serviceClass);
+    return service != null ? Collections.singletonList(service) : Collections.emptyList();
+  }
+
   default @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getService(serviceClass);
   }
 
   @Override
-  default @NotNull ExtensionsArea getExtensionArea() {
-    // default impl to keep backward compatibility
-    throw new AbstractMethodError();
-  }
+  @NotNull ExtensionsArea getExtensionArea();
 
   @ApiStatus.Internal
-  default <T> T instantiateClass(@NotNull Class<T> aClass, @SuppressWarnings("unused") @Nullable PluginId pluginId) {
+  default <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
     return ReflectionUtil.newInstance(aClass, false);
   }
 
   @ApiStatus.Internal
-  <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @SuppressWarnings("unused") @NotNull PluginId pluginId);
+  <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId);
 
   @ApiStatus.Internal
   default void logError(@NotNull Throwable error, @NotNull PluginId pluginId) {
@@ -136,20 +153,21 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @ApiStatus.Internal
   @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId);
 
-  @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId, @Nullable Map<String, String> attachments);
+  @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                        @Nullable Throwable error,
+                                        @NotNull PluginId pluginId,
+                                        @Nullable Map<String, String> attachments);
 
   @ApiStatus.Internal
-  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+  <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
 
   @ApiStatus.Internal
-  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
-    try {
-      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor);
 
   @NotNull ActivityCategory getActivityCategory(boolean isExtension);
+
+  @ApiStatus.Internal
+  default boolean isSuitableForOs(@NotNull ExtensionDescriptor.Os os) {
+    return true;
+  }
 }

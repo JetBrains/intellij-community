@@ -22,9 +22,6 @@ import org.jetbrains.idea.svn.api.SvnClient;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface CheckinClient extends SvnClient {
 
   CommitInfo @NotNull [] commit(@NotNull List<File> paths, @NotNull String comment) throws VcsException;

@@ -1,4 +1,4 @@
-// "Cast parameter to 'java.util.List<A>'" "false"
+// "Cast argument to 'List<A>'" "false"
 
 import java.util.*;
 

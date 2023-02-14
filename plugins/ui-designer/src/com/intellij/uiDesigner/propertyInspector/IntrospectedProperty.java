@@ -19,10 +19,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> {
   protected final static Object[] EMPTY_OBJECT_ARRAY=new Object[]{};
 

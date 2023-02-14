@@ -36,8 +36,7 @@ final class ModelAccessor {
    */
   ModelAccessor(@NotNull TreeModel model) {
     this.model = model;
-    if (model instanceof InvokerSupplier) {
-      InvokerSupplier supplier = (InvokerSupplier)model;
+    if (model instanceof InvokerSupplier supplier) {
       invoker = supplier.getInvoker();
     }
     else {
@@ -123,8 +122,7 @@ final class ModelAccessor {
     if (obsolescent.isObsolete()) return null;
     List<NodeContent> list = emptyList();
     if (state != LeafState.ALWAYS) {
-      if (model instanceof ChildrenProvider) {
-        ChildrenProvider<?> provider = (ChildrenProvider<?>)model;
+      if (model instanceof ChildrenProvider<?> provider) {
         List<?> children = provider.getChildren(node);
         if (children == null) throw new ProcessCanceledException();
         list = getChildren(obsolescent, children.size(), children::get);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.lightEdit.LightEditService;
@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -19,22 +20,23 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
+import java.util.function.Function;
 
+@Service(Service.Level.APP)
 public final class CommandLineWaitingManager {
   private static final Logger LOG = Logger.getInstance(CommandLineWaitingManager.class);
   private static final String DO_NOT_SHOW_KEY = "command.line.waiting.do.not.show";
@@ -61,7 +63,7 @@ public final class CommandLineWaitingManager {
         }
       }
     });
-    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         freeObject(project);
@@ -69,7 +71,7 @@ public final class CommandLineWaitingManager {
     });
   }
 
-  public @NotNull Future<CliResult> addHookForPath(@NotNull Path path) {
+  public @NotNull CompletableFuture<CliResult> addHookForPath(@NotNull Path path) {
     return addHookAndNotify(path, IdeBundle.message("activation.file.is.waiting.notification", path.toString()));
   }
 
@@ -77,16 +79,16 @@ public final class CommandLineWaitingManager {
     return ApplicationManager.getApplication().getService(CommandLineWaitingManager.class);
   }
 
-  public @NotNull Future<CliResult> addHookForFile(@NotNull VirtualFile file) {
+  public @NotNull CompletableFuture<CliResult> addHookForFile(@NotNull VirtualFile file) {
     return addHookAndNotify(file, IdeBundle.message("activation.file.is.waiting.notification", file.getPath()));
   }
 
-  public @NotNull Future<CliResult> addHookForProject(@NotNull Project project) {
+  public @NotNull CompletableFuture<CliResult> addHookForProject(@NotNull Project project) {
     return addHookAndNotify(project, IdeBundle.message("activation.project.is.waiting.notification", project.getName()));
   }
 
-  private @NotNull Future<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
-                                                      @NotNull @NlsContexts.NotificationContent String notificationText) {
+  private @NotNull CompletableFuture<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
+                                                                 @NotNull @NlsContexts.NotificationContent String notificationText) {
     LOG.info(notificationText);
 
     final CompletableFuture<CliResult> result = new CompletableFuture<>();
@@ -97,7 +99,6 @@ public final class CommandLineWaitingManager {
                                               NotificationType.WARNING).setImportant(true));
 
     EditorNotifications.updateAll();
-
     return result;
   }
 
@@ -118,29 +119,23 @@ public final class CommandLineWaitingManager {
     future.complete(CliResult.OK);
   }
 
-  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
-    private static final Key<EditorNotificationPanel> KEY = Key.create("CommandLineWaitingNotification");
-
+  static final class MyNotification implements EditorNotificationProvider, DumbAware {
     @Override
-    public @NotNull Key<EditorNotificationPanel> getKey() {
-      return KEY;
-    }
+    public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                   @NotNull VirtualFile file) {
+      if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) return null;
+      CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
+      if (manager == null || !manager.hasHookFor(file) || manager.myDismissedObjects.contains(file)) return null;
 
-    @Override
-    public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-      if (!PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) {
-        CommandLineWaitingManager manager = ApplicationManager.getApplication().getServiceIfCreated(CommandLineWaitingManager.class);
-        if (manager != null && manager.hasHookFor(file) && !manager.myDismissedObjects.contains(file)) {
-          return new MyNotificationPanel(file);
-        }
-      }
-      return null;
+      return fileEditor -> {
+        return new MyNotificationPanel(file);
+      };
     }
   }
 
   private static final class MyNotificationPanel extends EditorNotificationPanel {
     private MyNotificationPanel(@NotNull VirtualFile virtualFile) {
-      super(EditorColors.GUTTER_BACKGROUND);
+      super(EditorColors.GUTTER_BACKGROUND, Status.Info);
       setText(IdeBundle.message("activation.file.is.waiting.title"));
 
       createActionLabel(IdeBundle.message("activation.file.is.waiting.release"), () -> {

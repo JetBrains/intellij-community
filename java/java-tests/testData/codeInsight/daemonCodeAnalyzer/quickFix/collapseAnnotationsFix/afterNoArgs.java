@@ -1,4 +1,4 @@
-// "Remove" "true"
+// "Remove" "true-preview"
 
 @XYZ
 class X{}

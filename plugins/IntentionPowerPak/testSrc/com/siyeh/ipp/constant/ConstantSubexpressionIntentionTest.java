@@ -6,17 +6,20 @@ import com.siyeh.ipp.IPPTestCase;
 public class ConstantSubexpressionIntentionTest extends IPPTestCase {
 
   public void testPlus() {
-    doTest("class X {\n" +
-           "  void test(int a) { int res = a + 1 /*_Compute constant value of '1 + 2'*/+ 2 + 3; }\n" +
-           "}",
-           "class X {\n" +
-           "  void test(int a) { int res = a + 3 + 3; }\n" +
-           "}");
+    doTest("""
+             class X {
+               void test(int a) { int res = a + 1 /*_Compute constant value of '1 + 2'*/+ 2 + 3; }
+             }""",
+           """
+             class X {
+               void test(int a) { int res = a + 3 + 3; }
+             }""");
   }
 
   public void testMinus() {
-    doTestIntentionNotAvailable("class X {\n" +
-                                "  void test(int a) { int res = a - 1 /*_Compute constant value of '1 - 2'*/- 2 - 3; }\n" +
-                                "}");
+    doTestIntentionNotAvailable("""
+                                  class X {
+                                    void test(int a) { int res = a - 1 /*_Compute constant value of '1 - 2'*/- 2 - 3; }
+                                  }""");
   }
 }

@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.workspaceModel.storage.createBuilderFrom
 import com.intellij.workspaceModel.storage.createEmptyBuilder
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import junit.framework.Assert.assertTrue
 import org.junit.Test
 

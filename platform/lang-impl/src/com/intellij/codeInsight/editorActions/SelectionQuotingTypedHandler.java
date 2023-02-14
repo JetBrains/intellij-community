@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -15,17 +17,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author AG
- * @author yole
- */
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
-  private static final ExtensionPointName<DequotingFilter> OLD_EP_NAME = ExtensionPointName.create("com.intellij.selectionDequotingFilter");
 
   @NotNull
   @Override
@@ -48,6 +44,11 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       if (!StringUtil.isEmpty(selectedText)) {
         final int selectionStart = selectionModel.getSelectionStart();
         final int selectionEnd = selectionModel.getSelectionEnd();
+
+        if (isReplaceInComparisonOperation(file, selectionStart, selectedText, c)) {
+          return super.beforeSelectionRemoved(c, project, editor, file);
+        }
+
         if (selectedText.length() > 1) {
           final char firstChar = selectedText.charAt(0);
           final char lastChar = selectedText.charAt(selectedText.length() - 1);
@@ -64,11 +65,11 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();
         editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
-        
+
         int startOffset = caretOffset + 1;
         int endOffset = caretOffset + newText.length() - 1;
         int length = editor.getDocument().getTextLength();
-        
+
         // selection is removed here
         if (endOffset <= length) {
           if (restoreStickySelection) {
@@ -97,6 +98,33 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
       }
     }
     return super.beforeSelectionRemoved(c, project, editor, file);
+  }
+
+  private static boolean isReplaceInComparisonOperation(@NotNull PsiFile file, int offset, @NotNull String selectedText, char c) {
+    if ((c == '<' || c == '>') && selectedText.length() <= 3 && isOnlyComparisons(selectedText)) {
+      PsiElement elementAtOffset = file.findElementAt(offset);
+      if (elementAtOffset != null) {
+        IElementType tokenType = elementAtOffset.getNode().getElementType();
+        ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(elementAtOffset.getLanguage());
+        if (parserDefinition != null &&
+            (parserDefinition.getCommentTokens().contains(tokenType) ||
+             parserDefinition.getStringLiteralElements().contains(tokenType))) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private static boolean isOnlyComparisons(@NotNull String text) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c != '>' && c != '<' && c != '=' && c != '!') {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean containsQuoteInside(String selectedText, char quote) {
@@ -141,8 +169,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   public static boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
-    return EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) ||
-           OLD_EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c));
+    return EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c));
   }
 
   private static char getMatchingDelimiter(char c) {
@@ -178,16 +205,5 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
                                                           @NotNull Editor editor,
                                                           @NotNull String selectedText,
                                                           char c);
-  }
-
-  /**
-   * @deprecated in order to disable replacement of surrounding quotes/braces in some cases override {@link UnquotingFilter} and register
-   * the implementation as {@code selectionDequotingFilter} extension; if you need to check whether surrounding quotes/braces should be
-   * replaced use {@link #shouldSkipReplacementOfQuotesOrBraces}
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static abstract class DequotingFilter extends UnquotingFilter {
   }
 }

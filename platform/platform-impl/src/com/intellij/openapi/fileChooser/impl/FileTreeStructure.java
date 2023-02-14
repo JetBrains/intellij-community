@@ -63,11 +63,10 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object @NotNull [] getChildElements(@NotNull Object nodeElement) {
-    if (!(nodeElement instanceof FileElement)) {
+    if (!(nodeElement instanceof FileElement element)) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    FileElement element = (FileElement)nodeElement;
     VirtualFile file = element.getFile();
 
     if (file == null || !file.isValid()) {
@@ -110,8 +109,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   @Override
   public @Nullable Object getParentElement(@NotNull Object element) {
-    if (element instanceof FileElement) {
-      final FileElement fileElement = (FileElement)element;
+    if (element instanceof FileElement fileElement) {
 
       final VirtualFile elementFile = getValidFile(fileElement);
       VirtualFile rootElementFile = myRootElement.getFile();

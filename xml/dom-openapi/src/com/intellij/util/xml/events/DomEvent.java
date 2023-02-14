@@ -19,9 +19,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class DomEvent {
   public static final DomEvent[] EMPTY_ARRAY = new DomEvent[0];
 

@@ -1,0 +1,11 @@
+enum class Main {
+
+    enum class Test {
+        A;
+
+        fun test() {
+            Test.values()
+        }
+
+    }
+}

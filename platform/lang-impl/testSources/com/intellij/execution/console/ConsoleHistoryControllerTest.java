@@ -61,7 +61,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
 
   private void executeCommand() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    myExecAction.actionPerformed(new TestActionEvent());
+    myExecAction.actionPerformed(TestActionEvent.createTestEvent());
   }
 
   private void execStatementList1() {
@@ -134,7 +134,6 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
   public void tearDown() throws Exception {
     try {
       Disposer.dispose(myConsole);
-      setVFile(null);
     }
     catch (Throwable e) {
       addSuppressedException(e);

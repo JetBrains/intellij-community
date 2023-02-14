@@ -1,0 +1,60 @@
+_socket.*
+_posixsubprocess.cloexec_pipe
+os.EX_NOTFOUND
+os.SF_MNOWAIT
+os.SF_NODISKIO
+os.SF_SYNC
+os.plock
+posix.EX_NOTFOUND
+posix.NGROUPS_MAX
+select.EPOLL_RDHUP
+selectors.KqueueSelector
+signal.SIGEMT
+signal.SIGINFO
+socket.[A-Z0-9_]+
+errno.[A-Z0-9]+
+
+# Exists at runtime, but missing from stubs
+distutils.msvccompiler.MSVCCompiler.get_msvc_paths
+distutils.msvccompiler.MSVCCompiler.set_path_env_var
+distutils.msvccompiler.MacroExpander
+mimetypes.MimeTypes.read_windows_registry
+selectors.DefaultSelector.fileno
+spwd.struct_spwd.sp_nam
+spwd.struct_spwd.sp_pwd
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+# Modules that do not exist on Linux systems
+_msi
+_winapi
+asyncio.windows_events
+asyncio.windows_utils
+msilib(.[a-z]+)?
+msvcrt
+winreg
+winsound
+
+# Aliases for OSError
+posix.error.characters_written
+resource.error.characters_written
+
+# Platform differences that cannot be captured by the type system
+fcntl.I_[A-Z0-9_]+
+os.SCHED_[A-Z_]+
+posix.SCHED_[A-Z_]+
+
+# Some of these exist on non-windows, but they are useless and this is not intended
+stat.FILE_ATTRIBUTE_[A-Z_]+
+
+# Methods that come from __getattr__() at runtime
+tkinter.Tk.createfilehandler
+tkinter.Tk.deletefilehandler
+
+_?curses.ACS_.* # ACS codes are initialized only after initscr call
+curses.COLORS  # Initialized after start_color
+curses.COLOR_PAIRS  # Initialized after start_color
+curses.COLS  # Initialized only after initscr call
+curses.LINES  # Initialized only after initscr call

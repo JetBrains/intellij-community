@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -23,7 +24,7 @@ import java.util.Map;
  * @author Maxim.Medvedev
  */
 public final class RenameAliasedUsagesUtil {
-  private static final String EMPTY_ALIAS = "____00_______EMPTY_ALIAS_______00____";
+  private static final String EMPTY_ALIAS = new String("EMPTY_ALIAS");
 
   private RenameAliasedUsagesUtil() {
   }
@@ -35,7 +36,6 @@ public final class RenameAliasedUsagesUtil {
 
     for (PsiReference ref : refs) {
       final PsiElement e = ref.getElement();
-      if (e == null) continue;
       if (skipReference(element, aliases, e)) continue;
       result.add(ref);
     }
@@ -45,7 +45,7 @@ public final class RenameAliasedUsagesUtil {
 
   public static boolean skipReference(PsiElement member, Map<GroovyFile, String> aliases, PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof GroovyFile && findAliasedName(aliases, ((GroovyFile)containingFile), member) != EMPTY_ALIAS) {
+    if (containingFile instanceof GroovyFile && !Strings.areSameInstance(findAliasedName(aliases, ((GroovyFile)containingFile), member), EMPTY_ALIAS)) {
       if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, true) != null) return false;
       return true;
     }

@@ -27,11 +27,11 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   private static final Logger LOG = Logger.getInstance(PsiEnumConstantInitializerImpl.class);
   private PsiClassType myCachedBaseType;
 
-  public PsiEnumConstantInitializerImpl(final PsiClassStub stub) {
+  public PsiEnumConstantInitializerImpl(PsiClassStub stub) {
     super(stub, JavaStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
-  public PsiEnumConstantInitializerImpl(final ASTNode node) {
+  public PsiEnumConstantInitializerImpl(ASTNode node) {
     super(node);
   }
 

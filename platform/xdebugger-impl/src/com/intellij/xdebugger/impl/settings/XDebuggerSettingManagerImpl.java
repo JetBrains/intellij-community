@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -17,10 +18,9 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
-@State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"))
+@State(name = "XDebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState>, Disposable {
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
@@ -51,10 +51,6 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     return settingsState;
   }
 
-  public Collection<XDebuggerSettings> getSettingsList() {
-    return XDebuggerSettings.EXTENSION_POINT.getExtensionList();
-  }
-
   @Override
   @NotNull
   public XDebuggerDataViewSettings getDataViewSettings() {
@@ -70,7 +66,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.specificStates) {
-      XDebuggerSettings<?> settings = findSettings(settingsState.id);
+      XDebuggerSettings<?> settings = XDebuggerSettings.EXTENSION_POINT.findFirstSafe(e -> settingsState.id.equals(e.getId()));
       if (settings != null) {
         ComponentSerializationUtil.loadComponentState(settings, settingsState.configuration);
       }
@@ -79,10 +75,6 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
 
   @Override
   public void dispose() {
-  }
-
-  private static XDebuggerSettings findSettings(String id) {
-    return XDebuggerSettings.EXTENSION_POINT.extensions().filter(e -> id.equals(e.getId())).findFirst().orElse(null);
   }
 
   public static class SettingsState {

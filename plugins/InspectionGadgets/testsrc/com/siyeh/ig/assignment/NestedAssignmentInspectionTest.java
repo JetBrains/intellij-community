@@ -17,14 +17,15 @@ public class NestedAssignmentInspectionTest extends LightJavaInspectionTestCase 
   }
 
   public void testSwitchExpression() {
-    doTest("class Main {\n" +
-           "    int test(int i) {\n" +
-           "        int j = switch(i) {\n" +
-           "            default -> /*Result of assignment expression used*/i = 2/**/;\n" +
-           "        };\n" +
-           "        return j+i;\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Main {
+                 int test(int i) {
+                     int j = switch(i) {
+                         default -> /*Result of assignment expression used*/i = 2/**/;
+                     };
+                     return j+i;
+                 }
+             }""");
   }
 
   @Override

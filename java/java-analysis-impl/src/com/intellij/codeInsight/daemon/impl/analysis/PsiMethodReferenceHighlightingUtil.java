@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -11,7 +11,7 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 
 public final class PsiMethodReferenceHighlightingUtil {
-  static HighlightInfo checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
+  static HighlightInfo.Builder checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
     if (expression.isConstructor()) {
       PsiType[] typeParameters = expression.getTypeParameters();
       if (typeParameters.length > 0) {
@@ -20,7 +20,7 @@ public final class PsiMethodReferenceHighlightingUtil {
           PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
           if (resolve instanceof PsiClass && ((PsiClass)resolve).hasTypeParameters()) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters")).create();
+              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters"));
           }
         }
       }
@@ -29,7 +29,7 @@ public final class PsiMethodReferenceHighlightingUtil {
   }
 
   static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef) {
-    final PsiElement resolve = methodRef.resolve();
+    PsiElement resolve = methodRef.resolve();
 
     if (resolve == null) return null;
     return checkMethodReferenceContext(methodRef, resolve, methodRef.getFunctionalInterfaceType());
@@ -38,22 +38,20 @@ public final class PsiMethodReferenceHighlightingUtil {
   public static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
                                                                                     @NotNull PsiElement resolve,
                                                                                     PsiType functionalInterfaceType) {
-    final PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
-    final boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
-    final PsiElement qualifier = methodRef.getQualifier();
+    PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
+    boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    PsiElement qualifier = methodRef.getQualifier();
 
     boolean isMethodStatic = false;
     boolean receiverReferenced = false;
     boolean isConstructor = true;
 
-    if (resolve instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)resolve;
-
+    if (resolve instanceof PsiMethod method) {
       isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
       isConstructor = method.isConstructor();
 
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+      PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+      PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       receiverReferenced = PsiMethodReferenceUtil.isResolvedBySecondSearch(methodRef,
                                                     interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null,
                                                                            method.isVarArgs(),
@@ -78,9 +76,9 @@ public final class PsiMethodReferenceHighlightingUtil {
     }
 
     if (isMethodStatic && isStaticSelector && qualifier instanceof PsiTypeElement) {
-      final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(qualifier, PsiJavaCodeReferenceElement.class);
+      PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(qualifier, PsiJavaCodeReferenceElement.class);
       if (referenceElement != null) {
-        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        PsiReferenceParameterList parameterList = referenceElement.getParameterList();
         if (parameterList != null && parameterList.getTypeArguments().length > 0) {
           return JavaErrorBundle.message("parameterized.qualifier.on.static.method.reference.context");
         }

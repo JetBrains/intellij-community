@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -10,6 +10,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Factory;
@@ -25,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"))
+@State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
 public class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
   public static final Factory<Set<String>> SET_FACTORY = () -> new HashSet<>();
   private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();
@@ -72,7 +73,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   /**
    * @deprecated use getProviderToDisabledTemplates
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   @MapAnnotation(entryTagName = "disabled-postfix-templates", keyAttributeName = "lang", surroundWithTag = false)
   public Map<String, Set<String>> getLangDisabledTemplates() {
@@ -82,7 +83,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
   /**
    * @deprecated use setProviderToDisabledTemplates
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setLangDisabledTemplates(@NotNull Map<String, Set<String>> templatesState) {
     myLangToDisabledTemplates = templatesState;
   }

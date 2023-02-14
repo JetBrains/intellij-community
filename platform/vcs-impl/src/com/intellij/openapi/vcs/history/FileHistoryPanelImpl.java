@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.CommonBundle;
@@ -46,6 +46,7 @@ import com.intellij.util.TreeItem;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.text.JBDateFormat;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -74,11 +75,13 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
 
 public final class FileHistoryPanelImpl extends JPanel implements DataProvider, Disposable, EditorColorsListener, CopyProvider {
-  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
-  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
-
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
+  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
+  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
+  private static final String VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup";
+  private static final String VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP = "VcsHistoryActionsGroup.Toolbar";
+  
   private final String myHelpId;
 
   @NotNull private final AbstractVcs myVcs;
@@ -187,15 +190,13 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   private static void makeBold(Component component) {
-    if (component instanceof JComponent) {
-      JComponent jComponent = (JComponent)component;
+    if (component instanceof JComponent jComponent) {
       Font font = jComponent.getFont();
       if (font != null) {
         jComponent.setFont(font.deriveFont(Font.BOLD));
       }
     }
-    else if (component instanceof Container) {
-      Container container = (Container)component;
+    else if (component instanceof Container container) {
       for (int i = 0; i < container.getComponentCount(); i++) {
         makeBold(container.getComponent(i));
       }
@@ -320,8 +321,8 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
 
   private void setupDualView(@NotNull DefaultActionGroup group) {
     myDualView.setShowGrid(true);
-    PopupHandler.installPopupHandler(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP);
+    PopupHandler.installPopupMenu(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDualView, true));
 
     myDualView.addListSelectionListener(e -> updateMessage());
@@ -353,7 +354,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   @NotNull
-  protected JComponent createCenterPanel() {
+  private JComponent createCenterPanel() {
     mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
     mySplitter.setFirstComponent(myDualView);
 
@@ -389,10 +390,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
-    AnAction actionGroup = ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP : VCS_HISTORY_TOOLBAR_ACTION_GROUP);
-    result.add(actionGroup);
-    AnAction[] additionalActions =
-      myProvider.getAdditionalActions(() -> ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true)));
+    result.add(ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP :
+                                                     VCS_HISTORY_TOOLBAR_ACTION_GROUP));
+    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true));
+    });
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -400,6 +402,8 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         }
       }
     }
+    result.add(ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_PLUGIN_ACTION_GROUP :
+                                                     VCS_HISTORY_TOOLBAR_PLUGIN_ACTION_GROUP));
     if (!myIsStaticAndEmbedded) {
       result.add(new MyShowDetailsAction());
     }
@@ -486,7 +490,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
       return myRefresherI;
     }
-    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return myHelpId;
     }
     return null;
@@ -581,6 +585,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   public void performCopy(@NotNull DataContext dataContext) {
     String text = StringUtil.join(getSelectedRevisions(), revision -> getPresentableText(revision, true), "\n");
     CopyPasteManager.getInstance().setContents(new StringSelection(text));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -684,7 +693,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
           setOpaque(selected);
           Date date = (Date)value;
           if (date != null) {
-            append(DateFormatUtil.formatDateTime(date), getDefaultAttributes());
+            append(JBDateFormat.getFormatter().formatPrettyDateTime(date), getDefaultAttributes());
           }
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }
@@ -728,15 +737,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
-      if (selected || hasFocus) {
-        setBackground(table.getSelectionBackground());
-        setForeground(table.getSelectionForeground());
-      }
-      else {
-        setBackground(table.getBackground());
-        setForeground(table.getForeground());
-      }
-      if (value != null)  {
+      if (value != null) {
         //noinspection HardCodedStringLiteral
         append(value.toString(), getDefaultAttributes());
       }
@@ -760,8 +761,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     public TableCellRenderer getCustomizedRenderer(VcsFileRevision revision, TableCellRenderer renderer) {
       if (renderer instanceof AuthorCellRenderer) {
-        if (revision instanceof VcsFileRevisionEx) {
-          VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
+        if (revision instanceof VcsFileRevisionEx ex) {
           @Nls StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;"); // NON-NLS
           if (ex.getCommitterName() != null && !Objects.equals(ex.getAuthor(), ex.getCommitterName())) {
@@ -809,8 +809,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
-          if (value instanceof String) {
-            String message = (String)value;
+          if (value instanceof String message) {
             myIssueLinkRenderer.appendTextWithLinks(message, getDefaultAttributes());
             SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
           }
@@ -968,6 +967,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE;
     }
@@ -984,6 +988,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     MyShowDetailsAction() {
       super(VcsBundle.messagePointer("action.ToggleAction.text.show.details"),
             VcsBundle.messagePointer("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

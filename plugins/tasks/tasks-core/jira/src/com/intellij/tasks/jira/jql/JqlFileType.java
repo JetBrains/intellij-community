@@ -38,7 +38,7 @@ public final class JqlFileType extends LanguageFileType {
   }
 
   @Override
-  public @NotNull Icon getIcon() {
+  public Icon getIcon() {
     return TasksCoreIcons.Jira;
   }
 }

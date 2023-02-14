@@ -22,8 +22,6 @@ public final class VcsEP implements PluginAware {
   public String displayName;
   @Attribute("administrativeAreaName")
   public String administrativeAreaName;
-  @Attribute("crawlUpToCheckUnderVcs")
-  public boolean crawlUpToCheckUnderVcs;
   @Attribute("areChildrenValidMappings")
   public boolean areChildrenValidMappings;
 
@@ -34,7 +32,7 @@ public final class VcsEP implements PluginAware {
   }
 
   public @NotNull VcsDescriptor createDescriptor() {
-    return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs, areChildrenValidMappings);
+    return new VcsDescriptor(administrativeAreaName, displayName, name, areChildrenValidMappings);
   }
 
   @Override

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
@@ -23,21 +22,29 @@ import org.jetbrains.annotations.Nullable;
 public class ConvertToNestedIfIntention extends Intention {
 
   @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("convert.to.nested.if.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("convert.to.nested.if.intention.name");
+  }
+
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
 
       @Override
       public boolean satisfiedBy(PsiElement element) {
-        if (!(element instanceof PsiReturnStatement)) {
+        if (!(element instanceof PsiReturnStatement returnStatement)) {
           return false;
         }
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
         final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
-        if (!(returnValue instanceof PsiPolyadicExpression)) {
+        if (!(returnValue instanceof PsiPolyadicExpression polyadicExpression)) {
           return false;
         }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)returnValue;
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
         return tokenType == JavaTokenType.ANDAND || tokenType == JavaTokenType.OROR;
       }
@@ -73,8 +80,7 @@ public class ConvertToNestedIfIntention extends Intention {
                                        boolean top,
                                        CommentTracker tracker,
                                        StringBuilder out) {
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyadicExpression) {
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.ANDAND.equals(tokenType)) {
@@ -96,8 +102,7 @@ public class ConvertToNestedIfIntention extends Intention {
         return out;
       }
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       buildIf(parenthesizedExpression.getExpression(), top, tracker, out);
       return out;
     }

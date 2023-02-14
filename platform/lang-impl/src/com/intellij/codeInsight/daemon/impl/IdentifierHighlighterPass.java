@@ -46,17 +46,15 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UND
 import static com.intellij.codeInsight.highlighting.HighlightUsagesKt.getUsageRanges;
 import static com.intellij.model.psi.impl.TargetsKt.targetSymbols;
 
-/**
- * @author yole
- */
+
 public class IdentifierHighlighterPass {
   private static final Logger LOG = Logger.getInstance(IdentifierHighlighterPass.class);
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
-  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedSet(new LinkedHashSet<>());
+  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedSet(new LinkedHashSet<>());
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
@@ -225,13 +223,13 @@ public class IdentifierHighlighterPass {
              "virtual file: " + myFile.getVirtualFile());
   }
 
-  private static volatile int id;
+  private static int id;
   private int getId() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int id = IdentifierHighlighterPass.id;
     if (id == 0) {
       IdentifierHighlighterPass.id = id = ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(
-        myFile.getProject())).getNextAvailableId().incrementAndGet();
+        myFile.getProject())).getNextAvailableId();
     }
     return id;
   }
@@ -281,7 +279,7 @@ public class IdentifierHighlighterPass {
     }
     Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<>();
     for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
-      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset())));
+      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), highlighter.getTextRange()));
     }
 
     List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());

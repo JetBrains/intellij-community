@@ -15,12 +15,9 @@
  */
 package com.intellij.codeInsight.completion;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @deprecated does nothing
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated(forRemoval = true)
 public class UnfocusedNameIdentifier extends CompletionConfidence {
 }

@@ -6,14 +6,8 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.ui.NestedGroupFragment;
 import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
@@ -26,12 +20,13 @@ import com.intellij.util.ui.LocalPathCellEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public final class LogsFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
+public final class LogsFragment<T extends RunConfigurationBase<?>> extends SettingsEditorFragment<T, JComponent> {
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
   private final TableView<LogFileOptions> myFilesTable;
@@ -39,7 +34,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
 
   public LogsFragment() {
     super("log.monitor",
-          DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"),
+          DiagnosticBundle.message("log.monitor.fragment.name"), null, null, null, null,
           t -> !t.getLogFiles().isEmpty());
     setActionHint(ExecutionBundle.message("the.ide.will.display.the.selected.logs.in.the.run.tool.window"));
 
@@ -127,7 +122,6 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
 
   @Override
   protected void resetEditorFrom(@NotNull T configuration) {
-    super.resetEditorFrom(configuration);
     List<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
@@ -154,7 +148,6 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
 
   @Override
   protected void applyEditorTo(@NotNull T configuration) {
-    super.applyEditorTo(configuration);
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
     if (!isSelected()) return;
@@ -180,41 +173,6 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
     for (PredefinedLogFile logFile : myUnresolvedPredefined) {
       configuration.addPredefinedLogFile(logFile);
     }
-  }
-
-  @Override
-  protected List<SettingsEditorFragment<T, ?>> createChildren() {
-    TextFieldWithBrowseButton myOutputFile = new TextFieldWithBrowseButton();
-    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
-                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
-                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    LabeledComponent<TextFieldWithBrowseButton> component =
-      LabeledComponent.create(myOutputFile, ExecutionBundle.message("save.output.console.to.file"), BorderLayout.WEST);
-    SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> fragment =
-      new SettingsEditorFragment<>("logs.save.output", ExecutionBundle.message("save.output.console.to.file.option"), null, component,
-                                   (t, component1) -> component1.getComponent().setText(
-                                     StringUtil.notNullize(t.getOutputFilePath())),
-                                   (t, component1) -> {
-                                     t.setFileOutputPath(component1.getComponent().getText());
-                                     t.setSaveOutputToFile(StringUtil.isNotEmpty(component.getComponent().getText()));
-                                   },
-                                   t -> t.isSaveOutputToFile());
-    fragment.setActionHint(ExecutionBundle.message("write.the.output.of.the.application.to.a.file.for.later.inspection"));
-    SettingsEditorFragment<T, ?> stdOut = SettingsEditorFragment
-      .createTag("logs.stdout", DiagnosticBundle.message("log.monitor.fragment.stdout"), null, t -> t.isShowConsoleOnStdOut(),
-                 (t, value) -> t.setShowConsoleOnStdOut(value));
-    stdOut.setActionHint(ExecutionBundle.message("activate.the.console.when.the.application.writes.to.the.standard.output.stream"));
-    SettingsEditorFragment<T, ?> stdErr = SettingsEditorFragment
-      .createTag("logs.stderr", DiagnosticBundle.message("log.monitor.fragment.stderr"), null, t -> t.isShowConsoleOnStdErr(),
-                 (t, value) -> t.setShowConsoleOnStdErr(value));
-    stdErr.setActionHint(ExecutionBundle.message("activate.the.console.when.the.application.writes.to.the.standard.error.stream"));
-    return Arrays.asList(fragment, stdOut, stdErr);
-  }
-
-  @Override
-  public String getChildrenGroupName() {
-    return DiagnosticBundle.message("log.monitor.fragment.settings");
   }
 
   private class TabNameColumnInfo extends ColumnInfo<LogFileOptions, String> {

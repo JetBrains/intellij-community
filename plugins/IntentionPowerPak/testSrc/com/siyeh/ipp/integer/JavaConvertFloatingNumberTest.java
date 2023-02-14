@@ -26,7 +26,7 @@ public class JavaConvertFloatingNumberTest extends IPPTestCase {
   
   @Override
   protected String getIntentionName() {
-    return "Convert number to...";
+    return "Convert number to…";
   }
 
   @Override

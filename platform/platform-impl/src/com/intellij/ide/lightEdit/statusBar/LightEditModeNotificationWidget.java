@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.DataManager;
@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
@@ -38,8 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Supplier;
 
-public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
-
+public final class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
 
   public LightEditModeNotificationWidget() {
@@ -48,14 +46,6 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   @Override
   public @NonNls @NotNull String ID() {
     return "light.edit.mode.notification";
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-  }
-
-  @Override
-  public void dispose() {
   }
 
   @Override
@@ -98,7 +88,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   private @NotNull IdeTooltip createTooltip(@NotNull JComponent component) {
     IdeTooltip tooltip = new TooltipWithClickableLinks(component, getTooltipHtml(), new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         HelpManager.getInstance().invokeHelp("LightEdit_Mode");
       }
     }) {
@@ -175,6 +165,11 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
         return;
       }
       myDelegate.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate == null ? ActionUpdateThread.BGT : myDelegate.getActionUpdateThread();
     }
 
     @Override

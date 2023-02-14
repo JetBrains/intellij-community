@@ -16,10 +16,13 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-class GrazieExceptionsListComponent(exceptions: List<String>) : GrazieUIComponent, AddDeleteListPanel<String>(null, exceptions.sorted()) {
+class GrazieExceptionsListComponent(
+  exceptions: List<String>
+): GrazieUIComponent, AddDeleteListPanel<@Nls String>(null, exceptions.sorted()) {
   init {
     ListSpeedSearch(myList) { it }
 
@@ -35,7 +38,7 @@ class GrazieExceptionsListComponent(exceptions: List<String>) : GrazieUIComponen
     msg("grazie.settings.grammar.exceptions.add.message"), msg("grazie.settings.grammar.exceptions.add.title"), null
   )?.trimToNull()
 
-  override fun getListCellRenderer(): ListCellRenderer<*> = ConfigurableListCellRenderer<String> { component, value ->
+  override fun getListCellRenderer(): ListCellRenderer<*> = ConfigurableListCellRenderer<@Nls String> { component, value ->
     component.configure {
       border = padding(JBUI.insets(5))
       text = value
@@ -52,7 +55,10 @@ class GrazieExceptionsListComponent(exceptions: List<String>) : GrazieUIComponen
 
   override fun reset(state: GrazieConfig.State) {
     myListModel.clear()
-    state.suppressingContext.suppressed.sorted().forEach { myListModel.addElement(it) }
+    state.suppressingContext.suppressed.sorted().forEach {
+      @Suppress("HardCodedStringLiteral")
+      myListModel.addElement(it)
+    }
   }
 
   override fun apply(state: GrazieConfig.State) = state.copy(suppressingContext = SuppressingContext(myListModel.elements().toSet()))

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project;
 
 import com.intellij.codeHighlighting.Pass;
@@ -24,7 +24,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -32,8 +32,8 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   @Override
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
-    myProject = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), getTestRootDisposable());
-    ServiceContainerUtil.registerComponentImplementation(myProject, FileEditorManager.class, FileEditorManagerImpl.class);
+    myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
+    ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, new FileEditorManagerImpl(myProject, myProject.getCoroutineScope()));
   }
 
   @Override
@@ -82,6 +82,5 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
 
     FileEditor[] allEditors = FileEditorManager.getInstance(getProject()).getAllEditors();
     assertEquals(2, allEditors.length);
-
   }
 }

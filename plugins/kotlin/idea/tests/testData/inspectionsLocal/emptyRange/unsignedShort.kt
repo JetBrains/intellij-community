@@ -1,0 +1,4 @@
+// WITH_STDLIB
+val a: UShort = 1u
+val b: UShort = 0u
+val range = a<caret>..b

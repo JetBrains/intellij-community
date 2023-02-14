@@ -18,13 +18,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InsertNewFix implements IntentionActionWithFixAllOption {
   private final PsiMethodCallExpression myMethodCall;
@@ -33,6 +36,11 @@ public class InsertNewFix implements IntentionActionWithFixAllOption {
   public InsertNewFix(@NotNull PsiMethodCallExpression methodCall, @NotNull PsiClass aClass) {
     myMethodCall = methodCall;
     myClass = aClass;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new InsertNewFix(PsiTreeUtil.findSameElementInCopy(myMethodCall, target), myClass);
   }
 
   @Override
@@ -55,7 +63,7 @@ public class InsertNewFix implements IntentionActionWithFixAllOption {
   @NotNull
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myMethodCall;
+    return myMethodCall.getContainingFile();
   }
 
   @Override

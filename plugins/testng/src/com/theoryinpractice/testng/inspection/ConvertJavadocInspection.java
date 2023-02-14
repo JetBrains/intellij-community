@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -48,7 +49,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitDocTag(final PsiDocTag tag) {
+      @Override public void visitDocTag(final @NotNull PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
           holder.registerProblem(tag, TestngBundle.message("inspection.message.testng.javadoc.can.be.converted.to.annotations"), new ConvertJavadocQuickfix());
         }
@@ -68,6 +69,13 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiDocTag tag = (PsiDocTag)previewDescriptor.getPsiElement();
+      doFix(project, tag);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override
@@ -155,8 +163,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
         for (PsiElement element : docComment.getChildren()) {
           //if it's anything other than a doc token, then it must stay
           if (element instanceof PsiWhiteSpace) continue;
-          if (!(element instanceof PsiDocToken)) return;
-          PsiDocToken docToken = (PsiDocToken)element;
+          if (!(element instanceof PsiDocToken docToken)) return;
           if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }

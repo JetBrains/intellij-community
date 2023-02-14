@@ -17,9 +17,10 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("a");
     perform();
-    assertLayout("<root>\n" +
-                 " b/\n" +
-                 " a/");
+    assertLayout("""
+                   <root>
+                    b/
+                    a/""");
   }
 
   public void testMoveIncludedArtifact() {
@@ -31,9 +32,10 @@ public class MoveElementActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("included");
     perform();
-    assertLayout("<root>\n" +
-                 " b/\n" +
-                 " artifact:included");
+    assertLayout("""
+                   <root>
+                    b/
+                    artifact:included""");
   }
 
   public void testDoNotMoveInIncludedArtifact() {

@@ -16,8 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
@@ -54,17 +52,5 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
   @Override
   public boolean keyIsUniqueForIndexedFile() {
     return true;
-  }
-
-  /**
-   * @deprecated
-   *
-   * Should not be used because "index key" (namely, file id) should be not directly accessed in case of {@link SingleEntryFileBasedIndexExtension}.
-   * Use {@link FileBasedIndex#getFileData(ID, VirtualFile, Project)} instead for index queries.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static int getFileKey(@NotNull VirtualFile file) {
-    return Math.abs(FileBasedIndex.getFileId(file));
   }
 }

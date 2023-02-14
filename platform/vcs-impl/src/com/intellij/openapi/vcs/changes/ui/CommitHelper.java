@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -7,28 +7,25 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.util.NullableFunction;
 import com.intellij.vcs.commit.*;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * @deprecated use Committer directly
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 public class CommitHelper {
-  @NotNull private final String myActionName;
+  private final @Nls @NotNull String myActionName;
   private final boolean myForceSyncCommit;
-  @NotNull private final AbstractCommitter myCommitter;
+  @NotNull private final VcsCommitter myCommitter;
 
   public CommitHelper(@NotNull Project project,
                       @NotNull ChangeList changeList,
                       @NotNull List<? extends Change> changes,
-                      @NotNull String actionName,
+                      @Nls @NotNull String actionName,
                       @NotNull String commitMessage,
                       @NotNull List<? extends CheckinHandler> handlers,
                       boolean isDefaultChangeListFullyIncluded,
@@ -42,10 +39,15 @@ public class CommitHelper {
     // for compatibility with external plugins
     CommitContext commitContext =
       additionalData instanceof PseudoMap ? ((PseudoMap<Object, Object>)additionalData).getCommitContext() : new CommitContext();
-    myCommitter = new SingleChangeListCommitter(project, commitState, commitContext, actionName, isDefaultChangeListFullyIncluded);
+    myCommitter = SingleChangeListCommitter.create(project, commitState, commitContext, actionName);
 
-    myCommitter.addResultHandler(new CommitHandlersNotifier(handlers));
-    myCommitter.addResultHandler(notNull(resultHandler, new ShowNotificationCommitResultHandler(myCommitter)));
+    myCommitter.addResultHandler(new CheckinHandlersNotifier(myCommitter, handlers));
+    if (resultHandler != null) {
+      myCommitter.addResultHandler(new CommitResultHandlerNotifier(myCommitter, resultHandler));
+    }
+    else {
+      myCommitter.addResultHandler(new ShowNotificationCommitResultHandler(myCommitter));
+    }
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.

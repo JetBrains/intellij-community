@@ -50,8 +50,8 @@ class SingleComponentCenteringLayout : LayoutManager2 {
       val insets: Insets = parent.insets
       JBInsets.removeFrom(size, insets)
 
-      val x = max(0, (size.width - preferredSize.width) / 2)
-      val y = max(0, (size.height - preferredSize.height) / 2)
+      val x = max(0, insets.left + (size.width - preferredSize.width) / 2)
+      val y = max(0, insets.top + (size.height - preferredSize.height) / 2)
       val width = min(size.width, preferredSize.width)
       val height = min(size.height, preferredSize.height)
       return Rectangle(x, y, width, height)

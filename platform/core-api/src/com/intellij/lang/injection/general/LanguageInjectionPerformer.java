@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * Extension point, which provides <i>how</i> injection should be done to the particular host language.
  * Should be implemented by language-plugins to support complex language-injections like injection into concatenation or interpolation.
  *
- * <p>If it is not implemented then the {@link org.intellij.plugins.intelliLang.inject.DefaultLanguageInjector DefaultLanguageInjector}
+ * <p>If it is not implemented then the {@link org.intellij.plugins.intelliLang.inject.DefaultLanguageInjectionPerformer DefaultLanguageInjectionPerformer}
  * will be used</p>
  */
 public interface LanguageInjectionPerformer {

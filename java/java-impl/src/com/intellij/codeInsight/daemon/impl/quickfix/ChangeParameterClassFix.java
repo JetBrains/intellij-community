@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -22,6 +8,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
@@ -31,13 +19,14 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class ChangeParameterClassFix extends ExtendsListFix {
+public class ChangeParameterClassFix extends ExtendsListFix implements LowPriorityAction {
   public ChangeParameterClassFix(@NotNull PsiClass aClassToExtend, @NotNull PsiClassType parameterClass) {
     super(aClassToExtend, parameterClass, true);
   }
@@ -81,8 +70,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
           () -> {
-            Collection<PsiMethodMember> members =
-              ContainerUtil.map2List(toImplement, s -> new PsiMethodMember(s));
+            Collection<PsiMethodMember> members = ContainerUtil.map2List(toImplement, PsiMethodMember::new);
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
           });
       }
@@ -99,5 +87,16 @@ public class ChangeParameterClassFix extends ExtendsListFix {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiClass aClass = PsiTreeUtil.findSameElementInCopy((PsiClass)getStartElement(), file);
+    invokeImpl(aClass);
+    final Collection<CandidateInfo> toImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+    if (toImplement.isEmpty()) return IntentionPreviewInfo.EMPTY;
+    Collection<PsiMethodMember> members = ContainerUtil.map2List(toImplement, PsiMethodMember::new);
+    OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, false);
+    return IntentionPreviewInfo.DIFF;
   }
 }

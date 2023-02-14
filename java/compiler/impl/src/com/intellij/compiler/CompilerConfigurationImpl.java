@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -27,7 +27,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,7 +64,7 @@ import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normal
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
-public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element> {
+public final class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CompilerConfiguration.class);
 
   public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
@@ -114,8 +114,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
 
       @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-        myProcessorsProfilesMap = null; // clear cache
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
+        // clear cache
+        myProcessorsProfilesMap = null;
       }
 
       @Override
@@ -139,7 +140,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   // Overridden in Upsource
   @NotNull
-  protected ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+  private ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
     final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
     Disposer.register(project, cfg);
     project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
@@ -642,7 +643,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       wildcardPattern = wildcardPattern.substring(1);
     }
 
-    wildcardPattern = FileUtil.toSystemIndependentName(wildcardPattern);
+    wildcardPattern = FileUtilRt.toSystemIndependentName(wildcardPattern);
 
     String srcRoot = null;
     int colon = wildcardPattern.indexOf(":");
@@ -760,7 +761,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     final Element notNullAssertions = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS);
     if (notNullAssertions != null) {
-      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
+      myAddNotNullAssertions = Boolean.parseBoolean(notNullAssertions.getAttributeValue(JpsJavaCompilerConfigurationSerializer.ENABLED, "true"));
     }
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
@@ -1067,16 +1068,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  private static final class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
-
-    private CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
-      this.fileName = fileName;
-      this.dir = dir;
-      this.srcRoot = srcRoot;
-    }
+  private record CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
   }
 
   private static Element addChild(Element parent, final String childName) {

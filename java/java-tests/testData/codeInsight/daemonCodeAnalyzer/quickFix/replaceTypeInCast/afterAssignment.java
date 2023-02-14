@@ -1,4 +1,4 @@
-// "Replace 'Integer' with 'String' in cast" "true"
+// "Replace 'Integer' with 'String' in cast" "true-preview"
 import java.util.*;
 
 class X {

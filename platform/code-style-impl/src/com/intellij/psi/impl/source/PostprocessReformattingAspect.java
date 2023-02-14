@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.service.ExternalFormatProcessorAdapter;
 import com.intellij.formatting.service.FormattingService;
@@ -18,6 +19,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -34,16 +36,13 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -55,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public final class PostprocessReformattingAspect implements PomModelAspect {
   private static final Logger LOG = Logger.getInstance(PostprocessReformattingAspect.class);
@@ -159,7 +159,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   private void decrementPostponedCounter() {
     Application application = ApplicationManager.getApplication();
     if (--getContext().myPostponedCounter == 0) {
-      if (application.isWriteAccessAllowed() || !application.isWriteThread()) {
+      if (application.isWriteAccessAllowed() || !application.isWriteIntentLockAcquired()) {
         doPostponedFormatting();
       }
       else {
@@ -178,7 +178,8 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     PsiFile containingFile = InjectedLanguageManager.getInstance(psiElement.getProject()).getTopLevelFile(psiElement);
     final FileViewProvider viewProvider = containingFile.getViewProvider();
 
-    if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null) return;
+    if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null &&
+        !IntentionPreviewUtils.isPreviewElement(containingFile)) return;
     getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
     for (final ASTNode node : changeSet.getChangedElements()) {
       final TreeChange treeChange = changeSet.getChangesByElement(node);
@@ -192,11 +193,8 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
         final ChangeInfo childChange = treeChange.getChangeByChild(affectedChild);
         switch (childChange.getChangeType()) {
-          case ChangeInfo.ADD:
-          case ChangeInfo.REPLACE:
-            postponeFormatting(viewProvider, affectedChild);
-            break;
-          case ChangeInfo.CONTENTS_CHANGED:
+          case ChangeInfo.ADD, ChangeInfo.REPLACE -> postponeFormatting(viewProvider, affectedChild);
+          case ChangeInfo.CONTENTS_CHANGED -> {
             if (!CodeEditUtil.isNodeGenerated(affectedChild)) {
               ((TreeElement)affectedChild).acceptTree(new RecursiveTreeElementWalkingVisitor() {
                 @Override
@@ -209,7 +207,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
                 }
               });
             }
-            break;
+          }
         }
       }
     }
@@ -275,6 +273,16 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
 
   public boolean isViewProviderLocked(@NotNull FileViewProvider fileViewProvider) {
     return getContext().myReformatElements.containsKey(fileViewProvider);
+  }
+
+  public boolean isDocumentLocked(@NotNull Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null && file.isValid()) {
+      for (FileViewProvider provider : getContext().myReformatElements.keySet()) {
+        if (file.equals(provider.getVirtualFile())) return true;
+      }
+    }
+    return false;
   }
 
   public static void assertDocumentChangeIsAllowed(@NotNull PsiFile file) {
@@ -557,7 +565,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     if (currentTask instanceof ReformatWithHeadingWhitespaceTask && currentTask.getStartOffset() == currentTask.getEndOffset()) {
       return false;
     }
-    // reindent actions can't be be stuck at all
+    // reindent actions can't be stuck at all
     return !(currentTask instanceof ReindentTask);
   }
 
@@ -689,18 +697,6 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myDisabledCounter > 0;
   }
 
-  @NotNull
-  private CodeFormatterFacade getFormatterFacade(@NotNull FileViewProvider viewProvider) {
-    CodeStyleSettings styleSettings = CodeStyle.getSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = viewProvider.getDocument();
-    assert document != null;
-    CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, viewProvider.getBaseLanguage());
-
-    documentManager.commitDocument(document);
-    return codeFormatter;
-  }
-
   private abstract static class PostprocessFormattingTask implements Comparable<PostprocessFormattingTask>, Segment, Disposable {
     @NotNull private final RangeMarker myRange;
 
@@ -785,16 +781,25 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     @Override
     public void execute(@NotNull FileViewProvider viewProvider) {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
-      final FormatTextRanges textRanges = myRanges.ensureNonEmpty();
-      textRanges.setExtendToContext(true);
-      FormattingService formattingService = FormattingServiceUtil.findService(file);
+      FormattingService formattingService = FormattingServiceUtil.findService(file, false, false);
+      commitDocument(viewProvider);
+      formattingService.formatRanges(file, getRanges(formattingService), true, true);
+    }
+
+    private void commitDocument(@NotNull FileViewProvider viewProvider) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      Document document = viewProvider.getDocument();
+      assert document != null;
+      documentManager.commitDocument(document);
+    }
+
+    private FormatTextRanges getRanges(@NotNull FormattingService formattingService) {
       if (formattingService instanceof ExternalFormatProcessorAdapter) {
-        ((ExternalFormatProcessorAdapter)formattingService).formatCollectedRanges(file, myRanges);
+        return myRanges;
       }
-      else {
-        final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
-        SlowOperations.allowSlowOperations(() -> codeFormatter.processText(file, textRanges, false));
-      }
+      FormatTextRanges textRanges = myRanges.ensureNonEmpty();
+      textRanges.setExtendToContext(true);
+      return textRanges;
     }
 
     @Override

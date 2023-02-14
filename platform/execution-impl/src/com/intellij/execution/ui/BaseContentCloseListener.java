@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ProcessCloseConfirmation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,14 +16,18 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Objects;
 
 public abstract class BaseContentCloseListener implements VetoableProjectManagerListener,
@@ -33,7 +37,7 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   private static final Logger LOG = Logger.getInstance(BaseContentCloseListener.class);
 
   private Content myContent;
-  private final Project myProject;
+  protected final Project myProject;
 
   public BaseContentCloseListener(@NotNull Content content, @NotNull Project project) {
     this(content, project, project);
@@ -45,6 +49,17 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
     final ContentManager contentManager = content.getManager();
     if (contentManager != null) {
       contentManager.addContentManagerListener(this);
+      content.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (ContentImpl.PROP_CONTENT_MANAGER.equals(evt.getPropertyName())) {
+            ContentManager oldValue = (ContentManager)evt.getOldValue();
+            ContentManager newValue = (ContentManager)evt.getNewValue();
+            if (oldValue != null) oldValue.removeContentManagerListener(BaseContentCloseListener.this);
+            if (newValue != null) newValue.addContentManagerListener(BaseContentCloseListener.this);
+          }
+        }
+      });
     }
     ProjectManager.getInstance().addProjectManagerListener(myProject, this);
     Disposer.register(parentDisposable, this);
@@ -53,11 +68,12 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
   @Override
   public void contentRemoved(@NotNull final ContentManagerEvent event) {
     final Content content = event.getContent();
-    if (content == myContent) {
+    if (content == myContent && !Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
       Disposer.dispose(this);
     }
   }
 
+  @Override
   public void dispose() {
     if (myContent == null) return;
 
@@ -121,18 +137,29 @@ public abstract class BaseContentCloseListener implements VetoableProjectManager
 
   protected boolean askUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      // This might happens from Application.exit(force=true, ...) call.
+      // This might happen from Application.exit(force=true, ...) call.
       // Do not show any UI, destroy the process silently, do not wait for process termination.
       processHandler.destroyProcess();
       LOG.info("Destroying process under write action (name: " + sessionName + ", "
-               + processHandler.getClass() + ", " + processHandler.toString() + ")");
+               + processHandler.getClass() + ", " + processHandler + ")");
       return true;
     }
-    GeneralSettings.ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
+    Disposable disposable = Disposer.newDisposable();
+    Registry.get("ide.instant.shutdown").setValue(false, disposable);
+    try {
+      return doAskUserAndWait(processHandler, sessionName, task);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  private boolean doAskUserAndWait(@NotNull ProcessHandler processHandler, @NotNull String sessionName, @NotNull WaitForProcessTask task) {
+    ProcessCloseConfirmation rc = TerminateRemoteProcessDialog.show(myProject, sessionName, processHandler);
     if (rc == null) { // cancel
       return false;
     }
-    boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+    boolean destroyProcess = rc == ProcessCloseConfirmation.TERMINATE;
     if (destroyProcess) {
       processHandler.destroyProcess();
     }

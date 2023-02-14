@@ -26,46 +26,55 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author peter
- */
 public class JavaCompletionStatistician extends CompletionStatistician{
   private static final ElementPattern<PsiElement> SUPER_CALL = psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.SUPER));
 
   @Override
-  public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    Object o = element.getObject();
-
-    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 
-        o instanceof PsiThisExpression || o instanceof PsiKeyword || 
-        element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
-        FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
-        element.as(StreamConversion.StreamMethodInvocation.class) != null) {
-      return StatisticsInfo.EMPTY;
-    }
-
-    if (!(o instanceof PsiMember)) {
-      return null;
-    }
-
+  public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull CompletionLocation location) {
     PsiElement position = location.getCompletionParameters().getPosition();
     if (SUPER_CALL.accepts(position) ||
         JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position) ||
         PreferByKindWeigher.isComparisonRhs(position)) {
-      return StatisticsInfo.EMPTY;
+      return EMPTY_SERIALIZER;
     }
 
     ExpectedTypeInfo firstInfo = getExpectedTypeInfo(location);
     if (firstInfo != null && isInEnumAnnotationParameter(position, firstInfo)) {
-      return StatisticsInfo.EMPTY;
+      return EMPTY_SERIALIZER;
     }
-    
-    if (o instanceof PsiClass) {
-      return getClassInfo((PsiClass)o, position, firstInfo);
-    }
-    return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+
+    return element -> {
+      Object o = element.getObject();
+
+      if (o instanceof PsiLocalVariable || o instanceof PsiParameter ||
+          o instanceof PsiThisExpression || o instanceof PsiKeyword ||
+          element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
+          FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
+          element.as(StreamConversion.StreamMethodInvocation.class) != null) {
+        return StatisticsInfo.EMPTY;
+      }
+
+      if (o instanceof CustomStatisticsInfoProvider) {
+        return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
+      }
+
+      if (o instanceof PsiClass) {
+        return getClassInfo((PsiClass)o, position, firstInfo);
+      }
+      if (o instanceof PsiField || o instanceof PsiMethod) {
+        return getFieldOrMethodInfo((PsiMember)o, element, firstInfo);
+      }
+      return null;
+    };
+  }
+
+  @Override
+  public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
+    return forLocation(location).apply(element);
   }
 
   private static boolean isInEnumAnnotationParameter(PsiElement position, ExpectedTypeInfo firstInfo) {
@@ -107,5 +116,15 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
+  }
+
+  /**
+   * An interface for LookupElement objects that provide custom StatisticsInfo
+   */
+  public interface CustomStatisticsInfoProvider {
+    /**
+     * @return a statistics info for the current object; null if the statistics should not be collected for this item.
+     */
+    @Nullable StatisticsInfo getStatisticsInfo();
   }
 }

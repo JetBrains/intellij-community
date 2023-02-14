@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata.filter
 
 import com.intellij.internal.statistic.config.EventLogExternalSettings
-import com.intellij.internal.statistic.eventLog.EventLogBuildType.RELEASE
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
 import com.intellij.internal.statistic.eventLog.filters.LogEventBucketsFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import org.junit.Assert

@@ -6,57 +6,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongConsumer;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class TimeoutUtil {
-  /**
-   * @deprecated consider another approach to execute runnable on a background thread
-   * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable)
-   * @see com.intellij.openapi.progress.util.ProgressIndicatorUtils#withTimeout(long, com.intellij.openapi.util.Computable)
-   * @see com.intellij.util.concurrency.AppExecutorUtil#getAppScheduledExecutorService()
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void executeWithTimeout(long timeout, long sleep, @NotNull final Runnable run) {
-    final long start = System.currentTimeMillis();
-    final AtomicBoolean done = new AtomicBoolean(false);
-    final Thread thread = new Thread("Fast Function Thread@" + run.hashCode()) {
-      @Override
-      public void run() {
-        run.run();
-        done.set(true);
-      }
-    };
-    thread.start();
-
-    while (!done.get() && System.currentTimeMillis() - start < timeout) {
-      try {
-        //noinspection BusyWait
-        Thread.sleep(sleep);
-      } catch (InterruptedException e) {
-        break;
-      }
-    }
-    if (!thread.isInterrupted()) {
-      thread.stop();
-    }
-  }
-
-  /**
-   * @deprecated consider another approach to execute runnable on a background thread
-   * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable)
-   * @see com.intellij.openapi.progress.util.ProgressIndicatorUtils#withTimeout(long, com.intellij.openapi.util.Computable)
-   * @see com.intellij.util.concurrency.AppExecutorUtil#getAppScheduledExecutorService()
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static void executeWithTimeout(long timeout, @NotNull final Runnable run) {
-    executeWithTimeout(timeout, 50, run);
-  }
 
   public static void sleep(final long millis) {
     try {

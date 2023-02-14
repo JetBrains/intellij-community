@@ -835,7 +835,6 @@
     </item>
     <item name='org.apache.commons.collections.map.DefaultedMap java.util.Map decorate(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -845,7 +844,6 @@
     </item>
     <item name='org.apache.commons.collections.map.DefaultedMap java.util.Map decorate(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -858,7 +856,6 @@
     </item>
     <item name='org.apache.commons.collections.map.DefaultedMap java.util.Map decorate(java.util.Map, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -899,7 +896,6 @@
     </item>
     <item name='org.apache.commons.collections.map.FixedSizeMap java.util.Map decorate(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -946,7 +942,6 @@
     </item>
     <item name='org.apache.commons.collections.map.FixedSizeSortedMap java.util.SortedMap decorate(java.util.SortedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1269,7 +1264,6 @@
     </item>
     <item name='org.apache.commons.collections.map.LazyMap java.util.Map decorate(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1282,7 +1276,6 @@
     </item>
     <item name='org.apache.commons.collections.map.LazyMap java.util.Map decorate(java.util.Map, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1323,7 +1316,6 @@
     </item>
     <item name='org.apache.commons.collections.map.LazySortedMap java.util.SortedMap decorate(java.util.SortedMap, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1336,7 +1328,6 @@
     </item>
     <item name='org.apache.commons.collections.map.LazySortedMap java.util.SortedMap decorate(java.util.SortedMap, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1375,7 +1366,6 @@
     </item>
     <item name='org.apache.commons.collections.map.LinkedMap java.util.List asList()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1450,7 +1440,6 @@
     </item>
     <item name='org.apache.commons.collections.map.ListOrderedMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1462,21 +1451,18 @@
     </item>
     <item name='org.apache.commons.collections.map.ListOrderedMap java.util.List valueList()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.ListOrderedMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.ListOrderedMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1828,7 +1814,6 @@
     </item>
     <item name='org.apache.commons.collections.map.MultiValueMap org.apache.commons.collections.map.MultiValueMap decorate(java.util.Map, java.lang.Class)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1838,7 +1823,6 @@
     </item>
     <item name='org.apache.commons.collections.map.MultiValueMap org.apache.commons.collections.map.MultiValueMap decorate(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2073,7 +2057,6 @@
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2086,7 +2069,6 @@
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2200,21 +2182,18 @@
     </item>
     <item name='org.apache.commons.collections.map.StaticBucketMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.StaticBucketMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.StaticBucketMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2345,7 +2324,6 @@
     </item>
     <item name='org.apache.commons.collections.map.TransformedMap java.util.Map decorate(java.util.Map, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2381,7 +2359,6 @@
     </item>
     <item name='org.apache.commons.collections.map.TransformedSortedMap java.util.SortedMap decorate(java.util.SortedMap, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

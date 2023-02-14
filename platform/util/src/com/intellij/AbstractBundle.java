@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DefaultBundleService;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,31 +22,46 @@ import java.util.function.Supplier;
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <br/>
  * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
- *
- * @author Denis Zhdanov
  */
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
 
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
-
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
+  private final @NotNull ClassLoader myBundleClassLoader;
   private final @NonNls String myPathToBundle;
 
-  public AbstractBundle(@NonNls @NotNull String pathToBundle) {
+  /**
+   * @param bundleClass a class to obtain the classloader, usually a class which declared the field which references the bundle instance
+   */
+  public AbstractBundle(@NotNull Class<?> bundleClass, @NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
+    myBundleClassLoader = bundleClass.getClassLoader();
+  }
+
+  protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
+    myPathToBundle = pathToBundle;
+    myBundleClassLoader = getClass().getClassLoader();
+  }
+
+  @ApiStatus.Internal
+  protected final @NotNull ClassLoader getBundleClassLoader() {
+    return myBundleClassLoader;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ResourceBundle.Control getControl() {
+    return MyResourceControl.INSTANCE;
   }
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.messageOrDefault(getResourceBundle(getClass().getClassLoader()), key, null, params);
+    return BundleBase.messageOrDefault(getResourceBundle(), key, null, params);
   }
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains params.length+unassignedParams placeholders. Parameters
+   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
    * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.
@@ -60,7 +77,8 @@ public class AbstractBundle {
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return () -> getMessage(key, params);
+    Object[] actualParams = params.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : params; // do not capture new empty Object[] arrays here
+    return () -> getMessage(key, actualParams);
   }
 
   public @Nullable @Nls String messageOrNull(@NotNull @NonNls String key, Object @NotNull ... params) {
@@ -104,7 +122,7 @@ public class AbstractBundle {
   }
 
   public ResourceBundle getResourceBundle() {
-    return getResourceBundle(getClass().getClassLoader());
+    return getResourceBundle(myBundleClassLoader);
   }
 
   @ApiStatus.Internal
@@ -124,24 +142,21 @@ public class AbstractBundle {
     return bundle;
   }
 
-  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
-    if (pathToBundle.equals(myPathToBundle)) {
-      return getResourceBundle(loader);
-    }
-
-    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
-      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
-    ResourceBundle result = cache.get(pathToBundle);
-    if (result == null) {
-      result = resolveResourceBundle(pathToBundle, loader);
-      cache.put(pathToBundle, result);
-    }
-    return result;
+  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+    return resolveResourceBundleWithFallback(
+      () -> findBundle(pathToBundle, loader, MyResourceControl.INSTANCE),
+      loader, pathToBundle
+    );
   }
 
-  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveResourceBundleWithFallback(
+    @NotNull Supplier<? extends @NotNull ResourceBundle> firstTry,
+    @NotNull ClassLoader loader,
+    @NotNull String pathToBundle
+  ) {
     try {
-      return findBundle(pathToBundle, loader, MyResourceControl.INSTANCE);
+      return firstTry.get();
     }
     catch (MissingResourceException e) {
       LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
@@ -150,18 +165,19 @@ public class AbstractBundle {
     }
   }
 
-  protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+  protected @NotNull ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
-  }
-
-  protected static void clearGlobalLocaleCache() {
-    ourCache.clear();
   }
 
   public void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
     }
+  }
+
+  @ApiStatus.Internal
+  protected static @NotNull ResourceBundle resolveBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, MyResourceControl.INSTANCE);
   }
 
   // UTF-8 control for Java <= 1.8.
@@ -188,16 +204,28 @@ public class AbstractBundle {
         return null;
       }
 
-      InputStream stream = loader.getResourceAsStream(resourceName);
-      if (stream == null) {
-        return null;
+      if (loader instanceof UrlClassLoader) {
+        // checkParents - https://youtrack.jetbrains.com/issue/IDEA-282831
+        byte[] data = ((UrlClassLoader)loader).getResourceAsBytes(resourceName, true);
+        if (data == null) {
+          return null;
+        }
+        else {
+          return new PropertyResourceBundle(new InputStreamReader(new ByteArrayInputStream(data), StandardCharsets.UTF_8));
+        }
       }
+      else {
+        InputStream stream = loader.getResourceAsStream(resourceName);
+        if (stream == null) {
+          return null;
+        }
 
-      try {
-        return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-      }
-      finally {
-        stream.close();
+        try {
+          return new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        }
+        finally {
+          stream.close();
+        }
       }
     }
   }

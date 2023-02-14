@@ -41,14 +41,13 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethod method = (PsiMethod)descriptor.getPsiElement().getParent();
       final PsiCodeBlock methodBody = method.getBody();
       final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(methodBody);
-      if (!(statement instanceof PsiSynchronizedStatement)) {
+      if (!(statement instanceof PsiSynchronizedStatement synchronizedStatement)) {
         return;
       }
-      final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)statement;
       final PsiCodeBlock body = synchronizedStatement.getBody();
       if (body == null) {
         return;
@@ -70,32 +69,29 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
   private static class MethodMayBeSynchronizedVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiElement parent = statement.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethod)) {
+      if (!(grandParent instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)grandParent;
       if (!ControlFlowUtils.hasStatementCount(method.getBody(), 1)) {
         return;
       }
       final PsiExpression lockExpression = statement.getLockExpression();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (!(lockExpression instanceof PsiClassObjectAccessExpression)) {
+        if (!(lockExpression instanceof PsiClassObjectAccessExpression classExpression)) {
           return;
         }
-        final PsiClassObjectAccessExpression classExpression = (PsiClassObjectAccessExpression)lockExpression;
         final PsiTypeElement typeElement = classExpression.getOperand();
         final PsiType type = typeElement.getType();
-        if (!(type instanceof PsiClassType)) {
+        if (!(type instanceof PsiClassType classType)) {
           return;
         }
-        final PsiClassType classType = (PsiClassType)type;
         final PsiClass aClass = classType.resolve();
         final PsiClass containingClass = method.getContainingClass();
         if (aClass != containingClass) {
@@ -103,10 +99,9 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
         }
       }
       else {
-        if (!(lockExpression instanceof PsiThisExpression)) {
+        if (!(lockExpression instanceof PsiThisExpression thisExpression)) {
           return;
         }
-        final PsiThisExpression thisExpression = (PsiThisExpression)lockExpression;
         final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
         if (qualifier != null) {
           final PsiElement target = qualifier.resolve();

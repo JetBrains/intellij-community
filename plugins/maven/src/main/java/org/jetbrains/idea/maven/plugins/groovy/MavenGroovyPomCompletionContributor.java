@@ -26,11 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -113,10 +113,10 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     }
 
     if (completeDependency.get()) {
-      MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
+      DependencySearchService searchService = DependencySearchService.getInstance(project);
 
-      for (String groupId : indicesManager.getGroupIds()) {
-        for (String artifactId : indicesManager.getArtifactIds(groupId)) {
+      for (String groupId : searchService.getGroupIds("")) {
+        for (String artifactId : searchService.getArtifactIds(groupId)) {
           LookupElement builder = LookupElementBuilder.create(groupId + ':' + artifactId)
             .withIcon(AllIcons.Nodes.PpLib).withInsertHandler(MavenDependencyInsertHandler.INSTANCE);
           result.addElement(builder);
@@ -175,8 +175,6 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
         }
       }));
 
-    MavenProjectIndicesManager indicesManager = MavenProjectIndicesManager.getInstance(project);
-
     Set<String> versions;
 
     if (StringUtil.isEmptyOrSpaces(groupId)) {
@@ -189,7 +187,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
       //}
     }
     else {
-      versions = indicesManager.getVersions(groupId, artifactId);
+      versions = DependencySearchService.getInstance(project).getVersions(groupId, artifactId);
     }
 
     for (String version : versions) {

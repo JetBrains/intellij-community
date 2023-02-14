@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Works like a usual backspace except the situation when the caret is located after white space - all white space symbols
  * (white spaces, tabulations, line feeds) are removed then.
- * 
- * @author Denis Zhdanov
  */
 public class HungryBackspaceAction extends TextComponentEditorAction {
 

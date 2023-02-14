@@ -1,0 +1,6 @@
+# These classes are defined in regex/_regex.c and are returned by the public API functions.
+# The stubs are defined in regex/_regex.pyi but these classes aren't present at runtime.
+regex._regex.Match
+regex._regex.Pattern
+regex._regex.Scanner
+regex._regex.Splitter

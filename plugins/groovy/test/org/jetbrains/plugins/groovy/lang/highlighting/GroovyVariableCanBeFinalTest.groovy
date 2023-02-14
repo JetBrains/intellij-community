@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -26,7 +12,7 @@ class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
   }
 
   void testSimpleLocalVariable() {
-    testHighlighting('''
+    doTestHighlighting('''
 def simpleLocalVariableTest() {
     def <warning descr="Variable 'a' can be final">a</warning> = 1
     final def b = a
@@ -36,7 +22,7 @@ def simpleLocalVariableTest() {
   }
 
   void testClosureParam() {
-    testHighlighting('''
+    doTestHighlighting('''
 def closureParamTest() {
     { <warning descr="Parameter 'a' can be final">a</warning> -> print a }
 }
@@ -44,7 +30,7 @@ def closureParamTest() {
   }
 
   void testClosureOuterScope() {
-    testHighlighting('''
+    doTestHighlighting('''
 def closureOuterScopeTest() {
     def <warning descr="Variable 'outer' can be final">outer</warning> = 1
     def outer2 = 2
@@ -60,7 +46,7 @@ def closureOuterScopeTest() {
   }
 
   void testAnonymousClass() {
-    testHighlighting('''
+    doTestHighlighting('''
 Runnable foo() {
     def <warning descr="Variable 'a' can be final">a</warning> = 1
     def b = 2             // more than 1 assignment
@@ -79,7 +65,7 @@ Runnable foo() {
   }
 
   void testMethodParameter() {
-    testHighlighting('''
+    doTestHighlighting('''
 def methodParameterTest(String <warning descr="Parameter 's' can be final">s</warning>, String ss, final String sss) {
     ss = s
     println ss
@@ -89,7 +75,7 @@ def methodParameterTest(String <warning descr="Parameter 's' can be final">s</wa
   }
 
   void testFor() {
-    testHighlighting('''
+    doTestHighlighting('''
 def forTest() {
     for (int <warning descr="Variable 'i' can be final">i</warning> in 1..<10) {
         println i
@@ -108,7 +94,7 @@ def forTest() {
   }
 
   void testTernary() {
-    testHighlighting('''
+    doTestHighlighting('''
 def ternaryTest() {
     def <warning descr="Variable 'ternary' can be final">ternary</warning> = rand() ? rand() : 500
     final f = ternary
@@ -118,7 +104,7 @@ def ternaryTest() {
   }
 
   void testTernaryDeep() {
-    testHighlighting('''
+    doTestHighlighting('''
 def deepTernaryTest() {
     def <warning descr="Variable 'ternary' can be final">ternary</warning> = rand() ? (rand() ? 100 : 500) : (rand() ? { -> } : 300)
     final f = ternary
@@ -128,7 +114,7 @@ def deepTernaryTest() {
   }
 
   void testSwitch() {
-    testHighlighting('''
+    doTestHighlighting('''
 def switchTest() {
     def <warning descr="Variable 'sw' can be final">sw</warning>
     switch (rand()) {
@@ -147,7 +133,7 @@ def switchTest() {
   }
 
   void testDeepSwitch() {
-    testHighlighting('''
+    doTestHighlighting('''
 def deepSwitchTest() {
     def <warning descr="Variable 'sw' can be final">sw</warning>
     switch (rand()) {
@@ -176,7 +162,7 @@ def deepSwitchTest() {
   }
 
   void testIf() {
-    testHighlighting('''
+    doTestHighlighting('''
 def ifTest() {
     def <warning descr="Variable 'a' can be final">a</warning>
     if (rand()) a = 1
@@ -188,7 +174,7 @@ def ifTest() {
   }
 
   void testIfTriBranch() {
-    testHighlighting('''
+    doTestHighlighting('''
 def triBranchIfTest() {
     def <warning descr="Variable 'a' can be final">a</warning>
     if (rand()) {
@@ -205,7 +191,7 @@ def triBranchIfTest() {
   }
 
   void testIfDeep() {
-    testHighlighting('''
+    doTestHighlighting('''
 def deepIfTest() {
     def <warning descr="Variable 'a' can be final">a</warning>
     if (rand()) {
@@ -228,7 +214,7 @@ def deepIfTest() {
   }
 
   void testSameVariableName() {
-    testHighlighting('''
+    doTestHighlighting('''
  def testSameVariableName() {
     if (rand()) {
         def <warning descr="Variable 'a' can be final">a</warning> = 5
@@ -243,7 +229,7 @@ def deepIfTest() {
   }
 
   void testSeveralAssignments() {
-    testHighlighting('''
+    doTestHighlighting('''
 def testSeveralAssignments() {
     def a = 1
     a = 2

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'
+          xmlns:asmv3="urn:schemas-microsoft-com:asm.v3">
+    <trustInfo>
+        <security>
+            <requestedPrivileges>
+                <requestedExecutionLevel level='asInvoker' uiAccess='false' />
+            </requestedPrivileges>
+        </security>
+    </trustInfo>
+    <asmv3:application>
+        <asmv3:windowsSettings xmlns:dpi1="http://schemas.microsoft.com/SMI/2005/WindowsSettings"
+                               xmlns:dpi2="http://schemas.microsoft.com/SMI/2016/WindowsSettings">
+            <dpi1:dpiAware>true/PM</dpi1:dpiAware>
+            <dpi2:dpiAwareness>PerMonitorV2, PerMonitor, system</dpi2:dpiAwareness>
+        </asmv3:windowsSettings>
+    </asmv3:application>
+</assembly>

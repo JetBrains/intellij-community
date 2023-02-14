@@ -4,7 +4,7 @@ import com.google.gson.stream.JsonWriter
 import java.lang.reflect.Method
 
 object JsonWriters {
-  val JSON_WRITE_DEFERRED_NAME: Method
+  private val JSON_WRITE_DEFERRED_NAME: Method
 
   init {
       JSON_WRITE_DEFERRED_NAME = JsonWriter::class.java.getDeclaredMethod("writeDeferredName")

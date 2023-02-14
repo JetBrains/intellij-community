@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,26 +20,34 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenServerConnectorImpl extends MavenServerConnector {
   public static final Logger LOG = Logger.getInstance(MavenServerConnectorImpl.class);
-  private final RemoteMavenServerLogger myLogger = new RemoteMavenServerLogger();
-  private final RemoteMavenServerDownloadListener
-    myDownloadListener = new RemoteMavenServerDownloadListener();
-
   protected final Integer myDebugPort;
 
 
-  private boolean myLoggerExported;
-  private boolean myDownloadListenerExported;
+  private ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("Maven connector pulling", 2);
+  private final AtomicInteger myLoggerConnectFailedCount = new AtomicInteger(0);
+  private final AtomicInteger myDownloadConnectFailedCount = new AtomicInteger(0);
   private final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
+  private final AtomicBoolean myTerminated = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
-  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>();
+  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>() {
+    @Override
+    protected boolean shouldLogErrors() {
+      return false;
+    }
+  };
+  private ScheduledFuture<?> myPullingLoggerFuture = null;
+  private ScheduledFuture<?> myPullingDownloadFuture = null;
 
 
   public MavenServerConnectorImpl(@NotNull Project project,
@@ -73,6 +82,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     if (!myConnectStarted.compareAndSet(false, true)) {
       return;
     }
+    MavenLog.LOG.debug("connecting new maven server:", new Exception());
     ApplicationManager.getApplication().executeOnPooledThread(new StartServerTask());
   }
 
@@ -91,13 +101,14 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     }
     catch (Throwable e) {
       try {
-        shutdown(false);
+        MavenServerManager.getInstance().shutdownConnector(this, false);
       }
       catch (Throwable ignored) {
       }
-      cleanUp();
       myManager.cleanUp(this);
-      throw new CannotStartServerException(e);
+      throw e instanceof CannotStartServerException
+            ? (CannotStartServerException)e
+            : new CannotStartServerException(e);
     }
   }
 
@@ -117,49 +128,44 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     return myServerPromise.get();
   }
 
-  private void cleanUp() {
-    if (myLoggerExported) {
-      try {
-        UnicastRemoteObject.unexportObject(myLogger, true);
+  private void cleanUpFutures() {
+    try {
+      cancelFuture(myPullingDownloadFuture);
+      cancelFuture(myPullingLoggerFuture);
+      if (!myExecutor.isShutdown()) {
+        myExecutor.shutdownNow();
       }
-      catch (RemoteException e) {
-        MavenLog.LOG.warn(e);
-      }
-      myLoggerExported = false;
+      int count = myLoggerConnectFailedCount.get();
+      if (count != 0) MavenLog.LOG.warn("Maven pulling logger was failed: " + count + " times");
+      count = myDownloadConnectFailedCount.get();
+      if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
     }
-    if (myDownloadListenerExported) {
-      try {
-        UnicastRemoteObject.unexportObject(myDownloadListener, true);
-      }
-      catch (RemoteException e) {
-        MavenLog.LOG.warn(e);
-      }
-      myDownloadListenerExported = false;
+    catch (IllegalStateException ignore) {
     }
   }
 
-  @Override
-  public void addDownloadListener(MavenServerDownloadListener listener) {
-    myDownloadListener.myListeners.add(listener);
-  }
-
-  @Override
-  public void removeDownloadListener(MavenServerDownloadListener listener) {
-    myDownloadListener.myListeners.remove(listener);
+  private static void cancelFuture(ScheduledFuture<?> future) {
+    if (future != null) {
+      try {
+        future.cancel(true);
+      }
+      catch (Throwable ignore) {
+      }
+    }
   }
 
   @ApiStatus.Internal
   @Override
-  public void shutdown(boolean wait) {
-    super.shutdown(true);
-
+  public void stop(boolean wait) {
+    MavenLog.LOG.debug("[connector] shutdown " + this + " " + (mySupport == null));
+    cleanUpFutures();
     MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
     if (support != null) {
       support.stopAll(wait);
-      mySupport = null;
     }
-    cleanUp();
+    myTerminated.set(true);
   }
+
 
   @Override
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
@@ -172,8 +178,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         last = e;
       }
     }
-    cleanUp();
-    myManager.cleanUp(this);
+    cleanUpFutures();
+    myManager.shutdownConnector(this, false);
+    MavenLog.LOG.debug("[connector] perform error " + this);
     throw new RuntimeException("Cannot reconnect.", last);
   }
 
@@ -185,57 +192,26 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   @Override
   public State getState() {
-    switch (myServerPromise.getState()) {
-      case SUCCEEDED: {
-        return mySupport == null ? State.STOPPED : State.RUNNING;
-      }
-      case REJECTED:
-        return State.FAILED;
-      default:
-        return State.STARTING;
-    }
+    return switch (myServerPromise.getState()) {
+      case SUCCEEDED -> myTerminated.get() ? State.STOPPED : State.RUNNING;
+      case REJECTED -> State.FAILED;
+      default -> State.STARTING;
+    };
   }
 
-
-  private static class RemoteMavenServerLogger extends MavenRemoteObject implements MavenServerLogger {
-    @Override
-    public void info(Throwable e) {
-      MavenLog.LOG.info(e);
-    }
-
-    @Override
-    public void warn(Throwable e) {
-      MavenLog.LOG.warn(e);
-    }
-
-    @Override
-    public void error(Throwable e) {
-      MavenLog.LOG.error(e);
-    }
-
-    @Override
-    public void print(String s) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(s);
-    }
+  @Override
+  public boolean checkConnected() {
+    MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport support = mySupport;
+    return support != null && !support.getActiveConfigurations().isEmpty();
   }
 
-  private static class RemoteMavenServerDownloadListener extends MavenRemoteObject implements MavenServerDownloadListener {
-    private final List<MavenServerDownloadListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-    @Override
-    public void artifactDownloaded(File file, String relativePath) throws RemoteException {
-      for (MavenServerDownloadListener each : myListeners) {
-        each.artifactDownloaded(file, relativePath);
-      }
-    }
-  }
 
   private class StartServerTask implements Runnable {
     @Override
     public void run() {
       ProgressIndicator indicator = new EmptyProgressIndicator();
-      MavenLog.LOG.info("Connecting maven connector in " + myMultimoduleDirectory);
+      String dirForLogs = myMultimoduleDirectories.iterator().next();
+      MavenLog.LOG.debug("Connecting maven connector in " + dirForLogs);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
@@ -243,22 +219,81 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
         }
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
         mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+        mySupport.onTerminate(e -> {
+          MavenLog.LOG.debug("[connector] terminate " + MavenServerConnectorImpl.this);
+          MavenServerManager.getInstance().shutdownConnector(MavenServerConnectorImpl.this, false);
+        });
         MavenServer server = mySupport.acquire(this, "", indicator);
-        myLoggerExported = MavenRemoteObjectWrapper.doWrapAndExport(myLogger) != null;
-
-        if (!myLoggerExported) throw new RemoteException("Cannot export logger object");
-
-        myDownloadListenerExported = MavenRemoteObjectWrapper.doWrapAndExport(myDownloadListener) != null;
-        if (!myDownloadListenerExported) throw new RemoteException("Cannot export download listener object");
-
-        server.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
+        startPullingDownloadListener(server);
+        startPullingLogger(server);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + myMultimoduleDirectory + " has been connected");
+        MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + MavenServerConnectorImpl.this);
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + myMultimoduleDirectory, e);
+        MavenLog.LOG.warn("[connector] cannot connect in " + dirForLogs, e);
         myServerPromise.setError(e);
       }
     }
   }
+
+  private void startPullingDownloadListener(MavenServer server) throws RemoteException {
+    MavenPullDownloadListener listener = server.createPullDownloadListener(MavenRemoteObjectWrapper.ourToken);
+    if (listener == null) return;
+    myPullingDownloadFuture = myExecutor.scheduleWithFixedDelay(
+      () -> {
+        try {
+          List<DownloadArtifactEvent> artifactEvents = listener.pull();
+          if (artifactEvents == null) return;
+          for (DownloadArtifactEvent e : artifactEvents) {
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DOWNLOAD_LISTENER_TOPIC).artifactDownloaded(new File(e.getFile()), e.getPath());
+          }
+          myDownloadConnectFailedCount.set(0);
+        }
+        catch (RemoteException e) {
+          if (!Thread.currentThread().isInterrupted()) {
+            myDownloadConnectFailedCount.incrementAndGet();
+          }
+          else {
+            throw new RuntimeException(e);
+          }
+        }
+      },
+      500,
+      500,
+      TimeUnit.MILLISECONDS);
+  }
+
+
+  private void startPullingLogger(MavenServer server) throws RemoteException {
+    MavenPullServerLogger logger = server.createPullLogger(MavenRemoteObjectWrapper.ourToken);
+    if (logger == null) return;
+    myPullingLoggerFuture = myExecutor.scheduleWithFixedDelay(
+      () -> {
+        try {
+          List<ServerLogEvent> logEvents = logger.pull();
+          if (logEvents == null) return;
+          for (ServerLogEvent e : logEvents) {
+            switch (e.getType()) {
+              case PRINT, INFO -> MavenLog.LOG.info(e.getMessage());
+              case WARN -> MavenLog.LOG.warn(e.getMessage());
+              case ERROR -> MavenLog.LOG.error(e.getMessage());
+            }
+          }
+          myLoggerConnectFailedCount.set(0);
+        }
+        catch (RemoteException e) {
+          if (!Thread.currentThread().isInterrupted()) {
+            myLoggerConnectFailedCount.incrementAndGet();
+          }
+          else {
+            throw new RuntimeException(e);
+          }
+        }
+      },
+      0,
+      100,
+      TimeUnit.MILLISECONDS);
+  }
 }
+
+

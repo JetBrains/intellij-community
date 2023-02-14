@@ -30,12 +30,17 @@ class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
     super.update(e);
   }
 
-  @Nullable
   @Override
-  protected VcsFileRevision getRevision(int lineNumber) {
+  protected @Nullable VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     assert myProvider != null;
 
+    int lineNumber = getAnnotatedLine(e);
     if (lineNumber < 0 || lineNumber >= myAnnotation.getLineCount()) return null;
     return myProvider.getRevision(lineNumber);
+  }
+
+  @Override
+  protected int getAnnotatedLine(@NotNull AnActionEvent e) {
+    return ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
   }
 }

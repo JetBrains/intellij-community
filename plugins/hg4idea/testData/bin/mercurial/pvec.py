@@ -1,6 +1,6 @@
 # pvec.py - probabilistic vector clocks for Mercurial
 #
-# Copyright 2012 Matt Mackall <mpm@selenic.com>
+# Copyright 2012 Olivia Mackall <olivia@selenic.com>
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
@@ -48,16 +48,22 @@ Uses:
   different branches
 '''
 
-import base85, util
-from node import nullrev
+from __future__ import absolute_import
 
-_size = 448 # 70 chars b85-encoded
-_bytes = _size / 8
+from .node import nullrev
+from . import (
+    pycompat,
+    util,
+)
+
+_size = 448  # 70 chars b85-encoded
+_bytes = _size // 8
 _depthbits = 24
-_depthbytes = _depthbits / 8
+_depthbytes = _depthbits // 8
 _vecbytes = _bytes - _depthbytes
 _vecbits = _vecbytes * 8
-_radius = (_vecbits - 30) / 2 # high probability vectors are related
+_radius = (_vecbits - 30) // 2  # high probability vectors are related
+
 
 def _bin(bs):
     '''convert a bytestring to a long'''
@@ -66,19 +72,24 @@ def _bin(bs):
         v = v * 256 + ord(b)
     return v
 
+
 def _str(v, l):
-    bs = ""
-    for p in xrange(l):
-        bs = chr(v & 255) + bs
+    # type: (int, int) -> bytes
+    bs = b""
+    for p in pycompat.xrange(l):
+        bs = pycompat.bytechr(v & 255) + bs
         v >>= 8
     return bs
+
 
 def _split(b):
     '''depth and bitvec'''
     return _bin(b[:_depthbytes]), _bin(b[_depthbytes:])
 
+
 def _join(depth, bitvec):
     return _str(depth, _depthbytes) + _str(bitvec, _vecbytes)
+
 
 def _hweight(x):
     c = 0
@@ -87,16 +98,20 @@ def _hweight(x):
             c += 1
         x >>= 1
     return c
-_htab = [_hweight(x) for x in xrange(256)]
+
+
+_htab = [_hweight(x) for x in pycompat.xrange(256)]
+
 
 def _hamming(a, b):
     '''find the hamming distance between two longs'''
     d = a ^ b
     c = 0
     while d:
-        c += _htab[d & 0xff]
+        c += _htab[d & 0xFF]
         d >>= 8
     return c
+
 
 def _mergevec(x, y, c):
     # Ideally, this function would be x ^ y ^ ancestor, but finding
@@ -111,13 +126,13 @@ def _mergevec(x, y, c):
     hdist = _hamming(v1, v2)
     ddist = d1 - d2
     v = v1
-    m = v1 ^ v2 # mask of different bits
+    m = v1 ^ v2  # mask of different bits
     i = 1
 
     if hdist > ddist:
         # if delta = 10 and hdist = 100, then we need to go up 55 steps
         # to the ancestor and down 45
-        changes = (hdist - ddist + 1) / 2
+        changes = (hdist - ddist + 1) // 2
     else:
         # must make at least one change
         changes = 1
@@ -135,20 +150,22 @@ def _mergevec(x, y, c):
 
     return depth, v
 
+
 def _flipbit(v, node):
     # converting bit strings to longs is slow
-    bit = (hash(node) & 0xffffffff) % _vecbits
-    return v ^ (1<<bit)
+    bit = (hash(node) & 0xFFFFFFFF) % _vecbits
+    return v ^ (1 << bit)
+
 
 def ctxpvec(ctx):
     '''construct a pvec for ctx while filling in the cache'''
-    r = ctx._repo
+    r = ctx.repo()
     if not util.safehasattr(r, "_pveccache"):
         r._pveccache = {}
     pvc = r._pveccache
     if ctx.rev() not in pvc:
         cl = r.changelog
-        for n in xrange(ctx.rev() + 1):
+        for n in pycompat.xrange(ctx.rev() + 1):
             if n not in pvc:
                 node = cl.node(n)
                 p1, p2 = cl.parentrevs(n)
@@ -161,13 +178,14 @@ def ctxpvec(ctx):
                 else:
                     pvc[n] = _mergevec(pvc[p1], pvc[p2], node)
     bs = _join(*pvc[ctx.rev()])
-    return pvec(base85.b85encode(bs))
+    return pvec(util.b85encode(bs))
+
 
 class pvec(object):
     def __init__(self, hashorctx):
-        if isinstance(hashorctx, str):
+        if isinstance(hashorctx, bytes):
             self._bs = hashorctx
-            self._depth, self._vec = _split(base85.b85decode(hashorctx))
+            self._depth, self._vec = _split(util.b85decode(hashorctx))
         else:
             self._vec = ctxpvec(hashorctx)
 
@@ -180,7 +198,7 @@ class pvec(object):
     def __lt__(self, b):
         delta = b._depth - self._depth
         if delta < 0:
-            return False # always correct
+            return False  # always correct
         if _hamming(self._vec, b._vec) > delta:
             return False
         return True
@@ -196,7 +214,7 @@ class pvec(object):
 
     def __sub__(self, b):
         if self | b:
-            raise ValueError("concurrent pvecs")
+            raise ValueError(b"concurrent pvecs")
         return self._depth - b._depth
 
     def distance(self, b):

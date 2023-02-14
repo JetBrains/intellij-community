@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -34,7 +34,6 @@ import java.util.List;
 
 public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCase {
   protected CompilerTester myCompilerTester;
-  protected Project myProject;
 
   private String oldMacroValue;
 
@@ -63,21 +62,27 @@ public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCa
   public void setUp() throws Exception {
     super.setUp();
 
-    PathMacros pathMacros = PathMacros.getInstance();
-    oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
-    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
-
-    myProject = ProjectUtil.openOrImport(Paths.get(getTestDataPath()).normalize());
-
     InspectionProfileImpl.INIT_INSPECTIONS = true;
 
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
   }
 
+  @Override
+  protected @NotNull Project doCreateAndOpenProject() {
+    PathMacros pathMacros = PathMacros.getInstance();
+    oldMacroValue = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY);
+    pathMacros.setMacro(PathMacrosImpl.MAVEN_REPOSITORY, getDefaultMavenRepositoryPath());
+
+    return ProjectUtil.openOrImport(Paths.get(getTestDataPath()).normalize());
+  }
+
   protected final void initCompiler() {
     try {
-      Module module = ModuleManager.getInstance(myProject).getModules()[0];
-      myCompilerTester = new CompilerTester(module);
+      Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      if (modules.length != 1) {
+        throw new IllegalArgumentException("Only one module is expected");
+      }
+      myCompilerTester = new CompilerTester(modules[0]);
     }
     catch (Throwable e) {
       ExceptionUtil.rethrowAllAsUnchecked(e);

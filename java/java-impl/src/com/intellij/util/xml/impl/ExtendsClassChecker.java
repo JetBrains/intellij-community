@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.java.JavaBundle;
@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author peter
- */
 public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass> {
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 
@@ -46,19 +43,18 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
                                                             @NotNull final DomElement _element,
                                                             @NotNull final DomElementAnnotationHolder holder,
                                                             @NotNull final DomHighlightingHelper helper) {
-    if (!(_element instanceof GenericDomValue)) return Collections.emptyList();
-    GenericDomValue element = (GenericDomValue)_element;
+    if (!(_element instanceof GenericDomValue element)) return Collections.emptyList();
 
     if (!isPsiClassType(element)) return Collections.emptyList();
 
     final Object valueObject = element.getValue();
     PsiClass psiClass = null;
 
-    if (valueObject instanceof PsiClass) {
-      psiClass = (PsiClass)valueObject;
+    if (valueObject instanceof PsiClass cls) {
+      psiClass = cls;
     }
-    else if (valueObject instanceof PsiClassType) {
-      psiClass = ((PsiClassType)valueObject).resolve();
+    else if (valueObject instanceof PsiClassType classType) {
+      psiClass = classType.resolve();
     }
 
     if (psiClass != null) {

@@ -99,35 +99,37 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
   
   public void testSpacesInSimpleClass() {
     doTestLineToIndentMapping(
-      "public class A {\n" +
-      "    public void test() {\n" +
-      "      int a = 2;\n" +
-      "    }\n" +
-      "    public void a() {\n" +
-      "    }\n" +
-      "}",
+      """
+        public class A {
+            public void test() {
+              int a = 2;
+            }
+            public void a() {
+            }
+        }""",
       0, 4, 6, 4, 4, 4, 0
     );
   }
 
   public void testComplexIndents() {
     doTestLineToIndentMapping(
-      "class Test\n" +
-      "{\n" +
-      "  int a;\n" +
-      "  int b;\n" +
-      "  public void test() {\n" +
-      "    int c;\n" +
-      "  }\n" +
-      "  public void run() {\n" +
-      "    Runnable runnable = new Runnable() {\n" +
-      "      @Override\n" +
-      "      public void run() {\n" +
-      "        System.out.println(\"Hello!\");\n" +
-      "      }\n" +
-      "    };\n" +
-      "  }\n" +
-      "}",
+      """
+        class Test
+        {
+          int a;
+          int b;
+          public void test() {
+            int c;
+          }
+          public void run() {
+            Runnable runnable = new Runnable() {
+              @Override
+              public void run() {
+                System.out.println("Hello!");
+              }
+            };
+          }
+        }""",
       0, 0, 2, 2, 2, 4, 2, 2, 4, 6, 6, 8, 6, 4, 2, 0
     );
   }

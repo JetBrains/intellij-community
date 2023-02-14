@@ -86,8 +86,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private static void fillFromSchema(PsiFile file, ElementNames names) {
-    if (!(file instanceof XmlFile)) return;
-    final XmlFile f = (XmlFile)file;
+    if (!(file instanceof XmlFile f)) return;
     final XmlDocument d = f.getDocument();
     if (d == null) return;
     final XmlTag rootTag = d.getRootTag();
@@ -193,7 +192,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
 
     psiFile.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         final PsiFile[] _files = XsltSupport.getFiles(attribute);
         for (PsiFile _file : _files) {
           if (_file != file) files.add(_file);
@@ -327,13 +326,13 @@ public abstract class XsltContextProviderBase extends ContextProvider {
           if (!(file instanceof XmlFile)) continue;
           file.accept(new XmlRecursiveElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               names.elementNames.add(QNameUtil.createQName(tag));
               super.visitXmlTag(tag);
             }
 
             @Override
-            public void visitXmlAttribute(XmlAttribute attribute) {
+            public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
               if (!attribute.isNamespaceDeclaration()) {
                 names.attributeNames.add(QNameUtil.createQName(attribute));
               }

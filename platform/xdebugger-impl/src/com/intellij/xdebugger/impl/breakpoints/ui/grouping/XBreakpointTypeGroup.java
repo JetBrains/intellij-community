@@ -54,8 +54,8 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
     if (o instanceof XBreakpointTypeGroup) {
       if (((XBreakpointTypeGroup)o).myBreakpointType instanceof XLineBreakpointType) {
         if (myBreakpointType instanceof XLineBreakpointType) {
-          int res = ((XLineBreakpointType)((XBreakpointTypeGroup)o).myBreakpointType).getPriority() -
-                  ((XLineBreakpointType)myBreakpointType).getPriority();
+          int res = ((XLineBreakpointType<?>)((XBreakpointTypeGroup)o).myBreakpointType).getPriority() -
+                    ((XLineBreakpointType<?>)myBreakpointType).getPriority();
           if (res != 0) {
             return res;
           }

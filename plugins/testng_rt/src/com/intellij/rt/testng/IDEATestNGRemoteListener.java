@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.testng;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -20,10 +20,10 @@ import java.util.*;
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;
-  private final List<String> myCurrentSuites = new ArrayList<String>();
-  private final Map<String, Integer> myInvocationCounts = new HashMap<String, Integer>();
-  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<ExposedTestResult, String>();
-  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<ExposedTestResult, DelegatedResult>();
+  private final List<String> myCurrentSuites = new ArrayList<>();
+  private final Map<String, Integer> myInvocationCounts = new HashMap<>();
+  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
 
   public IDEATestNGRemoteListener() {
@@ -227,10 +227,11 @@ public class IDEATestNGRemoteListener {
     }
     Throwable ex = result.getThrowable();
     String methodName = getTestMethodNameWithParams(result);
-    final Map<String, String> attrs = new LinkedHashMap<String, String>();
+    final Map<String, String> attrs = new LinkedHashMap<>();
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
     if (ex != null) {
+      String expectedPrefix = " expected [";
       ComparisonFailureData notification;
       try {
         notification = ComparisonFailureData.create(ex);
@@ -247,7 +248,11 @@ public class IDEATestNGRemoteListener {
           notification = null;
         }
       }
-      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", "expected");
+      else {
+        expectedPrefix = "expected:";
+      }
+
+      ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex, "Comparison Failure: ", expectedPrefix);
     }
     else {
       attrs.put("message", "");
@@ -298,7 +303,7 @@ public class IDEATestNGRemoteListener {
             }
           }
           else {
-            paramString = "[" + parameter.toString() + "]";
+            paramString = "[" + parameter + "]";
           }
         }
       }
@@ -354,7 +359,7 @@ public class IDEATestNGRemoteListener {
     myResults.put(newResult, newResult);
     return newResult;
   }
-  
+
   protected static class DelegatedResult implements ExposedTestResult {
     private final ITestResult myResult;
     private final String myTestName;

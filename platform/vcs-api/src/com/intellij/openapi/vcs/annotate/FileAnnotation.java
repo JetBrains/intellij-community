@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -27,6 +28,7 @@ import java.util.*;
 
 /**
  * Represents annotations ("vcs blame") for some file in a specific revision
+ *
  * @see AnnotationProvider
  */
 public abstract class FileAnnotation {
@@ -97,8 +99,13 @@ public abstract class FileAnnotation {
   /**
    * This method is invoked when the file annotation is no longer used.
    * NB: method might be invoked multiple times
+   *
+   * @deprecated Historically ignored by users of {@link AnnotationProvider}.
+   * Implementations should not rely on this method to remove listeners, as it might cause memory leaks.
    */
-  public abstract void dispose();
+  @Deprecated
+  public void dispose() {
+  }
 
   /**
    * Get annotation aspects.
@@ -246,6 +253,11 @@ public abstract class FileAnnotation {
     return createDefaultRevisionsChangesProvider(this);
   }
 
+  @Nullable
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return null;
+  }
+
 
   public interface CurrentFileRevisionProvider {
     @Nullable
@@ -273,6 +285,11 @@ public abstract class FileAnnotation {
   public interface RevisionChangesProvider {
     @Nullable
     Pair<? extends CommittedChangeList, FilePath> getChangesIn(int lineNumber) throws VcsException;
+  }
+
+  public interface LineModificationDetailsProvider {
+    @Nullable
+    AnnotatedLineModificationDetails getDetails(int lineNumber) throws VcsException;
   }
 
 
@@ -358,7 +375,8 @@ public abstract class FileAnnotation {
     List<VcsFileRevision> revisions = annotation.getRevisions();
     if (revisions == null) return null;
 
-    List<List<VcsRevisionNumber>> orderedRevisions = ContainerUtil.map(revisions, (revision) -> Collections.singletonList(revision.getRevisionNumber()));
+    List<List<VcsRevisionNumber>> orderedRevisions =
+      ContainerUtil.map(revisions, (revision) -> Collections.singletonList(revision.getRevisionNumber()));
 
     return () -> orderedRevisions;
   }

@@ -22,9 +22,6 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
 
   @Override

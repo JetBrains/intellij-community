@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
@@ -114,7 +115,7 @@ public final class GitRebaseUpdater extends GitUpdater {
       // so we just notify the user about problems with collecting the updated changes.
       LOG.info("Couldn't mark end for repository " + repository, e);
       VcsNotifier.getInstance(myProject).
-        notifyMinorWarning("git.rebase.collect.updated.changes.error",
+        notifyMinorWarning(GitNotificationIdsHolder.COLLECT_UPDATED_CHANGES_ERROR,
                            GitBundle.message("notification.title.couldnt.collect.updated.files.info"),
                            GitBundle.message("notification.content.couldnt.collect.updated.files.info", repository));
     }

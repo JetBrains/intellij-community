@@ -23,6 +23,7 @@ class AnonymousExtendsJLR {
 interface I1 { default void run() {}}
 interface I2 { void run();}
 record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults</error>() implements I1, I2 {}
+enum <error descr="Class 'UnrelatedDefaults2' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults2</error> implements I1, I2 {}
 
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 
@@ -55,7 +56,7 @@ record AnnotatedComponents(
 class Outer {
   record NestedRecord() {}
   class Inner {
-    <error descr="Static declarations in inner classes are not supported at language level '15'">record InnerRecord()</error> {}
+    record InnerRecord() {}
   }
 }
 
@@ -74,4 +75,9 @@ record Incomplete(@<error descr="Class reference expected">i</error>nt a) {}
 record CStyle(int a<error descr="C-style record component declaration is not allowed">[]</error>) {}
 record CStyle2(int[] a<error descr="C-style record component declaration is not allowed">[] []</error> ) {}
 record JavaStyle(int[] [] a) {}
-record SafeVarargComponent(<error descr="@SafeVarargs annotation cannot be applied for a record component">@SafeVarargs</error> int... component) {}
+record SafeVarargComponent(<error descr="@SafeVarargs is not allowed on a record component">@SafeVarargs</error> int... component) {}
+record ExtendsRecordExplicitly() <error descr="No extends clause allowed for record">extends java.lang.Record</error> {}
+
+record AbstractMethod() {
+  <error descr="Abstract method in non-abstract class">abstract</error> void f();
+}

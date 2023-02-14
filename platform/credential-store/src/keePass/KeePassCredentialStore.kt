@@ -9,19 +9,19 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.exists
 
-internal const val DB_FILE_NAME = "c.kdbx"
+const val DB_FILE_NAME = "c.kdbx"
 
-internal fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
+fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
 
-internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
+fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
 
 /**
  * preloadedMasterKey [MasterKey.value] will be cleared

@@ -1,6 +1,7 @@
 package com.siyeh.igtest.bugs.throwable_result_of_method_call_ignored;
 
 import java.util.*;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
 public class ThrowableResultOfMethodCallIgnored {
 
@@ -30,6 +31,21 @@ public class ThrowableResultOfMethodCallIgnored {
     public Exception b() {
       return new RuntimeException();
     }
+
+  public static void main(String[] args) {
+    try {
+      // ...
+    } catch (Exception e) {
+      log(e);
+      e.printStackTrace();
+    }
+  }
+
+  @CanIgnoreReturnValue
+  public static Throwable log(Throwable t) {
+    // ...
+    return t;
+  }
 }
 class ResWrap {
     private String        payload;

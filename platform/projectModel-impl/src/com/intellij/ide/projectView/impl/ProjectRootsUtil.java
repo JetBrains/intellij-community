@@ -4,8 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
@@ -48,14 +46,38 @@ public final class ProjectRootsUtil {
   }
 
   public static boolean isModuleSourceRoot(@NotNull VirtualFile virtualFile, @NotNull final Project project) {
-    return getModuleSourceRoot(virtualFile, project) != null;
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    return fileIndex.isInSourceContent(virtualFile) && virtualFile.equals(fileIndex.getSourceRootForFile(virtualFile));
   }
 
   @Nullable
   public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    if (!root.equals(projectFileIndex.getSourceRootForFile(root))) return null;
+    
     final Module module = projectFileIndex.getModuleForFile(root);
-    return module != null && !module.isDisposed() ? findSourceFolder(module, root) : null;
+    if (module == null || module.isDisposed()) return null;
+
+    VirtualFile contentRoot = projectFileIndex.getContentRootForFile(root);
+    if (contentRoot == null) return null;
+    
+    for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
+      if (contentRoot.equals(contentEntry.getFile())) {
+        /*
+         If there are several source roots pointing to the same directory, DirectoryIndex::getSourceFolder will return the last of them.
+         It appears that we have code which relies on this behavior, so we'll temporarily keep it. 
+        */
+        SourceFolder @NotNull [] folders = contentEntry.getSourceFolders();
+        for (int i = folders.length - 1; i >= 0; i--) {
+          SourceFolder folder = folders[i];
+          if (root.equals(folder.getFile())) {
+            return folder;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean isLibraryRoot(@NotNull VirtualFile directoryFile, @NotNull Project project) {
@@ -79,22 +101,16 @@ public final class ProjectRootsUtil {
 
   public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
     if (project.isDefault()) return null;
-    final DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(root);
-    if (info.isExcluded(root) && root.equals(info.getContentRoot()) && info.getUnloadedModuleName() != null) {
-      return info.getUnloadedModuleName();
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+    if (fileIndex.isExcluded(root) && root.equals(fileIndex.getContentRootForFile(root, false))) {
+      return fileIndex.getUnloadedModuleNameForFile(root);
     }
     return null;
   }
 
   public static String findUnloadedModuleByFile(@NotNull final VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) return null;
-    DirectoryInfo info = DirectoryIndex.getInstance(project).getInfoForFile(file);
-    VirtualFile contentRoot = info.getContentRoot();
-    if (info.isExcluded(file) && contentRoot != null) {
-      DirectoryInfo rootInfo = DirectoryIndex.getInstance(project).getInfoForFile(contentRoot);
-      return rootInfo.getUnloadedModuleName();
-    }
-    return null;
+    return ProjectFileIndex.getInstance(project).getUnloadedModuleNameForFile(file);
   }
 
   public static boolean isProjectHome(@NotNull PsiDirectory psiDirectory) {
@@ -109,11 +125,13 @@ public final class ProjectRootsUtil {
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 
+  /**
+   * @deprecated use {@link #getModuleSourceRoot} instead
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
-    ProjectFileIndex index = ProjectFileIndex.getInstance(module.getProject());
-    SourceFolder folder = index.getModuleForFile(root) == module ? index.getSourceFolder(root) : null;
-    return folder != null && root.equals(folder.getFile()) ? folder : null;
+    return getModuleSourceRoot(root, module.getProject());
   }
 
   @Nullable

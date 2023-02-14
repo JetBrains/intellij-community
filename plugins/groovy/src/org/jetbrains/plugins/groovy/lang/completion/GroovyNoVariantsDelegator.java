@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class GroovyNoVariantsDelegator extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(GroovyNoVariantsDelegator.class);
 
@@ -100,7 +97,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     JavaCompletionSession session = new JavaCompletionSession(result);
     for (final LookupElement base : suggestQualifierItems(parameters, (GrReferenceElement<?>)qualifier, session)) {
       final PsiType type = getPsiType(base.getObject());
-      if (type != null && !PsiType.VOID.equals(type)) {
+      if (type != null && !PsiTypes.voidType().equals(type)) {
         GrReferenceElement<?> ref = createMockReference(position, type, base);
         PsiElement refName = ref == null ? null : ref.getReferenceNameElement();
         if (refName == null) continue;
@@ -128,8 +125,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     else if (o instanceof PsiMethod) {
       return ((PsiMethod)o).getReturnType();
     }
-    else if (o instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)o;
+    else if (o instanceof PsiClass psiClass) {
       return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
     }
     return null;

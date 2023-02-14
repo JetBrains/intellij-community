@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -34,8 +35,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IncrementDecrementUsedAsExpressionInspection
-  extends BaseInspection {
+public class IncrementDecrementUsedAsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -47,8 +47,7 @@ public class IncrementDecrementUsedAsExpressionInspection
   @NotNull
   public String buildErrorString(Object... infos) {
     final Object info = infos[0];
-    if (info instanceof PsiPostfixExpression) {
-      final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)info;
+    if (info instanceof PsiPostfixExpression postfixExpression) {
       final IElementType tokenType = postfixExpression.getOperationTokenType();
       if (tokenType.equals(JavaTokenType.PLUSPLUS)) {
         return InspectionGadgetsBundle.message(
@@ -107,7 +106,7 @@ public class IncrementDecrementUsedAsExpressionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       extractPrefixPostfixExpressionToSeparateStatement(descriptor.getPsiElement());
     }
   }
@@ -203,8 +202,7 @@ public class IncrementDecrementUsedAsExpressionInspection
         parent.addBefore(newStatement, statement);
       }
     }
-    else if (operand instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+    else if (operand instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (target != null) {
         final SearchScope useScope = target.getUseScope();
@@ -218,9 +216,8 @@ public class IncrementDecrementUsedAsExpressionInspection
         }
       }
     }
-    if (statement instanceof PsiLoopStatement) {
+    if (statement instanceof PsiLoopStatement loopStatement) {
       // in/decrement inside loop statement condition
-      final PsiLoopStatement loopStatement = (PsiLoopStatement)statement;
       final PsiStatement body = loopStatement.getBody();
       if (body instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;

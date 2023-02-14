@@ -17,6 +17,10 @@ public final class LibraryDependentToolWindow extends ToolWindowEP {
   @Attribute("librarySearchClass")
   public String librarySearchClass;
 
+  /**
+   * @deprecated not supported in new UI
+   */
+  @Deprecated
   @Attribute("showOnStripeByDefault")
   public boolean showOnStripeByDefault = true;
 

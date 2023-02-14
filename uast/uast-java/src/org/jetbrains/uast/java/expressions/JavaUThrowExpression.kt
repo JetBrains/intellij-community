@@ -17,13 +17,16 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiThrowStatement
+import com.intellij.util.lazyPub
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UThrowExpression
 
+@ApiStatus.Internal
 class JavaUThrowExpression(
   override val sourcePsi: PsiThrowStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UThrowExpression {
-  override val thrownExpression: UExpression by lz { JavaConverter.convertOrEmpty(sourcePsi.exception, this) }
+  override val thrownExpression: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.exception, this) }
 }

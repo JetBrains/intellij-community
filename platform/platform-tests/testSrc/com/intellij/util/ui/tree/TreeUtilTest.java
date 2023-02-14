@@ -4,21 +4,20 @@ package com.intellij.util.ui.tree;
 import com.intellij.ui.TreeExpandCollapse;
 import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Assertion;
 import com.intellij.util.ExceptionUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
-import java.awt.EventQueue;
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class TreeUtilTest extends TestCase {
-  private final Assertion CHECK = new Assertion();
+import static org.assertj.core.api.Assertions.assertThat;
 
+public class TreeUtilTest extends TestCase {
   public void testFindNodeWithObject() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
@@ -142,7 +141,7 @@ public class TreeUtilTest extends TestCase {
       order.add(node1.toString());
       return true;
     });
-    CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
+    assertThat(order).containsExactly("0", "00", "000", "001","01");
   }
 
   public static void waitForTestOnEDT(@NotNull Runnable test) {

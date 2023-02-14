@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -21,7 +23,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.InlayModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -31,26 +32,31 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
@@ -75,7 +81,7 @@ public final class EditorTestUtil {
     return first != 0 ? first : Comparing.compare(o1.second, o2.second);
   };
 
-  public static void performTypingAction(Editor editor, char c) {
+  public static void performTypingAction(@NotNull Editor editor, char c) {
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
     }
@@ -107,15 +113,12 @@ public final class EditorTestUtil {
 
   public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
-    action.beforeActionPerformedUpdate(event);
-    if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
-      return;
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-    action.actionPerformed(event);
-    actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    else if (assertActionIsEnabled) {
+      fail("Action " + action + " is disabled");
+    }
   }
 
   @NotNull
@@ -152,7 +155,7 @@ public final class EditorTestUtil {
     HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
 
     EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
-      project, ((EditorEx)editor).getVirtualFile());
+      project, editor.getVirtualFile());
     freshHighlighter.setEditor((EditorImpl)editor);
     freshHighlighter.setText(editor.getDocument().getImmutableCharSequence());
     HighlighterIterator freshIterator = freshHighlighter.createIterator(0);
@@ -229,9 +232,19 @@ public final class EditorTestUtil {
    */
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt) {
+    return configureSoftWraps(editor, charCountToWrapAt, true);
+  }
+
+  /**
+   * Configures given editor to wrap at given character count.
+   *
+   * @return whether any actual wraps of editor contents were created as a result of turning on soft wraps
+   */
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, final int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = 10;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, charWidthInPixels);
+    return configureSoftWraps(editor, (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
   }
 
   @TestOnly
@@ -249,7 +262,13 @@ public final class EditorTestUtil {
 
   @TestOnly
   public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels) {
+    return configureSoftWraps(editor, visibleWidthInPixels, visibleHeightInPixels, charWidthInPixels, true);
+  }
+
+  @TestOnly
+  public static boolean configureSoftWraps(Editor editor, int visibleWidthInPixels, int visibleHeightInPixels, int charWidthInPixels, boolean useCustomSoftWrapIndent) {
     editor.getSettings().setUseSoftWraps(true);
+    editor.getSettings().setUseCustomSoftWrapIndent(useCustomSoftWrapIndent);
     SoftWrapModelImpl model = (SoftWrapModelImpl)editor.getSoftWrapModel();
     model.setSoftWrapPainter(new SoftWrapPainter() {
       @Override
@@ -484,10 +503,69 @@ public final class EditorTestUtil {
         assertEquals(messageSuffix + caretDescription + "unexpected selection end", expectedSelectionEnd, actualSelectionEnd);
       }
       else {
-        assertFalse(messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
-                    currentCaret.hasSelection());
+        assertFalse(
+          messageSuffix + caretDescription + "should has no selection, but was: (" + actualSelectionStart + ", " + actualSelectionEnd + ")",
+          currentCaret.hasSelection());
       }
     }
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and comparing them with file from {@code answerFilePath}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
+    TestCase.assertNotNull("Fixture has no file", testFile);
+    final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
+                                                                                              testFile.getProject(),
+                                                                                              testFile.getVirtualFile());
+    TestCase.assertNotNull("Syntax highlighter not found", syntaxHighlighter);
+    final Lexer highlightingLexer = syntaxHighlighter.getHighlightingLexer();
+    TestCase.assertNotNull("Highlighting lexer not found", highlightingLexer);
+
+    final String fileText = testFile.getText();
+    highlightingLexer.start(fileText);
+    IElementType tokenType;
+    final StringBuilder sb = new StringBuilder();
+    Set<IElementType> notHighlightedTokens = new HashSet<>();
+    while ((tokenType = highlightingLexer.getTokenType()) != null) {
+      final TextAttributesKey[] highlights = syntaxHighlighter.getTokenHighlights(tokenType);
+      if (highlights.length > 0) {
+        if (sb.length() > 0) {
+          sb.append("\n");
+        }
+        String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());
+        token = token.replace(' ', '␣');
+        if (StringUtil.isEmptyOrSpaces(token)) {
+          token = token.replace("\n", "\\n");
+        }
+        sb.append(token).append("\n");
+        final List<String> attrNames = new SmartList<>();
+        for (final TextAttributesKey attributesKey : highlights) {
+          attrNames.add("    " + serializeTextAttributeKey(attributesKey));
+        }
+        sb.append(StringUtil.join(attrNames, "\n"));
+      }
+      else if (!StringUtil.isEmptyOrSpaces(highlightingLexer.getTokenText())) {
+        notHighlightedTokens.add(tokenType);
+      }
+      highlightingLexer.advance();
+    }
+    if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
+      TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
+    }
+    UsefulTestCase.assertSameLinesWithFile(answerFilePath, sb.toString());
+  }
+
+  private static String serializeTextAttributeKey(@Nullable TextAttributesKey key) {
+    if (key == null) {
+      return "";
+    }
+    final String keyName = key.getExternalName();
+    final TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TestCase.assertNotSame(fallbackKey, key);
+    return fallbackKey == null ? keyName : (keyName + " => " + serializeTextAttributeKey(fallbackKey));
   }
 
   private static class CaretAndSelectionMarkup {
@@ -506,7 +584,7 @@ public final class EditorTestUtil {
       return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
 
-    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<? extends CaretInfo> carets) {
       CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
       // The expected state is properly sorted already, so it doesn't require extra sorting,
       // but for sake of consistency we use the same approach as for the actual caret state.
@@ -587,12 +665,34 @@ public final class EditorTestUtil {
                                     boolean showWhenFolded,
                                     int widthInPixels,
                                     Integer heightInPixels) {
-    return ((InlayModelImpl)editor.getInlayModel()).addBlockElement(offset, relatesToPrecedingText, showAbove, showWhenFolded, 0,
-                                                                    new EmptyInlayRenderer(widthInPixels, heightInPixels));
+    return editor.getInlayModel().addBlockElement(offset,
+                                                  new InlayProperties()
+                                                    .relatesToPrecedingText(relatesToPrecedingText)
+                                                    .showAbove(showAbove)
+                                                    .showWhenFolded(showWhenFolded),
+                                                  new EmptyInlayRenderer(widthInPixels, heightInPixels));
   }
 
   public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
     return editor.getInlayModel().addAfterLineEndElement(offset, false, new EmptyInlayRenderer(widthInPixels));
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine) {
+    return addCustomFoldRegion(editor, startLine, endLine, 1);
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine, int heightInPixels) {
+    return addCustomFoldRegion(editor, startLine, endLine, 0, heightInPixels);
+  }
+
+  public static @Nullable CustomFoldRegion addCustomFoldRegion(@NotNull Editor editor, int startLine, int endLine,
+                                                               int widthInPixels, int heightInPixels) {
+    CustomFoldRegion[] result = new CustomFoldRegion[1];
+    FoldingModel model = editor.getFoldingModel();
+    model.runBatchFoldingOperation(() -> {
+      result[0] = model.addCustomLinesFolding(startLine, endLine, new EmptyCustomFoldingRenderer(widthInPixels, heightInPixels));
+    });
+    return result[0];
   }
 
   public static void waitForLoading(Editor editor) {
@@ -662,6 +762,7 @@ public final class EditorTestUtil {
     if (addSelection) {
       result.add(Pair.create(caret.getSelectionEnd(), SELECTION_END_TAG));
     }
+    result.sort(Pair.comparingByFirst());
     return result;
   }
 
@@ -679,10 +780,8 @@ public final class EditorTestUtil {
                                              @Nullable Set<String> acceptableKeyNames) {
     Editor editor = fixture.getEditor();
     CaretModel caretModel = editor.getCaretModel();
-    List<Integer> caretsOffsets = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
-    if (caretsOffsets.isEmpty()) {
-      caretsOffsets.add(-1);
-    }
+    List<Integer> offs = ContainerUtil.map(caretModel.getAllCarets(), Caret::getOffset);
+    List<Integer> caretsOffsets = offs.isEmpty() ? List.of(-1) : offs;
     caretModel.removeSecondaryCarets();
     CharSequence documentSequence = editor.getDocument().getCharsSequence();
 
@@ -704,7 +803,7 @@ public final class EditorTestUtil {
       }});
   }
 
-  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<HighlightInfo> highlightInfos,
+  private static @NotNull String renderTextWithHighlihgtingInfos(@NotNull List<? extends HighlightInfo> highlightInfos,
                                                                  @NotNull CharSequence documentSequence,
                                                                  @Nullable Set<String> acceptableKeyNames) {
     List<Pair<Integer, String>> sortedMarkers = highlightInfos.stream()
@@ -718,7 +817,7 @@ public final class EditorTestUtil {
           Pair.create(it.getEndOffset(), "</" + keyText + ">")
         );
       })
-      .sorted(MARKERS_COMPARATOR).collect(Collectors.toList());
+      .sorted(MARKERS_COMPARATOR).toList();
 
     StringBuilder sb = new StringBuilder();
     int lastEnd = 0;
@@ -735,14 +834,7 @@ public final class EditorTestUtil {
   }
 
 
-  public static class CaretAndSelectionState {
-    public final List<CaretInfo> carets;
-    public final TextRange blockSelection;
-
-    public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
-      this.carets = carets;
-      this.blockSelection = blockSelection;
-    }
+  public record CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
 
     /**
      * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
@@ -795,11 +887,31 @@ public final class EditorTestUtil {
     public int calcHeightInPixels(@NotNull Inlay inlay) {
       return height == null ? EditorCustomElementRenderer.super.calcHeightInPixels(inlay) : height;
     }
+  }
+
+  private static class EmptyCustomFoldingRenderer implements CustomFoldRegionRenderer {
+    private final int myWidth;
+    private final int myHeight;
+
+    private EmptyCustomFoldingRenderer(int width, int height) {
+      myWidth = width;
+      myHeight = height;
+    }
 
     @Override
-    public void paint(@NotNull Inlay inlay,
-                      @NotNull Graphics g,
-                      @NotNull Rectangle targetRegion,
+    public int calcWidthInPixels(@NotNull CustomFoldRegion region) {
+      return myWidth;
+    }
+
+    @Override
+    public int calcHeightInPixels(@NotNull CustomFoldRegion region) {
+      return myHeight;
+    }
+
+    @Override
+    public void paint(@NotNull CustomFoldRegion region,
+                      @NotNull Graphics2D g,
+                      @NotNull Rectangle2D targetRegion,
                       @NotNull TextAttributes textAttributes) {}
   }
 

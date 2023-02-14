@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
+public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
   private final StackFrameProxyImpl myFrame;
   private final FrameDisplayKey myDisplayKey;
   private final MethodsTracker myMethodsTracker;
@@ -44,7 +44,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
     return myDisplayKey;
   }
 
-  private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl>{
+  private static class FrameDisplayKey implements DisplayKey<StackFrameDescriptorImpl> {
     private final String myContextKey;
 
     FrameDisplayKey(final String contextKey) {
@@ -63,7 +63,7 @@ public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl>{
     }
 
     public int hashCode() {
-      return myContextKey == null? 0 : myContextKey.hashCode();
+      return myContextKey == null ? 0 : myContextKey.hashCode();
     }
   }
 }

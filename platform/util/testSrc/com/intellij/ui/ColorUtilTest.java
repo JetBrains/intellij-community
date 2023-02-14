@@ -104,4 +104,13 @@ public class ColorUtilTest extends TestCase {
     assertEquals(new Color(0xAA123456, true), fromHex("123456AA"));
     assertEquals(new Color(0xAA2468AC, true), fromHex("#2468ACAA"));
   }
+
+  public void testAlphaBlending() {
+    assertEquals(new Color(48, 78, 241, 15), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 0)));
+    assertEquals(new Color(0, 0, 0, 0), alphaBlending(new Color(48, 78, 241, 0), new Color(120, 46, 97, 0)));
+    assertEquals(new Color(120, 46, 97, 24), alphaBlending(new Color(48, 78, 241, 0), new Color(120, 46, 97, 24)));
+    assertEquals(new Color(48, 78, 241, 255), alphaBlending(new Color(48, 78, 241, 255), new Color(120, 46, 97, 24)));
+    assertEquals(new Color(115, 47, 105, 255), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 255)));
+    assertEquals(new Color(91, 58, 154, 37), alphaBlending(new Color(48, 78, 241, 15), new Color(120, 46, 97, 24)));
+  }
 }

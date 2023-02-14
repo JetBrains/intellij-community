@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -30,8 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance(GrCodeReferenceElementImpl.class);
@@ -101,16 +100,15 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   public String getCanonicalText() {
     switch (getKind()) {
-      case PACKAGE_REFERENCE:
-      case IMPORT_REFERENCE:
+      case PACKAGE_REFERENCE, IMPORT_REFERENCE -> {
         return getTextSkipWhiteSpaceAndComments();
-      case REFERENCE:
+      }
+      case REFERENCE -> {
         final PsiElement target = resolve();
         if (target instanceof PsiTypeParameter) {
           return StringUtil.notNullize(((PsiTypeParameter)target).getName());
         }
-        else if (target instanceof PsiClass) {
-          final PsiClass aClass = (PsiClass)target;
+        else if (target instanceof PsiClass aClass) {
           String name = aClass.getQualifiedName();
           if (name == null) return "";
 
@@ -135,8 +133,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           LOG.assertTrue(target == null);
           return getTextSkipWhiteSpaceAndComments();
         }
-      default:
-        throw new IllegalStateException();
+      }
+      default -> throw new IllegalStateException();
     }
   }
 
@@ -145,8 +143,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     if (super.bindsCorrectly(element)) return true;
     if (element instanceof PsiClass) {
       final PsiElement resolved = resolve();
-      if (resolved instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)resolved;
+      if (resolved instanceof PsiMethod method) {
         if (method.isConstructor() && getManager().areElementsEquivalent(element, method.getContainingClass())) {
           return true;
         }
@@ -176,17 +173,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
-    switch (getKind()) {
-      case PACKAGE_REFERENCE:
-        return referencesPackage(element);
-      case REFERENCE:
-        return referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
-      case IMPORT_REFERENCE:
-        return (element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element)
-               || element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element);
-      default:
-        throw new IllegalStateException();
-    }
+    return switch (getKind()) {
+      case PACKAGE_REFERENCE -> referencesPackage(element);
+      case REFERENCE -> referencesPackage(element) || element instanceof PsiClass && resolvesTo(element);
+      case IMPORT_REFERENCE ->
+        ((element instanceof PsiClass || element instanceof PsiField) && checkName((PsiNamedElement)element) && resolvesTo(element))
+        || (element instanceof PsiMethod && checkPropertyName((PsiNamedElement)element) && multiResolvesTo(element))
+        || (element instanceof PsiPackage && referencesPackage(element));
+    };
   }
 
   private boolean referencesPackage(@NotNull PsiElement element) {

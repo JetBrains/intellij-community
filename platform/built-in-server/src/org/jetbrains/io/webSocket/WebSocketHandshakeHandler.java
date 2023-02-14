@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.webSocket;
 
 import com.intellij.openapi.Disposable;
@@ -80,7 +80,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
           ClientManager clientManager = WebSocketHandshakeHandler.this.clientManager.getValue();
           clientManager.addClient(client);
           MessageChannelHandler messageChannelHandler = new MessageChannelHandler(clientManager, getMessageServer());
-          BuiltInServer.replaceDefaultHandler(context, messageChannelHandler);
+          BuiltInServer.Companion.replaceDefaultHandler(context, messageChannelHandler);
           ChannelHandlerContext messageChannelHandlerContext = context.pipeline().context(messageChannelHandler);
           context.pipeline().addBefore(messageChannelHandlerContext.name(), "webSocketFrameAggregator", new WebSocketFrameAggregator(NettyUtil.MAX_CONTENT_LENGTH));
           messageChannelHandlerContext.channel().attr(ClientManagerKt.getCLIENT()).set(client);

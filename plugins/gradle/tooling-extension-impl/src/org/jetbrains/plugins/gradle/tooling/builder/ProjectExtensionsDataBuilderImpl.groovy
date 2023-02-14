@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.api.plugins.ExtensionsSchema
 import org.gradle.api.reflect.HasPublicType
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
@@ -31,10 +32,10 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     result.parentProjectPath = project.parent?.path
 
     for (it in project.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, extractStringList(it, "getDeclarationAlternatives")))
     }
     for (it in project.buildscript.configurations) {
-      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true, extractStringList(it, "getDeclarationAlternatives")))
     }
 
     def convention = project.convention
@@ -52,7 +53,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       def extension = it as ExtensionContainer
       List<String> keyList =
         GradleVersion.current() >= GradleVersion.version("4.5")
-          ? extension.extensionsSchema.collect { it["name"] as String }
+          ? extractKeys(extension)
           : extractKeysViaReflection(extension)
 
       for (name in keyList) {
@@ -62,6 +63,14 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         def rootTypeFqn = getType(value)
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn))
       }
+    }
+    return result
+  }
+
+  private static List<String> extractKeys(ExtensionContainer extension) {
+    List<String> result = []
+    for (final ExtensionsSchema.ExtensionSchema schema in extension.extensionsSchema) {
+      result.add(schema.name)
     }
     return result
   }
@@ -93,6 +102,16 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
       project, e, "Project extensions data import errors"
     ).withDescription(
       "Unable to resolve some context data of gradle scripts. Some codeInsight features inside *.gradle files can be unavailable.")
+  }
+
+  @NotNull private static List<String> extractStringList(Object instance, String methodName) {
+    try {
+      Method method = instance.class.getMethod(methodName)
+      List<String> result = method.invoke(instance) as List<String>
+      return result != null ? result : Collections.<String>emptyList()
+    } catch (NoSuchMethodException | SecurityException | ClassCastException ignored) {
+      return Collections.emptyList()
+    }
   }
 
   static String getType(object) {

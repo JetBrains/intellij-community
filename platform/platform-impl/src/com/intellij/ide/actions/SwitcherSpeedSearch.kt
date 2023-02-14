@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
@@ -10,6 +11,19 @@ import com.intellij.ui.speedSearch.NameFilteringListModel
 import javax.swing.ListModel
 
 internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher) {
+  fun updateEnteredPrefix() = searchField?.let {
+    val text = it.text ?: ""
+    when (text.length > 1) {
+      true -> {
+        it.text = text.dropLast(1)
+        fireStateChanged()
+      }
+      else -> {
+        it.text = ""
+        hidePopup()
+      }
+    }
+  }
 
   fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,
@@ -23,18 +37,20 @@ internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<Sw
   private val windows
     get() = myComponent.toolWindows
 
-  override fun getSelectedIndex() = when (files.isFocusOwner) {
-    true -> files.selectedIndex
-    else -> windows.selectedIndex + files.itemsCount
+  override fun getSelectedIndex() = when (windows.selectedIndex >= 0) {
+    true -> windows.selectedIndex + files.itemsCount
+    else -> files.selectedIndex
   }
 
   override fun getElementText(element: Any?) = (element as? SwitcherListItem)?.mainText ?: ""
 
   override fun getElementCount() = files.itemsCount + windows.itemsCount
 
-  override fun getElementAt(index: Int): SwitcherListItem = when (index < files.itemsCount) {
-    true -> files.model.getElementAt(index)
-    else -> windows.model.getElementAt(index - files.itemsCount)
+  override fun getElementAt(index: Int) = when {
+    index < 0 -> null
+    index < files.itemsCount -> files.model.getElementAt(index)
+    index < elementCount -> windows.model.getElementAt(index - files.itemsCount)
+    else -> null
   }
 
   override fun selectElement(element: Any?, selectedText: String) {
@@ -72,12 +88,16 @@ internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<Sw
   }
 
   init {
-    comparator = SpeedSearchComparator(false, true)
+    comparator = SpeedSearchComparator(Registry.`is`("ide.recent.files.speed.search.beginning"),
+                                       Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
         myComponent.myPopup.cancel()
       }
       else {
+        val isPopupActive = isPopupActive
+        val element = if (isPopupActive) null else getElementAt(selectedIndex)
+
         (files.model as? NameFilteringListModel<*>)?.refilter()
         (windows.model as? NameFilteringListModel<*>)?.refilter()
 
@@ -89,7 +109,10 @@ internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<Sw
           files.setEmptyText(message("recent.files.file.list.empty.text"))
           windows.setEmptyText(message("recent.files.tool.window.list.empty.text"))
         }
-        refreshSelection()
+        when {
+          isPopupActive -> refreshSelection()
+          else -> selectElement(element ?: getElementAt(0), "")
+        }
       }
     }
   }

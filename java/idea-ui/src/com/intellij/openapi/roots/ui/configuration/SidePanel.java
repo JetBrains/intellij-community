@@ -3,12 +3,14 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -84,7 +86,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected void layout() {
         myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH);
-        myExtraPanel.add(myComponent, BorderLayout.CENTER);
+        myExtraPanel.add(getItemComponent(), BorderLayout.CENTER);
         myExtraPanel.add(myCountLabel, BorderLayout.EAST);
         myRendererComponent.add(myExtraPanel, BorderLayout.CENTER);
       }
@@ -97,7 +99,7 @@ public final class SidePanel extends JPanel {
                                                     boolean cellHasFocus) {
         layout();
         myCountLabel.setText("");
-        final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
           final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
@@ -120,6 +122,7 @@ public final class SidePanel extends JPanel {
       @Override
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
+
         myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 

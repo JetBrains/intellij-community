@@ -8,11 +8,9 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.util.NlsSafe;
 import org.gradle.tooling.events.*;
-import org.gradle.tooling.events.internal.DefaultOperationDescriptor;
 import org.gradle.tooling.events.task.TaskProgressEvent;
 import org.gradle.tooling.events.task.TaskSuccessResult;
 import org.gradle.tooling.events.test.TestProgressEvent;
-import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -24,14 +22,9 @@ public final class GradleProgressEventConverter {
 
   static EventId getEventId(@NotNull ProgressEvent event, @NotNull String operationId) {
     OperationDescriptor descriptor = event.getDescriptor();
-    InternalOperationDescriptor internalDescriptor = descriptor instanceof DefaultOperationDescriptor ?
-                                                     ((DefaultOperationDescriptor)descriptor).getInternalOperationDescriptor() : null;
-    String eventId = internalDescriptor == null ?
-                     operationId + descriptor.getDisplayName() : operationId + internalDescriptor.getId().toString();
+    String eventId = operationId + descriptor.getDisplayName();
     String parentEventId = descriptor.getParent() == null ? null :
-                           internalDescriptor == null
-                           ? operationId + descriptor.getParent().getDisplayName()
-                           : operationId + internalDescriptor.getParentId().toString();
+                           operationId + descriptor.getParent().getDisplayName();
     return new EventId(eventId, parentEventId);
   }
 
@@ -52,8 +45,7 @@ public final class GradleProgressEventConverter {
       return new ExternalSystemBuildEvent(
         id, new StartEventImpl(eventId.id, eventId.parentId, event.getEventTime(), description));
     }
-    else if (event instanceof StatusEvent) {
-      StatusEvent statusEvent = (StatusEvent)event;
+    else if (event instanceof StatusEvent statusEvent) {
       return new ExternalSystemBuildEvent(id, new ProgressBuildEventImpl(
         eventId.id, eventId.parentId, event.getEventTime(), description, statusEvent.getTotal(), statusEvent.getProgress(),
         statusEvent.getUnit()));
@@ -158,7 +150,7 @@ public final class GradleProgressEventConverter {
   @NotNull
   private static String getFileName(String path) {
     int index = path.lastIndexOf('/');
-    if (index > 0 && index < path.length()) {
+    if (index > 0) {
       String fileName = path.substring(index + 1);
       if (!fileName.isEmpty()) return fileName;
     }

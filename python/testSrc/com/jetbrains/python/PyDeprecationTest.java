@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -8,9 +8,7 @@ import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
-/**
- * @author yole
- */
+
 public class PyDeprecationTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -20,11 +18,12 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testFunction() {
     myFixture.configureByText(PythonFileType.INSTANCE,
-                              "def getstatus(file):\n" +
-                              "    \"\"\"Return output of \"ls -ld <file>\" in a string.\"\"\"\n" +
-                              "    import warnings\n" +
-                              "    warnings.warn(\"commands.getstatus() is deprecated\", DeprecationWarning, 2)\n" +
-                              "    return getoutput('ls -ld' + mkarg(file))");
+                              """
+                                def getstatus(file):
+                                    ""\"Return output of "ls -ld <file>" in a string.""\"
+                                    import warnings
+                                    warnings.warn("commands.getstatus() is deprecated", DeprecationWarning, 2)
+                                    return getoutput('ls -ld' + mkarg(file))""");
     PyFunction getstatus = ((PyFile) myFixture.getFile()).findTopLevelFunction("getstatus");
     assertEquals("commands.getstatus() is deprecated", getstatus.getDeprecationMessage());
   }

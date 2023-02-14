@@ -16,9 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -31,14 +32,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
@@ -56,18 +51,14 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       .finishDefault();
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(
-      new ListWrappingTableModel(Arrays.asList(methodMatcher.getClassNames(), methodMatcher.getMethodNamePatterns()),
-                                 InspectionGadgetsBundle.message("class.name"),
-                                 InspectionGadgetsBundle.message("method.name.regex")));
-    final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
-    panel.add(tablePanel, BorderLayout.CENTER);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(methodMatcher.getTable(""));
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return methodMatcher.getOptionController();
   }
 
   @Override
@@ -96,7 +87,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
   private class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.MINUS) || isSafeSubtraction(expression)) {
@@ -120,13 +111,14 @@ public class SubtractionInCompareToInspection extends BaseInspection {
 
     private boolean isSafeSubtraction(PsiBinaryExpression binaryExpression) {
       final PsiType type = binaryExpression.getType();
-      if (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
+      if (type == null) return true;
+      if (PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type)) {
         // Difference of floats and doubles never overflows.
         // It may lose a precision, but it's not the case when we compare the result with zero
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(binaryExpression.getParent());
         if(parent instanceof PsiTypeCastExpression) {
           PsiType castType = ((PsiTypeCastExpression)parent).getType();
-          if(PsiType.INT.equals(castType) || PsiType.LONG.equals(castType)) {
+          if(PsiTypes.intType().equals(castType) || PsiTypes.longType().equals(castType)) {
             // Precision is lost if result is cast to int/long (e.g. (int)(1.0 - 0.5) == 0)
             return false;
           }
@@ -145,23 +137,22 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       if (lhsType == null || rhsType == null) {
         return false;
       }
-      if ((PsiType.BYTE.equals(lhsType) || PsiType.SHORT.equals(lhsType) || PsiType.CHAR.equals(lhsType)) &&
-          (PsiType.BYTE.equals(rhsType) || PsiType.SHORT.equals(rhsType) || PsiType.CHAR.equals(rhsType))) {
+      if ((PsiTypes.byteType().equals(lhsType) || PsiTypes.shortType().equals(lhsType) || PsiTypes.charType().equals(lhsType)) &&
+          (PsiTypes.byteType().equals(rhsType) || PsiTypes.shortType().equals(rhsType) || PsiTypes.charType().equals(rhsType))) {
         return true;
       }
       if (isSafeOperand(lhs) && isSafeOperand(rhs)) return true;
       LongRangeSet leftRange = CommonDataflow.getExpressionRange(lhs);
       LongRangeSet rightRange = CommonDataflow.getExpressionRange(rhs);
       if (leftRange != null && !leftRange.isEmpty() && rightRange != null && !rightRange.isEmpty()) {
-        if (!leftRange.subtractionMayOverflow(rightRange, PsiType.LONG.equals(type))) return true;
+        if (!leftRange.subtractionMayOverflow(rightRange, JvmPsiRangeSetUtil.getLongRangeType(type))) return true;
       }
       return false;
     }
 
     private boolean isSafeOperand(PsiExpression operand) {
       operand = PsiUtil.skipParenthesizedExprDown(operand);
-      if (operand instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+      if (operand instanceof PsiMethodCallExpression methodCallExpression) {
         return methodMatcher.matches(methodCallExpression);
       }
       return ExpressionUtils.getArrayFromLengthExpression(operand) != null;

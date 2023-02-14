@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -99,6 +100,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setPathToGit(@Nullable String value) {
     getState().setPathToGit(value);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   public boolean autoUpdateIfPushRejected() {
@@ -107,14 +109,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setAutoUpdateIfPushRejected(boolean value) {
     getState().setPushAutoUpdate(value);
-  }
-
-  public boolean shouldUpdateAllRootsIfPushRejected() {
-    return getState().isPushUpdateAllRoots();
-  }
-
-  public void setUpdateAllRootsIfPushRejected(boolean value) {
-    getState().setPushUpdateAllRoots(value);
   }
 
   @Override
@@ -153,14 +147,6 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setRecentCommonBranch(@NotNull String value) {
     getState().setRecentCommonBranch(value);
-  }
-
-  public void setAutoCommitOnRevert(boolean value) {
-    getState().setAutoCommitOnRevert(value);
-  }
-
-  public boolean isAutoCommitOnRevert() {
-    return getState().isAutoCommitOnRevert();
   }
 
   public boolean warnAboutCrlf() {

@@ -46,7 +46,7 @@ public class BreakConverter {
     List<PsiBreakStatement> breaks = new ArrayList<>();
     mySwitchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitBreakStatement(PsiBreakStatement statement) {
+      public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
         super.visitBreakStatement(statement);
         if (statement.findExitedStatement() == mySwitchBlock) {
           breaks.add(statement);
@@ -54,12 +54,12 @@ public class BreakConverter {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         // Going down into any expression seems redundant
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
     });
     return breaks;
   }
@@ -85,9 +85,9 @@ public class BreakConverter {
     }
     if (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)grandParent).getReturnType()) ||
+      if (grandParent instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)grandParent).getReturnType()) ||
           grandParent instanceof PsiLambdaExpression &&
-          PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)grandParent))) {
+          PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)grandParent))) {
         return "return;";
       }
       if (grandParent instanceof PsiBlockStatement) {
@@ -118,8 +118,8 @@ public class BreakConverter {
       }
     }
     if (nextStatement instanceof PsiSwitchLabelStatement) {
-      return (((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchBlock() == switchStatement &&
-              !ControlFlowUtils.statementMayCompleteNormally(statement));
+      return ((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchBlock() == switchStatement &&
+             !ControlFlowUtils.statementMayCompleteNormally(statement);
     }
     if (nextStatement instanceof PsiBreakStatement) {
       return ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;
@@ -135,7 +135,7 @@ public class BreakConverter {
         boolean hasNonRemovableBreak;
 
         @Override
-        public void visitBreakStatement(PsiBreakStatement statement) {
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
           super.visitBreakStatement(statement);
           if (statement.findExitedStatement() == switchStatement && !isRemovable(switchStatement, statement)) {
             hasNonRemovableBreak = true;
@@ -144,12 +144,12 @@ public class BreakConverter {
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           // Going down into any expression seems redundant
         }
 
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
       }
       Visitor visitor = new Visitor();
       switchStatement.accept(visitor);

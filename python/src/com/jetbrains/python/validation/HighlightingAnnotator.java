@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
@@ -20,17 +6,18 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class HighlightingAnnotator extends PyAnnotator {
   public static final HighlightSeverity LOW_PRIORITY_HIGHLIGHTING = new HighlightSeverity("LOW_PRIORITY_HIGHLIGHTING",
                                                                                           HighlightSeverity.INFORMATION.myVal - 3);
@@ -50,8 +37,7 @@ public class HighlightingAnnotator extends PyAnnotator {
   }
 
   private static boolean isArgOrKwargParameter(PyParameter parameter) {
-    if (parameter instanceof PyNamedParameter) {
-      final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+    if (parameter instanceof PyNamedParameter namedParameter) {
       return namedParameter.isPositionalContainer() ||
              namedParameter.isKeywordContainer();
     }
@@ -62,9 +48,9 @@ public class HighlightingAnnotator extends PyAnnotator {
   public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
     final String referencedName = node.getReferencedName();
     if (!node.isQualified() && referencedName != null) {
-      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+      PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
       if (function != null) {
-        final PyNamedParameter element = function.getParameterList().findParameterByName(referencedName);
+        PyNamedParameter element = findParameterRecursively(function, referencedName);
         if (element != null) {
           final TextAttributesKey attrKey = element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER;
           addHighlightingAnnotation(node, attrKey);
@@ -113,5 +99,16 @@ public class HighlightingAnnotator extends PyAnnotator {
         PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null) {
       addHighlightingAnnotation(element, PyHighlighter.PY_KEYWORD);
     }
+  }
+
+  @Nullable
+  private static PyNamedParameter findParameterRecursively(@NotNull PyFunction function, @NotNull String referencedName) {
+    for (PyFunction f = function; f != null; f = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(f), PyFunction.class)) {
+      PyNamedParameter element = f.getParameterList().findParameterByName(referencedName);
+      if (element != null) {
+        return element;
+      }
+    }
+    return null;
   }
 }

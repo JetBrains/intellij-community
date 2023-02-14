@@ -1,9 +1,15 @@
 <html>
 <body>
-Reports <b>try</b> statements which catch
-<b>java.lang.ThreadDeath</b> which do not rethrow the exception.
+Reports <code>try</code> statements that catch
+<code>java.lang.ThreadDeath</code> and do not rethrow the exception.
+<p><b>Example:</b></p>
+<pre><code>
+  try {
+    executeInParallel(request);
+  } catch (ThreadDeath ex) { // warning: ThreadDeath 'ex' not rethrown
+    return false;
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

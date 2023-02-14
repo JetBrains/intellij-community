@@ -30,7 +30,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class FindResultUsageInfo extends UsageInfo {
+class FindResultUsageInfo extends UsageInfo {
   private final FindManager myFindManager;
   private final FindModel myFindModel;
   private final SmartPsiFileRange myAnchor;
@@ -40,13 +40,12 @@ public class FindResultUsageInfo extends UsageInfo {
 
   private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
 
-  public FindResultUsageInfo(@NotNull FindManager finder,
+  FindResultUsageInfo(@NotNull FindManager finder,
                              @NotNull PsiFile file,
                              int offset,
                              @NotNull FindModel findModel,
                              @NotNull FindResult result) {
     super(file, result.getStartOffset(), result.getEndOffset());
-
     myFindManager = finder;
     myFindModel = findModel;
 
@@ -67,9 +66,12 @@ public class FindResultUsageInfo extends UsageInfo {
 
   @Override
   public boolean isValid() {
-    if (!super.isValid()) return false;
+    if (!super.isValid()) {
+      return false;
+    }
 
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(getPsiFile());
+    PsiFile psiFile = getPsiFile();
+    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document == null) {
       myCachedResult = null;
       return false;
@@ -88,7 +90,7 @@ public class FindResultUsageInfo extends UsageInfo {
       return false;
     }
 
-    VirtualFile file = getPsiFile().getVirtualFile();
+    VirtualFile file = psiFile.getVirtualFile();
     if (isFileOrBinary) {
       myCachedResult = file.isValid();
       return myCachedResult;
@@ -130,5 +132,10 @@ public class FindResultUsageInfo extends UsageInfo {
 
   private PsiFile getPsiFile() {
     return (PsiFile)getElement();
+  }
+
+  @Override
+  public String toString() {
+    return "FindResultUsageInfo: myFindModel=" + myFindModel + " in " + getSmartPointer() +"; segment="+getSegment();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -15,21 +15,26 @@ import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.system.CpuArch;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class IdeaNativeAgentProxyMirror {
   private static final Logger LOG = Logger.getInstance(IdeaNativeAgentProxyMirror.class);
 
   private static final String PROXY_CLASS_NAME = "com.intellij.memory.agent.IdeaNativeAgentProxy";
-  
+
   private static final String IS_LOADED = "isLoaded";
 
   private static final String CAN_ESTIMATE_OBJECT_SIZE = "canEstimateObjectSize";
@@ -50,6 +55,7 @@ public class IdeaNativeAgentProxyMirror {
 
   private final String myCancellationFileName;
   private final String myProgressFileName;
+  private ClassType myProxyType = null;
 
   public IdeaNativeAgentProxyMirror(@NotNull String cancellationFileName, @NotNull String progressFileName) {
     this.myCancellationFileName = cancellationFileName;
@@ -78,7 +84,8 @@ public class IdeaNativeAgentProxyMirror {
     Pair<long[], ObjectReference[]> sizesAndObjects;
     if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
       sizesAndObjects = new Pair<>(new long[0], new ObjectReference[0]);
-    } else {
+    }
+    else {
       Pair<Long[], ObjectReference[]> parsingResult = SizeAndHeldObjectsParser.INSTANCE.parse(errCodeAndResult.getSecond());
       sizesAndObjects = new Pair<>(
         Arrays.stream(parsingResult.getFirst()).mapToLong(Long::longValue).toArray(),
@@ -184,7 +191,8 @@ public class IdeaNativeAgentProxyMirror {
           Collections.singletonList(new CalculationTimeoutReferringObject())
         )
       );
-    } else {
+    }
+    else {
       returnValue = GcRootsPathsParser.INSTANCE.parse(errCodeAndResult.getSecond());
     }
 
@@ -229,17 +237,36 @@ public class IdeaNativeAgentProxyMirror {
   }
 
   @NotNull
-  private static ClassType getProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
-    boolean valueBefore = evaluationContext.isAutoLoadClasses();
-    try {
-      return getOrLoadProxyType(evaluationContext);
+  private ClassType getProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+    if (myProxyType == null) {
+      boolean valueBefore = evaluationContext.isAutoLoadClasses();
+      try {
+        return getOrLoadProxyType(evaluationContext);
+      }
+      finally {
+        evaluationContext.setAutoLoadClasses(valueBefore);
+      }
     }
-    finally {
-      evaluationContext.setAutoLoadClasses(valueBefore);
-    }
+    return myProxyType;
   }
 
-  private static ClassType getOrLoadProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+  @NotNull
+  private static ObjectReference getProxyInstance(@NotNull EvaluationContextImpl evaluationContext,
+                                                  @NotNull ClassType proxyType,
+                                                  @NotNull ObjectReference cancellationFileName,
+                                                  @NotNull ObjectReference progressFileName,
+                                                  @NotNull LongValue timeoutInMillis) throws EvaluateException {
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    Method constructor = DebuggerUtils.findMethod(proxyType, JVMNameUtil.CONSTRUCTOR_NAME, PROXY_CONSTRUCTOR_SIGNATURE);
+    if (constructor == null) {
+      throw EvaluateExceptionUtil.createEvaluateException("No appropriate constructor found for proxy class");
+    }
+    return debugProcess.newInstance(
+      evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis)
+    );
+  }
+
+  private ClassType getOrLoadProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     ClassObjectReference classObjectReference = evaluationContext.computeAndKeep(() -> {
       long start = System.currentTimeMillis();
       ReferenceType referenceType = loadUtilityClass(evaluationContext);
@@ -251,8 +278,8 @@ public class IdeaNativeAgentProxyMirror {
 
       return referenceType.classObject();
     });
-
-    return (ClassType)classObjectReference.reflectedType();
+    myProxyType = (ClassType)classObjectReference.reflectedType();
+    return myProxyType;
   }
 
   private static boolean checkAgentCapability(@NotNull EvaluationContextImpl evaluationContext,
@@ -274,8 +301,9 @@ public class IdeaNativeAgentProxyMirror {
   }
 
   @NotNull
-  private static StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string) {
-    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(string);
+  private static StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string)
+    throws EvaluateException {
+    return DebuggerUtilsEx.mirrorOfString(string, evaluationContext.getDebugProcess().getVirtualMachineProxy(), evaluationContext);
   }
 
   @NotNull
@@ -296,9 +324,9 @@ public class IdeaNativeAgentProxyMirror {
 
   @NotNull
   public Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
-                                 @NotNull String methodName,
-                                 long timeoutInMillis,
-                                 Value... args) throws EvaluateException {
+                          @NotNull String methodName,
+                          long timeoutInMillis,
+                          Value... args) throws EvaluateException {
     ClassType proxyType = getProxyType(evaluationContext);
     return callMethod(
       evaluationContext,
@@ -334,14 +362,12 @@ public class IdeaNativeAgentProxyMirror {
     Value result = evaluationContext
       .computeAndKeep(() -> {
         DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-        Method constructor = DebuggerUtils.findMethod(proxyType, JVMNameUtil.CONSTRUCTOR_NAME, PROXY_CONSTRUCTOR_SIGNATURE);
-        if (constructor == null) {
-          throw EvaluateExceptionUtil.createEvaluateException("No appropriate constructor found for proxy class");
-        }
-        ObjectReference proxyInstance = debugProcess.newInstance(
-          evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis)
+        ObjectReference proxyInstance = getProxyInstance(
+          evaluationContext, proxyType, cancellationFileName, progressFileName, timeoutInMillis
         );
-        return debugProcess.invokeMethod(evaluationContext, proxyInstance, method, args);
+        return debugProcess.invokeInstanceMethod(
+          evaluationContext, proxyInstance, method, args, ObjectReference.INVOKE_SINGLE_THREADED
+        );
       });
 
     LOG.info("Memory agent's method \"" + methodName + "\" took " + (System.currentTimeMillis() - start) + " ms");
@@ -353,18 +379,72 @@ public class IdeaNativeAgentProxyMirror {
   }
 
   @Nullable
-  private static ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl context) throws EvaluateException {
-    DebugProcessImpl debugProcess = context.getDebugProcess();
+  private static ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     byte[] bytes = readUtilityClass();
-    context.setAutoLoadClasses(true);
-    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(context, debugProcess);
-    ClassLoadingUtils.defineClass(PROXY_CLASS_NAME, bytes, context, debugProcess, classLoader);
+    evaluationContext.setAutoLoadClasses(true);
+    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, debugProcess);
+    ClassLoadingUtils.defineClass(PROXY_CLASS_NAME, bytes, evaluationContext, debugProcess, classLoader);
+
     try {
-      return debugProcess.loadClass(context, PROXY_CLASS_NAME, classLoader);
+      ClassType systemClassType = (ClassType)debugProcess.findClass(evaluationContext, "java.lang.System", null);
+      if (systemClassType == null) return null;
+
+      String javaHomePath = getPropertyValue(evaluationContext, systemClassType, "java.home");
+      if (javaHomePath == null) return null;
+
+      JdkVersionDetector.JdkVersionInfo info = JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHomePath);
+      if (info == null) return null;
+
+      String agentPath = getMemoryAgentPath(info.arch);
+      if (agentPath == null) return null;
+
+      setAgentPathPropertyValue(evaluationContext, systemClassType, agentPath);
+      return debugProcess.loadClass(evaluationContext, PROXY_CLASS_NAME, classLoader);
     }
-    catch (InvocationException | ClassNotLoadedException | IncompatibleThreadStateException | InvalidTypeException e) {
+    catch (Exception e) {
       throw EvaluateExceptionUtil.createEvaluateException("Could not load proxy class", e);
     }
+  }
+
+  // Evaluates System.setProperty("intellij.memory.agent.path", agentPath)
+  private static void setAgentPathPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
+                                                @NotNull ClassType systemClassType,
+                                                @NotNull String agentPath) throws EvaluateException {
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    Method setPropertyMethod = DebuggerUtils.findMethod(
+      systemClassType, "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+    );
+    if (setPropertyMethod == null) return;
+
+    ObjectReference agentPathMirror = getStringReference(evaluationContext, agentPath);
+    ObjectReference propertyNameMirror = getStringReference(evaluationContext, "intellij.memory.agent.path");
+    debugProcess.invokeMethod(
+      evaluationContext, systemClassType, setPropertyMethod, Arrays.asList(propertyNameMirror, agentPathMirror)
+    );
+  }
+
+  private static @Nullable String getMemoryAgentPath(CpuArch arch) throws ExecutionException, InterruptedException, TimeoutException {
+    return MemoryAgentUtil.getAgentFilePathAsString(Registry.is("debugger.memory.agent.debug"), MemoryAgentUtil.detectAgentKindByArch(arch));
+  }
+
+  // Evaluates System.getProperty(propertyName)
+  @Nullable
+  private static String getPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
+                                         @NotNull ClassType systemClassType,
+                                         @NotNull String propertyName) throws EvaluateException {
+    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
+    Method getPropertyMethod = DebuggerUtils.findMethod(
+      systemClassType, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;"
+    );
+    if (getPropertyMethod == null) return null;
+
+    ObjectReference propertyNameMirror = getStringReference(evaluationContext, propertyName);
+    StringReference propertyValueRef = (StringReference)debugProcess.invokeMethod(
+      evaluationContext, systemClassType, getPropertyMethod, Collections.singletonList(propertyNameMirror)
+    );
+
+    return propertyValueRef == null ? null : propertyValueRef.value();
   }
 
   @NotNull

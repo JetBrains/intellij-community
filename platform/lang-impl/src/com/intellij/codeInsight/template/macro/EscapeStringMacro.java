@@ -23,9 +23,6 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class EscapeStringMacro extends MacroBase {
   public EscapeStringMacro() {
     super("escapeString", "escapeString(String)");

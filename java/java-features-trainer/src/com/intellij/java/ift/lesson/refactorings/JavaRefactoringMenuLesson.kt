@@ -13,7 +13,7 @@ import training.util.adaptToNotNativeLocalization
 import javax.swing.JDialog
 
 class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.menu") {
-  private val sample = parseLessonSample("""
+  override val sample = parseLessonSample("""
     import java.io.BufferedReader;
     import java.io.FileReader;
     import java.io.IOException;
@@ -44,10 +44,9 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
-    showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     moreRefactoringsTasks()
+    restoreRefactoringOptionsInformer()
   }
 
   private fun LessonContext.moreRefactoringsTasks() {
@@ -61,7 +60,8 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
       restoreIfModifiedOrMoved()
       if (adaptToNotNativeLocalization) {
         JavaLessonsBundle.message("java.refactoring.menu.inline.variable", code(inlineVariableName),
-                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")), action(it))
+                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")),
+                                  action(it))
       }
       else JavaLessonsBundle.message("java.refactoring.menu.inline.variable.eng",
                                      code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))

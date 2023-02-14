@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 05-Dec-17
  */
 public final class Version implements Comparable<Version> {
 

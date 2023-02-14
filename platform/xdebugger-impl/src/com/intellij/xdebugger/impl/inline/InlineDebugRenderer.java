@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -32,19 +31,18 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
-import static com.intellij.xdebugger.XSourcePosition.isOnTheSameLine;
 
 public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
@@ -53,7 +51,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final boolean myCustomNode;
   private final XDebugSession mySession;
   private final XValueNodeImpl myValueNode;
-  private final Editor myEditor;
   private final XDebuggerTreeCreator myTreeCreator;
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
@@ -61,20 +58,17 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
-  InlineDebugRenderer(XValueNodeImpl valueNode,
-                      @NotNull XSourcePosition position,
-                      @NotNull XDebugSession session,
-                      Editor editor) {
+  public InlineDebugRenderer(XValueNodeImpl valueNode, @NotNull XSourcePosition position, @NotNull XDebugSession session) {
     myPosition = position;
     mySession = session;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
-    myEditor = editor;
     updatePresentation();
+    XValueMarkers<?, ?> markers = session instanceof XDebugSessionImpl ?  ((XDebugSessionImpl)session).getValueMarkers() : null;
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
                                              session.getDebugProcess().getEditorsProvider(),
                                              session.getCurrentPosition(),
-                                             ((XDebugSessionImpl)session).getValueMarkers());
+                                             markers);
   }
 
   public void updatePresentation() {
@@ -86,14 +80,8 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private boolean isInExecutionPointHighlight() {
-    XSourcePosition debuggerPosition = mySession.getCurrentPosition();
-    if (debuggerPosition != null) {
-      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
-
-      return isOnTheSameLine(myPosition, debuggerPosition)
-             && debuggerManager.isFullLineHighlighter();
-    }
-    return false;
+    XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
+    return debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(myPosition);
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -124,51 +112,54 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     if (inlayRenderer.myPopupIsShown) {
       return;
     }
-    String name = "valueName";
-    XValue container = myValueNode.getValueContainer();
-    if (container instanceof XNamedValue) {
-      name = ((XNamedValue)container).getName();
-    }
-    Pair<XValue, String> descriptor = Pair.create(container, name);
+    Pair<XValue, String> descriptor = getXValueDescriptor(myValueNode);
     Rectangle bounds = inlay.getBounds();
     Point point = new Point(bounds.x, bounds.y + bounds.height);
 
     inlayRenderer.myPopupIsShown = true;
-    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, myEditor, point, myPosition, mySession, () -> {
+
+    Runnable hidePopupRunnable = () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         inlayRenderer.myPopupIsShown = false;
       });
-    });
-  }
+    };
 
-
-  public void onMouseExit(Inlay inlay, @NotNull EditorMouseEvent event) {
-    setHovered(false, inlay, (EditorEx)event.getEditor());
-  }
-
-  public void onMouseMove(Inlay inlay, @NotNull EditorMouseEvent event) {
-    EditorEx editorEx = (EditorEx)event.getEditor();
-    if (event.getMouseEvent().getX() >= myTextStartXCoordinate) {
-      setHovered(true, inlay, editorEx);
-    }
-    else {
-      setHovered(false, inlay, editorEx);
+    Editor editor = inlay.getEditor();
+    InlineValuePopupProvider popupProvider = InlineValuePopupProvider.EP_NAME.findFirstSafe(a -> a.accepts(myValueNode));
+    if (popupProvider != null) {
+      popupProvider.showPopup(myValueNode, mySession, myPosition, myTreeCreator, editor, point, hidePopupRunnable);
+    } else {
+      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, editor, point, myPosition, mySession, hidePopupRunnable);
     }
   }
 
-  private void setHovered(boolean active, Inlay inlay, EditorEx editorEx) {
+  @NotNull
+  public static Pair<XValue, String> getXValueDescriptor(@NotNull XValueNodeImpl xValueNode) {
+    String name = "valueName";
+    XValue container = xValueNode.getValueContainer();
+    if (container instanceof XNamedValue) {
+      name = ((XNamedValue)container).getName();
+    }
+    return Pair.create(container, name);
+  }
+
+
+  public void onMouseExit(@NotNull Inlay inlay) {
+    setHovered(false, inlay);
+  }
+
+  public void onMouseMove(@NotNull Inlay inlay, @NotNull EditorMouseEvent event) {
+    setHovered(event.getMouseEvent().getX() >= myTextStartXCoordinate, inlay);
+  }
+
+  private void setHovered(boolean active, @NotNull Inlay inlay) {
     boolean oldState = isHovered;
     isHovered = active;
     Cursor cursor = active ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
-    editorEx.setCustomCursor(InlineDebugRenderer.class, cursor);
+    ((EditorEx)inlay.getEditor()).setCustomCursor(InlineDebugRenderer.class, cursor);
     if (oldState != active) {
       inlay.update();
     }
-  }
-
-  @Override
-  public @Nullable ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return null;
   }
 
   @Override
@@ -221,9 +212,8 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     int curX = r.x + metrics.charWidth(' ');
 
     if (backgroundColor != null) {
-      float alpha = BACKGROUND_ALPHA;
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      GraphicsUtil.paintWithAlpha(g, alpha);
+      GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
       g.setColor(backgroundColor);
       g.fillRoundRect(curX + margin, r.y + gap, r.width - (2 * margin) - metrics.charWidth(' '), r.height - gap * 2, 6, 6);
       config.restore();
@@ -323,5 +313,17 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       return hoveredInlineAttr;
     }
     return inlinedAttributes;
+  }
+
+  boolean isCustomNode() {
+    return myCustomNode;
+  }
+
+  XValueNodeImpl getValueNode() {
+    return myValueNode;
+  }
+
+  XSourcePosition getPosition() {
+    return myPosition;
   }
 }

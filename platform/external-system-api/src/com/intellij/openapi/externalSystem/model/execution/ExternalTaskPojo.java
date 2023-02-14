@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents {@link TaskData} at the ide side. Is required purely for IJ serialization because {@link TaskData} has only final
  * fields which are initialized at constructor and ide serialization is not capable to handle such scenario properly.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalTaskPojo implements Comparable<ExternalTaskPojo> {
   

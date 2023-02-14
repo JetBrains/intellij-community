@@ -262,4 +262,37 @@ class C {
       throw e;
     }
   }
+
+  static class F extends Exception {}
+  private void x() throws E, F {
+    throw new E2();
+  }
+  private void m16() throws F {
+    try {
+      x();
+    }
+    catch (F | E1 e) {
+      System.out.println(e);
+      <error descr="Unhandled exception: C.E1">throw e;</error>
+    }
+    catch (E ignored) {}
+  }
+
+  private void m17() throws InterruptedException, java.io.FileNotFoundException {
+    try {
+      Thread.sleep(1);
+      throw new java.io.FileNotFoundException();
+    } catch (InterruptedException | java.io.IOException ex) {
+      throw ex;
+    }
+  }
+
+  private void m18() throws InterruptedException {
+    try {
+      Thread.sleep(1L);
+      // no IOException thrown
+    } catch (<error descr="Exception 'java.io.IOException' is never thrown in the corresponding try block">java.io.IOException ex</error>) {
+      throw ex;
+    }
+  }
 }

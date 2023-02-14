@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -27,11 +27,22 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated use {@link PresentableGoToChangePopupAction}
+ */
+@Deprecated(forRemoval = true)
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
-  extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain> {
+  extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
+
+  private final Chain myChain;
 
   public ChangeGoToChangePopupAction(@NotNull Chain chain) {
-    super(chain);
+    myChain = chain;
+  }
+
+  @Override
+  protected boolean canNavigate() {
+    return myChain.getRequests().size() > 1;
   }
 
   @NotNull
@@ -116,7 +127,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
+      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).iterateNodes().first();
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }

@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,12 +32,14 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnnecessaryParenthesesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClarifyingParentheses = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreParenthesesOnConditionals = false;
 
   @SuppressWarnings("PublicField")
@@ -49,13 +52,12 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.option"), "ignoreClarifyingParentheses");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option"),
-                             "ignoreParenthesesOnConditionals");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.parentheses.around.single.no.formal.type.lambda.parameter"), "ignoreParenthesesOnLambdaParameter");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreClarifyingParentheses", InspectionGadgetsBundle.message("unnecessary.parentheses.option")),
+      checkbox("ignoreParenthesesOnConditionals", InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option")),
+      checkbox("ignoreParenthesesOnLambdaParameter",
+               InspectionGadgetsBundle.message("ignore.parentheses.around.single.no.formal.type.lambda.parameter")));
   }
 
   @Override
@@ -72,16 +74,15 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiParameterList) {
+      if (element instanceof PsiParameterList parameterList) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-        final PsiParameterList parameterList = (PsiParameterList)element;
         final String text = Objects.requireNonNull(parameterList.getParameter(0)).getName() + "->{}";
         final PsiLambdaExpression expression = (PsiLambdaExpression)factory.createExpressionFromText(text, element);
         element.replace(expression.getParameterList());
       } else {
-        ParenthesesUtils.removeParentheses((PsiExpression)element, ignoreClarifyingParentheses);
+        ParenthesesUtils.removeParentheses((PsiCaseLabelElement)element, ignoreClarifyingParentheses);
       }
     }
   }
@@ -93,7 +94,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
 
   private class UnnecessaryParenthesesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitParameterList(PsiParameterList list) {
+    public void visitParameterList(@NotNull PsiParameterList list) {
       super.visitParameterList(list);
       if (!ignoreParenthesesOnLambdaParameter && list.getParent() instanceof PsiLambdaExpression && list.getParametersCount() == 1) {
         final PsiParameter parameter = Objects.requireNonNull(list.getParameter(0));
@@ -104,13 +105,24 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
+      final PsiElement parent = pattern.getParent();
+      if (parent instanceof PsiParenthesizedPattern) {
+        return;
+      }
+      if (!ErrorUtil.containsDeepError(pattern)) {
+        registerError(pattern);
+      }
+      super.visitParenthesizedPattern(pattern);
+    }
+
+    @Override
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression condition = conditionalExpression.getCondition();
         if (expression == condition) {
           return;

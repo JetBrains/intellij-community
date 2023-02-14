@@ -1,4 +1,4 @@
-// "Replace with toArray" "false"
+// "Collapse loop with stream 'toArray()'" "false"
 
 import java.util.ArrayList;
 import java.util.List;

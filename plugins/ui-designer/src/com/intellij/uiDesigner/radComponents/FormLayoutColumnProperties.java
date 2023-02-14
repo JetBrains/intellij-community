@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private static final Map<String, @Nls String> UNITS_MAP;
   static {
@@ -201,8 +199,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private void showSize(Size size) {
     Size minimumSize = null;
     Size maximumSize = null;
-    if (size instanceof BoundedSize) {
-      BoundedSize boundedSize = (BoundedSize)size;
+    if (size instanceof BoundedSize boundedSize) {
       minimumSize = boundedSize.getLowerBound();
       maximumSize = boundedSize.getUpperBound();
       size = boundedSize.getBasis();
@@ -390,7 +387,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
         myWasSelected = myButton.isSelected();
         myUnitsCombo.setEnabled(myButton.isSelected());
         mySpinner.setEnabled(myButton.isSelected());
-        if (myButton.isSelected() && mySpinner.getValue().equals(new Integer(0))) {
+        if (myButton.isSelected() && mySpinner.getValue().equals(Integer.valueOf(0))) {
           mySpinner.setValue(100);
         }
         updateOnRadioChange();

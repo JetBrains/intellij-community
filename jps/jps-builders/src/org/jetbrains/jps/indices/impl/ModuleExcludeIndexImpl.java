@@ -2,10 +2,13 @@
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.util.io.FileFilters;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
@@ -18,6 +21,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
@@ -33,6 +37,10 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
     Map<File, JpsModule> contentToModule = FileCollectionFactory.createCanonicalFileMap();
+
+    /* maps URL of content root to URLs of its source roots if there are exclusion patterns to be reused */
+    MultiMap<String, String> contentToSourceRootsWithExcludePatterns = MultiMap.createLinked();
+
     MultiMap<String, String> excludePatterns = MultiMap.createLinked();
     for (final JpsModule module : allModules) {
       final ArrayList<File> moduleExcludes = new ArrayList<>();
@@ -50,7 +58,8 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
         }
       }
-      for (JpsExcludePattern pattern : module.getExcludePatterns()) {
+      List<JpsExcludePattern> excludePatternsList = module.getExcludePatterns();
+      for (JpsExcludePattern pattern : excludePatternsList) {
         excludePatterns.putValue(pattern.getBaseDirUrl(), pattern.getPattern());
       }
       List<String> contentUrls = module.getContentRootsList().getUrls();
@@ -64,6 +73,12 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         File sourceRoot = root.getFile();
         moduleContent.add(sourceRoot);
         contentToModule.put(sourceRoot, module);
+        //source root should reuse exclusion patterns from its parent content root if any
+        for (JpsExcludePattern pattern : excludePatternsList) {
+          if (FileUtil.isAncestor(JpsPathUtil.urlToFile(pattern.getBaseDirUrl()), sourceRoot, true)) {
+            contentToSourceRootsWithExcludePatterns.putValue(pattern.getBaseDirUrl(), root.getUrl());
+          }
+        }
       }
       myModuleToExcludesMap.put(module, moduleExcludes);
       myModuleToContentMap.put(module, moduleContent);
@@ -77,6 +92,10 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         table.addAssociation(factory.createMatcher(pattern), Boolean.TRUE);
       }
       myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(entry.getKey()), table);
+      Collection<String> sourceRootUrls = contentToSourceRootsWithExcludePatterns.get(entry.getKey());
+      for (String sourceRootUrl : sourceRootUrls) {
+        myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(sourceRootUrl), table);
+      }
     }
 
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
@@ -205,5 +224,12 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   @Override
   public Collection<File> getModuleExcludes(JpsModule module) {
     return myModuleToExcludesMap.get(module);
+  }
+
+  @Override
+  public @NotNull FileFilter getModuleFileFilterHonorExclusionPatterns(@NotNull JpsModule module) {
+    List<File> contentRoots = myModuleToContentMap.get(module);
+    if (contentRoots == null || contentRoots.isEmpty() || myExcludeFromContentRootTables.isEmpty()) return FileFilters.EVERYTHING;
+    return file -> determineFileLocation(file, contentRoots, Collections.emptyList()) == FileLocation.IN_CONTENT;
   }
 }

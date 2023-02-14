@@ -1,51 +1,58 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.async
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal object AsyncUtils {
   fun isNonAsyncMode(): Boolean {
-    return ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment
+    return ApplicationManager.getApplication().isUnitTestMode
   }
 
   fun restartInspection(application: Application) {
-    if (application.isDisposed) return
+    if (application.isDisposed) {
+      return
+    }
 
     for (project in ProjectManager.getInstance().openProjects.filter { it.isInitialized && it.isOpen && !it.isDefault }) {
-      DaemonCodeAnalyzer.getInstance(project)?.restart()
+      project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart()
     }
   }
 
-  fun run(project: Project, body: () -> Unit) {
+  fun run(project: Project, body: suspend () -> Unit) {
     if (isNonAsyncMode()) {
-      body()
-    } else {
-      val toRun: () -> Unit = {
-        val app = ApplicationManager.getApplication()
+      runBlockingMaybeCancellable {
+        body()
+      }
+      return
+    }
 
-        app.executeOnPooledThread {
-          if (app.isDisposed) return@executeOnPooledThread
+    @Suppress("DEPRECATION") val toRun: () -> Unit = {
+      project.coroutineScope.launch {
+        body()
 
-          body()
-
-          UIUtil.invokeLaterIfNeeded {
-            restartInspection(app)
-          }
+        withContext(Dispatchers.EDT) {
+          restartInspection(ApplicationManager.getApplication())
         }
       }
+    }
 
-      // prevent registration of startup activities for the default project
-      if (project.isInitialized) {
-        toRun()
-      } else {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized { toRun() }
-      }
+    // prevent registration of startup activities for the default project
+    if (project.isDefault) {
+      toRun()
+    }
+    else {
+      StartupManager.getInstance(project).runAfterOpened { toRun() }
     }
   }
 }

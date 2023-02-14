@@ -1,4 +1,4 @@
-// "Add on-demand static import for 'java.lang.Math'" "true"
+// "Add on-demand static import for 'java.lang.Math'" "true-preview"
 package test;
 
 import static java.lang.Math.*;

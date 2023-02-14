@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -55,12 +55,12 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class ComponentPanelTestAction extends DumbAwareAction {
+final class ComponentPanelTestAction extends DumbAwareAction {
   private enum Placement {
-    Top    (SwingConstants.TOP, "Top"),
-    Bottom (SwingConstants.BOTTOM, "Bottom"),
-    Left   (SwingConstants.LEFT, "Left"),
-    Right  (SwingConstants.RIGHT, "Right");
+    Top(SwingConstants.TOP, "Top"),
+    Bottom(SwingConstants.BOTTOM, "Bottom"),
+    Left(SwingConstants.LEFT, "Left"),
+    Right(SwingConstants.RIGHT, "Right");
 
     private final String name;
     private final int placement;
@@ -79,6 +79,16 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     public int placement() {
       return placement;
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
@@ -151,7 +161,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
 
-      panel.addToTop(createToolbar());
+      panel.addToTop(createToolbar(pane));
 
       JPanel southPanel = new JPanel();
       southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
@@ -236,7 +246,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }).withValidator(() -> {
           String tt = text2.getText();
           return StringUtil.isEmpty(tt) || tt.length() < 5 ?
-            new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols <a href=\"#check.rules\">check rules.</a>", text2) : null;
+            new ValidationInfo("'" + tt + "': message is too short.<br/>Should contain at least 5 symbols. 8 is preferred <a href=\"#check.rules\">check rules.</a>", text2) :
+                 tt.length() < 8 ? new ValidationInfo("'" + tt + "': message of 8 symbols is preferred", text2).asWarning() : null;
         }).andStartOnFocusLost().andRegisterOnDocumentListener(text2).installOn(text2);
 
       gc.gridy++;
@@ -264,7 +275,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
             }
           }).createPanel(), gc);
 
-      // Abracadaba button
+      // Abracadabra button
       gc.gridy++;
       abracadabraButton = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(abracadabraButton);
@@ -272,7 +283,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       try {
         new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
-          andShowCloseShortcut().
           withShowCount(3).
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).
@@ -372,7 +382,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       col.setCellEditor(new StatefulValidatingCellEditor(rightEditor, getDisposable()));
       col.setCellRenderer(new ValidatingTableCellRendererWrapper(new ColoredTableCellRenderer() {
 
-        { setIpad(JBUI.emptyInsets()); } // Reset standard pads
+        {
+          setIpad(JBInsets.emptyInsets()); } // Reset standard pads
 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
@@ -396,7 +407,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           else {
             try {
               int iv = Integer.parseInt(value.toString());
-              return iv <= 8 ? null : new ValidationInfo("Value " + value.toString() + " is not preferred").asWarning();
+              return iv <= 8 ? null : new ValidationInfo("Value " + value + " is not preferred").asWarning();
             } catch (NumberFormatException nfe) {
               return NAN_VALUE_ERROR;
             }
@@ -576,6 +587,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                                  "Open file", () -> System.out.println("Browse file clicked"));
 
       ComboBox<String> eComboBox = new ComboBox<>(STRING_VALUES);
+      ComponentValidator eComboBoxValidator = new ComponentValidator(getDisposable()).withValidator(() -> {
+        Object item = eComboBox.getEditor().getItem();
+        String text = item == null ? "" : item.toString();
+        if (text.isBlank()) return new ValidationInfo("Blank lines are not supported", eComboBox);
+        if (text.contains("e")) return new ValidationInfo("Letter 'e' is prohibited", eComboBox);
+        return null; // text is valid
+      });
+
+      eComboBoxValidator.installOn(eComboBox);
+      eComboBoxValidator.revalidate(); // needed because text is already set
+      eComboBox.addActionListener(event -> eComboBoxValidator.revalidate());
+
       eComboBox.setEditable(true);
       eComboBox.setEditor(new BasicComboBoxEditor(){
         @Override
@@ -583,13 +606,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           ExtendableTextField ecbEditor = new ExtendableTextField();
           ecbEditor.addExtension(browseExtension);
           ecbEditor.setBorder(null);
+          ecbEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent event) {
+              eComboBoxValidator.revalidate();
+            }
+          });
           return ecbEditor;
         }
       });
-
-      new ComponentValidator(getDisposable())
-        .withValidator(() -> "Two".equals(eComboBox.getSelectedItem()) ? new ValidationInfo("Two is not preferred", eComboBox).asWarning() : null)
-        .installOn(eComboBox);
 
       ComboBox<String> animatedIconComboBox = new ComboBox<>();
       animatedIconComboBox.setEditable(true);
@@ -780,13 +805,25 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
 
     private int counter = 5;
-    private JComponent createToolbar() {
+
+    private JComponent createToolbar(@NotNull JComponent toolbarTarget) {
+      boolean[] enabledArray = new boolean[3];
+      Arrays.fill(enabledArray, true);
       AnAction[] actionsArray = new AnAction[3];
       actionsArray[0] = new MyAction("Play", AllIcons.Actions.Execute) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[0]);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           if (--counter == 0) {
-            e.getPresentation().setEnabled(false);
+            enabledArray[0] = false;
           }
           System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
@@ -794,26 +831,44 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       actionsArray[1] = new MyAction("Stop", AllIcons.Actions.Suspend) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[1]);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           counter = 5;
-          actionsArray[0].getTemplatePresentation().setEnabled(true);
+          enabledArray[0] = true;
           System.out.println(e.getPresentation().getDescription() + ", counter = " + counter);
         }
       };
 
       actionsArray[2] = new MyToggleAction("Mute", AllIcons.Debugger.MuteBreakpoints) {
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(enabledArray[2]);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           selected = !selected;
           if (selected) {
             System.out.println("Unmute buttons");
-            actionsArray[0].getTemplatePresentation().setEnabled(true);
-            actionsArray[1].getTemplatePresentation().setEnabled(true);
+            enabledArray[0] = true;
+            enabledArray[1] = true;
           }
           else {
             System.out.println("Mute buttons");
-            actionsArray[0].getTemplatePresentation().setEnabled(false);
-            actionsArray[1].getTemplatePresentation().setEnabled(false);
+            enabledArray[0] = false;
+            enabledArray[1] = false;
           }
 
           Toggleable.setSelected(e.getPresentation(), selected);
@@ -836,13 +891,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
-          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          actionGotIt.assignTo(getTemplatePresentation(),
+                               GotItTooltip.BOTTOM_MIDDLE);
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
       toolbarActions.add(new MyAction(null, AllIcons.Ide.Rating3).withShortCut("control P"));
 
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("TOP", toolbarActions, true);
+      toolbar.setTargetComponent(toolbarTarget);
       JComponent toolbarComponent = toolbar.getComponent();
       toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       return toolbarComponent;
@@ -850,7 +907,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private JComponent createJSliderTab() {
       JPanel panel = new JPanel(new MigLayout("fillx, ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(JSlider.HORIZONTAL){
+      JSlider hSlider = new JSlider(SwingConstants.HORIZONTAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -866,7 +923,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL);
+      JSlider hSliderBase = new JSlider(SwingConstants.HORIZONTAL);
 
       JPanel pane1 = new JPanel(new MigLayout("fillx, debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
@@ -883,24 +940,23 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return panel;
     }
 
-    @NotNull
-    private JComponent createComboBoxTab() {
+    private @NotNull JComponent createComboBoxTab() {
       JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
       pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
 
       class Item {
         final Icon myIcon;
         final String myText;
-        final ImmutableList<Item> myChildren;
+        final List<Item> myChildren;
 
         Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<? extends Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
-          this.myChildren = ImmutableList.copyOf(myChildren);
+          this.myChildren = List.copyOf(myChildren);
         }
       }
 
@@ -919,12 +975,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         @Override
         public boolean hasSubstep(Item selectedValue) {
           return !selectedValue.myChildren.isEmpty();
-        }
-
-        @Override
-        public void setSelectedItem(Object anObject) {
-          //sub-items are not contained here, so selector login has to be tweaked
-          super.setSelectedItem(anObject);
         }
       }
 
@@ -984,7 +1034,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       slider.setSnapToTicks(true);
 
-      Hashtable<Integer, JLabel> position = new Hashtable<>();
+      @SuppressWarnings("UseOfObsoleteCollectionType") 
+      var position = new Hashtable<Integer, JLabel>();
       position.put(0, new JLabel("Hashtable"));
       position.put(25, new JLabel("Hash"));
       position.put(50, new JLabel("Ha"));

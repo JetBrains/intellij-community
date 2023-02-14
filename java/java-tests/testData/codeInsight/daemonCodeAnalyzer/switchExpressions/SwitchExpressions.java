@@ -3,7 +3,7 @@ import java.util.Random;
 class SwitchExpressions {
   enum E { E1, E2 }
 
-  void m() {
+  void m(String s, Integer i) {
     System.out.println(switch (new Random().nextInt()) {
       default -> "whatever";
     });
@@ -22,7 +22,12 @@ class SwitchExpressions {
     );
 
     System.out.println(switch (E.valueOf("E1")) {
-      case <error descr="Constant expression required">null</error> -> 0;
+      case <error descr="Patterns in switch are not supported at language level '15'">null</error> -> 0;
+      case E1 -> 1;
+      case E2 -> 2;
+    });
+
+    System.out.println(switch (E.valueOf("E1")) {
       case <error descr="An enum switch case label must be the unqualified name of an enumeration constant">E.E1</error> -> 1;
       case E2 -> 2;
       case <error descr="Incompatible types. Found: 'int', required: 'SwitchExpressions.E'">1</error> -> 1;
@@ -40,6 +45,14 @@ class SwitchExpressions {
     System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">E.valueOf("E1")</error>) {
       case E1 -> 1;
     });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">s</error>) {
+      case "blah blah blah" -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case 42 -> 1;
+    });
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">s</error>) {});
+    System.out.println(switch (<error descr="'switch' expression does not have any case clauses">i</error>) {});
     System.out.println(switch (E.valueOf("E1")) {
       case E1 -> 1;
       case E2 -> 2;
@@ -64,5 +77,11 @@ class SwitchExpressions {
   
   boolean testEmpty(Empty e) {
     return switch (<error descr="'switch' expression does not have any case clauses">e</error>) {};
+  }
+  
+  byte assignability(String s) {
+    return switch(s) {
+      default -> 42;
+    };
   }
 }

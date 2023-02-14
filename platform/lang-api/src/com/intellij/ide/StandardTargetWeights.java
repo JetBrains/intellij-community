@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 public interface StandardTargetWeights {
   float PROJECT_WEIGHT = 1;
+  float BOOKMARKS_WEIGHT = 1.001f;
   float FAVORITES_WEIGHT = 1.01f;
   float PACKAGES_WEIGHT = 2;
   float J2EE_WEIGHT = 3;

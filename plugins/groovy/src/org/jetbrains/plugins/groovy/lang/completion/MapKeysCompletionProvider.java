@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 
-/**
- * @author Sergey Evdokimov
- */
 class MapKeysCompletionProvider extends CompletionProvider<CompletionParameters> {
 
   public static void register(CompletionContributor contributor) {

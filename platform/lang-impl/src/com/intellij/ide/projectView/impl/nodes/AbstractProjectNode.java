@@ -56,6 +56,9 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
           if (firstDifference.isPresent()) {
             commonGroupsPath = commonGroupsPath.subList(0, (int)firstDifference.getAsLong());
           }
+          else if (commonPartLen < commonGroupsPath.size()) {
+            commonGroupsPath = commonGroupsPath.subList(0, commonPartLen);
+          }
         }
       }
     }

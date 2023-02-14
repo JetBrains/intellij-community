@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 public class DemorgansLawIntention extends MutablyNamedIntention {
 
   @Override
-  protected @IntentionName String getTextForElement(PsiElement element) {
+  protected @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (GroovyTokenTypes.mLAND.equals(tokenType)) {
@@ -107,8 +107,7 @@ public class DemorgansLawIntention extends MutablyNamedIntention {
   }
 
   private static boolean isConjunctionExpression(PsiElement exp, IElementType conjunctionType) {
-    if (!(exp instanceof GrBinaryExpression)) return false;
-    final GrBinaryExpression binExp = (GrBinaryExpression)exp;
+    if (!(exp instanceof GrBinaryExpression binExp)) return false;
     final IElementType tokenType = binExp.getOperationTokenType();
     return conjunctionType.equals(tokenType);
   }

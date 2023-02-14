@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
 import com.intellij.application.options.codeStyle.properties.IntegerAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -14,6 +15,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -24,6 +26,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -40,7 +45,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                                   @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, GroovyBundle.message("language.groovy")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new GroovyCodeStyleMainPanel(getCurrentSettings(), settings) {};
       }
 
@@ -52,7 +57,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new GroovyCodeStyleSettings(settings);
   }
 
@@ -172,6 +177,12 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",
                                 GroovyBundle.message("code.style.option.use.flying.geese.braces"),
                                 getInstance().WRAPPING_BRACES);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class,
+                                "WRAP_CHAIN_CALLS_AFTER_DOT",
+                                GroovyBundle.message("code.style.option.wrap.after.dot"),
+                                getInstance().WRAPPING_CALL_CHAIN);
+
       consumer
         .showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP",
                           GroovyBundle.message("code.style.option.align.when.multiple"),
@@ -186,6 +197,21 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
       consumer.renameStandardOption("KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
                                     GroovyBundle.message("code.style.option.simple.lambdas.closures.in.one.line"));
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_GENERAL_CLAUSE_WRAP_POLICY", GroovyBundle.message("ginq.code.style.group.ginq.clauses"), null,
+                                getInstance().WRAP_OPTIONS_FOR_SINGLETON, CodeStyleSettingsCustomizable.WRAP_VALUES_FOR_SINGLETON);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_ON_WRAP_POLICY", GroovyBundle.message("ginq.code.style.option.wrap.on.clauses"), GroovyBundle.message("ginq.code.style.group.ginq.clauses"),
+                                getInstance().WRAP_OPTIONS_FOR_SINGLETON, CodeStyleSettingsCustomizable.WRAP_VALUES_FOR_SINGLETON);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_INDENT_ON_CLAUSE", GroovyBundle.message("ginq.code.style.option.indent.on.clauses"), GroovyBundle.message("ginq.code.style.group.ginq.clauses"));
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_HAVING_WRAP_POLICY", GroovyBundle.message("ginq.code.style.option.wrap.having.clauses"), GroovyBundle.message("ginq.code.style.group.ginq.clauses"),
+                                getInstance().WRAP_OPTIONS_FOR_SINGLETON, CodeStyleSettingsCustomizable.WRAP_VALUES_FOR_SINGLETON);
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_INDENT_HAVING_CLAUSE", GroovyBundle.message("ginq.code.style.option.indent.having.clauses"), GroovyBundle.message("ginq.code.style.group.ginq.clauses"));
+
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "GINQ_SPACE_AFTER_KEYWORD", GroovyBundle.message("ginq.code.style.option.space.after.keyword"), GroovyBundle.message("ginq.code.style.group.ginq.clauses"));
 
       return;
     }
@@ -287,6 +313,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AFTER_ASSERT_SEPARATOR",
                                 GroovyBundle.message("code.style.option.after.assert.separator"),
                                 getInstance().SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_RECORD_PARENTHESES",
+                                GroovyBundle.message("code.style.option.before.record.parameter.list"), getInstance().SPACES_BEFORE_PARENTHESES);
       return;
     }
     if (settingsType == BLANK_LINES_SETTINGS) {
@@ -426,19 +454,19 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   private enum LabelIndentStyle {
-    ABSOLUTE(GroovyBundle.message("settings.code.style.absolute")),
-    RELATIVE(GroovyBundle.message("settings.code.style.indent.statements.after.label")),
-    RELATIVE_REVERSED(GroovyBundle.message("settings.code.style.indent.labels"));
+    ABSOLUTE(GroovyBundle.messagePointer("settings.code.style.absolute")),
+    RELATIVE(GroovyBundle.messagePointer("settings.code.style.indent.statements.after.label")),
+    RELATIVE_REVERSED(GroovyBundle.messagePointer("settings.code.style.indent.labels"));
 
-    private final String description;
+    private final Supplier<String> description;
 
-    LabelIndentStyle(String description) {
+    LabelIndentStyle(Supplier<@NotNull @Nls String> description) {
       this.description = description;
     }
 
     @Override
     public String toString() {
-      return description;
+      return description.get();
     }
   }
 
@@ -462,5 +490,34 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       }
     }
     return super.getAccessor(codeStyleObject, field);
+  }
+
+  @Override
+  public List<CodeStylePropertyAccessor> getAdditionalAccessors(@NotNull Object codeStyleObject) {
+    if (codeStyleObject instanceof GroovyCodeStyleSettings) {
+      try {
+        Field onDemandPackagesField = codeStyleObject.getClass().getField("PACKAGES_TO_USE_IMPORT_ON_DEMAND");
+        return Collections.singletonList(new JavaPackageEntryTableAccessor(codeStyleObject, onDemandPackagesField) {
+          @Override
+          public boolean set(@NotNull List<String> extVal) {
+            PackageEntryTable entryTable = fromExternal(extVal);
+            if (entryTable != null) {
+              ((GroovyCodeStyleSettings)codeStyleObject).getPackagesToUseImportOnDemand().copyFrom(entryTable);
+              return true;
+            }
+            return false;
+          }
+        });
+      }
+      catch (NoSuchFieldException e) {
+        // Ignore
+      }
+    }
+    return super.getAdditionalAccessors(codeStyleObject);
+  }
+
+  @Override
+  public boolean usesCommonKeepLineBreaks() {
+    return true;
   }
 }

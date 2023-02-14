@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.reflect;
 
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ParameterizedTypeImpl;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -15,9 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   private final List<DomExtensionImpl> myAttributes = new SmartList<>();
   private final List<DomExtensionImpl> myFixeds = new SmartList<>();
@@ -41,7 +38,7 @@ public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar 
   }
 
   @NotNull
-  public final DomExtension registerFixedNumberChildrenExtension(@NotNull final XmlName name, @NotNull final Type type, final int count) {
+  public DomExtension registerFixedNumberChildrenExtension(@NotNull final XmlName name, @NotNull final Type type, final int count) {
     assert count > 0;
     return addExtension(myFixeds, name, type).setCount(count);
   }
@@ -67,7 +64,7 @@ public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar 
   @Override
   @NotNull
   public DomExtension registerAttributeChildExtension(@NotNull final XmlName name, @NotNull final Type type) {
-    assert GenericAttributeValue.class.isAssignableFrom(ReflectionUtil.getRawType(type));
+    assert GenericAttributeValue.class.isAssignableFrom(ClassUtil.getRawType(type));
     return addExtension(myAttributes, name, type);
   }
 
@@ -102,7 +99,7 @@ public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar 
     return extension;
   }
 
-  public final void addDependencies(Object[] deps) {
+  public void addDependencies(Object[] deps) {
     ContainerUtil.addAll(myDependencies, deps);
   }
 

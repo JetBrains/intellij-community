@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
@@ -7,6 +7,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Text;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class XExpressionState {
 
   public XExpressionState(boolean disabled, XExpression expression) {
     this(disabled,
-         expression.getExpression(),
+         XmlStringUtil.escapeIllegalXmlChars(expression.getExpression()),
          expression.getLanguage() != null ? expression.getLanguage().getID() : null,
          expression.getCustomInfo(),
          expression.getMode());
@@ -66,6 +67,9 @@ public class XExpressionState {
     if (StringUtil.isEmptyOrSpaces(myExpression)) {
       return null;
     }
-    return new XExpressionImpl(myExpression, Language.findLanguageByID(myLanguage), myCustomInfo, myMode);
+    return new XExpressionImpl(XmlStringUtil.unescapeIllegalXmlChars(myExpression),
+                               Language.findLanguageByID(myLanguage),
+                               myCustomInfo,
+                               myMode);
   }
 }

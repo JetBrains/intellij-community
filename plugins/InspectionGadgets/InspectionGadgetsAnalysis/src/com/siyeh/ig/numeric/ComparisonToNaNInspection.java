@@ -66,13 +66,12 @@ public class ComparisonToNaNInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression nanExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiElement target = nanExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
         return;
@@ -110,42 +109,48 @@ public class ComparisonToNaNInspection extends BaseInspection {
     @Override
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      if (!ComparisonUtils.isComparison(expression)) {
-        return;
-      }
-      final PsiExpression lhs = expression.getLOperand();
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null || !TypeUtils.hasFloatingPointType(lhs) && !TypeUtils.hasFloatingPointType(rhs)) {
-        return;
-      }
-      if (isNaN(lhs)) {
-        registerError(lhs, expression);
-      }
-      else if (isNaN(rhs)) {
-        registerError(rhs, expression);
+      PsiExpression nan = extractNaNFromComparison(expression);
+      if (nan != null) {
+        registerError(nan, expression);
       }
     }
+  }
 
-    private static boolean isNaN(PsiExpression expression) {
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      @NonNls final String referenceName = referenceExpression.getReferenceName();
-      if (!"NaN".equals(referenceName)) {
-        return false;
-      }
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
-        return false;
-      }
-      final PsiField field = (PsiField)target;
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
-        return false;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      return CommonClassNames.JAVA_LANG_DOUBLE.equals(qualifiedName) || CommonClassNames.JAVA_LANG_FLOAT.equals(qualifiedName);
+  public static PsiExpression extractNaNFromComparison(PsiBinaryExpression expression) {
+    if (!ComparisonUtils.isComparison(expression)) {
+      return null;
     }
+    final PsiExpression lhs = expression.getLOperand();
+    final PsiExpression rhs = expression.getROperand();
+    if (rhs == null || !TypeUtils.hasFloatingPointType(lhs) && !TypeUtils.hasFloatingPointType(rhs)) {
+      return null;
+    }
+    if (isNaN(lhs)) {
+      return lhs;
+    }
+    else if (isNaN(rhs)) {
+      return rhs;
+    }
+    return null;
+  }
+
+  private static boolean isNaN(PsiExpression expression) {
+    if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
+      return false;
+    }
+    @NonNls final String referenceName = referenceExpression.getReferenceName();
+    if (!"NaN".equals(referenceName)) {
+      return false;
+    }
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiField field)) {
+      return false;
+    }
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) {
+      return false;
+    }
+    final String qualifiedName = containingClass.getQualifiedName();
+    return CommonClassNames.JAVA_LANG_DOUBLE.equals(qualifiedName) || CommonClassNames.JAVA_LANG_FLOAT.equals(qualifiedName);
   }
 }

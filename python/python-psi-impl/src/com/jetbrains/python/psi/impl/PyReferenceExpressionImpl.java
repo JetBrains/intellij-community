@@ -37,8 +37,6 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 
 /**
  * Implements reference expression PSI.
- *
- * @author yole
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
@@ -56,7 +54,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     //noinspection InstanceofIncompatibleInterface
     assert !(this instanceof StubBasedPsiElement);
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(getProject(), getContainingFile());
-    return getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
+    return getReference(PyResolveContext.defaultContext(context));
   }
 
   @NotNull
@@ -154,16 +152,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
       for (ResolveResult resolveResult : node.myReferenceExpression.getReference(resolveContext).multiResolve(false)) {
         final PsiElement element = resolveResult.getElement();
-        if (element instanceof PyTargetExpression && follow.test((PyTargetExpression)element)) {
-          final PyTargetExpression target = (PyTargetExpression)element;
+        if (element instanceof PyTargetExpression target && follow.test((PyTargetExpression)element)) {
 
           final List<PsiElement> assignedFromElements = context.maySwitchToAST(target)
                                                         ? Collections.singletonList(target.findAssignedValue())
                                                         : target.multiResolveAssignedValue(resolveContext);
 
           for (PsiElement assignedFrom : assignedFromElements) {
-            if (assignedFrom instanceof PyReferenceExpression) {
-              final PyReferenceExpression assignedReference = (PyReferenceExpression)assignedFrom;
+            if (assignedFrom instanceof PyReferenceExpression assignedReference) {
 
               if (!visited.add(assignedReference)) continue;
 
@@ -249,7 +245,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private PyType getCallableType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(this);
     if (callExpression != null) {
-      return getCalleeType(callExpression, PyResolveContext.defaultContext().withTypeEvalContext(context));
+      return getCalleeType(callExpression, PyResolveContext.defaultContext(context));
     }
     return null;
   }
@@ -259,7 +255,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (!isQualified()) return null;
     final PyClassLikeType targetType = as(typeFromTargets, PyClassLikeType.class);
     if (targetType == null || targetType.isDefinition()) return null;
-    final PyResolveContext resolveContext = PyResolveContext.noProperties().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.noProperties(context);
     final List<? extends RatedResolveResult> members = targetType.resolveMember(PyNames.GET, this, AccessDirection.READ,
                                                                                 resolveContext);
     if (members == null || members.isEmpty()) return null;
@@ -295,7 +291,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private PyType getTypeFromTargets(@NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<PyType> members = new ArrayList<>();
 
     final PsiFile realFile = FileContextUtil.getContextFile(this);
@@ -347,8 +343,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private Ref<PyType> getTypeOfProperty(@Nullable PyType qualifierType, @NotNull String name, @NotNull TypeEvalContext context) {
-    if (qualifierType instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)qualifierType;
+    if (qualifierType instanceof PyClassType classType) {
       final PyClass pyClass = classType.getPyClass();
       final Property property = pyClass.findProperty(name, true, context);
 
@@ -365,8 +360,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return Ref.create();
       }
     }
-    else if (qualifierType instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)qualifierType;
+    else if (qualifierType instanceof PyUnionType unionType) {
       for (PyType type : unionType.getMembers()) {
         final Ref<PyType> result = getTypeOfProperty(type, name, context);
         if (result != null) {
@@ -406,8 +400,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         PyType qualifierType = context.getType(qualifier);
         boolean possiblyParameterizedQualifier = !(qualifierType instanceof PyModuleType || qualifierType instanceof PyImportedModuleType);
         if (possiblyParameterizedQualifier && PyTypeChecker.hasGenerics(type, context)) {
-          final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
-          if (!ContainerUtil.isEmpty(substitutions)) {
+          final var substitutions =
+            PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
+          if (substitutions != null) {
             final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
             if (substituted != null) {
               return substituted;
@@ -472,8 +467,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyTypedElement) {
       return context.getType((PyTypedElement)target);
     }
-    if (target instanceof PsiDirectory) {
-      final PsiDirectory dir = (PsiDirectory)target;
+    if (target instanceof PsiDirectory dir) {
       final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
       if (file != null) {
         return getTypeFromTarget(file, context, anchor);

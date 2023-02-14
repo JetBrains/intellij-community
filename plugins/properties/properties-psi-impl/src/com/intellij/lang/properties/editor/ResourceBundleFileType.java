@@ -16,6 +16,7 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
@@ -31,6 +32,11 @@ public class ResourceBundleFileType extends FakeFileType {
   @NotNull
   public String getName() {
     return "ResourceBundle";
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
+    return PropertiesFileType.DEFAULT_EXTENSION;
   }
 
   @Override

@@ -1,48 +1,44 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public final class JavaClassFileType implements FileType {
-
   public static final JavaClassFileType INSTANCE = new JavaClassFileType();
 
   private JavaClassFileType() {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "CLASS";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return JavaPsiBundle.message("filetype.class.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return JavaPsiBundle.message("filetype.class.display.name");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "class";
   }
 
   @Override
   public Icon getIcon() {
-    return AllIcons.FileTypes.JavaClass;
+    return IconManager.getInstance().getPlatformIcon(PlatformIcons.JavaClassFileType);
   }
 
   @Override

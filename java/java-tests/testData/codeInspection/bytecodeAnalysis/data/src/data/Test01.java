@@ -7,10 +7,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.ArrayList;
 
-/**
- * @author lambdamix
- */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
   @ExpectContract("null,_->fail;_,_->param1")
@@ -28,7 +27,7 @@ public class Test01 {
   static void checkNull(Object object, String s) {
     check(object == null, s, s);
   }
-  
+
   @ExpectContract("true,_->fail")
   static void checkNegate(boolean val, String s1) {
     check(!val, s1, null);
@@ -45,9 +44,9 @@ public class Test01 {
       throw new RuntimeException(createMessage(s1, s2));
     }
   }
-  
+
   native static String createMessage(String s1, String s2);
-  
+
   @ExpectNotNull
   @ExpectContract(pure = true)
   public static MySupplier methodReference(@ExpectNotNull String s) {
@@ -319,5 +318,11 @@ public class Test01 {
     String[] res = arr.clone();
     res[0] = null;
     return res;
+  }
+
+  @ExpectNotNull
+  @ExpectContract(pure = true)
+  List<String> getCollection() {
+    return new ArrayList<>();
   }
 }

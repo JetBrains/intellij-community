@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(args: Array<String>) {
+    val ind = args.indices
+}

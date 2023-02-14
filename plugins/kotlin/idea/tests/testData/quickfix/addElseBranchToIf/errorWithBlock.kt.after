@@ -1,0 +1,8 @@
+// "Add else branch" "true"
+fun foo(x: String?) {
+    val a = if (x == null) {
+        4
+    } else {
+        <caret>
+    }
+}

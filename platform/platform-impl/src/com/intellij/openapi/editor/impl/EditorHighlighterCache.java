@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
@@ -20,9 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 
-/**
- * @author yole
- */
+
 public final class EditorHighlighterCache {
   private static final Key<WeakReference<EditorHighlighter>> ourSomeEditorSyntaxHighlighter = Key.create("some editor highlighter");
 
@@ -61,7 +59,7 @@ public final class EditorHighlighterCache {
 
     if (document != null &&
         (cachedEditorHighlighter = getEditorHighlighterForCachesBuilding(document)) != null &&
-        PlatformIdTableBuilding.checkCanUseCachedEditorHighlighter(text, cachedEditorHighlighter)) {
+        checkCanUseCachedEditorHighlighter(text, cachedEditorHighlighter)) {
       highlighter = cachedEditorHighlighter;
       alreadyInitializedHighlighter = true;
     }
@@ -73,5 +71,14 @@ public final class EditorHighlighterCache {
       return new LexerEditorHighlighterLexer(highlighter, alreadyInitializedHighlighter);
     }
     return null;
+  }
+
+  public static boolean checkCanUseCachedEditorHighlighter(@NotNull CharSequence chars, @NotNull EditorHighlighter editorHighlighter) {
+    boolean b = ((LexerEditorHighlighter)editorHighlighter).checkContentIsEqualTo(chars);
+    if (!b) {
+      Logger logger = Logger.getInstance(EditorHighlighterCache.class);
+      logger.warn("Unexpected mismatch of editor highlighter content with indexing content");
+    }
+    return b;
   }
 }

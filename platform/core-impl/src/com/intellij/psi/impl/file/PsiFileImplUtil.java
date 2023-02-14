@@ -23,10 +23,10 @@ public final class PsiFileImplUtil {
   // before the file becomes non-openable in the editor, save it to prevent data loss
   @ApiStatus.Internal
   public static void saveDocumentIfFileWillBecomeBinary(VirtualFile vFile, @NotNull String newName) {
-    final FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
+    FileType newFileType = FileTypeRegistry.getInstance().getFileTypeByFileName(newName);
     if (UnknownFileType.INSTANCE.equals(newFileType) || newFileType.isBinary()) {
-      final FileDocumentManager fdm = FileDocumentManager.getInstance();
-      final Document doc = fdm.getCachedDocument(vFile);
+      FileDocumentManager fdm = FileDocumentManager.getInstance();
+      Document doc = fdm.getCachedDocument(vFile);
       if (doc != null) {
         fdm.saveDocumentAsIs(doc);
       }
@@ -61,9 +61,9 @@ public final class PsiFileImplUtil {
   }
 
   public static void doDelete(@NotNull PsiFile file) throws IncorrectOperationException {
-    final PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
+    PsiManagerImpl manager = (PsiManagerImpl)file.getManager();
 
-    final VirtualFile vFile = file.getVirtualFile();
+    VirtualFile vFile = file.getVirtualFile();
     try{
       vFile.delete(manager);
     }

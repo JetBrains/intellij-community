@@ -33,6 +33,7 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
   public void testTryWithResource() { doTest(); }
   public void testFirstNotInitialized() { doTest(); }
   public void testIDEA209231() { doTest(); }
+  public void testIDEA243497() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

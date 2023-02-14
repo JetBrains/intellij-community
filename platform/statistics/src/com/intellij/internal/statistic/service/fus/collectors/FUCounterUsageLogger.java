@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  */
 @ApiStatus.Internal
 public final class FUCounterUsageLogger {
-  private static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
+  public static final ExtensionPointName<CounterUsageCollectorEP> EP_NAME =
     new ExtensionPointName<>("com.intellij.statistics.counterUsagesCollector");
 
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
@@ -100,10 +98,17 @@ public final class FUCounterUsageLogger {
     for (EventLogGroup group : myGroups.values()) {
       futures.add(FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
     }
+    Map<String, StatisticsEventLogger> recorderLoggers = new HashMap<>();
     for (FeatureUsagesCollector collector : instantiateCounterCollectors()) {
       EventLogGroup group = collector.getGroup();
       if (group != null) {
-        futures.add(FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED));
+        String recorder = group.getRecorder();
+        StatisticsEventLogger logger = recorderLoggers.get(recorder);
+        if (logger == null) {
+          logger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).getLogger();
+          recorderLoggers.put(recorder, logger);
+        }
+        futures.add(logger.logAsync(group, EventLogSystemEvents.COLLECTOR_REGISTERED, false));
       }
       else {
         try {
@@ -135,7 +140,7 @@ public final class FUCounterUsageLogger {
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void logEvent(@Nullable Project project,
                        @NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
@@ -188,8 +193,7 @@ public final class FUCounterUsageLogger {
    * @see FUCounterUsageLogger#logEvent(Project, String, String, FeatureUsageData)
    * @deprecated Please use {@link EventLogGroup#registerEvent} and {@link EventId#log}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public void logEvent(@NonNls @NotNull String groupId,
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);

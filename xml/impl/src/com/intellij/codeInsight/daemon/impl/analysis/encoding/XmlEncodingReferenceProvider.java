@@ -21,14 +21,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance(XmlEncodingReferenceProvider.class);
+  private static final TokenSet ATTRIBUTE_VALUE_STD_TOKENS = TokenSet.create(
+    XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER,
+    XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+  );
   @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   @Override
@@ -48,6 +56,9 @@ public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   }
 
   public static PsiReference[] extractFromContentAttribute(final XmlAttributeValue value) {
+    boolean hasNonStandardTokens =
+      ContainerUtil.exists(value.getChildren(), ch -> !ATTRIBUTE_VALUE_STD_TOKENS.contains(ch.getNode().getElementType()));
+    if (hasNonStandardTokens) return PsiReference.EMPTY_ARRAY;
     String text = value.getValue();
     int start = text.indexOf(CHARSET_PREFIX);
     if (start != -1) {

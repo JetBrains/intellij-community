@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents an array used as a value of an annotation element. For example:
  * {@code @Endorsers({"Children", "Unscrupulous dentists"})}
- *
- * @author ven
  */
 public interface PsiArrayInitializerMemberValue extends PsiAnnotationMemberValue {
   /**

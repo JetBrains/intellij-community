@@ -26,14 +26,13 @@ public final class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebugg
   @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   @Override
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
-    switch (category) {
-      case STEPPING:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
-                                                       "reference.idesettings.debugger.groovy", GroovySteppingConfigurableUi.class, () -> this));
-      case HOTSWAP:
-        return singletonList(new GroovyHotSwapConfigurable(this));
-    }
-    return Collections.emptyList();
+    return switch (category) {
+      case STEPPING ->
+        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
+                                                "reference.idesettings.debugger.groovy", GroovySteppingConfigurableUi.class, () -> this));
+      case HOTSWAP -> singletonList(new GroovyHotSwapConfigurable(this));
+      default -> Collections.emptyList();
+    };
   }
 
   @Override

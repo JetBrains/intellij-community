@@ -5,13 +5,18 @@ import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.CodeStyleConfigurableWrapper;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ex.SortedConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleGroup;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,9 +39,19 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     return new CodeStyleGroupConfigurable();
   }
 
+  @Override
+  public @Nullable String getConfigurableDisplayName() {
+    return myGroup.getDisplayName();
+  }
+
+  @Override
+  public @Nullable Language getLanguage() {
+    return myGroup.getLanguage();
+  }
+
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleGroupConfigurable();
   }
 
@@ -44,9 +59,27 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     myChildProviders.add(provider);
   }
 
-  public class CodeStyleGroupConfigurable extends SortedConfigurableGroup {
-    public CodeStyleGroupConfigurable() {
-      super(myGroup.getId(), myGroup.getDisplayName(), myGroup.getDescription(), myGroup.getHelpTopic(), 0);
+  public class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract
+    implements ConfigurableGroup, Configurable.NoScroll {
+
+    @Override
+    public @NonNls @NotNull String getId() {
+      return myGroup.getId();
+    }
+
+    @Override
+    public @NonNls String getHelpTopic() {
+      return myGroup.getHelpTopic();
+    }
+
+    @Override
+    public @NlsContexts.ConfigurableName String getDisplayName() {
+      return myGroup.getDisplayName();
+    }
+
+    @Override
+    public @NlsContexts.DetailedDescription String getDescription() {
+      return myGroup.getDescription();
     }
 
     @Override

@@ -9,7 +9,7 @@ public class RootStatement extends Statement {
   private final DummyExitStatement dummyExit;
 
   public RootStatement(Statement head, DummyExitStatement dummyExit) {
-    type = Statement.TYPE_ROOT;
+    super(StatementType.ROOT);
 
     first = head;
     this.dummyExit = dummyExit;

@@ -1,4 +1,4 @@
-// "Make 'a.i' static" "true"
+// "Make 'a.i' static" "true-preview"
 import java.io.*;
 
 class a {

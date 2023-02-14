@@ -1,6 +1,6 @@
 /*
 Call always fails (foo(s, "checked"); line#12)
-  According to inferred contract, method 'foo' throws exception when obj == null (foo; line#12)
+  According to inferred contract, method 'foo' throws exception when s == null (foo; line#12)
     Condition 's == null' was checked before (s == null; line#11)
  */
 

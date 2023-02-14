@@ -149,7 +149,7 @@ public final class FileOffsetsManager {
     for (int src = 0; src < length; src++) {
       char c = bufferArray != null ? bufferArray[src] : buffer.charAt(src);
       switch (c) {
-        case '\r':
+        case '\r' -> {
           if (bufferArray != null) {
             bufferArray[dst++] = '\n';
           }
@@ -159,8 +159,8 @@ public final class FileOffsetsManager {
           //crCount++;
           originalLineOffsets.add(dst + crlfCount);
           convertedLineOffsets.add(dst);
-          break;
-        case '\n':
+        }
+        case '\n' -> {
           if (prev == '\r') {
             //crCount--;
             crlfCount++;
@@ -177,15 +177,15 @@ public final class FileOffsetsManager {
             originalLineOffsets.add(dst + crlfCount);
             convertedLineOffsets.add(dst);
           }
-          break;
-        default:
+        }
+        default -> {
           if (bufferArray != null) {
             bufferArray[dst++] = c;
           }
           else {
             buffer.put(dst++, c);
           }
-          break;
+        }
       }
       prev = c;
     }

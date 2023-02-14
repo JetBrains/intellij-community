@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
 public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrReturnStatement {
   public GrReturnStatementImpl(@NotNull ASTNode node) {
     super(node);

@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UDeclarationKt;
@@ -40,10 +39,9 @@ public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope scope,
     @NotNull InspectionManager manager,
     @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     final RefEntity owner = refClass.getOwner();
     if (!(owner instanceof RefPackage)) {
       return null;

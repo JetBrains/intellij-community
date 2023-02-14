@@ -3,10 +3,11 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
@@ -162,7 +163,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     };
   }
 
-  private Int2ObjectMap<MostlyUShortIntList> tempMap() {
+  private IntObjectMap<MostlyUShortIntList> tempMap() {
     assert myTempState != null;
     return Objects.requireNonNull(myTempState.myTempJoinedChildrenMap);
   }
@@ -207,6 +208,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   @NotNull
+  @Unmodifiable
   List<StubElement<?>> toPlainList() {
     //noinspection unchecked
     return (List)this;
@@ -221,7 +223,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   }
 
   private final class TempState {
-    @Nullable Int2ObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
+    @Nullable IntObjectMap<MostlyUShortIntList> myTempJoinedChildrenMap;
 
     int myCurrentParent = -1;
     int myExpectedChildrenCount;
@@ -269,7 +271,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
 
     private void switchChildrenToTempMap(int parentId) {
       if (myTempJoinedChildrenMap == null) {
-        myTempJoinedChildrenMap = new Int2ObjectOpenHashMap<>();
+        myTempJoinedChildrenMap = ContainerUtil.createConcurrentIntObjectMap();
       }
 
       int start = getChildrenStart(parentId);
@@ -286,7 +288,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
       }
 
       MostlyUShortIntList prev = myTempJoinedChildrenMap.put(parentId, ids);
-      assert prev == null;
+      assert prev == null: parentId;
 
       myStubData.set(childrenStartIndex(parentId), IN_TEMP_MAP);
     }

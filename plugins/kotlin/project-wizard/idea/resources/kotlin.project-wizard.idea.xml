@@ -1,0 +1,33 @@
+<idea-plugin package="org.jetbrains.kotlin.tools.projectWizard">
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.ideaWizardService" area="IDEA_PROJECT"
+                    interface="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService"
+                    dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="com.intellij.newProjectWizard.kotlin.buildSystem"
+            interface="org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.projectTemplatesProvider"
+            interface="org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.ProjectTemplatesProvider" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.androidSdkProvider"
+            interface="org.jetbrains.kotlin.tools.projectWizard.plugins.AndroidSdkProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>
+    <newProjectWizard.language implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
+    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder"/>
+
+    <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <ideaWizardService implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaFileFormattingService"/>
+    <ideaWizardService implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaRunConfigurationsService"/>
+  </extensions>
+</idea-plugin>

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -31,8 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RandomDoubleForRandomIntegerInspection
-  extends BaseInspection {
+public class RandomDoubleForRandomIntegerInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -61,7 +61,7 @@ public class RandomDoubleForRandomIntegerInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)name.getParent();
@@ -139,11 +139,9 @@ public class RandomDoubleForRandomIntegerInspection
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       return JavaTokenType.ASTERISK.equals(tokenType);
     }
@@ -152,13 +150,11 @@ public class RandomDoubleForRandomIntegerInspection
       if (expression == null) {
         return false;
       }
-      if (!(expression instanceof PsiTypeCastExpression)) {
+      if (!(expression instanceof PsiTypeCastExpression castExpression)) {
         return false;
       }
-      final PsiTypeCastExpression castExpression =
-        (PsiTypeCastExpression)expression;
       final PsiType type = castExpression.getType();
-      return PsiType.INT.equals(type);
+      return PsiTypes.intType().equals(type);
     }
   }
 

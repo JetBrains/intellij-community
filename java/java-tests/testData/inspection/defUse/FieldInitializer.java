@@ -2,7 +2,7 @@ class C {
   static boolean b = System.getProperty("foo") != null;
 
   static class C1 {
-    { <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    { <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     String s = "b";
   }
   static class C2 {
@@ -10,12 +10,12 @@ class C {
     { s = "c"; }
   }
   static class C3 {
-    { <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    { <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     String s;
     { s = "c"; }
   }
   static class C4 {
-    { if (b) <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    { if (b) <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     String s = "b";
   }
   static class C5 {
@@ -37,8 +37,8 @@ class C {
   static class C9 {
     String s;
     {
-      <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b";
-      if (b) <warning descr="The value \"c\" assigned to 's' is never used">s</warning> = "c";
+      <warning descr="The value '\"b\"' assigned to 's' is never used">s</warning> = "b";
+      if (b) <warning descr="The value '\"c\"' assigned to 's' is never used">s</warning> = "c";
     }
     { s = "d"; }
   }
@@ -63,17 +63,17 @@ class C {
   }
   static class C14 {
     String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
-    { <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b"; }
+    { <warning descr="The value '\"b\"' assigned to 's' is never used">s</warning> = "b"; }
     C14() { s = "c"; }
   }
   static class C15 {
     C15() { s = "c"; }
-    { if (b) <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b"; }
+    { if (b) <warning descr="The value '\"b\"' assigned to 's' is never used">s</warning> = "b"; }
     String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
   }
 
   static class S1 {
-    static { <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    static { <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     static String s = "b";
   }
   static class S2 {
@@ -81,12 +81,12 @@ class C {
     static { s = "c"; }
   }
   static class S3 {
-    static { <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    static { <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     static String s;
     static { s = "c"; }
   }
   static class S4 {
-    static { if (b) <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
+    static { if (b) <warning descr="The value '\"a\"' assigned to 's' is never used">s</warning> = "a"; }
     static String s = "b";
   }
   static class S5 {
@@ -108,8 +108,8 @@ class C {
   static class S9 {
     static String s;
     static {
-      <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b";
-      if (b) <warning descr="The value \"c\" assigned to 's' is never used">s</warning> = "c";
+      <warning descr="The value '\"b\"' assigned to 's' is never used">s</warning> = "b";
+      if (b) <warning descr="The value '\"c\"' assigned to 's' is never used">s</warning> = "c";
     }
     static { s = "d"; }
   }

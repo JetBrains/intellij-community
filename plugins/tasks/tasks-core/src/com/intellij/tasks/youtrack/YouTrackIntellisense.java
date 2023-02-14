@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.Gson;
@@ -10,8 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.containers.FixedHashMap;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -37,7 +36,7 @@ import static com.intellij.openapi.editor.HighlighterColors.TEXT;
  *
  * @author Mikhail Golubev
  */
-public class YouTrackIntellisense {
+public final class YouTrackIntellisense {
 
   /**
    * Key used to bind YouTrackIntellisense instance to specific PsiFile
@@ -46,30 +45,11 @@ public class YouTrackIntellisense {
 
   private static final Logger LOG = Logger.getInstance(YouTrackIntellisense.class);
 
-  private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = ContainerUtil.newHashMap(
-    Pair.create("field-value", CONSTANT.getDefaultAttributes()),
-    Pair.create("field-name", KEYWORD.getDefaultAttributes()),
-    Pair.create("text", STRING.getDefaultAttributes()),
-    Pair.create("error", BAD_CHARACTER.getDefaultAttributes())
-  );
+  private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = Map.of("field-value", CONSTANT.getDefaultAttributes(), "field-name", KEYWORD.getDefaultAttributes(), "text", STRING.getDefaultAttributes(), "error", BAD_CHARACTER.getDefaultAttributes());
   private static final int CACHE_SIZE = 30;
 
-  private static final class SizeLimitedCache<K, V> extends LinkedHashMap<K, V> {
-    private final int myMaxSize;
-
-    private SizeLimitedCache(int max) {
-      super((int)(max / 0.75) + 1, true);
-      myMaxSize = max;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<K, V> eldest, K key, V value) {
-      return size() > myMaxSize;
-    }
-  }
-
   private static final Map<Pair<String, Integer>, Response> ourCache =
-    Collections.synchronizedMap(new SizeLimitedCache<>(CACHE_SIZE));
+    Collections.synchronizedMap(new FixedHashMap<>(CACHE_SIZE));
 
   @NotNull
   private static TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {

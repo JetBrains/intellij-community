@@ -55,7 +55,6 @@
     <keyboard-shortcut first-keystroke="meta shift d"/>
   </action>
   <action id="Diff.ShowSettingsPopup"/>
-  <action id="TagDocumentationNavigation"/>
   <action id="CIDR.Lang.Cpp.GenerateDefinitions"/>
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="meta j"/>
@@ -171,6 +170,7 @@
   <action id="FindWordAtCaret">
     <keyboard-shortcut first-keystroke="meta alt g"/>
   </action>
+  <action id="FindPrevWordAtCaret"/>
   <action id="Mvc.RunTarget"/>
   <!--END FIND-->
   <!--VIEW-->
@@ -178,6 +178,7 @@
     <keyboard-shortcut first-keystroke="meta ctrl shift f"/>
   </action>
   <action id="ShowBookmarks"/>
+  <action id="ShowTypeBookmarks"/>
   <action id="Move"/>
   <action id="ChangeSignature"/>
   <action id="ChangeTypeSignature"/>
@@ -322,7 +323,15 @@
   <action id="PreviousOccurence"/>
   <action id="EditSource"/>
   <action id="EditSourceInNewWindow"/>
-  <action id="Debugger.EditTypeSource"/>
+  <action id="XDebugger.JumpToTypeSource"/>
   <action id="CopyElement"/>
   <action id="CheckinProject"/>
+  <action id="GoGenerateFileAction"/>
+  <action id="MethodUp"/>
+  <action id="MethodDown"/>
+  <action id="ResizeToolWindowLeft"/>
+  <action id="ResizeToolWindowRight"/>
+  <action id="ResizeToolWindowUp"/>
+  <action id="ResizeToolWindowDown"/>
+  <action id="ZoomOutIdeAction"/>
 </keymap>

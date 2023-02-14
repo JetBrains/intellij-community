@@ -5,9 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenArtifactCoordinatesPresentationProvider extends PresentationProvider<MavenDomArtifactCoordinates> {
 
   private static final String UNKNOWN = "<unknown>";

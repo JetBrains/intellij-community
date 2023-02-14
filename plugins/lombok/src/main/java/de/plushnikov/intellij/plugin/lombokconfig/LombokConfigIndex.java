@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,7 +14,6 @@ import de.plushnikov.intellij.plugin.language.LombokConfigFileType;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigCleaner;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigFile;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
-import de.plushnikov.intellij.plugin.language.psi.LombokConfigPsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,12 +23,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
-  private static final AtomicLong configChangeCount = new AtomicLong(1);
-  public static final ModificationTracker CONFIG_CHANGE_TRACKER = configChangeCount::get;
-
   @NonNls
   public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
@@ -61,16 +55,15 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
                                                               new ConfigValue(configValues.get(key.getConfigKey()), stopBubblingValue)));
           }
         }
-        configChangeCount.incrementAndGet();
         return result;
       }
 
-      private Map<String, String> extractValues(LombokConfigFile configFile) {
+      private static Map<String, String> extractValues(LombokConfigFile configFile) {
         Map<String, String> result = new HashMap<>();
 
         final LombokConfigCleaner[] configCleaners = LombokConfigUtil.getLombokConfigCleaners(configFile);
         for (LombokConfigCleaner configCleaner : configCleaners) {
-          final String key = StringUtil.toLowerCase(LombokConfigPsiUtil.getKey(configCleaner));
+          final String key = StringUtil.toLowerCase(configCleaner.getKey());
 
           final ConfigKey configKey = ConfigKey.fromConfigStringKey(key);
           if (null != configKey) {
@@ -80,9 +73,9 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
 
         final LombokConfigProperty[] configProperties = LombokConfigUtil.getLombokConfigProperties(configFile);
         for (LombokConfigProperty configProperty : configProperties) {
-          final String key = StringUtil.toLowerCase(LombokConfigPsiUtil.getKey(configProperty));
-          final String value = LombokConfigPsiUtil.getValue(configProperty);
-          final String sign = LombokConfigPsiUtil.getSign(configProperty);
+          final String key = StringUtil.toLowerCase(configProperty.getKey());
+          final String value = configProperty.getValue();
+          final String sign = configProperty.getSign();
           if (null == sign) {
             result.put(key, value);
           }
@@ -139,6 +132,6 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
 
   @Override
   public int getVersion() {
-    return 11;
+    return 12;
   }
 }

@@ -33,7 +33,9 @@ import git4idea.commands.GitLineHandlerListener;
 public class GitRebaseProblemDetector implements GitLineHandlerListener {
   private final static String[] REBASE_CONFLICT_INDICATORS = {
     "Merge conflict in",
-    "hint: after resolving the conflicts, mark the corrected paths",
+    "after resolving the conflicts, mark the corrected paths",
+    "After resolving the conflicts, mark them with",
+    "Resolve all conflicts manually, mark them as resolved with",
     "You must edit all merge conflicts",
     "Failed to merge in the changes",
     "could not apply"};

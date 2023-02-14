@@ -89,12 +89,12 @@ public final class PathMacroUtil {
   }
 
   private static Map<String, String> computeGlobalPathMacrosInsideIde() {
-    Map<String, String> result = new HashMap<>();
-    result.put(APPLICATION_HOME_DIR, FileUtilRt.toSystemIndependentName(PathManager.getHomePath()));
-    result.put(APPLICATION_CONFIG_DIR, FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()));
-    result.put(APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()));
-    result.put(USER_HOME_NAME, computeUserHomePath());
-    return Collections.unmodifiableMap(result);
+    return Map.of(
+      APPLICATION_HOME_DIR, FileUtilRt.toSystemIndependentName(PathManager.getHomePath()), 
+      APPLICATION_CONFIG_DIR, FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()), 
+      APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()), 
+      USER_HOME_NAME, computeUserHomePath()
+    );
   }
 
   private static @NotNull String computeUserHomePath() {

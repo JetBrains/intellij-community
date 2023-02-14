@@ -26,7 +26,7 @@ internal class VcsDirectoryRenamesProvider : PersistentStateComponent<Array<Rena
   val renamesMap: Map<EdgeData<CommitId>, EdgeData<FilePath>>
     get() = renames.get()
 
-  override fun getState(): Array<RenameRecord>? {
+  override fun getState(): Array<RenameRecord> {
     return renames.get().entries.groupBy({ it.value }) { it.key }.map { entry ->
       val paths = entry.key
       val commits = entry.value

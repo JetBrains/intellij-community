@@ -1,4 +1,4 @@
-// "Permute arguments" "true"
+// "Permute arguments" "true-preview"
 public class S {
     public S(int i, String s){}
     void f() {

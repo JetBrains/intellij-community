@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -28,9 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
+
 public class RadBorderLayoutManager extends RadLayoutManager {
   @Override
   public String getName() {
@@ -292,21 +290,12 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     @Override
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
-      String side = null;
-      switch (direction) {
-        case LEFT:
-          side = getAdjacentSide(myQuadrant, 0, -1);
-          break;
-        case UP:
-          side = getAdjacentSide(myQuadrant, -1, 0);
-          break;
-        case RIGHT:
-          side = getAdjacentSide(myQuadrant, 0, 1);
-          break;
-        case DOWN:
-          side = getAdjacentSide(myQuadrant, 1, 0);
-          break;
-      }
+      String side = switch (direction) {
+        case LEFT -> getAdjacentSide(myQuadrant, 0, -1);
+        case UP -> getAdjacentSide(myQuadrant, -1, 0);
+        case RIGHT -> getAdjacentSide(myQuadrant, 0, 1);
+        case DOWN -> getAdjacentSide(myQuadrant, 1, 0);
+      };
       if (side != null) {
         return new MyDropLocation(myContainer, side);
       }
@@ -318,7 +307,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     private LabelPropertyRenderer<String> myRenderer = null;
     private BorderSideEditor myEditor = null;
 
-    public static BorderSideProperty INSTANCE = new BorderSideProperty();
+    public static final BorderSideProperty INSTANCE = new BorderSideProperty();
 
     BorderSideProperty() {
       super(null, "Border Side");

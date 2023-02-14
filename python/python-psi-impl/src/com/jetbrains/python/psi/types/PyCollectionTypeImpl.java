@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyCallSiteExpression;
@@ -25,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   @NotNull private final List<PyType> myElementTypes;
 
@@ -110,5 +109,11 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   public PyType getIteratedItemType() {
     // TODO: Select the parameter type that matches T in Iterable[T]
     return ContainerUtil.getFirstItem(myElementTypes);
+  }
+
+  @Override
+  public String toString() {
+    return ((isValid() ? "" : "[INVALID] ") + "PyCollectionClassType: " + getClassQName()) +
+           "[" + StringUtil.join(getElementTypes(), ", ") + "]";
   }
 }

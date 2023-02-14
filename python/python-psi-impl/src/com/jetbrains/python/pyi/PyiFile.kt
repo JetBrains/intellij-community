@@ -21,7 +21,6 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.DelegatingScopeProcessor
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyImportElement
@@ -31,9 +30,6 @@ import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 
-/**
- * @author vlan
- */
 class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLanguageDialect.getInstance()) {
   override fun getFileType(): PythonFileType = PyiFileType.INSTANCE
 
@@ -43,7 +39,7 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     if (name == "function" && PyBuiltinCache.getInstance(this).builtinsFile == this) return emptyList()
-    if (exported && isPrivateName(name) && !resolvingBuiltinPathLike(name)) return emptyList()
+    if (exported && isPrivateName(name)) return emptyList()
 
     val baseResults = super.multiResolveName(name, exported)
     val dunderAll = dunderAll ?: emptyList()
@@ -72,9 +68,5 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   private fun isPrivateImport(element: PsiElement?, dunderAll: List<String>): Boolean {
     return element is PyImportElement && element.asName == null && element.visibleName !in dunderAll
-  }
-
-  private fun resolvingBuiltinPathLike(name: String): Boolean {
-    return name == PyNames.BUILTIN_PATH_LIKE && PyBuiltinCache.getInstance(this).builtinsFile == this
   }
 }

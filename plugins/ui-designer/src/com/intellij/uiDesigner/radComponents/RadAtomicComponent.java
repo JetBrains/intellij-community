@@ -6,10 +6,6 @@ import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.palette.Palette;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class RadAtomicComponent extends RadComponent {
   public RadAtomicComponent(final ModuleProvider module, final Class aClass, final String id){
     super(module, aClass, id);

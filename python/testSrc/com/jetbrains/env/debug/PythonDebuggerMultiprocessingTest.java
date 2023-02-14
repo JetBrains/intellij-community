@@ -239,4 +239,45 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testCallExecWithPythonArg() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_exec_with_python_arg.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test4.py"), 1);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        setProcessCanTerminate(true);
+        resume();
+        waitForOutput("3");
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("python2.7");
+      }
+    });
+
+    runPythonTest(new PyDebuggerTask("/debug", "test_call_python_version.py") {
+      @Override
+      public void testing() throws Exception {
+        waitForTerminate();
+        outputContains("Python");
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Collections.singleton("python2.7");
+      }
+    });
+  }
 }

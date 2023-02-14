@@ -22,9 +22,6 @@ import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixt
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
 import org.intellij.lang.annotations.Language
 
-/**
- * @author Pavel.Dolgov
- */
 class Java9ModuleExportsPackageToItselfTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private val message = JavaAnalysisBundle.message("inspection.module.exports.package.to.itself")
   private val fix1 = JavaAnalysisBundle.message("exports.to.itself.delete.statement.fix")

@@ -9,7 +9,7 @@ import com.intellij.model.search.SearchWordQueryBuilder
 import com.intellij.model.search.TextOccurrence
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeTo
 import com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeToFileLanguage
 import com.intellij.psi.search.SearchScope
@@ -23,7 +23,7 @@ internal data class SearchWordQueryBuilderImpl(
   private val myContainerName: String? = null,
   private val myCaseSensitive: Boolean = true,
   private val mySearchContexts: Set<SearchContext> = emptySet(),
-  private val mySearchScope: SearchScope = GlobalSearchScope.EMPTY_SCOPE,
+  private val mySearchScope: SearchScope = LocalSearchScope.EMPTY,
   private val myFileTypes: Collection<FileType>? = null,
   private val myFileLanguage: LanguageInfo = LanguageInfo.NoLanguage,
   private val myInjection: InjectionInfo = InjectionInfo.NoInjection

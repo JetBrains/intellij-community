@@ -29,7 +29,7 @@ public class ApplyIntentionAction extends AnAction {
   }
 
   public ApplyIntentionAction(final IntentionAction action, @NlsActions.ActionText String text, Editor editor, PsiFile file) {
-    super(text);
+    super("");
     getTemplatePresentation().setText(text, false);
     myAction = action;
     myEditor = editor;

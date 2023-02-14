@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -147,6 +148,11 @@ public class TableSpeedSearch extends TableSpeedSearchBase<JTable> {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
                                      myTable.getRowSelectionAllowed() &&
                                      myTable.getSelectionModel().getSelectionMode() == MULTIPLE_INTERVAL_SELECTION);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

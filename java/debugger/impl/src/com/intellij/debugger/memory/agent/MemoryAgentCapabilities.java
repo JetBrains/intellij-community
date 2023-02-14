@@ -17,6 +17,10 @@ public final class MemoryAgentCapabilities {
     myCapabilities = EnumSet.copyOf(capabilitySet);
   }
 
+  public boolean isDisabled() {
+    return this == DISABLED;
+  }
+
   public boolean isLoaded() {
     return myIsLoaded;
   }

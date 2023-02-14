@@ -66,7 +66,7 @@ public class RearrangeAttributesIntention implements IntentionAction {
     new RearrangeCodeProcessor(new ReformatCodeProcessor(project, file, reformatRange, false)) {
       @Override
       public Collection<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
-        return Collections.singleton(new TextRange(marker.getStartOffset(), marker.getEndOffset()));
+        return Collections.singleton(marker.getTextRange());
       }
     }.run();
     editor.getCaretModel().moveToOffset(reformatRange.getStartOffset());

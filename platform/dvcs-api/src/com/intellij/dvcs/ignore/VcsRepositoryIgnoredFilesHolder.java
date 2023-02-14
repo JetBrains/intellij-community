@@ -19,12 +19,6 @@ public interface VcsRepositoryIgnoredFilesHolder extends Disposable {
 
   boolean isInUpdateMode();
 
-  int getSize();
-
-  void addFiles(@NotNull Collection<? extends FilePath> files);
-
-  void addFile(@NotNull FilePath file);
-
   boolean containsFile(@NotNull FilePath file);
 
   @NotNull

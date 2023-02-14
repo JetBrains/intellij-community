@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Denis Zhdanov
- */
 public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemTaskManager<S> {
 

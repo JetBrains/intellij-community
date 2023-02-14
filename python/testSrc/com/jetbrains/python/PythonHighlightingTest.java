@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -18,8 +18,6 @@ import java.awt.*;
 
 /**
  * Test highlighting added by annotators.
- *
- * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
 
@@ -289,6 +287,51 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, false, false);
   }
 
+  // PY-52930
+  public void testExceptionGroupsStarNoWarning() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupsStarOlderPythonWarning() {
+    doTest(LanguageLevel.PYTHON310, false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptOk() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptionGroupInTupleInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testExceptStarAndExceptInTheSameTry() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakReturnInExceptStar() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testContinueBreakInsideLoopInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-52930
+  public void testReturnInsideFunctionInExceptStarPart() {
+    doTest(LanguageLevel.getLatest(), false, false);
+  }
+
   // PY-35961
   public void testUnpackingInNonParenthesizedTuplesInReturnAndYieldBefore38() {
     doTest(LanguageLevel.PYTHON35, false, false);
@@ -503,6 +546,21 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-43619
   public void testAssignmentExpressionInAnIterable() {
     doTest(LanguageLevel.getLatest(), false, false);
+  }
+
+  // PY-48008
+  public void testMatchAndCaseKeywords() {
+    doTest(LanguageLevel.PYTHON310, false, true);
+  }
+
+  // PY-24653
+  public void testSelfHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
+  }
+
+  // PY-24653
+  public void testNestedParamHighlightingInInnerFunc() {
+    doTest(LanguageLevel.getLatest(), false, true);
   }
 
   @NotNull

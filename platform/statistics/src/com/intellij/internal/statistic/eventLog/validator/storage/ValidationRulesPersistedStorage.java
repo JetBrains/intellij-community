@@ -1,8 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.connection.metadata.*;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
@@ -10,20 +13,20 @@ import com.intellij.internal.statistic.eventLog.validator.storage.persistence.Ev
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class ValidationRulesPersistedStorage implements IntellijValidationRulesStorage {
   private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
-  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  protected volatile Map<String, EventGroupRules> eventsValidators = Map.of();
+
   private final @NotNull Semaphore mySemaphore;
   private final @NotNull String myRecorderId;
   private @Nullable String myVersion;
@@ -76,11 +79,11 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore.down();
     try {
       EventGroupRemoteDescriptors groups = EventLogMetadataUtils.parseGroupRemoteDescriptors(rawEventsScheme);
-      EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
+      EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
       myIsInitialized.set(false);
-      eventsValidators.clear();
-      eventsValidators.putAll(result);
+
+      eventsValidators = Map.copyOf(result);
 
       myIsInitialized.set(true);
       return groups.version;

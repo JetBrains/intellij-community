@@ -1,4 +1,4 @@
-// "Make 'a.f' return 'java.util.List<java.lang.@N String>'" "true"
+// "Make 'a.f()' return 'java.util.List<java.lang.String>'" "true-preview"
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
@@ -9,7 +9,7 @@ import java.util.List;
 
 class a {
   List<@N String> f() {
-   return;
+      return null;
  }
 }
 

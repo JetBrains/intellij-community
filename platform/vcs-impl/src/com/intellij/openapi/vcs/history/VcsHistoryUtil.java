@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.DiffContentFactoryEx;
@@ -62,12 +62,11 @@ public final class VcsHistoryUtil {
 
   /**
    * Invokes {@link com.intellij.openapi.diff.DiffManager#getDiffTool()} to show difference between the given revisions of the given file.
+   *
    * @param project   project under vcs control.
-   * @param path  file which revisions are compared.
+   * @param path      file which revisions are compared.
    * @param revision1 first revision - 'before', to the left.
    * @param revision2 second revision - 'after', to the right.
-   * @throws VcsException
-   * @throws IOException
    */
   public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
@@ -117,8 +116,10 @@ public final class VcsHistoryUtil {
 
   public static byte @NotNull [] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.loadContent();
-    if (content == null) throw new VcsException(
-      VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
+    if (content == null) {
+      throw new VcsException(VcsBundle.message("history.failed.to.load.content.for.revision.0",
+                                               revision.getRevisionNumber().asString()));
+    }
     return content;
   }
 
@@ -178,7 +179,7 @@ public final class VcsHistoryUtil {
           LOG.info(e);
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(
             () -> Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                         VcsBundle.message("message.title.show.differences")), null, project);
+                                           VcsBundle.message("message.title.show.differences")), null, project);
         }
         catch (IOException e) {
           LOG.info(e);

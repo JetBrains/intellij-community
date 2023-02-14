@@ -1,6 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -18,6 +19,11 @@ public class SaveAsAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     e.getPresentation().setEnabled(project != null && virtualFile != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

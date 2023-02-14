@@ -8,6 +8,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
@@ -51,6 +52,21 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public String getGradleUserHome() {
+    return state.myGradleUserHome;
+  }
+
+  @ApiStatus.Internal
+  public void setGradleUserHome(@Nullable String gradleUserHome) {
+    state.myGradleUserHome = gradleUserHome;
+    // --- to be removed with the removal of GradleSystemSettings#getServiceDirectoryPath method ---
+    //noinspection deprecation
+    GradleSystemSettings.getInstance().setServiceDirectoryPath(gradleUserHome);
+    // ----
+  }
+
   @Override
   public void forgetExternalProjects(@NotNull Set<String> linkedProjectPathsToForget) {
     super.forgetExternalProjects(linkedProjectPathsToForget);
@@ -67,9 +83,17 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
   @Override
   public void loadState(@NotNull MyState state) {
     super.loadState(state);
+    // --- to be removed with the removal of GradleSystemSettings#getServiceDirectoryPath method ---
+    //noinspection deprecation
+    String serviceDirectoryPath = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    if (state.myGradleUserHome == null && serviceDirectoryPath != null) {
+      state.myGradleUserHome = serviceDirectoryPath;
+    }
+    // ----
   }
 
   public static class MyState extends AbstractExternalSystemLocalSettings.State {
+    public String myGradleUserHome;
     public Map<String/* project path */, String> myGradleHomes;
     public Map<String/* project path */, String> myGradleVersions;
   }

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.EditorSettings;
@@ -14,13 +15,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
   private static final Logger LOG = Logger.getInstance(SettingsImpl.class);
-  private static final RegistryValue SPECIAL_CHARS_ENABLED = Registry.get("editor.show.special.chars");
+  public static final String EDITOR_SHOW_SPECIAL_CHARS = "editor.show.special.chars";
 
   @Nullable private final EditorImpl myEditor;
   @Nullable private Supplier<? extends Language> myLanguageSupplier;
@@ -41,53 +40,55 @@ public class SettingsImpl implements EditorSettings {
 
   // This group of settings does not have UI
   private final SoftWrapAppliancePlaces mySoftWrapAppliancePlace;
-  private int                     myAdditionalLinesCount          = Registry.intValue("editor.virtual.lines", 5);
-  private int                     myAdditionalColumnsCount        = 3;
-  private int                     myLineCursorWidth               = EditorUtil.getDefaultCaretWidth();
-  private boolean                 myLineMarkerAreaShown           = true;
-  private boolean                 myAllowSingleLogicalLineFolding = false;
+  private int myAdditionalLinesCount = Registry.intValue("editor.virtual.lines", 5);
+  private int myAdditionalColumnsCount = 3;
+  private int myLineCursorWidth = EditorUtil.getDefaultCaretWidth();
+  private boolean myLineMarkerAreaShown = true;
+  private boolean myAllowSingleLogicalLineFolding;
   private boolean myAutoCodeFoldingEnabled = true;
 
-  // These comes from CodeStyleSettings
-  private Integer myTabSize         = null;
-  private Integer myCachedTabSize   = null;
-  private Boolean myUseTabCharacter = null;
+  // These come from CodeStyleSettings.
+  private Integer myTabSize;
+  private Integer myCachedTabSize;
+  private Boolean myUseTabCharacter;
   private final Object myTabSizeLock = new Object();
 
-  // These comes from EditorSettingsExternalizable defaults.
-  private Boolean myIsVirtualSpace                        = null;
-  private Boolean myIsCaretInsideTabs                     = null;
-  private Boolean myIsCaretBlinking                       = null;
-  private Integer myCaretBlinkingPeriod                   = null;
-  private Boolean myIsRightMarginShown                    = null;
-  private Integer myRightMargin                           = null;
-  private Boolean myAreLineNumbersShown                   = null;
-  private Boolean myGutterIconsShown                      = null;
-  private Boolean myIsFoldingOutlineShown                 = null;
-  private Boolean myIsSmartHome                           = null;
-  private Boolean myIsBlockCursor                         = null;
-  private Boolean myCaretRowShown                         = null;
-  private Boolean myIsWhitespacesShown                    = null;
-  private Boolean myIsLeadingWhitespacesShown             = null;
-  private Boolean myIsInnerWhitespacesShown               = null;
-  private Boolean myIsTrailingWhitespacesShown            = null;
-  private Boolean myIndentGuidesShown                     = null;
-  private Boolean myIsAnimatedScrolling                   = null;
-  private Boolean myIsAdditionalPageAtBottom              = null;
-  private Boolean myIsDndEnabled                          = null;
-  private Boolean myIsWheelFontChangeEnabled              = null;
-  private Boolean myIsMouseClickSelectionHonorsCamelWords = null;
-  private Boolean myIsRenameVariablesInplace              = null;
-  private Boolean myIsRefrainFromScrolling                = null;
-  private Boolean myUseSoftWraps                          = null;
-  private Boolean myUseCustomSoftWrapIndent               = null;
-  private Integer myCustomSoftWrapIndent                  = null;
-  private Boolean myRenamePreselect                       = null;
-  private Boolean myWrapWhenTypingReachesRightMargin      = null;
-  private Boolean myShowIntentionBulb                     = null;
-  private Boolean myShowingSpecialCharacters              = null;
+  // These come from EditorSettingsExternalizable defaults.
+  private Boolean myIsVirtualSpace;
+  private Boolean myIsCaretInsideTabs;
+  private Boolean myIsCaretBlinking;
+  private Integer myCaretBlinkingPeriod;
+  private Boolean myIsRightMarginShown;
+  private Integer myRightMargin;
+  private Boolean myAreLineNumbersShown;
+  private Boolean myGutterIconsShown;
+  private Boolean myIsFoldingOutlineShown;
+  private Boolean myIsSmartHome;
+  private Boolean myIsBlockCursor;
+  private Boolean myCaretRowShown;
+  private Boolean myIsWhitespacesShown;
+  private Boolean myIsLeadingWhitespacesShown;
+  private Boolean myIsInnerWhitespacesShown;
+  private Boolean myIsTrailingWhitespacesShown;
+  private Boolean myIsSelectionWhitespacesShown;
+  private Boolean myIndentGuidesShown;
+  private Boolean myIsAnimatedScrolling;
+  private Boolean myIsAdditionalPageAtBottom;
+  private Boolean myIsDndEnabled;
+  private Boolean myIsWheelFontChangeEnabled;
+  private Boolean myIsMouseClickSelectionHonorsCamelWords;
+  private Boolean myIsRenameVariablesInplace;
+  private Boolean myIsRefrainFromScrolling;
+  private Boolean myUseSoftWraps;
+  private boolean myPaintSoftWraps = true;
+  private Boolean myUseCustomSoftWrapIndent;
+  private Integer myCustomSoftWrapIndent;
+  private Boolean myRenamePreselect;
+  private Boolean myWrapWhenTypingReachesRightMargin;
+  private Boolean myShowIntentionBulb;
+  private Boolean myShowingSpecialCharacters;
 
-  private List<Integer> mySoftMargins = null;
+  private List<Integer> mySoftMargins;
 
   public SettingsImpl() {
     this(null, null);
@@ -105,7 +106,7 @@ public class SettingsImpl implements EditorSettings {
       mySoftWrapAppliancePlace = SoftWrapAppliancePlaces.MAIN_EDITOR;
     }
   }
-  
+
   @Override
   public boolean isRightMarginShown() {
     return myIsRightMarginShown != null
@@ -167,6 +168,18 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setTrailingWhitespaceShown(boolean val) {
     myIsTrailingWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  @Override
+  public boolean isSelectionWhitespaceShown() {
+    return myIsSelectionWhitespacesShown != null
+           ? myIsSelectionWhitespacesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isSelectionWhitespacesShown();
+  }
+
+  @Override
+  public void setSelectionWhitespaceShown(boolean val) {
+    myIsSelectionWhitespacesShown = Boolean.valueOf(val);
   }
 
   @Override
@@ -325,9 +338,9 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isUseTabCharacter(Project project) {
     if (myUseTabCharacter != null) return myUseTabCharacter.booleanValue();
-    PsiFile file = getPsiFile(project);
+    VirtualFile file = getVirtualFile();
     return file != null
-           ? CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER
+           ? CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
            : CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER;
   }
 
@@ -361,15 +374,14 @@ public class SettingsImpl implements EditorSettings {
 
     if (project == null || project.isDisposed()) return;
 
-    final PsiDocumentManager psiManager = PsiDocumentManager.getInstance(project);
-    final PsiFile file = psiManager.getPsiFile(document);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("reinitDocumentIndentOptions, file " + file.getName());
     }
 
-    CodeStyle.updateDocumentIndentOptions(project, document);
+    CodeStyle.updateDocumentIndentOptions(project, file, document);
   }
 
   @Override
@@ -383,14 +395,14 @@ public class SettingsImpl implements EditorSettings {
             tabSize = CodeStyle.getDefaultSettings().getTabSize(null);
           }
           else {
-            PsiFile file = getPsiFile(project);
+            VirtualFile file = getVirtualFile();
             if (myEditor != null && myEditor.isViewer()) {
               FileType fileType = file != null ? file.getFileType() : null;
               tabSize = CodeStyle.getSettings(project).getIndentOptions(fileType).TAB_SIZE;
             }
             else {
               tabSize = file != null ?
-                        CodeStyle.getIndentOptions(file).TAB_SIZE :
+                        CodeStyle.getIndentOptions(project, file).TAB_SIZE :
                         CodeStyle.getSettings(project).getTabSize(null);
             }
           }
@@ -409,11 +421,16 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Nullable
-  private PsiFile getPsiFile(@Nullable Project project) {
-    if (project != null && myEditor != null) {
-      return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+  private VirtualFile getVirtualFile() {
+    VirtualFile file = null;
+    if (myEditor != null) {
+      file = myEditor.getVirtualFile();
+      if (file == null) {
+        Document document = myEditor.getDocument();
+        file = FileDocumentManager.getInstance().getFile(document);
+      }
     }
-    return null;
+    return file;
   }
 
   @Override
@@ -632,7 +649,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setVariableInplaceRenameEnabled(boolean val) {
-    myIsRenameVariablesInplace = val? Boolean.TRUE : Boolean.FALSE;
+    myIsRenameVariablesInplace = val ? Boolean.TRUE : Boolean.FALSE;
   }
 
   @Override
@@ -676,7 +693,7 @@ public class SettingsImpl implements EditorSettings {
     myUseSoftWraps = newValue;
     fireEditorRefresh();
   }
-  
+
   void setUseSoftWrapsQuiet() {
     myUseSoftWraps = Boolean.TRUE;
   }
@@ -684,6 +701,16 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isAllSoftWrapsShown() {
     return EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown();
+  }
+
+  @Override
+  public boolean isPaintSoftWraps() {
+    return myPaintSoftWraps;
+  }
+
+  @Override
+  public void setPaintSoftWraps(boolean val) {
+    myPaintSoftWraps = val;
   }
 
   @Override
@@ -740,7 +767,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setShowIntentionBulb(boolean show) {
-    myShowIntentionBulb = show; 
+    myShowIntentionBulb = show;
   }
 
   @Nullable
@@ -758,7 +785,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isShowingSpecialChars() {
-    return myShowingSpecialCharacters == null ? SPECIAL_CHARS_ENABLED.asBoolean() : myShowingSpecialCharacters;
+    return myShowingSpecialCharacters == null ? AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) : myShowingSpecialCharacters;
   }
 
   @Override
@@ -769,5 +796,10 @@ public class SettingsImpl implements EditorSettings {
     if (newState != oldState) {
       fireEditorRefresh();
     }
+  }
+
+  @Override
+  public boolean isInsertParenthesesAutomatically() {
+    return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically();
   }
 }

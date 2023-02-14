@@ -54,15 +54,13 @@ public final class LibraryUtil {
 
   public static boolean isOverrideOfLibraryMethodParameter(
     @Nullable PsiVariable variable) {
-    if (!(variable instanceof PsiParameter)) {
+    if (!(variable instanceof PsiParameter parameter)) {
       return false;
     }
-    final PsiParameter parameter = (PsiParameter)variable;
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod)) {
+    if (!(scope instanceof PsiMethod method)) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)scope;
     return isOverrideOfLibraryMethod(method);
   }
 }

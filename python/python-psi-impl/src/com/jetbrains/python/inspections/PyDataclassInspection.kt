@@ -9,17 +9,20 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.*
+import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
+import com.jetbrains.python.codeInsight.PyDataclassParameters
+import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
@@ -28,13 +31,6 @@ class PyDataclassInspection : PyInspection() {
 
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
-    private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
-    private val ATTRS_HELPERS = setOf("attr.fields",
-                                      "attr.fields_dict",
-                                      "attr.asdict",
-                                      "attr.astuple",
-                                      "attr.assoc",
-                                      "attr.evolve")
 
     private enum class ClassOrder {
       MANUALLY, DC_ORDERED, DC_UNORDERED, UNKNOWN
@@ -44,9 +40,9 @@ class PyDataclassInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+    holder,PyInspectionVisitor.getContext(session))
 
-  private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+  private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
@@ -72,7 +68,7 @@ class PyDataclassInspection : PyInspection() {
         if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
           processDataclassParameters(node, dataclassParameters)
 
-          val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
+          val postInit = node.findMethodByName(Dataclasses.DUNDER_POST_INIT, false, myTypeEvalContext)
           val localInitVars = mutableListOf<PyTargetExpression>()
 
           node.processClassLevelDeclarations { element, _ ->
@@ -96,7 +92,7 @@ class PyDataclassInspection : PyInspection() {
           processAttrsParameters(node, dataclassParameters)
 
           node
-            .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
+            .findMethodByName(Attrs.DUNDER_POST_INIT, false, myTypeEvalContext)
             ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
 
           processAttrsDefaultThroughDecorator(node)
@@ -180,30 +176,27 @@ class PyDataclassInspection : PyInspection() {
     }
 
     override fun visitPyCallExpression(node: PyCallExpression) {
-      super.visitPyCallExpression(node)
+      val callees = node.multiResolveCallee(resolveContext)
+      val calleeQName = callees.mapNotNullTo(mutableSetOf()) { it.callable?.qualifiedName }.singleOrNull()
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
-      val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
-      val callee = callableType?.callable
-      val calleeQName = callee?.qualifiedName
-
-      if (callableType != null && callee != null) {
-        val dataclassType = when {
-          DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
-          ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
+      if (calleeQName != null) {
+        val dataclassType = when (calleeQName) {
+          in Dataclasses.HELPER_FUNCTIONS -> PyDataclassParameters.PredefinedType.STD
+          in Attrs.CLASS_HELPERS_FUNCTIONS, in Attrs.INSTANCE_HELPER_FUNCTIONS -> PyDataclassParameters.PredefinedType.ATTRS
           else -> return
         }
 
+        val callableType = callees.first()
         val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
-        val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
+        val dataclassParameter = callableType.getParameters(myTypeEvalContext)?.firstOrNull()
         val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
         if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+          processHelperDataclassArgument(dataclassArgument, calleeQName)
         }
         else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-          processHelperAttrsArgument(dataclassArgument, calleeQName!!)
+          processHelperAttrsArgument(dataclassArgument, calleeQName)
         }
       }
     }
@@ -415,6 +408,22 @@ class PyDataclassInspection : PyInspection() {
       if (field.annotationValue == null) return
 
       val value = field.findAssignedValue()
+
+      if (value is PyCallExpression) {
+        val fieldWithDefaultFactory = value
+          .multiResolveCallee(resolveContext)
+          .filter { it.callable?.qualifiedName == Dataclasses.DATACLASSES_FIELD }
+          .any {
+            PyCallExpressionHelper.mapArguments(value, it, myTypeEvalContext).mappedParameters.values.any { p ->
+              p.name == "default_factory"
+            }
+          }
+
+        if (fieldWithDefaultFactory) {
+          return
+        }
+      }
+
       if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
         registerProblem(value,
                         PyPsiBundle.message("INSP.dataclasses.mutable.attribute.default.not.allowed.use.default.factory", value?.text),
@@ -443,7 +452,7 @@ class PyDataclassInspection : PyInspection() {
                 val stub = PyDataclassFieldStubImpl.create(attribute)
                 if (stub != null && (stub.hasDefault() || stub.hasDefaultFactory())) {
                   registerProblem(method.nameIdentifier,
-                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.is.set.using.attr.ib"),
+                                  PyPsiBundle.message("INSP.dataclasses.attribute.default.set.using.method", "${stub.calleeName}()"),
                                   ProblemHighlightType.GENERIC_ERROR)
                 }
               }
@@ -641,10 +650,10 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperDataclassArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val allowDefinition = calleeQName == "dataclasses.fields"
+      val allowDefinition = calleeQName == Dataclasses.DATACLASSES_FIELDS
 
       val type = myTypeEvalContext.getType(argument)
-      val allowSubclass = calleeQName != "dataclasses.asdict"
+      val allowSubclass = calleeQName != Dataclasses.DATACLASSES_ASDICT
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.STD, allowDefinition, true, allowSubclass)) {
         val message = if (allowDefinition) {
           PyPsiBundle.message("INSP.dataclasses.method.should.be.called.on.dataclass.instances.or.types", calleeQName)
@@ -660,7 +669,7 @@ class PyDataclassInspection : PyInspection() {
     private fun processHelperAttrsArgument(argument: PyExpression?, calleeQName: String) {
       if (argument == null) return
 
-      val instance = calleeQName != "attr.fields" && calleeQName != "attr.fields_dict"
+      val instance = calleeQName in Attrs.INSTANCE_HELPER_FUNCTIONS
 
       val type = myTypeEvalContext.getType(argument)
       if (!isExpectedDataclass(type, PyDataclassParameters.PredefinedType.ATTRS, !instance, instance, true)) {
@@ -676,7 +685,7 @@ class PyDataclassInspection : PyInspection() {
     }
 
     private fun isInitVar(field: PyTargetExpression): Boolean {
-      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == DATACLASSES_INITVAR_TYPE
+      return (myTypeEvalContext.getType(field) as? PyClassType)?.classQName == Dataclasses.DATACLASSES_INITVAR
     }
 
     private fun isExpectedDataclass(type: PyType?,

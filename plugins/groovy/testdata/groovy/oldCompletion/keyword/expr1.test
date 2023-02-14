@@ -4,5 +4,6 @@ byte
 float
 int
 short
+switch
 this
 true

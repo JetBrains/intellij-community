@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.kt</file>
+    <line>1</line>
+    <problem_class>Method always returns the same value</problem_class>
+    <description>Method 'test1()' always returns '42' </description>
+  </problem>
+</problems>
+

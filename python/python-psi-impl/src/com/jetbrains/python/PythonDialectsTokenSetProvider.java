@@ -5,16 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.psi.tree.TokenSet;
-import one.util.streamex.StreamEx;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  * Provides element types of various kinds for known Python dialects.
  *
- * @author vlan
  */
 @Service
 public final class PythonDialectsTokenSetProvider implements Disposable {
@@ -85,16 +84,13 @@ public final class PythonDialectsTokenSetProvider implements Disposable {
     myCache.clear();
   }
 
-  private @NotNull TokenSet getTokenSet(@NotNull String key, @NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
+  private @NotNull TokenSet getTokenSet(@NotNull String key, @NotNull Function<? super PythonDialectsTokenSetContributor, ? extends TokenSet> getter) {
     return myCache.computeIfAbsent(key, __ -> orSets(getter));
   }
 
-  private static @NotNull TokenSet orSets(@NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
+  private static @NotNull TokenSet orSets(@NotNull Function<? super PythonDialectsTokenSetContributor, ? extends TokenSet> getter) {
     return TokenSet.orSet(
-      StreamEx
-        .of(PythonDialectsTokenSetContributor.EP_NAME.getExtensionList())
-        .map(getter)
-        .toArray(TokenSet.class)
+        ContainerUtil.map2Array(PythonDialectsTokenSetContributor.EP_NAME.getExtensionList(), TokenSet.class, getter)
     );
   }
 }

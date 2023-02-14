@@ -2,10 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -16,10 +13,9 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +31,13 @@ import java.util.Map;
  * sizes of window, dialogs, etc.
  */
 @State(name = "DimensionService", storages = @Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED))
+@Service(Service.Level.APP)
 public final class DimensionService extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DimensionService.class);
 
   private final Map<String, Point> myKeyToLocation = new LinkedHashMap<>();
   private final Map<String, Dimension> myKeToSize = new LinkedHashMap<>();
-  private final Object2IntMap<String> myKeyToExtendedState = new Object2IntOpenHashMap<>();
+  private final ObjectIntMap<String> myKeyToExtendedState = new ObjectIntHashMap<>();
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
@@ -65,7 +62,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #getLocation(String, Project)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public synchronized Point getLocation(String key) {
     return getLocation(key, guessProject());
@@ -99,7 +96,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #setLocation(String, Point, Project)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
@@ -127,7 +124,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    *
    * @deprecated use {@link #getSize(String, Project)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
@@ -152,13 +149,13 @@ public final class DimensionService extends SimpleModificationTracker implements
    * Store specified {@code size} under the {@code key}. If {@code size} is
    * {@code null} then the value stored under {@code key} will be removed.
    *
-   * @param key  a String key to to save size for.
+   * @param key  a String key to save size for.
    * @param size a Size to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
    *
    * @deprecated use {@link #setSize(String, Dimension, Project)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }
@@ -204,10 +201,11 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
 
     // save extended states
-    for (Object2IntMap.Entry<String> entry : Object2IntMaps.fastIterable(myKeyToExtendedState)) {
+
+    for (ObjectIntMap.Entry<String> entry : myKeyToExtendedState.entries()) {
       Element e = new Element(EXTENDED_STATE);
       e.setAttribute(KEY, entry.getKey());
-      e.setAttribute(STATE, Integer.toString(entry.getIntValue()));
+      e.setAttribute(STATE, Integer.toString(entry.getValue()));
       element.addContent(e);
     }
     return element;

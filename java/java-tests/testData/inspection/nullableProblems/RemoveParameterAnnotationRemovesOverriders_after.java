@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.*;
-
 interface Foo {
   void getTime(int a);
 }

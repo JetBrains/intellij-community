@@ -6,9 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
   private final GlobalSearchScope myBaseScope;
   @NotNull

@@ -35,6 +35,18 @@ class JavaSourceRootPropertiesTest {
   }
 
   @Test
+  fun `add root with package prefix`() {
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
+    val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("content/src")
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      model.addContentEntry(contentRoot).addSourceFolder(srcRoot, false, "foo")
+    }
+    val committed = ModuleRootManager.getInstance(module)
+    val committedSource = committed.contentEntries.single().sourceFolders.single()
+    assertThat(committedSource.packagePrefix).isEqualTo("foo")
+  }
+
+  @Test
   fun `change both packagePrefix and forGeneratedSources properties`() {
     val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("content")
     val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("content/src")

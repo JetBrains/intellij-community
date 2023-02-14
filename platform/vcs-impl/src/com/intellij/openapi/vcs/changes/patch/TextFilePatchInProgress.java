@@ -8,6 +8,7 @@ import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -40,14 +41,13 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
 
     if (myNewContentRevision == null) {
       myConflicts = null;
+      final FilePath newFilePath = getFilePath();
       if (FilePatchStatus.ADDED.equals(myStatus)) {
-        final FilePath newFilePath = VcsUtil.getFilePath(myIoCurrentBase, false);
         final String content = myPatch.getSingleHunkPatchText();
         myNewContentRevision = new SimpleContentRevision(content, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
           .message("patch.apply.conflict.patched.version")));
       }
       else {
-        final FilePath newFilePath = detectNewFilePathForMovedOrModified();
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
           .message("patch.apply.conflict.patched.version")), myPatch);
       }
@@ -91,6 +91,11 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
       public String getName() {
         final File ioCurrentBase = getIoCurrentBase();
         return ioCurrentBase == null ? getCurrentPath() : ioCurrentBase.getPath();
+      }
+
+      @Override
+      public @NotNull FileType getContentType() {
+        return getFilePath().getFileType();
       }
     };
   }

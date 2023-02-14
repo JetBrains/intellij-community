@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,18 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -37,35 +39,36 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UnaryPlusInspection extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.*;
 
+public final class UnaryPlusInspection extends BaseInspection {
   public boolean onlyReportInsideBinaryExpression = true;
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unary.plus.problem.descriptor");
+    return InspectionGadgetsBundle.message("unary.plus.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unary.plus.unary.binary.option"), this,
-                                          "onlyReportInsideBinaryExpression");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportInsideBinaryExpression", JavaAnalysisBundle.message("inspection.unary.plus.unary.binary.option")));
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (!onlyReportInsideBinaryExpression) {
-      node.addContent(new Element("option").setAttribute("name", "onlyReportInsideBinaryExpression").setAttribute("value", "false"));
-    }
+    writeBooleanOption(node, "onlyReportInsideBinaryExpression", true);
   }
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnaryPlusFix();
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    final boolean onTheFly = (boolean)infos[0];
+    final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)infos[1];
+    final InspectionGadgetsFix fix = ConvertDoubleUnaryToPrefixOperationFix.createFix(prefixExpression);
+    return onTheFly && fix != null
+           ? new InspectionGadgetsFix[]{new UnaryPlusFix(), fix}
+           : new InspectionGadgetsFix[]{new UnaryPlusFix()};
   }
 
   private static class UnaryPlusFix extends InspectionGadgetsFix {
@@ -78,13 +81,12 @@ public class UnaryPlusInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       final PsiExpression operand = prefixExpression.getOperand();
       if (operand == null) {
         return;
@@ -101,11 +103,9 @@ public class UnaryPlusInspection extends BaseInspection {
   private class UnaryPlusVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression prefixExpression) {
       super.visitPrefixExpression(prefixExpression);
-      final PsiJavaToken token = prefixExpression.getOperationSign();
-      final IElementType tokenType = token.getTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUS)) {
+      if (!ConvertDoubleUnaryToPrefixOperationFix.isDesiredPrefixExpression(prefixExpression, true)) {
         return;
       }
       final PsiExpression operand = prefixExpression.getOperand();
@@ -132,7 +132,132 @@ public class UnaryPlusInspection extends BaseInspection {
         // unary plus might have been used as cast to int
         return;
       }
-      registerError(token, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(prefixExpression.getOperationSign(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly(), prefixExpression);
+    }
+  }
+
+  static class ConvertDoubleUnaryToPrefixOperationFix extends InspectionGadgetsFix {
+    private final String myRefName;
+    private final boolean myIncrement;
+
+    private ConvertDoubleUnaryToPrefixOperationFix(@NotNull String refName, boolean increment) {
+      this.myRefName = refName;
+      this.myIncrement = increment;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("convert.double.unary.quickfix", myIncrement ? "++" : "--", myRefName);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("prefix.operation.quickfix.family.name");
+    }
+
+    @Nullable
+    static InspectionGadgetsFix createFix(@NotNull PsiPrefixExpression prefixExpr) {
+      final PsiExpression operand = prefixExpr.getOperand();
+      boolean increment;
+      if (isDesiredPrefixExpression(prefixExpr, true)) {
+        increment = true;
+      }
+      else if (isDesiredPrefixExpression(prefixExpr, false)) {
+        increment = false;
+      }
+      else {
+        return null;
+      }
+      if (operand instanceof PsiReferenceExpression) {
+        final PsiPrefixExpression parentPrefixExpr = ObjectUtils.tryCast(prefixExpr.getParent(), PsiPrefixExpression.class);
+        if (isDesiredPrefixExpression(parentPrefixExpr, increment) &&
+            containsOnlyWhitespaceBetweenOperatorAndOperand(prefixExpr) &&
+            containsOnlyWhitespaceBetweenOperatorAndOperand(parentPrefixExpr)) {
+          return createFix((PsiReferenceExpression)operand, increment);
+        }
+      }
+      else if (operand instanceof PsiPrefixExpression && isDesiredPrefixExpression((PsiPrefixExpression)operand, increment)) {
+        final PsiExpression operandExpr = ((PsiPrefixExpression)operand).getOperand();
+        final PsiReferenceExpression operandRefExpr = ObjectUtils.tryCast(operandExpr, PsiReferenceExpression.class);
+        if (operandRefExpr != null &&
+            containsOnlyWhitespaceBetweenOperatorAndOperand(prefixExpr) &&
+            containsOnlyWhitespaceBetweenOperatorAndOperand((PsiPrefixExpression)operand)) {
+          return createFix(operandRefExpr, increment);
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static InspectionGadgetsFix createFix(@NotNull PsiReferenceExpression refExpr, boolean increment) {
+      final String refName = refExpr.getReferenceName();
+      if (refName == null) {
+        return null;
+      }
+      final PsiPrefixExpression topPrefixExpr = ObjectUtils.tryCast(refExpr.getParent().getParent(), PsiPrefixExpression.class);
+      if (topPrefixExpr == null) {
+        return null;
+      }
+      final PsiType refExprType = refExpr.getType();
+      if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
+          MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
+        return null;
+      }
+      final PsiVariable resolved = ObjectUtils.tryCast(refExpr.resolve(), PsiVariable.class);
+      if (resolved == null || resolved.hasModifierProperty(PsiModifier.FINAL)) {
+        return null;
+      }
+      return new ConvertDoubleUnaryToPrefixOperationFix(refName, increment);
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
+      if (prefixExpr == null) {
+        return;
+      }
+      final PsiExpression operand = prefixExpr.getOperand();
+      final PsiExpression oldExpr;
+      final PsiReferenceExpression refExpr;
+      if (operand instanceof PsiReferenceExpression) {
+        oldExpr = (PsiExpression)prefixExpr.getParent();
+        refExpr = (PsiReferenceExpression)operand;
+      }
+      else if (operand instanceof PsiPrefixExpression) {
+        oldExpr = prefixExpr;
+        refExpr = (PsiReferenceExpression)((PsiPrefixExpression)operand).getOperand();
+      }
+      else {
+        return;
+      }
+      if (refExpr == null || oldExpr == null) {
+        return;
+      }
+      final String refName = refExpr.getReferenceName();
+      if (refName == null) {
+        return;
+      }
+      final String operatorText = myIncrement ? "++" : "--";
+      PsiReplacementUtil.replaceExpression(oldExpr, operatorText + refName);
+    }
+
+    private static boolean containsOnlyWhitespaceBetweenOperatorAndOperand(@Nullable PsiPrefixExpression prefixExpression) {
+      if (prefixExpression == null) return false;
+      final PsiJavaToken operator = prefixExpression.getOperationSign();
+      final PsiExpression operand = prefixExpression.getOperand();
+      PsiElement nextSibling = operator.getNextSibling();
+      while (nextSibling != operand) {
+        if (!(nextSibling instanceof PsiWhiteSpace)) {
+          return false;
+        }
+        nextSibling = nextSibling.getNextSibling();
+      }
+      return true;
+    }
+
+    static boolean isDesiredPrefixExpression(@Nullable PsiPrefixExpression prefixExpr, boolean increment) {
+      return prefixExpr != null && (increment ? prefixExpr.getOperationTokenType().equals(JavaTokenType.PLUS) :
+             prefixExpr.getOperationTokenType().equals(JavaTokenType.MINUS));
     }
   }
 }

@@ -39,8 +39,7 @@ public final class FxmlPresenceListener implements BulkFileListener {
 
   private void checkEvent(@NotNull VFileEvent event) {
     if (event instanceof VFileContentChangeEvent) return;
-    if (event instanceof VFilePropertyChangeEvent) {
-      VFilePropertyChangeEvent propertyChangeEvent = (VFilePropertyChangeEvent)event;
+    if (event instanceof VFilePropertyChangeEvent propertyChangeEvent) {
       if (VirtualFile.PROP_NAME.equals(propertyChangeEvent.getPropertyName())) {
         final String oldName = (String)propertyChangeEvent.getOldValue();
         final String newName = (String)propertyChangeEvent.getNewValue();

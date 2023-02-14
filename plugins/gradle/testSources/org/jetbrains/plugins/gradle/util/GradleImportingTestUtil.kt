@@ -1,125 +1,57 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleImportingTestUtil")
 
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.concurrency.AsyncPromise
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.use
+import com.intellij.testFramework.concurrency.awaitPromise
+import com.intellij.testFramework.concurrency.waitForPromise
 import org.jetbrains.concurrency.Promise
-import java.util.concurrent.TimeUnit
-
+import org.jetbrains.concurrency.all
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * @param action or some async calls have to produce project reload
  *  for example invokeLater { refreshProject(project, spec) }
  * @throws java.lang.AssertionError if import is failed or isn't started
  */
-fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getProjectDataLoadPromise(), action)
-
-fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getExecutionTaskFinishPromise(), action)
-
-private fun <R> waitForTask(finishTaskPromise: Promise<*>, action: ThrowableComputable<R, Throwable>): R {
-  val result = action.compute()
-  invokeAndWaitIfNeeded {
-    PlatformTestUtil.waitForPromise(finishTaskPromise, TimeUnit.MINUTES.toMillis(1))
+fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForMultipleProjectsReload").use { disposable ->
+    getMultipleReloadProjectPromise(expectedProjects, disposable).waitForPromise(2.minutes, action = action)
   }
-  return result
 }
 
-private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
-  if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-    val task = ExternalSystemProcessingManager.getInstance().findTask(id)
-    if (task is ExternalSystemResolveProjectTask) {
-      return !task.isPreviewMode
-    }
+fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForProjectReload").use { disposable ->
+    getReloadProjectPromise(disposable).waitForPromise(2.minutes, action = action)
   }
-  return false
 }
 
-fun whenResolveTaskStarted(action: () -> Unit, parentDisposable: Disposable) {
-  ExternalSystemProgressNotificationManager.getInstance()
-    .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        if (isResolveTask(id)) {
-          action()
-        }
-      }
-    }, parentDisposable)
+fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForTaskExecution").use { disposable ->
+    getExecutionTaskPromise(disposable).waitForPromise(2.minutes, action = action)
+  }
 }
 
-private fun getProjectDataLoadPromise(): Promise<Project> {
-  return getResolveTaskFinishPromise()
-    .thenAsync(::getProjectDataLoadPromise)
+suspend fun <R> awaitProjectReload(action: suspend () -> R): R {
+  return Disposer.newDisposable("awaitProjectReload").use { disposable ->
+    getReloadProjectPromise(disposable).awaitPromise(2.minutes, action = action)
+  }
 }
 
-private fun getExecutionTaskFinishPromise(): Promise<Project> {
-  return getExternalSystemTaskFinishPromise { it.type == ExternalSystemTaskType.EXECUTE_TASK }
-}
+private fun getMultipleReloadProjectPromise(expectedProjects: List<Path>, parentDisposable: Disposable): Promise<Project> {
+  require(expectedProjects.isNotEmpty())
 
-private fun getResolveTaskFinishPromise(): Promise<Project> {
-  return getExternalSystemTaskFinishPromise(::isResolveTask)
-}
-
-private fun getExternalSystemTaskFinishPromise(isRelevantTask: (ExternalSystemTaskId) -> Boolean): Promise<Project> {
-  val promise = AsyncPromise<Project>()
-  val parentDisposable = Disposer.newDisposable()
-  ExternalSystemProgressNotificationManager.getInstance()
-    .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onSuccess(id: ExternalSystemTaskId) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
-          promise.setResult(id.findProject()!!)
-        }
-      }
-
-      override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
-          promise.setError(e)
-        }
-      }
-
-      override fun onCancel(id: ExternalSystemTaskId) {
-        if (isRelevantTask(id)) {
-          Disposer.dispose(parentDisposable)
-          promise.cancel()
-        }
-      }
-    }, parentDisposable)
-  return promise
-}
-
-private fun getProjectDataLoadPromise(project: Project): Promise<Project> {
-  val promise = AsyncPromise<Project>()
-  val parentDisposable = Disposer.newDisposable()
-  val connection = project.messageBus.connect(parentDisposable)
-  connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
-    override fun onImportFinished(projectPath: String?) {
-      Disposer.dispose(parentDisposable)
-      invokeLater {
-        promise.setResult(project)
-      }
+  return getResolveTaskPromise(parentDisposable)
+    .thenAsync { project ->
+      expectedProjects.map { it.toCanonicalPath() }
+        .map { path -> getProjectDataLoadPromise(project, parentDisposable) { it == path } }
+        .all(project, false)
     }
-
-    override fun onImportFailed(projectPath: String?) {
-      Disposer.dispose(parentDisposable)
-      promise.setError("Import failed for $projectPath")
-    }
-  })
-  return promise
 }

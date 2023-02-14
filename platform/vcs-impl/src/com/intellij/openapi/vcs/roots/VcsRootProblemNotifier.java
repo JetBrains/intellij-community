@@ -1,8 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +16,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.configurable.VcsMappingConfigurable;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -25,14 +25,15 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_INVALID;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOTS_REGISTERED;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
+import static com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.UIUtil.BR;
 
@@ -44,7 +45,7 @@ public final class VcsRootProblemNotifier {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration mySettings;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ProjectLevelVcsManagerImpl myVcsManager;
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectFileIndex myProjectFileIndex;
 
@@ -64,8 +65,8 @@ public final class VcsRootProblemNotifier {
     myProject = project;
     mySettings = VcsConfiguration.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(project);
-    myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myProjectFileIndex = ProjectFileIndex.getInstance(myProject);
+    myVcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     myReportedUnregisteredRoots = new HashSet<>();
   }
 
@@ -77,7 +78,7 @@ public final class VcsRootProblemNotifier {
       }
       return;
     }
-    LOG.debug("Following errors detected: " + errors);
+    MAPPING_DETECTION_LOG.debug("Following errors detected: " + errors);
 
     Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
@@ -90,7 +91,7 @@ public final class VcsRootProblemNotifier {
       if (invalidRoots.isEmpty() && importantUnregisteredRoots.isEmpty()) return;
 
       LOG.info("Auto-registered following mappings: " + importantUnregisteredRoots);
-      addMappings(importantUnregisteredRoots);
+      addMappings(importantUnregisteredRoots, true);
 
       // Register the single root equal to the project dir silently, without any notification
       if (invalidRoots.isEmpty() &&
@@ -123,12 +124,12 @@ public final class VcsRootProblemNotifier {
 
       NotificationAction enableIntegration = NotificationAction
         .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.enable.integration"),
-                (event, notification) -> addMappings(importantUnregisteredRoots));
+                (event, notification) -> addMappings(importantUnregisteredRoots, false));
       NotificationAction ignoreAction = NotificationAction
         .create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.ignore"), (event, notification) -> {
-        mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, rootError -> rootError.getMapping().getDirectory()));
-        notification.expire();
-      });
+          mySettings.addIgnoredUnregisteredRoots(map(importantUnregisteredRoots, rootError -> rootError.getMapping().getDirectory()));
+          notification.expire();
+        });
       notificationActions = new NotificationAction[]{enableIntegration, getConfigureNotificationAction(), ignoreAction};
     }
 
@@ -144,26 +145,33 @@ public final class VcsRootProblemNotifier {
 
   @NotNull
   private NotificationAction getConfigureNotificationAction() {
-    return NotificationAction.create(VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"), (event, notification) -> {
-      if (!myProject.isDisposed()) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+    return NotificationAction.create(
+      VcsBundle.messagePointer("action.NotificationAction.VcsRootProblemNotifier.text.configure"),
+      (event, notification) -> {
+        if (!myProject.isDisposed()) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, VcsMappingConfigurable.class);
 
-        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-          Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
-          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
-            notification.expire();
-          }
-        });
-      }
-    });
+          BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+            Collection<VcsRootError> errorsAfterPossibleFix = new VcsRootProblemNotifier(myProject).scan();
+            if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+              notification.expire();
+            }
+          });
+        }
+      });
   }
 
-  private void addMappings(Collection<? extends VcsRootError> importantUnregisteredRoots) {
+  private void addMappings(Collection<? extends VcsRootError> importantUnregisteredRoots, boolean silently) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     for (VcsRootError root : importantUnregisteredRoots) {
       mappings = VcsUtil.addMapping(mappings, root.getMapping());
     }
-    myVcsManager.setDirectoryMappings(mappings);
+    if (silently) {
+      myVcsManager.setAutoDirectoryMappings(mappings);
+    }
+    else {
+      myVcsManager.setDirectoryMappings(mappings);
+    }
   }
 
   private boolean isUnderOrAboveProjectDir(@NotNull VcsDirectoryMapping mapping) {
@@ -182,6 +190,13 @@ public final class VcsRootProblemNotifier {
   private boolean isExplicitlyIgnoredPath(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return false;
     return mySettings.isIgnoredUnregisteredRoot(mapping.getDirectory());
+  }
+
+  private boolean conflictsWithExistingMapping(@NotNull VcsDirectoryMapping mapping) {
+    if (mapping.isDefaultMapping()) return false;
+    return exists(myVcsManager.getDirectoryMappings(), it -> {
+      return Objects.equals(mapping.getDirectory(), it.getDirectory());
+    });
   }
 
   private void expireNotification() {
@@ -257,7 +272,8 @@ public final class VcsRootProblemNotifier {
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
       title = rootsAlreadyAdded ? VcsBundle.message("roots.notification.title.vcs.name.integration.enabled", vcs)
-                                : VcsBundle.message("notification.title.vcs.name.repository.repositories.found", vcs, unregisteredRoots.size());
+                                : VcsBundle.message("notification.title.vcs.name.repository.repositories.found", vcs,
+                                                    unregisteredRoots.size());
     }
     else {
       title = VcsBundle.message("roots.notification.title.vcs.root.configuration.problems");
@@ -286,7 +302,8 @@ public final class VcsRootProblemNotifier {
       return error.getType() == UNREGISTERED_ROOT &&
              isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
-             !isExplicitlyIgnoredPath(mapping);
+             !isExplicitlyIgnoredPath(mapping) &&
+             !conflictsWithExistingMapping(mapping);
     });
   }
 
@@ -311,17 +328,8 @@ public final class VcsRootProblemNotifier {
   @VisibleForTesting
   @NotNull
   String getPresentableMapping(@NotNull String mapping) {
-    String presentablePath = null;
-    String projectDir = myProject.getBasePath();
-    if (projectDir != null && FileUtil.isAncestor(projectDir, mapping, true)) {
-      String relativePath = FileUtil.getRelativePath(projectDir, mapping, '/');
-      if (relativePath != null) {
-        presentablePath = toSystemDependentName(VcsBundle.message("label.relative.project.path.presentation", relativePath));
-      }
-    }
-    if (presentablePath == null) {
-      presentablePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
-    }
+    FilePath filePath = VcsUtil.getFilePath(mapping);
+    String presentablePath = VcsUtil.getPresentablePath(myProject, filePath, false, false);
     return escapeXmlEntities(presentablePath);
   }
 }

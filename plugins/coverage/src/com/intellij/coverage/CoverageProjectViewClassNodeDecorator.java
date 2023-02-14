@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -6,43 +6,13 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
-  CoverageProjectViewClassNodeDecorator(@NotNull Project project) {
-    super(project);
-  }
-
-  @Override
-  public void decorate(PackageDependenciesNode node, ColoredTreeCellRenderer cellRenderer) {
-    final PsiElement element = node.getPsiElement();
-    if (element == null || !element.isValid() || !(element instanceof PsiClass)) {
-      return;
-    }
-
-    final Project project = element.getProject();
-
-    final CoverageDataManager dataManager = getCoverageDataManager(project);
-    final JavaCoverageAnnotator javaCovAnnotator = getCovAnnotator(dataManager, project);
-    // This decorator is applicable only to JavaCoverageAnnotator
-    if (javaCovAnnotator == null) {
-      return;
-    }
-
-    final String qName = ((PsiClass)element).getQualifiedName();
-    if (qName != null) {
-      appendCoverageInfo(cellRenderer, javaCovAnnotator.getClassCoverageInformationString(qName, dataManager));
-    }
-  }
-
   @Override
   public void decorate(ProjectViewNode node, PresentationData data) {
     final Project project = node.getProject();
@@ -63,10 +33,9 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
       element = (PsiElement)value;
     }
     else if (value instanceof SmartPsiElementPointer) {
-      element = ((SmartPsiElementPointer)value).getElement();
+      element = ((SmartPsiElementPointer<?>)value).getElement();
     }
-    else if (value instanceof PackageElement) {
-      PackageElement packageElement = (PackageElement)value;
+    else if (value instanceof PackageElement packageElement) {
       final String coverageString = javaCovAnnotator.getPackageCoverageInformationString(packageElement.getPackage(),
                                                                                          packageElement.getModule(),
                                                                                          coverageDataManager);
@@ -80,6 +49,17 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
         final String qName = ((PsiClass)element).getQualifiedName();
         if (qName != null) {
           data.setLocationString(javaCovAnnotator.getClassCoverageInformationString(qName, coverageDataManager));
+        }
+      }
+    }
+    else if (element instanceof PsiNamedElement &&
+             // handled in CoverageProjectViewDirectoryNodeDecorator
+             !(element instanceof PsiFile || element instanceof PsiDirectory)) {
+      for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+        final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(javaCovAnnotator, (PsiNamedElement)element);
+        if (info != null) {
+          data.setLocationString(JavaCoverageAnnotator.getClassCoverageInformationString(info, coverageDataManager));
+          break;
         }
       }
     }

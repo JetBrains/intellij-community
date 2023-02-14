@@ -79,10 +79,9 @@ public class AntHectorConfigurable extends HectorComponentPanel {
 
     for (VirtualFile file : antFiles) {
       final PsiFile psiFile = psiManager.findFile(file);
-      if (!(psiFile instanceof XmlFile)) {
+      if (!(psiFile instanceof XmlFile xmlFile)) {
         continue;
       }
-      final XmlFile xmlFile = (XmlFile)psiFile;
       if (!xmlFile.equals(myFile) && AntDomFileDescription.isAntFile(xmlFile)) {
         final String path = PathUtil.getLocalPath(file);
         final XmlFile previous = myPathToFileMap.put(path, xmlFile);
@@ -130,7 +129,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     applyItem(myOriginalContext);
   }
 
-  private void applyItem(final String contextStr) {
+  private void applyItem(@NlsSafe final String contextStr) {
     XmlFile context = null;
     if (!myNoneText.equals(contextStr)) {
       context = myPathToFileMap.get(contextStr);

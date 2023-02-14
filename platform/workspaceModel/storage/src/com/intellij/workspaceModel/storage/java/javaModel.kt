@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.java
 
 import java.io.File
@@ -68,19 +68,19 @@ interface JvmTestSourceSet : JvmSourceSet {
 /**
  * Qualified name (including the project name) of a source set imported from Gradle.
  */
-val JvmSourceSet.gradleQualifiedName: String?
+val JvmSourceSet.gradleQualifiedName: String
   get() = TODO()
 
 /**
  * Name of a manually created module provided by user.
  */
-val JvmSourceSet.moduleName: String?
+val JvmSourceSet.moduleName: String
   get() = TODO()
 
 /**
  * Returns maven coordinates if the source set is actually a library imported from a Maven repository
  */
-val JvmSourceSet.mavenCoordinates: String?
+val JvmSourceSet.mavenCoordinates: String
   get() = TODO()
 
 val JvmSourceSet.annotationRoot: List<FilePointer>

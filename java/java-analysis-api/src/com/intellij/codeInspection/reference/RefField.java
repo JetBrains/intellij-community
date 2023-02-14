@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiField;
 import org.jetbrains.uast.UField;
 
@@ -25,9 +10,7 @@ import org.jetbrains.uast.UField;
  * @author anna
  */
 public interface RefField extends RefJavaElement {
-   Key<Boolean> ENUM_CONSTANT = Key.create("ENUM_CONSTANT");
-   Key<Boolean> IMPLICITLY_WRITTEN = Key.create("IMPLICITLY_WRITTEN");
-   Key<Boolean> IMPLICITLY_READ = Key.create("IMPLICITLY_READ");
+
   /**
    * Checks if the field is used for reading.
    *
@@ -48,6 +31,35 @@ public interface RefField extends RefJavaElement {
    * @return true if the only write access of the field is its initializer, false otherwise.
    */
   boolean isOnlyAssignedInInitializer();
+
+  /**
+   * Checks if this field is an enum constant.
+   *
+   * @return true if the field is an enum constant, false otherwise.
+   */
+  default boolean isEnumConstant() {
+    return false;
+  }
+
+  /**
+   * Checks if this field is implicitly read.
+   * @see com.intellij.codeInsight.daemon.ImplicitUsageProvider
+   *
+   * @return true if the field is implicitly read, false otherwise.
+   */
+  default boolean isImplicitlyRead() {
+    return false;
+  }
+
+  /**
+   * Checks if this field is implicitly written.
+   * @see com.intellij.codeInsight.daemon.ImplicitUsageProvider
+   *
+   * @return true if the field is implicitly written, false otherwise.
+   */
+  default boolean isImplicitlyWritten() {
+    return false;
+  }
 
   /**
    * Returns the reference graph node for the class to which the field belongs.

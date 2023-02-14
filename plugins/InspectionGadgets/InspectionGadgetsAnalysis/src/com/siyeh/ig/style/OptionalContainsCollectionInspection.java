@@ -44,7 +44,7 @@ public class OptionalContainsCollectionInspection extends BaseInspection {
   private static class OptionalContainsCollectionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!TypeUtils.isOptional(type)) {

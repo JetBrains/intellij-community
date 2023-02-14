@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -23,13 +20,13 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool {
+public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         String methodName = call.getMethodExpression().getReferenceName();
         if(methodName == null || !methodName.startsWith("create")) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -69,8 +66,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
             }
           }
         }
-        if(operand instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression call = (PsiMethodCallExpression)operand;
+        if(operand instanceof PsiMethodCallExpression call) {
           PsiMethod method = call.resolveMethod();
           if(MethodUtils.isToString(method)) {
             checkOperand(call.getMethodExpression().getQualifierExpression(), visited);
@@ -85,8 +81,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
           holder.registerProblem(operand, DevKitBundle.message("inspections.psi.element.concat.psi.type"),
                                  new AddGetTextFix("getCanonicalText"));
         }
-        if(operand instanceof PsiPolyadicExpression) {
-          PsiPolyadicExpression polyadic = (PsiPolyadicExpression)operand;
+        if(operand instanceof PsiPolyadicExpression polyadic) {
           if(JavaTokenType.PLUS.equals(polyadic.getOperationTokenType())) {
             for (PsiExpression op : polyadic.getOperands()) {
               checkOperand(op, visited);
@@ -121,8 +116,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if(!(element instanceof PsiExpression)) return;
-      PsiExpression expression = (PsiExpression)element;
+      if(!(element instanceof PsiExpression expression)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       PsiExpression replacement = factory.createExpressionFromText(ParenthesesUtils.getText(expression, ParenthesesUtils.POSTFIX_PRECEDENCE)
                                                                    + "." + myMethodName + "()", expression);

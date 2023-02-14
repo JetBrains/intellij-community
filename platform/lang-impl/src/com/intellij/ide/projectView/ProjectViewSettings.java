@@ -124,6 +124,12 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
+    public boolean isShowScratchesAndConsoles() {
+      ProjectView view = getProjectView();
+      return view != null && view.isShowScratchesAndConsoles(getPaneID(view));
+    }
+
+    @Override
     public boolean isFlattenModules() {
       ProjectView view = getProjectView();
       return view != null && view.isFlattenModules(getPaneID(view));

@@ -70,9 +70,9 @@ public final class BraceMatchingUtil {
    * It does not looks forward/behind skipping spaces, like highlighting does.
    */
   @Nullable
-  public static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
-                                                                                              @NotNull PsiFile file,
-                                                                                              int offset) {
+  static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
+                                                                                       @NotNull PsiFile file,
+                                                                                       int offset) {
     EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
     CharSequence text = editor.getDocument().getCharsSequence();
 
@@ -537,17 +537,8 @@ public final class BraceMatchingUtil {
   }
 
   /**
-   * Describes a brace matching/navigation context computed by {@link #computeHighlightingAndNavigationContext}
-   */
-  public static final class BraceHighlightingAndNavigationContext {
-    public final int currentBraceOffset;
-    public final int navigationOffset;
-    public final boolean isCaretAfterBrace;
-
-    public BraceHighlightingAndNavigationContext(int currentBraceOffset, int navigationOffset, boolean isCaretAfterBrace) {
-      this.currentBraceOffset = currentBraceOffset;
-      this.navigationOffset = navigationOffset;
-      this.isCaretAfterBrace = isCaretAfterBrace;
-    }
+     * Describes a brace matching/navigation context computed by {@link #computeHighlightingAndNavigationContext}
+     */
+    public record BraceHighlightingAndNavigationContext(int currentBraceOffset, int navigationOffset, boolean isCaretAfterBrace) {
   }
 }

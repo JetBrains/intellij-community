@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
  * user : catherine
  */
 public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull final AnActionEvent event) {
     RestPythonUtil.updateSphinxQuickStartRequiredAction(event);
@@ -23,13 +29,13 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Presentation presentation = RestPythonUtil.updateSphinxQuickStartRequiredAction(e);
-    assert presentation.isEnabled() &&  presentation.isVisible() : "Sphinx requirements for action are not satisfied";
+    assert presentation.isEnabled() && presentation.isVisible() : "Sphinx requirements for action are not satisfied";
 
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
     if (project == null) return;
 
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       Module[] modules = ModuleManager.getInstance(project).getModules();
       module = modules.length == 0 ? null : modules [0];

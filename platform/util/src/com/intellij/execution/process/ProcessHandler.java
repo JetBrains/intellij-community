@@ -12,6 +12,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    *
    * @deprecated
    */
-  @Deprecated public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
+  @Deprecated @ApiStatus.ScheduledForRemoval public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
   public static final Key<Boolean> TERMINATION_REQUESTED = Key.create("TERMINATION_REQUESTED");
 
   private final @NotNull List<@NotNull ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -65,7 +66,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   /**
    * Performs process destruction.
    *
-   * <p>This is an internal implementation of {@link #destroyProcess}. All sub-classes must implement this method and perform the
+   * <p>This is an internal implementation of {@link #destroyProcess}. All subclasses must implement this method and perform the
    * destruction in this method. This method is called from {@link #destroyProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
    * background thread and return without waiting for it. If the performed destruction led to process termination,
@@ -76,7 +77,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   /**
    * Performs detaching process.
    *
-   * <p>This is an internal implementation of {@link #detachProcess}. All sub-classes must implement this method and perform the
+   * <p>This is an internal implementation of {@link #detachProcess}. All subclasses must implement this method and perform the
    * detaching in this method. This method is called from {@link #detachProcess} and it can be in any thread including the
    * event dispatcher thread. You should avoid doing any expensive operation directly in this method. Instead, you may post the work to
    * background thread and return without waiting for it. If the performed detaching is completed,

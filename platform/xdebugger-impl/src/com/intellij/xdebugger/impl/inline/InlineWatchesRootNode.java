@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -78,18 +78,22 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     children.removeAll(inlines);
 
     if (indices.length > 0) {
-      inlineNodeRemoved(indices, removed);
+      inlineNodesRemoved(indices, removed);
     }
     if (children.size() == 0) {
-      myTree.getTreeModel().nodesWereRemoved(this, new int[]{0}, new XValueGroupNodeImpl[]{myInlinesRootNode});
+      allChildrenRemoved();
     }
   }
 
-  private void inlineNodeRemoved(int[] indices, TreeNode[] removed) {
+  private void inlineNodesRemoved(int[] indices, TreeNode[] removed) {
     myTree.getTreeModel().nodesWereRemoved(myInlinesRootNode, indices, removed);
     for (TreeNode node : removed) {
       ((InlineWatchNodeImpl)node).nodeRemoved();
     }
+  }
+
+  private void allChildrenRemoved() {
+    myTree.getTreeModel().nodesWereRemoved(this, new int[]{0}, new XValueGroupNodeImpl[]{myInlinesRootNode});
   }
 
   static class InlinesGroup extends XValueGroup {
@@ -173,7 +177,10 @@ public class InlineWatchesRootNode extends WatchesRootNode {
       int index = children.indexOf(node);
       if (index != -1) {
         children.remove(node);
-        inlineNodeRemoved(new int[]{index}, new TreeNode[]{node});
+        inlineNodesRemoved(new int[]{index}, new TreeNode[]{node});
+      }
+      if (children.size() == 0) {
+        allChildrenRemoved();
       }
       return index;
     }

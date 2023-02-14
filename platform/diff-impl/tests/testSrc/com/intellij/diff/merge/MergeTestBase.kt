@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.*
@@ -25,23 +24,23 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.UIUtil
 
 abstract class MergeTestBase : HeavyDiffTestCase() {
-  fun test1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, 1, f)
+  fun doTest1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, 1, f)
   }
 
-  fun test2(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, 2, f)
+  fun doTest2(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, 2, f)
   }
 
-  fun testN(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, -1, f)
+  fun doTestN(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, -1, f)
   }
 
-  fun test(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
-    test(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
+  fun doTest(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
   }
 
-  fun test(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
+  fun doTest(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
     val contentFactory = DiffContentFactoryImpl()
     val leftContent: DocumentContent = contentFactory.create(parseSource(left))
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))
@@ -72,7 +71,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   }
 
   inner class TestBuilder(val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
-    val viewer: MyThreesideViewer = mergeViewer.viewer
+    val viewer: MergeThreesideViewer = mergeViewer.viewer
     val changes: List<TextMergeChange> = viewer.allChanges
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
@@ -285,7 +284,7 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertType(changeType: SidesState) {
       assertTrue(changeType != NONE)
       val change = change(this)
-      val actual = change.type
+      val actual = change.conflictType
       val isLeftChange = changeType != RIGHT
       val isRightChange = changeType != LEFT
       assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isChange(Side.LEFT), actual.isChange(Side.RIGHT)))
@@ -377,13 +376,13 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
   private data class ViewerState constructor(private val content: CharSequence,
                                              private val changes: List<ViewerState.ChangeState>) {
     companion object {
-      fun recordState(viewer: MyThreesideViewer): ViewerState {
+      fun recordState(viewer: MergeThreesideViewer): ViewerState {
         val content = viewer.editor.document.immutableCharSequence
         val changes = viewer.allChanges.map { recordChangeState(viewer, it) }
         return ViewerState(content, changes)
       }
 
-      private fun recordChangeState(viewer: MyThreesideViewer, change: TextMergeChange): ChangeState {
+      private fun recordChangeState(viewer: MergeThreesideViewer, change: TextMergeChange): ChangeState {
         val document = viewer.editor.document
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 

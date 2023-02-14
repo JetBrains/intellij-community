@@ -40,6 +40,13 @@ public class TestStackTraceParser {
     return myTopLocationLine;
   }
 
+  protected TestStackTraceParser(int failedLine, String failedMethodName, String errorMessage, String topLocationLine) {
+    myFailedLine = failedLine;
+    myFailedMethodName = failedMethodName;
+    myErrorMessage = errorMessage;
+    myTopLocationLine = topLocationLine;
+  }
+
   public TestStackTraceParser(String url,
                               String stacktrace,
                               String errorMessage,

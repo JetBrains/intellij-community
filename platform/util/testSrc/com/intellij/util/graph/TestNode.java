@@ -15,9 +15,6 @@
  */
 package com.intellij.util.graph;
 
-/**
- * @author dsl
- */
 class TestNode {
   private final String myMark;
 

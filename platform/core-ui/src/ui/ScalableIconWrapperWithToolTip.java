@@ -13,6 +13,10 @@ final class ScalableIconWrapperWithToolTip extends IconWrapperWithToolTip implem
     super(icon, toolTip);
   }
 
+  private ScalableIconWrapperWithToolTip(IconWrapperWithToolTip another) {
+    super(another);
+  }
+
   @Override
   public float getScale() {
     return ((ScalableIcon)retrieveIcon()).getScale();
@@ -21,5 +25,10 @@ final class ScalableIconWrapperWithToolTip extends IconWrapperWithToolTip implem
   @Override
   public @NotNull Icon scale(float scaleFactor) {
     return ((ScalableIcon)retrieveIcon()).scale(scaleFactor);
+  }
+
+  @Override
+  public @NotNull ScalableIconWrapperWithToolTip replaceBy(@NotNull IconReplacer replacer) {
+    return new ScalableIconWrapperWithToolTip(super.replaceBy(replacer));
   }
 }

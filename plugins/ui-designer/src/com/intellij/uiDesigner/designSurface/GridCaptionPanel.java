@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -36,10 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-/**
- * @author yole
- */
-public class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
+public final class GridCaptionPanel extends JPanel implements ComponentSelectionListener, DataProvider {
   private static final Logger LOG = Logger.getInstance(GridCaptionPanel.class);
 
   private final GuiEditor myEditor;
@@ -89,7 +86,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
   }
 
   public static JBColor getGutterColor() {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? UIUtil.getPanelBackground() : color;
     });
@@ -371,7 +368,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
         }
         ActionGroup group = mySelectedContainer.getGridLayoutManager().getCaptionActions();
         if (group != null) {
-          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("GridCaptionPanel", group);
           popupMenu.getComponent().show(GridCaptionPanel.this, e.getX(), e.getY());
           return true;
         }
@@ -461,6 +458,11 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDeleteProvider implements DeleteProvider {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       int[] selection = getSelectedCells(null);
       if (selection.length > 0) {
@@ -480,7 +482,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
   private class MyDnDSource implements DnDSource {
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       LOG.debug("canStartDragging(): dragOrigin=" + dragOrigin);
       if (myResizeLine != -1) {
         LOG.debug("canStartDragging(): have resize line");
@@ -514,7 +516,7 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(new MyDragBean(myIsRow, getSelectedCells(dragOrigin)));
     }
   }
@@ -526,10 +528,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
       if (mySelectedContainer == null) {
         return false;
       }
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean bean)) {
         return false;
       }
-      MyDragBean bean = (MyDragBean) aEvent.getAttachedObject();
       if (bean.isRow != myIsRow || bean.cells.length == 0) {
         return false;
       }
@@ -557,10 +558,9 @@ public class GridCaptionPanel extends JPanel implements ComponentSelectionListen
 
     @Override
     public void drop(DnDEvent aEvent) {
-      if (!(aEvent.getAttachedObject() instanceof MyDragBean)) {
+      if (!(aEvent.getAttachedObject() instanceof MyDragBean dragBean)) {
         return;
       }
-      MyDragBean dragBean = (MyDragBean) aEvent.getAttachedObject();
       int targetCell = getDropGridLine(aEvent);
       if (targetCell < 0) return;
       mySelectedContainer.getGridLayoutManager().processCellsMoved(mySelectedContainer, myIsRow, dragBean.cells, targetCell);

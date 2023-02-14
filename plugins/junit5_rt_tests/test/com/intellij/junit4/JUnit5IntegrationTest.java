@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -6,10 +6,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,7 +48,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
      ModuleRootModificationUtil.updateModel(myModule,
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.7.0"), repoManager);
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.8.1"), repoManager);
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
@@ -79,7 +82,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
       dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
       dataContext.put(CommonDataKeys.PROJECT, myProject);
-      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext);
+      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
       assertNotNull(fromContext);
 
       RunConfiguration configuration = fromContext.getConfiguration().getConfiguration();
@@ -140,6 +143,84 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
     assertSize(1, ContainerUtil.filter(processOutput.messages, TestFailed.class::isInstance));
+  }
+
+  public void testNestedClassInAbstractOuterSingleInheritorMethod() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.MAIN_CLASS_NAME = "nested.FirstConcreteTest$NestedTests";
+    data.METHOD_NAME = "myTest";
+    data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 1, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+  
+  public void testNestedClassInAbstractOuterSingleClass() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    data.MAIN_CLASS_NAME = "nested.FirstConcreteTest$NestedTests";
+    data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!Method myTest1 of FirstConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+  
+  public void testNestedClassInAbstractOuterPatternWithInheritorMethod() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    LinkedHashSet<@NlsSafe String> pattern = new LinkedHashSet<>();
+    data.setPatterns(pattern);
+    pattern.add("nested.FirstConcreteTest$NestedTests,myTest");
+    pattern.add("nested.SecondConcreteTest$NestedTests,myTest");
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!The SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 2, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
+  }
+
+  public void testNestedClassInAbstractOuterPatternClasses() throws Exception {
+    JUnitConfiguration configuration = new JUnitConfiguration("name", myProject);
+    JUnitConfiguration.Data data = configuration.getPersistentData();
+    LinkedHashSet<@NlsSafe String> pattern = new LinkedHashSet<>();
+    data.setPatterns(pattern);
+    pattern.add("nested.FirstConcreteTest$NestedTests");
+    pattern.add("nested.SecondConcreteTest$NestedTests");
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.setModule(getModule());
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertTrue(systemOutput.contains("-junit5"));
+
+    assertEquals("The FirstConcreteTest was run!" +
+                 "Method myTest1 of FirstConcreteTest was run!" +
+                 "The SecondConcreteTest was run!" +
+                 "Method myTest1 of SecondConcreteTest was run!", StringUtil.join(processOutput.out, ""));
+    assertEmpty(processOutput.err);
+    assertEquals(systemOutput, 4, ContainerUtil.filter(processOutput.messages, TestStarted.class::isInstance).size());
   }
 
 

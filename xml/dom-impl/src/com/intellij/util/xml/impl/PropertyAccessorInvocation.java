@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.ArrayUtilRt;
@@ -7,9 +7,6 @@ import com.intellij.util.xml.JavaMethod;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
-*/
 final class PropertyAccessorInvocation implements Invocation {
   private final int myLastElement;
   private final JavaMethod[] myMethods;
@@ -20,7 +17,7 @@ final class PropertyAccessorInvocation implements Invocation {
   }
 
   @Override
-  public final Object invoke(DomInvocationHandler handler, Object[] args) {
+  public Object invoke(DomInvocationHandler handler, Object[] args) {
     return invoke(0, handler.getProxy());
   }
 

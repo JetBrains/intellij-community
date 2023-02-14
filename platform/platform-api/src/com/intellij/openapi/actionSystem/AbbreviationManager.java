@@ -9,7 +9,7 @@ import java.util.Set;
 
 /**
  * Manages abbreviations for actions. An abbreviation is an alias for the action name
- * which the user can enter in the Goto Action/Search Everywhere popups.
+ * which the user can enter in Goto Action/Search Everywhere popups.
  *
  * @author Konstantin Bulenkov
  */

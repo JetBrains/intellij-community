@@ -50,6 +50,6 @@ public class ListWithSelection<E> extends ArrayList<E> {
   }
 
   public Integer getSelectedIndex() {
-    return new Integer(indexOf(mySelection));
+    return Integer.valueOf(indexOf(mySelection));
   }
 }

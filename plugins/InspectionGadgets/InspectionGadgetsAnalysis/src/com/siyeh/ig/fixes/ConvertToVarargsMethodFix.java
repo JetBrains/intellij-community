@@ -4,17 +4,20 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -33,12 +36,11 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiMethod)) {
+    if (!(element instanceof PsiMethod method)) {
       return;
     }
-    final PsiMethod method = (PsiMethod)element;
     final Collection<PsiElement> writtenElements = new ArrayList<>();
     writtenElements.add(method);
     final Collection<PsiReferenceExpression> methodCalls = new ArrayList<>();
@@ -67,10 +69,9 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     final PsiParameter lastParameter = parameters[parameters.length - 1];
     lastParameter.normalizeDeclaration();
     final PsiType type = lastParameter.getType();
-    if (!(type instanceof PsiArrayType)) {
+    if (!(type instanceof PsiArrayType arrayType)) {
       return;
     }
-    final PsiArrayType arrayType = (PsiArrayType)type;
     final PsiType componentType = arrayType.getComponentType();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     final PsiType ellipsisType = new PsiEllipsisType(componentType, TypeAnnotationProvider.Static.create(type.getAnnotations()));
@@ -84,20 +85,18 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
   private static void makeMethodCallsVarargs(Collection<PsiReferenceExpression> referenceExpressions) {
     for (final PsiReferenceExpression referenceExpression : referenceExpressions) {
       final PsiElement parent = referenceExpression.getParent();
-      if (!(parent instanceof PsiMethodCallExpression)) {
+      if (!(parent instanceof PsiMethodCallExpression methodCallExpression)) {
         continue;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
         continue;
       }
       final PsiExpression lastArgument = arguments[arguments.length - 1];
-      if (!(lastArgument instanceof PsiNewExpression)) {
+      if (!(lastArgument instanceof PsiNewExpression newExpression)) {
         continue;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)lastArgument;
       final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
       if (arrayInitializerExpression == null) {
         continue;
@@ -108,5 +107,18 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
       }
       lastArgument.delete();
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiMethod method = ObjectUtils.tryCast(previewDescriptor.getPsiElement(), PsiMethod.class);
+    if (method == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    makeMethodVarargs(method);
+    List<PsiReferenceExpression> refsInFile = SyntaxTraverser.psiTraverser(method.getContainingFile()).filter(PsiReferenceExpression.class)
+      .filter(ref -> ref.isReferenceTo(method)).toList();
+    makeMethodCallsVarargs(refsInFile);
+    return IntentionPreviewInfo.DIFF;
   }
 }

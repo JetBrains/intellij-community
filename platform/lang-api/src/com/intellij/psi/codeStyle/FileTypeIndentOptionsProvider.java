@@ -16,7 +16,6 @@
 
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiFile;
@@ -36,8 +35,6 @@ public interface FileTypeIndentOptionsProvider extends FileTypeIndentOptionsFact
 
   @Override
   FileType getFileType();
-
-  IndentOptionsEditor createOptionsEditor();
 
   @NonNls
   String getPreviewText();

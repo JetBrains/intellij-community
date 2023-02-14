@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.ide.plugins.loadExtensionWithText
@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.LanguageSubstitutor
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 
 class LanguageSubstitutorLoadUnloadTest : LightJavaCodeInsightFixtureTestCase() {
@@ -24,7 +23,7 @@ class LanguageSubstitutorLoadUnloadTest : LightJavaCodeInsightFixtureTestCase() 
 
     val virtualFile = beforeLoading.virtualFile
     val text = "<lang.substitutor language=\"TEXT\" implementationClass=\"${TextToJavaSubstitutor::class.java.name}\"/>"
-    loadExtensionWithText(text, javaClass.classLoader).use {
+    loadExtensionWithText(text).use {
       val afterLoading = PsiManager.getInstance(myFixture.project).findFile(virtualFile)
       assertThat(afterLoading!!.language).isInstanceOf(JavaLanguage::class.java)
     }

@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * @author ilyas
- */
 public interface CustomMembersHolder {
 
   CustomMembersHolder EMPTY = new CustomMembersHolder() {

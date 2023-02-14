@@ -48,7 +48,7 @@ import java.util.*;
  * Every extension is expected to have a no-args constructor because they are used at external process and we need a simple way
  * to instantiate it.
  *
- * @author Denis Zhdanov, Vladislav Soroka
+ * @author Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
@@ -124,20 +124,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   default ProjectImportModelProvider getProjectsLoadedModelProvider() {return null;}
 
   /**
-   * @return whether or not this resolver requires Gradle task running infrastructure to be initialized, if any of the resolvers which are
-   * used by the resolution return true then the {@link BuildActionExecuter} will have
-   * {@link BuildActionExecuter#forTasks(String...)} called with an empty list. This will allow
-   * any tasks that are scheduled by Gradle plugin in the model builders to be run.
-   *
-   * @deprecated not required anymore
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  default boolean requiresTaskRunning() {
-    return false;
-  }
-
-  /**
    * add paths containing these classes to classpath of gradle tooling extension
    *
    * @return classes to be available for gradle
@@ -147,7 +133,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   /**
    * add target types to be used in the polymorphic containers
-   * @return
    */
   default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();
@@ -219,6 +204,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   // options passed from project to Gradle
   String DEBUG_OPTIONS_KEY = "DEBUG_OPTIONS";
+
+  // for Gradle version specific init scripts
+  String GRADLE_VERSION = "GRADLE_VERSION";
 
   /**
    * Allows extension to contribute to init script

@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.InheritanceUtil.isInheritor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CO
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ReferenceExpressionClassProcessor
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
@@ -50,13 +51,15 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     if (processNonCode) {
       if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
+      val macroPerformer = getHierarchicalInlineTransformationPerformer(place)
+      if (macroPerformer != null && !macroPerformer.processResolve(processor, initialState, place)) return false
     }
     return true
   }
 
   private fun processQualifier(qualifier: GrExpression, state: ResolveState): Boolean {
     val qualifierType = qualifier.type
-    if (qualifierType == null || PsiType.VOID == qualifierType) {
+    if (qualifierType == null || PsiTypes.voidType() == qualifierType) {
       if (qualifier is GrReferenceExpression) {
         val resolved = qualifier.resolve()
         if (resolved is PsiClass) {
@@ -71,12 +74,20 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
     }
     else {
       if (!qualifierType.processReceiverType(processor, state, place)) return false
-      if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return qualifierType.processSpread(processor, state, place, true)
+      if (place.parent !is GrMethodCall && !processImplicitSpread(qualifierType, processor, state, place)) {
+        return false
       }
     }
     return true
   }
+}
+
+private fun processImplicitSpread(type: PsiType, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+  if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+      (type is PsiArrayType && !processor.checkName("length", state))) {
+    return type.processSpread(processor, state, place, true)
+  }
+  else return true
 }
 
 
@@ -141,6 +152,10 @@ internal fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
     val localVariable = resolveToLocalVariable(name)
     if (localVariable != null) {
       return localVariable
+    }
+    val macroResult = resolveInInlineTransformation(this)
+    if (macroResult != null) {
+      return macroResult
     }
   }
 
@@ -211,4 +226,9 @@ private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReference
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result
+}
+
+private fun resolveInInlineTransformation(psiElement: PsiElement) : ElementResolveResult<PsiElement>? {
+  val handler = getHierarchicalInlineTransformationPerformer(psiElement) ?: return null
+  return handler.computeStaticReference(psiElement)
 }

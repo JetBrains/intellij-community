@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -31,7 +30,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -58,11 +56,6 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
     return false;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return true;
   }
 
   @Override
@@ -109,7 +102,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.IntroducePropertyAction);
+      MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.INTRODUCE_PROPERTY);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);
@@ -271,7 +264,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 root.acceptChildren(new XmlElementVisitor() {
 
                   @Override
-                  public void visitXmlText(XmlText text) {
+                  public void visitXmlText(@NotNull XmlText text) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
                     if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
                       usages.addAll(getUsages(text));
@@ -279,7 +272,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlAttributeValue(XmlAttributeValue value) {
+                  public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
                     XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
                     if (xmlTag != null && !xmlTag.equals(root)) {
                       usages.addAll(getUsages(value));
@@ -287,7 +280,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                   }
 
                   @Override
-                  public void visitXmlElement(XmlElement element) {
+                  public void visitXmlElement(@NotNull XmlElement element) {
                     element.acceptChildren(this);
                   }
                 });

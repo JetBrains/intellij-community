@@ -36,7 +36,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, YAMLLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         final CodeStyleSettings currentSettings = getCurrentSettings();
         return new TabbedLanguageCodeStylePanel(YAMLLanguage.INSTANCE, currentSettings, settings) {
           @Override
@@ -62,7 +62,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new YAMLCodeStyleSettings(settings);
   }
 

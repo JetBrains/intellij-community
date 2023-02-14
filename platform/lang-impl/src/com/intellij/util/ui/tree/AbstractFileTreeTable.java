@@ -2,7 +2,6 @@
 
 package com.intellij.util.ui.tree;
 
-import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -10,7 +9,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -65,7 +63,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     myProject = project;
 
     //noinspection unchecked
-    myModel = (MyModel)getTableModel();
+    myModel = (MyModel<T>)getTableModel();
     myModel.setTreeTable(this);
 
     new TreeTableSpeedSearch(this, o -> {
@@ -125,7 +123,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     getColumnModel().getColumn(1).setPreferredWidth(60);
   }
 
-  protected boolean isNullObject(final T value) {
+  private boolean isNullObject(final T value) {
     return false;
   }
 
@@ -157,30 +155,6 @@ public class AbstractFileTreeTable<T> extends TreeTable {
         }
       }
     }
-  }
-
-  public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent,
-                                                     final @NlsContexts.DialogMessage String message,
-                                                     final @NlsContexts.DialogTitle String title) {
-    Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
-    Map<VirtualFile, T> subdirectoryMappings = new HashMap<>();
-    for (VirtualFile file : mappings.keySet()) {
-      if (file != null && (parent == null || VfsUtilCore.isAncestor(parent, file, true))) {
-        subdirectoryMappings.put(file, mappings.get(file));
-      }
-    }
-    if (subdirectoryMappings.isEmpty()) {
-      return true;
-    }
-    int ret = Messages.showYesNoCancelDialog(myProject, message, title, LangBundle.message("button.override"),
-                                             LangBundle.message("button.do.not.override"), CommonBundle.getCancelButtonText(),
-                                             Messages.getWarningIcon());
-    if (ret == Messages.YES) {
-      for (VirtualFile file : subdirectoryMappings.keySet()) {
-        myModel.setValueAt(null, new DefaultMutableTreeNode(file), 1);
-      }
-    }
-    return ret != Messages.CANCEL;
   }
 
   @NotNull
@@ -259,61 +233,42 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
     @Override
     public String getColumnName(final int column) {
-      switch (column) {
-        case 0:
-          return LangBundle.message("column.name.file.directory");
-        case 1:
-          return myValueTitle;
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+      return switch (column) {
+        case 0 -> LangBundle.message("column.name.file.directory");
+        case 1 -> myValueTitle;
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
-    public Class getColumnClass(final int column) {
-      switch (column) {
-        case 0:
-          return TreeTableModel.class;
-        case 1:
-          return myValueClass;
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+    public Class<?> getColumnClass(final int column) {
+      return switch (column) {
+        case 0 -> TreeTableModel.class;
+        case 1 -> myValueClass;
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
     public Object getValueAt(final Object node, final int column) {
       Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-      if (userObject instanceof Project) {
-        switch (column) {
-          case 0:
-            return userObject;
-          case 1:
-            return myCurrentMapping.get(null);
-        }
-      }
-      VirtualFile file = (VirtualFile)userObject;
-      switch (column) {
-        case 0:
-          return file;
-        case 1:
-          return myCurrentMapping.get(file);
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+      return switch (column) {
+        case 0 -> userObject;
+        case 1 -> myCurrentMapping.get(userObject instanceof VirtualFile file ? file : null);
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
     public boolean isCellEditable(final Object node, final int column) {
-      switch (column) {
-        case 0:
-          return false;
-        case 1:
+      return switch (column) {
+        case 0 -> false;
+        case 1 -> {
           final Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          return !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
-        default:
-          throw new RuntimeException("invalid column " + column);
-      }
+          yield !(userObject instanceof VirtualFile || userObject == null) || myTreeTable.isValueEditableForFile((VirtualFile)userObject);
+        }
+        default -> throw new RuntimeException("invalid column " + column);
+      };
     }
 
     @Override
@@ -349,11 +304,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   public static class ProjectRootNode extends ConvenientNode<Project> {
     private final VirtualFileFilter myFilter;
 
-    public ProjectRootNode(@NotNull Project project) {
-      this(project, VirtualFileFilter.ALL);
-    }
-
-    public ProjectRootNode(@NotNull Project project, @NotNull VirtualFileFilter filter) {
+    ProjectRootNode(@NotNull Project project, @NotNull VirtualFileFilter filter) {
       super(project);
       myFilter = filter;
     }
@@ -425,7 +376,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
           return file1.getName().compareTo(file2.getName());
         });
         int i = 0;
-        for (ConvenientNode child : children) {
+        for (ConvenientNode<?> child : children) {
           insert(child, i++);
         }
       }

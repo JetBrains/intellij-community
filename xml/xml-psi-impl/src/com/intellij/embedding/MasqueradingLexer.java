@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A lexer which additionally providers information concerning whether a token
  * should be used in parsing (and be exposed to a parser) or be hidden to parser
- * @see com.intellij.embedding.MasqueradingPsiBuilderAdapter
+ * @see MasqueradingPsiBuilderAdapter
  */
 public abstract class MasqueradingLexer extends DelegateLexer {
 

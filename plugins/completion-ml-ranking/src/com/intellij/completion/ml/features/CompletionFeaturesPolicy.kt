@@ -3,7 +3,9 @@ package com.intellij.completion.ml.features
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface CompletionFeaturesPolicy {
     companion object {
         val Instance = LanguageExtension<CompletionFeaturesPolicy>("com.intellij.completion.ml.ranking.features.policy")

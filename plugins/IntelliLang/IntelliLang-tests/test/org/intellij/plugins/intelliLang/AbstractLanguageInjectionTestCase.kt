@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 
 abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTestCase() {
-  private val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
+  val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
 
   fun assertInjectedLangAtCaret(lang: String?) {
     injectionTestFixture.assertInjectedLangAtCaret(lang)
@@ -29,14 +29,14 @@ abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTe
 }
 
 class StoringFixPresenter : InjectLanguageAction.FixPresenter {
-  private lateinit var processor: Processor<PsiLanguageInjectionHost>
+  private lateinit var processor: Processor<in PsiLanguageInjectionHost>
   private lateinit var pointer: SmartPsiElementPointer<PsiLanguageInjectionHost>
 
   override fun showFix(editor: Editor,
                        range: TextRange,
                        pointer: SmartPsiElementPointer<PsiLanguageInjectionHost>,
-                       text: String,
-                       data: Processor<PsiLanguageInjectionHost>) {
+                       text: kotlin.String,
+                       data: Processor<in PsiLanguageInjectionHost>) {
     this.processor = data
     this.pointer = pointer
   }

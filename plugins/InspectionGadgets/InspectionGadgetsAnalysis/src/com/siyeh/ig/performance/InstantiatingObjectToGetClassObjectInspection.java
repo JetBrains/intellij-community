@@ -64,7 +64,7 @@ public class InstantiatingObjectToGetClassObjectInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -79,9 +79,8 @@ public class InstantiatingObjectToGetClassObjectInspection
     }
 
     private static StringBuilder getTypeText(PsiType type, StringBuilder text) {
-      if (type instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType arrayType) {
         text.append("[]");
-        final PsiArrayType arrayType = (PsiArrayType)type;
         getTypeText(arrayType.getComponentType(), text);
       }
       else if (type instanceof PsiClassType) {
@@ -124,10 +123,9 @@ public class InstantiatingObjectToGetClassObjectInspection
         return;
       }
       final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-      if (!(qualifier instanceof PsiNewExpression)) {
+      if (!(qualifier instanceof PsiNewExpression newExpression)) {
         return;
       }
-      final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
       if (newExpression.getAnonymousClass() != null) {
         return;
       }

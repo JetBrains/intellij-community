@@ -1,0 +1,11 @@
+// "Replace with 'this.bar()'" "true"
+@Deprecated("", ReplaceWith("this.bar()"))
+fun <T> T.foo() {
+}
+
+fun <T> T.bar() {
+}
+
+fun <T> test(i: Int) {
+    i.<caret>foo()
+}

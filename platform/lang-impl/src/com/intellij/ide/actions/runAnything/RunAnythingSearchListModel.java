@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -95,12 +95,11 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
       Function<Map.Entry<@Nls String, List<RunAnythingProvider>>, RunAnythingGroup> mapping =
         entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue());
 
-      myGroups = ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.extensions())
+      myGroups = ContainerUtil.concat(ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.getExtensionList().stream())
                                      .filter(provider -> provider.getHelpGroupTitle() != null)
                                      .groupingBy(provider -> provider.getHelpGroupTitle())
-                                     .entrySet(), mapping);
-
-      myGroups.addAll(RunAnythingHelpGroup.EP_NAME.getExtensionList());
+                                     .entrySet(), mapping),
+      RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }
 
     @NotNull

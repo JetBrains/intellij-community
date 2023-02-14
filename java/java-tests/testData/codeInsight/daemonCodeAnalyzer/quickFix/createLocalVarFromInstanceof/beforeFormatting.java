@@ -1,4 +1,4 @@
-// "Insert '(IOException)o' declaration" "true"
+// "Insert '(IOException)o' declaration" "true-preview"
 import java.io.IOException;
 
 class C {

@@ -24,7 +24,7 @@ class NonFinalFieldsVisitor extends BaseInspectionVisitor {
     method.accept(new JavaRecursiveElementWalkingVisitor() {
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         // Do not recurse into.
       }
 
@@ -33,10 +33,9 @@ class NonFinalFieldsVisitor extends BaseInspectionVisitor {
         @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
-        if (!(element instanceof PsiField)) {
+        if (!(element instanceof PsiField field)) {
           return;
         }
-        final PsiField field = (PsiField)element;
         if (field.hasModifierProperty(PsiModifier.FINAL)) {
           return;
         }

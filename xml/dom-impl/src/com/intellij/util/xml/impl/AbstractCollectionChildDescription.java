@@ -22,9 +22,6 @@ import com.intellij.util.xml.EvaluatedXmlName;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public interface AbstractCollectionChildDescription extends AbstractDomChildrenDescription {
   List<XmlTag> getSubTags(DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file);
   EvaluatedXmlName createEvaluatedXmlName(DomInvocationHandler parent, XmlTag childTag);

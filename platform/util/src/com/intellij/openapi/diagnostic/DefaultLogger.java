@@ -1,15 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,14 +40,14 @@ public class DefaultLogger extends Logger {
   @Override
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void warn(String message, @Nullable Throwable t) {
-    t = checkException(t);
+    t = ensureNotControlFlow(t);
     System.err.println("WARN: " + message);
     if (t != null) t.printStackTrace(System.err);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    t = checkException(t);
+    t = ensureNotControlFlow(t);
     message += attachmentsToString(t);
     dumpExceptionsToStderr(message, t, details);
 
@@ -59,29 +57,27 @@ public class DefaultLogger extends Logger {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void dumpExceptionsToStderr(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (shouldDumpExceptionToStderr()) {
-      System.err.println("ERROR: " + message);
+      System.err.println("ERROR: " + message + detailsToString(details));
       if (t != null) t.printStackTrace(System.err);
-      if (details.length > 0) {
-        System.err.println("details: ");
-        for (String detail : details) {
-          System.err.println(detail);
-        }
-      }
     }
   }
 
   @Override
   public void setLevel(@NotNull Level level) { }
 
-  public static String attachmentsToString(@Nullable Throwable t) {
+  public static @NotNull String detailsToString(String @NotNull ... details) {
+    return details.length > 0 ? "\nDetails:\n" + String.join("\n", details) : "";
+  }
+
+  public static @NotNull String attachmentsToString(@Nullable Throwable t) {
     if (t != null) {
-      List<Attachment> attachments = ExceptionUtil
-        .findCauseAndSuppressed(t, ExceptionWithAttachments.class)
-        .stream()
+      String prefix = "\n\nAttachments:\n";
+      String attachments = ExceptionUtil.findCauseAndSuppressed(t, ExceptionWithAttachments.class).stream()
         .flatMap(e -> Stream.of(e.getAttachments()))
-        .collect(Collectors.toList());
-      if (!attachments.isEmpty()) {
-        return "\n\nAttachments:\n" + StringUtil.join(attachments, ATTACHMENT_TO_STRING::apply, "\n----\n");
+        .map(ATTACHMENT_TO_STRING)
+        .collect(Collectors.joining("\n----\n", prefix, ""));
+      if (!attachments.equals(prefix)) {
+        return attachments;
       }
     }
     return "";
@@ -92,14 +88,10 @@ public class DefaultLogger extends Logger {
   }
 
   public static void disableStderrDumping(@NotNull Disposable parentDisposable) {
-    final boolean prev = ourMirrorToStderr;
+    boolean prev = ourMirrorToStderr;
     ourMirrorToStderr = false;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourMirrorToStderr = prev;
-      }
+    Disposer.register(parentDisposable, () -> {
+      ourMirrorToStderr = prev;
     });
   }
 }

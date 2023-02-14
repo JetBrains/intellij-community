@@ -76,13 +76,18 @@ class JavaRenameLesson
       }
     }
 
+    task {
+      stateCheck { TemplateManagerImpl.getInstance(project).getActiveTemplate(editor) != null }
+      restoreByTimer()
+    }
+
     task("NextTemplateVariable") {
       triggers(it)
       text(JavaLessonsBundle.message("java.rename.type.new.name", code(newNameExample), LessonUtil.rawEnter()))
-      restoreAfterStateBecomeFalse {
+      restoreAfterStateBecomeFalse(restoreId = startId) {
         TemplateManagerImpl.getTemplateState(editor) == null
       }
-      test {
+      test(waitEditorToBeReady = false) {
         type(newNameExample)
         actions(it)
       }
@@ -100,7 +105,7 @@ class JavaRenameLesson
     task {
       val okButtonText = CommonBundle.getOkButtonText()
       text(JavaLessonsBundle.message("java.rename.confirm.accessors.rename",
-                                 LessonUtil.rawEnter(), strong(okButtonText)))
+                                     LessonUtil.rawEnter(), strong(okButtonText)))
       stateCheck {
         val fieldName = getFieldName()
         val shouldBe = fieldName?.let { replaceTemplate(it).replace("<caret>", "").replace("<caret id=2/>", "") }
@@ -111,17 +116,19 @@ class JavaRenameLesson
           it.className.contains(RenameProcessor::class.simpleName!!)
         }
       }
-      test {
+      test(waitEditorToBeReady = false) {
         ideFrame {
           button(okButtonText).click()
         }
       }
     }
+
+    restoreRefactoringOptionsInformer()
   }
 
   private fun TaskRuntimeContext.getFieldName(): String? {
     val charsSequence = editor.document.charsSequence
-    // get position of declaration because it should not shifted after rename
+    // get position of declaration because it should not shift after rename
     val start = sample.getPosition(2).startOffset
     val end = charsSequence.indexOf(';', start).takeIf { it > 0 } ?: return null
     val newName = charsSequence.subSequence(start, end)
@@ -129,4 +136,9 @@ class JavaRenameLesson
     if (!Character.isJavaIdentifierStart(newName[0]) || newName.any { !Character.isJavaIdentifierPart(it) }) return null
     return newName.toString()
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }

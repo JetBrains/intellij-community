@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.configuration.deployment;
 
 import com.intellij.openapi.project.Project;
@@ -34,8 +20,7 @@ import java.io.File;
  * {@link SingletonDeploymentSourceType} to any other deployment source without recreating of the configuration.
  */
 public class SingletonDeploymentSourceType extends DeploymentSourceType<DeploymentSource> {
-  @Nls
-  private final String myPresentableName;
+  private final @Nls String myPresentableName;
   private final SingletonDeploymentSource mySourceInstance;
 
   public SingletonDeploymentSourceType(@NotNull String id, @NotNull @Nls String name, @NotNull Icon icon) {
@@ -48,8 +33,7 @@ public class SingletonDeploymentSourceType extends DeploymentSourceType<Deployme
     return DeploymentSourceType.EP_NAME.findExtension(clazz);
   }
 
-  @NotNull
-  public DeploymentSource getSingletonSource() {
+  public @NotNull DeploymentSource getSingletonSource() {
     return mySourceInstance;
   }
 
@@ -58,15 +42,12 @@ public class SingletonDeploymentSourceType extends DeploymentSourceType<Deployme
     //
   }
 
-  @NotNull
   @Override
-  public DeploymentSource load(@NotNull Element tag, @NotNull Project project) {
+  public @NotNull DeploymentSource load(@NotNull Element tag, @NotNull Project project) {
     return getSingletonSource();
   }
 
-  @Nls
-  @NotNull
-  public final String getPresentableName() {
+  public final @Nls @NotNull String getPresentableName() {
     return myPresentableName;
   }
 
@@ -79,15 +60,13 @@ public class SingletonDeploymentSourceType extends DeploymentSourceType<Deployme
       myTypeClass = typeClass;
     }
 
-    @Nullable
     @Override
-    public final File getFile() {
+    public final @Nullable File getFile() {
       return null;
     }
 
-    @Nullable
     @Override
-    public final String getFilePath() {
+    public final @Nullable String getFilePath() {
       return null;
     }
 
@@ -101,21 +80,18 @@ public class SingletonDeploymentSourceType extends DeploymentSourceType<Deployme
       return true;
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myIcon;
     }
 
-    @NotNull
     @Override
-    public final String getPresentableName() {
+    public final @NotNull String getPresentableName() {
       return getType().getPresentableName();
     }
 
-    @NotNull
     @Override
-    public SingletonDeploymentSourceType getType() {
+    public @NotNull SingletonDeploymentSourceType getType() {
       return findExtension(myTypeClass);
     }
   }

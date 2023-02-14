@@ -1,16 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser.parsing.util;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType;
+import org.jetbrains.plugins.groovy.lang.parser.GrClosureElementType;
 
 /**
  * Utility classdef, that contains various useful methods for
  * parser needs.
- *
- * @author ilyas
  */
 public abstract class ParserUtils {
 
@@ -20,7 +21,6 @@ public abstract class ParserUtils {
    * @param builder  current builder
    * @param elem     given element
    * @param errorMsg Message, that displays if element was not found; if errorMsg == null nothing displays
-   * @return true if element parsed
    */
   public static void getToken(PsiBuilder builder, IElementType elem, @ParsingError String errorMsg) {
     if (elem.equals(builder.getTokenType())) {
@@ -58,5 +58,18 @@ public abstract class ParserUtils {
     boolean res = (!builder.eof() && element2 == builder.getTokenType());
     rb.rollbackTo();
     return res;
+  }
+
+  // todo: eventually modify the platform to remove this duplication
+  public static GrBlockElementType getSwitchAwareBlockElementType(String debugName) {
+    return new GrBlockElementType(debugName, true);
+  }
+
+  public static GrBlockLambdaBodyElementType getSwitchAwareLambdaBlockElementType(String debugName) {
+    return new GrBlockLambdaBodyElementType(debugName, true);
+  }
+
+  public static GrClosureElementType getSwitchAwareClosureBlockElementType(String debugName) {
+    return new GrClosureElementType(debugName, true);
   }
 }

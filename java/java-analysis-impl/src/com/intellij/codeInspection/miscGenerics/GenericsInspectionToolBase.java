@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class GenericsInspectionToolBase extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public boolean isEnabledByDefault() {

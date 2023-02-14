@@ -66,9 +66,7 @@ public class PySteppingFilter {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PySteppingFilter)) return false;
-
-    PySteppingFilter filter = (PySteppingFilter)o;
+    if (!(o instanceof PySteppingFilter filter)) return false;
 
     if (isEnabled() != filter.isEnabled()) return false;
     if (!getFilter().equals(filter.getFilter())) return false;

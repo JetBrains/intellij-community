@@ -8,9 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
 public interface GrSynchronizedStatement extends GroovyPsiElement, GrStatement, GrControlStatement {
 
   @Nullable

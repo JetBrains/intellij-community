@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UndesirableClassUsage")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("UndesirableClassUsage", "removal")
 
 package com.intellij.ui.svg
 
@@ -12,7 +12,6 @@ import org.apache.batik.ext.awt.RenderingHintsKeyExt
 import org.apache.batik.gvt.CanvasGraphicsNode
 import org.apache.batik.gvt.CompositeGraphicsNode
 import org.apache.batik.gvt.GraphicsNode
-import org.apache.batik.transcoder.TranscoderException
 import org.apache.batik.util.ParsedURL
 import org.apache.batik.util.SVGConstants
 import org.apache.batik.util.SVGFeatureStrings
@@ -20,12 +19,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.svg.SVGAElement
-import org.w3c.dom.svg.SVGDocument
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
-import java.io.StringReader
+import java.io.InputStream
 import java.lang.ref.WeakReference
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -34,6 +33,11 @@ private fun logger() = Logger.getInstance(SvgTranscoder::class.java)
 private val identityTransform = AffineTransform()
 private val supportedFeatures = HashSet<String>()
 
+// An SVG tag custom attribute, optional for @2x SVG icons.
+// When provided and is set to `true `, the document size should be treated as double-scaled of the base size.
+// See https://youtrack.jetbrains.com/issue/IDEA-267073
+private const val DATA_SCALED_ATTR = "data-scaled"
+
 @ApiStatus.Internal
 class SvgTranscoder private constructor(private var width: Float, private var height: Float) : UserAgent {
   companion object {
@@ -41,8 +45,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
     }
 
-    @JvmStatic
-    val iconMaxSize: Float by lazy {
+    internal val iconMaxSize: Float by lazy {
       var maxSize = Integer.MAX_VALUE.toFloat()
       if (!GraphicsEnvironment.isHeadless()) {
         val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
@@ -55,36 +58,28 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
     @JvmStatic
     fun getDocumentSize(scale: Float, document: Document): ImageLoader.Dimension2DDouble {
-      val transcoder = SvgTranscoder(16f, 16f)
-      val bridgeContext = if ((document as SVGOMDocument).isSVG12) {
-        SVG12BridgeContext(transcoder)
-      }
-      else {
-        BridgeContext(transcoder)
-      }
+      val bridgeContext = createBridgeContext(document, SvgTranscoder(16f, 16f))
       GVTBuilder().build(bridgeContext, document)
       val size = bridgeContext.documentSize
       return ImageLoader.Dimension2DDouble(size.width * scale, size.height * scale)
     }
 
-    @Throws(TranscoderException::class)
-    @JvmStatic
-    @JvmOverloads
+    fun createImage(scale: Float, data: ByteArray): BufferedImage {
+      return createImage(scale = scale, document = createSvgDocument(uri = null, data = data))
+    }
+
+    fun createImage(scale: Float, input: InputStream): BufferedImage {
+      return createImage(scale = scale, document = createSvgDocument(uri = null, inputStream = input))
+    }
+
     fun createImage(scale: Float,
-                    document: Document,
-                    outDimensions: ImageLoader.Dimension2DDouble? /*OUT*/,
+                    document: SVGOMDocument,
                     overriddenWidth: Float = -1f,
                     overriddenHeight: Float = -1f): BufferedImage {
       val transcoder = SvgTranscoder(if (overriddenWidth == -1f) 16f else overriddenWidth,
                                      if (overriddenHeight == -1f) 16f else overriddenHeight)
 
-      val iconMaxSize = iconMaxSize
-      val bridgeContext = if ((document as SVGOMDocument).isSVG12) {
-        SVG12BridgeContext(transcoder)
-      }
-      else {
-        BridgeContext(transcoder)
-      }
+      val bridgeContext = createBridgeContext(document, transcoder)
 
       try {
         // build the GVT tree - it will set bridgeContext.documentSize
@@ -93,19 +88,16 @@ class SvgTranscoder private constructor(private var width: Float, private var he
         val docWidth = bridgeContext.documentSize.width.toFloat()
         val docHeight = bridgeContext.documentSize.height.toFloat()
 
-        transcoder.setImageSize(docWidth * scale, docHeight * scale, overriddenWidth, overriddenHeight, iconMaxSize)
+        var normalizingScale = 1f
+        if ((document.url?.contains("@2x") == true) and
+          document.rootElement?.attributes?.getNamedItem(DATA_SCALED_ATTR)?.nodeValue?.lowercase(Locale.ENGLISH).equals("true")) {
+          normalizingScale = 2f
+        }
+        val imageScale = scale / normalizingScale
+        transcoder.setImageSize(docWidth * imageScale, docHeight * imageScale, overriddenWidth, overriddenHeight, iconMaxSize)
         val transform = computeTransform(document, gvtRoot, bridgeContext, docWidth, docHeight, transcoder.width, transcoder.height)
         transcoder.currentTransform = transform
-
-        val image = render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
-        outDimensions?.setSize(docWidth.toDouble(), docHeight.toDouble())
-        return image
-      }
-      catch (e: TranscoderException) {
-        throw e
-      }
-      catch (e: Exception) {
-        throw TranscoderException(e)
+        return render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
       }
       finally {
         bridgeContext.dispose()
@@ -146,14 +138,14 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun getMedia() = "screen"
 
-  override fun getBrokenLinkDocument(e: Element, url: String, message: String): SVGDocument {
+  override fun getBrokenLinkDocument(e: Element, url: String, message: String): SVGOMDocument {
     logger().warn("$url $message")
     val fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
                        "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "</svg>\n"
-    return createSvgDocument(null, StringReader(fallbackIcon)) as SVGDocument
+    return createSvgDocument(data = fallbackIcon.toByteArray())
   }
 
   override fun getTransform() = currentTransform!!
@@ -184,6 +176,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun showConfirm(message: String?) = false
 
+  @Suppress("FloatingPointLiteralPrecision")
   override fun getPixelUnitToMillimeter(): Float = 0.26458333333333333333333333333333f // 96dpi
 
   override fun getPixelToMM() = pixelUnitToMillimeter
@@ -203,8 +196,6 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun getUserStyleSheetURI() = null
 
-  override fun getXMLParserClassName() = null
-
   override fun isXMLParserValidating() = false
 
   override fun getEventDispatcher() = null
@@ -221,26 +212,12 @@ class SvgTranscoder private constructor(private var width: Float, private var he
 
   override fun hasFeature(s: String?) = supportedFeatures.contains(s)
 
-  override fun supportExtension(s: String?) = false
-
-  override fun registerExtension(ext: BridgeExtension) {
-  }
-
-  override fun handleElement(elt: Element?, data: Any?) {}
-
   override fun checkLoadScript(scriptType: String?, scriptURL: ParsedURL, docURL: ParsedURL?) {
     throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
   }
 
   override fun checkLoadExternalResource(resourceUrl: ParsedURL, documentUrl: ParsedURL?) {
-    // make sure that the archives comes from the same host as the document itself
-    if (documentUrl == null) {
-      throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
-    }
-
-    val docHost = documentUrl.host
-    val externalResourceHost: String = resourceUrl.host
-    if (docHost != externalResourceHost && (docHost == null || docHost != externalResourceHost) && "data" != resourceUrl.protocol) {
+    if ("data" != resourceUrl.protocol) {
       throw SecurityException("NO_EXTERNAL_RESOURCE_ALLOWED")
     }
   }
@@ -262,7 +239,7 @@ private fun computeTransform(document: SVGOMDocument,
   val preserveAspectRatioMatrix: AffineTransform
   val root = document.rootElement
   val viewBox = root.getAttributeNS(null, SVGConstants.SVG_VIEW_BOX_ATTRIBUTE)
-  if (viewBox != null && viewBox.isNotEmpty()) {
+  if (viewBox.isNotEmpty()) {
     val aspectRatio = root.getAttributeNS(null, SVGConstants.SVG_PRESERVE_ASPECT_RATIO_ATTRIBUTE)
     preserveAspectRatioMatrix = ViewBox.getPreserveAspectRatioTransform(root, viewBox, aspectRatio, width, height, context)
   }
@@ -287,10 +264,15 @@ private fun render(offScreenWidth: Int, offScreenHeight: Int, usr2dev: AffineTra
 
   val g = image.createGraphics()
   g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+  g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
   g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+
   g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
   g.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE, WeakReference(image))
+
   g.transform = identityTransform
+  @Suppress("GraphicsSetClipInspection")
   g.setClip(0, 0, offScreenWidth, offScreenHeight)
   g.composite = AlphaComposite.Clear
   g.fillRect(0, 0, offScreenWidth, offScreenHeight)
@@ -322,4 +304,14 @@ private fun getStandardBolderFontWeight(f: Float): Float {
     900 -> 900f
     else -> throw IllegalArgumentException("Bad Font Weight: $f")
   }
+}
+
+private fun createBridgeContext(document: Document, transcoder: SvgTranscoder): BridgeContext {
+  val bridgeContext = if ((document as SVGOMDocument).isSVG12) {
+    SVG12BridgeContext(transcoder, SvgDocumentLoader)
+  }
+  else {
+    BridgeContext(transcoder, SvgDocumentLoader)
+  }
+  return bridgeContext
 }

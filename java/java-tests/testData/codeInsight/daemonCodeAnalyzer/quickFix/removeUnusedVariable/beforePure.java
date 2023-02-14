@@ -1,4 +1,4 @@
-// "Remove local variable 'i'" "true"
+// "Remove local variable 'i'" "true-preview"
 import org.jetbrains.annotations.Contract;
 
 class a {

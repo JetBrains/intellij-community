@@ -15,6 +15,12 @@ public final class TestFrameworkConstants {
   public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
 
   @NonNls
+  public static final String TEST_METADATA_ANNOTATION_QUALIFIED_NAME = "org.jetbrains.kotlin.test.TestMetadata";
+
+  @NonNls
+  public static final String TEST_ROOT_ANNOTATION_QUALIFIED_NAME = "org.jetbrains.kotlin.test.TestRoot";
+
+  @NonNls
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   @NonNls
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";

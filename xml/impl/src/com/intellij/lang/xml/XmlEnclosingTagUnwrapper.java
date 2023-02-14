@@ -54,7 +54,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement element, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement element, @NotNull List<? super PsiElement> toExtract) {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
     final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
@@ -94,7 +94,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     deleteEmptyLine(document, marker.getEndOffset());
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(marker.getStartOffset(), marker.getEndOffset()));
+    CodeStyleManager.getInstance(project).adjustLineIndent(file, marker.getTextRange());
     return Collections.emptyList();
   }
 

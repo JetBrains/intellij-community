@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -11,8 +11,6 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
@@ -20,13 +18,12 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -64,22 +61,27 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        state instanceof TargetEnvironmentAwareRunProfileState &&
-        Experiments.getInstance().isFeatureEnabled("run.targets")) {
+        state instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
         return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
       });
     }
     else {
-      executionManager.startRunProfile(environment, state, state1 -> SlowOperations.allowSlowOperations(() -> {
+      executionManager.startRunProfile(environment, state, state1 -> {
         return doExecute(state, environment);
-      }));
+      });
     }
   }
 
   // used externally
   protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
+    if (state instanceof JavaCommandLine &&
+        !JavaProgramPatcher.patchJavaCommandLineParamsUnderProgress(env.getProject(), () -> {
+          JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+        })) {
+      return null;
+    }
     return createContentDescriptor(state, env);
   }
 
@@ -88,16 +90,19 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                                                                    @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return state.prepareTargetToCommandExecution(env, LOG,"Failed to execute debug configuration async", () -> {
+    return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
+      if (state instanceof JavaCommandLine) {
+        JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+      }
       return createContentDescriptor(state, env);
     });
   }
 
   @Nullable
-  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
+                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      JavaProgramPatcher.runCustomPatchers(parameters, environment.getExecutor(), environment.getRunProfile());
       boolean isPollConnection = true;
       RemoteConnection connection = null;
       if (state instanceof RemoteConnectionCreator) {
@@ -109,20 +114,11 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
         connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
           .asyncAgent(true)
           .project(environment.getProject())
-          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
           .create(parameters);
         isPollConnection = true;
       }
 
-      // TODO: remove in 2019.1 where setShouldKillProcessSoftlyWithWinP is enabled by default in KillableProcessHandler
-      RunContentDescriptor descriptor = attachVirtualMachine(state, environment, connection, isPollConnection);
-      if (descriptor != null) {
-        ProcessHandler handler = descriptor.getProcessHandler();
-        if (handler instanceof KillableProcessHandler) {
-          ((KillableProcessHandler)handler).setShouldKillProcessSoftlyWithWinP(true);
-        }
-      }
-      return descriptor;
+      return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
       RemoteConnection connection =
@@ -176,6 +172,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
           }
         }).getRunContentDescriptor());
       }
+      catch (ProcessCanceledException ignored) {
+      }
       catch (ExecutionException e) {
         ex.set(e);
       }
@@ -227,7 +225,6 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return new RemoteConnectionBuilder(debuggerSettings.LOCAL, debuggerSettings.getTransport(), debuggerSettings.getDebugPort())
       .asyncAgent(beforeExecution)
       .project(project)
-      .memoryAgent(beforeExecution && DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(javaParameters);
   }
 

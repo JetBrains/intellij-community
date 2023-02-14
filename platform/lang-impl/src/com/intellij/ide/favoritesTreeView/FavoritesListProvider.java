@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -13,6 +13,10 @@ import javax.swing.*;
 import java.util.Comparator;
 import java.util.Set;
 
+/**
+ * @deprecated implement {@link com.intellij.ide.bookmark.BookmarksListProvider} instead
+ */
+@Deprecated(forRemoval = true)
 public interface FavoritesListProvider extends Comparator<FavoriteTreeNodeDescriptor>, Comparable<FavoritesListProvider> {
   ExtensionPointName<FavoritesListProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoritesListProvider");
 

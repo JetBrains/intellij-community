@@ -1,4 +1,4 @@
-// "Create field 'field'" "true"
+// "Create field 'field'" "true-preview"
 class A{
     private final Outer.Inner field<caret>;
 

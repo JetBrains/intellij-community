@@ -3,6 +3,7 @@ package com.intellij.xdebugger.memory.component;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -10,7 +11,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.xdebugger.memory.event.MemoryViewManagerListener;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"))
+@State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"), category = SettingsCategory.TOOLS)
 public class MemoryViewManager implements PersistentStateComponent<MemoryViewManagerState> {
   public static final String MEMORY_VIEW_CONTENT = "MemoryView";
 

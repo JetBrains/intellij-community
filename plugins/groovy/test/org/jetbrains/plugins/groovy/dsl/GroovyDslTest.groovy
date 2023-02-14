@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
 
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyDslTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -187,7 +184,8 @@ public class MyCategory {
     myFixture.configureByText 'a.groovy', '"".foo(par<caret>)'
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'param1', 'param2'
-    assert '<pre><b>param1</b>: java.lang.String</pre><p>My doc' == generateDoc()
+    assert generateDoc() ==
+           '<pre><span style="">param1</span><span style="">:</span> <span style="color:#000000;">java.lang.String</span></pre><p>My doc</p>'
   }
 
   private String generateDoc() {
@@ -217,7 +215,7 @@ public class MyCategory {
     myFixture.completeBasic()
     assert generateDoc().contains('Some doc')
     assert generateDoc().contains('foo')
-    assert generateDoc().contains('()')
+    assert generateDoc().contains('<span style="">(</span><span style="">)</span>')
   }
 
   void testPropertyDoc() {

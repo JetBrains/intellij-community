@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyRenameTest extends PyTestCase {
   public static final String RENAME_DATA_PATH = "refactoring/rename/";
 
@@ -226,6 +224,26 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
   }
 
+  // PY-16760
+  public void testGoogleDocstringAttributeRenamesWithClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringAttributeRenamesWithDataclassClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringDataClassParameterRenamesWithClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
+  // PY-28549
+  public void testGoogleDocstringDataClassParameterRenamesWithInitParameterOverClassAttribute() {
+    renameWithDocStringFormat(DocStringFormat.GOOGLE, "bar");
+  }
+
   // PY-2748
   public void testFormatStringDictLiteral() {
     doUnsupportedOperationTest();
@@ -345,6 +363,41 @@ public class PyRenameTest extends PyTestCase {
     assertEmpty(found);
   }
 
+  // PY-21938
+  public void testRenameMethodDefinitionDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed");
+  }
+
+  // PY-21938
+  public void testRenameMethodUsageDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed");
+  }
+
+  // PY-21938
+  public void testRenameMethodDeclaredInPyi() {
+    doMultiFileTest("someOtherMethodRenamed", "a.pyi");
+  }
+
+  // PY-21937
+  public void testRenameBothPyFileAndStub() {
+    doMultiFileTest("bar.pyi");
+  }
+
+  // PY-29898
+  public void testRenameDataclassAttributeAndKeywordArgument() {
+    doTest("y");
+  }
+
+  // PY-48012
+  public void testRenameKeywordParameter() {
+    doTest("bar");
+  }
+
+  // PY-55231
+  public void testRenameKeywordArgumentConstructorParameter() {
+    doTest("taram");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, () -> doTest(newName));
   }
@@ -381,10 +434,14 @@ public class PyRenameTest extends PyTestCase {
   }
 
   private void doMultiFileTest(String newName) {
+    doMultiFileTest(newName, "a.py");
+  }
+
+  private void doMultiFileTest(String newName, String entryFileName) {
     final String testName = getTestName(true);
     final VirtualFile dir1 = myFixture.copyDirectoryToProject(RENAME_DATA_PATH + testName + "/before", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    myFixture.configureFromTempProjectFile("a.py");
+    myFixture.configureFromTempProjectFile(entryFileName);
     myFixture.renameElementAtCaret(newName);
     VirtualFile dir2 = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
     try {

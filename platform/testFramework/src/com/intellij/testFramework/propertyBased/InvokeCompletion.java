@@ -48,9 +48,6 @@ import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
   private final CompletionPolicy myPolicy;
@@ -185,7 +182,7 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private void checkNoDuplicates(List<LookupElement> items) {
+  private void checkNoDuplicates(List<? extends LookupElement> items) {
     Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);

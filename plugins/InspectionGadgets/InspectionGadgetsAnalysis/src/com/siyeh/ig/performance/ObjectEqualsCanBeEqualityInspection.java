@@ -47,7 +47,7 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
   private static class ObjectEqualsMayBeEqualityVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       EqualityCheck check = EqualityCheck.from(expression);
       if (check == null) return;

@@ -1,5 +1,5 @@
 public class FooBar {
-    private static final class Bar1 {
+    static final class Bar1 {
         private Bar1() {
         }
     }
@@ -13,5 +13,11 @@ public class FooBar {
 
     public static void main(String[] args) throws Exception {
         foo(Bar1::new);
+    }
+}
+
+class FooBarBaz {
+     public static void main(String[] args) throws Exception {
+        foo(FooBar.Bar1::new);
     }
 }

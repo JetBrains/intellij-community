@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import com.intellij.ide.IdeTooltipManager
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.TestsScope
@@ -32,42 +31,34 @@ import javax.swing.border.EmptyBorder
 
 typealias SourcePath = String
 typealias TestName = String
-typealias TestTasks = List<String>
 
 open class TestTasksChooser {
-  @Suppress("CAST_NEVER_SUCCEEDS")
-  private fun error(message: String): Nothing = LOG.error(message) as Nothing
+  private fun error(message: String): Nothing {
+    LOG.error(message)
+    throw IllegalArgumentException(message)
+  }
 
   fun chooseTestTasks(
     project: Project,
     context: DataContext,
     elements: Iterable<PsiElement>,
-    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
+    consumer: Consumer<List<Map<SourcePath, TasksToRun>>>
   ) {
     val sources = elements.map { getSourceFile(it) ?: error("Can not find source file for $it") }
-    chooseTestTasks(project, context, sources, consumer)
-  }
-
-  fun chooseTestTasks(
-    project: Project,
-    context: DataContext,
-    vararg elements: PsiElement,
-    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
-  ) {
-    chooseTestTasks(project, context, elements.asIterable(), consumer)
-  }
-
-  fun chooseTestTasks(
-    project: Project,
-    context: DataContext,
-    sources: List<VirtualFile>,
-    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
-  ) {
     val testTasks = findAllTestsTaskToRun(sources, project)
+    chooseTestTasks(project, context, testTasks, consumer::accept)
+  }
+
+  open fun <T> chooseTestTasks(
+    project: Project,
+    context: DataContext,
+    testTasks: Map<TestName, T>,
+    consumer: (List<T>) -> Unit
+  ) {
     when {
-      testTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
-      testTasks.size == 1 -> consumer.accept(testTasks.values.toList())
-      else -> chooseTestTasks(project, context, testTasks, consumer)
+      testTasks.isEmpty() -> showTestTasksNotFoundWarning(project, context)
+      testTasks.size == 1 -> consumer(testTasks.values.toList())
+      else -> showTestTasksPopupChooser(project, context, testTasks, consumer)
     }
   }
 
@@ -76,23 +67,24 @@ open class TestTasksChooser {
     project: Project
   ): Map<TestName, Map<SourcePath, TasksToRun>> {
     val testTasks: Map<SourcePath, Map<TestName, TasksToRun>> =
-      sources.map { source -> source.path to findAllTestsTaskToRun(source, project).map { it.testName to it }.toMap() }.toMap()
+      sources.associate { source -> source.path to findAllTestsTaskToRun(source, project).associateBy { it.testName } }
     val testTaskNames = testTasks.flatMap { it.value.keys }.toSet()
-    return testTaskNames.map { name -> name to testTasks.mapNotNullValues { it.value[name] } }.toMap()
+    return testTaskNames.associateWith { name -> testTasks.mapNotNullValues { it.value[name] } }
   }
 
-  protected open fun chooseTestTasks(
+  protected open fun <T> showTestTasksPopupChooser(
     project: Project,
     context: DataContext,
-    testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-    consumer: Consumer<List<Map<SourcePath, TestTasks>>>
+    testTasks: Map<TestName, T>,
+    consumer: (List<T>) -> Unit
   ) {
     assert(!ApplicationManager.getApplication().isCommandLine)
-    val sortedTestTasksNames = testTasks.keys.toList().sortedByDescending { it == TEST_TASK_NAME }
-    val testTaskRenderer = TestTaskListCellRenderer(project)
     JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(sortedTestTasksNames)
-      .setRenderer(testTaskRenderer)
+      .createPopupChooserBuilder(
+        testTasks.keys.toList()
+          .sortedByDescending { it == TEST_TASK_NAME }
+      )
+      .setRenderer(TestTaskListCellRenderer(project))
       .setTitle(suggestPopupTitle(context))
       .setAutoselectOnMouseMove(false)
       .setNamerForFiltering(FunctionUtil.id())
@@ -104,19 +96,18 @@ open class TestTasksChooser {
       .setItemsChosenCallback {
         val choosesTestTasks = it.mapNotNull(testTasks::get)
         when {
-          choosesTestTasks.isEmpty() -> showTestsNotFoundWarning(project, context)
-          else -> consumer.accept(choosesTestTasks)
+          choosesTestTasks.isEmpty() -> showTestTasksNotFoundWarning(project, context)
+          else -> consumer(choosesTestTasks)
         }
       }
       .createPopup()
       .show(getBestPopupPosition(context))
   }
 
-  protected open fun showTestsNotFoundWarning(project: Project, context: DataContext) {
+  protected open fun showTestTasksNotFoundWarning(project: Project, context: DataContext) {
     assert(!ApplicationManager.getApplication().isCommandLine)
     JBPopupFactory.getInstance()
       .createBalloonBuilder(JLabel(GradleBundle.message("gradle.tests.tasks.choosing.warning.text")))
-      .setDisposable(ApplicationManager.getApplication())
       .setFillColor(IdeTooltipManager.getInstance().getTextBackground(false))
       .createBalloon()
       .show(getBestBalloonPosition(context), Balloon.Position.above)
@@ -124,9 +115,7 @@ open class TestTasksChooser {
 
   @NlsContexts.PopupTitle
   private fun suggestPopupTitle(context: DataContext): String {
-    @Suppress("HardCodedStringLiteral")
-    val locationName = context.getData(LOCATION)
-    return when (locationName) {
+    return when (val locationName = context.getData(LOCATION)) {
       null -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title.common")
       else -> GradleBundle.message("gradle.tests.tasks.choosing.popup.title", locationName)
     }

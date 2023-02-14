@@ -12,8 +12,6 @@ import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 /**
  * @author Plushnikov Michail
  */
@@ -33,15 +31,14 @@ public class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBa
     }
 
     @Override
-    public void visitAnnotation(final PsiAnnotation annotation) {
+    public void visitAnnotation(final @NotNull PsiAnnotation annotation) {
       checkFor("lombok.experimental.Builder", LombokClassNames.BUILDER, annotation);
       checkFor("lombok.experimental.Value", LombokClassNames.VALUE, annotation);
       checkFor("lombok.experimental.Wither", LombokClassNames.WITH, annotation);
     }
 
     private void checkFor(String deprecatedAnnotationFQN, String newAnnotationFQN, PsiAnnotation psiAnnotation) {
-      final String annotationQualifiedName = psiAnnotation.getQualifiedName();
-      if (Objects.equals(deprecatedAnnotationFQN, annotationQualifiedName)) {
+      if (psiAnnotation.hasQualifiedName(deprecatedAnnotationFQN)) {
         final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psiAnnotation, PsiModifierListOwner.class, false);
         if (null != listOwner) {
 

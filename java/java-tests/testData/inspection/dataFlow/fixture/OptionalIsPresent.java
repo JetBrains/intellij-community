@@ -7,7 +7,7 @@ class Test {
       test = Optional.of("x");
     } else {
       test = Optional.empty();
-      if(<warning descr="Condition '!test.isPresent()' is always 'true'">!<warning descr="Result of 'test.isPresent()' is always 'false'">test.isPresent()</warning></warning>) {
+      if(<warning descr="Condition '!test.isPresent()' is always 'true'">!test.isPresent()</warning>) {
         System.out.println("Always");
       }
     }
@@ -30,8 +30,8 @@ class Test {
       System.out.println(maybe.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>());
     }
     boolean b = <warning descr="Condition '((maybe.isPresent())) && maybe.get() == 1' is always 'false'">((<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>)) && maybe.get() == 1</warning>;
-    boolean c = <warning descr="Condition '(!maybe.isPresent()) || maybe.get() == 1' is always 'true'">(<warning descr="Condition '!maybe.isPresent()' is always 'true'">!<warning descr="Result of 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning></warning>) || maybe.get() == 1</warning>;
-    Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!<warning descr="Result of 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning></warning> ? 0 : maybe.get();
+    boolean c = <warning descr="Condition '(!maybe.isPresent()) || maybe.get() == 1' is always 'true'">(<warning descr="Condition '!maybe.isPresent()' is always 'true'">!maybe.isPresent()</warning>) || maybe.get() == 1</warning>;
+    Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!maybe.isPresent()</warning> ? 0 : maybe.get();
   }
 
   Optional<Integer> getIntegerOptional() {
@@ -100,9 +100,9 @@ class Test {
   public static String demo() {
     Optional<String> holder = Optional.empty();
 
-    if (<warning descr="Condition '! holder.isPresent()' is always 'true'">! <warning descr="Result of 'holder.isPresent()' is always 'false'">holder.isPresent()</warning></warning>) {
+    if (<warning descr="Condition '! holder.isPresent()' is always 'true'">! holder.isPresent()</warning>) {
       holder = Optional.of("hello world");
-      if (<warning descr="Condition '!holder.isPresent()' is always 'false'">!<warning descr="Result of 'holder.isPresent()' is always 'true'">holder.isPresent()</warning></warning>) {
+      if (<warning descr="Condition '!holder.isPresent()' is always 'false'">!holder.isPresent()</warning>) {
         return null;
       }
     }

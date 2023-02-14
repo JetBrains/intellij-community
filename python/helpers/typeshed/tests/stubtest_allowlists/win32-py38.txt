@@ -1,0 +1,19 @@
+# Exists at runtime, but missing from stubs
+_winapi.CreateFileMapping
+_winapi.MapViewOfFile
+_winapi.OpenFileMapping
+_winapi.VirtualQuerySize
+asyncio.IocpProactor.recvfrom
+asyncio.IocpProactor.sendto
+asyncio.windows_events.IocpProactor.recvfrom
+asyncio.windows_events.IocpProactor.sendto
+subprocess.STARTUPINFO.copy
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+# pathlib methods that exist on Windows, but always raise NotImplementedError,
+# so are omitted from the stub
+pathlib.WindowsPath.group
+pathlib.WindowsPath.owner

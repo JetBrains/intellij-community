@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -18,11 +18,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -34,17 +32,14 @@ public final class AsyncEventSupport {
   @ApiStatus.Internal
   public static final ExtensionPointName<AsyncFileListener> EP_NAME = new ExtensionPointName<>("com.intellij.vfs.asyncListener");
 
-  //
   // VFS events could be fired with any unpredictable nesting.
-  // One may fire new events (for example using syncPublisher()) while processing current events in before() or after().
-  // So, we cannot rely on listener's execution and nesting order in this case and we should explicitly mark events that supposed to be processed asynchronously.
-  //
-  @NotNull
-  private static final Set<List<? extends VFileEvent>> ourAsyncProcessedEvents
-    = new ObjectOpenCustomHashSet<>(1, new IdentityHashingStrategy());
-  @NotNull
-  private static final Map<List<? extends VFileEvent>, List<AsyncFileListener.ChangeApplier>> ourAppliers
-    = CollectionFactory.createSmallMemoryFootprintMap(1);
+  // One may fire new events (for example, using `syncPublisher()`) while processing current events in `before()` or `after()`.
+  // So, we cannot rely on listener's execution and nesting order in this case and have to explicitly mark events
+  // that are supposed to be processed asynchronously.
+  private static final @NotNull Set<List<? extends VFileEvent>> ourAsyncProcessedEvents =
+    CollectionFactory.createCustomHashingStrategySet(HashingStrategy.identity());
+  private static final @NotNull Map<List<? extends VFileEvent>, List<AsyncFileListener.ChangeApplier>> ourAppliers =
+    CollectionFactory.createSmallMemoryFootprintMap(1);
 
   public static void startListening() {
     Application app = ApplicationManager.getApplication();
@@ -73,12 +68,11 @@ public final class AsyncEventSupport {
   }
 
   private static void ensureAllEventsProcessed() {
-    LOG.assertTrue(ourAsyncProcessedEvents.isEmpty(), "Some vfs events were not properly processed " + ourAsyncProcessedEvents);
-    LOG.assertTrue(ourAppliers.isEmpty(), "Some vfs events were not processed after vfs change performed " + ourAppliers);
+    LOG.assertTrue(ourAsyncProcessedEvents.isEmpty(), "Some VFS events were not properly processed " + ourAsyncProcessedEvents);
+    LOG.assertTrue(ourAppliers.isEmpty(), "Some VFS events were not processed after VFS change performed " + ourAppliers);
   }
 
-  @NotNull
-  static List<AsyncFileListener.ChangeApplier> runAsyncListeners(@NotNull List<? extends VFileEvent> events) {
+  static @NotNull List<AsyncFileListener.ChangeApplier> runAsyncListeners(@NotNull List<? extends VFileEvent> events) {
     if (events.isEmpty()) return Collections.emptyList();
 
     if (LOG.isDebugEnabled()) {
@@ -120,7 +114,7 @@ public final class AsyncEventSupport {
     LOG.assertTrue(ourAsyncProcessedEvents.remove(events));
   }
 
-  private static void beforeVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
+  private static void beforeVfsChange(@NotNull List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
       PingProgress.interactWithEdtProgress();
       try {
@@ -138,6 +132,9 @@ public final class AsyncEventSupport {
       try {
         applier.afterVfsChange();
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable e) {
         LOG.error(e);
       }
@@ -146,30 +143,17 @@ public final class AsyncEventSupport {
 
   static void processEventsFromRefresh(@NotNull List<? extends CompoundVFileEvent> events,
                                        @NotNull List<? extends AsyncFileListener.ChangeApplier> appliers,
-                                       boolean asyncEventProcessing) {
+                                       boolean asyncProcessing) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     beforeVfsChange(appliers);
     try {
-      ((PersistentFSImpl) PersistentFS.getInstance()).processEventsImpl(events, asyncEventProcessing);
+      ((PersistentFSImpl)PersistentFS.getInstance()).processEventsImpl(events, asyncProcessing);
     }
     catch (Throwable e) {
       LOG.error(e);
     }
     finally {
       afterVfsChange(appliers);
-    }
-  }
-
-  private static class IdentityHashingStrategy implements Hash.Strategy<List<? extends VFileEvent>> {
-    @Override
-    public int hashCode(List<? extends VFileEvent> o) {
-      return o == null ? 0 : System.identityHashCode(o);
-    }
-
-    @Override
-    public boolean equals(@Nullable List<? extends VFileEvent> a,
-                          @Nullable List<? extends VFileEvent> b) {
-      return a == b;
     }
   }
 }

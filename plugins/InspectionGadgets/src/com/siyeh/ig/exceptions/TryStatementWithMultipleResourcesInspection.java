@@ -76,10 +76,9 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
 
   private static boolean isAcceptable(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiTryStatement)) {
+    if (!(parent instanceof PsiTryStatement tryStatement)) {
       return false;
     }
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList == null) {
       return false;
@@ -93,7 +92,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
 
   private static class SplitTryWithResourcesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitKeyword(PsiKeyword keyword) {
+    public void visitKeyword(@NotNull PsiKeyword keyword) {
       super.visitKeyword(keyword);
       if (isOnTheFly() && keyword.getTokenType() == JavaTokenType.TRY_KEYWORD && isAcceptable(keyword)) {
         registerError(keyword);
@@ -101,7 +100,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
     }
 
     @Override
-    public void visitResourceList(PsiResourceList resourceList) {
+    public void visitResourceList(@NotNull PsiResourceList resourceList) {
       super.visitResourceList(resourceList);
       if (isAcceptable(resourceList)) {
         registerError(resourceList);
@@ -111,7 +110,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
 
   private static class SplitTryWithResourcesFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       doFixImpl(descriptor.getPsiElement());
     }
 

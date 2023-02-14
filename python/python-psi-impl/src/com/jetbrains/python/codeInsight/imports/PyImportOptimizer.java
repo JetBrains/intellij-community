@@ -3,12 +3,10 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -28,20 +27,19 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
+  private static final Set<JavaResourceRootType> TEST_RESOURCE_ROOT_TYPES = Set.of(JavaResourceRootType.TEST_RESOURCE);
 
   private boolean mySortImports = true;
 
@@ -64,16 +62,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       return EmptyRunnable.INSTANCE;
     }
 
-    final LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, session);
-    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new SimplePyUnresolvedReferencesInspection());
-    file.accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitElement(@NotNull PsiElement node) {
-        super.visitElement(node);
-        node.accept(visitor);
-      }
-    });
+    PyUnresolvedReferencesVisitor visitor = prepare(file);
     return () -> {
       LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
@@ -84,11 +73,26 @@ public class PyImportOptimizer implements ImportOptimizer {
     };
   }
 
+  private PyUnresolvedReferencesVisitor prepare(@NotNull PsiFile file) {
+    final PsiFile contextFile = FileContextUtil.getContextFile(file);
+    final PsiFile rfile = ObjectUtils.chooseNotNull(contextFile, file);
+
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), rfile);
+
+    SimplePyUnresolvedReferencesInspection inspection = new SimplePyUnresolvedReferencesInspection();
+    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, inspection, context);
+    file.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement node) {
+        super.visitElement(node);
+        node.accept(visitor);
+      }
+    });
+    return visitor;
+  }
+
   private static boolean isInsideTestResourceRoot(@NotNull PsiFile file) {
-    final DirectoryIndex directoryIndex = DirectoryIndex.getInstance(file.getProject());
-    final DirectoryInfo directoryInfo = directoryIndex.getInfoForFile(file.getVirtualFile());
-    final JpsModuleSourceRootType<?> sourceRootType = directoryIndex.getSourceRootType(directoryInfo);
-    return JavaResourceRootType.TEST_RESOURCE.equals(sourceRootType);
+    return ProjectFileIndex.getInstance(file.getProject()).isUnderSourceRootOfType(file.getVirtualFile(), TEST_RESOURCE_ROOT_TYPES);
   }
 
   private static final class ImportSorter {

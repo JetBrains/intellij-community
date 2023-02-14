@@ -24,9 +24,6 @@ import com.intellij.util.ref.GCWatcher;
 
 import java.io.IOException;
 
-/**
- * @author peter
- */
 public class FileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testGetData() {

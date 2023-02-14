@@ -23,4 +23,5 @@ public interface DebuggerColors {
   TextAttributesKey INLINED_VALUES_EXECUTION_LINE = TextAttributesKey.createTextAttributesKey("DEBUGGER_INLINED_VALUES_EXECUTION_LINE");
   TextAttributesKey SMART_STEP_INTO_TARGET = TextAttributesKey.createTextAttributesKey("DEBUGGER_SMART_STEP_INTO_TARGET", EditorColors.SEARCH_RESULT_ATTRIBUTES);
   TextAttributesKey SMART_STEP_INTO_SELECTION = TextAttributesKey.createTextAttributesKey("DEBUGGER_SMART_STEP_INTO_SELECTION", EditorColors.LIVE_TEMPLATE_ATTRIBUTES);
+  TextAttributesKey INLINE_STACK_FRAMES = TextAttributesKey.createTextAttributesKey("INLINE_STACK_FRAMES");
 }

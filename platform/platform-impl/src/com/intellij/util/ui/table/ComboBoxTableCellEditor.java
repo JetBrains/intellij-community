@@ -65,8 +65,7 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-    if (value instanceof ListWithSelection) {
-      ListWithSelection options = (ListWithSelection)value;
+    if (value instanceof ListWithSelection options) {
       comboBox.setModel(new CollectionComboBoxModel(options));
 
       if (options.getSelection() == null) {

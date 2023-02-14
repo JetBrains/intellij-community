@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,7 +12,9 @@ import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated use {@link GotItTooltip} instead
  */
+@Deprecated
 public class GotItPanel {
   private static final JBColor BODY_COLOR_1 = new JBColor(new Color(77, 143, 253), new Color(52, 74, 100));
   private static final JBColor BODY_COLOR_2 = new JBColor(new Color(71, 135, 237), new Color(38, 53, 73));
@@ -53,6 +54,6 @@ public class GotItPanel {
     };
 
     myMessage = IdeTooltipManager.initPane("", new HintHint().setAwtTooltip(true), null);
-    myMessage.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 2f));
+    myMessage.setFont(StartupUiUtil.getLabelFont().deriveFont(StartupUiUtil.getLabelFont().getSize() + 2f));
   }
 }

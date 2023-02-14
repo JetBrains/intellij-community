@@ -92,7 +92,7 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (containingClass == null) {

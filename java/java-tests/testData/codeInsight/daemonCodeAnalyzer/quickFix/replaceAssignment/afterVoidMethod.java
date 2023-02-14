@@ -1,4 +1,4 @@
-// "Remove left side of assignment" "true"
+// "Remove left side of assignment" "true-preview"
 
 class FooBar {
   public int baz;

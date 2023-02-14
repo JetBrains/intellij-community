@@ -59,6 +59,8 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       when (suite.status) {
         GHCommitCheckSuiteStatusState.IN_PROGRESS,
         GHCommitCheckSuiteStatusState.QUEUED,
+        GHCommitCheckSuiteStatusState.PENDING,
+        GHCommitCheckSuiteStatusState.WAITING,
         GHCommitCheckSuiteStatusState.REQUESTED -> pendingChecks++
         GHCommitCheckSuiteStatusState.COMPLETED -> {
           when (suite.conclusion) {
@@ -68,6 +70,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
             GHCommitCheckSuiteConclusion.NEUTRAL -> successfulChecks++
             GHCommitCheckSuiteConclusion.SKIPPED -> successfulChecks++
             GHCommitCheckSuiteConclusion.STALE -> failedChecks++
+            GHCommitCheckSuiteConclusion.STARTUP_FAILURE -> failedChecks++
             GHCommitCheckSuiteConclusion.SUCCESS -> successfulChecks++
             GHCommitCheckSuiteConclusion.TIMED_OUT -> failedChecks++
             null -> failedChecks++

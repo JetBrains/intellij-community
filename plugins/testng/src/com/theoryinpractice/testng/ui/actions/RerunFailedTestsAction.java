@@ -60,7 +60,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
 
           @Override
           public SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
-            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile) {
+            return new SearchingForTestsTask(getServerSocket(), getConfiguration(), myTempFile) {
               @Override
               protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
                 final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = new HashMap<>();
@@ -93,8 +93,7 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
     final Location location = proxy.getLocation(project, scope);
     if (location != null) {
       final PsiElement element = location.getPsiElement();
-      if (element instanceof PsiMethod && element.isValid()) {
-        final PsiMethod psiMethod = (PsiMethod)element;
+      if (element instanceof PsiMethod psiMethod && element.isValid()) {
         PsiClass psiClass = psiMethod.getContainingClass();
         if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final AbstractTestProxy parent = proxy.getParent();

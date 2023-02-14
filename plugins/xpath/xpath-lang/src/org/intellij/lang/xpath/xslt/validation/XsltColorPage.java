@@ -31,15 +31,16 @@ public class XsltColorPage extends XMLColorsPage {
   @NotNull
   @Override
   public String getDemoText() {
-    return "<xsl><xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"1.0\"></xsl>\n" +
-           "    <xsl><xsl:template match=\"/hello-world\"></xsl>\n" +
-           "        <html>\n" +
-           "            <body>\n" +
-           "                <xsl><xsl:value-of select=\"greeting\"/></xsl>\n" +
-           "            </body>\n" +
-           "        </html>\n" +
-           "    <xsl></xsl:template></xsl>\n" +
-           "<xsl></xsl:stylesheet></xsl>";
+    return """
+      <xsl><xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"></xsl>
+          <xsl><xsl:template match="/hello-world"></xsl>
+              <html>
+                  <body>
+                      <xsl><xsl:value-of select="greeting"/></xsl>
+                  </body>
+              </html>
+          <xsl></xsl:template></xsl>
+      <xsl></xsl:stylesheet></xsl>""";
   }
 
   @Override

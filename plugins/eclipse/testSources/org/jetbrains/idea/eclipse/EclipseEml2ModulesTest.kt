@@ -1,23 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
-import org.junit.Assume.assumeTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.testFramework.rules.TestNameExtension
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class EclipseEml2ModulesTest {
   @JvmField
-  @Rule
-  val tempDirectory = TempDirectory()
+  @RegisterExtension
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
-  @Rule
-  val testName = TestName()
+  @RegisterExtension
+  val testName = TestNameExtension()
 
   @Test
   fun testSourceRootPaths() {
@@ -30,7 +28,6 @@ class EclipseEml2ModulesTest {
   }
 
   private fun doTest(secondRootName: String) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testName = testName.methodName.removePrefix("test").decapitalize()
     val testRoot = eclipseTestDataRoot.resolve("eml").resolve(testName)
     val commonRoot = eclipseTestDataRoot.resolve("common").resolve("twoModulesWithClasspathStorage")
@@ -38,11 +35,5 @@ class EclipseEml2ModulesTest {
       "test" to "srcPath/sourceRootPaths/sourceRootPaths",
       "ws-internals" to "srcPath/$secondRootName/ws-internals"
     ))
-  }
-
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
   }
 }

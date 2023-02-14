@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -119,14 +120,6 @@ public class SelectionModelImpl implements SelectionModel {
   public void removeSelectionListener(@NotNull SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
     LOG.assertTrue(success);
-  }
-
-  /**
-   * @deprecated Use {@link EditorActionUtil#selectEntireLines} instead.
-   */
-  @Deprecated
-  public static void doSelectLineAtCaret(@NotNull Caret caret) {
-    EditorActionUtil.selectEntireLines(caret, true);
   }
 
   @Override

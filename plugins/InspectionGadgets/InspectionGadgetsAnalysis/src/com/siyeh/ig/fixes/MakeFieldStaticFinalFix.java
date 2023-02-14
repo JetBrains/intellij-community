@@ -64,13 +64,12 @@ public final class MakeFieldStaticFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiField)) {
+    if (!(parent instanceof PsiField field)) {
       return;
     }
-    final PsiField field = (PsiField)parent;
     final PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) {
       return;

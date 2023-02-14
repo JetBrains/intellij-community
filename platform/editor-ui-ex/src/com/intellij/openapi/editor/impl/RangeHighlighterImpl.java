@@ -56,7 +56,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   static final byte FONT_STYLE_CHANGED_MASK = 64;
   static final byte FOREGROUND_COLOR_CHANGED_MASK = -128;
 
-  @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK, 
+  @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
     CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
   private @interface FlagConstant {}
 
@@ -148,6 +148,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public boolean isVisibleIfFolded() {
     return VISIBLE_IF_FOLDED.isIn(this);
+  }
+
+  @Override
+  public <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {
+    putUserData(key, value);
+    fireChanged(false, false, false);
   }
 
   private static int getFontStyle(TextAttributes textAttributes) {
@@ -359,34 +365,29 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   @Override
   public int getAffectedAreaStartOffset() {
     int startOffset = getStartOffset();
-    switch (getTargetArea()) {
-      case EXACT_RANGE:
-        return startOffset;
-      case LINES_IN_RANGE:
+    return switch (getTargetArea()) {
+      case EXACT_RANGE -> startOffset;
+      case LINES_IN_RANGE -> {
         Document document = myModel.getDocument();
         int textLength = document.getTextLength();
-        if (startOffset >= textLength) return textLength;
-        return document.getLineStartOffset(document.getLineNumber(startOffset));
-      default:
-        throw new IllegalStateException(getTargetArea().toString());
-    }
+        if (startOffset >= textLength) yield textLength;
+        yield document.getLineStartOffset(document.getLineNumber(startOffset));
+      }
+    };
   }
 
   @Override
   public int getAffectedAreaEndOffset() {
     int endOffset = getEndOffset();
-    switch (getTargetArea()) {
-      case EXACT_RANGE:
-        return endOffset;
-      case LINES_IN_RANGE:
+    return switch (getTargetArea()) {
+      case EXACT_RANGE -> endOffset;
+      case LINES_IN_RANGE -> {
         Document document = myModel.getDocument();
         int textLength = document.getTextLength();
-        if (endOffset >= textLength) return endOffset;
-        return Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
-      default:
-        throw new IllegalStateException(getTargetArea().toString());
-    }
-
+        if (endOffset >= textLength) yield endOffset;
+        yield Math.min(textLength, document.getLineEndOffset(document.getLineNumber(endOffset)) + 1);
+      }
+    };
   }
 
   @ChangeStatus

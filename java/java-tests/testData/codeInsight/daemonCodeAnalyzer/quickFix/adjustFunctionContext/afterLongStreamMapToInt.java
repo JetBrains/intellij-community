@@ -1,4 +1,4 @@
-// "Replace 'mapToInt()' with 'map()'" "true"
+// "Replace 'mapToInt()' with 'map()'" "true-preview"
 import java.util.stream.*;
 
 class Test {

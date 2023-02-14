@@ -21,11 +21,11 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
  */
 public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEmptyIntentions() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {\n" +
-                                                     "  <caret>   private String test() {\n" +
-                                                     "        return null;\n" +
-                                                     "     }" +
-                                                     "}");
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Foo {
+        <caret>   private String test() {
+              return null;
+           }}""");
     myFixture.findAllGutters();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     assertEmpty(intentions);
@@ -43,10 +43,11 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRunLineMarker() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class Main<caret>Test extends junit.framework.TestCase {\n" +
-                                               "    public void testFoo() {\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class Main<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+      }""");
     myFixture.doHighlighting();
     CachedIntentions intentions = IntentionsUI.getInstance(getProject()).getCachedIntentions(getEditor(), getFile());
     intentions.wrapAndUpdateGutters();
@@ -75,10 +76,11 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testWarningFixesOnTop() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
-                                               "    public void testFoo() throws Exce<caret>ption {\n" +
-                                               "    }\n" +
-                                               "}");
+    myFixture.configureByText("MainTest.java", """
+      public class MainTest extends junit.framework.TestCase {
+          public void testFoo() throws Exce<caret>ption {
+          }
+      }""");
     myFixture.enableInspections(new RedundantThrowsDeclarationLocalInspection());
     myFixture.doHighlighting();
     List<IntentionAction> actions = myFixture.getAvailableIntentions();

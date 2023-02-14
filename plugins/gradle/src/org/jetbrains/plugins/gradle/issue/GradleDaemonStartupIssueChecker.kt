@@ -52,7 +52,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       quickFixes.add(openFileQuickFix)
     }
 
-    val gradleUserHomeDir = BuildLayoutParameters().gradleUserHomeDir
+    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: BuildLayoutParameters().gradleUserHomeDir
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
     if (commonGradleProperties.isFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")
@@ -97,7 +97,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     if (location == null) return false
 
     if (failureCause == "startup failed:") {
-      val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
+      @Suppress("HardCodedStringLiteral") val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
       val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")

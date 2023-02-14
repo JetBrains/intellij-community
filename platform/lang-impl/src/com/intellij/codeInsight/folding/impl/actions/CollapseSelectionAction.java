@@ -19,20 +19,25 @@ package com.intellij.codeInsight.folding.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.folding.impl.CollapseSelectionHandler;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
 public class CollapseSelectionAction extends BaseCodeInsightAction implements DumbAware {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CollapseSelectionHandler();
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    super.update(event);
+    event.getPresentation().setVisible(event.getPresentation().isVisible() && !EditorUtil.contextMenuInvokedOutsideOfSelection(event));
   }
 
   @Override

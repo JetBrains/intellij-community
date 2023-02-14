@@ -9,9 +9,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 @ApiStatus.Experimental
 @State(name = "MavenProjectSettings", storages = @Storage("mavenProjectSettings.xml"))
 public class MavenProjectSettings implements PersistentStateComponent<MavenProjectSettings> {

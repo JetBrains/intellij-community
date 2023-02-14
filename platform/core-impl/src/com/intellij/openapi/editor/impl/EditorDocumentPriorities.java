@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
  * Document listeners are sorted according {@link PrioritizedDocumentListener#getPriority()}.
  * (the smaller the priority value the sooner the listener will be called)
  * Some standard priorities are listed here.
- *
- * @author Denis Zhdanov
  */
 public final class EditorDocumentPriorities {
 

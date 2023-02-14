@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,8 +99,7 @@ public final class InjectedLanguage {
       if (ourLanguageCache == null || ourLanguageCount != Language.getRegisteredLanguages().size()) {
         initLanguageCache();
       }
-      final Collection<Language> keys = ourLanguageCache.values();
-      return keys.toArray(new Language[0]);
+      return new HashSet<>(ourLanguageCache.values()).toArray(Language[]::new);
     }
   }
 
@@ -111,7 +111,12 @@ public final class InjectedLanguage {
       registeredLanguages = new ArrayList<>(Language.getRegisteredLanguages());
       for (Language language : registeredLanguages) {
         if (LanguageUtil.isInjectableLanguage(language)) {
-          ourLanguageCache.put(language.getID(), language);
+          String languageID = language.getID();
+          ourLanguageCache.put(languageID, language);
+          String lowerCase = languageID.toLowerCase(Locale.ROOT);
+          if (!lowerCase.equals(languageID)) {
+            ourLanguageCache.put(lowerCase, language);
+          }
         }
       }
     } while (Language.getRegisteredLanguages().size() != registeredLanguages.size());
@@ -137,6 +142,7 @@ public final class InjectedLanguage {
     return create(id, "", "", false);
   }
 
+  @Contract(value = "null, _, _, _ -> null; !null, _, _, _ -> new", pure = true)
   @Nullable
   public static InjectedLanguage create(@Nullable String id, String prefix, String suffix, boolean isDynamic) {
     return id == null ? null : new InjectedLanguage(id, prefix == null ? "" : prefix, suffix == null ? "" : suffix, isDynamic);

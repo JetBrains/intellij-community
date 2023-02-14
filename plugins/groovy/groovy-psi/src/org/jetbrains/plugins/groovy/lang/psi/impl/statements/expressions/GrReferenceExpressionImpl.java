@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -11,7 +11,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -45,21 +44,18 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 
 import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
-import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
 import static org.jetbrains.plugins.groovy.lang.typing.DefaultMethodCallTypeCalculatorKt.getTypeFromCandidate;
 
-/**
- * @author ilyas
- */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
   private static final Logger LOG = Logger.getInstance(GrReferenceExpressionImpl.class);
 
@@ -68,8 +64,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
-  private final Lazy<GroovyReference> myRValueReference = lazy(() -> new GrRValueExpressionReference(this));
-  private final Lazy<GroovyReference> myLValueReference = lazy(() -> new GrLValueExpressionReference(this));
+  private final GroovyReference myRValueReference = new GrRValueExpressionReference(this);
+  private final GroovyReference myLValueReference = new GrLValueExpressionReference(this);
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
@@ -222,8 +218,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return ((PsiVariable)resolved).getType();
     }
 
-    if (resolved instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod method) {
       if (PropertyUtilBase.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         return method.getParameterList().getParameters()[0].getType();
       }
@@ -271,6 +266,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
+    PsiType macroType = GroovyInlineTransformationUtilKt.getTypeFromInlineTransformation(refExpr);
+    if (macroType != null) return macroType;
     final Collection<? extends GroovyResolveResult> results = refExpr.lrResolve(true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
@@ -291,7 +288,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (nominal == null) {
-      if (inferred.equals(PsiType.NULL) && CompileStaticUtil.isCompileStatic(refExpr)) {
+      if (inferred.equals(PsiTypes.nullType()) && CompileStaticUtil.isCompileStatic(refExpr)) {
         return TypesUtil.getJavaLangObject(refExpr);
       }
       else {
@@ -389,13 +386,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
-    return isRValue(this) ? myRValueReference.getValue() : null;
+    return isRValue(this) ? myRValueReference : null;
   }
 
   @Nullable
   @Override
   public GroovyReference getLValueReference() {
-    return isLValue(this) ? myLValueReference.getValue() : null;
+    return isLValue(this) ? myLValueReference : null;
   }
 
   @Override
@@ -499,9 +496,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     @NotNull
     @Override
-    public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
+    public GroovyResolveResult[] doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
       if (incomplete) {
-        return resolveIncomplete(ref);
+        return resolveIncomplete(ref).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       final GroovyReference rValueRef = ref.getRValueReference();
       final GroovyReference lValueRef = ref.getLValueReference();
@@ -514,19 +511,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         for (GroovyResolveResult result : lValueRef.resolve(false)) {
           results.putIfAbsent(result.getElement(), result);
         }
-        return new SmartList<>(results.values());
+        return results.values().toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else if (rValueRef != null) {
         // r-value only
-        return new SmartList<>(rValueRef.resolve(false));
+        return rValueRef.resolve(false).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else if (lValueRef != null) {
         // l-value only
-        return new SmartList<>(lValueRef.resolve(false));
+        return lValueRef.resolve(false).toArray(GroovyResolveResult.EMPTY_ARRAY);
       }
       else {
         LOG.error("Reference expression has no references");
-        return emptyList();
+        return GroovyResolveResult.EMPTY_ARRAY;
       }
     }
   };

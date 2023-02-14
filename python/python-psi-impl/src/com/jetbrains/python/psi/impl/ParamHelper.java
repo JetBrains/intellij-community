@@ -55,8 +55,7 @@ public final class ParamHelper {
       final boolean first = i == 0;
       final boolean last = i == parameters.size() - 1;
 
-      if (psi instanceof PyTupleParameter) {
-        final PyTupleParameter tupleParameter = (PyTupleParameter)psi;
+      if (psi instanceof PyTupleParameter tupleParameter) {
         walker.enterTupleParameter(tupleParameter, first, last);
         walkDownParamArray(tupleParameter.getContents(), walker);
         walker.leaveTupleParameter(tupleParameter, first, last);
@@ -176,7 +175,7 @@ public final class ParamHelper {
     // According to PEP 8 equal sign should be surrounded by spaces if annotation is present
     sb.append(parameterRenderedAsTyped ? " = " : "=");
 
-    final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue);
+    final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue);
     if (quotes != null) {
       final String value = defaultValue.substring(quotes.getFirst().length(), defaultValue.length() - quotes.getSecond().length());
       sb.append(quotes.getFirst());
@@ -197,7 +196,7 @@ public final class ParamHelper {
   @Nullable
   public static String getDefaultValueText(@Nullable PyExpression defaultValue) {
     if (defaultValue instanceof PyStringLiteralExpression) {
-      final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
+      final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue.getText());
       if (quotes != null) {
         return quotes.getFirst() + ((PyStringLiteralExpression)defaultValue).getStringValue() + quotes.getSecond();
       }

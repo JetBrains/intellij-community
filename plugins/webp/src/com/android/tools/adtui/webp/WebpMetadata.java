@@ -15,7 +15,6 @@
  */
 package com.android.tools.adtui.webp;
 
-import com.intellij.ide.ApplicationInitializedListener;
 import org.w3c.dom.Node;
 
 import javax.imageio.metadata.IIOInvalidTreeException;
@@ -25,7 +24,7 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 
-public final class WebpMetadata extends IIOMetadata implements ApplicationInitializedListener {
+public final class WebpMetadata extends IIOMetadata {
   public static final String WEBP_FORMAT_LOWER_CASE = "webp";
   public static final String WEBP_FORMAT_UPPER_CASE = "WEBP";
   public static final String[] WEBP_FORMAT_NAMES = new String[] {WEBP_FORMAT_UPPER_CASE, WEBP_FORMAT_LOWER_CASE};
@@ -36,9 +35,10 @@ public final class WebpMetadata extends IIOMetadata implements ApplicationInitia
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
 
-  @Override
-  public void componentsInitialized() {
-    ensureWebpRegistered();
+  static final class WebpMetadataRegistrar {
+    private WebpMetadataRegistrar() {
+      ensureWebpRegistered();
+    }
   }
 
   /**

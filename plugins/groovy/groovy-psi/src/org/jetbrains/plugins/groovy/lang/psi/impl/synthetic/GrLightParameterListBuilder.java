@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -13,10 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GrLightParameterListBuilder extends LightElement implements GrParameterList {
   private final List<GrParameter> myParameters = new ArrayList<>();
   private GrParameter[] myCachedParameters;
@@ -101,6 +99,9 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitParameterList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
@@ -123,5 +124,18 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
   public void clear() {
     myParameters.clear();
     myCachedParameters = null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GrLightParameterListBuilder builder = (GrLightParameterListBuilder)o;
+    return Objects.equals(myParameters, builder.myParameters);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myParameters);
   }
 }

@@ -34,6 +34,11 @@ public final class PersistentMapInMemory<Key, Value> implements PersistentMapBas
   }
 
   @Override
+  public int keysCount() {
+    return myMap.size();
+  }
+
+  @Override
   public void put(Key key, Value value) throws IOException {
     myMap.put(key, value);
   }

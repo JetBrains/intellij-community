@@ -9,21 +9,20 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
-import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import org.jetbrains.annotations.NotNull
-import javax.swing.JComponent
+import java.util.concurrent.TimeUnit
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
@@ -50,8 +49,14 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
           fixOption.fix()
         }
       }
-      val message = if (description == null) text else HtmlBuilder().append(text).br().append(description).wrapWithHtmlBody().toString()
-      inlineComponent.showError(message, linkLabel)
+
+      val message = HtmlBuilder().appendRaw(text)
+      if (description != null) {
+        message.br().appendRaw(description)
+      }
+      message.wrapWithHtmlBody()
+
+      inlineComponent.showError(message.toString(), linkLabel)
     }
   }
 
@@ -113,12 +118,12 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     }
 
     progressShown = true
-    SingleAlarm(Runnable {
+    EdtScheduledExecutorService.getInstance().schedule({
       if (progressShown) {
         container.addToLeft(pi.component)
         panelToValidate?.validate()
       }
-    }, delay = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, threadToUse = SWING_THREAD).request(modalityState)
+    }, modalityState, DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong(), TimeUnit.MILLISECONDS)
 
     return pi
   }
@@ -127,9 +132,12 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     container.removeAll()
     progressShown = false
 
-    val label = multilineLabel(errorText).apply {
-      foreground = DialogWrapper.ERROR_FOREGROUND_COLOR
-    }
+    val label = JBLabel(errorText)
+      .setCopyable(true)
+      .setAllowAutoWrapping(true)
+      .apply {
+        foreground = NamedColorUtil.getErrorForeground()
+      }
 
     container.addToCenter(label)
     if (link != null) {
@@ -143,7 +151,10 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     container.removeAll()
     progressShown = false
 
-    container.addToLeft(JBLabel(text))
+    val label = JBLabel(text)
+      .setCopyable(true)
+
+    container.addToLeft(label)
     panelToValidate?.validate()
   }
 
@@ -152,10 +163,5 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel,
     progressShown = false
 
     panelToValidate?.validate()
-  }
-
-  private fun multilineLabel(text: @NlsContexts.Label String): JComponent = JBLabel(text).apply {
-    setAllowAutoWrapping(true)
-    setCopyable(true)
   }
 }

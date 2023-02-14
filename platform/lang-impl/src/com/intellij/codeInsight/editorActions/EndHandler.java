@@ -17,8 +17,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -49,16 +47,9 @@ public class EndHandler extends EditorActionHandler.ForEachCaret {
       return;
     }
 
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (project == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, caret, dataContext);
-      }
-      return;
-    }
+    final Project project = editor.getProject();
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, caret, dataContext);

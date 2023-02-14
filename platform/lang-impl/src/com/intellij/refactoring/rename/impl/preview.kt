@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
@@ -13,11 +14,13 @@ import com.intellij.refactoring.rename.api.PsiRenameUsage
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.ui.progressTitle
-import com.intellij.refactoring.rename.ui.uiDispatcher
 import com.intellij.refactoring.rename.ui.withBackgroundIndicator
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewUtil
-import com.intellij.usages.*
+import com.intellij.usages.Usage
+import com.intellij.usages.UsageView
+import com.intellij.usages.UsageViewManager
+import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -41,7 +44,7 @@ internal suspend fun showUsageView(
       }
     }
   }
-  return withContext(CoroutineName("show UV") + uiDispatcher) {
+  return withContext(CoroutineName("show UV") + Dispatchers.EDT) {
     UsageViewManager.getInstance(project).showUsages(
       arrayOf(RenameTarget2UsageTarget(targetPointer, newName)),
       usageViewUsages.toArray(Usage.EMPTY_ARRAY),
@@ -86,7 +89,7 @@ internal fun CoroutineScope.previewRenameAsync(
     }
   }
 
-  return async(CoroutineName("selectedUsagesAsync") + uiDispatcher) {
+  return async(CoroutineName("selectedUsagesAsync") + Dispatchers.EDT) {
     suspendCancellableCoroutine { continuation: Continuation<Collection<UsagePointer>> ->
       customizeUsagesView(usageView, continuation, rerunAction)
     }
@@ -95,7 +98,7 @@ internal fun CoroutineScope.previewRenameAsync(
 
 private fun asUsage(renameUsage: RenameUsage, newName: String): Usage? {
   return when (renameUsage) {
-    is PsiRenameUsage -> UsageInfo2UsageAdapter(PsiRenameUsage2UsageInfo(renameUsage, newName))
+    is PsiRenameUsage -> PsiRename2UsageInfo2UsageAdapter(PsiRenameUsage2UsageInfo(renameUsage, newName))
     else -> null
   }
 }

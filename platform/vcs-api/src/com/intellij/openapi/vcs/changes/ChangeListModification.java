@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @see ChangeListManager
  */
 public interface ChangeListModification {
-  LocalChangeList addChangeList(@NotNull @NlsSafe String name, @Nullable @NlsSafe final String comment);
+  @NotNull LocalChangeList addChangeList(@NotNull @NlsSafe String name, @Nullable @NlsSafe String comment);
 
   void setDefaultChangeList(@NotNull @NlsSafe String name);
 
@@ -21,8 +23,10 @@ public interface ChangeListModification {
 
   void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes);
 
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes);
+
   /**
-   * Prohibit changelist deletion or rename until Project is closed
+   * Prohibit changelist deletion or rename until the project is closed
    */
   boolean setReadOnly(@NotNull @NlsSafe String name, final boolean value);
 

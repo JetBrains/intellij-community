@@ -90,8 +90,4 @@ public class ReplicatorInputStream extends InputStream {
     mySource.close();
     myTarget.close();
   }
-
-  public int getBytesRead() {
-    return myTarget.size();
-  }
 }

@@ -22,9 +22,6 @@ import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
   @NotNull
   @Override

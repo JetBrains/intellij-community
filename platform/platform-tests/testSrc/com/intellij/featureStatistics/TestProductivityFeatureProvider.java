@@ -13,7 +13,7 @@ public class TestProductivityFeatureProvider extends ProductivityFeaturesProvide
   public FeatureDescriptor[] getFeatureDescriptors() {
     asked = true;
     return new FeatureDescriptor[] {
-      new FeatureDescriptor(tipId, groupId, "TestTip.html", "test", 0, 0, null, 0, this)
+      new FeatureDescriptor(tipId, groupId, "TestTip", "test", 0, 0, null, 0, this)
     };
   }
 
@@ -22,11 +22,6 @@ public class TestProductivityFeatureProvider extends ProductivityFeaturesProvide
     return new GroupDescriptor[]{
       new GroupDescriptor(groupId, "test")
     };
-  }
-
-  @Override
-  public ApplicabilityFilter[] getApplicabilityFilters() {
-    return new ApplicabilityFilter[0];
   }
 
   @Override

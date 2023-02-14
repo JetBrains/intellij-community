@@ -5,6 +5,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * <p>
+ *   Application-wide Path Macro contributor.
+ * </p>
+ * <p>
+ *   See {@link com.intellij.openapi.components.impl.ProjectWidePathMacroContributor} for the project-wide analog
+ * </p>
+ */
 public interface PathMacroContributor {
   /**
    * Register path.macros

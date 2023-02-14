@@ -40,9 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class DomBasicsTest extends DomTestCase {
   @Override
   protected void runTestRunnable(final @NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -309,6 +306,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testInstanceImplementation() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     MyElement element = createElement("");
     final Object o = new Object();
     element.setObject(o);
@@ -321,6 +320,8 @@ public class DomBasicsTest extends DomTestCase {
   }
 
   public void testSeveralInstanceImplementations() {
+    DomApplicationComponent.getInstance().registerImplementation(MyElement.class, Impl.class, getTestRootDisposable());
+    DomApplicationComponent.getInstance().registerImplementation(InheritedElement.class, AnotherImpl.class, getTestRootDisposable());
     InheritedElement element = createElement("", InheritedElement.class);
     final Object o = new Object();
     element.setObject(o);
@@ -441,7 +442,7 @@ public class DomBasicsTest extends DomTestCase {
       }
     });
     assertNotNull(element[0]);
-    assertSame(element[0], ((StableElement)stable).getWrappedElement());
+    assertSame(element[0], ((StableElement<?>)stable).getWrappedElement());
     assertEquals(element[0], stable);
     assertEquals(stable, element[0]);
     MyElement oldElement = element[0];
@@ -473,25 +474,25 @@ public class DomBasicsTest extends DomTestCase {
 
     oldElement = element[0];
     oldChild1 = oldElement.getChild();
-    ((StableElement)stable).invalidate();
+    ((StableElement<?>)stable).invalidate();
     assertTrue(oldElement.isValid());
     assertTrue(oldChild1.isValid());
-    assertFalse(oldElement.equals(((StableElement)stable).getWrappedElement()));
+    assertFalse(oldElement.equals(((StableElement<?>)stable).getWrappedElement()));
   }
 
   public void testStable_Revalidate() {
     final MyElement[] element = new MyElement[]{createElement("")};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     MyElement oldElement = element[0];
-    ((StableElement) stable).revalidate();
-    assertSame(oldElement, ((StableElement) stable).getWrappedElement());
+    ((StableElement<?>) stable).revalidate();
+    assertSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
     
     element[0] = createElement("");
     assertTrue(oldElement.isValid());
-    ((StableElement) stable).revalidate();
+    ((StableElement<?>) stable).revalidate();
     assertTrue(oldElement.isValid());
-    assertNotSame(oldElement, ((StableElement) stable).getWrappedElement());
-    assertSame(element[0], ((StableElement) stable).getWrappedElement());
+    assertNotSame(oldElement, ((StableElement<?>) stable).getWrappedElement());
+    assertSame(element[0], ((StableElement<?>) stable).getWrappedElement());
   }
 
   public void testStable_Invalidate() {
@@ -499,7 +500,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement[] element = new MyElement[]{oldElement};
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
-    ((StableElement) stable).invalidate();
+    ((StableElement<?>) stable).invalidate();
     assertEquals(stable, stable);
     assertEquals(oldElement.toString(), stable.toString());
   }
@@ -533,7 +534,6 @@ public class DomBasicsTest extends DomTestCase {
     assertTrue(copy.isValid());
   }
 
-  @Implementation(Impl.class)
   public interface MyElement extends DomElement {
     GenericAttributeValue<String> getAttr();
 
@@ -604,7 +604,6 @@ public class DomBasicsTest extends DomTestCase {
 
   public static abstract class EmptyImpl extends BaseImpl implements AnotherElement{}
 
-  @Implementation(AnotherImpl.class)
   public interface InheritedElement extends MyElement, DomElement {
     String getString();
 

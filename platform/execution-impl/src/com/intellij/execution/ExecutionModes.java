@@ -81,7 +81,6 @@ public class ExecutionModes {
     }
 
     /**
-     * @param cancelable
      */
     public SameThreadMode(final boolean cancelable) {
       this(cancelable, null, -1);

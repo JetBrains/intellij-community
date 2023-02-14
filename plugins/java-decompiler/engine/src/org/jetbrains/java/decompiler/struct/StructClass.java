@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructPermittedSubclassesAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructRecordAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -160,6 +162,12 @@ public class StructClass extends StructMember {
     return recordAttr.getComponents();
   }
 
+  public List<String> getPermittedSubclasses() {
+    StructPermittedSubclassesAttribute permittedSubClassAttr = getAttribute(StructGeneralAttribute.ATTRIBUTE_PERMITTED_SUBCLASSES);
+    if (permittedSubClassAttr == null) return null;
+    return permittedSubClassAttr.getClasses();
+  }
+
   public int[] getInterfaces() {
     return interfaces;
   }
@@ -189,12 +197,49 @@ public class StructClass extends StructMember {
             (majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0)); // FIXME: check second condition
   }
 
+  public boolean isVersion7() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_7;
+  }
+
   public boolean isVersion8() {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
+  }
+
+  public boolean isVersion14() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_14;
+  }
+
+  public boolean isVersion15() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_15;
+  }
+
+  public boolean isVersion16() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_16;
+  }
+
+  public boolean isVersion17() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_17;
+  }
+
+  public boolean isPreviewVersion() {
+    return minorVersion == 0xFFFF;
+  }
+
+  public boolean hasSealedClassesSupport() {
+    return isVersion17() || (isVersion15() && isPreviewVersion());
+  }
+
+  public boolean hasPatternsInInstanceofSupport() {
+    return isVersion16() || (isVersion14() && isPreviewVersion());
   }
 
   @Override
   public String toString() {
     return qualifiedName;
+  }
+
+  @Override
+  protected Type getType() {
+    return null;
   }
 }

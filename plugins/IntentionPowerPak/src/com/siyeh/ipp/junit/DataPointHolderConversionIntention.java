@@ -110,12 +110,11 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
   }
 
   private static boolean isConvertible(@NotNull final PsiMember member) {
-    if (!(member instanceof PsiMethod)) {
+    if (!(member instanceof PsiMethod method)) {
       return ((PsiField)member).getInitializer() != null;
     }
-    final PsiMethod method = (PsiMethod)member;
     final PsiType returnType = method.getReturnType();
-    if (returnType == null || returnType.equals(PsiType.VOID) || !method.getParameterList().isEmpty()) {
+    if (returnType == null || returnType.equals(PsiTypes.voidType()) || !method.getParameterList().isEmpty()) {
       return false;
     }
     final PsiCodeBlock body = method.getBody();
@@ -123,15 +122,11 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
       return false;
     }
     final PsiStatement[] methodStatements = body.getStatements();
-    switch (methodStatements.length) {
-      case 1:
-        final PsiStatement methodStatement = methodStatements[0];
-        return methodStatement instanceof PsiReturnStatement;
-      case 0:
-        return true;
-      default:
-        return false;
-    }
+    return switch (methodStatements.length) {
+      case 1 -> methodStatements[0] instanceof PsiReturnStatement;
+      case 0 -> true;
+      default -> false;
+    };
   }
 
   @NotNull

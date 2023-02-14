@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public interface TemplateLanguageFileViewProvider extends FileViewProvider {
 
   /**

@@ -9,10 +9,11 @@ import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.ift.PythonLessonsBundle
-import org.fest.swing.fixture.JTreeFixture
+import org.assertj.swing.fixture.JTreeFixture
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -59,13 +60,13 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     var dynamicItem: String? = null
     task("RenameElement") {
       text(PythonLessonsBundle.message("python.rename.press.rename", action(it), code("teams"), code("teams_number")))
-      triggerByUiComponentAndHighlight(false, false) { ui: NameSuggestionsField ->
+      triggerUI().component { ui: NameSuggestionsField ->
         ui.addDataChangedListener {
           replace = ui.enteredName
         }
         true
       }
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
         val pathStr = path.getPathComponent(1).toString()
         if (path.pathCount == 2 && pathStr.contains(dynamicWord)) {
           dynamicItem = pathStr
@@ -91,10 +92,10 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       }
       val dynamicReferencesString = "[$dynamicWord]"
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
-                                 code("teams"), strong(dynamicReferencesString)))
+                                       code("teams"), strong(dynamicReferencesString)))
 
-      triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
-        path.pathCount == 6 && path.getPathComponent(5).toString().contains("company_members")
+      triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
+        path.pathCount == 6 && path.getPathComponent(5).isToStringContains("company_members")
       }
       showWarningIfFindToolbarClosed()
       test {
@@ -121,7 +122,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
         val leafToBeExcluded = last.lastPathComponent
 
         @Suppress("UNCHECKED_CAST")
-        fun <T : Any?> castHack(processor: ExclusionHandler<T>): Boolean {
+        fun <T : Any> castHack(processor: ExclusionHandler<T>): Boolean {
           return processor.isNodeExclusionAvailable(leafToBeExcluded as T) && processor.isNodeExcluded(leafToBeExcluded as T)
         }
         castHack(exclusionProcessor)
@@ -137,8 +138,8 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
 
     val confirmRefactoringButton = RefactoringBundle.message("usageView.doAction").dropMnemonic()
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { button: JButton ->
-        button.text?.contains(confirmRefactoringButton) == true
+      triggerAndBorderHighlight().component { button: JButton ->
+        button.text.isToStringContains(confirmRefactoringButton)
       }
     }
 
@@ -157,7 +158,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
 
   private fun pathToExclude(tree: JTree): TreePath? {
     return TreeUtil.promiseVisit(tree, TreeVisitor { path ->
-      if (path.pathCount == 7 && path.getPathComponent(6).toString().contains("lambda"))
+      if (path.pathCount == 7 && path.getPathComponent(6).isToStringContains("lambda"))
         TreeVisitor.Action.INTERRUPT
       else
         TreeVisitor.Action.CONTINUE
@@ -170,4 +171,9 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       previous.ui?.isShowing != true
     }
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("rename.help.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html")),
+  )
 }

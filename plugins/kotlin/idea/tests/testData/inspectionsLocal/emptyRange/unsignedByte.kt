@@ -1,0 +1,4 @@
+// WITH_STDLIB
+val a: UByte = 1u
+val b: UByte = 0u
+val range = a<caret>..b

@@ -20,13 +20,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import java.nio.file.Paths
+import java.nio.file.Path
 
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     private val dependencyModuleNames: List<String>,
@@ -47,7 +48,7 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
     @JvmStatic
     fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
-      val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY)
+      val modules = JpsProjectLoader.loadModules(paths.map { Path.of(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY, null)
       val pathsByName = paths.associateBy { it.moduleName }
       val interner = Interner.createStringInterner()
       return modules.map { create(pathsByName[it.name]!!, it, parentDisposable, interner) }

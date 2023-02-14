@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.DefaultExecutionTarget;
@@ -13,9 +13,9 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -227,7 +227,7 @@ public final class TestResultsXmlFormatter {
     final int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : -1;
     final Printer printer = new Printer() {
       @Override
-      public void print(String text, ConsoleViewContentType contentType) {
+      public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         ProgressManager.checkCanceled();
         if (contentType != lastType.get()) {
           if (buffer.length() > 0) {
@@ -250,13 +250,13 @@ public final class TestResultsXmlFormatter {
       }
 
       @Override
-      public void printHyperlink(String text, HyperlinkInfo info) {
+      public void printHyperlink(@NotNull String text, HyperlinkInfo info) {
         if (info instanceof DiffHyperlink.DiffHyperlinkInfo) {
           final DiffHyperlink diffHyperlink = ((DiffHyperlink.DiffHyperlinkInfo)info).getPrintable();
           try {
             HashMap<String, String> attributes = new HashMap<>();
-            attributes.put(EXPECTED, diffHyperlink.getLeft());
-            attributes.put(ACTUAL, diffHyperlink.getRight());
+            attributes.put(EXPECTED, JDOMUtil.removeControlChars(diffHyperlink.getLeft()));
+            attributes.put(ACTUAL, JDOMUtil.removeControlChars(diffHyperlink.getRight()));
             startElement(DIFF, attributes);
             endElement(DIFF);
           }
@@ -300,7 +300,7 @@ public final class TestResultsXmlFormatter {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      output.append(StringUtil.escapeXmlEntities(t.nextToken())).append("\n");
+      output.append(JDOMUtil.removeControlChars(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();
@@ -318,23 +318,14 @@ public final class TestResultsXmlFormatter {
   private static String getStatusString(AbstractTestProxy node) {
     int magnitude = node.getMagnitude();
     // TODO enumeration!
-    switch (magnitude) {
-      case 0:
-        return STATUS_SKIPPED;
-      case 2:
-      case 4:
-        return STATUS_SKIPPED;
-      case 5:
-        return STATUS_IGNORED;
-      case 1:
-        return STATUS_PASSED;
-      case 6:
-        return STATUS_FAILED;
-      case 8:
-        return STATUS_ERROR;
-      default:
-        return node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
-    }
+    return switch (magnitude) {
+      case 0, 2, 4 -> STATUS_SKIPPED;
+      case 5 -> STATUS_IGNORED;
+      case 1 -> STATUS_PASSED;
+      case 6 -> STATUS_FAILED;
+      case 8 -> STATUS_ERROR;
+      default -> node.isPassed() ? STATUS_PASSED : STATUS_FAILED;
+    };
   }
 
   private void startElement(String name, Map<String, String> attributes) throws SAXException {

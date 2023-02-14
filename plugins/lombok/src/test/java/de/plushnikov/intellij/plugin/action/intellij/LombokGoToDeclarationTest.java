@@ -16,22 +16,23 @@ public class LombokGoToDeclarationTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testExtensionMethod() {
-    configureFromFileText("Test.java", "import lombok.experimental.ExtensionMethod;\n" +
-                                       "\n" +
-                                       "@ExtensionMethod({Extensions.class})\n" +
-                                       "public class ExtensionMethodDfa {\n" +
-                                       "  public String test() {\n" +
-                                       "    String iAmNull = " +
-                                       "\"hELlO, WORlD!\".toTitle<caret>Case();\n" +
-                                       "  }\n" +
-                                       "}\n" +
-                                       "class Extensions {\n" +
-                                       "  public static String toTitleCase(String in) {\n" +
-                                       "    if (in.isEmpty()) return in;\n" +
-                                       "    return \"\" + Character.toTitleCase(in.charAt(0)) +\n" +
-                                       "           in.substring(1).toLowerCase(Locale.ROOT);\n" +
-                                       "  }\n" +
-                                       "}\n");
+    configureFromFileText("Test.java", """
+      import lombok.experimental.ExtensionMethod;
+
+      @ExtensionMethod({Extensions.class})
+      public class ExtensionMethodDfa {
+        public String test() {
+          String iAmNull = "hELlO, WORlD!".toTitle<caret>Case();
+        }
+      }
+      class Extensions {
+        public static String toTitleCase(String in) {
+          if (in.isEmpty()) return in;
+          return "" + Character.toTitleCase(in.charAt(0)) +
+                 in.substring(1).toLowerCase(Locale.ROOT);
+        }
+      }
+      """);
 
     PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertTrue(element instanceof PsiMethod);

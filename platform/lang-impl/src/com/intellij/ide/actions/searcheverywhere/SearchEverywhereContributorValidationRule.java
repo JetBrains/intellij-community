@@ -6,9 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,6 +16,12 @@ public class SearchEverywhereContributorValidationRule extends CustomValidationR
 
   private static final Map<String, Boolean> ourContributorsMap = new HashMap<>();
 
+  @NotNull
+  @Override
+  public String getRuleId() {
+    return "se_contributor";
+  }
+
   @Override
   protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
@@ -25,11 +29,6 @@ public class SearchEverywhereContributorValidationRule extends CustomValidationR
     Boolean isJB = ourContributorsMap.get(data);
     return isJB == null ? ValidationResultType.REJECTED
            : isJB.booleanValue() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
-  }
-
-  @Override
-  public boolean acceptRuleId(@Nullable @NonNls String ruleId) {
-    return "se_contributor".equals(ruleId);
   }
 
   static void updateContributorsMap(Collection<? extends SearchEverywhereContributor<?>> contributors) {

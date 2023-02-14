@@ -8,8 +8,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.FilePathByPathComparator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -135,9 +133,7 @@ public class TriggerAdditionOrDeletion {
       myAffected.addAll(toBeDeleted);
 
       if (!vcs.fileListenerIsSynchronous()) {
-        for (FilePath filePath : toBeDeleted) {
-          myVcsFileListenerContextHelper.ignoreDeleted(filePath);
-        }
+        myVcsFileListenerContextHelper.ignoreDeleted(toBeDeleted);
 
         Set<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new HashSet<>());
         paths.addAll(toBeDeleted);
@@ -177,9 +173,7 @@ public class TriggerAdditionOrDeletion {
       myAffected.addAll(toBeAdded);
 
       if (!vcs.fileListenerIsSynchronous()) {
-        for (FilePath filePath : ContainerUtil.sorted(toBeAdded, FilePathByPathComparator.getInstance())) {
-          myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
-        }
+        myVcsFileListenerContextHelper.ignoreAdded(toBeAdded);
 
         Set<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new HashSet<>());
         paths.addAll(toBeAdded);

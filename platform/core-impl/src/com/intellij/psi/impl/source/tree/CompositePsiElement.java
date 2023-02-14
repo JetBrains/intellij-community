@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -38,12 +23,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
+public abstract class CompositePsiElement extends CompositeElement implements NavigatablePsiElement {
   private static final Logger LOG = Logger.getInstance(CompositePsiElement.class);
 
   protected static int ourHC;
 
-  protected CompositePsiElement(IElementType type) {
+  protected CompositePsiElement(@NotNull IElementType type) {
     super(type);
     setPsi(this);
   }
@@ -84,7 +69,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   @Override
   public PsiElement getParent() {
-    final CompositeElement parentNode = getTreeParent();
+    CompositeElement parentNode = getTreeParent();
     return parentNode != null ? parentNode.getPsi() : null;
   }
 
@@ -173,7 +158,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException {
+  public final PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
+    throws IncorrectOperationException {
     return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
   }
 
@@ -295,7 +281,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     if (project != null) {
       return project;
     }
-    final PsiManager manager = getManager();
+    PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 
     return manager.getProject();
@@ -313,7 +299,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     return this;
   }
 
-  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  private PsiElement addInnerBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
@@ -322,7 +308,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return this == another;
   }
 }

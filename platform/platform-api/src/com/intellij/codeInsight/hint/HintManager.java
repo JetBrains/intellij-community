@@ -58,6 +58,7 @@ public abstract class HintManager {
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull @HintText String text, @Nullable HyperlinkListener listener);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
+  public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @Nullable Runnable onHintHidden);
 
   public abstract void showQuestionHint(@NotNull Editor editor, @NotNull @HintText String hintText, int offset1, int offset2, @NotNull QuestionAction action);
 

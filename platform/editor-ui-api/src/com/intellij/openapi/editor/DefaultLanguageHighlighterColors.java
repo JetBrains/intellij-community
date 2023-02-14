@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
  * Base highlighter colors for multiple languages.
- *
- * @author Rustam Vishnyakov
  */
 public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey TEMPLATE_LANGUAGE_COLOR = TextAttributesKey.createTextAttributesKey("DEFAULT_TEMPLATE_LANGUAGE_COLOR", HighlighterColors.TEXT);

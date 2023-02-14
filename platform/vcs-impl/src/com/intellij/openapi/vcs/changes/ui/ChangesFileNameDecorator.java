@@ -7,9 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public abstract class ChangesFileNameDecorator {
   public static ChangesFileNameDecorator getInstance(Project project) {
     return project.getService(ChangesFileNameDecorator.class);

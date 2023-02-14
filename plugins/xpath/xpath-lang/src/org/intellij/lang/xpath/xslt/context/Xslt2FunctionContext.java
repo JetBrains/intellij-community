@@ -80,25 +80,28 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
     FunctionDeclarationParsing.addFunction(decls, "format-number($value as numeric?, $picture as xs:string, $decimal-format-name as xs:string) as xs:string");
 
     FunctionDeclarationParsing.addFunction(decls, "format-dateTime($value  as xs:dateTime?, $picture as xs:string) as xs:string? ");
-    FunctionDeclarationParsing.addFunction(decls, "format-dateTime($value \t as xs:dateTime?,\n" +
-            "$picture as xs:string,\n" +
-            "$language as xs:string?,\n" +
-            "$calendar as xs:string?,\n" +
-            "$country as xs:string?) as xs:string?");
+    FunctionDeclarationParsing.addFunction(decls, """
+      format-dateTime($value \t as xs:dateTime?,
+      $picture as xs:string,
+      $language as xs:string?,
+      $calendar as xs:string?,
+      $country as xs:string?) as xs:string?""");
 
     FunctionDeclarationParsing.addFunction(decls, "format-time($value as xs:time?, $picture as xs:string) as xs:string? ");
-    FunctionDeclarationParsing.addFunction(decls, "format-time($value \t as xs:time?,\n" +
-            "$picture as xs:string,\n" +
-            "$language as xs:string?,\n" +
-            "$calendar as xs:string?,\n" +
-            "$country as xs:string?) as xs:string?");
+    FunctionDeclarationParsing.addFunction(decls, """
+      format-time($value \t as xs:time?,
+      $picture as xs:string,
+      $language as xs:string?,
+      $calendar as xs:string?,
+      $country as xs:string?) as xs:string?""");
 
     FunctionDeclarationParsing.addFunction(decls, "format-date($value as xs:date?, $picture as xs:string) as xs:string? ");
-    FunctionDeclarationParsing.addFunction(decls, "format-date($value \t as xs:date?,\n" +
-            "$picture as xs:string,\n" +
-            "$language as xs:string?,\n" +
-            "$calendar as xs:string?,\n" +
-            "$country as xs:string?) as xs:string?");
+    FunctionDeclarationParsing.addFunction(decls, """
+      format-date($value \t as xs:date?,
+      $picture as xs:string,
+      $language as xs:string?,
+      $calendar as xs:string?,
+      $country as xs:string?) as xs:string?""");
 
     final Parameter optional_string = new Parameter(XPath2Type.STRING, Parameter.Kind.OPTIONAL);
     final Parameter required_string = new Parameter(XPath2Type.STRING, Parameter.Kind.REQUIRED);

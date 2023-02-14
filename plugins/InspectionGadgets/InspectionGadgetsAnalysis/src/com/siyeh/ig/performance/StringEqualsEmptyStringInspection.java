@@ -20,6 +20,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,14 +37,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class StringEqualsEmptyStringInspection extends BaseInspection {
   public boolean SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), this,
-                                          "SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL",
+               InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check")));
   }
 
   @Override
@@ -72,12 +75,11 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
   }
 
   private static PsiExpression getCheckedExpression(boolean useIsEmpty, PsiExpression expression) {
-    if (useIsEmpty || !(expression instanceof PsiMethodCallExpression)) {
+    if (useIsEmpty || !(expression instanceof PsiMethodCallExpression callExpression)) {
       return expression;
     }
     // to replace stringBuffer.toString().equals("") with
     // stringBuffer.length() == 0
-    final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
     final String referenceName = methodExpression.getReferenceName();
     final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
@@ -122,7 +124,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiReferenceExpression.class);
       if (expression == null) return;
       final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
@@ -140,17 +142,18 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       }
       final @NonNls StringBuilder newExpression;
       CommentTracker ct = new CommentTracker();
+      final PsiExpression parent = ObjectUtils.tryCast(call.getParent(), PsiExpression.class);
+      final boolean isNegation = parent != null && BoolUtils.isNegation(parent);
       if (myAddNullCheck) {
         newExpression = new StringBuilder(ct.text(checkedExpression, ParenthesesUtils.EQUALITY_PRECEDENCE));
-        newExpression.append("!=null&&");
+        newExpression.append(isNegation ? "==null||" : "!=null&&");
       }
       else {
         newExpression = new StringBuilder();
       }
-      final PsiExpression parent = ObjectUtils.tryCast(call.getParent(), PsiExpression.class);
       final PsiExpression expressionToReplace;
       String expressionText = ct.text(checkedExpression, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
-      if (parent != null && BoolUtils.isNegation(parent)) {
+      if (isNegation) {
         expressionToReplace = parent;
         if (myUseIsEmpty) {
           newExpression.append('!').append(expressionText).append(".isEmpty()");

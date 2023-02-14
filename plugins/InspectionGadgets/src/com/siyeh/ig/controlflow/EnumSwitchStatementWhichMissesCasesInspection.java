@@ -21,26 +21,31 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -58,10 +63,9 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option"),
-                                          this, "ignoreSwitchStatementsWithDefault");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSwitchStatementsWithDefault", InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option")));
   }
 
   @NotNull
@@ -74,7 +78,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       }
 
       @Override
-      public void visitSwitchExpression(PsiSwitchExpression expression) {
+      public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
         processSwitchBlock(expression);
       }
 
@@ -87,21 +91,29 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
           .toCollection(LinkedHashSet::new);
         if (constants.isEmpty()) return;
         boolean hasDefault = false;
+        boolean hasNull = false;
         ProblemHighlightType highlighting = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         for (PsiSwitchLabelStatementBase child : PsiTreeUtil
           .getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class)) {
-          if (child.isDefaultCase()) {
+          hasNull |= hasMatchingNull(child);
+          if (SwitchUtils.isDefaultLabel(child)) {
             hasDefault = true;
             if (ignoreSwitchStatementsWithDefault) {
               if (!isOnTheFly) return;
               highlighting = ProblemHighlightType.INFORMATION;
             }
-            continue;
+            if (child.isDefaultCase()) {
+              continue;
+            }
           }
           List<PsiEnumConstant> enumConstants = SwitchUtils.findEnumConstants(child);
           if (enumConstants.isEmpty()) {
-            // Syntax error or unresolved constant: do not report anything on incomplete code
-            return;
+            PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
+            if (labelElementList == null ||
+                !ContainerUtil.and(labelElementList.getElements(), labelElement -> isDefaultOrNull(labelElement))) {
+              // Syntax error or unresolved constant: do not report anything on incomplete code
+              return;
+            }
           }
           for (PsiEnumConstant constant : enumConstants) {
             if (constant.getContainingClass() != aClass) {
@@ -111,8 +123,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
             constants.remove(constant.getName());
           }
         }
-        if (!hasDefault && switchBlock instanceof PsiSwitchExpression) {
-          // non-exhaustive switch expression: it's a compilation error 
+        if (!hasDefault && (switchBlock instanceof PsiSwitchExpression || hasNull)) {
+          // non-exhaustive switch expression: it's a compilation error
+          // switch statement using any of the new features detailed in JEP 406, such as
+          // matching null, must be exhaustive, otherwise it's a compilation error as well
           // and the compilation fix should be suggested instead of normal inspection
           return;
         }
@@ -134,7 +148,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (constants.isEmpty()) return;
         String message = buildErrorString(aClass.getQualifiedName(), constants);
-        CreateMissingSwitchBranchesFix fix = new CreateMissingSwitchBranchesFix(switchBlock, constants);
+        CreateMissingSwitchBranchesFix fix = new CreateEnumMissingSwitchBranchesFix(switchBlock, constants);
         if (highlighting == ProblemHighlightType.INFORMATION ||
             InspectionProjectProfileManager.isInformationLevel(getShortName(), switchBlock)) {
           holder.registerProblem(switchBlock, message, highlighting, fix);
@@ -149,5 +163,14 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
       }
     };
+  }
+
+  private static boolean isDefaultOrNull(@Nullable PsiCaseLabelElement labelElement) {
+    return labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement);
+  }
+
+  private static boolean hasMatchingNull(@NotNull PsiSwitchLabelStatementBase label) {
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    return labelElementList != null && ContainerUtil.exists(labelElementList.getElements(), ExpressionUtils::isNullLiteral);
   }
 }

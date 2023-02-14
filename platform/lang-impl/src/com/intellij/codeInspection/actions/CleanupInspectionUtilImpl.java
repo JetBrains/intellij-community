@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -62,17 +62,17 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
 
   private static class PerformBatchFixesTask extends AbstractPerformFixesTask {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
-    private boolean myApplied = false;
+    private boolean myApplied;
 
     PerformBatchFixesTask(@NotNull Project project,
-                                 CommonProblemDescriptor @NotNull [] descriptors,
-                                 @NotNull Class<?> quickfixClass) {
+                          CommonProblemDescriptor @NotNull [] descriptors,
+                          @NotNull Class<?> quickfixClass) {
       super(project, descriptors, quickfixClass);
     }
 
     @Override
-    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
-      myBatchModeDescriptors.add(descriptor);
+    protected <D extends CommonProblemDescriptor> void collectFix(QuickFix<D> fix, D descriptor, Project project) {
+      myBatchModeDescriptors.add((ProblemDescriptor)descriptor);
     }
 
     @Override
@@ -81,8 +81,8 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
         if (!myApplied && !myBatchModeDescriptors.isEmpty()) {
           final ProblemDescriptor representative = myBatchModeDescriptors.get(0);
           LOG.assertTrue(representative.getFixes() != null);
-          for (QuickFix fix : representative.getFixes()) {
-            if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+          for (QuickFix<?> fix : representative.getFixes()) {
+            if (fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
                   myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
                   new ArrayList<>(),

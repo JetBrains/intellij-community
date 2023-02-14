@@ -5,9 +5,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -100,13 +98,13 @@ public enum AccessModifier {
   }
 
   @Override
-  public String toString() {
+  public @Nls String toString() {
     return JavaPsiBundle.visibilityPresentation(toPsiModifier());
   }
 
   @NotNull
-  public static List<AccessModifier> getAvailableModifiers(PsiMember member) {
-    if (member == null) return Collections.emptyList();
+  @Unmodifiable
+  public static List<AccessModifier> getAvailableModifiers(@NotNull PsiMember member) {
     PsiClass containingClass = member.getContainingClass();
     if (member instanceof PsiField) {
       if (member instanceof PsiEnumConstant || containingClass == null || containingClass.isInterface()) return Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,13 +9,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 class VcsLogRevisionFilterImpl implements VcsLogRevisionFilter {
-  @NotNull private final Collection<CommitId> myHeads;
+  private final @NotNull Collection<CommitId> myHeads;
 
-  VcsLogRevisionFilterImpl(@NotNull Collection<CommitId> heads) {myHeads = heads;}
+  VcsLogRevisionFilterImpl(@NotNull Collection<CommitId> heads) { myHeads = heads; }
 
-  @NotNull
   @Override
-  public Collection<CommitId> getHeads() {
+  public @NotNull Collection<CommitId> getHeads() {
     return myHeads;
   }
 

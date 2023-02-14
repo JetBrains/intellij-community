@@ -3,31 +3,30 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
-import com.intellij.dvcs.branch.isGroupingEnabled
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getRepositoryIcon
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
@@ -35,12 +34,13 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsImplUtil
-import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
@@ -75,7 +75,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val colorManager = getColorManager(project)
-    private val branchSettings = GitVcsSettings.getInstance(project).branchSettings
+    private val branchManager = project.service<GitBranchManager>()
 
     private var incomingOutgoingIcon: NodeIcon? = null
 
@@ -111,7 +111,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
-      val repositoryGrouping = branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
       if (!repositoryGrouping && branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
         append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
@@ -135,7 +135,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     override fun paint(g: Graphics) {
       super.paint(g)
       incomingOutgoingIcon?.let { (icon, locationX) ->
-        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, JBUIScale.scale(2))
+        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, (size.height - icon.iconHeight) / 2)
       }
     }
   }
@@ -206,36 +206,45 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
-    val paths = selectionPaths ?: return emptySet()
-    return paths.asSequence()
-      .filter {
-        val lastPathComponent = it.lastPathComponent
-        lastPathComponent is BranchTreeNode && lastPathComponent.getNodeDescriptor().branchInfo == branchInfo
-      }
-      .mapNotNull { findNodeDescriptorInPath(it) { descriptor -> Objects.nonNull(descriptor.repository) } }
-      .mapNotNull(BranchNodeDescriptor::repository)
-      .toSet()
+    return getSelectedRepositories(branchInfo, selectionPaths)
   }
 
-  private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
-    var curPath: TreePath? = path
-    while (curPath != null) {
-      val node = curPath.lastPathComponent as? BranchTreeNode
-      if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
-      curPath = curPath.parentPath
+  companion object {
+    internal fun getSelectedRepositories(branchInfo: BranchInfo, selectionPaths: Array<TreePath>?): Set<GitRepository> {
+      val paths = selectionPaths ?: return emptySet()
+      return paths.asSequence()
+        .filter {
+          val lastPathComponent = it.lastPathComponent
+          lastPathComponent is BranchTreeNode && lastPathComponent.getNodeDescriptor().branchInfo == branchInfo
+        }
+        .mapNotNull { findNodeDescriptorInPath(it) { descriptor -> Objects.nonNull(descriptor.repository) } }
+        .mapNotNull(BranchNodeDescriptor::repository)
+        .toSet()
     }
 
-    return null
+    private fun findNodeDescriptorInPath(path: TreePath, condition: (BranchNodeDescriptor) -> Boolean): BranchNodeDescriptor? {
+      var curPath: TreePath? = path
+      while (curPath != null) {
+        val node = curPath.lastPathComponent as? BranchTreeNode
+        if (node != null && condition(node.getNodeDescriptor())) return node.getNodeDescriptor()
+        curPath = curPath.parentPath
+      }
+
+      return null
+    }
   }
 }
 
-internal class FilteringBranchesTree(project: Project,
-                                     val component: BranchesTreeComponent,
-                                     private val uiController: BranchesDashboardController,
-                                     rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)))
-  : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
+internal class FilteringBranchesTree(
+  val project: Project,
+  val component: BranchesTreeComponent,
+  private val uiController: BranchesDashboardController,
+  rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
+  place: @NonNls String,
+  disposable: Disposable
+) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
-  private val expandedPaths = SmartHashSet<TreePath>()
+  private val expandedPaths = HashSet<TreePath>()
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
@@ -247,9 +256,12 @@ internal class FilteringBranchesTree(project: Project,
 
   private var localNodeExist = false
   private var remoteNodeExist = false
+  private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
+
+  private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
 
   private val groupingConfig: MutableMap<GroupingKey, Boolean> =
-    with(GitVcsSettings.getInstance(project).branchSettings) {
+    with(project.service<GitBranchManager>()) {
       hashMapOf(
         GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
         GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
@@ -265,9 +277,8 @@ internal class FilteringBranchesTree(project: Project,
 
   init {
     runInEdt {
-      PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
-      setupTreeExpansionListener()
-      project.service<BranchesTreeStateHolder>().setTree(this)
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(), place)
+      setupTreeListeners()
     }
   }
 
@@ -305,8 +316,9 @@ internal class FilteringBranchesTree(project: Project,
 
         val wordMatchers = hashSetOf<MinusculeMatcher>()
         for (word in StringUtil.split(text, " ")) {
+          val trimmedWord = word.trim() //otherwise Character.isSpaceChar would affect filtering
           wordMatchers.add(
-            FixingLayoutMatcher("*$word", NameUtil.MatchingCaseSensitivity.NONE, ""))
+            FixingLayoutMatcher("*$trimmedWord", NameUtil.MatchingCaseSensitivity.NONE, ""))
         }
 
         return wordMatchers
@@ -319,16 +331,19 @@ internal class FilteringBranchesTree(project: Project,
     return searchField
   }
 
-  private fun setupTreeExpansionListener() {
+  private fun setupTreeListeners() {
     component.addTreeExpansionListener(object : TreeExpansionListener {
       override fun treeExpanded(event: TreeExpansionEvent) {
         expandedPaths.add(event.path)
+        treeStateHolder.setStateProvider(treeStateProvider)
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
         expandedPaths.remove(event.path)
+        treeStateHolder.setStateProvider(treeStateProvider)
       }
     })
+    component.addTreeSelectionListener { treeStateHolder.setStateProvider(treeStateProvider) }
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
@@ -400,36 +415,51 @@ internal class FilteringBranchesTree(project: Project,
   private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
 
   fun update(initial: Boolean) {
-    if (rebuildTree(initial)) {
+    val branchesReloaded = uiController.reloadBranches()
+    runPreservingTreeState(initial) {
+      searchModel.updateStructure()
+    }
+    if (branchesReloaded) {
       tree.revalidate()
       tree.repaint()
     }
   }
 
-  fun rebuildTree(initial: Boolean): Boolean {
-    val rebuilded = uiController.reloadBranches()
-    val treeState = project.service<BranchesTreeStateHolder>()
-    if (!initial) {
-      treeState.createNewState()
-    }
-    searchModel.updateStructure()
-    if (initial) {
-      treeState.applyStateToTreeOrTryToExpandAll()
+  private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
+    if (Registry.`is`("git.branches.panel.persist.tree.state")) {
+      val treeState = if (loadSaved) treeStateHolder.getInitialTreeState() else TreeState.createOn(tree, root)
+      runnable()
+      if (treeState != null) {
+        treeState.applyTo(tree)
+      }
+      else {
+        initDefaultTreeExpandState()
+      }
     }
     else {
-      treeState.applyStateToTree()
+      runnable()
+      if (loadSaved) {
+        initDefaultTreeExpandState()
+      }
     }
+  }
 
-    return rebuilded
+  private fun initDefaultTreeExpandState() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (TreeUtil.hasManyNodes(tree, 30000)) {
+      TreeUtil.collapseAll(tree, 1)
+    }
+    else {
+      TreeUtil.expandAll(tree)
+    }
   }
 
   fun refreshTree() {
-    val treeState = project.service<BranchesTreeStateHolder>()
-    treeState.createNewState()
-    tree.selectionModel.clearSelection()
-    refreshNodeDescriptorsModel()
-    searchModel.updateStructure()
-    treeState.applyStateToTree()
+    runPreservingTreeState(false) {
+      tree.selectionModel.clearSelection()
+      refreshNodeDescriptorsModel()
+      searchModel.updateStructure()
+    }
   }
 
   fun refreshNodeDescriptorsModel() {
@@ -447,7 +477,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
-      add(headBranchesNode.getNodeDescriptor())
+      if (localNodeExist || remoteNodeExist) add(headBranchesNode.getNodeDescriptor())
       if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
       if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
     }
@@ -472,50 +502,45 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
 @State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 @Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
-  private lateinit var branchesTree: FilteringBranchesTree
-  private lateinit var treeState: TreeState
+  private var treeStateProvider: BranchesTreeStateProvider? = null
+  private var _treeState: TreeState? = null
+
+  fun getInitialTreeState(): TreeState? = state
 
   override fun getState(): TreeState? {
-    createNewState()
-    if (::treeState.isInitialized) {
-      return treeState
-    }
-    return null
+    return treeStateProvider?.getState() ?: _treeState
   }
 
   override fun loadState(state: TreeState) {
-    treeState = state
+    _treeState = state
   }
 
-  fun createNewState() {
-    if (::branchesTree.isInitialized) {
-      treeState = TreeState.createOn(branchesTree.tree, branchesTree.root)
-    }
+  fun setStateProvider(provider: BranchesTreeStateProvider) {
+    treeStateProvider = provider
   }
+}
 
-  fun applyStateToTree(ifNoStatePresent: () -> Unit = {}) {
-    if (!::branchesTree.isInitialized) return
+internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable: Disposable) {
+  private var tree: FilteringBranchesTree? = tree
+  private var state: TreeState? = null
 
-    if (::treeState.isInitialized) {
-      treeState.applyTo(branchesTree.tree)
-    }
-    else {
-      ifNoStatePresent()
-    }
-  }
-
-  fun applyStateToTreeOrTryToExpandAll() = applyStateToTree {
-    // expanding lots of nodes is a slow operation (and result is not very useful)
-    val tree = branchesTree.tree
-    if (TreeUtil.hasManyNodes(tree, 30000)) {
-      TreeUtil.collapseAll(tree, 1)
-    }
-    else {
-      TreeUtil.expandAll(tree)
+  init {
+    Disposer.register(disposable) {
+      persistTreeState()
+      this.tree = null
     }
   }
 
-  fun setTree(tree: FilteringBranchesTree) {
-    branchesTree = tree
+  fun getState(): TreeState? {
+    persistTreeState()
+    return state
+  }
+
+  private fun persistTreeState() {
+    if (Registry.`is`("git.branches.panel.persist.tree.state")) {
+      tree?.let {
+        state = TreeState.createOn(it.tree, it.root)
+      }
+    }
   }
 }

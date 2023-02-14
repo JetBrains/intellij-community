@@ -24,9 +24,6 @@ import java.util.Arrays;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class TextChangesStorageTest {
 
   private TextChangesStorage myStorage;  

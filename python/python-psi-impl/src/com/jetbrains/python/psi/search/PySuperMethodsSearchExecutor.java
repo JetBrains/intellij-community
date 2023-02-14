@@ -8,9 +8,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, PySuperMethodsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final PySuperMethodsSearch.SearchParameters queryParameters,

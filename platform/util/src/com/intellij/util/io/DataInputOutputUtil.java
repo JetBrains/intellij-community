@@ -105,7 +105,7 @@ public final class DataInputOutputUtil {
    * Writes the given (possibly null) element to the output using the given procedure to write the element if it's not null.
    * Should be coupled with {@link #readNullable}
    */
-  public static <T> void writeNullable(@NotNull DataOutput out, @Nullable T value, @NotNull ThrowableConsumer<T, IOException> writeValue)
+  public static <T> void writeNullable(@NotNull DataOutput out, @Nullable T value, @NotNull ThrowableConsumer<? super T, ? extends IOException> writeValue)
     throws IOException {
     out.writeBoolean(value != null);
     if (value != null) writeValue.consume(value);
@@ -116,7 +116,7 @@ public final class DataInputOutputUtil {
    * Should be coupled with {@link #writeNullable}
    */
   @Nullable
-  public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readValue) throws IOException {
+  public static <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<? extends T, ? extends IOException> readValue) throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
   }
 

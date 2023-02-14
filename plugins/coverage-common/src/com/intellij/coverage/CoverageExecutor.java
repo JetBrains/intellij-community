@@ -2,7 +2,6 @@ package com.intellij.coverage;
 
 import com.intellij.execution.Executor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +22,8 @@ public class CoverageExecutor extends Executor {
   @NotNull
   @Override
   public String getStartActionText(@NotNull String configurationName) {
-    String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
+    if (configurationName.isEmpty()) return getStartActionText();
+    String configName = shortenNameIfNeeded(configurationName);
     return TextWithMnemonic.parse(CoverageBundle.message("run.with.coverage.mnemonic")).replaceFirst("%s", configName).toString();
   }
 

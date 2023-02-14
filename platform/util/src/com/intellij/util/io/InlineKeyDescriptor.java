@@ -28,6 +28,11 @@ import java.io.IOException;
 public abstract class InlineKeyDescriptor<T> implements KeyDescriptor<T> {
   private final boolean myCompactFormat = isCompactFormat();
 
+  /**
+   * Return true to store keys as varints -- pays off if keys are not evenly distributed integers, but tend
+   * to have small values.
+   * @see DataInputOutputUtil#writeINT(DataOutput, int)
+   */
   protected boolean isCompactFormat() {
     return false;
   }

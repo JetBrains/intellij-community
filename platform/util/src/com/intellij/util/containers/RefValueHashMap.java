@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,16 +14,6 @@ import java.util.function.Supplier;
 abstract class RefValueHashMap<K, V> implements Map<K, V> {
   private final Map<K, MyReference<K, V>> myMap;
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
-
-  @NotNull
-  static IncorrectOperationException pointlessContainsKey() {
-    return new IncorrectOperationException("containsKey() makes no sense for weak/soft map because GC can clear the value any moment now");
-  }
-
-  @NotNull
-  static IncorrectOperationException pointlessContainsValue() {
-    return new IncorrectOperationException("containsValue() makes no sense for weak/soft map because GC can clear the key any moment now");
-  }
 
   protected interface MyReference<K,T> extends Supplier<T> {
     @NotNull
@@ -52,7 +41,7 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V get(Object key) {
+  public V get(@NotNull Object key) {
     MyReference<K,V> ref = myMap.get(key);
     return SoftReference.deref(ref);
   }
@@ -66,7 +55,7 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public V remove(Object key) {
+  public V remove(@NotNull Object key) {
     processQueue();
     MyReference<K,V> ref = myMap.remove(key);
     return SoftReference.deref(ref);
@@ -94,7 +83,7 @@ abstract class RefValueHashMap<K, V> implements Map<K, V> {
 
   @Override
   public boolean containsKey(Object key) {
-    throw pointlessContainsKey();
+    throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override

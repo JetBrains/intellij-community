@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.maven.testFramework.MavenExecutionTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.io.File;
@@ -40,6 +42,7 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     return false;
   }
 
+  @Test
   public void testExternalExecutor() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -49,9 +52,10 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     });
 
     WriteAction.computeAndWait(()->
-        createProjectPom("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>")
+        createProjectPom("""
+                           <groupId>test</groupId>
+                           <artifactId>project</artifactId>
+                           <version>1</version>""")
     );
 
     assertFalse(new File(getProjectPath(), "target").exists());
@@ -61,15 +65,18 @@ public class MavenExecutionTest extends MavenExecutionTestCase {
     assertTrue(new File(getProjectPath(), "target").exists());
   }
 
+  @Test
   public void testUpdatingExcludedFoldersAfterExecution() throws Exception {
     if (!hasMavenInstallation()) return;
 
     WriteAction.runAndWait(() -> {
       createStdProjectFolders();
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>");
+      importProject("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <version>1</version>
+                      """);
 
       createProjectSubDirs("target/generated-sources/foo",
                            "target/bar");

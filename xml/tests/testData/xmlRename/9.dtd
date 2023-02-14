@@ -1,0 +1,2 @@
+<!ELEMENT document (owner)>
+<!ELEMENT owner EMPTY>

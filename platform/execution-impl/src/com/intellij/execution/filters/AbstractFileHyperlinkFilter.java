@@ -1,14 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +37,12 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     myBaseDir = baseDir;
   }
 
-  @Nullable
-  protected static VirtualFile findDir(@Nullable String baseDir) {
+  protected static @Nullable VirtualFile findDir(@Nullable String baseDir) {
     if (StringUtil.isEmpty(baseDir)) {
       return null;
     }
-    return ReadAction.compute(() -> {
-      VirtualFile dir = LocalFileFinder.findFile(baseDir);
-      return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
-    });
+    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(baseDir);
+    return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
   }
 
   protected boolean supportVfsRefresh() {
@@ -127,6 +126,9 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
   @Nullable
   public VirtualFile findFile(@NotNull String filePath) {
     VirtualFile file = LocalFileFinder.findFile(filePath);
+    if (file == null && SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(filePath)) {
+      file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    }
     if (file == null && myBaseDir != null && myBaseDir.isValid()) {
       file = myBaseDir.findFileByRelativePath(filePath);
     }

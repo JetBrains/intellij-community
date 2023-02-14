@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
@@ -16,10 +16,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
@@ -47,6 +51,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   @NotNull
   private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   @NotNull
+  private final IntSet myDirtyFileIds = IntSets.synchronize(new IntOpenHashSet());
+  @NotNull
   private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
   @NotNull
   private final IndexConfiguration myState = new IndexConfiguration();
@@ -56,36 +62,43 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     myRegisteredIndexes = registeredIndexes;
   }
 
-  @NotNull
-  private Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
+  private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    Iterator<FileBasedIndexExtension<?, ?>> extensions =
-      IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :
-      Collections.emptyIterator();
-    List<ThrowableRunnable<?>> tasks = new ArrayList<>();
+    ExtensionPointImpl<FileBasedIndexExtension<?, ?>> extPoint =
+      (ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
+    Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
+    List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
 
+    myDirtyFileIds.addAll(PersistentDirtyFilesQueue.INSTANCE.readIndexingQueue());
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
-      if (extension == null) break;
-      ID<?, ?> name = extension.getName();
-      RebuildStatus.registerIndex(name);
+      if (extension == null) {
+        break;
+      }
+      RebuildStatus.registerIndex(extension.getName());
 
       myRegisteredIndexes.registerIndexExtension(extension);
 
       tasks.add(() -> {
+        if (IOUtil.isSharedCachesEnabled()) {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
+        }
         try {
           FileBasedIndexImpl.registerIndexer(extension,
                                              myState,
                                              myRegistrationResultSink,
-                                             myStaleIds);
+                                             myStaleIds,
+                                             myDirtyFileIds);
         }
         catch (IOException io) {
           throw io;
         }
         catch (Throwable t) {
           handleComponentError(t, extension.getClass().getName(), null);
+        }
+        finally {
+          IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
         }
       });
     }
@@ -96,15 +109,20 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     return tasks;
   }
 
-  @NotNull
   @Override
-  protected Collection<ThrowableRunnable<?>> prepareTasks() {
+  protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
     // 1) we call for it's instance before index creation to make sure it's initialized
     // 2) we dispose FileBasedIndex before PersistentFS disposing
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    Disposable disposable = () -> new FileBasedIndexImpl.MyShutDownTask().run();
+    // anonymous class is required to make sure the new instance is created
+    Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+        new FileBasedIndexImpl.MyShutDownTask().run();
+      }
+    };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
     myFileBasedIndex.setUpShutDownTask();
@@ -114,12 +132,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     PersistentIndicesConfiguration.loadConfiguration();
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
+    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
+      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
-    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     myCurrentVersionCorrupted = myCurrentVersionCorrupted || storageLayoutChanged;
 
     if (myCurrentVersionCorrupted) {
@@ -158,11 +176,17 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       return myState;
     }
     finally {
+      //CorruptionMarker.markIndexesAsDirty();
+      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
+      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
+      myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();
+      myFileBasedIndex.setUpHealthCheck();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
+      PersistentDirtyFilesQueue.INSTANCE.removeCurrentFile();
     }
   }
 
@@ -182,8 +206,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       return;
     }
 
-    NotificationGroupManager.getInstance().getNotificationGroup("Indexing")
-      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION, null)
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
+      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION)
       .notify(null);
   }
 
@@ -216,14 +240,19 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       }
     }
 
+    boolean dropFilenameIndex = FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX &&
+                                indicesToDrop.contains(FilenameIndex.NAME.getName());
     if (!exceptionThrown) {
       for (ID<?, ?> key : ids) {
+        if (dropFilenameIndex && key == FilenameIndex.NAME) continue;
         indicesToDrop.remove(key.getName());
       }
     }
 
     if (!indicesToDrop.isEmpty()) {
-      LOG.info("Dropping indices:" + String.join(",", indicesToDrop));
+      Collection<String> filtered = !dropFilenameIndex ? indicesToDrop :
+                                    ContainerUtil.filter(indicesToDrop, o -> !FilenameIndex.NAME.getName().equals(o));
+      if (!filtered.isEmpty()) LOG.info("Dropping indices:" + String.join(",", filtered));
       for (String s : indicesToDrop) {
         try {
           FileUtil.deleteWithRenaming(IndexInfrastructure.getFileBasedIndexRootDir(s).toFile());

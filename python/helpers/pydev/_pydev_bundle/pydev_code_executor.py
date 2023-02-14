@@ -1,3 +1,5 @@
+import os
+import signal
 import sys
 import traceback
 
@@ -79,6 +81,7 @@ class BaseCodeExecutor(object):
             pass
 
         more = False
+        exception_occurred = False
         try:
             sys.stdin = self.create_std_in(debugger, original_in)
             try:
@@ -103,13 +106,13 @@ class BaseCodeExecutor(object):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(self.debugger.trace_dispatch)
 
-                    more = self.do_add_exec(code_fragment)
+                    more, exception_occurred = self.do_add_exec(code_fragment)
 
                     if hasattr(self, 'debugger'):
                         import pydevd_tracing
                         pydevd_tracing.SetTrace(None)
 
-                    self.finish_exec(more)
+                    self.finish_exec(more, exception_occurred)
                 finally:
                     if help is not None:
                         try:
@@ -127,7 +130,7 @@ class BaseCodeExecutor(object):
         except:
             traceback.print_exc()
 
-        return more
+        return more, exception_occurred
 
     def do_add_exec(self, codeFragment):
         '''
@@ -188,14 +191,11 @@ class BaseCodeExecutor(object):
         except:
             return ''
 
-
-
     def start_exec(self):
         self.interruptable = True
 
-    def finish_exec(self, more):
+    def finish_exec(self, more, exception_occurred):
         self.interruptable = False
-
         return True
 
     def enableGui(self, guiname):
@@ -224,3 +224,47 @@ class BaseCodeExecutor(object):
 
     def get_ipython_hidden_vars_dict(self):
         return None
+
+    def interrupt(self):
+        self.buffer = None  # Also clear the buffer when it's interrupted.
+        try:
+            if self.interruptable:
+                called = False
+                try:
+                    # Fix for #PyDev-500: Console interrupt can't interrupt on sleep
+                    if os.name == 'posix':
+                        # On Linux we can't interrupt 0 as in Windows because it's
+                        # actually owned by a process -- on the good side, signals
+                        # work much better on Linux!
+                        os.kill(os.getpid(), signal.SIGINT)
+                        called = True
+
+                    elif os.name == 'nt':
+                        # In windows sending a Ctrl+C to a process given its pid is difficult.
+                        # There are utilities to make it work such as
+                        # http://www.latenighthacking.com/projects/2003/sendSignal/
+                        # but fortunately for us, it seems Python does allow a CTRL_C_EVENT
+                        # for the current process in Windows if pid 0 is passed... if we needed
+                        # to send a signal to another process the approach would be
+                        # much more difficult.
+                        # Still, note that CTRL_C_EVENT is only Python 2.7 onwards...
+                        os.kill(0, signal.CTRL_C_EVENT)
+                        called = True
+                except:
+                    # Many things to go wrong (from CTRL_C_EVENT not being there
+                    # to failing import signal)... if that's the case, ask for
+                    # forgiveness and go on to the approach which will interrupt
+                    # the main thread (but it'll only work when it's executing some Python
+                    # code -- not on sleep() for instance).
+                    pass
+
+                if not called:
+                    if hasattr(thread, 'interrupt_main'):  # Jython doesn't have it
+                        thread.interrupt_main()
+                    else:
+                        self.mainThread._thread.interrupt()  # Jython
+            self.finish_exec(False, False)
+            return True
+        except:
+            traceback.print_exc()
+            return False

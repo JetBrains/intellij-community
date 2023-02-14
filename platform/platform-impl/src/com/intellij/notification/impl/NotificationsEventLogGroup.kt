@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -7,11 +7,10 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByCustomRule
+import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByInlineRegexp
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationType
-import com.intellij.notification.impl.NotificationCollector.NotificationPlace
-import com.intellij.notification.impl.NotificationCollector.NotificationSeverity
+import com.intellij.notification.impl.NotificationCollector.*
 import java.util.stream.Collectors
 
 class NotificationsEventLogGroup : CounterUsagesCollector() {
@@ -19,7 +18,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("notifications", 62)
+    val GROUP = EventLogGroup("notifications", 66)
 
     @JvmField
     val DISPLAY_TYPE: EnumEventField<NotificationDisplayType> = Enum("display_type", NotificationDisplayType::class.java)
@@ -31,10 +30,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     val IS_EXPANDABLE = Boolean("is_expandable")
 
     @JvmField
-    val ID: StringEventField = object : StringEventField("id") {
-      override val validationRule: List<String>
-        get() = listOf("{regexp:\\d+.\\d+}")
-    }
+    val ID: StringEventField = StringValidatedByInlineRegexp("id", "\\d+.\\d+")
 
     @JvmField
     val NOTIFICATION_ID = NotificationIdField()
@@ -43,7 +39,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     val ADDITIONAL = ObjectEventField("additional", NOTIFICATION_ID)
 
     @JvmField
-    val NOTIFICATION_GROUP_ID = StringValidatedByCustomRule("notification_group", "notification_group")
+    val NOTIFICATION_GROUP_ID = StringValidatedByCustomRule("notification_group", NotificationGroupValidator::class.java)
 
     @JvmField
     val NOTIFICATION_PLACE: EnumEventField<NotificationPlace> = Enum("notification_place", NotificationPlace::class.java)
@@ -76,7 +72,7 @@ class NotificationsEventLogGroup : CounterUsagesCollector() {
     @JvmField
     val BALLOON_COLLAPSED = registerNotificationEvent("balloon.collapsed")
 
-    fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    private fun registerNotificationEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return GROUP.registerVarargEvent(
         eventId,
         ID,

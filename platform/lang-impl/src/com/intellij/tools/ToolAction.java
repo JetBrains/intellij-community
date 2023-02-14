@@ -18,6 +18,7 @@ package com.intellij.tools;
 
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.macro.MacroManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -31,8 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.LangDataKeys.MODULE;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 /**
  * @author Eugene Belyaev
@@ -57,6 +58,11 @@ public class ToolAction extends AnAction implements DumbAware {
     if (tool != null) {
       e.getPresentation().setText(ToolRunProfile.expandMacrosInName(tool, e.getDataContext()), false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Nullable

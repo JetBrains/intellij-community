@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.SourcePosition;
@@ -19,14 +17,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class PositionUtil extends ContextUtil {
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
-    if(context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getSourcePosition();
+    if (context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getSourcePosition();
 
     return ContextUtil.getSourcePosition(context);
   }
 
   @Nullable
   public static PsiElement getContextElement(final StackFrameContext context) {
-    if(context instanceof DebuggerContextImpl) return ((DebuggerContextImpl) context).getContextElement();
+    if (context instanceof DebuggerContextImpl) return ((DebuggerContextImpl)context).getContextElement();
 
     return ContextUtil.getContextElement(context);
   }
@@ -41,7 +39,7 @@ public class PositionUtil extends ContextUtil {
     return ReadAction.compute(() -> {
       final PsiFile psiFile = sourcePosition.getFile();
       final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-      if(document == null) {
+      if (document == null) {
         return null;
       }
       final int spOffset = sourcePosition.getOffset();

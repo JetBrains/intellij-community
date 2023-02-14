@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -94,13 +94,12 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     PsiModifierList modifierList = null;
 
-    if (!PsiType.VOID.equals(method.getReturnType())) {
+    if (!PsiTypes.voidType().equals(method.getReturnType())) {
       call.append("return ");
     }
 
     boolean isMethodStatic = methodCandidate.getElement().hasModifierProperty(PsiModifier.STATIC);
-    if (target instanceof PsiField) {
-      PsiField field = (PsiField)target;
+    if (target instanceof PsiField field) {
       modifierList = field.getModifierList();
       if (isMethodStatic) {
         call.append(methodCandidate.getContainingClass().getQualifiedName());
@@ -119,8 +118,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       }
       call.append(".");
     }
-    else if (target instanceof PsiMethod) {
-      PsiMethod m = (PsiMethod)target;
+    else if (target instanceof PsiMethod m) {
       modifierList = m.getModifierList();
       if (isMethodStatic) {
         call.append(methodCandidate.getContainingClass().getQualifiedName()).append(".");
@@ -387,7 +385,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
           final PsiVariable psiVariable = proc.getResult(i);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
           final PsiType type = psiVariable.getType();
-          if (LambdaUtil.notInferredType(type)) {
+          if (LambdaUtil.notInferredType(type) || PsiTypes.nullType().equals(type)) {
             continue;
           }
           result.add(new PsiFieldMember(elementFactory.createField(psiVariable.getName(), type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type)) {

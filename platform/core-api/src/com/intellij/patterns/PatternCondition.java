@@ -26,9 +26,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 
-/**
- * @author peter
-*/
 public abstract class PatternCondition<T> {
   private static final Logger LOG = Logger.getInstance(PatternCondition.class);
   @NonNls private static final String PARAMETER_FIELD_PREFIX = "val$";
@@ -48,7 +45,7 @@ public abstract class PatternCondition<T> {
     } else if (obj instanceof Object[]) {
       appendArray(builder, indent, (Object[])obj);
     } else if (obj instanceof Collection) {
-      appendArray(builder, indent, ((Collection) obj).toArray());
+      appendArray(builder, indent, ((Collection<?>) obj).toArray());
     }
     else if (obj instanceof String) {
       builder.append('\"').append(obj).append('\"');

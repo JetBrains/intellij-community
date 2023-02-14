@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInsight.intention;
 
@@ -33,57 +19,69 @@ public class FlipCommaIntentionTest extends IPPTestCase {
   }
 
   public void testMultipleFieldsSingleDeclaration() {
-    doTest("class C {\n" +
-           "    int a,/*_Flip ','*/ b;\n" +
-           "}",
+    doTest("""
+             class C {
+                 int a,/*_Flip ','*/ b;
+             }""",
 
-           "class C {\n" +
-           "    int b, a;\n" +
-           "}");
+           """
+             class C {
+                 int b, a;
+             }""");
   }
 
   public void testMultipleFieldsSingleDeclaration2() {
-    doTest("class C {\n" +
-           "  int a, b,/*_Flip ','*/ c;\n" +
-           "}",
+    doTest("""
+             class C {
+               int a, b,/*_Flip ','*/ c;
+             }""",
 
-           "class C {\n" +
-           "  int a, c, b;\n" +
-           "}");
+           """
+             class C {
+               int a, c, b;
+             }""");
   }
 
   public void testMultipleFieldsSingleDeclaration3() {
-     doTest("class C {\n" +
-            "  String one = \"one\",/*_Flip ','*/ two =\"two\", three;\n" +
-            "}",
+     doTest("""
+              class C {
+                String one = "one",/*_Flip ','*/ two ="two", three;
+              }""",
 
-            "class C {\n" +
-            "  String two =\"two\", one = \"one\", three;\n" +
-            "}");
+            """
+              class C {
+                String two ="two", one = "one", three;
+              }""");
   }
 
   public void testIncomplete() {
-    doTest("class C {\n" +
-           "  int a,/*_Flip ','*/ b =;\n" +
-           "}",
+    doTest("""
+             class C {
+               int a,/*_Flip ','*/ b =;
+             }""",
 
-           "class C {\n" +
-           "  int b =, a;\n" +
-           "}");
+           """
+             class C {
+               int b =, a;
+             }""");
   }
 
   public void testFlippingBrokenEnumConstantDoesNotCrashWithStubTextMismatch() {
-    doTest("enum E {\n" +
-           "  A(1)/*_Flip ','*/,\n" +
-           "  B(C(2), \n" +
-           "  D(5);\n" +
-           "}\n",
+    doTest("""
+             enum E {
+               A(1)/*_Flip ','*/,
+               B(C(2),\s
+               D(5);
+             }
+             """,
 
-           "enum E {\n" +
-           "  B(C(2), \n" +
-           "  D(5),\n" +
-           "  A(1);\n" +
-           "}\n");
+           """
+             enum E {
+               B(C(2),\s
+               D(5),
+               A(1);
+             }
+             """);
   }
 
   public void testUnavailableForDangling() {
@@ -96,5 +94,10 @@ public class FlipCommaIntentionTest extends IPPTestCase {
     doTestIntentionNotAvailable("class C {" +
                                 "  int[] ones = {1/*_Flip ','*/,1,1};" +
                                 "}");
+  }
+
+  public void testRecordComponent() {
+    doTest("record A(String s,/*_Flip ','*/ int i) { }",
+           "record A(int i, String s) { }");
   }
 }

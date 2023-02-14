@@ -15,11 +15,12 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,6 +29,7 @@ import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,12 +43,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
+public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final CallMatcher JUNIT4_ASSERT_EQUALS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes("long", "long"),
@@ -91,10 +95,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "integer.multiplication.implicit.cast.to.long.option"),
-                                          this, "ignoreNonOverflowingCompileTimeConstants");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonOverflowingCompileTimeConstants", InspectionGadgetsBundle.message(
+        "integer.multiplication.implicit.cast.to.long.option")));
   }
 
   @Override
@@ -118,7 +122,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasMultiplication(expression.getOperands()[0]);
     }
 
-    return Arrays.stream(expression.getOperands()).anyMatch(operand -> hasMultiplication(operand));
+    return ContainerUtil.exists(expression.getOperands(), operand -> hasMultiplication(operand));
   }
 
   private static boolean hasMultiplication(PsiExpression expression) {
@@ -128,8 +132,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasMultiplication(((PsiPrefixExpression)expression).getOperand());
     }
 
-    if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyExpr = (PsiPolyadicExpression)expression;
+    if (expression instanceof PsiPolyadicExpression polyExpr) {
       final IElementType tokenType = polyExpr.getOperationTokenType();
 
       if (tokenType == JavaTokenType.ASTERISK) {
@@ -139,8 +142,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       return hasInnerMultiplication(polyExpr);
     }
 
-    if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression ternary = (PsiConditionalExpression)expression;
+    if (expression instanceof PsiConditionalExpression ternary) {
       return hasMultiplication(ternary.getThenExpression()) || hasMultiplication(ternary.getElseExpression());
     }
 
@@ -161,7 +163,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
 
       final PsiExpression[] operands = expression.getOperands();
@@ -232,10 +234,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (parent instanceof PsiTypeCastExpression) {
         PsiType castType = ((PsiTypeCastExpression)parent).getType();
         if (isNonLongInteger(castType)) return;
-        if (PsiType.LONG.equals(castType)) context = (PsiExpression)parent;
+        if (PsiTypes.longType().equals(castType)) context = (PsiExpression)parent;
       }
-      if (!PsiType.LONG.equals(context.getType()) &&
-          !PsiType.LONG.equals(ExpectedTypeUtils.findExpectedType(context, true))) {
+      if (!PsiTypes.longType().equals(context.getType()) &&
+          !PsiTypes.longType().equals(ExpectedTypeUtils.findExpectedType(context, true))) {
         return;
       }
       if (ignoreNonOverflowingCompileTimeConstants) {
@@ -310,8 +312,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     private PsiExpression getContainingExpression(
       PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiPolyadicExpression && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
-        final PsiPolyadicExpression polyParent = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyParent && TypeConversionUtil.isNumericType(((PsiPolyadicExpression)parent).getType())) {
         final IElementType tokenType = polyParent.getOperationTokenType();
         if (!isShiftToken(tokenType) || expression == polyParent.getOperands()[0]) {
           return getContainingExpression((PsiExpression)parent);

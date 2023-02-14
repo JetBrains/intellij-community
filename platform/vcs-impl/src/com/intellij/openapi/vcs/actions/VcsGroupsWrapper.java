@@ -34,6 +34,11 @@ public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
 
@@ -50,7 +55,7 @@ public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    return VcsContextUtil.selectedFilesIterable(dataContext)
+    return VcsContextUtil.selectedFilePathsIterable(dataContext)
       .filterMap(vcsManager::getVcsFor)
       .map(AbstractVcs::getName)
       .unique()

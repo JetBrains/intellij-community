@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.awt.Image
+import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.io.Reader
@@ -95,7 +96,7 @@ object GithubApiContentHelper {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun loadImage(stream: InputStream): Image {
+  fun loadImage(stream: InputStream): BufferedImage {
     return ImageIO.read(stream)
   }
 }

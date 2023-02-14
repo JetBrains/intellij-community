@@ -89,7 +89,7 @@ public abstract class JavaPsiFacade {
    * @deprecated use {@link PsiNameHelper#getInstance(Project)}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public abstract PsiNameHelper getNameHelper();
 

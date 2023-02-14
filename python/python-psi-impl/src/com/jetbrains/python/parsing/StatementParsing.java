@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private static final Logger LOG = Logger.getInstance(StatementParsing.class);
   @NonNls protected static final String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
@@ -57,6 +55,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final  String TOK_IMPORT = PyNames.IMPORT;
   @NonNls protected static final  String TOK_IN = PyNames.IN;
   @NonNls protected static final  String TOK_FROM = PyNames.FROM;
+  @NonNls protected static final String TOK_MATCH = PyNames.MATCH;
+  @NonNls protected static final String TOK_CASE = PyNames.CASE;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
@@ -133,8 +133,80 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         return;
       }
     }
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_MATCH)) {
+      if (parseMatchStatement()) {
+        return;
+      }
+    }
 
     parseSimpleStatement();
+  }
+
+  private boolean parseMatchStatement() {
+    assert atToken(PyTokenTypes.IDENTIFIER, TOK_MATCH);
+    SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+    myBuilder.remapCurrentToken(PyTokenTypes.MATCH_KEYWORD);
+    myBuilder.advanceLexer();
+    boolean followedBySubject = myContext.getExpressionParser().parseExpressionOptional();
+    if (!followedBySubject || !matchToken(PyTokenTypes.COLON)) {
+      mark.rollbackTo();
+      myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
+      return false;
+    }
+    parseCaseClauses();
+    mark.done(PyElementTypes.MATCH_STATEMENT);
+    return true;
+  }
+
+  private boolean parseCaseClauses() {
+    if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
+
+      final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
+      if (indentFound) {
+        myBuilder.advanceLexer();
+        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          if (!parseCaseClause()) {
+            SyntaxTreeBuilder.Marker illegalStatement = myBuilder.mark();
+            parseStatement();
+            illegalStatement.error(PyPsiBundle.message("PARSE.expected.case.clause"));
+          }
+        }
+        if (!myBuilder.eof()) {
+          assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+          myBuilder.advanceLexer();
+        }
+      }
+      else {
+        myBuilder.error(PyPsiBundle.message("indent.expected"));
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean parseCaseClause() {
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_CASE)) {
+      SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+      myBuilder.remapCurrentToken(PyTokenTypes.CASE_KEYWORD);
+      myBuilder.advanceLexer();
+      if (!getPatternParser().parseCasePattern()) {
+        SyntaxTreeBuilder.Marker patternError = myBuilder.mark();
+        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON, PyTokenTypes.STATEMENT_BREAK)) {
+          nextToken();
+        }
+        patternError.error(PyPsiBundle.message("PARSE.expected.pattern"));
+      }
+      if (matchToken(PyTokenTypes.IF_KEYWORD)) {
+        if (!getExpressionParser().parseNamedTestExpression(false, false)) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+        }
+      }
+      parseColonAndSuite();
+      mark.done(PyElementTypes.CASE_CLAUSE);
+      return true;
+    }
+    return false;
   }
 
   protected void parseSimpleStatement() {
@@ -712,6 +784,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       while (myBuilder.getTokenType() == PyTokenTypes.EXCEPT_KEYWORD) {
         final SyntaxTreeBuilder.Marker exceptBlock = myBuilder.mark();
         myBuilder.advanceLexer();
+
+        boolean star = matchToken(PyTokenTypes.MULT);
         if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
           if (!getExpressionParser().parseSingleExpression(false)) {
             myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
@@ -722,6 +796,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
               myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
             }
           }
+        }
+        else if (star) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
         }
         parseColonAndSuite();
         exceptBlock.done(PyElementTypes.EXCEPT_PART);
@@ -766,25 +843,66 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private void parseWithStatement(SyntaxTreeBuilder.Marker endMarker) {
     assertCurrentToken(PyTokenTypes.WITH_KEYWORD);
     myBuilder.advanceLexer();
-    while (true) {
-      SyntaxTreeBuilder.Marker withItem = myBuilder.mark();
-      if (!getExpressionParser().parseSingleExpression(false)) {
+    if (!parseParenthesizedWithItems()) {
+      if (!parseWithItems(false)) {
         myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
-      }
-      if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
-        myBuilder.advanceLexer();
-        if (!getExpressionParser().parseSingleExpression(true)) {
-          myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
-          // 'as' is followed by a target
-        }
-      }
-      withItem.done(PyElementTypes.WITH_ITEM);
-      if (!matchToken(PyTokenTypes.COMMA)) {
-        break;
       }
     }
     parseColonAndSuite();
     endMarker.done(PyElementTypes.WITH_STATEMENT);
+  }
+
+  private boolean parseParenthesizedWithItems() {
+    if (!atToken(PyTokenTypes.LPAR)) {
+      return false;
+    }
+    final SyntaxTreeBuilder.Marker leftPar = myBuilder.mark();
+    nextToken();
+    // Reparse empty parentheses as an empty tuple
+    if (!parseWithItems(true)) {
+      leftPar.rollbackTo();
+      return false;
+    }
+    if (!matchToken(PyTokenTypes.RPAR)) {
+      myBuilder.error(PyPsiBundle.message("PARSE.expected.rpar"));
+    }
+    // Reparse something like "(foo()) as bar" or (foo()).bar as a single WithItem
+    if (!atAnyOfTokens(PyTokenTypes.COLON, PyTokenTypes.STATEMENT_BREAK)) {
+      leftPar.rollbackTo();
+      return false;
+    }
+    leftPar.drop();
+    return true;
+  }
+
+  private boolean parseWithItems(boolean insideParentheses) {
+    if (!parseWithItem()) {
+      return false;
+    }
+    while (matchToken(PyTokenTypes.COMMA)) {
+      if (!parseWithItem()) {
+        if (!insideParentheses) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+        }
+        break;
+      }
+    }
+    return true;
+  }
+
+  private boolean parseWithItem() {
+    SyntaxTreeBuilder.Marker withItem = myBuilder.mark();
+    if (!getExpressionParser().parseSingleExpression(false)) {
+      withItem.drop();
+      return false;
+    }
+    if (matchToken(PyTokenTypes.AS_KEYWORD)) {
+      if (!getExpressionParser().parseSingleExpression(true)) {
+        myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
+      }
+    }
+    withItem.done(PyElementTypes.WITH_ITEM);
+    return true;
   }
 
   private void parseClassDeclaration() {
@@ -855,13 +973,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
       if (indentFound) {
         myBuilder.advanceLexer();
-        if (myBuilder.eof()) {
-          myBuilder.error(PyPsiBundle.message("indented.block.expected"));
-        }
-        else {
-          while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
-            parseStatement();
-          }
+        while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+          parseStatement();
         }
       }
       else {
@@ -874,7 +987,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (indentFound && !myBuilder.eof()) {
-        checkMatches(PyTokenTypes.DEDENT, PyPsiBundle.message("dedent.expected"));
+        assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+        myBuilder.advanceLexer();
       }
     }
     else {

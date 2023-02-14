@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
@@ -31,9 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author yole
- */
+
 public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   private static void checkInitPyDir(PsiElement elt, String dirname) {
@@ -583,7 +581,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiFile context = myFixture.configureByText("a.py", "");
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(typeEvalContext);
 
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
@@ -637,5 +635,14 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
         assertEquals(QualifiedName.fromDottedString("numpy"), canonicalImportPath);
       });
     });
+  }
+
+  // PY-49156
+  public void testFromPackageImportIntoInitConflictWithAssignment() {
+    myFixture.copyDirectoryToProject("fromPackageImportIntoInitConflictWithAssignment/pack", "pack");
+    final PsiFile psiFile = myFixture.configureByFile("pack/__init__.py");
+    final PsiElement result = doResolve(psiFile);
+    assertInstanceOf(result, PyFile.class);
+    assertEquals("mod.py", ((PyFile)result).getName());
   }
 }

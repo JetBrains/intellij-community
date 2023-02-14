@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -8,12 +10,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends BaseInspection {
 
@@ -37,11 +38,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   public String nonThreadSafeTypes = "";
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(
-      nonThreadSafeClasses, InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
-      InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("nonThreadSafeClasses", InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title")))
+    );
   }
 
   @NotNull
@@ -64,16 +65,15 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   class AccessToNonThreadSafeStaticFieldFromInstanceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       if (expression.getQualifierExpression() != null) {
         return;
       }
       final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
       final String className = classType.rawType().getCanonicalText();
       boolean deepCheck = false;
       if (!nonThreadSafeClasses.contains(className)) {
@@ -83,10 +83,9 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
         deepCheck = true;
       }
       final PsiElement target = expression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
@@ -117,10 +116,9 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
           return;
         }
         final PsiType initializerType = initializer.getType();
-        if (!(initializerType instanceof PsiClassType)) {
+        if (!(initializerType instanceof PsiClassType classType2)) {
           return;
         }
-        final PsiClassType classType2 = (PsiClassType)initializerType;
         final String className2 = classType2.rawType().getCanonicalText();
         if (!nonThreadSafeClasses.contains(className2)) {
           return;

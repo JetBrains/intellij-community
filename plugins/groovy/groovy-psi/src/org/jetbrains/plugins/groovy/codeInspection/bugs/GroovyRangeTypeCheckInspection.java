@@ -101,14 +101,11 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
-    switch (args.length) {
-      case 1:
-        return GroovyBundle.message("type.doesnt.implement.comparable", args);
-      case 2:
-        return GroovyBundle.message("type.doesnt.contain.method", args);
-      default:
-        throw new IncorrectOperationException("incorrect args:" + Arrays.toString(args));
-    }
+    return switch (args.length) {
+      case 1 -> GroovyBundle.message("type.doesnt.implement.comparable", args);
+      case 2 -> GroovyBundle.message("type.doesnt.contain.method", args);
+      default -> throw new IncorrectOperationException("incorrect args:" + Arrays.toString(args));
+    };
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,7 +22,15 @@ public interface DocumentationActionProvider {
   /**
    * Allows to add custom actions to Quick Documentation popup and Documentation toolwindow.
    * Actions are added to the context menu and to the toolbar or corner button menu.
+   *
+   * @deprecated Unused in v2 implementation. Add actions to {@code Documentation.PrimaryGroup} by registering them in plugin.xml as follows:
+   * <pre>
+   * &lt;action id="..." class="...">
+   *  &lt;add-to-group group-id="Documentation.PrimaryGroup" anchor="last"/>
+   * &lt;/action>
+   * </pre>
    */
+  @Deprecated
   default List<AnAction> additionalActions(DocumentationComponent component) {
     return Collections.emptyList();
   }

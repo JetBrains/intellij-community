@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class UnnecessaryBreak {
   void example(boolean a, boolean b) {
     foo: {
@@ -37,4 +39,17 @@ class Switch {
             }
         }
     }
+}
+class JetbrainsBugReport {
+  public static void main(String[] args) {
+    Random r = new Random();
+    boolean b = r.nextBoolean();
+    label1: if(b) {
+      int k = 0;
+      <warning descr="'break' statement is unnecessary">break</warning> label1;
+    }
+    else {
+      System.out.println("Example");
+    }
+  }
 }

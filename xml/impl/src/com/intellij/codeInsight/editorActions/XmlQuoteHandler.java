@@ -19,9 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.xml.XmlTokenType;
 
-/**
- * @author peter
-*/
 public class XmlQuoteHandler implements QuoteHandler {
   @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {

@@ -1,19 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CompletableDeferred
 
-internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
-                                       pluginDescriptor: PluginDescriptor,
-                                       componentManager: ComponentManagerImpl,
-                                       implementationClass: Class<*>? = null,
-                                       initializedInstance: Any? = null) : BaseComponentAdapter(componentManager, pluginDescriptor, initializedInstance, implementationClass) {
+internal class ServiceComponentAdapter(
+  @JvmField val descriptor: ServiceDescriptor,
+  pluginDescriptor: PluginDescriptor,
+  componentManager: ComponentManagerImpl,
+  implementationClass: Class<*>? = null,
+  deferred: CompletableDeferred<Any> = CompletableDeferred()
+) : BaseComponentAdapter(componentManager, pluginDescriptor, deferred, implementationClass) {
+  companion object {
+    private val isDebugEnabled = LOG.isDebugEnabled
+  }
+
   override val implementationClassName: String
     get() = descriptor.implementation!!
 
@@ -23,25 +28,15 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
 
   override fun getActivityCategory(componentManager: ComponentManagerImpl) = componentManager.getActivityCategory(isExtension = false)
 
-  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T {
-    if (LOG.isDebugEnabled) {
+  override fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {
+    if (isDebugEnabled) {
       val app = componentManager.getApplication()
       if (app != null && app.isWriteAccessAllowed && !app.isUnitTestMode &&
           PersistentStateComponent::class.java.isAssignableFrom(implementationClass)) {
         LOG.warn(Throwable("Getting service from write-action leads to possible deadlock. Service implementation $implementationClassName"))
       }
     }
-
-    if (indicator == null) {
-      return createAndInitialize(componentManager, implementationClass)
-    }
-
-    // don't use here computeInNonCancelableSection - it is kotlin and no need of such awkward and stack-trace unfriendly methods
-    var instance: T? = null
-    ProgressManager.getInstance().executeNonCancelableSection {
-      instance = createAndInitialize(componentManager, implementationClass)
-    }
-    return instance!!
+    return createAndInitialize(componentManager, implementationClass)
   }
 
   private fun <T : Any> createAndInitialize(componentManager: ComponentManagerImpl, implementationClass: Class<T>): T {

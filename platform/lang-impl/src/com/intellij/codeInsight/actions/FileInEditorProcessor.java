@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.LangBundle;
@@ -40,6 +42,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.Objects;
 
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
@@ -80,7 +83,7 @@ public class FileInEditorProcessor {
       return;
     }
 
-    if (myOptions.isOptimizeImports()) {
+    if (myOptions.isOptimizeImports() && myOptions.getTextRangeType() != SELECTED_TEXT) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
 
@@ -100,7 +103,11 @@ public class FileInEditorProcessor {
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(() -> {
-        if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) {
+          return;
+        }
+        if ((!myProcessSelectedText || Objects.requireNonNull(myProcessor.getInfoCollector()).getSecondFormatNotification() != null)
+            && !isExternalFormatterInUse()) {
           showHint(myEditor, new FormattedMessageBuilder());
         }
       });
@@ -111,6 +118,11 @@ public class FileInEditorProcessor {
     if (myEditor != null && myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
       CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
     }
+  }
+
+  private boolean isExternalFormatterInUse() {
+    return !(FormattingServiceUtil.findService(myFile, true, myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE)
+               instanceof CoreFormattingService);
   }
 
   @NotNull
@@ -136,23 +148,27 @@ public class FileInEditorProcessor {
 
   @NotNull
   private AbstractLayoutCodeProcessor mixWithReformatProcessor(@Nullable AbstractLayoutCodeProcessor processor) {
+    ReformatCodeProcessor reformatCodeProcessor;
     if (processor != null) {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
+        reformatCodeProcessor = new ReformatCodeProcessor(processor, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
+        reformatCodeProcessor = new ReformatCodeProcessor(processor, myProcessChangesTextOnly);
       }
     }
     else {
       if (myProcessSelectedText) {
-        processor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
+        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myEditor.getSelectionModel());
       }
       else {
-        processor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
+        reformatCodeProcessor = new ReformatCodeProcessor(myFile, myProcessChangesTextOnly);
       }
     }
-    return processor;
+    if (myOptions.doNotKeepLineBreaks()) {
+      reformatCodeProcessor.setDoNotKeepLineBreaks(myFile);
+    }
+    return reformatCodeProcessor;
   }
 
   @NotNull
@@ -214,7 +230,7 @@ public class FileInEditorProcessor {
   private boolean shouldNotify() {
     if (isInHeadlessMode()) return false;
     EditorSettingsExternalizable es = EditorSettingsExternalizable.getInstance();
-    return es.isShowNotificationAfterReformat() && myEditor != null && !myProcessSelectedText;
+    return es.isShowNotificationAfterReformat() && myEditor != null;
   }
 
   private static boolean isInHeadlessMode() {
@@ -253,7 +269,10 @@ public class FileInEditorProcessor {
       LOG.assertTrue(notifications != null);
 
       if (notifications.isEmpty() && !myNoChangesDetected) {
-        if (myProcessChangesTextOnly) {
+        if (notifications.getSecondFormatNotification() != null) {
+          builder.append(notifications.getSecondFormatNotification()).br();
+        }
+        else if (myProcessChangesTextOnly) {
           builder.append(LangBundle.message("formatter.in.editor.message.already.formatted")).br();
         }
         else {
@@ -280,6 +299,9 @@ public class FileInEditorProcessor {
         String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
         if (optimizeImportsNotification != null) {
           builder.append(optimizeImportsNotification).br();
+        }
+        if (notifications.getSecondFormatNotification() != null) {
+          builder.append(notifications.getSecondFormatNotification()).br();
         }
       }
 
@@ -325,7 +347,7 @@ public class FileInEditorProcessor {
     public final HyperlinkListener createHyperlinkListener() {
       return new HyperlinkAdapter() {
         @Override
-        protected void hyperlinkActivated(HyperlinkEvent e) {
+        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
           getHyperlinkRunnable().run();
         }
       };

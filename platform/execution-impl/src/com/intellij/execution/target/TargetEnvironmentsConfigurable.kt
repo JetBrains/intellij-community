@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionBundle
@@ -14,7 +14,6 @@ class TargetEnvironmentsConfigurable(private val project: Project,
                                      defaultLanguageRuntime: LanguageRuntimeType<*>? = null)
   : SearchableConfigurable, MasterDetails {
 
-  @Suppress("unused")
   constructor(project: Project) : this(project, null, null)
 
   private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName, defaultLanguageRuntime)

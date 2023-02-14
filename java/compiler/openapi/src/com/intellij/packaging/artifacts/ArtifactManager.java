@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,9 @@ import java.util.Collection;
 import java.util.Comparator;
 
 public abstract class ArtifactManager implements ArtifactModel {
+
+  public static final @NonNls String FEATURE_TYPE = "com.intellij.packaging.artifacts.ArtifactType";
+
   @Topic.ProjectLevel
   public static final Topic<ArtifactListener> TOPIC = new Topic<>("artifacts changes", ArtifactListener.class, Topic.BroadcastDirection.NONE);
   public static final Comparator<Artifact> ARTIFACT_COMPARATOR = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
@@ -26,6 +30,7 @@ public abstract class ArtifactManager implements ArtifactModel {
   /**
    * Return artifacts sorted by their names (ignoring case)
    */
+  @RequiresReadLock
   public abstract Artifact[] getSortedArtifacts();
 
   public abstract ModifiableArtifactModel createModifiableModel();

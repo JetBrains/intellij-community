@@ -33,9 +33,8 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
     return checkUsage(element, EnumSet.of(LombokPsiElementUsage.WRITE, LombokPsiElementUsage.READ_WRITE));
   }
 
-  private boolean checkUsage(@NotNull PsiElement element, EnumSet<LombokPsiElementUsage> elementUsages) {
-    if (element instanceof PsiField) {
-      final PsiField psiField = (PsiField)element;
+  private static boolean checkUsage(@NotNull PsiElement element, EnumSet<LombokPsiElementUsage> elementUsages) {
+    if (element instanceof PsiField psiField) {
       if (isUsedByLombokAnnotations(psiField, psiField, elementUsages) ||
           isUsedByLombokAnnotations(psiField, psiField.getContainingClass(), elementUsages)) {
         return true;
@@ -44,9 +43,9 @@ public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  private boolean isUsedByLombokAnnotations(@NotNull PsiField psiField,
-                                            @Nullable PsiModifierListOwner modifierListOwner,
-                                            EnumSet<LombokPsiElementUsage> elementUsages) {
+  private static boolean isUsedByLombokAnnotations(@NotNull PsiField psiField,
+                                                   @Nullable PsiModifierListOwner modifierListOwner,
+                                                   EnumSet<LombokPsiElementUsage> elementUsages) {
     if (null != modifierListOwner) {
       for (PsiAnnotation psiAnnotation : modifierListOwner.getAnnotations()) {
         for (Processor processor : LombokProcessorManager.getProcessors(psiAnnotation)) {

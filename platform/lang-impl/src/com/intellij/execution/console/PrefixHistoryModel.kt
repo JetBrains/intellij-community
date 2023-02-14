@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.console.ConsoleHistoryModel.Entry
@@ -21,7 +21,7 @@ private val MasterModels = ConcurrentFactoryMap.create<String, MasterModel>(
     ContainerUtil.createConcurrentWeakValueMap()
   })
 
-private fun assertWriteThread() = ApplicationManager.getApplication().assertIsWriteThread()
+private fun assertWriteThread() = ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
 fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHistoryModel {
   val masterModel: MasterModel = MasterModels[persistenceId]!!
@@ -114,7 +114,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private fun createEntry(prevEntry: String): Entry = Entry(prevEntry, prevEntry.length)
 
-  override fun getCurrentIndex(): Int = currentIndex ?: entries.size-1
+  override fun getCurrentIndex(): Int = currentIndex ?: (entries.size - 1)
 
   override fun prevOnLastLine(): Boolean = true
 
@@ -126,7 +126,6 @@ private class MasterModel(private val modTracker: SimpleModificationTracker = Si
   @Volatile
   private var entries: MutableList<String> = mutableListOf()
 
-  @Suppress("UNCHECKED_CAST")
   override fun getEntries(): MutableList<String> = entries.toMutableList()
 
   override fun resetEntries(ent: List<String>) {
@@ -149,7 +148,7 @@ private class MasterModel(private val modTracker: SimpleModificationTracker = Si
     modTracker.incModificationCount()
   }
 
-  override fun getMaxHistorySize() = UISettings.instance.state.consoleCommandHistoryLimit
+  override fun getMaxHistorySize() = UISettings.getInstance().state.consoleCommandHistoryLimit
 
   override fun isEmpty() = entries.isEmpty()
 

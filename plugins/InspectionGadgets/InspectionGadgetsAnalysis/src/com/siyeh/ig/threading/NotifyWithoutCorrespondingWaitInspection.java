@@ -55,10 +55,9 @@ public class NotifyWithoutCorrespondingWaitInspection extends BaseInspection {
         return;
       }
       final PsiElement referent = ((PsiReference)qualifier).resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       final PsiClass fieldClass = field.getContainingClass();
       if (fieldClass == null) {
         return;
@@ -100,7 +99,7 @@ public class NotifyWithoutCorrespondingWaitInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+      @NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!ThreadingUtils.isWaitCall(expression)) {
         return;

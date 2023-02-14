@@ -1,0 +1,8 @@
+// AFTER-WARNING: The expression is unused
+package one.two.three
+
+class Test
+
+fun test() {
+    one.two.three.Test::class
+}

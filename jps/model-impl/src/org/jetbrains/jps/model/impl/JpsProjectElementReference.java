@@ -16,10 +16,11 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.ex.JpsElementReferenceBase;
 
-public class JpsProjectElementReference extends JpsElementReferenceBase<JpsProjectElementReference, JpsProject> {
+public final class JpsProjectElementReference extends JpsElementReferenceBase<JpsProjectElementReference, JpsProject> {
   @Override
   public JpsProject resolve() {
     final JpsModel model = getModel();

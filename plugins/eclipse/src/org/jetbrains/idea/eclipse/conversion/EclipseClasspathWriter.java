@@ -29,16 +29,8 @@ public class EclipseClasspathWriter {
   private final Map<String, Element> myOldEntries = new HashMap<>();
 
   @NotNull
-  public Element writeClasspath(@Nullable Element oldRoot, @NotNull ModuleRootModel model) {
+  public Element writeClasspath(@NotNull ModuleRootModel model) {
     Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    if (oldRoot != null) {
-      for (Element oldChild : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-        String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
-        String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
-        myOldEntries.put(oldKind + getJREKey(oldPath), oldChild);
-      }
-    }
-
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       createClasspathEntry(orderEntry, classpathElement, model);
     }
@@ -97,8 +89,7 @@ public class EclipseClasspathWriter {
       }
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
-    else if (entry instanceof LibraryOrderEntry) {
-      final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+    else if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
       final String libraryName = libraryOrderEntry.getLibraryName();
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
@@ -172,7 +163,7 @@ public class EclipseClasspathWriter {
 
             EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
 
-            final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
+            final String[] nativeRoots = libraryOrderEntry.getRootUrls(NativeLibraryOrderRootType.getInstance());
             if (nativeRoots.length > 0) {
               EJavadocUtil.setupAttributes(orderEntry, nativeRoot -> EPathUtil.collapse2EclipsePath(nativeRoot, model), EclipseXml.DLL_LINK, nativeRoots);
             }

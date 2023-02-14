@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -119,9 +120,9 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
   }
 
   public void testProvidersCompatibility() {
-    Set<Class<?>> project = ContainerUtil.map2Set(ImportModuleAction.getProviders(null), p -> p.getClass());
+    Set<Class<?>> project = ContainerUtil.map2Set(ImportModuleAction.getProviders(null), ProjectImportProvider::getClass);
     assertFalse(project.contains(ModuleImportProvider.class));
-    Set<Class<?>> modular = ContainerUtil.map2Set(ImportModuleAction.getProviders(getProject()), p -> p.getClass());
+    Set<Class<?>> modular = ContainerUtil.map2Set(ImportModuleAction.getProviders(getProject()), ProjectImportProvider::getClass);
     assertTrue(modular.contains(ModuleImportProvider.class));
   }
 }

@@ -1,4 +1,4 @@
-// "Replace with collect" "false"
+// "Collapse loop with stream 'collect()'" "false"
 package com.google.common.collect;
 
 import java.util.*;

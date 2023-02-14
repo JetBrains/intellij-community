@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
@@ -37,8 +38,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void waitForSmartMode() {
-  }
+  public void waitForSmartMode() { }
 
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
@@ -53,8 +53,7 @@ public class MockDumbService extends DumbService {
   public void cancelAllTasksAndWait() { }
 
   @Override
-  public void completeJustSubmittedTasks() {
-  }
+  public void completeJustSubmittedTasks() { }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
@@ -74,8 +73,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText,
-                                        @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
+  public void showDumbModeActionBalloon(@NotNull String balloonText, @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
     throw new UnsupportedOperationException();
   }
 
@@ -85,8 +83,7 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void setAlternativeResolveEnabled(boolean enabled) {
-  }
+  public void setAlternativeResolveEnabled(boolean enabled) { }
 
   @Override
   public boolean isAlternativeResolveEnabled() {
@@ -96,11 +93,6 @@ public class MockDumbService extends DumbService {
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
     activity.run();
-  }
-
-  @Override
-  public boolean isSuspendedDumbMode() {
-    return false;
   }
 
   @Override
@@ -116,5 +108,10 @@ public class MockDumbService extends DumbService {
   @Override
   public void smartInvokeLater(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
     runnable.run();
+  }
+
+  @Override
+  public AccessToken runWithWaitForSmartModeDisabled() {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
   }
 }

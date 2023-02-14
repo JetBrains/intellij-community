@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
@@ -27,6 +28,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class JoinConcatenatedStringLiteralsIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("join.concatenated.string.literals.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("join.concatenated.string.literals.intention.name");
+  }
 
   @Override
   @NotNull
@@ -39,11 +50,10 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    final PsiJavaToken token = (PsiJavaToken)element;
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final StringBuilder newExpression = new StringBuilder();
     PsiExpression[] operands = polyadicExpression.getOperands();
@@ -85,7 +95,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
 
   private static String getLiteralExpressionText(PsiLiteralExpression expression) {
     final PsiType type = expression.getType();
-    if (PsiType.CHAR.equals(type)) {
+    if (PsiTypes.charType().equals(type)) {
       final String result = StringUtil.unquoteString(expression.getText());
       if (result.equals("\"")) return "\\\"";
       if (result.equals("\\'")) return "'";

@@ -34,13 +34,12 @@ class BreakpointsTreeCellRenderer  {
                                         boolean selected,
                                         boolean expanded,
                                         ColoredTreeCellRenderer renderer) {
-    if (value instanceof BreakpointItemNode) {
-      BreakpointItemNode node = (BreakpointItemNode)value;
+    if (value instanceof BreakpointItemNode node) {
       BreakpointItem breakpoint = node.getBreakpointItem();
       breakpoint.setupRenderer(renderer, project, selected);
     }
     else if (value instanceof BreakpointsGroupNode) {
-      XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
+      XBreakpointGroup group = ((BreakpointsGroupNode<?>)value).getGroup();
       renderer.setIcon(group.getIcon(expanded));
       if (group instanceof XBreakpointCustomGroup && ((XBreakpointCustomGroup)group).isDefault()) {
         renderer.append(group.getName(), SIMPLE_CELL_ATTRIBUTES_BOLD);

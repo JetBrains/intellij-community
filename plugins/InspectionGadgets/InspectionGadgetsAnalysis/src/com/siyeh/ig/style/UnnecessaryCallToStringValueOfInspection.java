@@ -19,12 +19,12 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -80,13 +80,18 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     return new UnnecessaryCallToStringValueOfFix(text);
   }
 
-  public static String calculateReplacementText(PsiExpression expression) {
+  private static String calculateReplacementText(@NotNull PsiMethodCallExpression call, PsiExpression expression) {
     if (!(expression instanceof PsiPolyadicExpression)) {
       return expression.getText();
     }
+    PsiPolyadicExpression parentCall = ObjectUtils.tryCast(ParenthesesUtils.getParentSkipParentheses(call), PsiPolyadicExpression.class);
+    if (parentCall == null) {
+      return expression.getText();
+    }
     final PsiType type = expression.getType();
-    if (TypeUtils.typeEquals(JAVA_LANG_STRING, type) ||
-        ParenthesesUtils.getPrecedence(expression) < ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+    int precedence = ParenthesesUtils.getPrecedence(expression);
+    if (TypeUtils.typeEquals(JAVA_LANG_STRING, type) || precedence < ParenthesesUtils.ADDITIVE_PRECEDENCE ||
+        (precedence == ParenthesesUtils.ADDITIVE_PRECEDENCE && ArrayUtil.getFirstElement(parentCall.getOperands()) == call)) {
       return expression.getText();
     }
     return '(' + expression.getText() + ')';
@@ -113,13 +118,13 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);
       if (arg == null) return;
       CommentTracker tracker = new CommentTracker();
-      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(tracker.markUnchanged(arg)), tracker);
+      PsiReplacementUtil.replaceExpression(call, calculateReplacementText(call, tracker.markUnchanged(arg)), tracker);
     }
   }
 
@@ -131,11 +136,11 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
   private static class UnnecessaryCallToStringValueOfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       final PsiExpression argument = tryUnwrapRedundantConversion(call);
       if (argument == null) return;
-      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    calculateReplacementText(argument));
+      registerErrorAtOffset(call, 0, call.getArgumentList().getStartOffsetInParent(),
+                    calculateReplacementText(call, argument));
     }
   }
 

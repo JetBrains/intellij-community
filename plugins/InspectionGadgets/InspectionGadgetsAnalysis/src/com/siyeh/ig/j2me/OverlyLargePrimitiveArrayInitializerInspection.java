@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiArrayInitializerExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
@@ -25,8 +25,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Arrays;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class OverlyLargePrimitiveArrayInitializerInspection
   extends BaseInspection {
@@ -46,11 +48,10 @@ public class OverlyLargePrimitiveArrayInitializerInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "large.initializer.primitive.type.array.maximum.number.of.elements.option"),
-      this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message(
+        "large.initializer.primitive.type.array.maximum.number.of.elements.option"), 1, Integer.MAX_VALUE));
   }
 
   @Override
@@ -64,7 +65,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
 
     @Override
     public void visitArrayInitializerExpression(
-      PsiArrayInitializerExpression expression) {
+      @NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {
@@ -82,9 +83,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
     }
 
     private int calculateNumElements(PsiExpression expression) {
-      if (expression instanceof PsiArrayInitializerExpression) {
-        final PsiArrayInitializerExpression arrayExpression =
-          (PsiArrayInitializerExpression)expression;
+      if (expression instanceof PsiArrayInitializerExpression arrayExpression) {
         final PsiExpression[] initializers =
           arrayExpression.getInitializers();
         return Arrays.stream(initializers).mapToInt(this::calculateNumElements).sum();

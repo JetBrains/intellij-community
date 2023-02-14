@@ -50,6 +50,10 @@ public class SingleConfigurableEditor extends DialogWrapper {
     setTitle(title);
 
     myProject = project;
+    init(configurable);
+  }
+
+  protected void init(@NotNull Configurable configurable) {
     myConfigurable = configurable;
     init();
     myConfigurable.reset();
@@ -65,9 +69,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     myShowApplyButton = showApplyButton;
     setTitle(createTitleString(configurable));
 
-    myConfigurable = configurable;
-    init();
-    myConfigurable.reset();
+    init(configurable);
   }
 
   public SingleConfigurableEditor(@Nullable Project project, Configurable configurable, String dimensionKey, boolean showApplyButton) {
@@ -122,11 +124,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   @Override
-  public @Nullable Dimension getInitialSize() {
-    return new Dimension(650, 500);
-  }
-
-  @Override
   protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
@@ -176,10 +173,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   protected class ApplyAction extends AbstractAction {
-    private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Alarm myUpdateAlarm = new Alarm(getDisposable());
 
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());
+      setEnabled(false); // should be disabled initially. the same as com.intellij.openapi.options.newEditor.ConfigurableEditor.init
       final Runnable updateRequest = new Runnable() {
         @Override
         public void run() {

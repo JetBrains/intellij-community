@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.renamer;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -40,7 +40,7 @@ public class ConverterHelper implements IIdentifierRenamer {
   /**
    * Return {@code true} if, and only if identifier passed is compliant to JLS9 section 3.8 AND DOES NOT CONTAINS so-called "ignorable" characters.
    * Ignorable characters are removed by javac silently during compilation and thus may appear only in specially crafted obfuscated classes.
-   * For more information about "ignorable" characters see <a href="https://bugs.openjdk.java.net/browse/JDK-7144981">JDK-7144981</a>.
+   * For more information about "ignorable" characters see <a href="https://bugs.openjdk.org/browse/JDK-7144981">JDK-7144981</a>.
    *
    * @param identifier Identifier to be checked
    * @return {@code true} in case {@code identifier} passed can be used as an identifier; {@code false} otherwise.

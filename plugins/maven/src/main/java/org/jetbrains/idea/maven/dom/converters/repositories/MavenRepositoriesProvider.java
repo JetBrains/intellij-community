@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.dom.converters.repositories;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.util.xmlb.XmlSerializer;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.repositories.beans.RepositoriesBean;
 import org.jetbrains.idea.maven.dom.converters.repositories.beans.RepositoryBeanInfo;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ public final class MavenRepositoriesProvider {
     return ApplicationManager.getApplication().getService(MavenRepositoriesProvider.class);
   }
 
-  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<>();
+  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new HashMap<>();
 
   public MavenRepositoriesProvider() {
     final RepositoriesBean repositoriesBean =

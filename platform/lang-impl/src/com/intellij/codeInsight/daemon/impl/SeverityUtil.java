@@ -15,7 +15,7 @@ public final class SeverityUtil {
   @NotNull
   public static Collection<SeverityRegistrar.SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes(@NotNull SeverityRegistrar registrar) {
     List<SeverityRegistrar.SeverityBasedTextAttributes> collection = new ArrayList<>(registrar.allRegisteredAttributes());
-    for (HighlightInfoType type : registrar.standardSeverities()) {
+    for (HighlightInfoType type : SeverityRegistrar.standardSeverities()) {
       if (HighlightInfoType.INFORMATION.equals(type) || HighlightInfoType.INFO.equals(type)) continue;
       collection.add(getSeverityBasedTextAttributes(registrar, type));
     }
@@ -23,9 +23,10 @@ public final class SeverityUtil {
     return collection;
   }
 
+  @NotNull
   private static SeverityRegistrar.SeverityBasedTextAttributes getSeverityBasedTextAttributes(@NotNull SeverityRegistrar registrar, @NotNull HighlightInfoType type) {
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes textAttributes = scheme.getAttributes(type.getAttributesKey());
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes textAttributes = scheme.getAttributes(type.getAttributesKey());
     if (textAttributes != null) {
       return new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes, (HighlightInfoType.HighlightInfoTypeImpl)type);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -10,8 +10,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -63,42 +66,43 @@ public final class CreateSwitchBranchesUtil {
                                                                         @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();
+    final PsiExpression switchExpression = switchBlock.getExpression();
+    PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
+    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && selectorClass.hasModifierProperty(PsiModifier.SEALED);
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
       CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression switchExpression = switchBlock.getExpression();
       newStatementText.append("switch(").append(switchExpression == null ? "" : commentTracker.text(switchExpression)).append("){");
       for (String missingName : missingNames) {
-        newStatementText.append(String.join("", generateStatements(missingName, switchBlock, isRuleBasedFormat)));
+        newStatementText.append(String.join("", generateStatements(missingName, switchBlock, isRuleBasedFormat, isPatternsGenerated)));
       }
       newStatementText.append('}');
       PsiSwitchBlock block = (PsiSwitchBlock)commentTracker.replaceAndRestoreComments(switchBlock, newStatementText.toString());
       return PsiTreeUtil.getChildrenOfTypeAsList(block.getBody(), PsiSwitchLabelStatementBase.class);
     }
-    Map<String, String> prevToNext =
-      StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
-    List<String> missingLabels = StreamEx.of(allNames).filter(missingNames::contains).toList();
+    Map<String, String> prevToNext = StreamEx.of(allNames).pairMap(Couple::of).toMap(c -> c.getFirst(), c -> c.getSecond());
+    List<String> missingLabels = ContainerUtil.filter(allNames, missingNames::contains);
     String nextLabel = getNextLabel(prevToNext, missingLabels);
     PsiElement bodyElement = body.getFirstBodyElement();
     List<PsiSwitchLabelStatementBase> addedLabels = new ArrayList<>();
     while (bodyElement != null) {
       PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(bodyElement, PsiSwitchLabelStatementBase.class);
       if (label != null) {
-        List<String> constants = caseExtractor.apply(label);
-        while (nextLabel != null && constants.contains(nextLabel)) {
-          addedLabels.add(addSwitchLabelStatementBefore(missingLabels.get(0), bodyElement, switchBlock, isRuleBasedFormat));
-          missingLabels.remove(0);
+        List<String> caseLabelNames = caseExtractor.apply(label);
+        while (nextLabel != null && caseLabelNames.contains(nextLabel)) {
+          addedLabels.add(addSwitchLabelStatementBefore(missingLabels.get(0), bodyElement, switchBlock, isRuleBasedFormat, isPatternsGenerated));
+          missingLabels = missingLabels.subList(1, missingLabels.size());
           if (missingLabels.isEmpty()) {
             break;
           }
           nextLabel = getNextLabel(prevToNext, missingLabels);
         }
-        if (label.isDefaultCase()) {
-          for (String missingEnumElement : missingLabels) {
-            addedLabels.add(addSwitchLabelStatementBefore(missingEnumElement, bodyElement, switchBlock, isRuleBasedFormat));
+        if (SwitchUtils.isDefaultLabel(label)) {
+          for (String missingElement : missingLabels) {
+            addedLabels.add(addSwitchLabelStatementBefore(missingElement, bodyElement, switchBlock, isRuleBasedFormat, isPatternsGenerated));
           }
-          missingLabels.clear();
+          missingLabels = Collections.emptyList();
           break;
         }
       }
@@ -106,8 +110,8 @@ public final class CreateSwitchBranchesUtil {
     }
     if (!missingLabels.isEmpty()) {
       final PsiElement lastChild = body.getLastChild();
-      for (String missingEnumElement : missingLabels) {
-        addedLabels.add(addSwitchLabelStatementBefore(missingEnumElement, lastChild, switchBlock, isRuleBasedFormat));
+      for (String missingElement : missingLabels) {
+        addedLabels.add(addSwitchLabelStatementBefore(missingElement, lastChild, switchBlock, isRuleBasedFormat, isPatternsGenerated));
       }
     }
     return addedLabels;
@@ -152,26 +156,39 @@ public final class CreateSwitchBranchesUtil {
     return elementsToReplace;
   }
 
-  private static @NonNls List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  /**
+   * @param caseLabelName will be added after case keyword, i.e. case "caseLabelName"
+   * @param switchBlock a switch block, that is going to be changed
+   * @param isRuleBasedFormat true, if a switch block consists of arrows
+   * @param isPatternsGenerated specify whether patterns are generated. If true, then pattern variable identifiers
+   *                            will be generated as well i.e. case "caseLabelName" "patternVariableName"
+   * @return list of generated statements depending on type of switch block
+   */
+  public static @NonNls List<String> generateStatements(@NotNull String caseLabelName, @NotNull PsiSwitchBlock switchBlock,
+                                                        boolean isRuleBasedFormat, boolean isPatternsGenerated) {
+    final String patternVariableName =
+      isPatternsGenerated ? " " + new VariableNameGenerator(switchBlock, VariableKind.PARAMETER).byName(
+        StringUtil.getShortName(caseLabelName)).generate(false) : "";
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {
-        return Collections.singletonList("case " + name + " -> " + value + ";");
+        return Collections.singletonList("case " + caseLabelName + patternVariableName + " -> " + value + ";");
       }
       else {
-        return Arrays.asList("case " + name + ":", "yield " + value + ";");
+        return Arrays.asList("case " + caseLabelName + patternVariableName + ":", "yield " + value + ";");
       }
     }
     if (isRuleBasedFormat) {
-      return Collections.singletonList("case " + name + " -> {}");
+      return Collections.singletonList("case " + caseLabelName + patternVariableName + " -> {}");
     }
-    return Arrays.asList("case " + name + ":", "break;");
+    return Arrays.asList("case " + caseLabelName + patternVariableName + ":", "break;");
   }
 
   private static PsiSwitchLabelStatementBase addSwitchLabelStatementBefore(String labelExpression,
                                                                            PsiElement anchor,
                                                                            PsiSwitchBlock switchBlock,
-                                                                           boolean isRuleBasedFormat) {
+                                                                           boolean isRuleBasedFormat,
+                                                                           boolean isPatternsGenerated) {
     if (anchor instanceof PsiSwitchLabelStatement) {
       PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
       while (sibling instanceof PsiSwitchLabelStatement) {
@@ -183,12 +200,13 @@ public final class CreateSwitchBranchesUtil {
     final PsiElement parent = anchor.getParent();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
     PsiSwitchLabelStatementBase result = null;
-    for (String text : generateStatements(labelExpression, switchBlock, isRuleBasedFormat)) {
+    for (String text : generateStatements(labelExpression, switchBlock, isRuleBasedFormat, isPatternsGenerated)) {
       PsiStatement statement = factory.createStatementFromText(text, parent);
       PsiElement inserted = parent.addBefore(statement, correctedAnchor);
       if (inserted instanceof PsiSwitchLabelStatementBase) {
         result = (PsiSwitchLabelStatementBase)inserted;
       }
+      correctedAnchor = inserted.getNextSibling();
     }
     return result;
   }

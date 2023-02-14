@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,29 +18,20 @@ import java.util.Set;
 
 public final class JavaSdkUtil {
   /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
     return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
   }
 
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
     Path[] jarDirs;
-    if (SystemInfo.isMac && !home.getFileName().startsWith("mockJDK")) {
-      Path openJdkRtJar = home.resolve("jre/lib/rt.jar");
-      if (Files.isReadable(openJdkRtJar)) {
-        Path libDir = home.resolve("lib");
-        Path classesDir = openJdkRtJar.getParent();
-        Path libExtDir = openJdkRtJar.resolveSibling("ext");
-        Path libEndorsedDir = libDir.resolve("endorsed");
-        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
-      }
-      else {
-        Path libDir = home.resolve("lib");
-        Path classesDir = home.resolveSibling("Classes");
-        Path libExtDir = libDir.resolve("ext");
-        Path libEndorsedDir = libDir.resolve("endorsed");
-        jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
-      }
+    Path fileName = home.getFileName();
+    if (fileName != null && "Home".equals(fileName.toString()) && Files.exists(home.resolve("../Classes/classes.jar"))) {
+      Path libDir = home.resolve("lib");
+      Path classesDir = home.resolveSibling("Classes");
+      Path libExtDir = libDir.resolve("ext");
+      Path libEndorsedDir = libDir.resolve("endorsed");
+      jarDirs = new Path[]{libEndorsedDir, libDir, classesDir, libExtDir};
     }
     else if (Files.exists(home.resolve("lib/jrt-fs.jar"))) {
       jarDirs = new Path[0];
@@ -53,14 +43,16 @@ public final class JavaSdkUtil {
       jarDirs = new Path[]{libEndorsedDir, libDir, libExtDir};
     }
 
-    Set<String> pathFilter = CollectionFactory.createFilePathSet();
     List<Path> rootFiles = new ArrayList<>();
+
     if (Registry.is("project.structure.add.tools.jar.to.new.jdk", false)) {
-      Path toolsJar = home.resolve("lib/tools.jar");
+      @SuppressWarnings("IdentifierGrammar") Path toolsJar = home.resolve("lib/tools.jar");
       if (Files.isRegularFile(toolsJar)) {
         rootFiles.add(toolsJar);
       }
     }
+
+    Set<String> pathFilter = CollectionFactory.createFilePathSet();
     for (Path jarDir : jarDirs) {
       if (jarDir != null && Files.isDirectory(jarDir)) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(jarDir, "*.jar")) {
@@ -80,20 +72,12 @@ public final class JavaSdkUtil {
       }
     }
 
-    List<Path> ibmJdkLookupDirs = new ArrayList<>();
-    ibmJdkLookupDirs.add(home.resolve(isJre ? "bin" : "jre/bin"));
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(home.resolve(isJre ? "lib" : "jre/lib"), Files::isDirectory)) {
-      for (Path path : stream) ibmJdkLookupDirs.add(path);
-    }
-    catch (IOException ignored) { }
-    for (Path candidate : ibmJdkLookupDirs) {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(candidate, p -> p.getFileName().toString().startsWith("jclSC") && Files.isDirectory(p))) {
-        for (Path dir : stream) {
-          Path vmJar = dir.resolve("vm.jar");
-          if (Files.isRegularFile(vmJar)) {
-            rootFiles.add(vmJar);
-          }
-        }
+    if (ContainerUtil.exists(rootFiles, path -> path.getFileName().toString().startsWith("ibm"))) {
+      // ancient IBM JDKs split JRE classes between `rt.jar` and `vm.jar`, and the latter might be anywhere
+      try (var paths = Files.walk(isJre ? home : home.resolve("jre"))) {
+        paths.filter(path -> path.getFileName().toString().equals("vm.jar"))
+          .findFirst()
+          .ifPresent(rootFiles::add);
       }
       catch (IOException ignored) { }
     }

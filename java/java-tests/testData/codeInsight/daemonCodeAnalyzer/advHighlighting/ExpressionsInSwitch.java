@@ -51,4 +51,15 @@ class ExpressionsInSwitch {
       case true ^ true ? 0 : 0:
     }
   }
+
+  void parenthesizedNull() {
+    switch (new Object()) {
+      case <error descr="Constant expression required">((null))</error> -> {}
+      default -> {}
+    }
+
+    switch ("blah blah blah") {
+      case "hello", <error descr="Constant expression required">((null))</error>, default -> {}
+    }
+  }
 }

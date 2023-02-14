@@ -1,21 +1,8 @@
-/*
- * Copyright 2006-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -24,7 +11,20 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.do.while.loop.with.while.loop.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("replace.do.while.loop.with.while.loop.intention.name");
+  }
 
   @Override
   @NotNull
@@ -70,12 +70,10 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1, length = children.length - 1; i < length; i++) {
           final PsiElement child = children[i];
-          if (child instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+          if (child instanceof PsiDeclarationStatement declarationStatement) {
             final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
-              if (declaredElement instanceof PsiVariable) {
-                final PsiVariable variable = (PsiVariable)declaredElement;
+              if (declaredElement instanceof PsiVariable variable) {
                 final PsiModifierList modifierList = variable.getModifierList();
                 if (modifierList != null) {
                   modifierList.setModifierProperty(PsiModifier.FINAL, false);
@@ -113,13 +111,11 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1; i < children.length - 1; i++) {
           final PsiElement child = children[i];
-          if (child instanceof PsiDeclarationStatement) {
-            final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)child;
+          if (child instanceof PsiDeclarationStatement declarationStatement) {
             final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
             for (PsiElement declaredElement : declaredElements) {
-              if (declaredElement instanceof PsiVariable) {
+              if (declaredElement instanceof PsiVariable variable) {
                 // prevent duplicate variable declarations.
-                final PsiVariable variable = (PsiVariable)declaredElement;
                 final PsiExpression initializer = variable.getInitializer();
                 if (initializer != null) {
                   replacementText.append(variable.getName()).append(" = ").append(commentTracker.text(initializer)).append(';');

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache;
 
@@ -10,7 +10,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -27,15 +26,14 @@ import java.util.Collection;
  */
 public interface CacheManager {
 
+  /**
+   * @deprecated use {@link CacheManager#getInstance(Project)}
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
-    /**
-     * @deprecated use {@link CacheManager#getInstance(Project)}
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public static CacheManager getInstance(Project project) {
       return project.getService(CacheManager.class);
     }

@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -40,11 +40,10 @@ public class AssertMessageNotStringInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("assert.message.of.type.boolean.problem.descriptor", type.getPresentableText());
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("assert.message.not.string.only.warn.boolean.option"),
-                                          this, "onlyWarnOnBoolean");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnBoolean", InspectionGadgetsBundle.message("assert.message.not.string.only.warn.boolean.option")));
   }
 
   @Override
@@ -55,7 +54,7 @@ public class AssertMessageNotStringInspection extends BaseInspection {
   private class AssertMessageNotStringVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       super.visitAssertStatement(statement);
       final PsiExpression assertDescription = statement.getAssertDescription();
       if (assertDescription == null) {
@@ -63,11 +62,11 @@ public class AssertMessageNotStringInspection extends BaseInspection {
       }
       final PsiType type = assertDescription.getType();
       if (onlyWarnOnBoolean) {
-        if (PsiType.BOOLEAN.equals(type)) {
+        if (PsiTypes.booleanType().equals(type)) {
           registerError(assertDescription, type);
           return;
         }
-        final PsiClassType javaLangBoolean = PsiType.BOOLEAN.getBoxedType(statement);
+        final PsiClassType javaLangBoolean = PsiTypes.booleanType().getBoxedType(statement);
         if (javaLangBoolean != null && javaLangBoolean.equals(type)) {
           registerError(assertDescription, type);
         }

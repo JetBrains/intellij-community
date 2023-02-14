@@ -1,0 +1,19 @@
+0(1) element: null
+1(2) WRITE ACCESS: self
+2(3) element: PyAssignmentStatement
+3(4) READ ACCESS: get_response
+4(5) WRITE ACCESS: str
+5(6) element: PyIfStatement
+6(7) READ ACCESS: isinstance
+7(8) READ ACCESS: str
+8(9,14) READ ACCESS: int
+9(10) element: PyStatementList. Condition: isinstance(str, int):true
+10(11) ASSERTTYPE ACCESS: str
+11(12) element: PyExpressionStatement
+12(18) READ ACCESS: self
+13(15) element: PyPrintStatement
+14(15) ASSERTTYPE ACCESS: str
+15(16) element: PyExpressionStatement
+16(17) READ ACCESS: self
+17(18) READ ACCESS: str
+18() element: null

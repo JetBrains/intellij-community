@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Formats;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +36,7 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
 
   IdeStartupScripts() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
   }
 
@@ -46,14 +45,15 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
     if (!isActive.compareAndSet(true, false)) {
       return;
     }
+
     List<Path> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
-    if (scripts.isEmpty()) return;
-
-    runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+    if (!scripts.isEmpty()) {
+      runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+    }
   }
 
-  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<Path> scripts) {
+  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<? extends Path> scripts) {
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
     List<Pair<Path, IdeScriptEngine>> result = new ArrayList<>();
     for (Path script : scripts) {
@@ -91,13 +91,13 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
   }
 
   static void runAllScriptsImpl(@Nullable Project project,
-                                @NotNull List<Pair<Path, IdeScriptEngine>> result,
+                                @NotNull List<? extends Pair<Path, IdeScriptEngine>> result,
                                 @NotNull Logger logger) {
     for (Pair<Path, IdeScriptEngine> pair : result) {
       try {
         logger.info(pair.first.toString());
 
-        String scriptText = PathKt.readText(pair.first);
+        String scriptText = Files.readString(pair.first);
         IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second);
 
         long start = System.currentTimeMillis();

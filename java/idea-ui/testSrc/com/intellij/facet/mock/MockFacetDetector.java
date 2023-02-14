@@ -3,6 +3,7 @@ package com.intellij.facet.mock;
 
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static com.intellij.patterns.StandardPatterns.string;
 
+@InternalIgnoreDependencyViolation
 public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFacet, MockFacetConfiguration> {
   public static final String ROOT_TAG_NAME = "root";
   public static final String ROOT_TAG = "<" + ROOT_TAG_NAME + "/>";
@@ -41,14 +43,14 @@ public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFac
 
   @NotNull
   @Override
-  public List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> createConfigurations(@NotNull Collection<VirtualFile> files,
-                                                                     @NotNull Collection<MockFacetConfiguration> existentFacetConfigurations) {
+  public List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> createConfigurations(@NotNull Collection<? extends VirtualFile> files,
+                                                                                          @NotNull Collection<? extends MockFacetConfiguration> existentFacetConfigurations) {
 
     return doDetect(files, existentFacetConfigurations);
   }
 
-  public static List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> doDetect(Collection<VirtualFile> files,
-                                                                                     Collection<MockFacetConfiguration> existentFacetConfigurations) {
+  public static List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> doDetect(Collection<? extends VirtualFile> files,
+                                                                                     Collection<? extends MockFacetConfiguration> existentFacetConfigurations) {
     final List<Pair<MockFacetConfiguration, Collection<VirtualFile>>> result = new ArrayList<>();
     MultiMap<String, VirtualFile> filesByName = new MultiMap<>();
     for (VirtualFile file : files) {
@@ -77,7 +79,7 @@ public final class MockFacetDetector extends FacetBasedFrameworkDetector<MockFac
 
   @Nullable
   private static MockFacetConfiguration detectConfiguration(final String fileName,
-                                                           final Collection<MockFacetConfiguration> existentFacetConfigurations) {
+                                                           final Collection<? extends MockFacetConfiguration> existentFacetConfigurations) {
     for (MockFacetConfiguration configuration : existentFacetConfigurations) {
       if (fileName.equals(configuration.getData())) {
         return null;

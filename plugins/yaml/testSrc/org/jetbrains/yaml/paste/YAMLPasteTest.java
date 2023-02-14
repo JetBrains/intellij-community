@@ -17,19 +17,24 @@ import java.awt.datatransfer.StringSelection;
  * Suffix is used to distinguish tests with the same `before` and `after` states but with different insertion (with and without indent).
  */
 public abstract class YAMLPasteTest extends BasePlatformTestCase {
-  private static final String ZERO_INDENT_SAMPLE = "key1:\n" +
-                                                   "  subKey: val1\n" +
-                                                   "\n" +
-                                                   "key2: val2";
+  private static final String ZERO_INDENT_SAMPLE = """
+    key1:
+      subKey: val1
 
-  private static final String INDENTED_SAMPLE = "  key1:\n" +
-                                                "    subKey: val1\n" +
-                                                "\n" +
-                                                "  key2: val2";
+    key2: val2""";
 
-  private static final String EMPTY_LINES_SAMPLE = "\n" +
-                                                   "\n" +
-                                                   "\n";
+  private static final String INDENTED_SAMPLE = """
+      key1:
+        subKey: val1
+
+      key2: val2\
+    """;
+
+  private static final String EMPTY_LINES_SAMPLE = """
+
+
+
+    """;
 
   private final int myReformatOnPaste;
 

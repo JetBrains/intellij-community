@@ -38,6 +38,11 @@ public class CopyAsRichTextAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     RichCopySettings settings = RichCopySettings.getInstance();
     boolean savedValue = settings.isEnabled();

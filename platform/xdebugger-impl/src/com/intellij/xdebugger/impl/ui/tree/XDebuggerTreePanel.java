@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.dnd.DnDAction;
@@ -14,7 +14,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,16 +52,16 @@ public final class XDebuggerTreePanel implements DnDSource {
   }
 
   @Override
-  public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
+  public boolean canStartDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return getNodesToDrag().length > 0;
   }
 
   private XValueNodeImpl[] getNodesToDrag() {
-    return myTree.getSelectedNodes(XValueNodeImpl.class, node -> DebuggerUIUtil.hasEvaluationExpression(node.getValueContainer()));
+    return myTree.getSelectedNodes(XValueNodeImpl.class, null);
   }
 
   @Override
-  public DnDDragStartBean startDragging(final DnDAction action, final Point dragOrigin) {
+  public DnDDragStartBean startDragging(final DnDAction action, final @NotNull Point dragOrigin) {
     return new DnDDragStartBean(getNodesToDrag());
   }
 

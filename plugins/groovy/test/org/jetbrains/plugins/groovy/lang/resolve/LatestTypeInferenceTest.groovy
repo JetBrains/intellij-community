@@ -49,4 +49,13 @@ Integer getSomeClass() {
     nes<caret>ted(1) { }
 }''', JAVA_LANG_INTEGER
   }
+
+  @Test
+  void 'assert explicitly typed Set variable with list initializer'() {
+    typingTest '''\
+Set<String> a = ['a']
+assert a instanceof Set
+<caret>a
+''', 'java.util.Set<java.lang.String>'
+  }
 }

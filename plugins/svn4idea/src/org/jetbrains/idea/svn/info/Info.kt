@@ -2,7 +2,6 @@
 package org.jetbrains.idea.svn.info
 
 import com.intellij.openapi.util.io.FileUtil.isAbsolute
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.svn.api.*
 import org.jetbrains.idea.svn.checkin.CommitInfo
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription
@@ -37,10 +36,6 @@ class Info(val file: File?,
   val conflictOldFile = resolveConflictFile(file, conflictOldFilePath)
   val conflictNewFile = resolveConflictFile(file, conflictNewFilePath)
   val conflictWrkFile = resolveConflictFile(file, conflictWorkingFilePath)
-
-  @Deprecated("Use url property", ReplaceWith("url"))
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  fun getURL() = url
 
   companion object {
     const val SCHEDULE_ADD = "add"

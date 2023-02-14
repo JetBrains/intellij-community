@@ -23,10 +23,21 @@ public abstract class LocalTerminalCustomizer {
    * {@code /usr/bin/bash --rcfile PATH_TO/community/plugins/terminal/resources/jediterm-bash.in}. See the {@code jediterm-bash.in} script
    * for more information on how to alter the execution process.
    */
-  public @NotNull String[] customizeCommandAndEnvironment(@NotNull Project project,
-                                                          @NotNull String[] command,
-                                                          @NotNull Map<String, String> envs) {
+  public String[] customizeCommandAndEnvironment(@NotNull Project project,
+                                                 @Nullable String workingDirectory,
+                                                 @NotNull String[] command,
+                                                 @NotNull Map<String, String> envs) {
     return command;
+  }
+
+  /**
+   * @deprecated use LocalTerminalCustomizer#customizeCommandAndEnvironment(Project, String, String[], Map)
+   */
+  @Deprecated
+  public String[] customizeCommandAndEnvironment(@NotNull Project project,
+                                                 @NotNull String[] command,
+                                                 @NotNull Map<String, String> envs) {
+    return customizeCommandAndEnvironment(project, null, command, envs);
   }
 
   /**

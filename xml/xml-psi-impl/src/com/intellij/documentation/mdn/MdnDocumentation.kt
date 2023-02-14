@@ -1,20 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.documentation.mdn
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.TreeNode
+import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
-import com.intellij.util.castSafelyTo
+import com.intellij.util.asSafely
+import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.xml.psi.XmlPsiBundle
 import com.intellij.xml.util.HtmlUtil
+import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
@@ -29,7 +40,7 @@ fun getJsMdnDocumentation(namespace: MdnApiNamespace, qualifiedName: String): Md
       it.endsWith("Constructor") -> "$it.$it"
       else -> it
     }
-  }.toLowerCase(Locale.US).let { webApiIndex[it] ?: it }
+  }.lowercase(Locale.US).let { webApiIndex[it] ?: it }
   val jsNamespace = qualifiedName.takeWhile { it != '.' }
   if (jsNamespace.endsWith("EventMap")) {
     getDomEventDocumentation(qualifiedName.substring(jsNamespace.length + 1))?.let { return it }
@@ -57,14 +68,14 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
     // Directly from the file
     element is XmlTag && !element.containingFile.name.endsWith(".xsd", true) -> {
       symbolName = element.localName
-      getTagDocumentation(getApiNamespace(element.namespace, element, toLowerCase(symbolName)), toLowerCase(symbolName))
+      getTagDocumentation(getHtmlApiNamespace(element.namespace, element, toLowerCase(symbolName)), toLowerCase(symbolName))
     }
     // TODO support special documentation for attribute values
     element is XmlAttribute || element is XmlAttributeValue -> {
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName
-        getAttributeDocumentation(getApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
-                                  attr.parent.localName, toLowerCase(symbolName))
+        getAttributeDocumentation(getHtmlApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
+          attr.parent.localName, toLowerCase(symbolName))
       }
     }
     else -> {
@@ -92,7 +103,7 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       }
       symbolName?.let {
         val lcName = toLowerCase(it)
-        val namespace = getApiNamespace(context?.namespace, context, lcName)
+        val namespace = getHtmlApiNamespace(context?.namespace, context, lcName)
         if (isTag) {
           getTagDocumentation(namespace, lcName)
         }
@@ -102,7 +113,6 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       }
     }
   }
-    ?.takeIf { symbolName != null }
     ?.let { (source, doc) ->
       MdnSymbolDocumentationAdapter(if (context?.isCaseSensitive == true) symbolName!! else toLowerCase(symbolName!!), source, doc)
     }
@@ -163,16 +173,24 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
     .let { Pair(it, it.events[eventName] ?: return@let null) }
 
 interface MdnSymbolDocumentation {
+  val name: String
   val url: String
   val isDeprecated: Boolean
+  val isExperimental: Boolean
+  val description: String
+  val sections: Map<@Nls String, @Nls String>
+  val footnote: @Nls String?
 
-  fun getDocumentation(withDefinition: Boolean): String
+  fun getDocumentation(withDefinition: Boolean): @NlsSafe String
 
   fun getDocumentation(withDefinition: Boolean,
-                       additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String
+                       additionalSectionsContent: Consumer<java.lang.StringBuilder>?): @NlsSafe String
+
 }
 
-class MdnSymbolDocumentationAdapter(private val name: String,
+private const val defaultBcdContext = "default_context"
+
+class MdnSymbolDocumentationAdapter(override val name: String,
                                     private val source: MdnDocumentation,
                                     private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
   override val url: String
@@ -181,19 +199,60 @@ class MdnSymbolDocumentationAdapter(private val name: String,
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
 
+  override val isExperimental: Boolean
+    get() = doc.status?.contains(MdnApiStatus.Experimental) == true
+
+  override val description: String
+    get() = capitalize(doc.doc ?: "").fixUrls()
+
+  override val sections: Map<String, String>
+    get() {
+      val result = doc.sections.toMutableMap()
+      if (doc.compatibility != null) {
+        doc.compatibility!!.entries.forEach { (id, map) ->
+          val actualId = if (id == defaultBcdContext) "browser_compatibility" else id
+          val bundleKey = "mdn.documentation.section.compat.$actualId"
+          val sectionName: String = if (actualId.startsWith("support_of_") && !XmlPsiBundle.hasKey(bundleKey)) {
+            XmlPsiBundle.message("mdn.documentation.section.compat.support_of", actualId.substring("support_of_".length))
+          }
+          else {
+            XmlPsiBundle.message(bundleKey)
+          }
+          result[sectionName] = map.entries
+            .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
+            .ifBlank { XmlPsiBundle.message("mdn.documentation.section.compat.supported_by.none") }
+        }
+      }
+      doc.status?.asSequence()
+        ?.filter { it != MdnApiStatus.StandardTrack }
+        ?.map { Pair(WebSymbolsBundle.message("mdn.documentation.section.status." + it.name), "") }
+        ?.toMap(result)
+      return result.map { (key, value) -> Pair(key.fixUrls(), value.fixUrls()) }.toMap()
+    }
+
+  override val footnote: String
+    get() = "By <a href='${doc.url}/contributors.txt'>Mozilla Contributors</a>, <a href='https://creativecommons.org/licenses/by-sa/2.5/'>CC BY-SA 2.5</a>"
+      .fixUrls()
+
   override fun getDocumentation(withDefinition: Boolean): String =
     getDocumentation(withDefinition, null)
 
   override fun getDocumentation(withDefinition: Boolean,
                                 additionalSectionsContent: Consumer<java.lang.StringBuilder>?) =
-    buildDoc(doc, name, source.lang, withDefinition, additionalSectionsContent)
+    buildDoc(this, withDefinition, additionalSectionsContent)
+
+  private fun String.fixUrls(): String =
+    fixMdnUrls(replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
+               source.lang)
 
 }
+
+typealias CompatibilityMap = Map<String, Map<MdnJavaScriptRuntime, String>>
 
 interface MdnRawSymbolDocumentation {
   val url: String
   val status: Set<MdnApiStatus>?
-  val compatibility: Map<MdnJavaScriptRuntime, String>?
+  val compatibility: CompatibilityMap?
   val doc: String?
   val sections: Map<String, String> get() = emptyMap()
 }
@@ -223,24 +282,28 @@ data class MdnCssDocumentation(override val lang: String,
 
 data class MdnHtmlElementDocumentation(override val url: String,
                                        override val status: Set<MdnApiStatus>?,
-                                       override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                       @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                       override val compatibility: CompatibilityMap?,
                                        override val doc: String,
                                        val details: Map<String, String>?,
                                        val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnHtmlAttributeDocumentation(override val url: String,
                                          override val status: Set<MdnApiStatus>?,
-                                         override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                         @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                         override val compatibility: CompatibilityMap?,
                                          override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnDomEventDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
-                                    override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                    @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                    override val compatibility: CompatibilityMap?,
                                     override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnJsSymbolDocumentation(override val url: String,
                                     override val status: Set<MdnApiStatus>?,
-                                    override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                    @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                    override val compatibility: CompatibilityMap?,
                                     override val doc: String?,
                                     val parameters: Map<String, String>?,
                                     val returns: String?,
@@ -249,11 +312,11 @@ data class MdnJsSymbolDocumentation(override val url: String,
     get() {
       val result = mutableMapOf<String, String>()
       parameters?.takeIf { it.isNotEmpty() }?.let {
-        result.put("Params", buildSubSection(it))
+        result.put(XmlPsiBundle.message("mdn.documentation.section.parameters"), buildSubSection(it))
       }
-      returns?.let { result.put("Returns", it) }
+      returns?.let { result.put(XmlPsiBundle.message("mdn.documentation.section.returns"), it) }
       throws?.takeIf { it.isNotEmpty() }?.let {
-        result.put("Throws", buildSubSection(it))
+        result.put(XmlPsiBundle.message("mdn.documentation.section.throws"), buildSubSection(it))
       }
       return result
     }
@@ -261,18 +324,21 @@ data class MdnJsSymbolDocumentation(override val url: String,
 
 data class MdnCssBasicSymbolDocumentation(override val url: String,
                                           override val status: Set<MdnApiStatus>?,
-                                          override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                          @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                          override val compatibility: CompatibilityMap?,
                                           override val doc: String?) : MdnRawSymbolDocumentation
 
 data class MdnCssAtRuleSymbolDocumentation(override val url: String,
                                            override val status: Set<MdnApiStatus>?,
-                                           override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                           @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                           override val compatibility: CompatibilityMap?,
                                            override val doc: String?,
                                            val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
 
 data class MdnCssPropertySymbolDocumentation(override val url: String,
                                              override val status: Set<MdnApiStatus>?,
-                                             override val compatibility: Map<MdnJavaScriptRuntime, String>?,
+                                             @JsonDeserialize(using = CompatibilityMapDeserializer::class)
+                                             override val compatibility: CompatibilityMap?,
                                              override val doc: String?,
                                              val formalSyntax: String?,
                                              val values: Map<String, String>?) : MdnRawSymbolDocumentation {
@@ -280,10 +346,10 @@ data class MdnCssPropertySymbolDocumentation(override val url: String,
     get() {
       val result = mutableMapOf<String, String>()
       formalSyntax?.takeIf { it.isNotEmpty() }?.let {
-        result.put("Syntax", "<pre><code>$it</code></pre>")
+        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
       }
       values?.takeIf { it.isNotEmpty() }?.let {
-        result.put("Values", buildSubSection(values))
+        result.put(XmlPsiBundle.message("mdn.documentation.section.values"), buildSubSection(values))
       }
       return result
     }
@@ -331,8 +397,8 @@ enum class MdnCssSymbolKind {
     override fun getDocumentationMap(documentation: MdnCssDocumentation): Map<String, MdnRawSymbolDocumentation> = documentation.properties
     override fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? {
       if (name.startsWith("@")) {
-        val atRule = name.takeWhile { it != '.' }.substring(1).toLowerCase(Locale.US)
-        val propertyName = name.takeLastWhile { it != '.' }.toLowerCase(Locale.US)
+        val atRule = name.takeWhile { it != '.' }.substring(1).lowercase(Locale.US)
+        val propertyName = name.takeLastWhile { it != '.' }.lowercase(Locale.US)
         documentation.atRules[atRule]?.properties?.get(propertyName)?.let {
           return MdnSymbolDocumentationAdapter(name, documentation, it)
         }
@@ -366,15 +432,39 @@ enum class MdnCssSymbolKind {
   protected abstract fun decorateName(name: String): String
 
   open fun getSymbolDoc(documentation: MdnCssDocumentation, name: String): MdnSymbolDocumentation? =
-    getDocumentationMap(documentation)[name.toLowerCase(Locale.US)]?.let {
+    getDocumentationMap(documentation)[name.lowercase(Locale.US)]?.let {
       MdnSymbolDocumentationAdapter(decorateName(name), documentation, it)
     }
 }
 
 val webApiFragmentStarts = arrayOf('a', 'e', 'l', 'r', 'u')
 
+private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>() {
+
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): CompatibilityMap =
+    p.readValueAsTree<TreeNode>()
+      .asSafely<ObjectNode>()
+      ?.let {
+        if (it.firstOrNull() is ObjectNode) {
+          it.fields().asSequence()
+            .map { (key, value) -> Pair(key, (value as ObjectNode).toBcdMap()) }
+            .toMap()
+        }
+        else {
+          mapOf(Pair(defaultBcdContext, it.toBcdMap()))
+        }
+      }
+    ?: emptyMap()
+
+  private fun ObjectNode.toBcdMap(): Map<MdnJavaScriptRuntime, String> =
+    this.fields().asSequence().map { (key, value) ->
+      Pair(MdnJavaScriptRuntime.valueOf(key), (value as TextNode).asText())
+    }.toMap()
+
+}
+
 private fun getWebApiFragment(name: String): Char =
-  webApiFragmentStarts.findLast { it <= name[0].toLowerCase() }!!
+  webApiFragmentStarts.findLast { it <= name[0].lowercaseChar() }!!
 
 private const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
 
@@ -391,16 +481,16 @@ private fun fixMdnUrls(content: String, lang: String): String =
   content.replace("$MDN_DOCS_URL_PREFIX/", "https://developer.mozilla.org/$lang/docs/")
     .replace(MDN_DOCS_URL_PREFIX, "https://developer.mozilla.org/$lang/docs")
 
-private fun getApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
+fun getHtmlApiNamespace(namespace: String?, element: PsiElement?, symbolName: String): MdnApiNamespace =
   when {
     symbolName.equals("svg", true) -> MdnApiNamespace.Svg
     symbolName.equals("math", true) -> MdnApiNamespace.MathML
     namespace == HtmlUtil.SVG_NAMESPACE -> MdnApiNamespace.Svg
     namespace == HtmlUtil.MATH_ML_NAMESPACE -> MdnApiNamespace.MathML
     else -> PsiTreeUtil.findFirstParent(element, false) { parent ->
-      parent is XmlTag && parent.localName.toLowerCase(Locale.US).let { it == "svg" || it == "math" }
-    }?.castSafelyTo<XmlTag>()?.let {
-      when (it.name.toLowerCase()) {
+      parent is XmlTag && parent.localName.lowercase(Locale.US).let { it == "svg" || it == "math" }
+    }?.asSafely<XmlTag>()?.let {
+      when (it.name.lowercase(Locale.US)) {
         "svg" -> MdnApiNamespace.Svg
         "math" -> MdnApiNamespace.MathML
         else -> null
@@ -421,35 +511,28 @@ private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace,
   MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")!!
     .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
 
-private fun buildDoc(doc: MdnRawSymbolDocumentation,
-                     name: String,
-                     lang: String,
+private fun buildDoc(doc: MdnSymbolDocumentation,
                      withDefinition: Boolean,
-                     additionalSectionsContent: Consumer<java.lang.StringBuilder>?): String {
+                     additionalSectionsContent: Consumer<java.lang.StringBuilder>?): @NlsSafe String {
   val buf = StringBuilder()
   if (withDefinition)
     buf.append(DocumentationMarkup.DEFINITION_START)
-      .append(name)
+      .append(doc.name)
       .append(DocumentationMarkup.DEFINITION_END)
+      .append("\n")
 
   buf.append(DocumentationMarkup.CONTENT_START)
-    .append(capitalize(doc.doc ?: ""))
+    .append(doc.description)
     .append(DocumentationMarkup.CONTENT_END)
 
-  val sections = doc.sections?.toMutableMap() ?: mutableMapOf()
-  if (doc.compatibility != null) {
-    sections["Supported by:"] = doc.compatibility!!.entries
-      .joinToString(", ") { it.key.displayName + (if (it.value.isNotEmpty()) " " + it.value else "") }
-      .ifBlank { "none" }
-  }
-  doc.status?.asSequence()
-    ?.filter { it != MdnApiStatus.StandardTrack }
-    ?.map { Pair(it.name, "") }
-    ?.toMap(sections)
-  if (!sections.isNullOrEmpty() || additionalSectionsContent != null) {
-    buf.append(DocumentationMarkup.SECTIONS_START)
+  val sections = doc.sections
+
+  if (sections.isNotEmpty() || additionalSectionsContent != null) {
+    buf.append("\n")
+      .append(DocumentationMarkup.SECTIONS_START)
     for (entry in sections) {
-      buf.append(DocumentationMarkup.SECTION_HEADER_START)
+      buf.append("\n")
+        .append(DocumentationMarkup.SECTION_HEADER_START)
         .append(entry.key)
       if (entry.value.isNotEmpty()) {
         if (!entry.key.endsWith(":"))
@@ -462,15 +545,13 @@ private fun buildDoc(doc: MdnRawSymbolDocumentation,
     additionalSectionsContent?.accept(buf)
     buf.append(DocumentationMarkup.SECTIONS_END)
   }
-  buf.append(DocumentationMarkup.CONTENT_START)
-    .append("By <a href='")
-    .append(doc.url)
-    .append("/contributors.txt'>Mozilla Contributors</a>, <a href='http://creativecommons.org/licenses/by-sa/2.5/'>CC BY-SA 2.5</a>")
+  buf.append("\n")
+    .append(DocumentationMarkup.CONTENT_START)
+    .append(doc.footnote)
     .append(DocumentationMarkup.CONTENT_END)
+    .append("\n")
   // Expand MDN URL prefix and fix relative "#" references to point to external MDN docs
-  return fixMdnUrls(
-    buf.toString().replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
-    lang)
+  return buf.toString()
 }
 
 fun buildSubSection(items: Map<String, String>): String {
@@ -480,7 +561,7 @@ fun buildSubSection(items: Map<String, String>): String {
       .append(name)
       .append("</code> &ndash; ")
       .append(doc)
-      .append("<br><span style='font-size:0.2em'>&nbsp;</span>")
+      .append("<br><span style='font-size:0.2em'>&nbsp;</span>\n")
   }
   return result.toString()
 }
@@ -494,5 +575,5 @@ private fun getUnprefixedName(name: String): String? {
 private val UPPER_CASE = Regex("(?=\\p{Upper})")
 
 private fun String.toKebabCase() =
-  this.split(UPPER_CASE).joinToString("-") { it.toLowerCase(Locale.US) }
+  this.split(UPPER_CASE).joinToString("-") { it.lowercase(Locale.US) }
 

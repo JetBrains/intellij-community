@@ -29,9 +29,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList {
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);
@@ -69,8 +67,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
           isLast = false;
           break;
         }
-        if (p instanceof PyNamedParameter) {
-          PyNamedParameter named = (PyNamedParameter)p;
+        if (p instanceof PyNamedParameter named) {
           if (named.isKeywordContainer() || named.isPositionalContainer()) {
             beforeWhat = p.getNode();
             isLast = false;

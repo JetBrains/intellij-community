@@ -127,7 +127,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
         }
 
         IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
+        if (type instanceof IStubElementType && ((IStubElementType<?, ?>)type).shouldCreateStub(node)) {
           result.add(node);
         }
 

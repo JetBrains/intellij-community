@@ -1,16 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -47,31 +45,6 @@ public final class GithubNotifications {
                                  @NotificationContent @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantWarning(displayId, title, message);
-  }
-
-  public static void showWarning(@NotNull Project project,
-                                 @NonNls @Nullable String displayId,
-                                 @NotificationTitle @NotNull String title,
-                                 @NotNull Exception e) {
-    LOG.info(title + "; ", e);
-    if (isOperationCanceled(e)) return;
-    VcsNotifier.getInstance(project).notifyImportantWarning(displayId, title, getErrorTextFromException(e));
-  }
-
-  public static void showWarning(@NotNull Project project,
-                                 @NonNls @Nullable String displayId,
-                                 @NotificationTitle @NotNull String title,
-                                 @NotificationContent @NotNull String message,
-                                 AnAction @Nullable ... actions) {
-    LOG.info(title + "; " + message);
-    Notification notification =
-      new Notification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), displayId, title, message, NotificationType.WARNING, null);
-    if (actions != null) {
-      for (AnAction action : actions) {
-        notification.addAction(action);
-      }
-    }
-    notification.notify(project);
   }
 
   public static void showError(@NotNull Project project,
@@ -163,7 +136,7 @@ public final class GithubNotifications {
   public static boolean showYesNoDialog(@Nullable Project project,
                                         @NotificationTitle @NotNull String title,
                                         @NotificationContent @NotNull String message,
-                                        @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
+                                        @NotNull DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(Messages.getQuestionIcon())
       .doNotAsk(doNotAskOption)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -7,11 +7,9 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
 
-/**
- * @author peter
- */
 class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   void testDuplicateClosurePrivateVariable() {
@@ -170,7 +168,7 @@ class A {
   void testBuiltInTypeInstantiation() { doTest() }
 
   void 'test void array type'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 <error descr="Illegal type: 'void'">void</error>[] foo() {}
 <error descr="Illegal type: 'void'">void</error>[] bar = foo()
 '''
@@ -508,7 +506,7 @@ C<warning descr="Wrong number of type arguments: 2; required: 1"><String, Double
   }
 
   void testTryCatch1() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (Exception e){}
 catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
@@ -516,7 +514,7 @@ catch (<warning descr="Exception 'java.io.IOException' has already been caught">
   }
 
   void testTryCatch2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (e){}
 catch (<warning descr="Exception 'java.lang.Exception' has already been caught">e</warning>){}
@@ -524,7 +522,7 @@ catch (<warning descr="Exception 'java.lang.Exception' has already been caught">
   }
 
   void testTryCatch3() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (e){}
 catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
@@ -532,14 +530,14 @@ catch (<warning descr="Exception 'java.io.IOException' has already been caught">
   }
 
   void testTryCatch4() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (Exception | <warning descr="Unnecessary exception 'java.io.IOException'. 'java.lang.Exception' is already declared">IOException</warning> e){}
 ''')
   }
 
   void testTryCatch5() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (RuntimeException | IOException e){}
 catch (<warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
@@ -547,7 +545,7 @@ catch (<warning descr="Exception 'java.lang.NullPointerException' has already be
   }
 
   void testTryCatch6() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 try {}
 catch (NullPointerException | IOException e){}
 catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
@@ -568,7 +566,7 @@ package groovy.transform;
 public @interface CompileStatic {
 }''')
 
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.CompileStatic
 
 class A {
@@ -591,7 +589,7 @@ print <error descr="Cannot resolve symbol 'abc'">abc</error>
   }
 
   void testUnresolvedVarInStaticMethod() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 static def foo() {
   print <error descr="Cannot resolve symbol 'abc'">abc</error>
 
@@ -603,7 +601,7 @@ static def foo() {
   }
 
   void testStaticOkForClassMembersWithThisQualifier() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   def foo(){}
   static bar() {
@@ -617,7 +615,7 @@ class A {
 
   void testScriptFieldsAreAllowedOnlyInScriptBody() {
     addGroovyTransformField()
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Field
 
 @Field
@@ -642,7 +640,7 @@ class X {
 
   void testDuplicatedScriptField() {
     addGroovyTransformField()
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Field
 
 while(true) {
@@ -663,7 +661,7 @@ def foo
 
   void testReturnTypeInStaticallyCompiledMethod() {
     addCompileStatic()
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.CompileStatic
 @CompileStatic
 int method(x, y, z) {
@@ -681,7 +679,7 @@ int method(x, y, z) {
   }
 
   void testOverrideForVars() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class S {
   @<error descr="'@Override' not applicable to field">Override</error> def foo;
 
@@ -693,7 +691,7 @@ class S {
 
   void testUnusedImportToList() {
     myFixture.addClass('''package java.awt; public class Component{}''')
-    testHighlighting('''\
+    doTestHighlighting('''\
 import java.awt.Component
 <warning descr="Unused import">import java.util.List</warning>
 
@@ -706,7 +704,7 @@ print List
     myFixture.addClass('''package java.awt; public class Component{}''')
     myFixture.addClass('''package java.awt; public class List{}''')
     myFixture.addClass('''package java.util.concurrent; public class ConcurrentHashMap{}''')
-    testHighlighting('''\
+    doTestHighlighting('''\
 import java.awt.*
 import java.util.List
 <warning descr="Unused import">import java.util.concurrent.ConcurrentHashMap</warning>
@@ -717,7 +715,7 @@ print List
   }
 
   void testIncompatibleTypeOfImplicitGetter() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 abstract class Base {
     abstract String getFoo()
 }
@@ -728,7 +726,7 @@ class Inheritor extends Base {
   }
 
   void testIncompatibleTypeOfInheritedMethod() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 abstract class Base {
   abstract String getFoo()
 }
@@ -739,7 +737,7 @@ class Inheritor extends Base {
   }
 
   void testIncompatibleTypeOfInheritedMethod2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 abstract class Base {
   abstract String getFoo()
 }
@@ -750,7 +748,7 @@ class Inheritor extends Base {
   }
 
   void testIncompatibleTypeOfInheritedMethodInAnonymous() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 abstract class Base {
   abstract String getFoo()
 }
@@ -761,7 +759,7 @@ new Base() {
   }
 
   void testAnnotationArgs() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Int {
   int value()
   String s() default 'a'
@@ -780,7 +778,7 @@ new Base() {
   }
 
   void testDefaultAttributeValue() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Int {
   int value1() default 2
   String value2() default <error descr="Cannot assign 'Integer' to 'String'">2</error>
@@ -790,7 +788,7 @@ new Base() {
   }
 
   void testAnnotationMethodThrowsList() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 @interface A {
   int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
   int aab() throws<error descr="<type> expected, got ';'"> </error>;
@@ -799,7 +797,7 @@ new Base() {
   }
 
   void testAnnotationAttributeTypes() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Int {
   int a()
   String b()
@@ -815,7 +813,7 @@ new Base() {
   }
 
   void testDefaultAnnotationValue() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface A {
   int a() default 2
   String b() default <error descr="Cannot assign 'List<String>' to 'String'">['a']</error>
@@ -827,7 +825,7 @@ new Base() {
   }
 
   void testAbstractMethodWithBody() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface A {
   def foo()<error descr="Abstract methods must not have body">{}</error>
 }
@@ -843,11 +841,11 @@ class X {
   }
 
   void testTupleVariableDeclarationWithRecursion() {
-    testHighlighting('''def (a, b) = [a, a]''')
+    doTestHighlighting('''def (a, b) = [a, a]''')
   }
 
   void testSwitchInLoopNoSoe() {
-    testHighlighting('''
+    doTestHighlighting('''
 def foo(File f) {
   while (true) {
     switch (f.name) {
@@ -862,7 +860,7 @@ def foo(File f) {
   }
 
   void testInstanceMethodUsedInStaticClosure() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     static staticClosure = {
         foo()
@@ -878,7 +876,7 @@ class A {
   }
 
   void testStaticOk() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   class B {}
 }
@@ -888,14 +886,14 @@ A.B foo = new A.B()
   }
 
   void testDuplicatedVar0() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def a = 5
 def <error descr="Variable 'a' already defined">a</error> = 7
 ''')
   }
 
   void testDuplicatedVarInIf() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def a = 5
 if (cond)
   def <error descr="Variable 'a' already defined">a</error> = 7
@@ -904,7 +902,7 @@ if (cond)
 
 
   void testDuplicatedVarInAnonymous() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo() {
   def a = 5
 
@@ -918,7 +916,7 @@ def foo() {
   }
 
   void testDuplicatedVarInClosure() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo() {
   def a = 5
 
@@ -930,7 +928,7 @@ def foo() {
   }
 
   void testDuplicatedVarInClosureParameter() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo() {
   def a = 5
 
@@ -942,7 +940,7 @@ def foo() {
   }
 
   void testDuplicatedVarInAnonymousParameter() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def a = -1
 
 def foo() {
@@ -957,7 +955,7 @@ def foo() {
 
 
   void testNoDuplicateErrors() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Foo {
   def foo
 
@@ -985,7 +983,7 @@ class X {
   }
 
   void testPropertySelectionMayBeLValue() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def methodMissing(String methodName, args) {
     def closure = {
         callSomeOtherMethodInstead()
@@ -997,14 +995,14 @@ def methodMissing(String methodName, args) {
   }
 
   void testEnumExtendsList() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> {
 }
 ''')
   }
 
   void testVarInTupleDuplicate() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def (a, b) = []
 def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>) = []
 ''')
@@ -1012,7 +1010,7 @@ def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Var
 
   void 'test create method from usage is available in static method'() {
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   static foo() {
     <warning descr="Cannot resolve symbol 'abc'">a<caret>bc</warning>()
@@ -1024,7 +1022,7 @@ class A {
   }
 
   void testTypeParameterIsCorrect() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class Component{}
 
 class Window extends Component{
@@ -1042,7 +1040,7 @@ class Sub<W extends Window> extends Super<W> {
   }
 
   void 'test anonymous body on new line within parenthesized expression'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class Foo {
   def i
 }
@@ -1135,7 +1133,7 @@ def mm4() {
   }
 
   void 'test anonymous body on new line within argument list'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class Foo {}
 
 def foo(param) {}
@@ -1188,7 +1186,7 @@ foo(new Foo() {
 
   void testGenerics() {
     addHashSet()
-    testHighlighting('''
+    doTestHighlighting('''
 
 class NodeInfo{}
 
@@ -1206,7 +1204,7 @@ print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type paramete
   }
 
   void testTypeInConstructor() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class X {
   public <error descr="Return type element is not allowed in constructor">void</error> X() {}
 }
@@ -1214,7 +1212,7 @@ class X {
   }
 
   void testFinalMethodOverriding() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     final void foo() {}
 }
@@ -1226,7 +1224,7 @@ class B extends A{
   }
 
   void testWeakerMethodAccess0() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     void foo() {}
 }
@@ -1238,7 +1236,7 @@ class B extends A{
   }
 
   void testWeakerMethodAccess1() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     void foo() {}
 }
@@ -1250,7 +1248,7 @@ class B extends A{
   }
 
   void testWeakerMethodAccess2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     public void foo() {}
 }
@@ -1262,7 +1260,7 @@ class B extends A{
   }
 
   void testWeakerMethodAccess3() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     protected void foo() {}
 }
@@ -1274,7 +1272,7 @@ class B extends A{
   }
 
   void testOverriddenProperty() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     final foo = 2
 }
@@ -1286,19 +1284,19 @@ class B extends A {
   }
 
   void testUnresolvedQualifierHighlighting() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 <error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
 ''')
   }
 
   void testVarargParameterWithoutTypeElement() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo(def <error descr="Ellipsis type is not allowed here">...</error> vararg, def last) {}
 ''')
   }
 
   void testTupleInstanceCreatingInDefaultConstructor() {
-    testHighlighting('''
+    doTestHighlighting('''
 class Book {
     String title
     Author author
@@ -1317,7 +1315,7 @@ assert book.toString() == 'Other Title by Other Name'
   }
 
   void testArrayAccessForMapProperty() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def bar() {
     return [list:[1, 2, 3]]
 }
@@ -1329,7 +1327,7 @@ print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning d
   }
 
   void testGStringInjectionLFs() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 print "${<error descr="GString injection must not contain line feeds">
 </error>}"
 
@@ -1356,7 +1354,7 @@ print "${1 + 2<error descr="GString injection must not contain line feeds">
   }
 
   void testListOrMapErrors() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 print([1])
 print([1:2])
 print(<error descr="Collection literal contains named and expression arguments at the same time">[1:2, 4]</error>)
@@ -1364,7 +1362,7 @@ print(<error descr="Collection literal contains named and expression arguments a
   }
 
   void _testDelegatesToApplicability() {
-    testHighlighting('''
+    doTestHighlighting('''
       def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
         arg.delegate = target
         arg()
@@ -1380,7 +1378,7 @@ print(<error descr="Collection literal contains named and expression arguments a
   void testClosureParameterInferenceDoesNotWorkIfComplieStatic() {
     addCompileStatic()
     myFixture.enableInspections(GrUnresolvedAccessInspection)
-    testHighlighting('''
+    doTestHighlighting('''
 @groovy.transform.CompileStatic
 def foo() {
     final collector = [1, 2].find {a ->
@@ -1391,7 +1389,7 @@ def foo() {
   }
 
   void testIllegalLiteralName() {
-    testHighlighting('''
+    doTestHighlighting('''
 def <error descr="Illegal escape character in string literal">'a\\obc'</error>() {
 
 }
@@ -1399,7 +1397,7 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
   }
 
   void testExceptionParameterAlreadyDeclared() {
-    testHighlighting('''
+    doTestHighlighting('''
       int missing() {
         InputStream i = null
 
@@ -1414,7 +1412,7 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
   }
 
   void testInnerAnnotationType() {
-    testHighlighting('''
+    doTestHighlighting('''
       class A {
         @interface <error descr="Annotation type cannot be inner">X</error> {}
       }
@@ -1422,7 +1420,7 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
   }
 
   void testDuplicatingAnnotations() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface A {
   String value()
 }
@@ -1440,7 +1438,7 @@ class Y{}
   }
 
   void testAnnotationAttribute() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface A {
   String value() default 'a'
   String[] values() default []
@@ -1490,7 +1488,7 @@ def g
   }
 
   void testDuplicateMethodsWithGenerics() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A<T, E> {
   <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(T t)</error> {}
   <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(E e)</error> {}
@@ -1516,7 +1514,7 @@ class D<T, E> {
   void testOverriddenReturnType0() {
     myFixture.addClass('class Base{}')
     myFixture.addClass('class Inh extends Base{}')
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   List<Base> foo() {}
 }
@@ -1530,7 +1528,7 @@ class B extends A {
   void testOverriddenReturnType1() {
     myFixture.addClass('class Base extends SuperBase {}')
     myFixture.addClass('class Inh extends Base{}')
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   List<Base> foo() {}
 }
@@ -1544,7 +1542,7 @@ class B extends A {
   void testOverriddenReturnType2() {
     myFixture.addClass('class Base extends SuperBase {}')
     myFixture.addClass('class Inh extends Base{}')
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   List<Base> foo() {}
 }
@@ -1558,7 +1556,7 @@ class B extends A {
   void testOverriddenReturnType3() {
     myFixture.addClass('class Base extends SuperBase {}')
     myFixture.addClass('class Inh extends Base{}')
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   Base[] foo() {}
 }
@@ -1572,7 +1570,7 @@ class B extends A {
   void testOverriddenReturnType4() {
     myFixture.addClass('class Base extends SuperBase {}')
     myFixture.addClass('class Inh extends Base{}')
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   Base[] foo() {}
 }
@@ -1584,7 +1582,7 @@ class B extends A {
   }
 
   void testEnumConstantAsAnnotationAttribute() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 enum A {CONST}
 
 @interface I {
@@ -1597,7 +1595,7 @@ def bar
   }
 
   void testUnassignedFieldAsAnnotationAttribute() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 interface A {
   String CONST
 }
@@ -1612,7 +1610,7 @@ def bar
   }
 
   void testFinalFieldRewrite() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   final foo = 1
 
@@ -1630,7 +1628,7 @@ new A().foo = 2 //no error
   }
 
   void testStaticFinalFieldRewrite() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
   static final foo = 1
 
@@ -1657,7 +1655,7 @@ A.foo = 3 //no error
 
   void testSOEIfExtendsItself() {
     TransformationUtilKt.disableAssertOnRecursion(testRootDisposable)
-    testHighlighting('''\
+    doTestHighlighting('''\
 <error descr="Cyclic inheritance involving 'A'">class A extends A</error> {
   def foo
 }
@@ -1672,7 +1670,7 @@ A.foo = 3 //no error
   }
 
   void testFinalParameter() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def foo0(final i) {
   <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
   print i
@@ -1695,7 +1693,7 @@ def foo3(final i) {
   }
 
   void testNonStaticInnerClass1() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class MyController {
      static def list() {
          def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
@@ -1711,7 +1709,7 @@ class MyCommand {
   }
 
   void testNonStaticInnerClass2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class MyController {
      def list() {
          def myInnerClass = new MyCommand.MyInnerClass()
@@ -1765,7 +1763,7 @@ class MyCommand {
   }
 
   void testInnerClassWithStaticMethod() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class A {
     class B {
         static foo() {}
@@ -1824,14 +1822,14 @@ public abstract class Base {
   abstract void foo();
 }
 ''')
-    testHighlighting('''\
+    doTestHighlighting('''\
 <error>class Foo extends p.Base</error> {
 }
 ''')
   }
 
   void testInjectedLiterals() {
-    testHighlighting("""\
+    doTestHighlighting("""\
 //language=Groovy
 def groovy1 = '''print 'abc\\' '''
 
@@ -1842,7 +1840,7 @@ def groovy2 = '''print <error descr="String end expected">'abc\\\\' </error>'''
   }
 
   void testAnnotationAsAnnotationValue() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface A {}
 @interface B {
   A[] foo()
@@ -1860,7 +1858,7 @@ def foo
   }
 
   void testSameNameMethodWithDifferentAccessModifiers() {
-    testHighlighting('''
+    doTestHighlighting('''
 
 class A {
   def foo(){}
@@ -1895,7 +1893,7 @@ class Z {
   }
 
   void testImmutable() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -1913,7 +1911,7 @@ class A {
   }
 
   void testConstructorInImmutable() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -1927,7 +1925,7 @@ class A {
   }
 
   void testGetterInImmutable() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -1942,7 +1940,7 @@ class A {
   }
 
   void testGetterInImmutable2() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 import groovy.transform.Immutable
 
 @Immutable
@@ -1955,7 +1953,7 @@ class A {
   }
 
   void testMinusInAnnotationArg() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 @interface Xx {
     int value()
 }
@@ -1984,7 +1982,7 @@ foo(<caret>)
   }
 
   void 'test no SOE in index property assignment with generic function'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class Main {
 
     static <T> T foo() {}
@@ -1999,7 +1997,7 @@ class Main {
     }
 }
 '''
-    testHighlighting '''
+    doTestHighlighting '''
 class Main {
 
     static <T> T foo() {}
@@ -2017,7 +2015,7 @@ class Main {
   }
 
   void 'test static GDK method applicable'() {
-    testHighlighting '''
+    doTestHighlighting '''
 def doParse() {
   Date.parse('dd.MM.yyyy', '01.12.2016')
 }
@@ -2025,7 +2023,7 @@ def doParse() {
   }
 
   void 'test unresolved anonymous base class'() {
-    testHighlighting '''
+    doTestHighlighting '''
 def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>() {}
 '''
   }
@@ -2041,13 +2039,13 @@ def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>()
 package a.b.c.trait.d.as.e.def.f.in.g;
 public class Foo {} 
 '''
-    testHighlighting '''\
+    doTestHighlighting '''\
 import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*
 ''', false, true
   }
 
   void 'test resolve methods of boxed types on primitive qualifiers'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class Widget {
     float width = 1.1f
 }
@@ -2060,11 +2058,11 @@ w.width.compareTo(2f)
   }
 
   void "test no warning on extension method with spread operator"() {
-    testHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
+    doTestHighlighting '[1, 2, 3]*.multiply(4)', GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection
   }
 
   void 'test type arguments in import references'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import java.util.List<error descr="Type argument list is not allowed here"><String></error>
 import java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.Entry
 import static java.util.Map<error descr="Type argument list is not allowed here"><Integer, String></error>.*
@@ -2073,7 +2071,7 @@ import java.util.List<error descr="Type argument list is not allowed here"><Stri
   }
 
   void 'test assign collection to an array in @CS'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 Collection<? extends Runnable> foo() {}
 
 @groovy.transform.CompileStatic
@@ -2089,7 +2087,7 @@ def usage(Collection<? extends Runnable> cr) {
   }
 
   void 'test map constructor with map literal'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class A {
   String s
 }
@@ -2099,7 +2097,7 @@ new A([s : "abc", <warning>q</warning>: 1])
   }
 
   void 'test map constructor with final field'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class A {
   final String s
 }
@@ -2109,7 +2107,7 @@ new A([<warning>s</warning> : "abc"])
   }
 
   void 'test map constructor with raw map assignment'() {
-    testHighlighting '''
+    doTestHighlighting '''
 class A {
   final String s
 }
@@ -2120,5 +2118,87 @@ A a = [<warning>s</warning> : "asd"]
 
   void testIllegalMethodName() {
     doTest()
+  }
+
+  void 'test method reference with just type argument'() {
+    doTestHighlighting """
+@groovy.transform.CompileStatic
+class A {
+  String key = ""
+  String foo(int x) {return key}
+  
+  public static void main() {
+    def ref = A.&foo
+    A a = new A()
+    ref(a, 1)
+  }
+}
+"""
+  }
+
+  void 'test variable in anonymous class constructor'() {
+    doTestHighlighting """
+class Foo {
+    int y;
+
+    Foo(int x) { this.y = x }
+
+    static void test() {
+        int x = 5
+        Foo foo = new Foo(x) {}
+        println foo
+    }
+}
+""", UnusedDefInspection
+  }
+
+  void 'test closure with null mapping'() {
+    doTestHighlighting """
+class A {
+    static def cl = {}
+}
+
+A.cl()""", GroovyAssignabilityCheckInspection
+  }
+
+  void 'test field closure'() {
+    doTestHighlighting """
+class A {
+  Closure<?> f
+  
+  def foo() {
+    f()
+  }
+}"""
+  }
+
+  void 'test IDEA-280481'() {
+    doTestHighlighting '''
+def output = \'\'
+for (something5 in something4) {
+  [].eachLine { line ->
+      if (line) {
+          def (line_number) = line
+          output = output + line_number
+      }
+  }
+  output = "${output}" 
+}
+new File('').withWriter('utf-8') {
+    writer -> writer.write(output)
+}
+'''
+  }
+
+  void 'test IDEA-291580'() {
+    doTestHighlighting """
+<error>class Foo extends Foo</error> {} 
+"""
+  }
+
+  void 'test legal colon in name'() {
+    doTestHighlighting """
+def "foo:bar"() {}
+"""
   }
 }

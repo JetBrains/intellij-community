@@ -1,13 +1,9 @@
-
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -24,18 +20,16 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, () -> {
-        final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
+        EditorWindow window = e.getData(EditorWindow.DATA_KEY);
         if (window != null){
-          final VirtualFile[] files = window.getFiles();
-          for (final VirtualFile file : files) {
+          for (VirtualFile file : window.getFileList()) {
             window.closeFile(file);
           }
           return;
         }
         FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
         VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
-        VirtualFile[] openFiles = fileEditorManager.getSiblings(selectedFile);
-        for (final VirtualFile openFile : openFiles) {
+        for (VirtualFile openFile : fileEditorManager.getSiblings(selectedFile)) {
           fileEditorManager.closeFile(openFile);
         }
       }, IdeBundle.message("command.close.all.editors"), null
@@ -58,5 +52,10 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
       return;
     }
     presentation.setEnabled(FileEditorManager.getInstance(project).getSelectedFiles().length > 0);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

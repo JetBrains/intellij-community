@@ -107,7 +107,7 @@ public class OutputParser{
   }
 
   private void printRawError(@Nls String text) {
-    myMessageView.outputError(text, 0);
+    myMessageView.outputError(text, AntBuildMessageView.PRIORITY_ERR);
   }
 
   public final void readErrorOutput(@NlsSafe String text) {

@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression;
 
 import com.intellij.openapi.editor.Editor;
@@ -8,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
@@ -23,6 +23,16 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FlipSetterCallIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("flip.setter.call.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("flip.setter.call.intention.name");
+  }
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
@@ -54,8 +64,7 @@ public class FlipSetterCallIntention extends Intention {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     if (arguments.length != 1) return;
     final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-    if (!(argument instanceof PsiMethodCallExpression)) return;
-    final PsiMethodCallExpression call2 = (PsiMethodCallExpression)argument;
+    if (!(argument instanceof PsiMethodCallExpression call2)) return;
 
     final PsiExpression qualifierExpression1 = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
     final PsiExpression qualifierExpression2 = ExpressionUtils.getEffectiveQualifier(call2.getMethodExpression());
@@ -72,19 +81,17 @@ public class FlipSetterCallIntention extends Intention {
   }
 
   private static boolean isSetGetMethodCall(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression call1)) {
       return false;
     }
-    final PsiMethodCallExpression call1 = (PsiMethodCallExpression)element;
     final PsiExpression[] arguments = call1.getArgumentList().getExpressions();
     if (arguments.length != 1) {
       return false;
     }
     final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[0]);
-    if (!(argument instanceof PsiMethodCallExpression)) {
+    if (!(argument instanceof PsiMethodCallExpression call2)) {
       return false;
     }
-    final PsiMethodCallExpression call2 = (PsiMethodCallExpression)argument;
     final PsiMethod setter = call1.resolveMethod();
     final PsiMethod getter = call2.resolveMethod();
     final PsiMethod get = PropertyUtil.getReversePropertyMethod(setter);

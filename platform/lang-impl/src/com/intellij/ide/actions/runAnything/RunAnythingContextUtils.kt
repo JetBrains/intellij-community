@@ -9,6 +9,8 @@ import com.intellij.openapi.project.guessProjectDir
 
 fun RunAnythingContext.getPath() = when (this) {
   is ProjectContext -> project.guessProjectDir()?.path
+                       // Base path may not be present in VFS caches
+                       ?: project.basePath
   is ModuleContext -> module.guessModuleDir()?.path
   is RecentDirectoryContext -> path
   is BrowseRecentDirectoryContext -> null

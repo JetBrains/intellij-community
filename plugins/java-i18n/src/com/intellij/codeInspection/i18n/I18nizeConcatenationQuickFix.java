@@ -1,11 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.I18nizedTextGenerator;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PartiallyKnownString;
@@ -106,6 +111,21 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
       }
     };
   }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(descriptor.getPsiElement());
+    if (concatenation == null) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+    final List<UExpression> args = new ArrayList<>();
+    @NlsSafe
+    String string = JavaI18nUtil
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
+    return new IntentionPreviewInfo.Html(new HtmlBuilder().append(JavaI18nBundle.message("i18n.quickfix.preview.description"))
+                                           .br().append(HtmlChunk.text(string).code()).toFragment());
+  }
+
 
   @Nullable
   public static UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {

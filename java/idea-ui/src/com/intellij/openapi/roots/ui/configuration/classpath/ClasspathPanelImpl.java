@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.ide.JavaUiBundle;
@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -104,7 +103,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setIntercellSpacing(new Dimension(0, 0));
 
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
-    myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
+    myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer());
 
     JComboBox<DependencyScope> scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
@@ -209,6 +208,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isDumbAware() {
         return true;
       }
@@ -245,6 +249,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
           }
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
     navigateAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(),
                                              myEntryTable);
@@ -258,20 +267,16 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
     actionGroup.add(new ConvertModuleLibraryToRepositoryLibraryAction(this, getStructureConfigurableContext()));
-    PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myEntryTable, actionGroup, "ClassPathEntriesPopup");
   }
 
   @NotNull
   private static SortOrder getNextSortOrder(@NotNull SortOrder order) {
-    switch (order) {
-      case ASCENDING:
-        return SortOrder.DESCENDING;
-      case DESCENDING:
-        return SortOrder.UNSORTED;
-      case UNSORTED:
-      default:
-        return SortOrder.ASCENDING;
-    }
+    return switch (order) {
+      case ASCENDING -> SortOrder.DESCENDING;
+      case DESCENDING -> SortOrder.UNSORTED;
+      case UNSORTED -> SortOrder.ASCENDING;
+    };
   }
 
   private ClasspathTableItem<?> getItemAt(int selectedRow) {
@@ -385,7 +390,6 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
           });
         final RelativePoint point = button.getPreferredPopupPoint();
-        if (point == null) return;
         popup.show(point);
       }
     })
@@ -442,9 +446,13 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(this, provider, library, myState.getProject(),
                                                                               presentation, getStructureConfigurableContext());
     dialog.setContextModule(getRootModel().getModule());
-    dialog.show();
-    myEntryTable.repaint();
-    getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    if (dialog.showAndGet()) {
+      if (table == null) {
+        rootsChanged();
+      }
+      myEntryTable.repaint();
+      getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    }
   }
 
   private void removeSelectedItems(final List<Object[]> removedRows) {
@@ -670,30 +678,18 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       setPaintFocusBorder(false);
       setFocusBorderAroundIcon(true);
       setBorder(NO_FOCUS_BORDER);
-      if (value instanceof ClasspathTableItem<?>) {
-        final ClasspathTableItem<?> tableItem = (ClasspathTableItem<?>)value;
+      if (value instanceof ClasspathTableItem<?> tableItem) {
         getCellAppearance(tableItem, myContext, selected).customize(this);
         setToolTipText(tableItem.getTooltipText());
       }
     }
   }
 
-  private static class ExportFlagRenderer implements TableCellRenderer {
-    private final TableCellRenderer myDelegate;
-    private final JPanel myBlankPanel;
-
-    ExportFlagRenderer(TableCellRenderer delegate) {
-      myDelegate = delegate;
-      myBlankPanel = new JPanel();
-    }
+  private static class ExportFlagRenderer extends BooleanTableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (!table.isCellEditable(row, column)) {
-        myBlankPanel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-        return myBlankPanel;
-      }
-      return myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      return super.getTableCellRendererComponent(table, table.isCellEditable(row, column) ? value : null, isSelected, hasFocus, row, column);
     }
   }
 
@@ -705,6 +701,11 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     @Override
     protected boolean isEnabled() {
       return getSelectedElement() != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

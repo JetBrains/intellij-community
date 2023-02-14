@@ -15,23 +15,27 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.List;
 
-/**
-* @author irengrig
-*/
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
+
 class DummyChangesView implements ChangesViewEx {
-  DummyChangesView(Project project) {
+  DummyChangesView() {
   }
 
   @Override
   public void scheduleRefresh() {
+  }
+
+  @Override
+  public void resetViewImmediatelyAndRefreshLater() {
   }
 
   @Override
@@ -58,14 +62,18 @@ class DummyChangesView implements ChangesViewEx {
   public void refreshImmediately() {
   }
 
-  @Nullable
   @Override
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return null;
+  public @NotNull Promise<?> promiseRefresh(@NotNull ModalityState modalityState) {
+    return resolvedPromise();
   }
 
   @Override
   public boolean isAllowExcludeFromCommit() {
     return false;
+  }
+
+  @Override
+  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return null;
   }
 }

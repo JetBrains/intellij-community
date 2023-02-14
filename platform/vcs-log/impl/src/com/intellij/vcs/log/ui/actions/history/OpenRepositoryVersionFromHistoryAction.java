@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.history.FileHistoryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public class OpenRepositoryVersionFromHistoryAction extends FileHistoryMetadataAction {
 
   @Override
-  protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(@NotNull FileHistoryModel model, @Nullable VcsCommitMetadata detail, @NotNull AnActionEvent e) {
     if (detail != null) {
-      VirtualFile file = FileHistoryUtil.createVcsVirtualFile(ui.createRevision(detail));
+      VirtualFile file = FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
       if (file == null) return false;
     }
     return true;
@@ -39,10 +39,10 @@ public class OpenRepositoryVersionFromHistoryAction extends FileHistoryMetadataA
 
   @Override
   protected void performAction(@NotNull Project project,
-                               @NotNull FileHistoryUi ui,
+                               @NotNull FileHistoryModel model,
                                @NotNull VcsCommitMetadata detail,
                                @NotNull AnActionEvent e) {
-    VirtualFile file = FileHistoryUtil.createVcsVirtualFile(ui.createRevision(detail));
+    VirtualFile file = FileHistoryUtil.createVcsVirtualFile(model.createRevision(detail));
     if (file != null) {
       OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, file));
     }

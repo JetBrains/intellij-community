@@ -42,6 +42,7 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
   }
 
   fun `test listener cleanup`() {
+    val existingListeners = getListeners()
     val disposable = Disposer.newDisposable(testRootDisposable, "test task listener cleanup")
     notificationManager.addNotificationListener(DummyTaskNotificationListener(), disposable)
 
@@ -65,7 +66,7 @@ class ExternalSystemProgressNotificationManagerImplTest : UsefulTestCase() {
     assertEquals("start ${task1.id};end ${task1.id};", taskListener.logger.toString())
 
     Disposer.dispose(disposable)
-    assertListenersReleased()
+    assertListenersReleased(existingListeners)
   }
 
   private class DummyTaskNotificationListener() : ExternalSystemTaskNotificationListenerAdapter() {

@@ -27,8 +27,6 @@ import java.util.List;
  * Python-specific Emacs-like processing extension.
  * <p/>
  * Thread-safe.
- *
- * @author Denis Zhdanov
  */
 public class PyEmacsHandler implements EmacsProcessingHandler {
 
@@ -277,9 +275,11 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     for (int i = start; i < end; i++) {
       char c = text.charAt(i);
       switch (c) {
-        case ' ': result++; break;
-        case '\t': result += context.getIndentOptions().TAB_SIZE; break;
-        default: return result;
+        case ' ' -> result++;
+        case '\t' -> result += context.getIndentOptions().TAB_SIZE;
+        default -> {
+          return result;
+        }
       }
     }
     return result;

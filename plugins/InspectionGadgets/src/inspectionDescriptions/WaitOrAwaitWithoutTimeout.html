@@ -1,13 +1,18 @@
 <html>
 <body>
-Reports on any call to <b>Object.wait()</b> or <b>Condition.await()</b> which
-does not specify a timeout. Such calls may be dangerous in high-availability programs, as failures in one
-component may result in blockages of the waiting component,
-if <b>notify()</b>/<b>notifyAll()</b>
-or <b>signal()</b>/<b>signalAll()</b> never
-get called.
-<!-- tooltip end -->
+Reports calls to <code>Object.wait()</code> or <code>Condition.await()</code> without specifying a timeout.
 <p>
-
+  Such calls may be dangerous in high-availability programs, as failures in one
+  component may result in blockages of the waiting component
+  if <code>notify()</code>/<code>notifyAll()</code>
+  or <code>signal()</code>/<code>signalAll()</code> never get called.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  void foo(Object bar) throws InterruptedException {
+    bar.wait();
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

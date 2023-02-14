@@ -31,7 +31,7 @@ import javax.swing.*;
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
 public class ConsoleExecutionEditor implements Disposable {
-  private final EditorEx myConsoleEditor;
+  private final @NotNull EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;
   private final Document myEditorDocument;
   private final LanguageConsoleImpl.Helper myHelper;
@@ -64,10 +64,6 @@ public class ConsoleExecutionEditor implements Disposable {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
         ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
-    }
-
-    @Override
-    public void focusLost(@NotNull Editor editor) {
     }
   };
 
@@ -163,7 +159,7 @@ public class ConsoleExecutionEditor implements Disposable {
     FileEditorManagerListener fileEditorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (myConsoleEditor == null || !Comparing.equal(file, getVirtualFile())) {
+        if (!Comparing.equal(file, getVirtualFile())) {
           return;
         }
 

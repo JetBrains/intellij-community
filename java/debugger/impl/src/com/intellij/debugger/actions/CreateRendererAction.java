@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableBase;
@@ -29,6 +30,11 @@ public class CreateRendererAction extends AnAction {
     if (values.size() != 1) {
       e.getPresentation().setEnabledAndVisible(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -52,7 +58,7 @@ public class CreateRendererAction extends AnAction {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Type type = javaValue.getDescriptor().getType();
-        final String name = type != null ? type.name() :null;
+        final String name = type != null ? type.name() : null;
         DebuggerUIUtil.invokeLater(() -> {
           final UserRenderersConfigurable ui = new UserRenderersConfigurable();
           ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings> configurable =

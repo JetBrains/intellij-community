@@ -10,10 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class SelectionWatcher {
   private final MyPropertyChangeListener myChangeListener;
   private RadRootContainer myRootContainer;
@@ -46,8 +42,7 @@ public abstract class SelectionWatcher {
 
   private void install(@NotNull final RadComponent component){
     component.addPropertyChangeListener(myChangeListener);
-    if(component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){
         install(container.getComponent(i));
       }
@@ -56,8 +51,7 @@ public abstract class SelectionWatcher {
 
   private void deinstall(@NotNull final RadComponent component){
     component.removePropertyChangeListener(myChangeListener);
-    if(component instanceof RadContainer){
-      final RadContainer container = (RadContainer)component;
+    if(component instanceof RadContainer container){
       for(int i = container.getComponentCount() - 1; i>= 0; i--){
         deinstall(container.getComponent(i));
       }

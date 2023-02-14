@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author peter
- */
 @CompileStatic
 class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -739,6 +736,38 @@ static String test(String a, String b) {
   void "test this propagated to parameter"() {
     def c = inferContracts("""StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""")
     assert c == ['_ -> param1']
+  }
+  
+  void "test boxed boolean equals"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.FALSE.equals(condition);
+    }""")
+    assert c == ['false -> true', 'true -> false', 'null -> false']
+  }
+
+  void "test boxed boolean equals1"() {
+    def c = inferContracts("""public static boolean isFalse(boolean condition) {
+        return Boolean.TRUE.equals(condition);
+    }""")
+    assert c == ['true -> true', 'false -> false']
+  }
+  
+  void "test boxed boolean equals2"() {
+    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
+        return Boolean.TRUE.equals(condition);
+    }""")
+    assert c == ['true -> true', 'false -> false', 'null -> false']
+  }
+  
+  void "test boxed boolean equals3"() {
+    def c = inferContracts("""  
+    final boolean test(Foo x) {
+      return Boolean.TRUE.equals(x.getBoolean());
+    }
+
+    private native Boolean getBoolean();
+""")
+    assert c == []
   }
 
   private String inferContract(String method) {

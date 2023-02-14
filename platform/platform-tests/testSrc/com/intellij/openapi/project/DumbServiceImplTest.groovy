@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -10,15 +10,18 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
@@ -27,22 +30,15 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-/**
- * @author peter
- */
-class DumbServiceImplTest extends BasePlatformTestCase {
 
+class DumbServiceImplTest extends BasePlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    def key = "idea.force.dumb.queue.tasks"
+    String key = "idea.force.dumb.queue.tasks"
     String prev = System.setProperty(key, "true")
     disposeOnTearDown {
-      if (prev != null) {
-        System.setProperty(key, prev)
-      } else {
-        System.clearProperty(key)
-      }
+      SystemProperties.setProperty(key, prev)
     }
   }
 
@@ -50,7 +46,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     DumbService dumbService = new DumbServiceImpl(project)
 
     AtomicInteger disposes = new AtomicInteger(0)
-    def task1 = new DumbModeTask("a") {
+    def task1 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         while (!indicator.isCanceled()) {
@@ -64,7 +60,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       }
     }
 
-    def task2 = new DumbModeTask("b") {
+    def task2 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
       }
@@ -86,12 +82,12 @@ class DumbServiceImplTest extends BasePlatformTestCase {
 
   void "test queueTask is async"() {
     def semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask("mock") {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         def e = new Exception()
         for (StackTraceElement element : e.stackTrace) {
-          if (element.toString().contains(DumbServiceGuiTaskQueue.class.simpleName)) {
+          if (element.toString().contains(DumbServiceGuiExecutor.class.simpleName)) {
             semaphore.up()
             return
           }
@@ -116,10 +112,11 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     int invocations = 0
 
     Semaphore semaphore = new Semaphore(1)
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         edt {
           dumbService.runWhenSmart {
             invocations++
@@ -163,16 +160,17 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     def started = new AtomicBoolean()
     def finished = new AtomicBoolean()
 
-    dumbService.queueTask(new DumbModeTask(new Object()) {
+    dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
-        assert !ApplicationManager.application.dispatchThread
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
-              .indexFiles(project, "child", [child], indicator)
+            new IndexUpdateRunner(index, 1)
+              .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
+                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }
         }
         catch (ProcessCanceledException e) {
@@ -187,11 +185,11 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     assert finished.get()
   }
 
-  public void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
+  void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
     int N = 100
     int[] delays = new int[N]
     DumbServiceImpl dumbService = getDumbService()
-    Future<?> future = null;
+    Future<?> future = null
     for (int i=0; i< N; i++) {
       dumbService.runInDumbMode {
         CountDownLatch waiting = new CountDownLatch(1)
@@ -202,12 +200,48 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         waiting.await()
       }
       long start = System.currentTimeMillis()
-      future.get();
+      future.get()
       long elapsed = System.currentTimeMillis() - start
       delays[i] = elapsed
     }
     Arrays.sort(delays)
     int avg = ArrayUtil.averageAmongMedians(delays, 3)
-    assert avg == 0 : "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n"+Arrays.toString(delays)+"\n"
+    assert avg == 0: "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
+                     Arrays.toString(delays) + "\n"
+  }
+
+  void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
+    DumbServiceImpl dumbService = getDumbService()
+    AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
+    AtomicBoolean dumbTaskFinished = new AtomicBoolean(false)
+
+    Thread t1 = new Thread({
+                             dumbService.queueTask(
+                               new DumbModeTask() {
+                                 @Override
+                                 void performInDumbMode(@NotNull ProgressIndicator indicator) {
+                                   queuedTaskInvoked.set(true)
+                                 }
+
+                                 @Override
+                                 void dispose() {
+                                   dumbTaskFinished.set(true)
+                                 }
+                               }
+                             )
+                           }, "Test thread 1")
+
+    // we are on Write thread without write action
+    t1.start()
+    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { !t1.isAlive() }, 5)
+    assertFalse("Thread should have completed", t1.isAlive())
+
+    // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
+    dumbService.cancelAllTasksAndWait()
+
+    PlatformTestUtil.waitWithEventsDispatching("DumbModeTask didn't complete in 5 seconds", dumbTaskFinished::get, 5)
+
+    assertTrue(dumbTaskFinished.get())
+    assertFalse(queuedTaskInvoked.get())
   }
 }

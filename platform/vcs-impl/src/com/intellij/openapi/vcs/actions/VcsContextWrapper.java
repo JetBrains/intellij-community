@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
@@ -118,11 +117,6 @@ public class VcsContextWrapper implements VcsContext {
   @Override
   public int getModifiers() {
     return myModifiers;
-  }
-
-  @Override
-  public Refreshable getRefreshableDialog() {
-    return Refreshable.PANEL_KEY.getData(myContext);
   }
 
   @Nullable

@@ -79,10 +79,21 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     public PyNodeRenderer getRenderer() {
       return myPyNodeRenderer;
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public ViewAsGroup() {
     super(Presentation.NULL_STRING, true);
+    getTemplatePresentation().setHideGroupIfEmpty(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override
@@ -100,11 +111,6 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
 
     return myChildren;
-  }
-
-  @Override
-  public boolean hideIfNoVisibleChildren() {
-    return true;
   }
 
   @NotNull

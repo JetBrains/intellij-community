@@ -60,13 +60,12 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiField)) {
+      if (!(parent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)parent;
       final PsiModifierList modifierList = field.getModifierList();
       if (modifierList == null) {
         return;
@@ -85,21 +84,21 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
   private static class SerialVersionUIDNotStaticFinalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       PsiClass containingClass = field.getContainingClass();
       if (containingClass == null || containingClass.isInterface() || containingClass.isAnnotationType()) return;
       visitVariable(field, containingClass);
     }
 
     @Override
-    public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 
     private void visitVariable(@NotNull PsiVariable field, @Nullable PsiClass containingClass) {
       if (!SerializationUtils.isSerializable(containingClass)) return;
       if (!HardcodedMethodConstants.SERIAL_VERSION_UID.equals(field.getName())) return;
-      final boolean rightReturnType = PsiType.LONG.equals(field.getType());
+      final boolean rightReturnType = PsiTypes.longType().equals(field.getType());
       boolean isStaticField = field.hasModifierProperty(STATIC);
       if (rightReturnType && isStaticField && field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(FINAL)) return;
       PsiIdentifier identifier = field.getNameIdentifier();

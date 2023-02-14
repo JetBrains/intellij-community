@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionEP
@@ -14,7 +14,7 @@ import java.nio.file.Paths
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/inspectionDescription")
 class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTestCase() {
 
-  override fun getBasePath(): String? {
+  override fun getBasePath(): String {
     return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/inspectionDescription"
   }
 
@@ -41,7 +41,7 @@ class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTest
   }
 
   fun testHighlightingForDescriptionCustomShortName() {
-    myFixture.testHighlighting("MyInspectionCustomShortName.kt");
+    myFixture.testHighlighting("MyInspectionCustomShortName.kt")
   }
 
   fun testWithDescription() {

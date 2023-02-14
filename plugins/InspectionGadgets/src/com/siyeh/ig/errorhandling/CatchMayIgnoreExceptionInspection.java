@@ -7,13 +7,26 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.ArrayStoreInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
@@ -40,11 +53,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -54,15 +68,12 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public boolean m_ignoreNonEmptyCatchBlock = true;
   public boolean m_ignoreUsedIgnoredName = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.comments"),
-                      "m_ignoreCatchBlocksWithComments");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.nonempty"), "m_ignoreNonEmptyCatchBlock");
-    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used"), "m_ignoreUsedIgnoredName");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreCatchBlocksWithComments", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.comments")),
+      checkbox("m_ignoreNonEmptyCatchBlock", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.nonempty")),
+      checkbox("m_ignoreUsedIgnoredName", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used")));
   }
 
   @NotNull
@@ -70,7 +81,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiCatchSection[] catchSections = statement.getCatchSections();
         for (final PsiCatchSection section : catchSections) {
@@ -107,17 +118,21 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 renameFix, addBodyFix, fix);
+                                 LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   new RenameFix(generateName(block), false, false), fix);
+                                   LocalQuickFix.notNullElements(new RenameFix(generateName(block), false, false), fix));
           }
         }
-        else if (mayIgnoreVMException(parameter, block)) {
-          holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message"), fix);
+        else {
+          String className = mayIgnoreVMException(parameter, block);
+          if (className != null) {
+            String message = InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message", className);
+            holder.registerProblem(catchToken, message, LocalQuickFix.notNullElements(fix));
+          }
         }
       }
 
@@ -137,81 +152,55 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
 
       /**
-       * Returns true if given catch block may ignore VM exception such as NullPointerException
+       * Returns class name of important VM exception (like NullPointerException) if given catch block may ignore it
        *
        * @param parameter a catch block parameter
        * @param block     a catch block body
-       * @return true if it's determined that catch block may ignore VM exception
+       * @return class name of important VM exception (like NullPointerException) if given catch block may ignore it
        */
-      private boolean mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
+      private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();
         if (!type.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) &&
             !type.equalsToText(CommonClassNames.JAVA_LANG_ERROR)) {
-          return false;
+          return null;
         }
         // Let's assume that exception is NPE or SOE with null cause and null message and see what happens during dataflow.
         // Will it produce any side-effect?
         String className = type.equalsToText(CommonClassNames.JAVA_LANG_ERROR) ? "java.lang.StackOverflowError"
                                                                                : CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION;
-        PsiClassType exception = JavaPsiFacade.getElementFactory(parameter.getProject()).createTypeByFQClassName(
-          className, parameter.getResolveScope());
+        Project project = parameter.getProject();
+        PsiClassType exception = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(className, parameter.getResolveScope());
         PsiClass exceptionClass = exception.resolve();
-        if (exceptionClass == null) return false;
+        if (exceptionClass == null) return null;
 
-        class CatchDataFlowRunner extends DataFlowRunner {
-          final DfaVariableValue myExceptionVar;
-          final DfaVariableValue myStableExceptionVar;
-
-          CatchDataFlowRunner() {
-            super(holder.getProject(), block);
-            DfaValueFactory factory = getFactory();
-            myExceptionVar = factory.getVarFactory().createVariableValue(parameter);
-            myStableExceptionVar = factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block));
-          }
-
-          @NotNull
-          @Override
-          protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                             @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                             @NotNull ControlFlow flow) {
-            DfaValueFactory factory = getFactory();
-
-            for (DfaMemoryState memState : memStates) {
-              memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
-              memState.applyCondition(
-                myExceptionVar.cond(RelationType.IS, factory.getObjectType(exception, Nullability.NOT_NULL)));
-            }
-            return super.createInitialInstructionStates(psiBlock, memStates, flow);
-          }
-        }
-
-        CatchDataFlowRunner runner = new CatchDataFlowRunner();
-        StandardInstructionVisitor visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, runner.myStableExceptionVar);
-        return runner.analyzeCodeBlock(block, visitor) == RunnerResult.OK;
+        DfaValueFactory factory = new DfaValueFactory(project);
+        ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
+        if (flow == null) return null;
+        var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);
+        DfaMemoryState memState = new JvmDfaMemoryStateImpl(factory);
+        DfaVariableValue stableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
+        DfaVariableValue exceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
+        memState.applyCondition(exceptionVar.eq(stableExceptionVar));
+        memState.applyCondition(exceptionVar.cond(RelationType.IS, DfTypes.typedObject(exception, Nullability.NOT_NULL)));
+        return interpreter.interpret(memState) == RunnerResult.OK ? className : null;
       }
     };
   }
 
-  @NotNull
-  private static String generateName(PsiCodeBlock block) {
-    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
-  }
+  private static class CatchDataFlowInterpreter extends StandardDataFlowInterpreter {
+    final DfaVariableValue myExceptionVar;
+    final @NotNull List<PsiMethod> myMethods;
+    final @NotNull PsiParameter myParameter;
+    final @NotNull PsiCodeBlock myBlock;
 
-  static class IgnoredExceptionVisitor extends SideEffectVisitor {
-    private final @NotNull PsiParameter myParameter;
-    private final @NotNull PsiCodeBlock myBlock;
-    @NonNls private final @NotNull List<PsiMethod> myMethods;
-    private final @NotNull DfaVariableValue myExceptionVar;
-
-    IgnoredExceptionVisitor(@NotNull PsiParameter parameter,
-                                   @NotNull PsiCodeBlock block,
-                                   @NotNull PsiClass exceptionClass,
-                                   @NotNull DfaVariableValue exceptionVar) {
+    CatchDataFlowInterpreter(@NotNull PsiClassType exception, @NotNull PsiParameter parameter, @NotNull ControlFlow flow) {
+      super(flow, DfaListener.EMPTY);
       myParameter = parameter;
-      myBlock = block;
-      myExceptionVar = exceptionVar;
+      myBlock = (PsiCodeBlock)flow.getPsiAnchor();
+      PsiClass exceptionClass = Objects.requireNonNull(exception.resolve());
+      myExceptionVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
       myMethods = StreamEx.of("getMessage", "getLocalizedMessage", "getCause")
         .flatArray(name -> exceptionClass.findMethodsByName(name, true))
         .filter(m -> m.getParameterList().isEmpty())
@@ -219,24 +208,64 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (myMethods.contains(instruction.getTargetMethod())) {
-        DfaValue qualifier = memState.peek();
-        // Methods like "getCause" and "getMessage" return "null" for our test exception
-        if (memState.areEqual(qualifier, myExceptionVar)) {
-          memState.pop();
-          memState.push(runner.getFactory().getNull());
-          return nextInstruction(instruction, runner, memState);
+    protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+      Instruction instruction = instructionState.getInstruction();
+      DfaMemoryState memState = instructionState.getMemoryState();
+      if (instruction instanceof EnsureInstruction) {
+        if (((EnsureInstruction)instruction).getProblem() instanceof ContractFailureProblem &&
+            memState.peek().getDfType().equals(DfType.FAIL)) {
+          cancel();
         }
       }
-      return super.visitMethodCall(instruction, runner, memState);
+      if (instruction instanceof MethodCallInstruction) {
+        if (myMethods.contains(((MethodCallInstruction)instruction).getTargetMethod())) {
+          DfaValue qualifier = memState.peek();
+          // Methods like "getCause" and "getMessage" return "null" for our test exception
+          if (memState.areEqual(qualifier, myExceptionVar)) {
+            memState.pop();
+            memState.push(getFactory().fromDfType(DfTypes.NULL));
+            return instructionState.nextStates(this);
+          }
+        }
+      }
+      if (isSideEffect(instruction, memState)) {
+        cancel();
+      }
+      return super.acceptInstruction(instructionState);
     }
 
-    @Override
-    protected boolean isModificationAllowed(DfaVariableValue variable) {
-      PsiModifierListOwner owner = variable.getPsiVariable();
+    private boolean isSideEffect(Instruction instruction, DfaMemoryState memState) {
+      if (instruction instanceof FlushFieldsInstruction || instruction instanceof ThrowInstruction) {
+        return true;
+      }
+      if (instruction instanceof FlushVariableInstruction) {
+        return !isModificationAllowed(((FlushVariableInstruction)instruction).getVariable());
+      }
+      if (instruction instanceof AssignInstruction) {
+        return !isModificationAllowed(memState.getStackValue(1));
+      }
+      if (instruction instanceof ReturnInstruction) {
+        return ((ReturnInstruction)instruction).getAnchor() != null;
+      }
+      if (instruction instanceof MethodCallInstruction) {
+        return !((MethodCallInstruction)instruction).getMutationSignature().isPure();
+      }
+      if (instruction instanceof ArrayStoreInstruction) {
+        return true;
+      }
+      return false;
+    }
+
+    protected boolean isModificationAllowed(DfaValue variable) {
+      if (!(variable instanceof DfaVariableValue)) return false;
+      PsiElement owner = ((DfaVariableValue)variable).getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
+  }
+
+  @NotNull
+  private static String generateName(PsiCodeBlock block) {
+    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
   }
 
   private static class AddCatchBodyFix implements LocalQuickFix, LowPriorityAction {
@@ -302,8 +331,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection)) return;
-      final PsiCatchSection catchSection = (PsiCatchSection)parent;
+      if (!(parent instanceof PsiCatchSection catchSection)) return;
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();

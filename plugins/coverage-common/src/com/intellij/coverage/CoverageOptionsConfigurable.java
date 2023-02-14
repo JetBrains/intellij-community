@@ -114,33 +114,27 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
   private int getSelectedValue() {
     if (myPanel.myReplaceRB.isSelected()) {
-      return 0;
+      return CoverageOptionsProvider.REPLACE_SUITE;
     }
     else if (myPanel.myAddRB.isSelected()) {
-      return 1;
+      return CoverageOptionsProvider.ADD_SUITE;
     }
     else if (myPanel.myDoNotApplyRB.isSelected()) {
-      return 2;
+      return CoverageOptionsProvider.IGNORE_SUITE;
     }
-    return 3;
+    return CoverageOptionsProvider.ASK_ON_NEW_SUITE;
   }
 
   @Override
   public void reset() {
     final int addOrReplace = myManager.getOptionToReplace();
-    switch (addOrReplace) {
-      case 0:
-        myPanel.myReplaceRB.setSelected(true);
-        break;
-      case 1:
-        myPanel.myAddRB.setSelected(true);
-        break;
-      case 2:
-        myPanel.myDoNotApplyRB.setSelected(true);
-        break;
-      default:
-        myPanel.myShowOptionsRB.setSelected(true);
-    }
+    final JRadioButton radioButton = switch (addOrReplace) {
+      case CoverageOptionsProvider.REPLACE_SUITE -> myPanel.myReplaceRB;
+      case CoverageOptionsProvider.ADD_SUITE -> myPanel.myAddRB;
+      case CoverageOptionsProvider.IGNORE_SUITE -> myPanel.myDoNotApplyRB;
+      default -> myPanel.myShowOptionsRB;
+    };
+    radioButton.setSelected(true);
 
     myPanel.myActivateCoverageViewCB.setSelected(myManager.activateViewOnRun());
     super.reset();

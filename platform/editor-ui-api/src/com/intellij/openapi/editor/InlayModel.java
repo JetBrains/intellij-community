@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -12,10 +12,19 @@ import java.util.EventListener;
 import java.util.List;
 
 /**
- * Provides an ability to introduce custom visual elements into editor's representation.
- * Such elements are not reflected in document contents. Elements are 'anchored' to a certain document offset at creation,
- * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
+ * Keeps track of all inlays of a single editor.
  * <p>
+ * Inlays are visual additions to the editor that are not reflected in the editor's document,
+ * such as parameter hints or author attributions.
+ * <p>
+ * There are two kinds of inlays:
+ * <ul>
+ * <li>inline inlays are inserted horizontally into a line of text and move the remaining text of the line further to the end of the line.
+ * <li>block inlays are inserted vertically between lines of text and move the remaining lines of the file further down.
+ * </ul>
+ * The elements are 'anchored' to a certain document offset at creation,
+ * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
+ *
  * @see Editor#getInlayModel()
  */
 public interface InlayModel {
@@ -31,8 +40,8 @@ public interface InlayModel {
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
-   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
    *         is not supported by current editor instance.
    */
   @Nullable
@@ -42,25 +51,36 @@ public interface InlayModel {
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @param priority if multiple elements are requested to be displayed for the same position, this parameter defines the relative
    *    *                 positioning of such elements (larger priority value means the element will be rendered closer to the left)
-   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                              boolean relatesToPrecedingText,
+                                                                              int priority,
+                                                                              @NotNull T renderer);
+
+  /**
+   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
+   *
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
    *         is not supported by current editor instance.
    */
   @Nullable
-  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, boolean relatesToPrecedingText, int priority, @NotNull T renderer);
+  <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset, @NotNull InlayProperties properties, @NotNull T renderer);
 
   /**
    * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
    * will be displayed between lines of text.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
    * @param showAbove whether element will be displayed above or below corresponding visual line
    * @param priority if multiple elements are requested to be displayed for the same visual line, this parameter defines the relative
    *                 positioning of such elements (larger priority value means the element will be rendered closer to the text)
-   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
    *         is not supported by current editor instance.
    *
    * @see BlockInlayPriority
@@ -72,17 +92,37 @@ public interface InlayModel {
                                                                 int priority,
                                                                 @NotNull T renderer);
 
+  /**
+   * Introduces a 'block' visual element at a given offset, its size and appearance is defined by the provided renderer. This element
+   * will be displayed between lines of text.
+   *
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable
+  <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset, @NotNull InlayProperties properties, @NotNull T renderer);
+
 
   /**
    * Introduces a visual element, which will be displayed after the end of corresponding logical line.
    *
    * @param relatesToPrecedingText whether element is associated with preceding or following text
-   *                               (see {@link Inlay#isRelatedToPrecedingText()})
-   * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
+   *                               (see {@link InlayProperties#relatesToPrecedingText(boolean)})
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
    *         is not supported by current editor instance.
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset, boolean relatesToPrecedingText, @NotNull T renderer);
+
+  /**
+   * Introduces a visual element, which will be displayed after the end of corresponding logical line.
+   *
+   * @return {@code null} if requested element cannot be created, e.g., if corresponding functionality
+   *         is not supported by current editor instance.
+   */
+  @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                    @NotNull InlayProperties properties,
+                                                                                    @NotNull T renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
@@ -95,7 +135,7 @@ public interface InlayModel {
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
   default <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)ContainerUtil.filter(getInlineElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
 
@@ -110,7 +150,7 @@ public interface InlayModel {
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
    */
   default <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)ContainerUtil.filter(getBlockElementsInRange(startOffset, endOffset), inlay -> type.isInstance(inlay.getRenderer()));
   }
 
@@ -156,7 +196,7 @@ public interface InlayModel {
   }
 
   /**
-   * Return a custom visual element at at a given visual position. Only visual position to the left of the element is recognized.
+   * Return a custom visual element at a given visual position. Only visual position to the left of the element is recognized.
    */
   @Nullable
   Inlay getInlineElementAt(@NotNull VisualPosition visualPosition);
@@ -174,8 +214,8 @@ public interface InlayModel {
    */
   @Nullable
   default <T> Inlay<? extends T> getElementAt(@NotNull Point point, @NotNull Class<T> type) {
-    Inlay inlay = getElementAt(point);
     //noinspection unchecked
+    Inlay<? extends T> inlay = getElementAt(point);
     return inlay != null && type.isInstance(inlay.getRenderer()) ? inlay : null;
   }
 
@@ -193,7 +233,7 @@ public interface InlayModel {
    */
   @NotNull
   default <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    //noinspection unchecked
+    //noinspection unchecked,rawtypes
     return (List)ContainerUtil.filter(getAfterLineEndElementsInRange(startOffset, endOffset),
                                       inlay -> type.isInstance(inlay.getRenderer()));
   }
@@ -208,10 +248,18 @@ public interface InlayModel {
   List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine);
 
   /**
+   * Tells whether there exists at least one after-line-end element currently.
+   */
+  default boolean hasAfterLineEndElements() {
+    return !getAfterLineEndElementsInRange(0, Integer.MAX_VALUE).isEmpty();
+  }
+
+  /**
    * When text is inserted at inline element's offset, resulting element's position is determined by its
-   * {@link Inlay#isRelatedToPrecedingText()} property. But to enable natural editing experience around inline elements (so that typed text
-   * appears at caret visual position), caret position is also taken into account at document insertion. This method allows to disable
-   * accounting for caret position, and can be useful for document modifications which don't originate directly from user actions.
+   * {@link InlayProperties#relatesToPrecedingText(boolean)} property. But to enable natural editing experience around inline elements
+   * (so that typed text appears at caret visual position), caret position is also taken into account at document insertion.
+   * This method allows to disable accounting for caret position, and can be useful for document modifications which don't originate
+   * directly from user actions.
    */
   void setConsiderCaretPositionOnDocumentUpdates(boolean enabled);
 
@@ -224,7 +272,7 @@ public interface InlayModel {
    * batch mode can be determined empirically, but usually it's around hundred(s).
    * <p>
    * Executed code should not perform document- or editor-related operations other than those operating on inlays. In particular, modifying
-   * document, querying or updating folding, soft-wrap or caret state, as well as performing editor coordinate transformations (e.g. visual
+   * document, querying or updating folding, soft-wrap or caret state, as well as performing editor coordinate transformations (e.g., visual
    * to logical position conversions) might lead to incorrect results or throw an exception.
    *
    * @param batchMode whether to enable batch mode for executed inlay operations
@@ -273,14 +321,14 @@ public interface InlayModel {
    */
   abstract class SimpleAdapter implements Listener {
     @Override
-    public void onAdded(@NotNull Inlay inlay) {
+    public void onAdded(@NotNull Inlay<?> inlay) {
       onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
                        ChangeFlags.HEIGHT_CHANGED |
                        (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
 
     @Override
-    public void onRemoved(@NotNull Inlay inlay) {
+    public void onRemoved(@NotNull Inlay<?> inlay) {
       onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
                        ChangeFlags.HEIGHT_CHANGED |
                        (inlay.getGutterIconRenderer() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));

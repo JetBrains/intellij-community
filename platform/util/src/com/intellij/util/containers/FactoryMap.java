@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,17 +21,7 @@ import java.util.function.Supplier;
 public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
 
-  /**
-   * @deprecated Use {@link #create(Function)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public FactoryMap() {
-    DeprecatedMethodException.report("Use FactoryMap.create*() instead");
-  }
-
-  private FactoryMap(boolean safe) {
-  }
+  private FactoryMap() { }
 
   @NotNull
   protected Map<K, V> createMap() {
@@ -117,7 +105,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   public boolean removeValue(Object value) {
     Object t = notNull(value);
-    //noinspection SuspiciousMethodCalls
     return getMap().values().remove(t);
   }
 
@@ -168,7 +155,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
-    return new FactoryMap<K, V>(true) {
+    return new FactoryMap<K, V>() {
       @Nullable
       @Override
       protected V create(K key) {
@@ -179,7 +166,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public static <K, V> Map<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Supplier<? extends Map<K, V>> mapCreator) {
-    return new FactoryMap<K, V>(true) {
+    return new FactoryMap<K, V>() {
       @Nullable
       @Override
       protected V create(K key) {

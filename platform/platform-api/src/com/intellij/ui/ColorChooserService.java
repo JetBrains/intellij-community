@@ -23,7 +23,7 @@ public abstract class ColorChooserService {
   /**
    * @deprecated this overload does not work with headless implementation, use one with the Project instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public abstract Color showDialog(Component parent, @DialogTitle String caption, Color preselectedColor, boolean enableOpacity,
                                    List<? extends ColorPickerListener> listeners, boolean opacityInPercent);

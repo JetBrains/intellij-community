@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.injection;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -8,11 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -27,6 +27,10 @@ public abstract class InjectedLanguageManager {
     return project.getService(InjectedLanguageManager.class);
   }
 
+  /**
+   * Used to indicate a psi file should not be checked for errors, see e.g. {@link org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter}.
+   * Set in user data ({@link UserDataHolder}) on for example a string expression that can not be completely evaluated at compile time.
+   */
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider);
@@ -34,18 +38,14 @@ public abstract class InjectedLanguageManager {
   @Nullable
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement);
 
+  /**
+   * @return range in the top level file if {@code injectedContext} is inside injection
+   *         unchanged {@code injectedTextRange} otherwise
+   */
   @NotNull
   public abstract TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange);
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset, boolean minHostOffset);
-
-  /**
-   * @deprecated use {@link MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
-   * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
 
   @TestOnly
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);

@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
@@ -23,6 +24,17 @@ public final class BlockUtils {
    */
   public static PsiStatement addBefore(PsiStatement anchor, PsiStatement... newStatements) {
     if (newStatements.length == 0) throw new IllegalArgumentException();
+    if (anchor instanceof PsiBlockStatement) {
+      PsiCodeBlock codeBlock = ((PsiBlockStatement)anchor).getCodeBlock();
+      PsiJavaToken brace = codeBlock.getLBrace();
+      if (brace != null) {
+        PsiElement result = brace;
+        for (PsiStatement statement : newStatements) {
+          result = codeBlock.addAfter(statement, result);
+        }
+        return (PsiStatement)result;
+      }
+    }
     PsiStatement oldStatement = anchor;
     PsiElement parent = oldStatement.getParent();
     while (parent instanceof PsiLabeledStatement) {
@@ -199,22 +211,29 @@ public final class BlockUtils {
     return false;
   }
 
-  public static void inlineCodeBlock(@NotNull PsiStatement orig, PsiCodeBlock codeBlock) {
+  /**
+   * Method inlines the statements inside <code>codeBlock</code> replacing <code>statement</code>.
+   *
+   * @param statement statement to delete
+   * @param codeBlock a block with statements to inline
+   * @return a first inlined statement, or null if <code>codeBlock</code> doesn't contain any statements.
+   */
+  @Nullable
+  public static PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
     PsiJavaToken lBrace = codeBlock.getLBrace();
     PsiJavaToken rBrace = codeBlock.getRBrace();
-    if (lBrace == null || rBrace == null) return;
+    if (lBrace == null || rBrace == null) return null;
 
-    final PsiElement[] children = codeBlock.getChildren();
-    if (children.length > 2) {
-      final PsiElement added =
-        orig.getParent().addRangeBefore(
-          children[1],
-          children[children.length - 2],
-          orig);
-      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+    final PsiElement first = PsiTreeUtil.skipWhitespacesForward(lBrace);
+    PsiElement added = null;
+    if (first != rBrace) {
+      assert first != null;
+      added = statement.getParent().addRangeBefore(first, rBrace.getPrevSibling(), statement);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(statement.getManager());
       codeStyleManager.reformat(added);
     }
-    orig.delete();
+    statement.delete();
+    return added;
   }
 
   public static PsiBlockStatement createBlockStatement(Project project) {

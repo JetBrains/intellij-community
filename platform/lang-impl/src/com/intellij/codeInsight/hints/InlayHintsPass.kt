@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -26,7 +27,7 @@ class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,
   private val editor: Editor
-) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
+) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   private var allHints: HintsBuffer? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
@@ -59,6 +60,7 @@ class InlayHintsPass(
   }
 
   override fun doApplyInformationToEditor() {
+    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
     applyCollected(allHints, rootElement, editor)
@@ -71,10 +73,9 @@ class InlayHintsPass(
   companion object {
     private const val BULK_CHANGE_THRESHOLD = 1000
     private val MANAGED_KEY = Key.create<Boolean>("managed.inlay")
+    private val PLACEHOLDER_KEY = Key.create<Boolean>("inlay.placeholder")
 
-    internal fun applyCollected(hints: HintsBuffer?,
-                                element: PsiElement,
-                                editor: Editor) {
+    internal fun applyCollected(hints: HintsBuffer?, element: PsiElement, editor: Editor, isPlaceholder: Boolean = false) {
       val startOffset = element.textOffset
       val endOffset = element.textRange.endOffset
       val inlayModel = editor.inlayModel
@@ -102,16 +103,17 @@ class InlayHintsPass(
         updateOrDispose(existingBlockBelowInlays, hints, Inlay.Placement.BELOW_LINE, factory, editor)
         if (hints != null) {
           addInlineHints(hints, inlayModel)
-          addBlockHints(inlayModel, hints.blockAboveHints, true)
-          addBlockHints(inlayModel, hints.blockBelowHints, false)
+          addBlockHints(factory, inlayModel, hints.blockAboveHints, true, isPlaceholder)
+          addBlockHints(factory, inlayModel, hints.blockBelowHints, false, isPlaceholder)
         }
       }
     }
 
 
-    private fun postprocessInlay(inlay: Inlay<out PresentationContainerRenderer<*>>) {
+    private fun postprocessInlay(inlay: Inlay<out PresentationContainerRenderer<*>>, isPlaceholder: Boolean) {
       inlay.renderer.setListener(InlayContentListener(inlay))
       inlay.putUserData(MANAGED_KEY, true)
+      if (isPlaceholder) inlay.putUserData(PLACEHOLDER_KEY, true)
     }
 
 
@@ -120,19 +122,23 @@ class InlayHintsPass(
         val renderer = InlineInlayRenderer(entry.value)
 
         val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
+        val isRelatedToPrecedingText = entry.value.all { it.constraints?.relatesToPrecedingText ?: false }
         val inlay = if (toBePlacedAtTheEndOfLine) {
           inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.intKey, renderer) ?: break
+          inlayModel.addInlineElement(entry.intKey, isRelatedToPrecedingText, renderer) ?: break
         }
 
-        inlay?.let { postprocessInlay(it) }
+        inlay?.let { postprocessInlay(it, false) }
       }
     }
 
-    private fun addBlockHints(inlayModel: InlayModel,
-                              map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
-                              showAbove: Boolean
+    private fun addBlockHints(
+      factory: PresentationFactory,
+      inlayModel: InlayModel,
+      map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
+      showAbove: Boolean,
+      isPlaceholder: Boolean
     ) {
       for (entry in Int2ObjectMaps.fastIterable(map)) {
         val presentations = entry.value
@@ -142,9 +148,9 @@ class InlayHintsPass(
           constraints?.relatesToPrecedingText ?: true,
           showAbove,
           constraints?.priority ?: 0,
-          BlockInlayRenderer(presentations)
+          BlockInlayRenderer(factory, presentations)
         ) ?: break
-        postprocessInlay(inlay)
+        postprocessInlay(inlay, isPlaceholder)
         if (!showAbove) {
           break
         }
@@ -179,10 +185,11 @@ class InlayHintsPass(
         val offset = inlay.offset
         val elements = hints?.remove(offset, placement)
         if (elements == null) {
-          Disposer.dispose(inlay)
+          if (inlay.getUserData(PLACEHOLDER_KEY) != true) Disposer.dispose(inlay)
           continue
         }
         else {
+          inlay.putUserData(PLACEHOLDER_KEY, null)
           inlay.renderer.addOrUpdate(elements, factory, placement, editor)
         }
       }
@@ -216,8 +223,9 @@ class InlayHintsPass(
       if (!isAcceptablePlacement(placement)) {
         throw IllegalArgumentException()
       }
+
       @Suppress("UNCHECKED_CAST")
-      return addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
+      addOrUpdate(new as List<ConstrainedPresentation<*, Constraints>>, editor, factory)
     }
   }
 }

@@ -8,12 +8,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 class FavoriteTypeValidationRule : CustomValidationRule() {
+  override fun getRuleId(): String = "favorite_type"
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val provider = FavoriteNodeProvider.EP_NAME.findFirstSafe { it.favoriteTypeId == data }
     if (provider == null) return ValidationResultType.REJECTED
     val pluginInfo = getPluginInfo(provider.javaClass)
     return if (pluginInfo.isSafeToReport()) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
   }
-
-  override fun acceptRuleId(ruleId: String?): Boolean = ruleId == "favorite_type"
 }

@@ -1,10 +1,10 @@
-// "Replace 'switch' with 'if'" "true"
+// "Replace 'switch' with 'if'" "true-preview"
 class X {
   int m(String s, int x) {
     if (x > 0) {
       SWITCH:
       {
-          if ("a".equals(s)) {
+          if (s.equals("a")) {
               System.out.println("a");
               for (int i = 0; i < 10; i++) {
                   System.out.println(i);

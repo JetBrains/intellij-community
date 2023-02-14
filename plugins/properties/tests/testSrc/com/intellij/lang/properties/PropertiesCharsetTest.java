@@ -118,7 +118,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
       assertEquals("\\u1234\\uxxxx\\n\\t\\y", property.getKey());
       assertEquals("\\u3210\\uzzzz\\n\\t\\y", property.getValue());
       ApplicationManager.getApplication().runWriteAction(() -> {
-        property.setName("\u041f\\uyyyy\\n\\t\\y");
+        property.setName("\\u041f\\uyyyy\\n\\t\\y");
       });
 
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -126,7 +126,7 @@ public class PropertiesCharsetTest extends JavaCodeInsightTestCase {
       // copy to other file type to stop charset mingling
       VirtualFile newFile = copy(virtualFile, virtualFile.getParent(), "xxx.txt");
       String chars = VfsUtilCore.loadText(newFile);
-      assertEquals("\u041f\\uyyyy\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y", chars);
+      assertEquals("\\u041f\\uyyyy\\n\\t\\y=\\u3210\\uzzzz\\n\\t\\y", chars);
     });
   }
 

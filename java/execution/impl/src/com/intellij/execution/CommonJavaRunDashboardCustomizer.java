@@ -20,7 +20,7 @@ public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
     return runConfiguration instanceof SingleClassConfiguration ||
            (runConfiguration instanceof CommonJavaRunConfigurationParameters &&
             runConfiguration instanceof ModuleBasedConfiguration &&
-            ((ModuleBasedConfiguration)runConfiguration).getConfigurationModule() instanceof JavaRunConfigurationModule);
+            ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule() instanceof JavaRunConfigurationModule);
   }
 
   @Override
@@ -40,7 +40,7 @@ public class CommonJavaRunDashboardCustomizer extends RunDashboardCustomizer {
       return null;
     }
 
-    RunConfigurationModule configurationModule = ((ModuleBasedConfiguration)runConfiguration).getConfigurationModule();
+    RunConfigurationModule configurationModule = ((ModuleBasedConfiguration<?, ?>)runConfiguration).getConfigurationModule();
     if (!(configurationModule instanceof JavaRunConfigurationModule)) return null;
 
     String runClassName = ((CommonJavaRunConfigurationParameters)runConfiguration).getRunClass();

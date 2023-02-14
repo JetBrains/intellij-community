@@ -100,7 +100,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   @Nullable
   @Override
   public InputData<Key, Value> readData(@NotNull FileContent content) throws IOException {
-    if (!((FileContentImpl)content).isPhysicalContent()) {
+    if (((FileContentImpl)content).isTransientContent()) {
       throw new IllegalArgumentException("Non-physical data are not allowed.");
     }
     int hashId = getHashId(content);
@@ -157,11 +157,11 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   private @NotNull ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
     if (myMapExternalizer != null) {
-      return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size() * 4);
+      return AbstractForwardIndexAccessor.serializeValueToByteSeq(data, myMapExternalizer, data.size() * 4);
     }
     else {
       assert myValueExternalizer != null;
-      return AbstractForwardIndexAccessor.serializeToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
+      return AbstractForwardIndexAccessor.serializeValueToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, 4);
     }
   }
 

@@ -25,7 +25,7 @@ public class IReparseableElementType extends ILazyParseableElementType implement
   }
 
   /**
-   * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   * Allows constructing element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
   public IReparseableElementType(@NotNull @NonNls String debugName, @NotNull Language language, boolean register) {
     super(debugName, language, register);
@@ -42,7 +42,7 @@ public class IReparseableElementType extends ILazyParseableElementType implement
    * @return true if the content is valid, false if not
    * @deprecated use {@link #isReparseable(ASTNode, CharSequence, Language, Project)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public boolean isParsable(@NotNull CharSequence buffer,
                             @NotNull Language fileLanguage,

@@ -1,0 +1,10 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
+import java.io.File
+
+fun foo(file: File) {
+    file.abs<caret>
+}
+
+// ELEMENT: absolutePath

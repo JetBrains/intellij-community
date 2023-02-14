@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class RenameUtil {
-
   private static final Set<String> ourRncKeywords = new HashSet<>();
 
   static {

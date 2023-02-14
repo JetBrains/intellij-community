@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
@@ -69,6 +69,18 @@ public abstract class HtmlChunk {
         chunk.appendTo(builder);
       }
     }
+
+    @Override
+    public @Nullable Icon findIcon(@NotNull String id) {
+      for (HtmlChunk child : myContent) {
+        Icon icon = child.findIcon(id);
+        if (icon != null) {
+          return icon;
+        }
+      }
+      return null;
+    }
+
   }
   
   private static class Nbsp extends HtmlChunk {
@@ -132,10 +144,15 @@ public abstract class HtmlChunk {
      * @return a new element that is like this element but has the specified attribute added or replaced
      */
     @Contract(pure = true)
-    public @NotNull Element attr(@NonNls String name, String value) {
+    public @NotNull Element attr(@NonNls String name, @NotNull String value) {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
+    /**
+     * @param name attribute name
+     * @param value attribute value
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
@@ -148,6 +165,15 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element style(@NonNls String style) {
       return attr("style", style);
+    }
+
+    /**
+     * @param className name of style class
+     * @return a new element that is like this element but has the specified class name
+     */
+    @Contract(pure = true)
+    public @NotNull Element setClass(@NonNls String className) {
+      return attr("class", className);
     }
 
     /**
@@ -211,7 +237,47 @@ public abstract class HtmlChunk {
       newChildren.addAll(myChildren);
       newChildren.add(chunk);
       return new Element(myTagName, myAttributes, newChildren);
-    } 
+    }
+
+    @Override
+    public @Nullable Icon findIcon(@NotNull String id) {
+      for (HtmlChunk child : myChildren) {
+        Icon icon = child.findIcon(id);
+        if (icon != null) {
+          return icon;
+        }
+      }
+      return null;
+    }
+  }
+
+  private static class IconElement extends Element {
+    private final @NotNull String myId;
+    private final @NotNull Icon myIcon;
+
+    private IconElement(@NotNull String id, @NotNull Icon icon) {
+      super("icon", UnmodifiableHashMap.<String, String>empty().with("src", id), Collections.emptyList());
+      myId = id;
+      myIcon = icon;
+    }
+
+    @Override
+    public @Nullable Icon findIcon(@NotNull String id) {
+      if (id.equals(myId)) {
+        return myIcon;
+      }
+      return null;
+    }
+  }
+
+  /**
+   * @param id id of icon to find
+   * @return an icon with a given ID within this {@code HtmlChunk} tree; null if not found
+   * @see #icon(String, Icon)
+   */
+  @Contract(pure = true)
+  public @Nullable Icon findIcon(@NotNull @NonNls String id) {
+    return null;
   }
 
   /**
@@ -271,6 +337,26 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull Element tag(@NotNull @NonNls String tagName) {
     return new Element(tagName, UnmodifiableHashMap.empty(), Collections.emptyList());
+  }
+
+  /**
+   * @param id id of the icon (must be unique within the document)
+   * @param icon an icon itself
+   * @return an {@code <icon/>} HTML element with a given ID as src. The icon itself is stored and can be later retrieved via
+   * {@link #findIcon(String)} call on the root {@code HtmlChunk}. This allows rendering HTML with icons using something like this:
+   * <pre>{@code
+   * val content = ... // get HtmlChunk
+   * val editor = JEditorPane()
+   * editor.editorKit = HTMLEditorKitBuilder()
+   *   .withViewFactoryExtensions(
+   *       ExtendableHTMLViewFactory.Extensions.icons(content))
+   *   .build()
+   * editor.text = content.toString()
+   * }</pre>
+   */
+  @Contract(pure = true)
+  public static @NotNull Element icon(@NotNull @NonNls String id, @NotNull Icon icon) {
+    return new IconElement(id, icon);
   }
 
   /**
@@ -360,6 +446,10 @@ public abstract class HtmlChunk {
   public static @NotNull Element font(@NonNls @NotNull String color) {
     return tag("font").attr("color", color);
   }
+  
+  public static @NotNull Element font(int size) {
+    return tag("font").attr("size", String.valueOf(size));
+  }
 
   /**
    * @return a &lt;body&gt; element.
@@ -422,9 +512,61 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * Substitutes a template where variables are wrapped with <code>$...$</code>
+   * <p>
+   *   Example:
+   *   {@code HtmlChunk greeting = template("Hello, $user$!", Map.entry("user", text(userName).wrapWith("b")))}
+   * </p>
+   *
+   * @param template template string. Parts outside of <code>$...$</code> are considered to be plain text.
+   * @param substitutions substitution entries like (variableName -> chunk). Every variable mentioned in template
+   *                      must be present in substitutions.
+   * @return a {@code HtmlChunk} that represents a substituted template
+   */
+  @SafeVarargs
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk template(@NotNull @Nls String template,
+                                            Map.Entry<@NotNull @NonNls String, @NotNull HtmlChunk>... substitutions) {
+    String[] parts = template.split("\\$", -1);
+    if (parts.length % 2 != 1) {
+      throw new IllegalArgumentException("Invalid template (must have even number of '$' characters): " + template);
+    }
+    HtmlBuilder builder = new HtmlBuilder();
+    Map<String, HtmlChunk> chunkMap = Stream.of(substitutions).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    for (int i = 0; i < parts.length; i++) {
+      String part = parts[i];
+      if (i % 2 == 0) {
+        builder.append(part);
+      }
+      else if (part.isEmpty()) {
+        builder.append("$");
+      }
+      else {
+        builder.append(Objects.requireNonNull(chunkMap.get(part), part));
+      }
+    }
+    return builder.toFragment();
+  }
+
+  /**
+   * Substitutes a template where single variable is wrapped with <code>$...$</code>.
+   * See {@link #template(String, Map.Entry[])} for more details.
+   *
+   * @param template template string. Parts outside of <code>$...$</code> are considered to be plain text.
+   * @param variable a variable name (between <code>$...$</code>)
+   * @param substitution a substitution chunk for the variable.
+   * @return a {@code HtmlChunk} that represents a substituted template
+   */
+  public static @NotNull HtmlChunk template(@NotNull @Nls String template,
+                                            @NotNull @NonNls String variable, @NotNull HtmlChunk substitution) {
+    return template(template, new AbstractMap.SimpleImmutableEntry<>(variable, substitution));
+  }
+
+  /**
    * Creates a chunk that represents a piece of raw HTML. Should be used with care!
    * The purpose of this method is to be able to externalize the text with embedded link. E.g.:
-   * {@code "Click <a href=\"...\">here</a> for details"}.
+   * {@code "Click <a href=\"...\">here</a> for details"}. As an alternative, consider using
+   * {@link #template(String, Map.Entry[])}.
    * 
    * @param rawHtml raw HTML content. It's the responsibility of the caller to balance tags and escape HTML entities.
    * @return the HtmlChunk that represents the supplied content.
@@ -436,23 +578,38 @@ public abstract class HtmlChunk {
 
   /**
    * Creates an element that represents a simple HTML link.
-   * 
+   *
    * @param target link target (HREF)
    * @param text link text
    * @return the Element that represents a link
    */
   @Contract(pure = true)
   public static @NotNull Element link(@NotNull @NonNls String target, @NotNull @Nls String text) {
-    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text(text)));
+    return link(target, text(text));
   }
 
   /**
-   * Creates an html entity (e.g. `&ndash;`)
+   * Creates an element that represents an HTML link.
+   * 
+   * @param target link target (HREF)
+   * @param text link text chunk
+   * @return the Element that represents a link
+   */
+  @Contract(pure = true)
+  public static @NotNull Element link(@NotNull @NonNls String target, @NotNull HtmlChunk text) {
+    return new Element("a", UnmodifiableHashMap.<String, String>empty().with("href", target), Collections.singletonList(text));
+  }
+
+  /**
+   * Creates an HTML entity (e.g. `&ndash;`)
    * @param htmlEntity entity
    * @return the HtmlChunk that represents the html entity
    */
   @Contract(pure = true)
   public static @NotNull HtmlChunk htmlEntity(@NotNull @NlsSafe String htmlEntity) {
+    if (!htmlEntity.startsWith("&") && !htmlEntity.endsWith(";")) {
+      throw new IllegalArgumentException("Not an entity: " + htmlEntity);
+    }
     return raw(htmlEntity);
   }
 
@@ -481,6 +638,17 @@ public abstract class HtmlChunk {
     StringBuilder builder = new StringBuilder();
     appendTo(builder);
     return builder.toString();
+  }
+
+  /**
+   * @return the HtmlChunk that represents the fragment chunk
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk fragment(@NotNull HtmlChunk @NotNull ... chunks) {
+    if (chunks.length == 0) {
+      return empty();
+    }
+    return Arrays.stream(chunks).collect(toFragment());
   }
 
   /**

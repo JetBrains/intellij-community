@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.embedding
 
 import com.intellij.lexer.HtmlRawTextLexer
@@ -19,13 +19,13 @@ interface HtmlEmbeddedContentProvider {
     @JvmField
     val RAW_TEXT_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
       override fun getElementType(): IElementType? = XmlTokenType.XML_DATA_CHARACTERS
-      override fun createHighlightingLexer(): Lexer? = HtmlRawTextLexer()
+      override fun createHighlightingLexer(): Lexer = HtmlRawTextLexer()
     }
 
     @JvmField
     val RAW_TEXT_FORMATTABLE_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
-      override fun getElementType(): IElementType? = HtmlRawTextElementType
-      override fun createHighlightingLexer(): Lexer? = HtmlRawTextLexer()
+      override fun getElementType(): IElementType = HtmlRawTextElementType
+      override fun createHighlightingLexer(): Lexer = HtmlRawTextLexer()
     }
   }
 }

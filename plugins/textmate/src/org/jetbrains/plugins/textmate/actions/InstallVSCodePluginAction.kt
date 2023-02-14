@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.actions
 
-import com.google.gson.Gson
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.templates.github.DownloadUtil
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.ScrollPaneFactory
@@ -27,20 +27,21 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.textmate.TextMateService
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.io.BufferedReader
-import java.io.File
+import kotlin.io.path.pathString
 
 @Suppress("HardCodedStringLiteral")
 class InstallVSCodePluginAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val model = SortedListModel<Plugin>(Comparator.comparing(Plugin::toString))
-    val list = JBList<Plugin>(model)
+    val model = SortedListModel(Comparator.comparing(Plugin::toString))
+    val list = JBList(model)
     updateList(list, model)
     val scroll = ScrollPaneFactory.createScrollPane(list)
     scroll.border = JBUI.Borders.empty()
@@ -57,7 +58,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
       .setCancelOnOtherWindowOpen(true)
       .setMovable(true)
       .setResizable(true)
-      .setTitle("Install VSCode plugin")
+      .setTitle("Install VSCode Plugin")
       .setCancelOnWindowDeactivation(false)
       .setCancelOnClickOutside(true)
       .setDimensionServiceKey(project, "install.vscode.plugin", true)
@@ -109,7 +110,7 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
 
   private fun loadPlugins(reader: BufferedReader): List<Plugin> {
     val plugins = mutableListOf<Plugin>()
-    val response = Gson().fromJson(reader, Object::class.java)
+    val response = JsonPlistReader.createJsonReader().readValue(reader, Object::class.java)
     val results = (response as? Map<*, *>)?.get("results")
     for (result in (results as? List<*> ?: emptyList<Any>())) {
       val extensions = (result as? Map<*, *>)?.get("extensions")
@@ -138,16 +139,16 @@ class InstallVSCodePluginAction : AnAction(), DumbAware {
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Installing $selectedValue", false, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Downloading $selectedValue..."
-        val temp = File.createTempFile("vscode", "")
+        val temp = FileUtil.createTempFile("vscode", "")
         DownloadUtil.downloadAtomically(indicator, "${selectedValue.url}/Microsoft.VisualStudio.Services.VSIXPackage", temp)
 
         indicator.text = "Unzipping $selectedValue..."
-        val extensionDir = PathManager.getConfigDir().resolve("vscode").resolve(selectedValue.name).toFile()
-        ZipUtil.extract(temp, extensionDir, null)
+        val extensionDir = PathManager.getConfigDir().resolve("vscode").resolve(selectedValue.name)
+        ZipUtil.extract(temp.toPath(), extensionDir, null)
 
         indicator.text = "Applying $selectedValue"
         val state = TextMateSettings.getInstance().state ?: TextMateSettings.TextMateSettingsState()
-        state.bundles.add(BundleConfigBean(selectedValue.toString(), File(extensionDir, "extension").path, true))
+        state.bundles.add(BundleConfigBean(selectedValue.toString(), extensionDir.resolve("extension").pathString, true))
         TextMateService.getInstance().reloadEnabledBundles()
       }
     })

@@ -67,12 +67,11 @@ final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiReferenceExpression)) {
+    if (!(element instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
     fixContainingMethodReturnType(referenceExpression);
     PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression, myReplacementText);
   }
@@ -90,11 +89,10 @@ final class ReturnOfCollectionFieldFix extends InspectionGadgetsFix {
     if (!InheritanceUtil.isInheritor(type, myQualifiedClassName)) {
       return;
     }
-    if (!(type instanceof PsiClassType)) {
+    if (!(type instanceof PsiClassType classType)) {
       return;
     }
     final Project project = referenceExpression.getProject();
-    final PsiClassType classType = (PsiClassType)type;
     final PsiClass aClass = classType.resolve();
     if (aClass == null || myQualifiedClassName.equals(aClass.getQualifiedName())) {
       return;

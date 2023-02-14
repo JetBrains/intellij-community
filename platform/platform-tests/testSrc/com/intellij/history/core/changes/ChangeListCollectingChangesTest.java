@@ -22,7 +22,7 @@ import java.util.List;
 
 public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   @Test
-  public void tesChangesForFile() {
+  public void testChangesForFile() {
     addChangeSet(facade, "1", createFile(r, "file"));
     addChangeSet(facade, "2", changeContent(r, "file", null));
 

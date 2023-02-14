@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+
+/**
+ * An extension to perform activities before and after running inspections
+ * (see {@link GlobalInspectionContext}).
+ */
 public interface GlobalInspectionContextExtension<T> {
   @NotNull
   Key<T> getID();

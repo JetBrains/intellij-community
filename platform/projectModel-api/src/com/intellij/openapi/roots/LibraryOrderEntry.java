@@ -21,9 +21,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- *  @author dsl
- */
 @ApiStatus.NonExtendable
 public interface LibraryOrderEntry extends LibraryOrSdkOrderEntry, ExportableOrderEntry {
   @Nullable

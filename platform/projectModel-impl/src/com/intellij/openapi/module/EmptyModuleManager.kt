@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module
 
 import com.intellij.openapi.module.impl.createGrouper
@@ -18,11 +18,13 @@ class EmptyModuleManager(private val project: Project) : ModuleManager() {
   override fun disposeModule(module: Module) {
   }
 
-  override fun getModules(): Array<Module> = emptyArray<Module>()
+  override val modules: Array<Module>
+    get() = emptyArray()
 
   override fun findModuleByName(name: String): Nothing? = null
 
-  override fun getSortedModules(): Array<Module> = emptyArray<Module>()
+  override val sortedModules: Array<Module>
+    get() = emptyArray()
 
   override fun moduleDependencyComparator(): Nothing = throw UnsupportedOperationException()
 
@@ -36,21 +38,27 @@ class EmptyModuleManager(private val project: Project) : ModuleManager() {
 
   override fun getModifiableModel(): Nothing = throw UnsupportedOperationException()
 
-  override fun getModuleGroupPath(module: Module): Array<String> = emptyArray<String>()
+  override fun getModuleGroupPath(module: Module): Array<String> = emptyArray()
 
-  override fun setUnloadedModules(unloadedModuleNames: MutableList<String>) {
+  override suspend fun setUnloadedModules(unloadedModuleNames: List<String>) {
+  }
+
+  override fun setUnloadedModulesSync(unloadedModuleNames: List<String>) {
   }
 
   override fun getModuleGrouper(model: ModifiableModuleModel?): ModuleGrouper {
     return createGrouper(project, model)
   }
 
-  override fun getAllModuleDescriptions(): List<ModuleDescription> = emptyList<ModuleDescription>()
+  override val allModuleDescriptions: List<ModuleDescription>
+    get() = emptyList()
 
-  override fun getUnloadedModuleDescriptions(): List<UnloadedModuleDescription> = emptyList<UnloadedModuleDescription>()
+
+  override val unloadedModuleDescriptions: List<UnloadedModuleDescription>
+    get() = emptyList()
 
   override fun getUnloadedModuleDescription(moduleName: String): Nothing? = null
 
-  override fun removeUnloadedModules(unloadedModules: MutableCollection<out UnloadedModuleDescription>) {
+  override fun removeUnloadedModules(unloadedModules: Collection<UnloadedModuleDescription>) {
   }
 }

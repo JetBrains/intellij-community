@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -73,13 +74,13 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
       String suggestedName = changeLists.get(0).DESCRIPTION;
-      ChangeListChooser chooser = new ChangeListChooser(project, null, null,
-                                                        VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
+      ChangeListChooser chooser = new ChangeListChooser(project, VcsBundle.message("unshelve.changelist.chooser.title")) {
         @Override
         protected JComponent createDoNotAskCheckbox() {
           return createRemoveFilesStrategyCheckbox(project);
         }
       };
+      chooser.setSuggestedName(suggestedName);
       if (!chooser.showAndGet()) return;
 
       targetList = chooser.getSelectedList();
@@ -97,6 +98,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null && !ShelvedChangesViewManager.getShelvedLists(e.getDataContext()).isEmpty());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {

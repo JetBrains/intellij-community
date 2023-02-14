@@ -52,12 +52,12 @@ public final class DiffTree<OT, NT> {
   }
 
   @NotNull
-  @SuppressWarnings("unchecked")
   private static <OT, NT> DiffTreeChangeBuilder<OT, NT> emptyConsumer() {
-    return EMPTY_CONSUMER;
+    //noinspection unchecked
+    return (DiffTreeChangeBuilder<OT, NT>)EMPTY_CONSUMER;
   }
 
-  private static final DiffTreeChangeBuilder EMPTY_CONSUMER = new DiffTreeChangeBuilder() {
+  private static final DiffTreeChangeBuilder<?,?> EMPTY_CONSUMER = new DiffTreeChangeBuilder<Object,Object>() {
     @Override
     public void nodeReplaced(@NotNull Object oldChild, @NotNull Object newChild) { }
 
@@ -118,15 +118,16 @@ public final class DiffTree<OT, NT> {
                                                                           oldChildrenSize - suffixLength,
                                                                           newChildrenSize - suffixLength);
           if (vicinityMatch.hasStartMatch()) {
-            if (vicinityMatch == ThreeElementMatchResult.drillDownStartMatch) {
+            if (vicinityMatch == ThreeElementMatchResult.DRILL_DOWN_START_MATCH) {
               build(oldChildren[oldIndex], newChildren[newIndex], level + 1, consumer);
             }
-            else if (vicinityMatch == ThreeElementMatchResult.replaceStart) {
+            else if (vicinityMatch == ThreeElementMatchResult.REPLACE_START) {
               consumer.nodeReplaced(oldChildren[oldIndex], newChildren[newIndex]);
             }
-            oldIndex++; newIndex++;
+            oldIndex++;
+            newIndex++;
           }
-          else if (vicinityMatch != ThreeElementMatchResult.noMatch) {
+          else if (vicinityMatch != ThreeElementMatchResult.NO_MATCH) {
             for (int i = vicinityMatch.skipOldCount() - 1; i >= 0; i--) {
               consumer.nodeDeleted(oldNode, oldChildren[oldIndex]);
               oldIndex++;
@@ -143,9 +144,11 @@ public final class DiffTree<OT, NT> {
                                                 newChildrenSize - suffixLength, newChildren, newIndex);
             if (suffixMatch > 0) {
               suffixLength += suffixMatch;
-            } else {
+            }
+            else {
               consumer.nodeReplaced(oldChildren[oldIndex], newChildren[newIndex]);
-              oldIndex++;newIndex++;
+              oldIndex++;
+              newIndex++;
             }
           }
         }
@@ -158,59 +161,59 @@ public final class DiffTree<OT, NT> {
   }
 
   private ThreeElementMatchResult matchNext3Children(OT[] oldChildren, NT[] newChildren, int oldIndex, int newIndex, int oldLimit, int newLimit) {
-    if (oldIndex >= oldLimit) return ThreeElementMatchResult.skipNew1;
-    if (newIndex >= newLimit) return ThreeElementMatchResult.skipOld1;
+    if (oldIndex >= oldLimit) return ThreeElementMatchResult.SKIP_NEW_1;
+    if (newIndex >= newLimit) return ThreeElementMatchResult.SKIP_OLD_1;
 
     OT oldChild1 = oldChildren[oldIndex];
     NT newChild1 = newChildren[newIndex];
 
     CompareResult c11 = looksEqual(oldChild1, newChild1);
-    if (c11 == CompareResult.EQUAL) return ThreeElementMatchResult.fullStartMatch;
-    if (c11 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.drillDownStartMatch;
+    if (c11 == CompareResult.EQUAL) return ThreeElementMatchResult.FULL_START_MATCH;
+    if (c11 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.DRILL_DOWN_START_MATCH;
 
     OT oldChild2 = oldIndex < oldLimit - 1 ? oldChildren[oldIndex + 1] : null;
     NT newChild2 = newIndex < newLimit - 1 ? newChildren[newIndex + 1] : null;
 
     CompareResult c12 = looksEqual(oldChild1, newChild2);
-    if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.skipNew1;
+    if (c12 == CompareResult.EQUAL || c12 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.SKIP_NEW_1;
 
     CompareResult c21 = looksEqual(oldChild2, newChild1);
-    if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.skipOld1;
+    if (c21 == CompareResult.EQUAL || c21 == CompareResult.DRILL_DOWN_NEEDED) return ThreeElementMatchResult.SKIP_OLD_1;
 
-    if (c11 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.replaceStart;
+    if (c11 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.REPLACE_START;
 
-    if (c12 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.skipNew1;
-    if (c21 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.skipOld1;
+    if (c12 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.SKIP_NEW_1;
+    if (c21 == CompareResult.TYPE_ONLY) return ThreeElementMatchResult.SKIP_OLD_1;
 
     // check whether two children are inserted/deleted
     // (which frequently is a case when e.g. a PsiMethod inserted, the trailing PsiWhiteSpace is appended too)
     OT oldChild3 = oldIndex < oldLimit - 2 ? oldChildren[oldIndex + 2] : null;
     NT newChild3 = newIndex < newLimit - 2 ? newChildren[newIndex + 2] : null;
 
-    if (looksEqual(oldChild1, newChild3) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.skipNew2;
-    if (looksEqual(oldChild3, newChild1) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.skipOld2;
+    if (looksEqual(oldChild1, newChild3) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.SKIP_NEW_2;
+    if (looksEqual(oldChild3, newChild1) != CompareResult.NOT_EQUAL) return ThreeElementMatchResult.SKIP_OLD_2;
 
-    return ThreeElementMatchResult.noMatch;
+    return ThreeElementMatchResult.NO_MATCH;
   }
 
   // Represents the result of matching among 3 next node children in before and after tree
   private enum ThreeElementMatchResult {
     // first children match completely
-    fullStartMatch,
+    FULL_START_MATCH,
     // first children match well, PSI instance should be preserved
-    drillDownStartMatch,
+    DRILL_DOWN_START_MATCH,
     // PSI instance should be replaced for first children
-    replaceStart,
+    REPLACE_START,
     // first 1 or 2 "new" children don't match, report them as inserted and try matching after them
-    skipNew1, skipNew2,
+    SKIP_NEW_1, SKIP_NEW_2,
     // first 1 or 2 "old" children don't match, report them as deleted and try matching after them
-    skipOld1, skipOld2,
+    SKIP_OLD_1, SKIP_OLD_2,
     // nothing in the 3-children scope matches both the "old" and the "old" first child
-    noMatch;
+    NO_MATCH;
 
-    final int skipNewCount() { return this == skipNew1 ? 1 : this == skipNew2 ? 2 : 0; }
-    final int skipOldCount() { return this == skipOld1 ? 1 : this == skipOld2 ? 2 : 0; }
-    final boolean hasStartMatch() { return this == fullStartMatch || this == drillDownStartMatch || this == replaceStart; }
+    int skipNewCount() { return this == SKIP_NEW_1 ? 1 : this == SKIP_NEW_2 ? 2 : 0; }
+    int skipOldCount() { return this == SKIP_OLD_1 ? 1 : this == SKIP_OLD_2 ? 2 : 0; }
+    boolean hasStartMatch() { return this == FULL_START_MATCH || this == DRILL_DOWN_START_MATCH || this == REPLACE_START; }
   }
 
   private int matchLastChildren(int level, DiffTreeChangeBuilder<? super OT, ? super NT> consumer,

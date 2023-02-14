@@ -22,17 +22,16 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +51,9 @@ public class IdeaGateway {
   }
 
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
-    if (!f.isInLocalFileSystem()) return false;
+    if (!f.isInLocalFileSystem()) {
+      return isNonLocalVersioned(f);
+    }
 
     if (!f.isDirectory()) {
       CharSequence fileName = f.getNameSequence();
@@ -89,6 +90,14 @@ public class IdeaGateway {
     if (shouldBeInContent && !isInContent) return false;
 
     return true;
+  }
+
+  public static boolean isNonLocalVersioned(@NotNull VirtualFile f) {
+    return f.getFileSystem() instanceof VersionedFileSystem;
+  }
+
+  public String getPathOrUrl(@NotNull VirtualFile file) {
+    return file.isInLocalFileSystem() ? file.getPath() : file.getUrl();
   }
 
   @NotNull
@@ -171,6 +180,9 @@ public class IdeaGateway {
 
   @Nullable
   public VirtualFile findVirtualFile(@NotNull String path) {
+    if (path.contains(URLUtil.SCHEME_SEPARATOR)) {
+      return VirtualFileManager.getInstance().findFileByUrl(path);
+    }
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
     if (file == null && ApplicationManager.getApplication().isUnitTestMode()) {
       return TempFileSystem.getInstance().findFileByPath(path);
@@ -231,15 +243,13 @@ public class IdeaGateway {
 
   @NotNull
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
   }
 
   @NotNull
   public static Iterable<VirtualFile> loadAndIterateChildren(VirtualFile f) {
-    if (!(f instanceof NewVirtualFile)) return Collections.emptyList();
-    NewVirtualFile nf = (NewVirtualFile)f;
+    if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return Arrays.asList(nf.getChildren());
   }
 
@@ -260,7 +270,14 @@ public class IdeaGateway {
   }
 
   private static List<VirtualFile> getLocalRoots() {
-    return Arrays.asList(ManagingFS.getInstance().getLocalRoots());
+    List<VirtualFile> roots = new SmartList<>();
+
+    for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
+      if ((root.isInLocalFileSystem() || isNonLocalVersioned(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
+        roots.add(root);
+      }
+    }
+    return roots;
   }
 
   private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
@@ -324,20 +341,38 @@ public class IdeaGateway {
     }
 
     DirectoryEntry newDir = null;
-    if (file instanceof VirtualFileSystemEntry) {
+    boolean nonLocalRoot = !file.isInLocalFileSystem() && file.getParent() == null;
+    if (file instanceof VirtualFileSystemEntry && !nonLocalRoot) {
       int nameId = ((VirtualFileSystemEntry)file).getNameId();
       if (nameId > 0) {
         newDir = new DirectoryEntry(nameId);
       }
     }
 
+    DirectoryEntry res;
     if (newDir == null) {
-      newDir = new DirectoryEntry(file.getName());
+      if (nonLocalRoot) {
+        DirectoryEntry first = null;
+        for (String item : Paths.split(file.getUrl())) {
+          DirectoryEntry cur = new DirectoryEntry(item);
+          if (first == null) first = cur;
+          if (newDir != null) newDir.addChild(cur);
+          newDir = cur;
+        }
+        res = first;
+      }
+      else {
+        newDir = new DirectoryEntry(file.getName());
+        res = newDir;
+      }
+    }
+    else {
+      res = newDir;
     }
 
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return newDir;
+    return res;
   }
 
   @NotNull
@@ -372,7 +407,7 @@ public class IdeaGateway {
   private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, Document d) {
     Pair<StoredContent, Long> contentAndStamp = acquireAndUpdateActualContent(f, d);
     if (contentAndStamp != null) {
-      vcs.contentChanged(f.getPath(), contentAndStamp.first, contentAndStamp.second);
+      vcs.contentChanged(getPathOrUrl(f), contentAndStamp.first, contentAndStamp.second);
     }
   }
 

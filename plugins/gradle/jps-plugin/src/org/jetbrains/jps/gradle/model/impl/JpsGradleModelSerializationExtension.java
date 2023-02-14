@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
+public final class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
   private static final String GRADLE_SYSTEM_ID = "GRADLE";
 
@@ -38,26 +38,12 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
   }
 
   @Override
-  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    if (JpsGradleExtensionService.getInstance().getExtension(module) != null) {
-      rootElement.setAttribute("external.system.id", "GRADLE");
-    }
-  }
-
-  @Override
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
     if (orderEntry.getAttributeValue(PRODUCTION_ON_TEST_ATTRIBUTE) != null) {
       JpsGradleExtensionService.getInstance().setProductionOnTestDependency(dependency, true);
     }
   }
-
-  @Override
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-    if (JpsGradleExtensionService.getInstance().isProductionOnTestDependency(dependency)) {
-      orderEntry.setAttribute(PRODUCTION_ON_TEST_ATTRIBUTE, "");
-    }
-  }
-
+  
   @NotNull
   @Override
   public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
 import com.intellij.psi.PsiElement;
@@ -21,26 +7,22 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.CommentSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
   private static final Set<String> excludedTags = Set.of("author", "see", "by", "link");
 
   @Override
-  public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {
+  public void tokenize(@NotNull PsiDocComment comment, @NotNull TokenConsumer consumer) {
     final CommentSplitter splitter = CommentSplitter.getInstance();
 
     for (PsiElement el = comment.getFirstChild(); el != null; el = el.getNextSibling()) {
-      if (el instanceof PsiDocTag) {
-        PsiDocTag tag = (PsiDocTag)el;
+      if (el instanceof PsiDocTag tag) {
         if (!excludedTags.contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
             consumer.consumeToken(data, splitter);

@@ -1,32 +1,18 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 
-/**
- * @author yole
- */
+
 public class Py3ResolveTest extends PyResolveTestCase {
 
   @Override
@@ -581,6 +567,21 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
 
+  // PY-29898
+  public void testKeywordArgumentToDataclassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-29898
+  public void testKeywordArgumentToAttrsAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "some_attr");
+  }
+
+  // PY-55231
+  public void testKeywordArgumentToConstructorParameter() {
+    assertResolvesTo(PyNamedParameterImpl.class, "param");
+  }
+
   // PY-30942
   public void testUserPyiInsteadUserPy() {
     myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
@@ -774,5 +775,105 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-25832
   public void testTypeVarClassObjectBoundAttribute() {
     assertNull(doResolve());
+  }
+
+  // PY-36158
+  public void testDataclassFieldsDataclassesStarImport() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrAbove() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testNoResolveInstanceAttrBelow() {
+    assertUnresolved();
+  }
+
+  public void testNoResolveInstanceAttrSameLine() {
+    assertUnresolved();
+  }
+
+  public void testInstanceAttrOtherMethod() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrOtherMethodAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("f", function.getName());
+  }
+
+  public void testInstanceAttrBelowAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowAndOtherMethodBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("f", function.getName());
+  }
+
+  public void testInstanceAttrInheritedAndBelow() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  public void testInstanceAttrBelowEarlierByControlFlow() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrBelowDifferentBranchesOfSameIfStatement() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  public void testInstanceAttrBothEarlierAndLater() {
+    PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    assertEquals("self.foo = 1", target.getParent().getText());
+  }
+
+  public void testInstanceAttrBelowInInitAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedInstanceAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedClassAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-48012
+  public void testKeywordPatternResolvesToInheritedProperty() {
+    assertResolvesTo(PyFunction.class, "foo");
   }
 }

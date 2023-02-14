@@ -91,7 +91,7 @@ public final class ProblemPreviewEditorPresentation {
           Segment range = usage.getNavigationRange();
           if (element != null && range != null) {
             if (injectedLanguageManager.getInjectionHost(element) != null) {
-              range = injectedLanguageManager.injectedToHost(element, new TextRange(range.getStartOffset(), range.getEndOffset()));
+              range = injectedLanguageManager.injectedToHost(element, TextRange.create(range));
             }
             final Document document = editor.getDocument();
             final int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,

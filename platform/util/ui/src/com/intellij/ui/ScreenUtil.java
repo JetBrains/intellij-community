@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,12 +11,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
   @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache = Boolean.getBoolean("ide.cache.screen.insets")
-                                                                                                 ? CollectionFactory.createWeakMap() : null;
+                                                                                                 ? new WeakHashMap<>() : null;
   private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -303,24 +303,31 @@ public final class ScreenUtil {
   }
 
   public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+    moveToFit(rectangle, container, padding, false);
+  }
+
+  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding, boolean crop) {
     Rectangle move = new Rectangle(rectangle);
     JBInsets.addTo(move, padding);
 
     if (move.getMaxX() > container.getMaxX()) {
       move.x = (int)container.getMaxX() - move.width;
     }
-
-
     if (move.getMinX() < container.getMinX()) {
       move.x = (int)container.getMinX();
+    }
+    if (move.getMaxX() > container.getMaxX() && crop) {
+      move.width = (int)container.getMaxX() - move.x;
     }
 
     if (move.getMaxY() > container.getMaxY()) {
       move.y = (int)container.getMaxY() - move.height;
     }
-
     if (move.getMinY() < container.getMinY()) {
       move.y = (int)container.getMinY();
+    }
+    if (move.getMaxY() > container.getMaxY() && crop) {
+      move.height = (int)container.getMaxY() - move.y;
     }
 
     JBInsets.removeFrom(move, padding);

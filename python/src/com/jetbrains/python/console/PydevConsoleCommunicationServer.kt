@@ -14,6 +14,7 @@ import com.jetbrains.python.console.transport.server.ServerClosedException
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.console.transport.server.TNettyServerTransport
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
+import com.jetbrains.python.debugger.PyFrameListener
 import org.apache.thrift.protocol.TBinaryProtocol
 import org.apache.thrift.transport.TTransport
 import java.util.concurrent.Future
@@ -113,7 +114,15 @@ class PydevConsoleCommunicationServer(project: Project,
 
       val executionService = PyDebugValueExecutionService.getInstance(myProject)
       executionService.sessionStarted(this)
-      addFrameListener { executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationServer) }
+      addFrameListener(object : PyFrameListener {
+        override fun frameChanged() {
+          executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationServer)
+        }
+
+        override fun sessionStopped() {
+          executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationServer)
+        }
+      })
     }
 
     stateLock.withLock {

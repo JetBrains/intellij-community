@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -29,6 +31,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
+import org.intellij.lang.regexp.inspection.custom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +40,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -48,11 +50,25 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
-    final InspectionProfileModifiableModel profile = panel.getProfile();
+    enableSSIfDisabled(panel.getProfile(), panel.getProject());
+    final DefaultActionGroup actionGroup = new DefaultActionGroup(
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.search.template.button"), false),
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true),
+      new AddCustomRegExpInspectionAction(panel, SSRBundle.message("action.add.regexp.search.inspection.text"), false),
+      new AddCustomRegExpInspectionAction(panel, SSRBundle.message("action.add.regexp.replace.inspection.text"), true)
+    );
+    actionGroup.setPopup(true);
+    actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
+    final Presentation presentation = actionGroup.getTemplatePresentation();
+    presentation.setIcon(AllIcons.General.Add);
+    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
+    return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
+  }
+
+  private static void enableSSIfDisabled(@NotNull InspectionProfileModifiableModel profile, @NotNull Project project) {
     if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
         !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
-      // enable SSBasedInspection if it was manually disabled
-      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, panel.getProject(), false);
+      profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, project, false);
 
       for (ScopeToolState tool : profile.getAllTools()) {
         final InspectionToolWrapper<?, ?> wrapper = tool.getTool();
@@ -61,17 +77,6 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
       }
     }
-
-    final DefaultActionGroup actionGroup = new DefaultActionGroup(
-      new AddInspectionAction(panel, false),
-      new AddInspectionAction(panel, true)
-    );
-    actionGroup.setPopup(true);
-    actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
-    final Presentation presentation = actionGroup.getTemplatePresentation();
-    presentation.setIcon(AllIcons.General.Add);
-    presentation.setText(SSRBundle.messagePointer("add.inspection.button"));
-    return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
   }
 
   private static final class RemoveInspectionAction extends DumbAwareAction {
@@ -85,31 +90,79 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myPanel.getSelectedTool() instanceof StructuralSearchInspectionToolWrapper);
+      final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
+      e.getPresentation().setEnabled(selectedTool instanceof CustomRegExpInspectionToolWrapper ||
+                                     selectedTool instanceof StructuralSearchInspectionToolWrapper);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
       final String shortName = selectedTool.getShortName();
+      final String mainToolId = selectedTool.getMainToolId();
       myPanel.removeSelectedRow();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-      inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
-      profile.removeTool(shortName);
+      final InspectionProfileEntry inspection = InspectionProfileUtil.getInspection(profile, mainToolId);
+      if (inspection instanceof SSBasedInspection ssBasedInspection) {
+        ssBasedInspection.removeConfigurationsWithUuid(shortName);
+      }
+      else if (inspection instanceof CustomRegExpInspection customRegExpInspection) {
+        customRegExpInspection.removeConfigurationWithUuid(shortName);
+      }
+      profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
     }
   }
 
-  private static final class AddInspectionAction extends DumbAwareAction {
+  static final class AddCustomRegExpInspectionAction extends DumbAwareAction {
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;
 
-    private AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, boolean replace) {
-      super(replace
-            ? SSRBundle.message("SSRInspection.add.replace.template.button")
-            : SSRBundle.message("SSRInspection.add.search.template.button"));
+    AddCustomRegExpInspectionAction(@NotNull SingleInspectionProfilePanel panel, @NlsActions.ActionText String text, boolean replace) {
+      super(text);
+      myPanel = panel;
+      myReplace = replace;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final RegExpDialog dialog = new RegExpDialog(e.getProject(), true, myReplace ? RegExpInspectionConfiguration.InspectionPattern.EMPTY_REPLACE_PATTERN : null);
+      if (myReplace) {
+        // do something?
+      }
+      if (!dialog.showAndGet()) return;
+
+      final RegExpInspectionConfiguration.InspectionPattern pattern = dialog.getPattern();
+      final InspectionProfileModifiableModel profile = myPanel.getProfile();
+      final CustomRegExpInspection inspection = InspectionProfileUtil.getCustomRegExpInspection(profile);
+      final RegExpInspectionConfiguration configuration = new RegExpInspectionConfiguration("new inspection");
+      configuration.addPattern(pattern);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      final MetaDataDialog metaDataDialog = new MetaDataDialog(project, inspection, configuration, true);
+      if (!metaDataDialog.showAndGet()) return;
+
+      configuration.setUuid(null);
+      inspection.addConfiguration(configuration);
+      CustomRegExpInspection.addInspectionToProfile(project, profile, configuration);
+      profile.setModified(true);
+      InspectionProfileUtil.fireProfileChanged(profile);
+      myPanel.selectInspectionTool(configuration.getUuid());
+    }
+  }
+
+  static final class AddInspectionAction extends DumbAwareAction {
+    private final SingleInspectionProfilePanel myPanel;
+    private final boolean myReplace;
+
+    AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, @NlsActions.ActionText String text, boolean replace) {
+      super(text);
       myPanel = panel;
       myReplace = replace;
     }
@@ -117,18 +170,15 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
+
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
-      if (!dialog.showAndGet()) {
-        return;
-      }
+      if (!dialog.showAndGet()) return;
+
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      assert project != null;
       final Configuration configuration = dialog.getConfiguration();
-      if (!createNewInspection(configuration, project, profile)) {
-        return;
-      }
-      myPanel.selectInspectionTool(configuration.getUuid().toString());
+      if (!createNewInspection(configuration, context.getProject(), profile)) return;
+
+      myPanel.selectInspectionTool(configuration.getUuid());
     }
   }
 
@@ -136,7 +186,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     createNewInspection(configuration, project, InspectionProfileManager.getInstance(project).getCurrentProfile());
   }
 
-  private static boolean createNewInspection(@NotNull Configuration configuration,
+  public static boolean createNewInspection(@NotNull Configuration configuration,
                                              @NotNull Project project,
                                              @NotNull InspectionProfileImpl profile) {
     final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
@@ -162,7 +212,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   private static void addInspectionToProfile(@NotNull Project project,
                                              @NotNull InspectionProfileImpl profile,
                                              @NotNull Configuration configuration) {
-    final String shortName = configuration.getUuid().toString();
+    final String shortName = configuration.getUuid();
     final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
     if (toolWrapper != null) {
       // already added
@@ -190,7 +240,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     private final JTextField mySuppressIdTextField;
 
     InspectionDataDialog(Project project, @NotNull SSBasedInspection inspection, @NotNull Configuration configuration, boolean newInspection) {
-      super(null);
+      super((Project)null);
       myInspection = inspection;
 
       myConfiguration = configuration;
@@ -209,7 +259,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
+    public JComponent getPreferredFocusedComponent() {
       return myNameTextField;
     }
 
@@ -243,7 +293,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
-          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid().toString())) {
+          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid())) {
             warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
           }
           else {

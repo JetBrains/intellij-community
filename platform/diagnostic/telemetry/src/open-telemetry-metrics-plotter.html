@@ -1,0 +1,1224 @@
+<!--
+Page visualises *.csv files produced by CsvMetricsExporter -- i.e. OTel metrics exported in csv format
+
+Uses jquery for DOM manipulation and plotly.js for plotting.
+-->
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <!--    <script src="https://cdn.plot.ly/plotly-2.17.0.js" charset="utf-8"></script>-->
+  <script src="https://cdn.plot.ly/plotly-2.17.0.min.js"></script>
+
+  <style lang="css">
+    body {
+      font-family: Helvetica, serif;
+
+      background-color: #F0F0F0;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ===== progress-bar details: =====*/
+
+    #progressBar {
+      display: block;
+      background-color: rgba(200, 200, 200, 0.8);
+
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+
+      cursor: progress;
+
+      z-index: 1000;
+    }
+
+    #progressBar > div {
+      width: 30em;
+      height: 5em;
+
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      margin-left: -15em;
+      margin-top: -2.5em;
+
+
+      font-size: 2em;
+
+      padding: 0.5em;
+      text-align: center;
+
+      border-radius: 5px;
+
+      border: 2px outset darkgrey;
+
+      background-color: lightgrey;
+    }
+
+    #progressBar > div > div {
+      float: left;
+      clear: both;
+    }
+
+    /* ===== file-chooser elements: =====*/
+
+    .openFilesContainer {
+      display: block;
+    }
+
+    .fileChooserForm {
+      margin: 0;
+    }
+
+    /* Hide file chooser -- use it's <label> to trigger dialog */
+    .fileInput {
+      display: none;
+    }
+
+    #fileInputLabel {
+      display: block;
+      font-size: 1em;
+
+      padding-top: 0.5em;
+
+      background: #ccc;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #loadedFilesInfo {
+      display: block;
+
+      padding: 0.5em;
+      margin: 0.5em;
+      font-size: 1.2em;
+
+      background: #ccc;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    /* ========= starting screen:  ================== */
+
+    div.splashScreen {
+      background-color: rgba(200, 200, 200, 0.7);
+
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      height: 100%;
+      width: 100%;
+      padding: 0;
+
+      z-index: 100;
+
+      font-size: 2em;
+    }
+
+    .splashScreen #fileChooserFormSplash {
+      display: block;
+      position: absolute;
+
+      height: 3em;
+      width: 40em;
+
+      /*aka 'align-center hack' */
+      top: 30%;
+      left: 50%;
+      margin-top: -1.5em;
+      margin-left: -20em;
+    }
+
+    .splashScreen #fileInputLabelSplash {
+      display: block;
+      padding: 1em;
+
+      text-align: center;
+
+      border: 1px outset darkgrey;
+      border-radius: 5px;
+
+      font-size: 1.2em;
+
+      background: #ccc;
+      cursor: pointer;
+    }
+
+    .splashScreen .faq {
+      margin-top: 2em;
+      font-size: 0.7em;
+
+      background: #ccc;
+      border: 1px outset darkgrey;
+      border-radius: 5px;
+    }
+
+    .splashScreen .faq dl {
+      padding: 0.5em;
+      margin: 0;
+    }
+
+    .splashScreen .faq dl dt::before {
+      content: "Q: ";
+      font-weight: bold;
+    }
+
+    .splashScreen .faq dl dd {
+      margin-bottom: 0.5em;
+      margin-inline-start: 0;
+    }
+
+    .splashScreen .faq dl dd::before {
+      content: "A: ";
+      font-weight: bold;
+    }
+
+
+    /* ========= plots:  ================== */
+
+    div.blockOfPlots {
+      border: 2px outset lightgrey;
+      border-radius: 0.5em;
+
+      margin: 0.5em;
+    }
+
+    div.caption {
+      font-weight: bold;
+      font-size: 1.2em;
+      font-family: Helvetica, serif;
+
+      padding: 0.4em;
+
+      cursor: pointer;
+
+      background-color: lightblue;
+    }
+
+    /* open/close markers */
+    div > div.caption::before {
+      content: '-';
+      font-family: Monospace;
+    }
+
+    div.hidden > div.caption::before {
+      content: '+';
+      font-family: Monospace;
+    }
+
+    div.plot {
+      /*border: 1px solid lightgrey;*/
+      margin: 0;
+    }
+
+    div.hidden > div.hideable {
+      display: none;
+    }
+
+  </style>
+
+  <!-- General objects/helpers: Point, TimeSeries, formatting methods -->
+  <script lang="js">
+    function Point(time, value) {
+      this.time = time
+      this.value = value
+    }
+
+    Point.prototype = {
+      time: null,
+      value: null,
+      toString() {
+        return this.time + ", " + this.value
+      }
+    }
+
+    function TimeSeries(points) {
+      this.points = points.sort((p1, p2) => {
+        const t1 = p1.time.getTime()
+        const t2 = p2.time.getTime()
+        if (t1 > t2) {
+          return 1
+        }
+        else if (t1 < t2) {
+          return -1
+        }
+        else {
+          return 0
+        }
+      })
+      const pointByTime = {}
+      for (const p of points) {
+        pointByTime[p.time.getTime()] = p
+      }
+      this.pointByTime = pointByTime
+    }
+
+    TimeSeries.prototype = {
+      points: null, //Array(Point{time, value})
+      pointByTime: null, // Map{ time => Point(time, value) }
+      toString() {
+        return this.points.length + " points"
+      },
+
+      length() {
+        return this.points.length
+      },
+
+      timestamps() {
+        return this.points.map(p => p.time)
+      },
+
+      values() {
+        return this.points.map(p => p.value)
+      },
+
+      combine(anotherTimeSeries, binaryOp) {
+        const points = []
+        this.points.forEach(p => {
+          const ap = anotherTimeSeries.pointByTime[p.time.getTime()]
+          if (ap) {
+            points.push(new Point(p.time, binaryOp(p.value, ap.value)))
+          }
+          else {
+            points.push(new Point(p.time, binaryOp(p.value, 0)))
+          }
+        })
+        anotherTimeSeries.points.forEach(p => {
+          const ap = this.pointByTime[p.time.getTime()]
+          if (!ap) {
+            points.push(new Point(p.time, binaryOp(0, p.value)))
+          }
+        })
+        return new TimeSeries(points)
+      },
+
+      plus(anotherTimeSeries) {
+        return this.combine(anotherTimeSeries, function (a, b) {
+          return a + b
+        })
+      },
+      minus(anotherTimeSeries) {
+        return this.combine(anotherTimeSeries, function (a, b) {
+          return a - b
+        })
+      },
+      mul(anotherTimeSeries) {
+        return this.combine(anotherTimeSeries, function (a, b) {
+          return a * b
+        })
+      },
+      div(anotherTimeSeries) {
+        return this.combine(anotherTimeSeries, function (a, b) {
+          return a / b
+        })
+      },
+      mulScalar(scalar) {
+        return new TimeSeries(this.points.map(p => new Point(p.time, p.value * scalar)))
+      }
+    }
+
+    Object.defineProperty(Number.prototype, 'formatSizeAsHumanReadable', {
+      value: function () {
+        const units = [' b', ' KiB', ' MiB', ' GiB', ' TiB', ' PiB']
+        const step = 1024
+        let size = this
+        let i = 0
+        for (; i < units.length - 1; i++) {
+          if (size < step) {
+            break
+          }
+          else {
+            size /= step
+          }
+        }
+        return size.toFixed(1) + units[i]
+      }
+    })
+  </script>
+
+  <!-- Plotting -->
+  <script lang="js">
+    document.loadedAndParsedData = {
+      parsedCSV: null,        //parseFileContents() -> Array[ {name:String, startedAt:Date, value:Float} ]
+      dateRange: {            //min/max of all (parsedCSV.startedAt)
+        min: null,
+        max: null
+      },
+      names: [],              //Array of {parsedCSV.name}
+    }
+
+    document.plots = []
+
+    const PLOTLY_TEMPLATE = Plotly.makeTemplate({
+      data: [{
+        type: 'scatter',
+        mode: 'lines+markers',
+        connectgaps: true,
+        line: {width: 1.5},
+        marker: {size: 2},
+      }],
+      layout: {
+        showlegend: true,
+        dragmode: 'pan',
+        legend: {x: 1, y: 1, xanchor: 'right'},
+        margin: {l: 60, r: 20, t: 40, b: 40},
+        xaxis: {type: 'date'},
+        yaxis: {}
+      }
+    })
+
+    const PLOTLY_CONFIG = {
+      displayModeBar: true,
+      responsive: true,
+      displaylogo: false,
+      modeBarButtonsToRemove: ['select2d', 'lasso2d']
+    }
+
+    /* Extracts time series with name nameOfSeriesToPlot from loadedAndParsedData.
+     * @return TimeSeries of Point(time: Date, value: value}
+     */
+    function extractTimeSeries(nameOfSeriesToPlot, parsedCSV = document.loadedAndParsedData.parsedCSV) {
+      return new TimeSeries(
+        parsedCSV
+          .filter(row => row.name === nameOfSeriesToPlot)
+          .map(row => new Point(row.startedAt, row.value))
+      )
+    }
+
+
+    function plotFilePageCacheCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+      const pageFastHits = extractTimeSeries("FilePageCache.pageFastCacheHits")
+      const pageHits = extractTimeSeries("FilePageCache.pageHits")
+      const pageLoads = extractTimeSeries("FilePageCache.pageLoads")
+      const pageMisses = extractTimeSeries("FilePageCache.pageLoadsAboveSizeThreshold")
+
+      const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
+      const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
+
+      const timeRange = document.loadedAndParsedData.dateRange
+
+      console.log("FPC fast hits: " + pageFastHits)
+      console.log("FPC hits: " + pageHits)
+      console.log("FPC misses: " + pageMisses)
+      console.log("FPC Loads: " + pageLoads)
+      console.log("FPC load times: " + pageLoadsTimeUs)
+      console.log("FPC disposal times: " + pageDisposalTimeUs)
+
+      const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
+      const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
+      const pageHitsPercent = pageHits.div(totalPagesRequested).mulScalar(100)
+      const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
+
+      plotTimeSeries(
+        'FilePageCache: hits/misses/loads',
+        $("#filePageCache_HitsMisses_Chart"),
+        [
+          {name: 'Fast hits', color: 'green', series: pageFastHitsPercent},
+          {name: 'Regular hits', color: 'blue', series: pageHitsPercent},
+          {name: 'Misses (loads)', color: 'red', series: pageLoadsPercent},
+        ],
+        /*yaxis: */ {
+          title: '%',
+          autorange: false,
+          range: [0, 100]
+        }
+      )
+
+      plotTimeSeries(
+        'FilePageCache: loads/dispose times',
+        $("#filePageCache_Times_Chart"),
+        [
+          {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
+          {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
+        ],
+        /*yaxis: */ {
+          title: 'ms',
+          autorange: true
+        }
+      )
+    }
+
+    function plotAWTQueueCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+
+      const awtEventsCount = extractTimeSeries("AWTEventQueue.eventsDispatched")
+      const awtDispatchTimeMaxMs = extractTimeSeries("AWTEventQueue.dispatchTimeMaxNs").mulScalar(0.000_001 /* ns-> ms */)
+      const awtDispatchTime90PMs = extractTimeSeries("AWTEventQueue.dispatchTime90PNs").mulScalar(0.000_001 /* ns-> ms */)
+      const awtDispatchTimeAvgMs = extractTimeSeries("AWTEventQueue.dispatchTimeAvgNs").mulScalar(0.000_001 /* ns-> ms */)
+
+      console.log("AWT events: " + awtEventsCount)
+      console.log("AWT dispatch time avg: " + awtDispatchTimeAvgMs)
+
+      plotTimeSeries(
+        'AWT event queue: events count',
+        'EDT_awtEventsDispatchedChart',
+        [{
+          name: 'events dispatched',
+          color: 'blue',
+          series: awtEventsCount
+        }],
+        /*yaxis:*/ {
+          title: 'events'
+        }
+      )
+
+      plotTimeSeries(
+        'AWT event queue: event dispatching times',
+        'EDT_awtEventsTimingsChart',
+        [{
+          name: 'avg, ms',
+          color: 'green',
+          series: awtDispatchTimeAvgMs
+        }, {
+          name: '90%, ms',
+          color: 'orange',
+          series: awtDispatchTime90PMs
+        }, {
+          name: 'MAX, ms',
+          color: 'red',
+          series: awtDispatchTimeMaxMs,
+          visible: 'legendonly'  //MAX is too dominating => toggle off by default
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
+    }
+
+    function plotFlushQueueCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+
+      //FlushQueue: ========
+      const flushQueueTasksExecuted = extractTimeSeries("FlushQueue.tasksExecuted")
+
+      const flushQueueSizeAvg = extractTimeSeries("FlushQueue.queueSizeAvg")
+      const flushQueueSizeMax = extractTimeSeries("FlushQueue.queueSizeMax")
+      const flushQueueSize90P = extractTimeSeries("FlushQueue.queueSize90P")
+
+      const flushQueueWaitingTimeMaxMs = extractTimeSeries("FlushQueue.waitingTimeMaxNs").mulScalar(1e-6)
+      const flushQueueWaitingTime90PMs = extractTimeSeries("FlushQueue.waitingTime90PNs").mulScalar(1e-6)
+      const flushQueueWaitingTimeAvgMs = extractTimeSeries("FlushQueue.waitingTimeAvgNs").mulScalar(1e-6)
+
+      const flushQueueExecutionTimeMaxMs = extractTimeSeries("FlushQueue.executionTimeMaxNs").mulScalar(1e-6)
+      const flushQueueExecutionTime90PMs = extractTimeSeries("FlushQueue.executionTime90PNs").mulScalar(1e-6)
+      const flushQueueExecutionTimeAvgMs = extractTimeSeries("FlushQueue.executionTimeAvgNs").mulScalar(1e-6)
+
+      plotTimeSeries(
+        'FlushQueue: events count',
+        'FlushQueue_tasksExecutedChart',
+        [{
+          name: 'events dispatched',
+          color: 'blue',
+          series: flushQueueTasksExecuted
+        }],
+        /*yaxis:*/ {
+          title: 'events',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'FlushQueue: waiting times (ms)',
+        'FlushQueue_tasksWaitingTimesChart',
+        [{
+          name: 'avg, ms',
+          color: 'green',
+          series: flushQueueWaitingTimeAvgMs
+        }, {
+          name: '90%, ms',
+          color: 'orange',
+          series: flushQueueWaitingTime90PMs
+        }, {
+          name: 'MAX, ms',
+          color: 'red',
+          series: flushQueueWaitingTimeMaxMs,
+          visible: 'legendonly' //MAX is too dominating => toggle off by default
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
+
+      plotTimeSeries(
+        'FlushQueue: execution times (ms)',
+        'FlushQueue_tasksExecutionTimesChart',
+        [{
+          name: 'avg, ms',
+          color: 'green',
+          series: flushQueueExecutionTimeAvgMs
+        }, {
+          name: '90%, ms',
+          color: 'orange',
+          series: flushQueueExecutionTime90PMs
+        }, {
+          name: 'MAX, ms',
+          color: 'red',
+          series: flushQueueExecutionTimeMaxMs,
+          visible: 'legendonly'  //MAX is too dominating => toggle them off by default
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
+
+      /*
+      TODO RC: a lot of issues with shared-axis plots, decided to avoid them for now
+      awtEventsDispatched.plot = Plotly.newPlot(awtEventsDispatched,
+          /!* data: *!/     [{
+              type: 'scatter',
+              mode: 'lines+markers',
+              name: 'Events dispatched',
+              line: {
+                  color: 'blue',
+                  width: 1.5
+              },
+              marker: {
+                  color: 'blue',
+                  size: 2
+              },
+              connectgaps: true,
+              x: awtEventsCount.timestamps(),
+              y: awtEventsCount.values(),
+              xaxis: 'x',
+              yaxis: 'y1'
+          }, {
+              type: 'scatter',
+              mode: 'lines+markers',
+              name: 'Event dispatch time, avg (ms)',
+              line: {
+                  color: 'green',
+                  width: 1.5
+              },
+              marker: {
+                  color: 'green',
+                  size: 2
+              },
+              x: awtDispatchTimeAvgMs.timestamps(),
+              y: awtDispatchTimeAvgMs.values(),
+              xaxis: 'x',
+              yaxis: 'y2'
+          }, {
+              type: 'scatter',
+              mode: 'lines+markers',
+              name: 'Event dispatch time, 90% (ms)',
+              line: {
+                  color: 'orange',
+                  width: 1.5
+              },
+              marker: {
+                  color: 'orange',
+                  size: 2
+              },
+              x: awtDispatchTime90PMs.timestamps(),
+              y: awtDispatchTime90PMs.values(),
+              xaxis: 'x',
+              yaxis: 'y2'
+          }, {
+              type: 'scatter',
+              mode: 'lines+markers',
+              name: 'Event dispatch time, MAX (ms)',
+              line: {
+                  color: 'red',
+                  width: 1.5
+              },
+              marker: {
+                  color: 'red',
+                  size: 2
+              },
+              x: awtDispatchTimeMaxMs.timestamps(),
+              y: awtDispatchTimeMaxMs.values(),
+              xaxis: 'x',
+              yaxis: 'y2'
+          }],
+          /!* layout: *!/   {
+              template: 'seaborn',
+              // title: 'AWT event queue: events count',
+              showlegend: true,
+              legend: {x: 1, y: 1, xanchor: 'right'},
+              margin: {l: 40, r: 20, t: 40, b: 40},
+              grid: {
+                  rows: 2,
+                  columns: 1,
+                  subplots: [['xy1'], ['xy2']]
+              },
+              xaxis: {
+                  type: 'date',
+                  range: timeRange
+              },
+              yaxis1: {
+                  title: 'events',
+                  autorange: true
+              },
+              yaxis2: {
+                  title: 'ms',
+                  autorange: true
+              }
+          },
+          PLOTLY_CONFIG
+      );*/
+    }
+
+    function plotNonBlockingReadActionChart() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+
+      const finalizedExecutionsCount = extractTimeSeries("NonBlockingReadAction.finalizedExecutionsCount")
+      const failedExecutionsCount = extractTimeSeries("NonBlockingReadAction.failedExecutionsCount")
+      const finalizedExecutionTimeMs = extractTimeSeries("NonBlockingReadAction.finalizedExecutionTimeUs").mulScalar(1e-3)
+      const failedExecutionTimeMs = extractTimeSeries("NonBlockingReadAction.failedExecutionTimeUs").mulScalar(1e-3)
+
+      plotTimeSeries(
+        'NonBlockingReadActions count: successful/interrupted',
+        'NonBlockingReads_CountChart',
+        [{
+          name: 'successful',
+          color: 'green',
+          series: finalizedExecutionsCount
+        }, {
+          name: 'failed/interrupted',
+          color: 'red',
+          series: failedExecutionsCount
+        }],
+        /*yaxis:*/ {
+          title: 'events'
+        }
+      )
+
+      plotTimeSeries(
+        'NonBlockingReadActions times: useful/wasted',
+        'NonBlockingReads_TimesChart',
+        [{
+          name: 'useful (succeeded) time, ms',
+          color: 'green',
+          series: finalizedExecutionTimeMs
+        }, {
+          name: 'wasted (interrupted) time, ms',
+          color: 'red',
+          series: failedExecutionTimeMs
+        }],
+        /*yaxis:*/ {
+          title: 'ms'
+        }
+      )
+    }
+
+    function extractAndPlotTimeSeries(nameOfSeriesToPlot) {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+      const timeSeries = extractTimeSeries(nameOfSeriesToPlot)
+      if (timeSeries) {
+        console.log(`Plot series: ${nameOfSeriesToPlot}, ${timeSeries}`)
+        const canvas = $("#customChartPlotly")
+        plotCustomTimeSeries(nameOfSeriesToPlot, timeSeries, canvas)
+      }
+      else {
+        console.log(`Error: .loadedAndParsedData.parsedCSV[${nameOfSeriesToPlot}] is not exists`)
+        console.log(document.loadedAndParsedData.parsedCSV)
+      }
+    }
+
+    function plotCustomTimeSeries(title, timeSeries, canvasElement) {
+      plotTimeSeries(
+        title,
+        canvasElement,
+        [{
+          name: title,
+          color: 'green',
+          series: timeSeries
+        }]
+      )
+    }
+
+    /* @param caption: String, plot title
+     * @param domElementOrId container to plot into: id, DOM element, or jQuery object
+     * @param dataToPlot: [{name, color, series, visible?}]
+     * @param yaxis: optional {range, ...}
+     */
+    function plotTimeSeries(caption, domElementOrId, dataToPlot, yaxis) {
+      let domElement
+      if (domElementOrId instanceof jQuery) {
+        domElement = domElementOrId[0]
+      }
+      else if (typeof (domElementOrId) == 'string') {
+        domElement = $("#" + domElementOrId)[0]
+      }
+      else if (domElementOrId.id) {
+        domElement = $(domElementOrId)[0]
+      }
+      else {
+        throw `Unrecognized ${domElementOrId}: should be (ID | DOM element | jQuery object)`
+      }
+      console.log(`plotTimeSeries(${caption}, ${domElement.id}, ${dataToPlot.length} plots, ...)`)
+      //RC: seems like Plotly purge previous plot by itself anyway
+      // if (element.plot) {
+      //     Plotly.purge(canvasElement);
+      // }
+      const plotlyTrace = dataToPlot.map(row => {
+        const trace = {
+          name: row.name,
+          line: {color: row.color},
+          marker: {color: row.color},
+          x: row.series.timestamps(),
+          y: row.series.values()
+        }
+        if (row.visible === 'legendonly') {
+          trace.visible = 'legendonly'
+        }
+        return trace
+      })
+
+      const layout = {
+        template: PLOTLY_TEMPLATE,
+        title: caption,
+        xaxis: {range: document.loadedAndParsedData.dateRange}
+      }
+      if (typeof (yaxis) !== 'undefined') {
+        layout.yaxis = yaxis
+      }
+      domElement.plot = Plotly.newPlot(
+        domElement,
+        plotlyTrace,
+        layout,
+        PLOTLY_CONFIG
+      )
+      document.plots.push(domElement)
+      return domElement
+    }
+
+  </script>
+
+  <!-- Files loading -->
+  <script lang="js">
+
+    function readFiles(files) {
+      console.log("Files: " + files.length)
+      if (files.length === 0) {
+        return
+      }
+
+      $("#splashScreen").hide()
+      document.progressBar.show(`Parsing ${files.length} files...`)
+      document.progressBar.update(0)
+
+      for (plot of document.plots) {
+        Plotly.purge(plot)
+      }
+      document.plots = []
+
+      const fileNames = Array.from(files)
+        .reduce((string, file) => `${string + file.name} (${file.size.formatSizeAsHumanReadable()}) `, "")
+      const totalFileSize = Array.from(files)
+        .map(file => file.size)
+        .reduce((total, size) => total + size, 0)
+
+      new Promise((resolve, reject) => {
+        let fileContents = []
+        for (file of files) {
+          const fileName = file.name
+          const reader = new FileReader()
+          reader.addEventListener('load', (event) => {
+            const fileText = event.target.result
+            console.log(`\tread ${fileName}: ${fileText.length} b`)
+
+            fileContents.push(fileText)
+            if (fileContents.length < files.length) {
+              document.progressBar.update(fileContents.length * 40 / files.length)
+            }
+            else {
+              //all files done:
+              resolve(fileContents)
+            }
+          })
+          console.log(`reading ${fileName}...`)
+          reader.readAsText(file)
+        }
+      })
+        .then(parseFileContents)
+        .then(csvRows => {
+          document.progressBar.update(69)
+
+          document.loadedAndParsedData.parsedCSV = csvRows
+          document.loadedAndParsedData.names = [...new Set(csvRows.map(row => {
+            return row.name
+          }))]
+
+          let minTs = 1e30, maxTs = 0
+          csvRows.map(row => {
+            return row.startedAt.getTime()
+          }).forEach(timestamp => {
+            minTs = Math.min(minTs, timestamp)
+            maxTs = Math.max(maxTs, timestamp)
+          })
+          document.loadedAndParsedData.dateRange = [new Date(minTs), new Date(maxTs)]
+
+          $("#filesLoadedInfo")
+            .text(`Loaded ${files.length} files: ${totalFileSize.formatSizeAsHumanReadable()}, ${csvRows.length} points`)
+            .attr('title', fileNames)
+          $("#pointsLoadedInfo").html(
+            `Interval covered: [${new Date(minTs).toLocaleString()}  &mdash;  ${new Date(maxTs).toLocaleString()}]`
+          )
+          document.progressBar.show(`Parsed ${files.length} files, ${totalFileSize.formatSizeAsHumanReadable()}, plotting...`)
+          document.progressBar.update(74)
+          return csvRows
+        })
+        .then(onDataLoaded)
+        //RC: plot predefined charts:
+        .then(plotAWTQueueCharts)
+        .then(() => {
+          document.progressBar.update(80)
+        })
+        .then(plotFlushQueueCharts)
+        .then(() => {
+          document.progressBar.update(85)
+        })
+        .then(plotNonBlockingReadActionChart)
+        .then(() => {
+          document.progressBar.update(90)
+        })
+        .then(plotFilePageCacheCharts)
+        .then(() => {
+          document.progressBar.hide()
+        })
+        .then(() => {
+          //RC: 'connect' plots x-axes so that all plots show the same datetime range:
+          for (const plot of document.plots) {
+            //FIXME RC: 'reset axis' doesn't issue plotly_relayout?
+            plot.on('plotly_relayout', (eventData) => {
+              const from = eventData['xaxis.range[0]']
+              const to = eventData['xaxis.range[1]']
+              $(document.body).css('cursor', 'progress')
+              try {
+                if (from && to) {
+                  console.log(`${plot.id}: x-axis range: [${from}, ${to}]`)
+                  for (otherPlot of document.plots) {
+                    if (otherPlot !== plot) {
+                      console.log(`\treLayout: ${otherPlot.id}`)
+                      Plotly.relayout(otherPlot, {'xaxis.range': [from, to]})
+                    }
+                  }
+                }
+              }
+              finally {
+                $(document.body).css('cursor', 'default')
+              }
+            })
+          }
+
+        })
+    }
+
+    /* @param contents: String, multi-lines csv
+     * @return Array of records {name, startedAt:Date, value: float}
+     */
+    function parseFileContents(contents) {
+      console.log("File contents: " + contents.length)
+      let data = []
+      for (const content of contents) {
+        const lines = content.split('\n')
+        for (const line of lines) {
+          if (!line.startsWith('#') && line.trim().length > 0) {
+            const parts = line.split(',')
+            if (parts.length === 4) {//name, startEpochNs, endEpochNs, value:
+              data.push({
+                name: parts[0].trim(),
+                startedAt: new Date(parseInt(parts[1].trim()) / 1_000_000 /* ns -> ms */),
+                value: parseFloat(parts[3].trim())
+              })
+            }
+            else {
+              console.log("Error parsing line: [" + line + "]")
+            }
+          }
+        }
+      }
+
+      return data
+    }
+
+    /* Updates UI after CSV data is loaded */
+    function onDataLoaded(data) {
+      const names = document.loadedAndParsedData.names
+
+      const timeSeriesChooser = $("#timeSeriesChooser")
+      timeSeriesChooser.html("")
+      for (const name of names.sort()) {
+        timeSeriesChooser.append(`<option value="${name}">${name}</option>`)
+      }
+      //click on <select> propagates to parent .caption, and click on .caption collapses/expands
+      // the apt section, which is frustrating => to prevent it I stop the propagation:
+      timeSeriesChooser.on('click', e => {
+        e.stopPropagation()
+      })
+
+      if (names && names.length > 0) {
+        extractAndPlotTimeSeries(names[0])
+      }
+
+
+      //TODO setup time-range chooser:
+      const $timeRangeChooser = $("#timeRangeChooser")
+      $timeRangeChooser.append(`<option value="">---all---</option>`)
+
+      //TODO RC: how to iterate time range hour by hour?
+      const min = document.loadedAndParsedData.dateRange[0]
+      const max = document.loadedAndParsedData.dateRange[1]
+      // for(v=min; v<max; v++) {
+      //     $timeRangeChooser.append(`<option value="">---all---</option>`)
+      // }
+    }
+  </script>
+</head>
+<body>
+
+<div id="progressBar" style="display: none">
+  <div>
+    <div id="caption">LOADING...</div>
+    <div><span id="percents">0</span>%</div>
+    <div>(Please be patient: browser is working hard for your honor!)</div>
+  </div>
+</div>
+
+<div id="splashScreen" class="splashScreen">
+  <form id="fileChooserFormSplash">
+    <label id="fileInputLabelSplash" for="fileInputSplash" autofocus class="fileInputLabel">
+      Drag & Drop <span style="font-family: monospace">open-telemetry-metrics.*.csv</span> file(s) on the page<br/>
+      (or click here for file-open dialog)
+    </label>
+
+    <input type="file"
+           id="fileInputSplash" multiple
+           accept="text/csv"
+           title="Select 'open-telemetry-metrics.*.csv' files"
+           class="fileInput"
+           onchange="readFiles(event.target.files)"
+    />
+
+    <div class="faq hidden">
+      <div class="caption">FAQ (What is this?)</div>
+      <div class="hideable">
+        <dl>
+          <dt>What this page is for?</dt>
+          <dd>During its work IDE exports its internal monitoring data into a <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+            files. The page could parse those files and plot nice time series charts. The data is mostly for JetBrains support and
+            development engineers.
+          </dd>
+
+          <dt>Why do I need it?</dt>
+          <dd>Maybe you don't need it. But it is quite easy to try and see yourself: drag-n-drop
+            any <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+            file onto the page.
+          </dd>
+
+          <dt>There to find <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+            files?
+          </dt>
+          <dd>In IDE logs folder (menu: <span style="font-family: Monospace">Help/Show logs in Finder</span>)</dd>
+        </dl>
+      </div>
+    </div>
+  </form>
+
+</div>
+
+<div id="loadedFilesInfo">
+  <div id="filesLoadedInfo"></div>
+  <div id="pointsLoadedInfo"></div>
+
+  <div class="openFilesContainer">
+    <form id="fileChooserForm" class="fileChooserForm">
+
+      <label for="timeRangeChooser" style="display: none">Reduce time range to specific hour:</label>
+      <select id="timeRangeChooser" style="display: none"></select>
+
+      <!--            class="fileInputLabel"-->
+      <label id="fileInputLabel" for="fileInput" autofocus>
+        To view another file(s): Drag & Drop <span style="font-family: monospace">*.csv</span> file(s) on the page,
+        or click here for file-open dialog.
+      </label>
+      <input type="file"
+             id="fileInput"
+             accept="text/csv" multiple
+             class="fileInput"
+             title="Select 'open-telemetry-metrics.*.csv' files"
+             onchange="readFiles(event.target.files)"
+      />
+
+    </form>
+  </div>
+</div>
+
+<div id="plots">
+  <div id="AWTQueue" class="blockOfPlots">
+
+    <div class="caption">AWT Event-dispatching queue:</div>
+
+    <div id="EDT_awtEventsDispatchedChart" class="plot hideable"></div>
+    <div id="EDT_awtEventsTimingsChart" class="plot hideable"></div>
+  </div>
+
+  <div id="FlushQueue" class="blockOfPlots">
+
+    <div class="caption">FlushQueue (tasks dispatching):</div>
+
+    <div id="FlushQueue_tasksExecutedChart" class="plot hideable"></div>
+    <div id="FlushQueue_tasksWaitingTimesChart" class="plot hideable"></div>
+    <div id="FlushQueue_tasksExecutionTimesChart" class="plot hideable"></div>
+  </div>
+
+  <div id="NonBlockingRead" class="blockOfPlots">
+
+    <div class="caption">NonBlockingReadAction:</div>
+
+    <div id="NonBlockingReads_CountChart" class="plot hideable"></div>
+    <div id="NonBlockingReads_TimesChart" class="plot hideable"></div>
+  </div>
+
+  <div id="filePageCache" class="blockOfPlots">
+
+    <div class="caption">FilePageCache:</div>
+
+    <div id="filePageCache_HitsMisses_Chart" class="plot hideable"></div>
+    <div id="filePageCache_Times_Chart" class="plot hideable"></div>
+  </div>
+
+  <div id="custom" class="blockOfPlots">
+    <div class="caption">
+      <label for="timeSeriesChooser">Custom plot:</label>
+      <select name="timeSeriesChooser" id="timeSeriesChooser" onchange="extractAndPlotTimeSeries(this.value)">
+        <option value="">----nothing----</option>
+      </select>
+    </div>
+
+    <div id="customChartPlotly" class="plot hideable"></div>
+  </div>
+</div>
+
+<script lang="js">
+
+  /* Make page accept drag-n-drop files */
+  initDnD = function (dragAndDropAreaElement, processFiles) {
+    //area 'sensitive' to drag-n-drop:
+    const dragAndDropArea = $(dragAndDropAreaElement)
+
+    //create 'glass pane' for DnD visual signalling:
+    const dragAndDropGlassPane = $('<div/>', {
+      id: 'dragAndDropGlassPane',
+      style: "position:absolute; top:0;bottom:0;left:0;right:0; z-index:1000;pointer-events:none;"
+    })
+    dragAndDropGlassPane.appendTo(dragAndDropArea)
+    dragAndDropGlassPane.hide()
+    const dragAndDropAssistant = $("<div/>", {
+      id: 'dragAndDropAssistant',
+      style: 'position:absolute; z-index:1001; font-size: 2em; ' +
+        'margin-top:-1.5em; margin-left:-5em; ' +
+        'display:none; pointer-events:none;' +
+        'color: rgb(0, 100, 0);'
+    }).text("Drop it. Right here. Now.")
+    dragAndDropGlassPane.append(dragAndDropAssistant)
+
+
+    dragAndDropGlassPane.showPanel = (event, readyToAcceptDrop) => {
+      if (readyToAcceptDrop) {
+        dragAndDropGlassPane.css("background-color", "rgba(200, 220, 200, 0.7)")
+      }
+      else {
+        dragAndDropGlassPane.css("background-color", "rgba(220, 200, 200, 0.7)")
+      }
+      if (event && readyToAcceptDrop) {
+        //show validating text under cursor:
+        const x = event.clientX + 10
+        const y = event.clientY - 10
+        dragAndDropAssistant.css({left: x - 10, top: y}).show()
+      }
+      dragAndDropGlassPane.show()
+    }
+    dragAndDropGlassPane.hidePanel = () => {
+      dragAndDropGlassPane.hide()
+    }
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dragAndDropArea.on(eventName, (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+
+        console.log(event.originalEvent)
+
+        switch (event.type) {
+          case "dragenter":
+          case "dragover":
+            dragAndDropGlassPane.showPanel(event, /*accept: */true)
+            break
+          case "dragleave":
+            dragAndDropGlassPane.hidePanel()
+            break
+          case "drop":
+            dragAndDropGlassPane.hidePanel()
+            if (event.originalEvent.dataTransfer) {
+              const dataTransfer = event.originalEvent.dataTransfer
+              const files = dataTransfer.files
+              if (files.length && files.length > 0) {
+                processFiles(files)
+              }
+            }
+            break
+        }
+      })
+    })
+
+  }
+  initDnD(document.body, readFiles)
+
+  initProgressBar = function () {
+    const progressBarGlassPane = $("#progressBar")
+
+    const textPane = $("#progressBar #caption")
+    const percentsPane = $("#progressBar #percents")
+    progressBarGlassPane.hide()
+
+    document.progressBar = {
+      show: (caption) => {
+        textPane.text(caption)
+        percentsPane.text(0)
+        progressBarGlassPane.show()
+      },
+      update: (percents) => {
+        percentsPane.text(percents.toFixed(0))
+      },
+      hide: () => {
+        progressBarGlassPane.hide()
+      }
+    }
+  }
+  initProgressBar()
+
+
+  //setup panels close/open by clicking on caption:
+  $('.caption').on('click', (event) => {
+    const parent = $(event.target.parentElement)
+    parent.toggleClass('hidden')
+  })
+
+</script>
+</body>
+</html>

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -39,8 +40,11 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(@NotNull final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
-    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-    if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !EditorModificationUtil.requestWriting(editor)) return;
+    boolean preview = IntentionPreviewUtils.getPreviewEditor() == editor;
+    if (!preview) {
+      if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !EditorModificationUtil.requestWriting(editor)) return;
+    }
 
     DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
       @Override
@@ -59,7 +63,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
         }
       }
     };
-    if (editor instanceof TextComponentEditor) {
+    if (preview || editor instanceof TextComponentEditor) {
       runnable.run();
     }
     else {

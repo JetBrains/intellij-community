@@ -1,0 +1,10 @@
+// "Remove parameter 'bar'" "true"
+private fun foo(foo: String, baz: String = "") {}
+
+private fun test() {
+    foo(
+        "foo", // foo comment
+        // bar comment
+        "baz" // baz comment
+    )
+}

@@ -19,12 +19,36 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
-import java.util.ArrayList
+import net.jpountz.lz4.LZ4Factory
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicLong
 
 class CompressedAppendableFileTest : TestCase() {
+  fun testNativeCompression() {
+    val nativeDecomp = LZ4Factory.nativeInstance().fastDecompressor()
+    assert(nativeDecomp.javaClass.name.contains("JNI"))
+    assertFailed {
+      nativeDecomp.decompress(ByteArray(3), ByteArray(12))
+    }
+    assertFailed {
+      nativeDecomp.decompress(ByteArray(0), ByteArray(12))
+    }
+  }
+
+  private fun assertFailed(op: () -> Unit) {
+    try {
+      op()
+      fail()
+    }
+    catch (ignored: Exception) {
+
+    }
+    catch (ignored: AssertionError) {
+
+    }
+  }
+
   @Throws
   fun testCreateParentDirWhenSave() {
     val randomTemporaryPath = FileUtil.generateRandomTemporaryPath().toPath().resolve("Test.compressed")

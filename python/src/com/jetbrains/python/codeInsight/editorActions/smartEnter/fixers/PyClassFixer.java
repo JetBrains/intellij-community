@@ -14,10 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyClassFixer extends PyFixer<PyClass> {
   public PyClassFixer() {
     super(PyClass.class);

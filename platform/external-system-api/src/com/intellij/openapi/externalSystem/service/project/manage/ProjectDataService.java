@@ -48,7 +48,6 @@ import java.util.Collection;
  * </pre>
  * 
  * 
- * @author Denis Zhdanov
  * @param <E>  target external project data type
  * @param <I>  target ide project data type
  */
@@ -76,8 +75,6 @@ public interface ProjectDataService<E, I> {
    * </ul>
    * </pre>
    * are created, updated or left as-is if they have the
-   *  @param toImport
-   * @param project
    */
   void importData(Collection<? extends DataNode<E>> toImport,
                   @Nullable ProjectData projectData,

@@ -1,17 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.bookmarks.Bookmark;
-import com.intellij.ide.bookmarks.BookmarkManager;
+import com.intellij.ide.bookmark.Bookmark;
+import com.intellij.ide.bookmark.BookmarkType;
+import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.projectView.impl.ProjectViewInplaceCommentProducerImplKt;
 import com.intellij.ide.tags.TagManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.InplaceCommentAppender;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -28,13 +33,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.StatePreservingNavigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IconManager;
+import com.intellij.ui.ColoredText;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,11 +131,19 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Nullable
   private VirtualFile getVirtualFileForValue() {
-    PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null) {
-      return null;
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer<?> pointer) {
+      return pointer.getVirtualFile(); // do not retrieve PSI element
     }
+    PsiElement psiElement = extractPsiFromValue();
     return PsiUtilCore.getVirtualFile(psiElement);
+  }
+
+  @Override
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
+    if (UISettings.getInstance().getShowInplaceComments()) {
+      ProjectViewInplaceCommentProducerImplKt.appendInplaceComments(this, appender);
+    }
   }
 
   // Should be called in atomic action
@@ -164,29 +176,28 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       catch (IndexNotReadyException ignored) {
       }
 
-      SimpleColoredText coloredText = null;
-      Icon tagIcon;
+      final Icon tagIcon;
+      final ColoredText tagText;
       if (!TagManager.isEnabled()) {
-        Bookmark bookmark = BookmarkManager.getInstance(myProject).findElementBookmark(value);
-        tagIcon = bookmark == null ? null : bookmark.getIcon();
+        tagIcon = getBookmarkIcon(myProject, value);
+        tagText = null;
       }
       else {
-        tagIcon = TagManager.appendTags(value, coloredText = new SimpleColoredText());
+        var tagIconAndText = TagManager.getTagIconAndText(value);
+        tagIcon = tagIconAndText.first;
+        tagText = tagIconAndText.second;
       }
-      if (tagIcon != null) {
-        icon = new com.intellij.ui.RowIcon(tagIcon, icon);
-      }
-      data.setIcon(icon);
+      data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
       if (deprecated) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
       }
-      if (coloredText != null) {
-        int fragment = 0;
-        for (String text : coloredText.getTexts()) {
-          data.getColoredText().add(new ColoredFragment(text, coloredText.getAttributes().get(fragment++)));
+      if (tagText != null) {
+        var fragments = tagText.fragments();
+        for (ColoredText.Fragment fragment : fragments) {
+          data.getColoredText().add(new ColoredFragment(fragment.fragmentText(), fragment.fragmentAttributes()));
         }
-        if (fragment > 0) {
+        if (!fragments.isEmpty()) {
           data.getColoredText().add(new ColoredFragment(myName, getSimpleTextAttributes(data)));
         }
       }
@@ -215,19 +226,33 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
     Icon icon = original;
 
-    final Bookmark bookmarkAtFile = BookmarkManager.getInstance(project).findFileBookmark(file);
-    if (bookmarkAtFile != null) {
-      final RowIcon composite = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER);
-      composite.setIcon(icon, 0);
-      composite.setIcon(bookmarkAtFile.getIcon(), 1);
-      icon = composite;
-    }
-
     if (file.is(VFileProperty.SYMLINK)) {
       icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
     }
 
+    Icon bookmarkIcon = getBookmarkIcon(project, file);
+    if (bookmarkIcon != null) {
+      icon = withIconMarker(icon, bookmarkIcon);
+    }
+
     return icon;
+  }
+
+  private static @Nullable Icon withIconMarker(@Nullable Icon icon, @Nullable Icon marker) {
+    return Registry.is("ide.project.view.bookmarks.icon.before", false)
+           ? IconUtil.rowIcon(marker, icon)
+           : IconUtil.rowIcon(icon, marker);
+  }
+
+  private static @Nullable Icon getBookmarkIcon(@NotNull Project project, @Nullable Object context) {
+    if (Registry.is("ide.project.view.bookmarks.icon.hide", false)) return null;
+    BookmarksManager manager = BookmarksManager.getInstance(project);
+    if (manager == null) return null; // bookmarks manager is not available
+    Bookmark bookmark = manager.createBookmark(context);
+    if (bookmark == null) return null; // bookmark cannot be created
+    BookmarkType type = manager.getType(bookmark);
+    if (type == null) return null; // bookmark is not set
+    return type.getIcon();
   }
 
   protected boolean isDeprecated() {
@@ -236,17 +261,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public boolean contains(@NotNull final VirtualFile file) {
-    final PsiElement psiElement = extractPsiFromValue();
-    if (psiElement == null || !psiElement.isValid()) {
-      return false;
-    }
-
-    final PsiFile containingFile = psiElement.getContainingFile();
-    if (containingFile == null) {
-      return false;
-    }
-    final VirtualFile valueFile = containingFile.getVirtualFile();
-    return file.equals(valueFile);
+    return file.equals(getVirtualFileForValue());
   }
 
   @Nullable

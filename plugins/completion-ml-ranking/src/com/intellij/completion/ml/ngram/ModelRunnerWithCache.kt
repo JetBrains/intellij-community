@@ -8,16 +8,14 @@ import com.intellij.completion.ngram.slp.modeling.Model
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
 import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPsiElementPointer
 
 internal class ModelRunnerWithCache(model: Model = JMModel()) : ModelRunner(model) {
 
   private val myCache = FilePath2Tokens(this)
 
-  internal fun processFile(filePointer: SmartPsiElementPointer<PsiFile>) {
-    val filePath = filePointer.virtualFile?.path ?: return
+  internal fun processFile(psiFile: PsiFile, filePath: String) {
     if (filePath in myCache) return
-    val tokens = lexPsiFile(filePointer.element ?: return, TEXT_RANGE_LIMIT)
+    val tokens = lexPsiFile(psiFile, TEXT_RANGE_LIMIT)
     myCache[filePath] = tokens
     learnTokens(tokens)
   }

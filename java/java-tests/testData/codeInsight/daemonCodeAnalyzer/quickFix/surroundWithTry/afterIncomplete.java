@@ -1,4 +1,4 @@
-// "Surround with try/catch" "true"
+// "Surround with try/catch" "true-preview"
 class C {
     native boolean foo() throws Exception;
     
@@ -6,7 +6,7 @@ class C {
         try {
             if(foo() && foo())
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
     

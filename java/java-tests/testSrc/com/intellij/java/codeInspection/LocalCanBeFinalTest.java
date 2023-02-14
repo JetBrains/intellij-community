@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,7 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     // has to have JFrame and sources
-    return JAVA_15;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   private void doTest() {
@@ -39,14 +41,30 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
+  public void testUnreachableModification() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
   public void testIfTest() {
     myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  public void testSwitchBranches() {
+    myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
   public void testIncompleteAssignment() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
+    doTest();
+  }
+  
+  public void testLambdaParameters() {
+    myTool.REPORT_PARAMETERS = true;
+    myTool.REPORT_VARIABLES = false;
     doTest();
   }
 
@@ -157,5 +175,10 @@ public class LocalCanBeFinalTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testResource() {
     doTest();
+  }
+
+  public void testPatternVariables() {
+    myTool.REPORT_PATTERN_VARIABLES = true;
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }
 }

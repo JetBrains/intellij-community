@@ -1,0 +1,14 @@
+<idea-plugin>
+<name>Visual Studio 2022 Keymap</name>
+<id>com.intellij.plugins.visualstudio2022keymap</id>
+<vendor>JetBrains</vendor>
+<category>Keymap</category>
+<description>
+  Visual Studio 2022 keymap for all IntelliJ-based IDEs.
+  Use this plugin if Visual Studio 2022 keymap is not pre-installed in your IDE.
+</description>
+<depends>com.intellij.modules.lang</depends>
+<extensions defaultExtensionNs="com.intellij">
+    <bundledKeymap file="Visual Studio 2022.xml"/>
+</extensions>
+</idea-plugin>

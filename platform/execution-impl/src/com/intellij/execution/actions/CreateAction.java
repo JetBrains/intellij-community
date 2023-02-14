@@ -1,18 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.SyntheticRunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
-    super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, null);
+    this(null);
+  }
+
+  public CreateAction(Icon icon) {
+    super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, icon);
+    getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
   }
 
   @Override
@@ -36,7 +46,13 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
     final RunnerAndConfigurationSettings configuration = findExisting(context);
-    return configuration == null ? Holder.CREATE_AND_EDIT : Holder.EDIT;
+    if (configuration == null) {
+      return Holder.CREATE_AND_EDIT;
+    }
+    if (configuration.getConfiguration() instanceof SyntheticRunConfigurationBase) {
+      return Holder.DISABLED;
+    }
+    return Holder.EDIT;
   }
 
   private static abstract class BaseCreatePolicy {
@@ -63,6 +79,7 @@ public class CreateAction extends BaseRunConfigurationAction {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
         runManager.addConfiguration(configuration);
         runManager.setSelectedConfiguration(configuration);
+        RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
       }
     }
   }
@@ -80,5 +97,19 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static class Holder {
     private static final BaseCreatePolicy CREATE_AND_EDIT = new CreateAndEditPolicy();
     private static final BaseCreatePolicy EDIT = new EditPolicy();
+    private static final BaseCreatePolicy DISABLED = new BaseCreatePolicy() {
+      @Override
+      public void update(Presentation presentation, ConfigurationContext context, @NotNull String actionText) {
+        presentation.setEnabledAndVisible(false);
+      }
+
+      @Override
+      protected void updateText(Presentation presentation, String actionText) {
+      }
+
+      @Override
+      protected void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context) {
+      }
+    };
   }
 }

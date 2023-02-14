@@ -58,8 +58,7 @@ public class PyTransformConditionalExpressionIntention extends PyBaseIntentionAc
     assert assignmentStatement != null;
     final PyExpression assignedValue =
       assignmentStatement.getAssignedValue();
-    if (assignedValue instanceof PyConditionalExpression) {
-      final PyConditionalExpression expression = (PyConditionalExpression)assignedValue;
+    if (assignedValue instanceof PyConditionalExpression expression) {
       final PyExpression condition = expression.getCondition();
       final PyExpression falsePart = expression.getFalsePart();
       if (condition != null && falsePart != null) {

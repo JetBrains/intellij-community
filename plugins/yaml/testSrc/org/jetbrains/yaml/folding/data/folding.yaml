@@ -1,11 +1,11 @@
 <fold text='---'>---
 <fold text='key1: <4 keys>'>key1:
-  Key2: <fold text='foo'>foo</fold>
-  Key3: <fold text='bar'>bar</fold>
+  Key2: foo
+  Key3: bar
   <fold text='Key4: <3 items>'>Key4:
-    - <fold text='foo'>foo</fold>
-    - <fold text='bar'>bar</fold>
-    - <fold text='baz'>baz</fold></fold>
+    - foo
+    - bar
+    - baz</fold>
   <fold text='Key5: <1 key>'>Key5:
     <fold text='Key6: <3 keys>'>Key6:
       Key7: <fold text='foo
@@ -14,14 +14,14 @@ bar
         foo
         
         bar</fold>
-      Key8: <fold text='dfjsdfdfs…ljfsddfsdf'>"dfjsdfdfsdfssdkjfklsdjfklsdkljfsddfsdf"</fold>
+      Key8: "dfjsdfdfsdfssdkjfklsdjfklsdkljfsddfsdf"
       LongKeyVeryLongYeah9: <fold text='fjhsdjkfh…sdjhfjskfh'>fjhsdjkfhsdf
         jshdfjkhsdjksdfjsdjhfjskfh</fold></fold></fold></fold>
 </fold>
 <fold text='---'>---
 <fold text='key1: {4 keys}'>key1:
-  {Key2: <fold text='foo'>foo</fold>,
-  Key3: <fold text='bar'>bar</fold>,
-  <fold text='Key4: [3 items]'>Key4: [<fold text='foo'>foo</fold>, <fold text='bar'>bar</fold>, <fold text='baz'>baz</fold>]</fold>,
-  <fold text='Key5: {1 key}'>Key5: {<fold text='Key6: {3 keys}'>Key6: {Key7: <fold text='foo bar'>'foo bar'</fold>, Key8: <fold text='dfjsdfdfs…hjkfsdkjfh'>"dfjsdfdfsdfsdfsdfskdjhfkjsdhfjkdshjkfsdkjfh"</fold>, LongKeyVeryLongYeah9: <fold text='sdfjhsdjk…kfhksjdhfk'>sdfjhsdjkfhsdfsdfhjksdhfjhsdjfhjksdhfjkshdjkfhksjdhfk</fold>}</fold>}</fold>}
+  {Key2: foo,
+  Key3: bar,
+  <fold text='Key4: [3 items]'>Key4: [foo, bar, baz]</fold>,
+  <fold text='Key5: {1 key}'>Key5: {<fold text='Key6: {3 keys}'>Key6: {Key7: 'foo bar', Key8: "dfjsdfdfsdfsdfsdfskdjhfkjsdhfjkdshjkfsdkjfh", LongKeyVeryLongYeah9: sdfjhsdjkfhsdfsdfhjksdhfjhsdjfhjksdhfjkshdjkfhksjdhfk}</fold>}</fold>}
   </fold></fold>

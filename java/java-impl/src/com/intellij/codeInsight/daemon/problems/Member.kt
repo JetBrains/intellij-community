@@ -38,10 +38,10 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
   companion object {
     internal fun create(psiMember: PsiMember) = when (psiMember) {
+      is PsiEnumConstant -> EnumConstant.create(psiMember)
       is PsiMethod -> Method.create(psiMember)
       is PsiField -> Field.create(psiMember)
       is PsiClass -> Class.create(psiMember)
-      is PsiEnumConstant -> EnumConstant.create(psiMember)
       else -> null
     }
 
@@ -85,7 +85,7 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
     override fun copy(modifiers: MutableSet<String>): Member = copy(name = name, modifiers = modifiers, type = type)
 
     companion object {
-      internal fun create(psiField: PsiField): Field? {
+      internal fun create(psiField: PsiField): Field {
         val name = psiField.name
         val modifiers = extractModifiers(psiField.modifierList)
         val type = psiField.type.canonicalText

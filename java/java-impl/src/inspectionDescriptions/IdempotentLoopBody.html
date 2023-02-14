@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports loops whose second and the subsequent iterations do not produce any additional side effects other than produced by the first iteration,
-which could indicate a programming error. Such loops may iterate only zero, one or infinite number of times.
-If infinite number of times case is unreachable, such loop could be replaced with <code>if</code> statement. Otherwise there's a danger that
-the program could stuck.
+Reports loops whose second and all subsequent iterations do not produce any additional side effects other
+than the one produced by the first iteration, which can indicate a programming error.
+<p>Such loops may iterate only zero, one, or infinite number of times.
+If the infinite number of times case is unreachable, such a loop can be replaced with an <code>if</code> statement.
+  Otherwise, there's a possibility that the program can get stuck.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
     public void foo(String baseName, String names) {
         int suffix = 1;
         String name = baseName;
@@ -14,7 +15,7 @@ the program could stuck.
             name = baseName + suffix;
         }
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2018.1</small></p>
 </body>

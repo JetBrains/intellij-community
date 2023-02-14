@@ -7,9 +7,6 @@ import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfState
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-/**
- * @author peter
- */
 class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testSuppressForIfStatement() throws Throwable {

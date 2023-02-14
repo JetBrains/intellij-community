@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
@@ -23,8 +23,15 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   public override fun tearDown() {
-    super.tearDown()
-    System.clearProperty(JavaBackwardReferenceIndexWriter.PROP_KEY)
+    try {
+      System.clearProperty(JavaBackwardReferenceIndexWriter.PROP_KEY)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun assertIndexOnRebuild(vararg files: String) {
@@ -201,7 +208,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 
-  private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.getName(this)
+  private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.valueOf(this)!!
 
   private fun CompilerRef.asText(nameEnumerator: NameEnumerator): String =
       when (this) {

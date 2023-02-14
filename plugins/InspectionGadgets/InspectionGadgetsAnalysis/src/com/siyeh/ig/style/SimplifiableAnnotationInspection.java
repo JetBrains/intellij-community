@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,7 +63,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
       if (annotation == null) {
@@ -113,8 +112,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
     private static void buildAttributeValueText(PsiAnnotationMemberValue value,
                                                 StringBuilder out,
                                                 CommentTracker tracker) {
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
+      if (value instanceof PsiArrayInitializerMemberValue arrayValue) {
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length == 1) {
           out.append(tracker.text(initializers[0]));
@@ -137,7 +135,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
   private static class SimplifiableAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -151,7 +149,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       }
       if (attributes.length == 0) {
         if (parameterList.getChildren().length > 0 && !containsError(annotation)) {
-          registerError(parameterList, ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+          registerError(parameterList, Boolean.FALSE);
         }
       }
       else if (attributes.length == 1) {
@@ -161,37 +159,35 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
         if (identifier != null && attributeValue != null) {
           @NonNls final String name = attribute.getName();
           if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name) && !containsError(annotation)) {
-            registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+            registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(),
                                   Boolean.FALSE);
           }
         }
-        if (!(attributeValue instanceof PsiArrayInitializerMemberValue)) {
+        if (!(attributeValue instanceof PsiArrayInitializerMemberValue arrayValue)) {
           return;
         }
-        final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)attributeValue;
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length != 1) {
           return;
         }
         if (!containsError(annotation)) {
-          registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
-          registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+          registerError(arrayValue.getFirstChild(), Boolean.FALSE);
+          registerError(arrayValue.getLastChild(), Boolean.FALSE);
         }
       }
       else {
         for (PsiNameValuePair attribute : attributes) {
           final PsiAnnotationMemberValue value = attribute.getValue();
-          if (!(value instanceof PsiArrayInitializerMemberValue)) {
+          if (!(value instanceof PsiArrayInitializerMemberValue arrayValue)) {
             continue;
           }
-          final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
           final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
           if (initializers.length != 1) {
             continue;
           }
           if (!containsError(annotation)) {
-            registerError(arrayValue.getFirstChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
-            registerError(arrayValue.getLastChild(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, Boolean.FALSE);
+            registerError(arrayValue.getFirstChild(), Boolean.FALSE);
+            registerError(arrayValue.getLastChild(), Boolean.FALSE);
           }
         }
       }
@@ -234,10 +230,9 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       }
 
       for (PsiMethod method : aClass.getMethods()) {
-        if (!(method instanceof PsiAnnotationMethod)) {
+        if (!(method instanceof PsiAnnotationMethod annotationMethod)) {
           continue;
         }
-        final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
         if (annotationMethod.getDefaultValue() == null && !names.contains(annotationMethod.getName())) {
           return true; // missing a required argument
         }
@@ -275,8 +270,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       if (value instanceof PsiArrayInitializerMemberValue) {
         return expectedType instanceof PsiArrayType;
       }
-      if (value instanceof PsiExpression) {
-        final PsiExpression expression = (PsiExpression)value;
+      if (value instanceof PsiExpression expression) {
         return expression.getType() != null && TypeConversionUtil.areTypesAssignmentCompatible(expectedType, expression) ||
                expectedType instanceof PsiArrayType &&
                TypeConversionUtil.areTypesAssignmentCompatible(((PsiArrayType)expectedType).getComponentType(), expression);

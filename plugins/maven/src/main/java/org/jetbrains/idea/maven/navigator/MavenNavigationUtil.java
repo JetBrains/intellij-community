@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,8 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
@@ -59,8 +60,16 @@ public final class MavenNavigationUtil {
     };
   }
 
-  @Nullable
-  public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull MavenArtifact artifact) {
+    return createNavigatableForDependency(project, file, artifact.getGroupId(), artifact.getArtifactId());
+  }
+
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull String groupId,
+                                                                    @NotNull String artifactId) {
     return new NavigatableAdapter() {
       @Override
       public void navigate(boolean requestFocus) {
@@ -69,7 +78,7 @@ public final class MavenNavigationUtil {
         MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
         if (projectModel == null) return;
 
-        MavenDomDependency dependency = findDependency(projectModel, artifact.getGroupId(), artifact.getArtifactId());
+        MavenDomDependency dependency = findDependency(projectModel, groupId, artifactId);
         if (dependency == null) return;
 
         XmlTag artifactId = dependency.getArtifactId().getXmlTag();
@@ -82,8 +91,8 @@ public final class MavenNavigationUtil {
 
   @Nullable
   public static VirtualFile getArtifactFile(Project project, MavenId id) {
-    final File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
-    return file.exists() ? LocalFileSystem.getInstance().findFileByIoFile(file) : null;
+    Path path = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(project).getLocalRepository(), id);
+    return Files.exists(path) ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   }
 
   @Nullable

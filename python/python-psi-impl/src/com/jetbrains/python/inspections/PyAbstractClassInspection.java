@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
@@ -29,13 +30,14 @@ public class PyAbstractClassInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static final class Visitor extends PyInspectionVisitor {
 
-    private Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    private Visitor(@NotNull ProblemsHolder holder,
+                    @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -43,7 +45,13 @@ public class PyAbstractClassInspection extends PyInspection {
       if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
-      final List<PyFunction> toImplement = PyPsiRefactoringUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);
+
+      /* Do not report problem if class contains only methods that raise NotImplementedError without any abc.* decorators
+         but keep ability to implement them via quickfix (see PY-38680) */
+      final List<PyFunction> toImplement = ContainerUtil
+        .filter(PyPsiRefactoringUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext),
+                function -> PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext));
+
       final ASTNode nameNode = pyClass.getNameNode();
       if (!toImplement.isEmpty() && nameNode != null) {
         final SmartList<LocalQuickFix> quickFixes = new SmartList<>();

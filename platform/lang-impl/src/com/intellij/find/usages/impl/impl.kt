@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
 import com.intellij.find.usages.api.*
-import com.intellij.find.usages.symbol.SearchableSymbol
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
@@ -41,12 +41,12 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
   for (factory in SYMBOL_SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
     val factory_ = factory as SymbolSearchTargetFactory<Symbol>
-    val target = factory_.createTarget(project, symbol)
+    val target = factory_.searchTarget(project, symbol)
     if (target != null) {
       return target
     }
   }
-  if (symbol is SearchableSymbol) {
+  if (symbol is SearchTargetSymbol) {
     return symbol.searchTarget
   }
   if (symbol is SearchTarget) {
@@ -56,11 +56,12 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
 }
 
 @ApiStatus.Internal
-fun <O> buildUsageViewQuery(project: Project,
-                            target: SearchTarget,
-                            handler: UsageHandler<O>,
-                            allOptions: AllSearchOptions<O>): Query<out UVUsage> {
-  return buildQuery(project, target, handler, allOptions).transforming {
+fun buildUsageViewQuery(
+  project: Project,
+  target: SearchTarget,
+  allOptions: AllSearchOptions,
+): Query<out UVUsage> {
+  return buildQuery(project, target, allOptions).transforming {
     if (it is PsiUsage && !it.declaration) {
       listOf(Psi2UsageInfo2UsageAdapter(PsiUsage2UsageInfo(it)))
     }
@@ -70,18 +71,17 @@ fun <O> buildUsageViewQuery(project: Project,
   }
 }
 
-internal fun <O> buildQuery(
+@ApiStatus.Internal
+fun buildQuery(
   project: Project,
   target: SearchTarget,
-  handler: UsageHandler<O>,
-  allOptions: AllSearchOptions<O>
+  allOptions: AllSearchOptions,
 ): Query<out Usage> {
   val queries = ArrayList<Query<out Usage>>()
-  val (options, textSearch, customOptions) = allOptions
+  val (options, textSearch) = allOptions
   if (options.isUsages) {
     queries += SearchService.getInstance().searchParameters(DefaultUsageSearchParameters(project, target, options.searchScope))
   }
-  queries += handler.buildSearchQuery(options, customOptions)
   if (textSearch == true) {
     target.textSearchRequests.mapTo(queries) { searchRequest ->
       buildTextUsageQuery(project, searchRequest, options.searchScope, textSearchContexts).mapping(::PlainTextUsage)

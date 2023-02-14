@@ -1,5 +1,5 @@
 //statics in inner -- in Java 16 allowed everywhere
-public class a {
+<error descr="Class 'a' is public, should be declared in a file named 'a.java'">public class a</error> {
 
   static final Number x = null;
   static final int ix = x== null ? 4 : 3;
@@ -83,10 +83,13 @@ public class a {
 
   void withanonymous() {
     new Object() {
-      <error descr="Modifier 'private' not allowed here">private</error> class RT {}
+      private class RT {}
       private void method() {}
       private int myI;
     };
+    new Object() {
+      static void f() {}
+    }.f();
   }
 }
 

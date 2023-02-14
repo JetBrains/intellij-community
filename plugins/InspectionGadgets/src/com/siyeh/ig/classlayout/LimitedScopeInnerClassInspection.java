@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,18 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDeclarationStatement;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
 public class LimitedScopeInnerClassInspection extends BaseInspection {
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MoveClassFix();
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "limited.scope.inner.class.problem.descriptor");
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
+    return InspectionGadgetsBundle.message("limited.scope.inner.class.problem.descriptor");
   }
 
   @Override
@@ -48,12 +35,11 @@ public class LimitedScopeInnerClassInspection extends BaseInspection {
     return new LimitedScopeInnerClassVisitor();
   }
 
-  private static class LimitedScopeInnerClassVisitor
-    extends BaseInspectionVisitor {
+  private static class LimitedScopeInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.getParent() instanceof PsiDeclarationStatement) {
+      if (PsiUtil.isLocalClass(aClass)) {
         registerClassError(aClass);
       }
     }

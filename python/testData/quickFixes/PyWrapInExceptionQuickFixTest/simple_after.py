@@ -1,1 +1,0 @@
-raise Exception("Some String")

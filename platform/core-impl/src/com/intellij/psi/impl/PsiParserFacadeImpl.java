@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -19,9 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class PsiParserFacadeImpl implements PsiParserFacade {
   private final PsiManagerEx myManager;
 
@@ -32,8 +30,8 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
   @Override
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
-    final FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
-    final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
+    FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
+    LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
     holderElement.rawAddChildren(newElement);
     GeneratedMarkerVisitor.markGenerated(newElement.getPsi());
     return newElement.getPsi();
@@ -48,8 +46,8 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
 
   @Override
   @NotNull
-  public PsiComment createLineCommentFromText(@NotNull final Language language,
-                                              @NotNull final String text) throws IncorrectOperationException {
+  public PsiComment createLineCommentFromText(@NotNull Language language,
+                                              @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null;
     String prefix = commenter.getLineCommentPrefix();
@@ -67,8 +65,8 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
                                                @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null : language;
-    final String blockCommentPrefix = commenter.getBlockCommentPrefix();
-    final String blockCommentSuffix = commenter.getBlockCommentSuffix();
+    String blockCommentPrefix = commenter.getBlockCommentPrefix();
+    String blockCommentSuffix = commenter.getBlockCommentSuffix();
     assert blockCommentPrefix != null && blockCommentSuffix != null;
 
     PsiFile aFile = createDummyFile(language, blockCommentPrefix + text + blockCommentSuffix);
@@ -82,8 +80,8 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null : language;
     String prefix = commenter.getLineCommentPrefix();
-    final String blockCommentPrefix = commenter.getBlockCommentPrefix();
-    final String blockCommentSuffix = commenter.getBlockCommentSuffix();
+    String blockCommentPrefix = commenter.getBlockCommentPrefix();
+    String blockCommentSuffix = commenter.getBlockCommentSuffix();
     assert prefix != null || (blockCommentPrefix != null && blockCommentSuffix != null);
 
     PsiFile aFile = createDummyFile(language, prefix != null ? (prefix + text) : (blockCommentPrefix + text + blockCommentSuffix));
@@ -100,7 +98,7 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
     return comment;
   }
 
-  private PsiFile createDummyFile(final Language language, String text) {
+  private PsiFile createDummyFile(Language language, String text) {
     return PsiFileFactory.getInstance(myManager.getProject()).createFileFromText("_Dummy_", language, text);
   }
 }

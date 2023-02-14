@@ -28,12 +28,12 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitUnaryExpression(PsiUnaryExpression expression) {
+      public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
         handle(expression);
       }
 
       @Override
-      public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
         handle(expression);
       }
 
@@ -101,8 +101,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
 
   private static String getValueText(Object value) {
     @NonNls final String newExpression;
-    if (value instanceof String) {
-      final String string = (String)value;
+    if (value instanceof String string) {
       newExpression = '"' + StringUtil.escapeStringCharacters(string) + '"';
     }
     else if (value instanceof Character) {

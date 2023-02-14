@@ -15,8 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 28.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements GrWildcardTypeArgument {
   private static final Logger LOG = Logger.getInstance(GrWildcardTypeArgumentImpl.class);

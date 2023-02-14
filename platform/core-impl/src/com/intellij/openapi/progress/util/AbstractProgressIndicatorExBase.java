@@ -190,7 +190,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
   }
 
-  private void delegateProgressChange(@NotNull IndicatorAction action) {
+  @ApiStatus.Internal
+  protected void delegateProgressChange(@NotNull IndicatorAction action) {
     delegate(action);
     onProgressChange();
   }
@@ -204,7 +205,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
    * @deprecated do not use. Instead, create new indicator and call {@link #addStateDelegate(ProgressIndicatorEx)} with it.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   protected void delegateRunningChange(@NotNull IndicatorAction action) {
   }
 

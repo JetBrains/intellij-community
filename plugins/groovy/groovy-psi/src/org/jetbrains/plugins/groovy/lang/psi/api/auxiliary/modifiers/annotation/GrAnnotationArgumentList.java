@@ -21,8 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.psi.PsiAnnotationParameterList;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public interface GrAnnotationArgumentList extends GroovyPsiElement, PsiAnnotationParameterList {
   @Override

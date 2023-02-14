@@ -33,19 +33,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
 
-public class DynamicRegexReplaceableByCompiledPatternInspection extends
-                                                                BaseInspection {
+public class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
   @NonNls
-  protected static final Collection<String> regexMethodNames = new HashSet<>(4);
-   static {
-    regexMethodNames.add("matches");
-    regexMethodNames.add("replace");
-    regexMethodNames.add("replaceFirst");
-    regexMethodNames.add("replaceAll");
-    regexMethodNames.add("split");
-  }
+  protected static final Collection<String> regexMethodNames = Set.of(
+    "matches", "replace", "replaceFirst", "replaceAll", "split"
+  );
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -79,22 +74,20 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiClass aClass = ClassUtils.getContainingStaticClass(element);
       if (aClass == null) {
         return;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) {
+      if (!(parent instanceof PsiReferenceExpression methodExpression)) {
         return;
       }
-      final PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
       final PsiElement grandParent = methodExpression.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList list = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = list.getExpressions();
       CommentTracker commentTracker = new CommentTracker();
@@ -132,8 +125,12 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
           expressionText.append(methodName);
         }
         expressionText.append('(');
+        boolean quote = false;
         if (literalReplacement) {
-          expressionText.append("java.util.regex.Matcher.quoteReplacement(");
+          quote = (expressionsLength > 1 && needsQuote(expressions[1]));
+          if (quote) {
+            expressionText.append("java.util.regex.Matcher.quoteReplacement(");
+          }
         }
         if (expressionsLength > 1) {
           expressionText.append(commentTracker.text(expressions[1]));
@@ -141,7 +138,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
             expressionText.append(',').append(commentTracker.text(expressions[i]));
           }
         }
-        if (literalReplacement) {
+        if (literalReplacement && quote) {
           expressionText.append(')');
         }
         expressionText.append(')');
@@ -149,17 +146,24 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiElement field = aClass.add(factory.createFieldFromText(fieldText.toString(), element));
-      PsiMethodCallExpression newMethodCallExpression = (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
+      PsiMethodCallExpression newMethodCallExpression =
+        (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
       newMethodCallExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newMethodCallExpression);
+      if (newMethodCallExpression == null) return;
       final PsiReferenceExpression reference = getReference(newMethodCallExpression);
       HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner)field, reference);
+    }
+
+    private static boolean needsQuote(PsiExpression expr) {
+      Object constExprValue = ExpressionUtils.computeConstantExpression(expr);
+      return !(constExprValue instanceof String) ||
+             Matcher.quoteReplacement((String) constExprValue) != constExprValue;
     }
 
     private static PsiReferenceExpression getReference(PsiMethodCallExpression newMethodCallExpression) {
       final PsiReferenceExpression methodExpression = newMethodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
+      if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
         return getReference(methodCallExpression);
       }
       if (!(qualifierExpression instanceof PsiReferenceExpression)) {
@@ -172,7 +176,7 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
   private static class DynamicRegexReplaceableByCompiledPatternVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (!isCallToRegexMethod(expression)) {
         return;
@@ -192,10 +196,9 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends
         return false;
       }
       final Object value = ExpressionUtils.computeConstantExpression(arguments[0]);
-      if (!(value instanceof String)) {
+      if (!(value instanceof String regex)) {
         return false;
       }
-      final String regex = (String)value;
       if (PsiUtil.isLanguageLevel7OrHigher(expression) && "split".equals(name) && isOptimizedPattern(regex) ||
           PsiUtil.isLanguageLevel9OrHigher(expression) && "replace".equals(name)) {
         return false;

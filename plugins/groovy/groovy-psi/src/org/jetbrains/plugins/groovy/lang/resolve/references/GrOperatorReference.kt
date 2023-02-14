@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
@@ -12,8 +12,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrNumericBinaryExpressionTypeCalculator
+import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveWithArguments
 
 class GrOperatorReference(
   element: GrOperatorExpression
@@ -26,24 +30,61 @@ class GrOperatorReference(
     get() {
       val operand = when (val element = element) {
         is GrBinaryExpression -> element.leftOperand
-        is GrAssignmentExpression -> element.lValue
+        is GrAssignmentExpression -> {
+          val lValue = element.lValue
+          if (lValue is GrIndexProperty) {
+            lValue.invokedExpression
+          }
+          else {
+            lValue
+          }
+        }
         else -> return null
       }
       return ExpressionArgument(operand)
     }
 
-  override val methodName: String get() = binaryOperatorMethodNames[element.operator] ?: error(element.text)
+  override val methodName: String
+    get() {
+      val element = element
+      return if (element is GrAssignmentExpression && element.lValue is GrIndexProperty) "putAt"
+      else binaryOperatorMethodNames[element.operator] ?: error(element.text)
+    }
 
-  override val arguments: Arguments?
+  override val arguments: Arguments
     get() {
       val operand = when (val element = element) {
         is GrBinaryExpression -> element.rightOperand
-        is GrAssignmentExpression -> element.rValue
+        is GrAssignmentExpression -> {
+          val lValue = element.lValue
+          if (lValue is GrIndexProperty) {
+            return computePutAtArguments(lValue, element)
+          }
+          else {
+            element.rValue
+          }
+        }
         else -> null
       }
       val argument = if (operand == null) UnknownArgument else ExpressionArgument(operand)
       return listOf(argument)
     }
+
+  private fun computePutAtArguments(lValue: GrIndexProperty,
+                                    element: GrAssignmentExpression): List<Argument> {
+    val key = lValue.getArgumentListArgument()
+    val value = LazyTypeArgument {
+      val actualMethodName = binaryOperatorMethodNames[element.operator] ?: return@LazyTypeArgument null
+      val leftOperand = lValue.type?.let(::JustTypeArgument) ?: UnknownArgument
+      val rightOperand = element.rValue?.type?.let(::JustTypeArgument) ?: UnknownArgument
+      val resolveResult = resolveWithArguments(leftOperand, actualMethodName, listOf(rightOperand), element).singleOrNull()
+                          ?: return@LazyTypeArgument null
+      val rt = GrNumericBinaryExpressionTypeCalculator.INSTANCE.getTypeByResult(lValue.type, element.rValue?.type, listOf(rightOperand),
+                                                                                resolveResult, element)
+      rt
+    }
+    return listOf(key, value)
+  }
 
   override fun collectDependencies(): MutableCollection<out PsiPolyVariantReference> {
     val result = SmartList<PsiPolyVariantReference>()

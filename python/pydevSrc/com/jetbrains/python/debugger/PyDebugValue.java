@@ -6,10 +6,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
@@ -57,6 +59,7 @@ public class PyDebugValue extends XNamedValue {
   private @NotNull PyFrameAccessor myFrameAccessor;
   private @NotNull final List<XValueNode> myValueNodes = new ArrayList<>();
   private final boolean myErrorOnEval;
+  private final @Nullable String myTypeRendererId;
   private int myOffset;
   private int myCollectionLength = -1;
 
@@ -82,8 +85,9 @@ public class PyDebugValue extends XNamedValue {
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
+                      @Nullable String typeRendererId,
                       @NotNull final PyFrameAccessor frameAccessor) {
-    this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, null, frameAccessor);
+    this(name, type, typeQualifier, value, container, shape, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, null, frameAccessor);
   }
 
   /**
@@ -98,6 +102,7 @@ public class PyDebugValue extends XNamedValue {
    * @param isReturnedVal   is value was returned from a function during debug session
    * @param isIPythonHidden does value belong to IPython util variables group
    * @param errorOnEval     did an error occur during evaluation
+   * @param typeRendererId  user type renderer unique identifier
    * @param parent          parent variable in Variables tree
    * @param frameAccessor   frame accessor used for evaluation
    */
@@ -110,6 +115,7 @@ public class PyDebugValue extends XNamedValue {
                       boolean isReturnedVal,
                       boolean isIPythonHidden,
                       boolean errorOnEval,
+                      @Nullable String typeRendererId,
                       @Nullable final PyDebugValue parent,
                       @NotNull final PyFrameAccessor frameAccessor) {
     super(name);
@@ -121,6 +127,7 @@ public class PyDebugValue extends XNamedValue {
     myIsReturnedVal = isReturnedVal;
     myIsIPythonHidden = isIPythonHidden;
     myErrorOnEval = errorOnEval;
+    myTypeRendererId = typeRendererId;
     myParent = parent;
     myFrameAccessor = frameAccessor;
     myLoadValuePolicy = ValuesPolicy.SYNC;
@@ -132,7 +139,7 @@ public class PyDebugValue extends XNamedValue {
 
   public PyDebugValue(@NotNull PyDebugValue value, @NotNull String newName) {
     this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.isReturnedVal(),
-         value.isIPythonHidden(), value.isErrorOnEval(), value.getParent(), value.getFrameAccessor());
+         value.isIPythonHidden(), value.isErrorOnEval(), value.getTypeRendererId(), value.getParent(), value.getFrameAccessor());
     myOffset = value.getOffset();
     setLoadValuePolicy(value.getLoadValuePolicy());
     setTempName(value.getTempName());
@@ -184,6 +191,10 @@ public class PyDebugValue extends XNamedValue {
 
   public boolean isErrorOnEval() {
     return myErrorOnEval;
+  }
+
+  public @Nullable String getTypeRendererId() {
+    return myTypeRendererId;
   }
 
   @Nullable
@@ -345,6 +356,7 @@ public class PyDebugValue extends XNamedValue {
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
     setFullValueEvaluator(node, value);
+    setConfigureTypeRenderersLink(node);
     if (value.length() >= MAX_VALUE) {
       value = value.substring(0, MAX_VALUE);
     }
@@ -417,8 +429,7 @@ public class PyDebugValue extends XNamedValue {
     List<PyFrameAccessor.PyAsyncValue<String>> variables = new ArrayList<>();
     for (int i = 0; i < childrenList.size(); i++) {
       XValue value = childrenList.getValue(i);
-      if (value instanceof PyDebugValue) {
-        PyDebugValue debugValue = (PyDebugValue)value;
+      if (value instanceof PyDebugValue debugValue) {
         if (debugValue.getLoadValuePolicy() == ValuesPolicy.ASYNC) {
           variables.add(new PyFrameAccessor.PyAsyncValue<>(debugValue, debugValue.createDebugValueCallback()));
         }
@@ -459,6 +470,17 @@ public class PyDebugValue extends XNamedValue {
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
+  private void setConfigureTypeRenderersLink(@NotNull XValueNode node) {
+    String typeRendererId = getTypeRendererId();
+    if (node instanceof XValueNodeImpl valueNode) {
+      valueNode.clearAdditionalHyperlinks();
+      if (typeRendererId != null) {
+        XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
+        if (link != null) valueNode.addAdditionalHyperlink(link);
+      }
+    }
+  }
+
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
@@ -475,7 +497,7 @@ public class PyDebugValue extends XNamedValue {
             values = processLargeCollection(values);
           }
           if (myFrameAccessor.isSimplifiedView()) {
-            extractChildrenToGroup(PROTECTED_ATTRS_NAME, AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
+            extractChildrenToGroup(PydevBundle.message("pydev.value.protected.attributes.group.name"), AllIcons.Nodes.C_protected, node, values, (String name) -> name.startsWith("_"),
                                    getPROTECTED_ATTRS_EXCLUDED());
           }
           else {
@@ -549,18 +571,19 @@ public class PyDebugValue extends XNamedValue {
   }
 
   @Override
-  public boolean canNavigateToSource() {
-    return true;
-  }
-
-  @Override
   public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-    if (myParent == null) {
-      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
-    }
-    else {
-      navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ReadAction.run(
+        () -> {
+          if (myParent == null) {
+            navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, null));
+          }
+          else {
+            navigatable.setSourcePosition(myFrameAccessor.getSourcePositionForName(myName, myParent.getDeclaringType()));
+          }
+        }
+      )
+    );
   }
 
   @Override
@@ -679,8 +702,7 @@ public class PyDebugValue extends XNamedValue {
     if (values == null) return;
 
     for (int i = 0; i < values.size(); i++) {
-      if (values.getValue(i) instanceof PyDebugValue) {
-        PyDebugValue value = (PyDebugValue) values.getValue(i);
+      if (values.getValue(i) instanceof PyDebugValue value) {
         descriptor = childrenDescriptors.getOrDefault(value.getName(), null);
         if (descriptor == null) {
           descriptor = new PyDebugValueDescriptor();

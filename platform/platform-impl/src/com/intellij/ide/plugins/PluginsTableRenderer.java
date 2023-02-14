@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -57,7 +57,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myPluginsView = !showFullInfo;
 
     Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
-    myName.setFont(UIUtil.getLabelFont().deriveFont((float)UISettings.getInstance().getFontSize()));
+    myName.setFont(StartupUiUtil.getLabelFont().deriveFont(UISettings.getInstance().getFontSize2D()));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
@@ -99,7 +99,8 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
       myName.setOpaque(false);
       myCategory.clear();
       myCategory.setOpaque(false);
-      Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
+      SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(table);
+      String query = speedSearch == null ? null : speedSearch.getEnteredPrefix();
       SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected, hasFocus),
                                                            UIUtil.getListForeground(isSelected, hasFocus),
                                                            JBColor.RED,
@@ -108,7 +109,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
 
       String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory()); //NON-NLS
       if (category != null) {
-        if (query instanceof String) {
+        if (query != null) {
           SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);
         }
         else {

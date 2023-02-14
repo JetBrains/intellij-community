@@ -1,41 +1,46 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,9 +58,10 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
+  private static final Logger LOG = Logger.getInstance(SSBasedInspection.class);
+
   public static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
     Comparator.comparing(Configuration::getName, NaturalComparator.INSTANCE).thenComparingInt(Configuration::getOrder);
-  private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
 
   private static final Key<Map<Configuration, Matcher>> COMPILED_PATTERNS = Key.create("SSR_COMPILED_PATTERNS");
   private final MultiMapEx<Configuration, Matcher> myCompiledPatterns = new MultiMapEx<>();
@@ -153,39 +159,25 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     final PsiFile file = holder.getFile();
-    if (file.getFileType() instanceof PlainTextLikeFileType) return PsiElementVisitor.EMPTY_VISITOR;
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof PlainTextLikeFileType) return PsiElementVisitor.EMPTY_VISITOR;
 
     final Project project = holder.getProject();
     final InspectionProfileImpl profile =
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid().toString(), project);
-      if (tools != null && tools.isEnabled()) {
+      if (configuration.getFileType() != fileType) continue;
+      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid(), project);
+      if (tools != null && tools.isEnabled(file)) {
         configurations.add(configuration);
         register(configuration);
       }
     }
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final Map<Configuration, Matcher> compiledPatterns;
-    if (!Registry.is("ssr.multithreaded.inspection")) {
-      compiledPatterns = SSBasedInspectionCompiledPatternsCache.getInstance(project).getCachedCompiledConfigurations(configurations);
-      if (compiledPatterns.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
-      synchronized (LOCK) {
-        for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
-          final Matcher matcher = entry.getValue();
-          if (matcher == null) {
-            continue;
-          }
-          matcher.getMatchContext().setSink(new InspectionResultSink());
-        }
-      }
-    }
-    else {
-      compiledPatterns = checkOutCompiledPatterns(configurations, project);
-      session.putUserData(COMPILED_PATTERNS, compiledPatterns);
-    }
+    final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project);
+    session.putUserData(COMPILED_PATTERNS, compiledPatterns);
     return new SSBasedVisitor(compiledPatterns, profile, holder);
   }
 
@@ -194,9 +186,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       // not a main configuration containing meta data
       return;
     }
-    // modify from single (AWT) thread, to prevent race conditions.
+    // modify from single (event) thread, to prevent race conditions.
     ApplicationManager.getApplication().invokeLater(() -> {
-      final String shortName = configuration.getUuid().toString();
+      final String shortName = configuration.getUuid();
       final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key != null) {
         if (!isMetaDataChanged(configuration, key)) return;
@@ -231,32 +223,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   private static LocalQuickFix createQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
-    final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
-    final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
-    final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
-
-    return new LocalQuickFix() {
-      @Override
-      @NotNull
-      public String getName() {
-        return SSRBundle.message("SSRInspection.replace.with", replacementInfo.getReplacement());
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (element != null) {
-          replacer.replace(replacementInfo);
-        }
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        //noinspection DialogTitleCapitalization
-        return SSRBundle.message("SSRInspection.family.name");
-      }
-    };
+    return new StructuralQuickFix(project, matchResult, configuration.getReplaceOptions());
   }
 
   @NotNull
@@ -264,7 +231,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     if (configuration.getOrder() == 0) {
       return configuration;
     }
-    final UUID uuid = configuration.getUuid();
+    final String uuid = configuration.getUuid();
     return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
   }
 
@@ -274,9 +241,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @NotNull
-  public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
-    final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
-    configurations.sort(Comparator.comparingInt(Configuration::getOrder));
+  public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
+    final List<Configuration> configurations = ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
+    Comparator.comparingInt(Configuration::getOrder));
     return configurations;
   }
 
@@ -303,17 +270,55 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return removed;
   }
 
-  public boolean removeConfigurationsWithUuid(@NotNull UUID uuid) {
+  public boolean removeConfigurationsWithUuid(@NotNull String uuid) {
     final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
     if (removed) myWriteSorted = true;
     return removed;
+  }
+
+  private static class StructuralQuickFix implements LocalQuickFix {
+    private final ReplacementInfo myReplacementInfo;
+    private final Replacer myReplacer;
+    private final ReplaceOptions myReplaceOptions;
+
+    StructuralQuickFix(@NotNull Project project, @NotNull MatchResult matchResult, @NotNull ReplaceOptions replaceOptions) {
+      myReplaceOptions = replaceOptions;
+      myReplacer = new Replacer(project, replaceOptions);
+      myReplacementInfo = myReplacer.buildReplacement(matchResult);
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementInfo.getReplacement());
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element != null) {
+        myReplacer.replace(myReplacementInfo);
+      }
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      return new StructuralQuickFix(target.getProject(), new MatchResultForPreview(myReplacementInfo.getMatchResult(), target), myReplaceOptions);
+    }
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      //noinspection DialogTitleCapitalization
+      return SSRBundle.message("SSRInspection.family.name");
+    }
   }
 
   private final class InspectionResultSink extends DefaultMatchResultSink {
     private Configuration myConfiguration;
     private ProblemsHolder myHolder;
 
-    private final Set<SmartPsiPointer> duplicates = new HashSet<>();
+    private final Set<SmartPsiElementPointer<?>> duplicates = new HashSet<>();
 
     InspectionResultSink() {}
 
@@ -346,7 +351,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final InspectionManager manager = holder.getManager();
       final ProblemDescriptor descriptor =
         manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
-      final String toolName = configuration.getUuid().toString();
+      final String toolName = configuration.getUuid();
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
     }
 
@@ -356,8 +361,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  @Nullable
-  Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations, @NotNull Project project) {
+  private Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations,
+                                                               @NotNull Project project) {
     final Map<Configuration, Matcher> result = new HashMap<>();
     for (Configuration configuration : configurations) {
       final Matcher matcher = myCompiledPatterns.popValue(configuration);
@@ -368,9 +373,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         result.put(configuration, matcher);
       }
       else {
-        final Matcher newMatcher = SSBasedInspectionCompiledPatternsCache.getInstance(project).buildCompiledConfiguration(configuration);
+        final Matcher newMatcher = buildCompiledConfiguration(configuration, project);
         if (newMatcher != null) {
-          newMatcher.getMatchContext().setSink(new InspectionResultSink());
+          MatchContext context = newMatcher.getMatchContext();
+          context.setSink(new InspectionResultSink());
+          // ssr should never match recursively because this is handled by the inspection visitor
+          context.setShouldRecursivelyMatch(false);
         }
         result.put(configuration, newMatcher);
       }
@@ -378,7 +386,18 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return result;
   }
 
-  void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
+  private static Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+    try {
+      final MatchOptions matchOptions = configuration.getMatchOptions();
+      final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);
+      return (compiledPattern == null) ? null : new Matcher(project, matchOptions, compiledPattern);
+    } catch (StructuralSearchException e) {
+      LOG.warn("Malformed structural search inspection pattern \"" + configuration.getName() + '"', e);
+      return null;
+    }
+  }
+
+  private void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
     for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
       final Configuration configuration = entry.getKey();
       final Matcher matcher = entry.getValue();
@@ -423,28 +442,18 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     public void visitElement(@NotNull PsiElement element) {
       if (LexicalNodesFilter.getInstance().accepts(element)) return;
-      if (Registry.is("ssr.multithreaded.inspection")) {
-        processElement(element);
-      }
-      else {
-        synchronized (LOCK) {
-          processElement(element);
-        }
-      }
-    }
-
-    private void processElement(@NotNull PsiElement element) {
       for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
-        final Configuration configuration = entry.getKey();
         final Matcher matcher = entry.getValue();
         if (matcher == null) continue;
+        MatchingStrategy strategy = matcher.getMatchContext().getPattern().getStrategy();
+        if (!strategy.continueMatching(element)) continue;
 
-        processElement(element, configuration, matcher);
+        processElement(element, entry.getKey(), matcher);
       }
     }
 
     private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
-      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
+      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid()), element)) {
         return;
       }
       final NodeIterator matchedNodes = SsrFilteringNodeIterator.create(element);
@@ -461,12 +470,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       catch (StructuralSearchException e) {
         if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
           final String message = e.getMessage().replace(ScriptSupport.UUID, "");
-          final NotificationGroup notificationGroup =
-            NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
-          notificationGroup.createNotification(NotificationType.ERROR)
-            .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
+          NotificationGroupManager.getInstance()
+            .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)
+            .createNotification(SSRBundle.message("inspection.script.problem", message, configuration.getName()), NotificationType.ERROR)
             .setImportant(true)
-            .notify(element.getProject());
+            .notify(element != null ? element.getProject() : null);
         }
       }
       finally {

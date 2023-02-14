@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -20,11 +20,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeYieldInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -34,9 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ven
- */
 public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
   public enum ReturnStatus {
@@ -49,10 +48,10 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
           PsiClass resolved = ((PsiClassType)inferredReturnType).resolve();
           if (resolved != null && !(resolved instanceof PsiTypeParameter)) return mustReturnValue;
         }
-        return inferredReturnType != null && !PsiType.VOID.equals(inferredReturnType) ? shouldReturnValue : shouldNotReturnValue;
+        return inferredReturnType != null && !PsiTypes.voidType().equals(inferredReturnType) ? shouldReturnValue : shouldNotReturnValue;
       }
       else if (subject instanceof GrMethod) {
-        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && !PsiType.VOID.equals(((GrMethod)subject).getReturnType())
+        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && !PsiTypes.voidType().equals(((GrMethod)subject).getReturnType())
                ? mustReturnValue
                : shouldNotReturnValue;
       }
@@ -102,7 +101,7 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
     }
 
     for (PsiType type : expectedReturnTypes) {
-      if (PsiType.VOID.equals(type) || PsiType.VOID.equals(PsiPrimitiveType.getUnboxedType(type))) return PsiType.VOID;
+      if (PsiTypes.voidType().equals(type) || PsiTypes.voidType().equals(PsiPrimitiveType.getUnboxedType(type))) return PsiTypes.voidType();
     }
     return TypesUtil.getLeastUpperBoundNullable(expectedReturnTypes, closure.getManager());
   }
@@ -141,7 +140,6 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
     final Ref<Boolean> alwaysHaveReturn = new Ref<>(true);
     final Ref<Boolean> sometimesHaveReturn = new Ref<>(false);
-    final Ref<Boolean> hasExplicitReturn = new Ref<>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -163,11 +161,11 @@ public class MissingReturnInspection extends GroovyLocalInspectionTool {
 
         if (instruction.getElement() instanceof GrReturnStatement && returnValue != null) {
           sometimesHaveReturn.set(true);
-          hasExplicitReturn.set(true);
           return true;
         }
-
-        alwaysHaveReturn.set(false);
+        if (!(instruction instanceof MaybeYieldInstruction) && !(instruction.getElement() instanceof GrYieldStatement)) {
+          alwaysHaveReturn.set(false);
+        }
         return true;
       }
     });

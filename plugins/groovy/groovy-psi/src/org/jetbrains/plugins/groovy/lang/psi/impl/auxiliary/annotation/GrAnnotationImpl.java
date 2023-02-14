@@ -36,8 +36,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports.getAliasedFullyQualifiedNames;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 04.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
 
@@ -155,8 +154,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
-    if (owner instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)owner;
+    if (owner instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
         return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
       }

@@ -1,42 +1,26 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.FormatUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class MalformedFormatStringInspection extends BaseInspection {
   final List<String> classNames;
@@ -58,23 +42,12 @@ public class MalformedFormatStringInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    ListWrappingTableModel classTableModel =
-      new ListWrappingTableModel(classNames, InspectionGadgetsBundle.message("string.format.class.column.name"));
-    JPanel classChooserPanel = UiUtils
-      .createAddRemoveTreeClassChooserPanel(new ListTable(classTableModel), InspectionGadgetsBundle.message("string.format.choose.class"));
-
-    ListWrappingTableModel methodTableModel =
-      new ListWrappingTableModel(methodNames, InspectionGadgetsBundle.message("string.format.class.method.name"));
-    JPanel methodPanel = UiUtils.createAddRemovePanel(new ListTable(methodTableModel));
-
-    final JPanel panel = new JPanel();
-    BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-    panel.setLayout(boxLayout);
-
-    panel.add(classChooserPanel);
-    panel.add(methodPanel);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("classNames", InspectionGadgetsBundle.message("string.format.class.label"),
+                 new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("string.format.choose.class"))),
+      stringList("methodNames", InspectionGadgetsBundle.message("string.format.class.method.label"))
+    );
   }
 
   @Override
@@ -95,8 +68,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final Object value = infos[0];
-    if (value instanceof Exception) {
-      final Exception exception = (Exception)value;
+    if (value instanceof Exception exception) {
       final String message = exception.getMessage();
       if (message != null) {
         return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.illegal", message);
@@ -110,8 +82,14 @@ public class MalformedFormatStringInspection extends BaseInspection {
                                              argumentCount, validators.length);
     }
     if (validators.length > argumentCount) {
-      return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments",
-                                             argumentCount, validators.length);
+      final boolean isPrefix = ((Boolean)infos[2]).booleanValue();
+      if(isPrefix){
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.at.least.too.few.arguments",
+                                               argumentCount, validators.length);
+      }else{
+        return InspectionGadgetsBundle.message("malformed.format.string.problem.descriptor.too.few.arguments",
+                                               argumentCount, validators.length);
+      }
     }
     final PsiType argumentType = (PsiType)infos[2];
     final FormatDecode.Validator validator = (FormatDecode.Validator)infos[3];
@@ -130,69 +108,56 @@ public class MalformedFormatStringInspection extends BaseInspection {
   }
 
   private class MalformedFormatStringVisitor extends BaseInspectionVisitor {
-
-    private int findFirstStringArgumentIndex(PsiExpression[] expressions) {
-      for (int i = 0, length = expressions.length; i < length; i++) {
-        final PsiExpression expression = expressions[i];
-        if (ExpressionUtils.hasStringType(expression)) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      PsiExpression[] arguments = argumentList.getExpressions();
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
+      PsiExpressionList list = expression.getArgumentList();
+      if (list == null) {
+        return;
+      }
+      FormatDecode.FormatArgument formatArgument = FormatDecode.FormatArgument.extract(expression, methodNames, classNames, true);
+      if (formatArgument == null) {
+        return;
+      }
 
-      final PsiExpression formatArgument;
-      int formatArgumentIndex;
-      if (FormatUtils.STRING_FORMATTED.matches(expression)) {
-        formatArgument = expression.getMethodExpression().getQualifierExpression();
-        formatArgumentIndex = 0;
+      int formatArgumentIndex = formatArgument.getIndex();
+
+      PsiExpression[] arguments = list.getExpressions();
+
+      int argumentCount = arguments.length - formatArgumentIndex;
+
+      String value = formatArgument.calculateValue();
+      final FormatDecode.Validator[] validators;
+      boolean isPrefix = false;
+      if (value != null) {
+        try {
+          validators = FormatDecode.decode(value, argumentCount);
+        }
+        catch (FormatDecode.IllegalFormatException e) {
+          registerError(formatArgument.getExpression(), e);
+          return;
+        }
       }
       else {
-        if (!FormatUtils.isFormatCall(expression, methodNames, classNames)) {
+        String prefixValue = formatArgument.calculatePrefixValue();
+        isPrefix = true;
+        if (prefixValue == null) {
           return;
         }
+        try {
+          validators = FormatDecode.decodePrefix(prefixValue, argumentCount);
+        }
+        catch (FormatDecode.IllegalFormatException e) {
+          registerError(formatArgument.getExpression(), e);
+          return;
+        }
+      }
 
-        formatArgumentIndex = findFirstStringArgumentIndex(arguments);
-        if (formatArgumentIndex < 0) {
-          return;
-        }
-        
-        formatArgument = arguments[formatArgumentIndex];
-        formatArgumentIndex++;
-      }
-      if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
-        return;
-      }
-      final PsiType formatType = formatArgument.getType();
-      if (formatType == null) {
-        return;
-      }
-      final String value = (String)ConstantExpressionUtil.computeCastTo(formatArgument, formatType);
-      if (value == null) {
-        return;
-      }
-      int argumentCount = arguments.length - formatArgumentIndex;
-      final FormatDecode.Validator[] validators;
-      try {
-        validators = FormatDecode.decode(value, argumentCount);
-      }
-      catch (FormatDecode.IllegalFormatException e) {
-        registerError(formatArgument, e);
-        return;
-      }
       if (argumentCount == 1) {
         final PsiExpression argument = resolveIfPossible(arguments[formatArgumentIndex]);
         final PsiType argumentType = argument.getType();
         if (argumentType instanceof PsiArrayType) {
           final PsiArrayInitializerExpression arrayInitializer;
-          if (argument instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+          if (argument instanceof PsiNewExpression newExpression) {
             arrayInitializer = newExpression.getArrayInitializer();
           }
           else if (argument instanceof PsiArrayInitializerExpression) {
@@ -209,8 +174,14 @@ public class MalformedFormatStringInspection extends BaseInspection {
           formatArgumentIndex = 0;
         }
       }
-      if (validators.length != argumentCount) {
-        registerMethodCallError(expression, validators, Integer.valueOf(argumentCount));
+      if ((!isPrefix && validators.length != argumentCount) ||
+          (isPrefix && validators.length > argumentCount)) {
+        if (expression instanceof PsiMethodCallExpression) {
+          registerMethodCallError((PsiMethodCallExpression)expression, validators, Integer.valueOf(argumentCount), isPrefix);
+        }
+        else if (expression instanceof PsiNewExpression) {
+          registerNewExpressionError((PsiNewExpression)expression, validators, Integer.valueOf(argumentCount), isPrefix);
+        }
         return;
       }
       for (int i = 0; i < validators.length; i++) {
@@ -229,13 +200,11 @@ public class MalformedFormatStringInspection extends BaseInspection {
       }
     }
 
-    private PsiExpression resolveIfPossible(PsiExpression expression) {
+    private static PsiExpression resolveIfPossible(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      if (expression instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
-        if (target instanceof PsiVariable && target.getContainingFile() == expression.getContainingFile()) {
-          final PsiVariable variable = (PsiVariable)target;
+        if (target instanceof PsiVariable variable && target.getContainingFile() == expression.getContainingFile()) {
           final PsiExpression initializer = variable.getInitializer();
           if (initializer != null) {
             return initializer;

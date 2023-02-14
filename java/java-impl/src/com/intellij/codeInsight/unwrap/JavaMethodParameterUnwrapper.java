@@ -75,7 +75,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     e = adjustElementToTheLeft(e);
     super.collectAffectedElements(e, toExtract);
     return isTopLevelCall(e) ? e.getParent() : e.getParent().getParent();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -37,7 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ImplicitNumericConversionInspection extends BaseInspection {
 
@@ -51,15 +53,13 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   public boolean ignoreConstantConversions = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.widening.conversion.option"),
-                             "ignoreWideningConversions");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.char.conversion.option"),
-                             "ignoreCharConversions");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.constant.conversion.option"),
-                             "ignoreConstantConversions");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreWideningConversions",
+               InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.widening.conversion.option")),
+      checkbox("ignoreCharConversions", InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.char.conversion.option")),
+      checkbox("ignoreConstantConversions",
+               InspectionGadgetsBundle.message("implicit.numeric.conversion.ignore.constant.conversion.option")));
   }
 
   @Override
@@ -110,7 +110,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
       if (expectedType == null) {
@@ -122,8 +122,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
       else {
         final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (parent instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiJavaToken sign = assignmentExpression.getOperationSign();
           if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
             replaceCompoundAssignment(assignmentExpression);
@@ -159,8 +158,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           builder.append("(").append(promotedType.getCanonicalText()).append(')');
         }
       }
-      builder.append(lhsText);
-      builder.append(sign.getText().charAt(0));
+      builder.append(lhsText).append(StringUtil.substringBefore(sign.getText(), "="));
       if (!ignoreWideningConversions && !promotedType.equals(rhsType) &&
           !(ignoreCharConversions && isCharConversion(rhsType, promotedType))) {
         builder.append('(').append(promotedType.getCanonicalText()).append(')');
@@ -175,7 +173,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
 
     @Nullable
     @NonNls
-    private String convertExpression(PsiExpression expression, PsiType expectedType) {
+    private static String convertExpression(PsiExpression expression, PsiType expectedType) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiLiteralExpression) && !isNegatedLiteral(expression)) {
         return null;
@@ -185,34 +183,34 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         return null;
       }
       final String text = expression.getText();
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.longType())) {
         return text + 'L';
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0F";
       }
-      if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.intType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text + ".0";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.floatType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0F";
       }
-      if (expressionType.equals(PsiType.LONG) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.longType()) && expectedType.equals(PsiTypes.doubleType())) {
         if (!isDecimalLiteral(text)) {
           return null;
         }
         return text.substring(0, text.length() - 1) + ".0";
       }
-      if (expressionType.equals(PsiType.DOUBLE) && expectedType.equals(PsiType.FLOAT)) {
+      if (expressionType.equals(PsiTypes.doubleType()) && expectedType.equals(PsiTypes.floatType())) {
         final int length = text.length();
         if (text.charAt(length - 1) == 'd' || text.charAt(length - 1) == 'D') {
           return text.substring(0, length - 1) + 'F';
@@ -221,23 +219,22 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           return text + 'F';
         }
       }
-      if (expressionType.equals(PsiType.FLOAT) && expectedType.equals(PsiType.DOUBLE)) {
+      if (expressionType.equals(PsiTypes.floatType()) && expectedType.equals(PsiTypes.doubleType())) {
         final int length = text.length();
         return text.substring(0, length - 1);
       }
       return null;
     }
 
-    private boolean isDecimalLiteral(String text) {
+    private static boolean isDecimalLiteral(String text) {
       // should not be binary, octal or hexadecimal: 0b101, 077, 0xFF
       return text.length() > 0 && text.charAt(0) != '0';
     }
 
-    private boolean isNegatedLiteral(PsiExpression expression) {
-      if (!(expression instanceof PsiPrefixExpression)) {
+    private static boolean isNegatedLiteral(PsiExpression expression) {
+      if (!(expression instanceof PsiPrefixExpression prefixExpression)) {
         return false;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (!JavaTokenType.MINUS.equals(tokenType)) {
         return false;
@@ -248,68 +245,70 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
   }
 
   private static boolean isCharConversion(PsiType expressionType, PsiType convertedType) {
-    return PsiType.CHAR.equals(expressionType) && !PsiType.FLOAT.equals(convertedType) && !PsiType.DOUBLE.equals(convertedType) ||
-           PsiType.CHAR.equals(convertedType) && !PsiType.FLOAT.equals(expressionType) && !PsiType.DOUBLE.equals(expressionType);
+    return PsiTypes.charType().equals(expressionType) && !PsiTypes.floatType().equals(convertedType) && !PsiTypes.doubleType()
+      .equals(convertedType) ||
+           PsiTypes.charType().equals(convertedType) && !PsiTypes.floatType().equals(expressionType) && !PsiTypes.doubleType()
+             .equals(expressionType);
   }
 
   private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression expression) {
       super.visitArrayAccessExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }
@@ -319,8 +318,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
           if (assignmentExpression.getLExpression() == expression) {
             final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -358,8 +356,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (expressionType.equals(convertedType)) return false;
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
-        while (rootExpression instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rootExpression;
+        while (rootExpression instanceof PsiParenthesizedExpression parenthesizedExpression) {
           rootExpression = parenthesizedExpression.getExpression();
         }
         if (rootExpression instanceof PsiLiteralExpression || PsiUtil.isConstantExpression(rootExpression)) {

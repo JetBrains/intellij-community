@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementLabelUiComponent extends AbstractArrangementUiComponent {
 
   @NotNull private final ArrangementAtomMatchCondition myCondition;

@@ -7,7 +7,6 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PomTransactionBase implements PomTransaction{
   private final PsiElement myScope;
@@ -28,7 +27,6 @@ public abstract class PomTransactionBase implements PomTransaction{
     myAccumulatedEvent.merge(runInner());
   }
 
-  @Nullable
   @NotNull
   public abstract PomModelEvent runInner() throws IncorrectOperationException;
 

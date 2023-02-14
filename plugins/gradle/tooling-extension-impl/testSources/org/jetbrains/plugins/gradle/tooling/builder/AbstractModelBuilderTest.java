@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
@@ -7,12 +7,12 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
-import gnu.trove.THash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -26,6 +26,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
@@ -36,6 +37,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -46,8 +48,10 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -55,27 +59,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.util.containers.ContainerUtil.set;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
  */
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
-
-  /**
-   * !When adding new versions here change also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
-   */
-  public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
-    {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
-    {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
-    {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, */ {"6.8.1"}
-  };
-  public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
@@ -94,8 +87,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() {
-    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+  public static Collection<String[]> data() {
+    return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
 
@@ -115,8 +108,19 @@ public abstract class AbstractModelBuilderTest {
     testDir = new File(ourTempDir, methodName);
     FileUtil.ensureExists(testDir);
 
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
+    String compileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion) ? "implementation" : "compile";
+    String testCompileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion)
+                                      ? "testImplementation" : "testCompile";
+    String integrationTestCompileConfiguration = GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(_gradleVersion)
+                                                 ? "integrationTestImplementation"
+                                                 : "integrationTestCompile";
     try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
-      Files.copy(buildScriptStream, new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
+      String text = StreamUtil.readText(new InputStreamReader(buildScriptStream, StandardCharsets.UTF_8));
+      text = text.replaceAll("<<compile>>", compileConfiguration);
+      text = text.replaceAll("<<testCompile>>", testCompileConfiguration);
+      text = text.replaceAll("<<integrationTestCompile>>", testCompileConfiguration);
+      FileUtil.writeToFile(new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME), text, StandardCharsets.UTF_8);
     }
 
     try (InputStream settingsStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.SETTINGS_FILE_NAME)) {
@@ -129,7 +133,6 @@ public abstract class AbstractModelBuilderTest {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
-    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
     final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
@@ -141,13 +144,12 @@ public abstract class AbstractModelBuilderTest {
     }
 
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
-    ProjectConnection connection = connector.connect();
 
-    try {
+    try (ProjectConnection connection = connector.connect()) {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
       projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
-                                                                                        ContainerUtil.<Class<?>>set(IdeaProject.class)));
+                                                                                        Collections.<Class<?>>singleton(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
@@ -162,17 +164,15 @@ public abstract class AbstractModelBuilderTest {
       allModels = buildActionExecutor.run();
       assertNotNull(allModels);
     }
-    finally {
-      connection.close();
-    }
   }
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
+    assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
+               GradleJvmSupportMatrices.isSupported(GradleVersion.version(gradleVersion),
+                                                      JavaVersion.current()));
+
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
-      Properties properties = System.getProperties();
-      String javaVersionString = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
-      JavaVersion javaVersion = JavaVersion.tryParse(javaVersionString);
-      assumeThat(javaVersion.feature, new CustomMatcher<Integer>("Java version older than 9") {
+      assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
         @Override
         public boolean matches(Object item) {
           return item instanceof Integer && ((Integer)item).compareTo(9) < 0;
@@ -182,8 +182,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   @NotNull
-  private Set<Class<?>> getToolingExtensionClasses() {
-    final Set<Class<?>> classes = set(
+  public static Set<Class<?>> getToolingExtensionClasses() {
+    return ContainerUtil.set(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -192,8 +192,6 @@ public abstract class AbstractModelBuilderTest {
       Init.class,
       Multimap.class,
       ShortTypeHandling.class,
-      // trove4j jar
-      THash.class,
       // fastutil
       Object2ObjectMap.class,
       // ion-java jar
@@ -201,14 +199,6 @@ public abstract class AbstractModelBuilderTest {
       // util-rt jat
       SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
     );
-
-    ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());
-    return classes;
-  }
-
-  @NotNull
-  protected Set<Class<?>> doGetToolingExtensionClasses() {
-    return Collections.emptySet();
   }
 
   @After

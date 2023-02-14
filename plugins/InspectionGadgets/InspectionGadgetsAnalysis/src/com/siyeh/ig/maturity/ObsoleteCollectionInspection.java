@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ObsoleteCollectionInspection extends BaseInspection {
   private static final int MAX_OCCURRENCES = 20;
@@ -53,11 +56,11 @@ public class ObsoleteCollectionInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "use.obsolete.collection.type.ignore.library.arguments.option"
-    ), this, "ignoreRequiredObsoleteCollectionTypes");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreRequiredObsoleteCollectionTypes", InspectionGadgetsBundle.message(
+        "use.obsolete.collection.type.ignore.library.arguments.option"
+      )));
   }
 
   @Override
@@ -89,7 +92,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
       if (!isObsoleteCollectionType(returnType)) {
@@ -145,8 +148,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
 
     private boolean isRequiredObsoleteCollectionElement(PsiElement element) {
       final PsiElement parent = element.getParent();
-      if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
+      if (parent instanceof PsiVariable variable) {
         final PsiType variableType = variable.getType();
         if (isObsoleteCollectionType(variableType)) {
           return true;
@@ -158,9 +160,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
           return true;
         }
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final PsiType lhsType = lhs.getType();
         if (isObsoleteCollectionType(lhsType)) {
@@ -170,16 +170,13 @@ public class ObsoleteCollectionInspection extends BaseInspection {
       else if (parent instanceof PsiMethodCallExpression) {
         return isRequiredObsoleteCollectionElement(parent);
       }
-      if (!(parent instanceof PsiExpressionList)) {
+      if (!(parent instanceof PsiExpressionList argumentList)) {
         return false;
       }
-      final PsiExpressionList argumentList = (PsiExpressionList)parent;
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiCallExpression)) {
+      if (!(grandParent instanceof PsiCallExpression callExpression)) {
         return false;
       }
-      final PsiCallExpression callExpression =
-        (PsiCallExpression)grandParent;
       final int index = getIndexOfArgument(argumentList, element);
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
@@ -195,10 +192,9 @@ public class ObsoleteCollectionInspection extends BaseInspection {
           return false;
         }
         final PsiType type = lastParameter.getType();
-        if (!(type instanceof PsiEllipsisType)) {
+        if (!(type instanceof PsiEllipsisType ellipsisType)) {
           return false;
         }
-        final PsiEllipsisType ellipsisType = (PsiEllipsisType)type;
         final PsiType componentType = ellipsisType.getComponentType();
         return isObsoleteCollectionType(componentType);
       }

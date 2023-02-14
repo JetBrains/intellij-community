@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * An informational object for debugging stub-mismatch related issues. Should be as small as possible since it's stored in files's attributes.
- *
- * @author peter
  */
 class IndexingStampInfo {
   final long indexingFileStamp;
@@ -60,7 +58,6 @@ class IndexingStampInfo {
            contentLengthMatches(file.getLength(), document.getTextLength());
   }
 
-  @SuppressWarnings("unused")
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {
     if (this.indexingCharLength >= 0 && charContentLength >= 0) {
       return this.indexingCharLength == charContentLength;

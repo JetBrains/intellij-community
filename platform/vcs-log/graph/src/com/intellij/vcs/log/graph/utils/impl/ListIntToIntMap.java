@@ -2,17 +2,18 @@
 
 package com.intellij.vcs.log.graph.utils.impl;
 
-import com.intellij.util.BooleanFunction;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Predicate;
 
 public final class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
   @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull BooleanFunction<? super Integer> thisIsVisible, int longSize) {
-    return newInstance(new BooleanFunctionFlags(thisIsVisible, longSize));
+  public static UpdatableIntToIntMap newInstance(@NotNull Predicate<? super Integer> thisIsVisible, int longSize) {
+    return newInstance(new PredicateFlags(thisIsVisible, longSize));
   }
 
   @NotNull
@@ -131,7 +132,7 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
    * which of the multiple occurrences of the key is going to be found, while this method always returns the last insertion point.
    *
    * @param array the array to be searched
-   * @param key the value to be searched for
+   * @param key   the value to be searched for
    * @return index of the insertion point for the key. The insertion point is defined as the index of the first element greater than the key.
    */
   private static int lastInsertionPoint(int[] array, int key) {

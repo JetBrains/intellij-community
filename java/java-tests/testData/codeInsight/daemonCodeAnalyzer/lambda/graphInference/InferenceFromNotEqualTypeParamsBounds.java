@@ -29,7 +29,7 @@ public class ConcurrentCollectors {
         static <T, K, D, M1 extends Map<K, D>> C<T, M1> groupingBy(F<M1> f,
                                                                    C<T, D> c,
                                                                    BiConsumer<M1, T> consumer) {
-            return new CImpl<error descr="Cannot infer arguments"><></error>(f, consumer, arg(c.getOp()));
+            return new CImpl<><error descr="'CImpl(ConcurrentCollectors.F<R>, ConcurrentCollectors.BiConsumer<R,T>, ConcurrentCollectors.BiOp<R>)' in 'ConcurrentCollectors.CImpl' cannot be applied to '(ConcurrentCollectors.F<M1>, ConcurrentCollectors.BiConsumer<M1,T>, ConcurrentCollectors.BiOp<ConcurrentCollectors.ConcurrentMap<java.lang.Object,D>>)'">(f, consumer, arg(c.getOp()))</error>;
         }
 
         static <K, V, M2 extends ConcurrentMap<K, V>> BiOp<M2> arg(BiOp<V> op) {

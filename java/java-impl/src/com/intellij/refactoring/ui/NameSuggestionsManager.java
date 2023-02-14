@@ -23,9 +23,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
 
-/**
- * @author dsl
- */
 public class NameSuggestionsManager {
   private final TypeSelector myTypeSelector;
   private final NameSuggestionsField myNameField;

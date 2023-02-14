@@ -54,9 +54,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   protected final Project myProject;
 
   @NotNull
-  private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
+  private final Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
 
-  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = ContainerUtil.createWeakMap();
+  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = new WeakHashMap<>();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;
@@ -196,7 +196,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
         if (isEmpty(((LibraryOrderEntry)entry).getLibraryName())) {
           final Set<String> paths = ContainerUtil.map2Set(libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY),
                                                           PathUtil::getLocalPath);
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
+          final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
                                                                s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
           if (entryPaths.equals(paths) && ((LibraryOrderEntry)entry).getScope() == data.getScope()) return entry;
           continue;
@@ -235,16 +235,13 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
     Map<LibraryOrderEntry, LibraryDependencyData> result = new HashMap<>();
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
-      if (entry instanceof LibraryOrderEntry) {
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+      if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (!libraryOrderEntry.isModuleLevel()) continue;
-        if (isEmpty(libraryOrderEntry.getLibraryName())) {
-          final Set<String> entryPaths = ContainerUtil.map2Set(entry.getUrls(OrderRootType.CLASSES),
-                                                               s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
-          LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
-          if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
-            result.put(libraryOrderEntry, libraryDependencyData);
-          }
+        final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
+                                                             s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
+        LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
+        if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
+          result.put(libraryOrderEntry, libraryDependencyData);
         }
       }
     }
@@ -300,7 +297,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     }
 
     Iterable<String> generate() {
-      List<String> names;
+      List<String> names = new ArrayList<>();
       String prefix = myModule.getGroup();
       File modulePath = new File(myModule.getLinkedExternalProjectPath());
       if (modulePath.isFile()) {
@@ -308,10 +305,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       }
 
       if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names = ContainerUtil.newArrayList(myModule.getInternalName());
+        names.add(myModule.getInternalName());
       }
       else {
-        names = ContainerUtil.newArrayList(myModule.getInternalName(), prefix + myDelimiter + myModule.getInternalName());
+        names.add(myModule.getInternalName());
+        names.add(prefix + myDelimiter + myModule.getInternalName());
       }
 
       String name = names.get(0);

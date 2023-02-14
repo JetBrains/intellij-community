@@ -133,7 +133,7 @@ class MissingRecentApiUsageProcessor(
           BuildNumber.fromStringOrNull(it)
         }
       }
-      .min()
+      .minOrNull()
 
   private fun SinceUntilRange.someBuildsAreNotCovered(apiSinceBuildNumber: BuildNumber) =
     sinceBuild == null || sinceBuild < apiSinceBuildNumber

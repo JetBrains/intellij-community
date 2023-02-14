@@ -30,7 +30,7 @@ public class JBCefMultiRenderingModeTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
-    TestScaleHelper.setSystemProperty("ide.browser.jcef.osr.enabled", "true");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
 
   @After
@@ -40,18 +40,18 @@ public class JBCefMultiRenderingModeTest {
 
   @Test
   public void test() {
-    show(new JBCefBrowser("chrome:version"));
-    show(JBCefBrowser.createDefaultOsrBrowser(null, "chrome:version"));
+    show(JBCefBrowser.createBuilder().setOffScreenRendering(false).setUrl("chrome:version").build());
+    show(JBCefBrowser.createBuilder().setOffScreenRendering(true).setUrl("chrome:version").build());
     Disposer.dispose(JBCefApp.getInstance().getDisposable());
   }
 
-  private void show(@NotNull JBCefBrowser browser) {
-    invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
+  private static void show(@NotNull JBCefBrowser browser) {
+    invokeAndWaitForLoad(browser, () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);
       frame.add(browser.getComponent(), BorderLayout.CENTER);
       frame.setVisible(true);
-    }));
+    });
   }
 }

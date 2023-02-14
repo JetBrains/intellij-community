@@ -7,6 +7,8 @@ import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.psi.PyCallExpression
@@ -47,15 +49,10 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     private fun calculateCalleeNameAndType(callee: PyReferenceExpression): Pair<QualifiedName, PyDataclassParameters.PredefinedType>? {
       val qualifiedName = callee.asQualifiedName() ?: return null
 
-      val dataclassesField = QualifiedName.fromComponents("dataclasses", "field")
-      val attrIb = QualifiedName.fromComponents("attr", "ib")
-      val attrAttr = QualifiedName.fromComponents("attr", "attr")
-      val attrAttrib = QualifiedName.fromComponents("attr", "attrib")
-
       for (originalQName in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
-        when (originalQName) {
-          dataclassesField -> return qualifiedName to PyDataclassParameters.PredefinedType.STD
-          attrIb, attrAttr, attrAttrib -> return qualifiedName to PyDataclassParameters.PredefinedType.ATTRS
+        when (originalQName.toString()) {
+          Dataclasses.DATACLASSES_FIELD -> return qualifiedName to PyDataclassParameters.PredefinedType.STD
+          in Attrs.FIELD_FUNCTIONS -> return qualifiedName to PyDataclassParameters.PredefinedType.ATTRS
         }
       }
 
@@ -83,7 +80,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
           val hasFactoryInDefault =
             callee != null &&
-            QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
+            PyResolveUtil.resolveImportedElementQNameLocally(callee).any { it.toString() in Attrs.ATTRS_FACTORY }
 
           return FieldParameters(!hasFactoryInDefault, hasFactory || hasFactoryInDefault, initValue, kwOnly)
         }
@@ -112,6 +109,15 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
   override fun hasDefaultFactory(): Boolean = parameters.hasDefaultFactory
   override fun initValue(): Boolean = parameters.initValue
   override fun kwOnly(): Boolean = parameters.kwOnly
+
+  override fun toString(): String {
+    return "PyDataclassFieldStubType(callee=$calleeName" +
+           ", hasDefault=${parameters.hasDefault}" +
+           ", hasDefaultFactory=${parameters.hasDefaultFactory}" +
+           ", initValue=${parameters.initValue}" +
+           ", kwOnly=${parameters.kwOnly}" +
+           ")"
+  }
 
   private data class FieldParameters(val hasDefault: Boolean,
                                      val hasDefaultFactory: Boolean,

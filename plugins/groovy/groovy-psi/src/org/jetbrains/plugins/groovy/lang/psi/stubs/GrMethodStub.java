@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrMethodElementType;
 
-/**
- * @author ilyas
- */
 public class GrMethodStub extends StubBase<GrMethod> implements NamedStub<GrMethod> {
   public static final byte IS_DEPRECATED_BY_DOC_TAG = 0b1;
   public static final byte HAS_BLOCK = 0b10;

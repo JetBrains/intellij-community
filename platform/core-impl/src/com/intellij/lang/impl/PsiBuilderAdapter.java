@@ -55,7 +55,7 @@ public class PsiBuilderAdapter implements PsiBuilder {
   }
 
   @Override
-  public void remapCurrentToken(IElementType type) {
+  public void remapCurrentToken(@NotNull IElementType type) {
     myDelegate.remapCurrentToken(type);
   }
 

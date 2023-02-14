@@ -9,7 +9,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 
 class KeymapSchemeRuleValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = (KEYMAP_SCHEME == ruleId)
+  override fun getRuleId(): String = KEYMAP_SCHEME
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val keymap = KeymapManager.getInstance().getKeymap(data)

@@ -1,0 +1,5 @@
+import a.b.JavaClass
+
+fun test() {
+    val javaClass = JavaClass()
+}

@@ -16,6 +16,7 @@ public class TablePassInfo extends LayoutPassInfo {
   public final Rectangle tabRectangle = new Rectangle();
   final Map<TabInfo, TableRow> myInfo2Row = new HashMap<>();
   final JBTabsImpl myTabs;
+  @NotNull public final Rectangle entryPointRect = new Rectangle();
   @NotNull public final Rectangle moreRect = new Rectangle();
   @NotNull public final Rectangle titleRect = new Rectangle();
   public final List<TabInfo> invisible = new ArrayList<>();
@@ -37,32 +38,18 @@ public class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
-  @Deprecated
   @Override
   public int getRowCount() {
     return table.size();
   }
 
-  @Deprecated
-  @Override
-  public int getColumnCount(final int row) {
-    return table.get(row).myColumns.size();
-  }
-
-  @Deprecated
-  @Override
-  public TabInfo getTabAt(final int row, final int column) {
-    if(getRowCount() <= row) return null;
-    TableRow tableRow = table.get(row);
-    if(tableRow == null) return null;
-    List<TabInfo> columns = tableRow.myColumns;
-    if(columns.size() <= column) return null;
-
-    return columns.get(column);
-  }
-
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)toFitRec.clone();
+  }
+
+  @Override
+  public int getRequiredLength() {
+    return requiredLength;
   }
 }

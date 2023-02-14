@@ -27,23 +27,27 @@ public class NestedSynchronizedStatementInspectionTest extends LightJavaInspecti
   }
 
   public void testClassInitializer() {
-    doTest("class C {\n" +
-           "  {\n" +
-           "    synchronized (C.class) {\n" +
-           "      /*Nested 'synchronized' statement*/synchronized/**/ (C.class){\n" +
-           "      }\n" +
-           "    }\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               {
+                 synchronized (C.class) {
+                   /*Nested 'synchronized' statement*/synchronized/**/ (C.class){
+                   }
+                 }
+               }
+             }
+             """);
   }
 
   public void testInsideLambda() {
-    doTest("class C {\n" +
-           "  static void m() {\n" +
-           "   synchronized (C.class){\n" +
-           "     new Thread(() -> {synchronized (C.class) {}});\n" +
-           "   }\n" +
-           "  }\n" +
-           "}\n");
+    doTest("""
+             class C {
+               static void m() {
+                synchronized (C.class){
+                  new Thread(() -> {synchronized (C.class) {}});
+                }
+               }
+             }
+             """);
   }
 }

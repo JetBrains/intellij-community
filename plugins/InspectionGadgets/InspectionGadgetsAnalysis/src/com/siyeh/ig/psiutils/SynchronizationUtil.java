@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public final class SynchronizationUtil {
 
@@ -52,10 +53,9 @@ public final class SynchronizationUtil {
 
   public static boolean isCallToHoldsLock(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     @NonNls final String name = methodExpression.getReferenceName();
     if (!"holdsLock".equals(name)) {
@@ -73,7 +73,7 @@ public final class SynchronizationUtil {
     private PsiAssertStatement myAssertStatement = null;
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       if (myAssertStatement != null) return;
       super.visitAssertStatement(statement);
       final PsiExpression condition = statement.getAssertCondition();

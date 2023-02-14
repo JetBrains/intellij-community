@@ -8,12 +8,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.IconDeferrer;
-import com.intellij.ui.PlaceProvider;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.content.AlertIcon;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +56,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
 
   private ActionGroup myTabLabelActions;
+  private @Nullable ActionGroup myTabPaneActions;
   private String myTabActionPlace;
 
   private AlertIcon myAlertIcon;
@@ -75,13 +73,14 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private Color myDefaultForeground;
   private TextAttributes editorAttributes;
   private SimpleTextAttributes myDefaultAttributes;
-  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
+  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6));
 
   private boolean myEnabled = true;
   private Color myTabColor;
 
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
+  private DragDelegate myDragDelegate;
 
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
@@ -175,7 +174,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   public boolean isPinned() {
-    return UIUtil.isClientPropertyTrue(getComponent(), PINNED);
+    return ClientProperty.isTrue(getComponent(), PINNED);
   }
 
   @NotNull
@@ -264,6 +263,20 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myTabLabelActions = tabActions;
     myTabActionPlace = place;
     myChangeSupport.firePropertyChange(TAB_ACTION_GROUP, old, myTabLabelActions);
+    return this;
+  }
+
+  @Nullable
+  public ActionGroup getTabPaneActions() {
+    return myTabPaneActions;
+  }
+
+  /**
+   * Sets the actions that will be displayed on the right side of the tabs
+   */
+  @NotNull
+  public TabInfo setTabPaneActions(final @Nullable ActionGroup tabPaneActions) {
+    myTabPaneActions = tabPaneActions;
     return this;
   }
 
@@ -433,9 +446,22 @@ public final class TabInfo implements Queryable, PlaceProvider {
     myPreviousSelection = new WeakReference<>(previousSelection);
   }
 
+  public DragDelegate getDragDelegate() {
+    return myDragDelegate;
+  }
+
+  public void setDragDelegate(DragDelegate dragDelegate) {
+    myDragDelegate = dragDelegate;
+  }
+
   @Nullable
   public TabInfo getPreviousSelection() {
     return myPreviousSelection.get();
+  }
+
+  public interface DragDelegate {
+    void dragStarted(@NotNull MouseEvent mouseEvent);
+    void dragFinishedOrCanceled();
   }
 
   public interface DragOutDelegate {

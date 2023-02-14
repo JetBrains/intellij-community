@@ -1,21 +1,36 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector
 
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindIntText
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import java.awt.GraphicsEnvironment
 
 /**
  * @author Konstantin Bulenkov
  */
-class ConfigureCustomSizeAction: DumbAwareAction() {
+internal class ConfigureCustomSizeAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun actionPerformed(e: AnActionEvent) {
     val centerPanel = panel {
-      row("Width:") { intTextField(CustomSizeModel::width, 20, 1..maxWidth()).focused() }
-      row("Height:") { intTextField(CustomSizeModel::height, 20, 1..maxHeight()) }
+      row("Width:") {
+        intTextField(1..maxWidth())
+          .bindIntText(CustomSizeModel::width)
+          .columns(20)
+          .focused()
+      }
+      row("Height:") {
+        intTextField(1..maxHeight())
+          .bindIntText(CustomSizeModel::height)
+          .columns(20)
+      }
     }
 
     dialog("Default Size", centerPanel, project = e.project).show()

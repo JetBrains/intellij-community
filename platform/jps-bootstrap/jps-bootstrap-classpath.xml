@@ -1,0 +1,108 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<project name="Prepare classpath for jps bootstrap" xmlns:resolver="antlib:org.apache.maven.resolver.ant" default="jps-bootstrap-classpath">
+  <dirname property="jps.bootstrap.dir" file="${ant.file}"/>
+  <property name="community.home" value="${jps.bootstrap.dir}/../.."/>
+  <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
+  <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
+  <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
+  <property environment="env"/>
+  <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
+
+  <mkdir dir="${build.dir}" />
+
+  <property name="maven.resolver.ant.tasks.version" value="1.2.1"/>
+  <property name="maven.resolver.ant.tasks.file.name" value="maven-resolver-ant-tasks-${maven.resolver.ant.tasks.version}-uber.jar"/>
+  <property name="maven.resolver.ant.tasks.file.path" value="org/apache/maven/resolver/maven-resolver-ant-tasks/${maven.resolver.ant.tasks.version}"/>
+  <property name="maven.resolver.ant.tasks.cache.dir" value="${user.home}/.m2/repository/${maven.resolver.ant.tasks.file.path}"/>
+  <property name="maven.resolver.ant.tasks.cache.file" value="${maven.resolver.ant.tasks.cache.dir}/${maven.resolver.ant.tasks.file.name}"/>
+
+  <xmlproperty file="${jps.bootstrap.dir}/pom.xml" prefix="jps.bootstrap.pom.xml"/>
+
+  <xslt style="kotlinc.xml.xslt" in="${community.home}/.idea/kotlinc.xml" out="${build.dir}/kotlinc.version.txt" />
+  <loadfile property="kotlinc.version" srcfile="${build.dir}/kotlinc.version.txt">
+    <filterchain>
+      <striplinebreaks />
+      <striplinebreaks linebreaks=" "/>
+    </filterchain>
+  </loadfile>
+  <echo message="kotlinc.version=${kotlinc.version}" />
+
+  <available file="${maven.resolver.ant.tasks.cache.file}" property="maven.resolver.ant.tasks.file.exists"/>
+
+  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+    <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
+    <get
+      src="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/${maven.resolver.ant.tasks.file.path}/${maven.resolver.ant.tasks.file.name}"
+      dest="${maven.resolver.ant.tasks.cache.file}.tmp"
+      verbose="true"/>
+    <move
+      file="${maven.resolver.ant.tasks.cache.file}.tmp"
+      tofile="${maven.resolver.ant.tasks.cache.file}"
+      overwrite="true"/>
+  </target>
+
+  <target name="jps-bootstrap-classpath" depends="download.resolver">
+    <taskdef uri="antlib:org.apache.maven.resolver.ant" resource="org/apache/maven/resolver/ant/antlib.xml"
+             classpath="${maven.resolver.ant.tasks.cache.file}"/>
+
+    <resolver:remoterepos id="remoterepos.buildscript">
+      <resolver:remoterepo id="central" url="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"/>
+      <resolver:remoterepo id="intellij-dependencies" url="https://cache-redirector.jetbrains.com/intellij-dependencies"/>
+      <resolver:remoterepo id="kotlin-ide-plugin-dependencies" url="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"/>
+      <resolver:remoterepo id="teamcity-repository" url="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository"/>
+    </resolver:remoterepos>
+
+    <resolver:pom file="${jps.bootstrap.dir}/pom.xml" id="jps.bootstrap.pom"/>
+
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies pomRef="jps.bootstrap.pom">
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-jps-plugin-classpath" version="${kotlinc.version}" />
+      </resolver:dependencies>
+      <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
+    </resolver:resolve>
+
+    <resolver:resolve failOnMissingAttachments="true">
+      <resolver:remoterepos refid="remoterepos.buildscript"/>
+      <resolver:dependencies>
+        <resolver:dependency groupId="org.jetbrains.kotlin" artifactId="kotlin-compiler" version="${kotlinc.version}" />
+      </resolver:dependencies>
+      <resolver:path refid="classpath.kotlin.compiler" classpath="runtime"/>
+    </resolver:resolve>
+
+    <delete dir="${classes.dir}" />
+    <java
+      classname="org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
+      classpathref="classpath.kotlin.compiler"
+      fork="true"
+      failonerror="true">
+      <arg value="-no-reflect" />
+      <arg value="-no-stdlib" />
+      <arg value="-jvm-target" />
+      <arg value="11" />
+      <arg value="-classpath" />
+      <arg pathref="classpath.buildscripts" />
+      <arg path="${jps.bootstrap.dir}/src/main/java" />
+      <arg path="${community.home}/platform/build-scripts/downloader/src" />
+      <arg value="-d" />
+      <arg value="${classes.dir}" />
+    </java>
+
+    <delete file="${classes.dir}.jar" />
+    <zip destfile="${classes.dir}.jar">
+      <fileset dir="${classes.dir}" />
+    </zip>
+
+    <mkdir dir="${uber.dir}" />
+    <sync todir="${uber.dir}">
+      <mappedresources>
+        <flattenmapper />
+
+        <resources>
+          <path refid="classpath.buildscripts" />
+          <file file="${classes.dir}.jar" />
+        </resources>
+      </mappedresources>
+    </sync>
+  </target>
+</project>

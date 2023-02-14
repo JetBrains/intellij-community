@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.CommonBundle;
@@ -82,8 +82,12 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false));
     splitter.setSecondComponent(depsPanel);
 
+    DefaultActionGroup toolbarActions = createEntriesToolbarActions();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", toolbarActions, true);
+    toolbar.setTargetComponent(myEntriesChooser);
+
     JPanel groupPanel = new JPanel(new BorderLayout());
-    groupPanel.add(createEntriesActionToolbar().getComponent(), BorderLayout.NORTH);
+    groupPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
     groupPanel.add(splitter, BorderLayout.CENTER);
     groupPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
@@ -109,7 +113,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     });
   }
 
-  private ActionToolbar createEntriesActionToolbar() {
+  private DefaultActionGroup createEntriesToolbarActions() {
     final DefaultActionGroup entriesActions = new DefaultActionGroup();
 
     final RenameAction rename = new RenameAction();
@@ -124,7 +128,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     split.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0)), this);
     entriesActions.add(split);
 
-    return ActionManager.getInstance().createActionToolbar("ProjectLayoutPanel.Entries", entriesActions, true);
+    return entriesActions;
   }
 
   public final ModuleInsight getInsight() {
@@ -179,8 +183,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     if (element instanceof LibraryDescriptor) {
       return PlatformIcons.LIBRARY_ICON;
     }
-    if (element instanceof File) {
-      final File file = (File)element;
+    if (element instanceof File file) {
       return file.isDirectory()? PlatformIcons.FOLDER_ICON : PlatformIcons.JAR_ICON;
     }
     return null;
@@ -208,8 +211,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return getElementTextFromFile((File)element);
     }
 
-    if (element instanceof ModuleDescriptor) {
-      final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
+    if (element instanceof ModuleDescriptor moduleDescriptor) {
       final StringBuilder builder = new StringBuilder(moduleDescriptor.getName());
 
       final Set<File> contents = moduleDescriptor.getContentRoots();
@@ -281,6 +283,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract @NlsContexts.BorderTitle String getDependenciesTitle();
 
+  protected abstract @NotNull Set<String> getExistingNames();
+
   enum ElementType {
     LIBRARY(0), MODULE(1);
     private final int id;
@@ -304,7 +308,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         return true;
       }
     }
-    return false;
+    return getExistingNames().contains(entryName);
   }
 
   @NotNull
@@ -360,6 +364,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() > 1);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class SplitAction extends AnAction {
@@ -397,6 +405,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       final List<T> elements = myEntriesChooser.getSelectedElements();
       e.getPresentation().setEnabled(elements.size() == 1 && getContent(elements.get(0)).size() > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class RenameAction extends AnAction {
@@ -427,6 +440,11 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       e.getPresentation().setEnabled(myEntriesChooser.getSelectedElements().size() == 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

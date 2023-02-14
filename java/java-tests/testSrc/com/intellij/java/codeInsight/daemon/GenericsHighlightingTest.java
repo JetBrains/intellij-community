@@ -29,6 +29,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +40,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection());
-    enableInspectionTool(new UnusedImportInspection());
-    enableInspectionTool(new JavacQuirksInspection());
+    if (!getTestName(false).startsWith("OnlyUncheckedWarning")) {
+      enableInspectionTool(new UnusedDeclarationInspection());
+      enableInspectionTool(new UnusedImportInspection());
+      enableInspectionTool(new JavacQuirksInspection());
+    }
   }
 
   @Override
@@ -417,7 +420,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     PsiManager manager = getPsiManager();
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
     PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(
-      PsiType.INT.getBoxedType(manager, scope), PsiType.LONG.getBoxedType(manager, scope), manager);
+      PsiTypes.intType().getBoxedType(manager, scope), PsiTypes.longType().getBoxedType(manager, scope), manager);
     assertNotNull(leastUpperBound);
     assertEquals("Number & Comparable<? extends Number & Comparable<?>>", leastUpperBound.getPresentableText());
   }
@@ -447,4 +450,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA128159() { doTest6(false); }
   public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
   public void testUnboxingWildcards() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
+  public void testOnlyUncheckedWarningWithCast(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testOnlyUncheckedWarningCastWithInnerClasses(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
+  public void testOnlyUncheckedWarningCastWithDuplicatedArguments(){doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);}
 }

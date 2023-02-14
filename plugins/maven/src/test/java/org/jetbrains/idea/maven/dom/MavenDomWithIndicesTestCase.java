@@ -15,17 +15,13 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.maven.testFramework.MavenDomTestCase;
+import com.intellij.testFramework.ExtensionTestUtil;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
-import org.jetbrains.idea.maven.onlinecompletion.IndexBasedCompletionProvider;
-import org.jetbrains.idea.maven.onlinecompletion.ProjectModulesCompletionProvider;
-import org.jetbrains.idea.reposearch.DependencySearchProvider;
+import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Collections.emptyList;
+import java.util.Collections;
 
 public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   protected MavenIndicesTestFixture myIndicesFixture;
@@ -33,14 +29,11 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    ExtensionTestUtil.maskExtensions(DependencySearchService.EP_NAME,
+                                     Collections.singletonList(new MavenCompletionProviderFactory()),
+                                     getTestRootDisposable(), false, null);
     myIndicesFixture = createIndicesFixture();
     myIndicesFixture.setUp();
-    List<DependencySearchProvider> indexProviders =
-      new ArrayList<>(ContainerUtil.map(myIndicesFixture.getProjectIndicesManager().getIndices(), IndexBasedCompletionProvider::new));
-    indexProviders.add(new ProjectModulesCompletionProvider(myProject));
-    DependencySearchService.getInstance(myProject).setProviders(indexProviders,
-                                                                emptyList()
-    );
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {

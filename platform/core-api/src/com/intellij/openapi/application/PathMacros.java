@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,8 +23,7 @@ public abstract class PathMacros {
     return ApplicationManager.getApplication().getService(PathMacros.class);
   }
 
-  @NotNull
-  public abstract Set<String> getAllMacroNames();
+  public abstract @NotNull Set<String> getAllMacroNames();
 
   @Nullable
   public abstract String getValue(@NotNull String name);
@@ -33,15 +33,6 @@ public abstract class PathMacros {
    */
   @ApiStatus.Internal
   public abstract void setMacro(@NotNull String name, @Nullable String value);
-
-  /**
-   * @deprecated Use {@link PathMacroContributor}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void removeMacro(@NotNull String name) {
-    setMacro(name, null);
-  }
 
   @NotNull
   public abstract Set<String> getUserMacroNames();
@@ -57,9 +48,9 @@ public abstract class PathMacros {
 
   public abstract void setIgnoredMacroNames(@NotNull final Collection<String> names);
 
-  public abstract void addIgnoredMacro(@NotNull final String name);
+  public abstract void addIgnoredMacro(@NotNull List<String> names);
 
-  public abstract boolean isIgnoredMacroName(@NotNull final String macro);
+  public abstract boolean isIgnoredMacroName(@NotNull String macro);
 
   public abstract void removeAllMacros();
 

@@ -53,6 +53,12 @@ public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase 
       return new LocalInspectionTool[]{new ObviousNullCheckInspection()};
     }
 
+    @NotNull
+    @Override
+    protected LightProjectDescriptor getProjectDescriptor() {
+      return JAVA_11_ANNOTATED;
+    }
+
     @Override
     protected String getBasePath() {
       return TEST_DATA_DIR;

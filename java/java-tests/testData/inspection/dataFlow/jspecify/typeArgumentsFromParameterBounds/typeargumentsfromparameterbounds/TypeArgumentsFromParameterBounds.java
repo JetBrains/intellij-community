@@ -16,15 +16,15 @@
 
 package typeargumentsfromparameterbounds;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullnessUnspecified;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
+import org.jspecify.nullness.NullnessUnspecified;
 
-@DefaultNonNull
+@NullMarked
 public class TypeArgumentsFromParameterBounds<
     T extends Object, E extends @Nullable Object, F extends @NullnessUnspecified Object> {}
 
-@DefaultNonNull
+@NullMarked
 class A {
   public void bar(TypeArgumentsFromParameterBounds<Test, Test, Test> a) {}
 }
@@ -36,7 +36,7 @@ class B {
 
 class Test {}
 
-@DefaultNonNull
+@NullMarked
 class Use {
   public static void main(
       TypeArgumentsFromParameterBounds<Test, Test, Test> aNotNullNotNullNotNull,

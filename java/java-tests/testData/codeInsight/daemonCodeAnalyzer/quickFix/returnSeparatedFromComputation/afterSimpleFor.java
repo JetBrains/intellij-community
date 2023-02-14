@@ -1,4 +1,4 @@
-// "Move 'return' closer to computation of the value of 'n'" "true"
+// "Move 'return' closer to computation of the value of 'n'" "true-preview"
 class T {
     int f(int[] a, int b) {
         for (int i = 0; i < a.length; i++) {

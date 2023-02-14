@@ -1,9 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
-interface SpacingConfiguration {
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL Version 2")
+internal interface SpacingConfiguration {
   /**
    * Horizontal space between two components (in terms of layout grid - cells).
    *
@@ -45,29 +47,3 @@ interface SpacingConfiguration {
    */
   val indentLevel: Int
 }
-
-// https://jetbrains.github.io/ui/controls/input_field/#spacing
-fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-  return object : SpacingConfiguration {
-    override val horizontalGap = JBUI.scale(6)
-    override val componentVerticalGap = JBUI.scale(6)
-    override val labelColumnHorizontalGap = JBUI.scale(6)
-    override val largeHorizontalGap = JBUI.scale(16)
-    override val largeVerticalGap = JBUI.scale(20)
-    override val radioGroupTitleVerticalGap = JBUI.scale(6 + 2)
-
-    override val shortTextWidth = JBUI.scale(250)
-    override val maxShortTextWidth = JBUI.scale(350)
-
-    override val unitSize = JBUI.scale(4)
-
-    override val dialogTopBottom = JBUI.scale(10)
-    override val dialogLeftRight = JBUI.scale(12)
-
-    override val commentVerticalTopGap = JBUI.scale(6)
-
-    override val indentLevel: Int
-      get() = JBUI.scale(20)
-  }
-}
-

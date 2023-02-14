@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 
@@ -22,9 +22,9 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertS
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
-import com.intellij.testFramework.setRegistryPropertyForTest
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 
@@ -41,8 +41,9 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     application.replaceService(Environment::class.java, TestEnvironment(), testRootDisposable)
     application.replaceService(ExternalSystemJdkProvider::class.java, TestJdkProvider(), testRootDisposable)
 
-    setRegistryPropertyForTest("unknown.sdk.auto", false)
-    setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", false) //we have inconsistency between SDK names in JDK
+    setRegistryPropertyForTest("unknown.sdk.auto", "false")
+    setRegistryPropertyForTest("use.jdk.vendor.in.suggested.jdk.name", "false") //we have inconsistency between SDK names in JDK
+
     SdkType.EP_NAME.point.registerExtension(SdkTestCase.TestSdkType, testRootDisposable)
 
     environment.variables(ExternalSystemJdkUtil.JAVA_HOME to null)
@@ -131,7 +132,11 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
 
   fun createGradleSubProject() {
-    createProjectSubFile("settings.gradle", groovy { assign("rootProject.name", "'project'") })
-    createProjectSubFile("build.gradle", createBuildScriptBuilder().withJavaPlugin().generate())
+    createSettingsFile {
+      setProjectName("project")
+    }
+    createBuildFile {
+      withJavaPlugin()
+    }
   }
 }

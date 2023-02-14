@@ -16,10 +16,10 @@
 
 package nullnessunspecifiedtypeparameter;
 
-import org.jspecify.annotations.DefaultNonNull;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.nullness.NullMarked;
+import org.jspecify.nullness.Nullable;
 
-@DefaultNonNull
+@NullMarked
 public class NullnessUnspecifiedTypeParameter<T> {
   public void foo(T t) {}
 
@@ -28,7 +28,7 @@ public class NullnessUnspecifiedTypeParameter<T> {
 
 class Test {}
 
-@DefaultNonNull
+@NullMarked
 class Instances {
   static final NullnessUnspecifiedTypeParameter<Object> A1 =
       new NullnessUnspecifiedTypeParameter<>();

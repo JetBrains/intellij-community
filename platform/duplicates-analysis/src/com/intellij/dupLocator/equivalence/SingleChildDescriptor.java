@@ -4,9 +4,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class SingleChildDescriptor {
   private final MyType myType;
   private final PsiElement myElement;

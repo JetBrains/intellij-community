@@ -35,10 +35,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class KeyChooserDialog extends DialogWrapper{
   private final PropertiesFile myBundle;
   private final String myBundleName;
@@ -116,8 +112,7 @@ public final class KeyChooserDialog extends DialogWrapper{
     keyColumn.setMaxWidth(width);
     keyColumn.setMinWidth(width);
     final TableCellRenderer defaultRenderer = myTable.getDefaultRenderer(String.class);
-    if (defaultRenderer instanceof JComponent) {
-      final JComponent component = (JComponent)defaultRenderer;
+    if (defaultRenderer instanceof JComponent component) {
       component.putClientProperty("html.disable", Boolean.TRUE);
     }
     selectKey(keyToPreselect);

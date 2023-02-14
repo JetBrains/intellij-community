@@ -1,0 +1,10 @@
+// FIX: Convert sealed subclass to object
+// WITH_STDLIB
+
+sealed class Sealed
+
+object SubSealed : Sealed() {
+    init {
+        println("init")
+    }
+}

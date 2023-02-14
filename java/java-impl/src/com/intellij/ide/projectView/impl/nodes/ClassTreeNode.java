@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -12,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +73,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     boolean showInnerClasses = Registry.is("projectView.always.show.inner.classes", false);
     if (showInnerClasses) return true;
     VirtualFile file = getVirtualFile();
-    return file != null && JavaClassFileType.INSTANCE == file.getFileType();
+    return file != null && FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE);
   }
 
   @Override
@@ -155,8 +155,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   private class ClassNameSortKey implements Comparable {
     @Override
     public int compareTo(final Object o) {
-      if (!(o instanceof ClassNameSortKey)) return 0;
-      ClassNameSortKey rhs = (ClassNameSortKey) o;
+      if (!(o instanceof ClassNameSortKey rhs)) return 0;
       return getPosition() - rhs.getPosition();
     }
 
@@ -172,9 +171,9 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean canRepresent(final Object element) {
+    if (!mayContain(element)) return false;
     if (!isValid()) return false;
-
-    return super.canRepresent(element) || SlowOperations.allowSlowOperations(() -> canRepresent(getValue(), element));
+    return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -59,7 +60,6 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.collections.HashMap
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
@@ -318,7 +318,6 @@ internal class CompletionQualityStatsAction : AnAction() {
               }
 
               val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
-                @Suppress("DEPRECATION")
                 override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
                   super.completionFinished(indicator, hasModifiers)
                   lookupItems = indicator.lookup.items
@@ -358,11 +357,13 @@ internal class CompletionQualityStatsAction : AnAction() {
         catch (e: Throwable) {
           LOG.error(e)
         }
-      }, ModalityState.NON_MODAL)
+                                                        }, ModalityState.NON_MODAL)
 
       return Pair(result, total)
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null

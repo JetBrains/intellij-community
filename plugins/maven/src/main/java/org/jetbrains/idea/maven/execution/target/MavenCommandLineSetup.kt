@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
@@ -18,12 +21,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.idea.maven.execution.MavenExecutionOptions
+import org.jetbrains.idea.maven.execution.*
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.MAVEN_OPTS
 import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration
-import org.jetbrains.idea.maven.execution.MavenRunner
-import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -39,18 +39,17 @@ import java.util.*
 
 class MavenCommandLineSetup(private val project: Project,
                             private val name: @NlsSafe String,
-                            private val request: TargetEnvironmentRequest,
-                            private val target: TargetEnvironmentConfiguration) {
+                            private val request: TargetEnvironmentRequest) {
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
 
-  private val defaultMavenRuntimeConfiguration: MavenRuntimeTargetConfiguration? = target.runtimes.findByType(
+  private val defaultMavenRuntimeConfiguration: MavenRuntimeTargetConfiguration? = request.configuration?.runtimes?.findByType(
     MavenRuntimeTargetConfiguration::class.java)
-  private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = target.runtimes.findByType(
+  private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
   init {
@@ -62,7 +61,7 @@ class MavenCommandLineSetup(private val project: Project,
   fun setupCommandLine(settings: MavenRunConfiguration.MavenSettings, setupEventListener: Boolean = true): MavenCommandLineSetup {
     val mavenOptsValues = mutableListOf<TargetValue<String>>()
     setupExePath()
-    setupTargetJavaRuntime(settings.myRunnerSettings)
+    setupTargetJavaRuntime(mavenRunnerSettings(settings))
     setupTargetProjectDirectories(settings)
     if (setupEventListener) {
       setupMavenExtClassPath()
@@ -72,7 +71,7 @@ class MavenCommandLineSetup(private val project: Project,
     return this
   }
 
-  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to progressIndicator)
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)
@@ -132,7 +131,7 @@ class MavenCommandLineSetup(private val project: Project,
       .forEach { (key, value) -> mavenPropertiesList.addProperty(key, value) }
     commandLine.addParameters(mavenPropertiesList.parameters)
 
-    val runnerParameters = settings.myRunnerParameters
+    val runnerParameters = settings.myRunnerParameters ?: MavenRunnerParameters()
     for (goal in runnerParameters.goals) {
       commandLine.addParameter(goal)
     }
@@ -160,8 +159,9 @@ class MavenCommandLineSetup(private val project: Project,
     if (generalSettings.isAlwaysUpdateSnapshots) {
       commandLine.addParameter("--update-snapshots")
     }
-    if (!generalSettings.threads.isNullOrBlank()) {
-      commandLine.addParameters("-T", generalSettings.threads)
+    val threads = generalSettings.threads
+    if (!threads.isNullOrBlank()) {
+      commandLine.addParameters("-T", threads)
     }
     generalSettings.failureBehavior.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
     generalSettings.checksumPolicy.commandLineOption.nullize(true)?.also { commandLine.addParameter(it) }
@@ -209,14 +209,12 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
-    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, target, volumeDescriptor, localRootPath)
+    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, volumeDescriptor, localRootPath)
   }
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {
-    val workingDirectory = settings.myRunnerParameters.workingDirFile
-
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val file = VfsUtil.findFileByIoFile(workingDirectory, false) ?: throw CantRunException(
+    val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
     val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: throw CantRunException(
       message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))

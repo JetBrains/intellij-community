@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.jpackage;
 
 import com.intellij.execution.CommandLineUtil;
@@ -102,14 +102,14 @@ public class JPackageArtifactBuildTaskProvider extends ArtifactBuildTaskProvider
         }
       }
       if (javaSdk == null) {
-        error("Java version 14 or higher is required to build platform specific package using jpackage");
+        error(JavaFXJpsBundle.message("java.version.14.or.higher.is.required.to.build.platform.specific.package.using.jpackage"));
         return;
       }
       final String homePath = javaSdk.getHomePath();
       final String jpackagePath = homePath + File.separatorChar + "bin" + File.separatorChar + "jpackage";
       final String archiveName = getArchiveName();
       if (archiveName == null) {
-        error("No archive found");
+        error(JavaFXJpsBundle.message("no.archive.found"));
         return;
       }
 
@@ -135,7 +135,7 @@ public class JPackageArtifactBuildTaskProvider extends ArtifactBuildTaskProvider
 
       final int errorCode = startProcess(commands);
       if (errorCode != 0) {
-        error("jpackage task has failed");
+        error(JavaFXJpsBundle.message("jpackage.task.has.failed"));
       }
     }
 

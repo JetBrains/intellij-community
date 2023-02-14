@@ -3,33 +3,42 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import junit.framework.TestCase;
-import org.jdom.Element;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class ConflictFileTypeMappingTrackerTest extends TestCase {
   public void testEveryPossibleFriggingCombination() {
-    IdeaPluginDescriptorImpl bundled1 = createDescriptor(PluginId.getId("bundled1"), true);
-    IdeaPluginDescriptorImpl bundled2 = createDescriptor(PluginId.getId("bundled2"), true);
-    IdeaPluginDescriptorImpl core = createDescriptor(PluginManagerCore.CORE_ID, true);
-    IdeaPluginDescriptorImpl user1 = createDescriptor(PluginId.getId("user1"), false);
-    IdeaPluginDescriptorImpl user2 = createDescriptor(PluginId.getId("user2"), false);
-    
+    IdeaPluginDescriptorImpl bundled1 = createDescriptor(PluginId.getId("bundled1"), "JetBrains", true);
+    IdeaPluginDescriptorImpl bundled2 = createDescriptor(PluginId.getId("bundled2"), "JetBrains", true);
+    IdeaPluginDescriptorImpl bundledFromOtherVendor = createDescriptor(PluginId.getId("bundled3"), "JetBrains, Google", true);
+    IdeaPluginDescriptorImpl core = createDescriptor(PluginManagerCore.CORE_ID, "JetBrains", true);
+    IdeaPluginDescriptorImpl user1 = createDescriptor(PluginId.getId("user1"), "JetBrains", false);
+    IdeaPluginDescriptorImpl user2 = createDescriptor(PluginId.getId("user2"), "JetBrains", false);
+
     assertConflict(bundled1, bundled2, false, false);
     assertConflict(bundled1, core, false, true);
     assertConflict(bundled1, user1, true, true);
+    // plugin (even bundled) should win over core
     assertConflict(core, bundled1, true, true);
     assertConflict(core, user1, true, true);
     assertConflict(user1, bundled1, false, true);
     assertConflict(user1, core, false, true);
     assertConflict(user1, user2, true, false);
+
+    // if both bundled, should win the bundle from other vendor as more specific
+    // see the case "Image" plugin vs "Adobe Photoshop" from Android
+    assertConflict(bundled1, bundledFromOtherVendor, true, true);
+    assertConflict(bundledFromOtherVendor, bundled1, false, true);
   }
 
   private static void assertConflict(@NotNull PluginDescriptor oldDescriptor,
@@ -43,8 +52,8 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     FileTypeManagerImpl.FileTypeWithDescriptor oldFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(oldFileType, oldDescriptor);
     FileTypeManagerImpl.FileTypeWithDescriptor newFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(newFileType, newDescriptor);
     result = ConflictingFileTypeMappingTracker.resolveConflict(matcher, oldFtd, newFtd);
-    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved.fileType);
-    assertEquals(expectedApprove, result.approved);
+    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved().fileType);
+    assertEquals(expectedApprove, result.approved());
   }
 
   @NotNull
@@ -59,10 +68,11 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     return oldFileType;
   }
 
-  @NotNull
-  private static IdeaPluginDescriptorImpl createDescriptor(PluginId id, boolean isBundled) {
-    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Path.of(""), Path.of(""), isBundled);
-    descriptor.readForTest(new Element("empty"), id);
-    return descriptor;
+  private static @NotNull IdeaPluginDescriptorImpl createDescriptor(@NotNull PluginId id, @NotNull String vendor, boolean isBundled) {
+    @Language("XML")
+    String input = "<idea-plugin>" +
+                   "  <vendor>" + vendor + "</vendor>" +
+                   "</idea-plugin>";
+    return PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
   }
 }

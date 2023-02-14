@@ -139,7 +139,7 @@ final class ChangeListManagerSerialization {
 
     List<Change> changes = new ArrayList<>();
     for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
-      changes.add(readChange(changeNode));
+      changes.add(readChange(changeNode, project));
     }
 
     return new LocalChangeListImpl.Builder(project, name)
@@ -160,9 +160,9 @@ final class ChangeListManagerSerialization {
   }
 
   @NotNull
-  private static Change readChange(@NotNull Element changeNode) {
-    FakeRevision bRev = readContentRevision(changeNode, RevisionSide.BEFORE);
-    FakeRevision aRev = readContentRevision(changeNode, RevisionSide.AFTER);
+  private static Change readChange(@NotNull Element changeNode, @NotNull Project project) {
+    FakeRevision bRev = readContentRevision(changeNode, project, RevisionSide.BEFORE);
+    FakeRevision aRev = readContentRevision(changeNode, project, RevisionSide.AFTER);
     return new Change(bRev, aRev);
   }
 
@@ -181,7 +181,7 @@ final class ChangeListManagerSerialization {
   }
 
   @Nullable
-  private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull RevisionSide side) {
+  private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull Project project, @NotNull RevisionSide side) {
     String plainPath = changeNode.getAttributeValue(side.getPathKey());
     String escapedPath = changeNode.getAttributeValue(side.getEscapedPathKey());
     String path = escapedPath != null ? XmlStringUtil.unescapeIllegalXmlChars(escapedPath) : plainPath;
@@ -190,11 +190,11 @@ final class ChangeListManagerSerialization {
     String value = changeNode.getAttributeValue(side.getIsDirKey());
     if (value != null) {
       boolean isDirectory = Boolean.parseBoolean(value);
-      return new FakeRevision(VcsUtil.getFilePath(path, isDirectory));
+      return new FakeRevision(project, VcsUtil.getFilePath(path, isDirectory));
     }
     else {
       // old-style config. Will get "isDirectory" flag from VFS.
-      return new FakeRevision(VcsUtil.getFilePath(path));
+      return new FakeRevision(project, VcsUtil.getFilePath(path));
     }
   }
 

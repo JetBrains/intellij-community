@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.MethodReturnValueDescriptorImpl;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl>{
+public final class MethodReturnValueData extends DescriptorData<MethodReturnValueDescriptorImpl> {
   private final @Nullable Value myReturnValue;
   private final @NotNull Method myMethod;
 
@@ -56,7 +56,8 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return new MethodReturnValueDisplayKey(myMethod, myReturnValue);
   }
 
-  private static final class MethodReturnValueDisplayKey extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
+  private static final class MethodReturnValueDisplayKey
+    extends Pair<Method, Value> implements DisplayKey<MethodReturnValueDescriptorImpl> {
     MethodReturnValueDisplayKey(@NotNull Method method, @Nullable Value value) {
       super(method, value);
     }

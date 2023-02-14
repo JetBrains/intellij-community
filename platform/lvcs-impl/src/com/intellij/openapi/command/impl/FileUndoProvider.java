@@ -148,6 +148,9 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     if (!myIsInsideCommand || myProject.isDisposed()) {
       return false;
     }
+    if (UndoUtil.isUndoDisabledFor(file)) {
+      return false;
+    }
 
     Object requestor = e.getRequestor();
     if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(requestor) || requestor instanceof StorageManagerFileWriteRequestor) {

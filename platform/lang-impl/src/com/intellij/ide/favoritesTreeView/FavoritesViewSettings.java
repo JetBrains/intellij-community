@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertyName;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated(forRemoval = true)
 public class FavoritesViewSettings implements ViewSettings {
 
   @PropertyName("favorites.view.settings.show.members")

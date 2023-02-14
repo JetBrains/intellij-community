@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class ResultBuilderNotifier extends ProcessAdapter {
 
   /**

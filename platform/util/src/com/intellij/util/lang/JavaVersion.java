@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -6,14 +6,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // this class is used in bootstrap - please use only JDK API
 
 /**
  * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
  *
- * Based on <a href="http://openjdk.java.net/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
+ * Based on <a href="http://openjdk.org/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
  * "New Version-String Scheme" (Java 9), as well as earlier version's formats.
  *
  * @see #parse(String) for examples of supported version strings
@@ -221,9 +223,14 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   public static @NotNull JavaVersion parse(@NotNull String versionString) throws IllegalArgumentException {
     // trimming
     String str = versionString.trim();
-    if (str.contains("Runtime Environment")) {
-      int p = str.indexOf("(build ");
-      if (p > 0) str = str.substring(p);
+    Map<String, String> trimmingMap = new HashMap<>(); // "substring to detect" to "substring from which to trim"
+    trimmingMap.put("Runtime Environment", "(build ");
+    trimmingMap.put("OpenJ9", "version ");
+    for (String keyToDetect : trimmingMap.keySet()) {
+      if (str.contains(keyToDetect)) {
+        int p = str.indexOf(trimmingMap.get(keyToDetect));
+        if (p > 0) str = str.substring(p);
+      }
     }
 
     // partitioning

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -43,7 +43,7 @@ public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
       return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
         .connect(request -> {
           try {
-            return create(JDOMUtil.load(request.getReader()));
+            return create(JDOMUtil.load(request.getInputStream()));
           }
           catch (JDOMException e) {
             LOG.error(e);
@@ -67,7 +67,7 @@ public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   }
 
   @Override
-  public ProjectTemplate @NotNull [] createTemplates(@Nullable String group, WizardContext context) {
+  public ProjectTemplate @NotNull [] createTemplates(@Nullable String group, @NotNull WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
     return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(ProjectTemplate.EMPTY_ARRAY);
   }

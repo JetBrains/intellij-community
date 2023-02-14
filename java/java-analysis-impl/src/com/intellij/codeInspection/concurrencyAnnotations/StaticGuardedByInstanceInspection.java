@@ -38,7 +38,7 @@ public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
         return;
@@ -77,7 +77,7 @@ public class StaticGuardedByInstanceInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void visitDocTag(PsiDocTag psiDocTag) {
+    public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
         return;

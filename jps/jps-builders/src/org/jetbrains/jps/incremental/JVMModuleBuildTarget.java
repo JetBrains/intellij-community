@@ -21,7 +21,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  */
 public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extends ModuleBasedTarget<R> {
-  public JVMModuleBuildTarget(ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
+  public JVMModuleBuildTarget(@NotNull ModuleBasedBuildTargetType<? extends JVMModuleBuildTarget<R>> targetType, JpsModule module) {
     super(targetType, module);
   }
 

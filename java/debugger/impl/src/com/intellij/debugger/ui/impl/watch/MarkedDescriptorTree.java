@@ -28,12 +28,12 @@ public class MarkedDescriptorTree {
   public <T extends NodeDescriptor> void addChild(NodeDescriptor parent, T child, DescriptorKey<T> key) {
     Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> children;
 
-    if(parent == null) {
+    if (parent == null) {
       children = myRootChildren;
     }
     else {
       children = myChildrenMap.get(parent);
-      if(children == null) {
+      if (children == null) {
         children = new HashMap<>();
         myChildrenMap.put(parent, children);
       }
@@ -42,7 +42,7 @@ public class MarkedDescriptorTree {
   }
 
   public <T extends NodeDescriptor> T getChild(NodeDescriptor parent, DescriptorKey<T> key) {
-    if(parent == null) {
+    if (parent == null) {
       return (T)myRootChildren.get(key);
     }
     final Map<DescriptorKey<? extends NodeDescriptor>, NodeDescriptor> map = myChildrenMap.get(parent);

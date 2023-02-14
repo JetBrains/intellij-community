@@ -3,8 +3,10 @@
  */
 package git4idea.config;
 
+import org.jetbrains.annotations.Nls;
+
 public class GitVersionIdentificationException extends RuntimeException {
-  public GitVersionIdentificationException(String message, Throwable cause) {
+  public GitVersionIdentificationException(@Nls String message, Throwable cause) {
     super(message, cause);
   }
 }

@@ -21,7 +21,7 @@ public abstract class StatisticsManager {
    */
   public static final int RECENCY_OBLIVION_THRESHOLD = 10000;
 
-  private static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.statistician");
+  public static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.statistician");
 
   @Nullable
   public static <T, Loc> StatisticsInfo serialize(Key<? extends Statistician<T, Loc>> key, T element, Loc location) {
@@ -54,7 +54,7 @@ public abstract class StatisticsManager {
   public abstract int getLastUseRecency(@NotNull StatisticsInfo info);
 
   /**
-   * Registers a usage of an <context, value> entry represented by info parameter.
+   * Registers a usage of an (context, value) entry represented by info parameter.
    * This will affect subsequent {@link #getUseCount(StatisticsInfo)} and {@link #getLastUseRecency(StatisticsInfo)} results.
    */
   public abstract void incUseCount(@NotNull StatisticsInfo info);

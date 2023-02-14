@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -13,8 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class PathMappingSettings extends AbstractPathMapper implements Cloneable {
+  // C:\
+  private static final Pattern WIN_DRIVE = Pattern.compile("^[a-z]:[/\\\\]$", Pattern.CASE_INSENSITIVE);
 
   @NotNull
   private List<PathMapping> myPathMappings;
@@ -287,6 +290,11 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     }
 
     private static String trimSlash(@NotNull String s) {
+      if (WIN_DRIVE.matcher(s).matches()) {
+        // No need to convert c:\ -> C:
+        // Path.ancestor doens't work with it
+        return s;
+      }
       if (s.equals("/")) {
         return s;
       }
@@ -337,5 +345,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     remotePrefix = norm(remotePrefix);
     return path.startsWith(remotePrefix) &&
            (path.length() == remotePrefix.length() || remotePrefix.endsWith("/") || path.substring(remotePrefix.length()).startsWith("/"));
+  }
+
+  @Override
+  public String toString() {
+    return "PathMappingSettings{" +
+           "myPathMappings=" + myPathMappings +
+           "} " + super.toString();
   }
 }

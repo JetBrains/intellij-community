@@ -1,87 +1,111 @@
 import sys
-from logging import Logger
-from multiprocessing import connection, pool, sharedctypes, synchronize
+from multiprocessing import context, reduction as reducer, synchronize
 from multiprocessing.context import (
     AuthenticationError as AuthenticationError,
-    BaseContext,
     BufferTooShort as BufferTooShort,
-    DefaultContext,
     Process as Process,
     ProcessError as ProcessError,
-    SpawnContext,
     TimeoutError as TimeoutError,
 )
-from multiprocessing.managers import SyncManager
 from multiprocessing.process import active_children as active_children, current_process as current_process
 
-# These are technically functions that return instances of these Queue classes. See #4313 for discussion
+# These are technically functions that return instances of these Queue classes.
+# Using them as annotations is deprecated. Either use imports from
+# multiprocessing.queues or the aliases defined below. See #4266 for discussion.
 from multiprocessing.queues import JoinableQueue as JoinableQueue, Queue as Queue, SimpleQueue as SimpleQueue
 from multiprocessing.spawn import freeze_support as freeze_support
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, Union, overload
-from typing_extensions import Literal
+from typing import TypeVar
+from typing_extensions import TypeAlias
 
 if sys.version_info >= (3, 8):
     from multiprocessing.process import parent_process as parent_process
 
-if sys.platform != "win32":
-    from multiprocessing.context import ForkContext, ForkServerContext
+__all__ = [
+    "Array",
+    "AuthenticationError",
+    "Barrier",
+    "BoundedSemaphore",
+    "BufferTooShort",
+    "Condition",
+    "Event",
+    "JoinableQueue",
+    "Lock",
+    "Manager",
+    "Pipe",
+    "Pool",
+    "Process",
+    "ProcessError",
+    "Queue",
+    "RLock",
+    "RawArray",
+    "RawValue",
+    "Semaphore",
+    "SimpleQueue",
+    "TimeoutError",
+    "Value",
+    "active_children",
+    "allow_connection_pickling",
+    "cpu_count",
+    "current_process",
+    "freeze_support",
+    "get_all_start_methods",
+    "get_context",
+    "get_logger",
+    "get_start_method",
+    "log_to_stderr",
+    "reducer",
+    "set_executable",
+    "set_forkserver_preload",
+    "set_start_method",
+]
 
-# N.B. The functions below are generated at runtime by partially applying
-# multiprocessing.context.BaseContext's methods, so the two signatures should
-# be identical (modulo self).
+if sys.version_info >= (3, 8):
+    __all__ += ["parent_process"]
 
-# Sychronization primitives
-_LockLike = Union[synchronize.Lock, synchronize.RLock]
+# The following type aliases can be used to annotate the return values of
+# the corresponding functions. They are not defined at runtime.
+#
+# from multiprocessing import Lock
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from multiprocessing import _LockType
+# lock: _LockType = Lock()
 
-def Barrier(parties: int, action: Optional[Callable[..., Any]] = ..., timeout: Optional[float] = ...) -> synchronize.Barrier: ...
-def BoundedSemaphore(value: int = ...) -> synchronize.BoundedSemaphore: ...
-def Condition(lock: Optional[_LockLike] = ...) -> synchronize.Condition: ...
-def Event() -> synchronize.Event: ...
-def Lock() -> synchronize.Lock: ...
-def RLock() -> synchronize.RLock: ...
-def Semaphore(value: int = ...) -> synchronize.Semaphore: ...
-def Pipe(duplex: bool = ...) -> Tuple[connection.Connection, connection.Connection]: ...
-def Pool(
-    processes: Optional[int] = ...,
-    initializer: Optional[Callable[..., Any]] = ...,
-    initargs: Iterable[Any] = ...,
-    maxtasksperchild: Optional[int] = ...,
-) -> pool.Pool: ...
+_T = TypeVar("_T")
+_QueueType: TypeAlias = Queue[_T]
+_SimpleQueueType: TypeAlias = SimpleQueue[_T]
+_JoinableQueueType: TypeAlias = JoinableQueue[_T]
+_BarrierType: TypeAlias = synchronize.Barrier
+_BoundedSemaphoreType: TypeAlias = synchronize.BoundedSemaphore
+_ConditionType: TypeAlias = synchronize.Condition
+_EventType: TypeAlias = synchronize.Event
+_LockType: TypeAlias = synchronize.Lock
+_RLockType: TypeAlias = synchronize.RLock
+_SemaphoreType: TypeAlias = synchronize.Semaphore
 
-# Functions Array and Value are copied from context.pyi.
-# See https://github.com/python/typeshed/blob/ac234f25927634e06d9c96df98d72d54dd80dfc4/stdlib/2and3/turtle.pyi#L284-L291
-# for rationale
-def Array(typecode_or_type: Any, size_or_initializer: Union[int, Sequence[Any]], *, lock: bool = ...) -> sharedctypes._Array: ...
-def Value(typecode_or_type: Any, *args: Any, lock: bool = ...) -> sharedctypes._Value: ...
-
-# ----- multiprocessing function stubs -----
-def allow_connection_pickling() -> None: ...
-def cpu_count() -> int: ...
-def get_logger() -> Logger: ...
-def log_to_stderr(level: Optional[Union[str, int]] = ...) -> Logger: ...
-def Manager() -> SyncManager: ...
-def set_executable(executable: str) -> None: ...
-def set_forkserver_preload(module_names: List[str]) -> None: ...
-def get_all_start_methods() -> List[str]: ...
-def get_start_method(allow_none: bool = ...) -> Optional[str]: ...
-def set_start_method(method: str, force: Optional[bool] = ...) -> None: ...
-
-if sys.platform != "win32":
-    @overload
-    def get_context(method: None = ...) -> DefaultContext: ...
-    @overload
-    def get_context(method: Literal["spawn"]) -> SpawnContext: ...
-    @overload
-    def get_context(method: Literal["fork"]) -> ForkContext: ...
-    @overload
-    def get_context(method: Literal["forkserver"]) -> ForkServerContext: ...
-    @overload
-    def get_context(method: str) -> BaseContext: ...
-
-else:
-    @overload
-    def get_context(method: None = ...) -> DefaultContext: ...
-    @overload
-    def get_context(method: Literal["spawn"]) -> SpawnContext: ...
-    @overload
-    def get_context(method: str) -> BaseContext: ...
+# These functions (really bound methods)
+# are all autogenerated at runtime here: https://github.com/python/cpython/blob/600c65c094b0b48704d8ec2416930648052ba715/Lib/multiprocessing/__init__.py#L23
+RawValue = context._default_context.RawValue
+RawArray = context._default_context.RawArray
+Value = context._default_context.Value
+Array = context._default_context.Array
+Barrier = context._default_context.Barrier
+BoundedSemaphore = context._default_context.BoundedSemaphore
+Condition = context._default_context.Condition
+Event = context._default_context.Event
+Lock = context._default_context.Lock
+RLock = context._default_context.RLock
+Semaphore = context._default_context.Semaphore
+Pipe = context._default_context.Pipe
+Pool = context._default_context.Pool
+allow_connection_pickling = context._default_context.allow_connection_pickling
+cpu_count = context._default_context.cpu_count
+get_logger = context._default_context.get_logger
+log_to_stderr = context._default_context.log_to_stderr
+Manager = context._default_context.Manager
+set_executable = context._default_context.set_executable
+set_forkserver_preload = context._default_context.set_forkserver_preload
+get_all_start_methods = context._default_context.get_all_start_methods
+get_start_method = context._default_context.get_start_method
+set_start_method = context._default_context.set_start_method
+get_context = context._default_context.get_context

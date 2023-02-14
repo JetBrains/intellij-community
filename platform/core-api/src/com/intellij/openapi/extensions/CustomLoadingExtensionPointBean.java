@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -22,8 +22,7 @@ public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyIn
     super(instance);
   }
 
-  @NotNull
-  public final T createInstance(@NotNull ComponentManager componentManager) {
+  public final @NotNull T createInstance(@NotNull ComponentManager componentManager) {
     T instance;
     if (factoryClass == null) {
       instance = super.createInstance(componentManager, getPluginDescriptor());

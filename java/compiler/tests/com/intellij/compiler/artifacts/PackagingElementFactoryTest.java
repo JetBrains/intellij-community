@@ -13,43 +13,54 @@ public class PackagingElementFactoryTest extends PackagingElementsTestCase {
     assertLayout(root, "root/\n");
 
     assertLayout(dir(root, "sub"), "sub/\n");
-    assertLayout(root, "root/\n" +
-                       " sub/\n");
+    assertLayout(root, """
+      root/
+       sub/
+      """);
 
     assertLayout(dir(root, "/sub/subsub"), "subsub/\n");
-    assertLayout(root, "root/\n" +
-                       " sub/\n" +
-                       "  subsub/\n");
+    assertLayout(root, """
+      root/
+       sub/
+        subsub/
+      """);
 
     dir(root, "/sub2/sub3/");
-    assertLayout(root, "root/\n" +
-                       " sub/\n" +
-                       "  subsub/\n" +
-                       " sub2/\n" +
-                       "  sub3/\n");
+    assertLayout(root, """
+      root/
+       sub/
+        subsub/
+       sub2/
+        sub3/
+      """);
   }
 
   public void testArchive() {
     final CompositePackagingElement<?> root = createRoot();
     final CompositePackagingElement<?> archive = archive(root, "/a/out.jar");
     assertLayout(archive, "out.jar\n");
-    assertLayout(root, "root/\n" +
-                       " a/\n" +
-                       "  out.jar\n");
+    assertLayout(root, """
+      root/
+       a/
+        out.jar
+      """);
   }
   
   public void testFileCopy() {
     assertLayout(file("/", "/temp/file.txt"), "file:/temp/file.txt\n");
-    assertLayout(file("/xxx/yyy/", "/temp/file.txt"), "xxx/\n" +
-                                                      " yyy/\n" +
-                                                      "  file:/temp/file.txt\n");
+    assertLayout(file("/xxx/yyy/", "/temp/file.txt"), """
+      xxx/
+       yyy/
+        file:/temp/file.txt
+      """);
   }
 
   public void testDirectoryCopy() {
     assertLayout(dir("/", "/temp/dir"), "dir:/temp/dir");
-    assertLayout(dir("/aaa/bbb", "/temp/dir"), "aaa/\n" +
-                                               " bbb/\n" +
-                                               "  dir:/temp/dir");
+    assertLayout(dir("/aaa/bbb", "/temp/dir"), """
+      aaa/
+       bbb/
+        dir:/temp/dir""");
   }
 
   private static CompositePackagingElement<?> dir(final CompositePackagingElement<?> root, final String relativePath) {

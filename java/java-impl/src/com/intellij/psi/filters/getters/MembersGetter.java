@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -34,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +28,14 @@ import java.util.*;
 
 /**
  * @author ik
- * @author peter
  */
 public abstract class MembersGetter {
+  private static final Map<String, List<String>> COMMON_INHERITORS =
+    Map.of("java.util.Collection", List.of("java.util.List", "java.util.Set"),
+           "java.util.List", List.of("java.util.ArrayList"),
+           "java.util.Set", List.of("java.util.HashSet", "java.util.TreeSet"),
+           "java.util.Map", List.of("java.util.HashMap", "java.util.TreeMap"));
+
   public static final Key<Boolean> EXPECTED_TYPE_MEMBER = Key.create("EXPECTED_TYPE_MEMBER");
   private final Set<PsiMember> myImportedStatically = new HashSet<>();
   private final List<PsiClass> myPlaceClasses = new ArrayList<>();
@@ -87,9 +79,10 @@ public abstract class MembersGetter {
                              final boolean acceptMethods, final boolean searchInheritors) {
     if (where == null || isPrimitiveClass(where)) return;
 
+    String qualifiedName = where.getQualifiedName();
     final boolean searchFactoryMethods = searchInheritors &&
-                                   !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName()) &&
-                                   !isPrimitiveClass(where);
+                                         !CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) &&
+                                         !isPrimitiveClass(where);
 
     final Project project = myPlace.getProject();
     final GlobalSearchScope scope = myPlace.getResolveScope();
@@ -104,18 +97,23 @@ public abstract class MembersGetter {
       if (mayProcessMembers(psiClass)) {
         final FilterScopeProcessor<PsiElement> declProcessor = new FilterScopeProcessor<>(TrueFilter.INSTANCE);
         psiClass.processDeclarations(declProcessor, ResolveState.initial(), null, myPlace);
-        doProcessMembers(acceptMethods, results, psiType == baseType, declProcessor.getResults());
+        doProcessMembers(acceptMethods, results, psiType == baseType, psiClass, declProcessor.getResults());
 
         String name = psiClass.getName();
         if (name != null && searchFactoryMethods) {
           Collection<PsiMember> factoryMethods = JavaStaticMemberTypeIndex.getInstance().getStaticMembers(name, project, scope);
-          doProcessMembers(acceptMethods, results, false, factoryMethods);
+          doProcessMembers(acceptMethods, results, false, psiClass, factoryMethods);
         }
       }
     };
     consumer.consume(baseType);
-    if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName())) {
+    if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
       CodeInsightUtil.processSubTypes(baseType, myPlace, true, PrefixMatcher.ALWAYS_TRUE, consumer);
+    } else if (qualifiedName != null) {
+      // If we don't search inheritors, we still process some known very common ones
+      StreamEx.ofTree(qualifiedName, cls -> StreamEx.of(COMMON_INHERITORS.getOrDefault(cls, List.of()))).skip(1)
+        .map(className -> JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(className, myPlace.getResolveScope()))
+        .forEach(consumer::consume);
     }
   }
 
@@ -127,11 +125,29 @@ public abstract class MembersGetter {
 
   private void doProcessMembers(boolean acceptMethods,
                                 Consumer<? super LookupElement> results,
-                                boolean isExpectedTypeMember, Collection<? extends PsiElement> declarations) {
+                                boolean isExpectedTypeMember,
+                                PsiClass origClass,
+                                Collection<? extends PsiElement> declarations) {
     for (final PsiElement result : declarations) {
-      if (result instanceof PsiMember && !(result instanceof PsiClass)) {
-        final PsiMember member = (PsiMember)result;
-        if (!member.hasModifierProperty(PsiModifier.STATIC)) continue;
+      if (result instanceof PsiMember member && !(result instanceof PsiClass)) {
+        if (member instanceof PsiMethod method && method.isConstructor()) {
+          PsiClass aClass = member.getContainingClass();
+          if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
+          PsiClass enclosingClass = aClass.hasModifierProperty(PsiModifier.STATIC) ? null : aClass.getContainingClass();
+          if (enclosingClass != null &&
+              !InheritanceUtil.hasEnclosingInstanceInScope(enclosingClass, myPlace, true, false)) {
+            continue;
+          }
+          // For parameterized class constructors, we add a diamond. Do not suggest constructors for parameterized classes
+          // in Java 6 or older when diamond was not supported
+          if (aClass.getTypeParameters().length > 0 && !PsiUtil.isLanguageLevel7OrHigher(myPlace)) continue;
+          // Constructor type parameters aren't supported yet
+          if (method.getTypeParameters().length > 0) continue;
+        }
+        else if (!(member.hasModifierProperty(PsiModifier.STATIC))) {
+          continue;
+        }
+        if (!(result instanceof PsiField) && !(result instanceof PsiMethod)) continue;
         if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
         if (result instanceof PsiMethod && (!acceptMethods || myPlaceMethods.contains(result))) continue;
         if (JavaCompletionUtil.isInExcludedPackage(member, false) || myImportedStatically.contains(member)) continue;
@@ -140,7 +156,8 @@ public abstract class MembersGetter {
           continue;
         }
 
-        final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
+        final LookupElement item = result instanceof PsiMethod method ? createMethodElement(method, origClass) :
+                                   createFieldElement((PsiField)result, origClass);
         if (item != null) {
           item.putUserData(EXPECTED_TYPE_MEMBER, isExpectedTypeMember);
           results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
@@ -150,8 +167,8 @@ public abstract class MembersGetter {
   }
 
   @Nullable
-  protected abstract LookupElement createFieldElement(PsiField field);
+  protected abstract LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
 
   @Nullable
-  protected abstract LookupElement createMethodElement(PsiMethod method);
+  protected abstract LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
 }

@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional
 
 from cryptography.hazmat.backends.interfaces import CipherBackend
 from cryptography.hazmat.primitives.ciphers.modes import Mode
@@ -22,8 +21,8 @@ class BlockCipherAlgorithm(metaclass=ABCMeta):
     @abstractmethod
     def block_size(self) -> int: ...
 
-class Cipher(object):
-    def __init__(self, algorithm: CipherAlgorithm, mode: Optional[Mode], backend: Optional[CipherBackend] = ...) -> None: ...
+class Cipher:
+    def __init__(self, algorithm: CipherAlgorithm, mode: Mode | None, backend: CipherBackend | None = ...) -> None: ...
     def decryptor(self) -> CipherContext: ...
     def encryptor(self) -> CipherContext: ...
 

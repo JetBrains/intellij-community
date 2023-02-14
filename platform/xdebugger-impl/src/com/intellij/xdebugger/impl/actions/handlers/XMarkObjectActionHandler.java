@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
@@ -18,16 +18,17 @@ import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
 public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   @Override
   public void perform(@NotNull Project project, AnActionEvent event) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     if (session == null) return;
 
     XValueMarkers<?, ?> markers = ((XDebugSessionImpl)session).getValueMarkers();
@@ -39,8 +40,9 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
     XDebuggerTreeState treeState = XDebuggerTreeState.saveState(node.getTree());
 
     ValueMarkup existing = markers.getMarkup(value);
+    Promise<Object> markPromise;
     if (existing != null) {
-      markers.unmarkValue(value);
+      markPromise = markers.unmarkValue(value);
     }
     else {
       Component component = event.getData(CONTEXT_COMPONENT);
@@ -53,18 +55,24 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
       dialog.show();
       ValueMarkup markup = dialog.getConfiguredMarkup();
       if (dialog.isOK() && markup != null) {
-        markers.markValue(value, markup);
+        markPromise = markers.markValue(value, markup);
+      } else {
+        return;
       }
     }
-    if (detachedView) {
-      node.getTree().rebuildAndRestore(treeState);
-    }
-    session.rebuildViews();
+    markPromise.onSuccess(__ ->
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (detachedView) {
+          node.getTree().rebuildAndRestore(treeState);
+        }
+        session.rebuildViews();
+      })
+    );
   }
 
   @Override
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-    XValueMarkers<?, ?> markers = getValueMarkers(project);
+    XValueMarkers<?, ?> markers = getValueMarkers(event);
     if (markers == null) return false;
 
     XValue value = XDebuggerTreeActionBase.getSelectedValue(event.getDataContext());
@@ -73,7 +81,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
 
   @Override
   public boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event) {
-    XValueMarkers<?, ?> markers = getValueMarkers(project);
+    XValueMarkers<?, ?> markers = getValueMarkers(event);
     if (markers == null) return false;
 
     XValue value = XDebuggerTreeActionBase.getSelectedValue(event.getDataContext());
@@ -82,12 +90,12 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
 
   @Override
   public boolean isHidden(@NotNull Project project, AnActionEvent event) {
-    return getValueMarkers(project) == null;
+    return getValueMarkers(event) == null;
   }
 
   @Nullable
-  private static XValueMarkers<?, ?> getValueMarkers(@NotNull Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+  private static XValueMarkers<?, ?> getValueMarkers(AnActionEvent event) {
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null ? ((XDebugSessionImpl)session).getValueMarkers() : null;
   }
 }

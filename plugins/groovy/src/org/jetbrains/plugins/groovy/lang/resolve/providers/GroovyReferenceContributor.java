@@ -30,10 +30,10 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 public class GroovyReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrLiteral.class), new PropertiesReferenceProvider());
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(GrLiteral.class), new PropertiesReferenceProvider(),
+                                        PsiReferenceRegistrar.LOWER_PRIORITY);
 
     registrar.registerReferenceProvider(GroovyPatterns.stringLiteral().withParent(GrAnnotationNameValuePair.class),
                                         new SpockUnrollReferenceProvider());
-
   }
 }

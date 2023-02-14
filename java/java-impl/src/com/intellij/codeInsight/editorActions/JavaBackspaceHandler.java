@@ -19,10 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
@@ -46,23 +43,9 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
 
       char c1 = chars.charAt(offset);
       if (c1 != '>') return true;
-      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypedHandler.INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE);
       return true;
     }
     return false;
-  }
-
-  /**
-   * needed for API compatibility only
-   * @deprecated Please use {@link TypedHandlerUtil#handleGenericGT} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void handleLTDeletion(@NotNull final Editor editor,
-                                      final int offset,
-                                      @NotNull final IElementType lt,
-                                      @NotNull final IElementType gt,
-                                      @NotNull final TokenSet invalidInsideReference) {
-    TypedHandlerUtil.handleGenericLTDeletion(editor, offset, lt, gt, invalidInsideReference);
   }
 }

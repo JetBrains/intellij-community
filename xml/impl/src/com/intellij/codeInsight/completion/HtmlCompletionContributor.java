@@ -1,36 +1,46 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInsight.completion.CompletionService.getCompletionService;
 import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 
 public class HtmlCompletionContributor extends CompletionContributor implements DumbAware {
 
@@ -75,6 +85,8 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
         }
       }
     });
+    extend(CompletionType.BASIC, getHtmlElementInTextPattern(),
+           new HtmlElementInTextCompletionProvider());
   }
 
   public static boolean hasHtmlAttributesCompletion(PsiElement position) {
@@ -165,5 +177,169 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       return ArrayUtilRt.toStringArray(result);
     }
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
+  }
+
+  @Contract("null->false")
+  private static boolean shouldTryDeselectingFirstPopupItem(@Nullable Lookup lookup) {
+    PsiFile file = doIfNotNull(lookup, Lookup::getPsiFile);
+    if (file == null || !isHtmlElementInTextCompletionEnabledForFile(file)) {
+      return false;
+    }
+    PsiElement element = lookup.getPsiElement();
+    if (element == null || isDeselectingFirstPopupItemDisabled(element)) {
+      return false;
+    }
+    IElementType elementType = element.getNode().getElementType();
+
+    if ((elementType == XmlTokenType.XML_DATA_CHARACTERS
+         || element.getNode().getElementType() == XmlTokenType.XML_WHITE_SPACE)
+        && (element.getParent() instanceof XmlText || element.getParent() instanceof XmlDocument)
+    ) {
+      return !element.getText().endsWith("<");
+    }
+
+    if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      return element.getText().contains("&");
+    }
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public static ElementPattern<PsiElement> getHtmlElementInTextPattern() {
+    return psiElement(XmlTokenType.XML_DATA_CHARACTERS)
+      .withParent(StandardPatterns.or(psiElement(XmlText.class), psiElement(XmlDocument.class)))
+      .inFile(PlatformPatterns.psiFile(HtmlFileImpl.class));
+  }
+
+  @ApiStatus.Internal
+  public static CompletionResultSet patchResultSetForHtmlElementInTextCompletion(@NotNull CompletionResultSet result,
+                                                                                 @NotNull CompletionParameters parameters) {
+    // We want live templates to be mixed with tags and other contributions
+    result = result.withRelevanceSorter(withoutLiveTemplatesWeigher(null, parameters, result.getPrefixMatcher()));
+    if (parameters.getInvocationCount() == 0) {
+      // We only want results which start with the prefix first char
+      result = result.withPrefixMatcher(new StartOnlyMatcher(result.getPrefixMatcher()));
+    }
+    return result;
+  }
+
+  @ApiStatus.Internal
+  public static boolean canProvideHtmlElementInTextCompletion(@NotNull CompletionParameters parameters) {
+    // Do not provide HTML text completions in multi view files like PHP
+    final List<PsiFile> psiFiles = parameters.getOriginalFile().getViewProvider().getAllFiles();
+    return ContainerUtil.exists(psiFiles, f -> f instanceof HtmlFileImpl) &&
+           ContainerUtil.and(psiFiles, f -> isHtmlElementInTextCompletionEnabledForFile(f));
+  }
+
+  static boolean isHtmlElementInTextCompletionEnabledForFile(@NotNull PsiFile file) {
+    return HtmlInTextCompletionEnabler.EP_NAME.getExtensionList().stream().anyMatch(enabler -> enabler.isEnabledInFile(file));
+  }
+
+  private static boolean isDeselectingFirstPopupItemDisabled(@NotNull PsiElement element) {
+    return ContainerUtil.exists(HtmlInTextCompletionPopupExtension.EP_NAME.getExtensionList(), ext -> ext.isDeselectingFirstItemDisabled(element));
+  }
+
+  private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
+                                                              @NotNull CompletionParameters parameters,
+                                                              @NotNull PrefixMatcher prefixMatcher) {
+    if (sorter == null) {
+      sorter = getCompletionService().defaultSorter(parameters, prefixMatcher);
+    }
+    return ((CompletionSorterImpl)sorter).withoutClassifiers(f -> "templates".equals(f.getId()));
+  }
+
+  private static class HtmlElementInTextCompletionProvider extends CompletionProvider<CompletionParameters> {
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  @NotNull ProcessingContext context,
+                                  @NotNull CompletionResultSet result) {
+      if (!canProvideHtmlElementInTextCompletion(parameters)) return;
+      // We cannot modify the file in injections - disable the feature
+      if (parameters.getPosition().getContainingFile().isPhysical()) return;
+      PsiFile completionFile = parameters.getPosition().getContainingFile();
+      int offset = parameters.getOffset();
+      var offsets = new OffsetsInFile(completionFile);
+      offsets.getOffsets().addOffset(CompletionInitializationContext.START_OFFSET, offset);
+      offsets = offsets.copyWithReplacement(offset, offset, "<");
+      PsiElement tag = doIfNotNull(offsets.getFile().findElementAt(offset + 1), PsiElement::getParent);
+      if (tag instanceof XmlTag) {
+        CompletionResultSet patchedResultSet = patchResultSetForHtmlElementInTextCompletion(result, parameters);
+        for (LookupElement variant : TagNameReferenceCompletionProvider.getTagNameVariants((XmlTag)tag, "")) {
+          LookupElement decorated = new LookupElementDecorator<>(variant) {
+
+            @Override
+            public @NotNull String getLookupString() {
+              return "<" + super.getLookupString();
+            }
+
+            @Override
+            public void renderElement(@NotNull LookupElementPresentation presentation) {
+              super.renderElement(presentation);
+              presentation.setItemText("<" + presentation.getItemText());
+            }
+          };
+          if (variant instanceof PrioritizedLookupElement) {
+            decorated = PrioritizedLookupElement.withGrouping(
+              PrioritizedLookupElement.withExplicitProximity(
+                PrioritizedLookupElement.withPriority(decorated,
+                                                      ((PrioritizedLookupElement<?>)variant).getPriority()),
+                ((PrioritizedLookupElement<?>)variant).getExplicitProximity()),
+              ((PrioritizedLookupElement<?>)variant).getGrouping());
+          }
+          patchedResultSet.consume(decorated);
+        }
+        patchedResultSet.runRemainingContributors(parameters, r -> {
+          patchedResultSet.withPrefixMatcher(r.getPrefixMatcher())
+            .withRelevanceSorter(withoutLiveTemplatesWeigher(r.getSorter(), parameters, r.getPrefixMatcher()))
+            .addElement(r.getLookupElement());
+        });
+      }
+      if (result.getPrefixMatcher().getPrefix().length() < 2) {
+        result.restartCompletionOnAnyPrefixChange();
+      }
+    }
+  }
+
+  public static class HtmlElementInTextLookupManagerListener implements LookupManagerListener {
+
+    @Override
+    public void activeLookupChanged(@Nullable Lookup oldLookup,
+                                    @Nullable Lookup newLookup) {
+      if (newLookup instanceof LookupImpl lookup && shouldTryDeselectingFirstPopupItem(newLookup)) {
+        lookup.setPrefixChangeListener(new PrefixChangeListener() {
+          @Override
+          public void afterAppend(char c) {
+            // Select first item when two chars are typed after '&'
+            if (lookup.getCurrentItemOrEmpty() == null && hasTwoCharsAfterAmp(lookup)) {
+              lookup.setSelectedIndex(0);
+            }
+          }
+        });
+        lookup.addLookupListener(new LookupListener() {
+          @Override
+          public void uiRefreshed() {
+            var currentCompletion = getCompletionService().getCurrentCompletion();
+            if (currentCompletion != null
+                && currentCompletion.isAutopopupCompletion()
+                && !lookup.isSelectionTouched()
+                && !hasTwoCharsAfterAmp(lookup)) {
+              // Deselect topmost item
+              lookup.getList().setSelectedValue(null, false);
+              ListSelectionModel selectionModel = lookup.getList().getSelectionModel();
+              selectionModel.setAnchorSelectionIndex(-1);
+              selectionModel.setLeadSelectionIndex(-1);
+            }
+          }
+        });
+      }
+    }
+
+    private static boolean hasTwoCharsAfterAmp(LookupImpl lookup) {
+      int start = Math.max(lookup.getLookupStart() - 1, 0);
+      int end = lookup.getEditor().getCaretModel().getOffset();
+      if (end - start < 3) return false;
+      Document doc = lookup.getEditor().getDocument();
+      return doc.getTextLength() > start && doc.getCharsSequence().charAt(start) == '&';
+    }
   }
 }

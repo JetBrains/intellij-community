@@ -42,7 +42,7 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
   private static class SuspiciousArrayCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement == null) {
@@ -72,10 +72,9 @@ public class SuspiciousArrayCastInspection extends BaseInspection {
     }
 
     private static boolean isCollectionToArrayCall(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       if (argumentList.getExpressionCount() != 1) {
         return false;

@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class SafeDeleteUsageInfo extends UsageInfo {
   private static final Logger LOG = Logger.getInstance(SafeDeleteUsageInfo.class);
   private final PsiElement myReferencedElement;

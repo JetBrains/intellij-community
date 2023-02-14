@@ -17,12 +17,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service(Service.Level.PROJECT)
@@ -47,14 +47,25 @@ public final class MavenDomElementDescriptorHolder {
       public String getSchemaUrl() {
         return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL;
       }
+    },
+    SETTINGS_FILE_1_1 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_1;
+      }
+    },
+    SETTINGS_FILE_1_2 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL_1_2;
+      }
     };
 
     public abstract String getSchemaUrl();
   }
 
   private final Project myProject;
-  private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap =
-    new THashMap<>();
+  private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap = new HashMap<>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;
@@ -118,7 +129,16 @@ public final class MavenDomElementDescriptorHolder {
   private static FileKind getFileKind(PsiFile file) {
     if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
-    if (MavenDomUtil.isSettingsFile(file)) return FileKind.SETTINGS_FILE;
+    if (MavenDomUtil.isSettingsFile(file)) return getSettingsFileKind(file);
     return null;
+  }
+
+  @NotNull
+  private static FileKind getSettingsFileKind(PsiFile file) {
+    String nameSpace = MavenDomUtil.getXmlSettingsNameSpace(file);
+    if (nameSpace == null) return FileKind.SETTINGS_FILE;
+    if (nameSpace.contains("1.1.0")) return FileKind.SETTINGS_FILE_1_1;
+    if (nameSpace.contains("1.2.0")) return FileKind.SETTINGS_FILE_1_2;
+    return FileKind.SETTINGS_FILE;
   }
 }

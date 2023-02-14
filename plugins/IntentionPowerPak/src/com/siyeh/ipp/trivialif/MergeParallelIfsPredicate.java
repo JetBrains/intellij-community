@@ -22,6 +22,7 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,21 +32,18 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken)) {
+    if (!(element instanceof PsiJavaToken token)) {
       return false;
     }
-    final PsiJavaToken token = (PsiJavaToken)element;
     final PsiElement parent = token.getParent();
-    if (!(parent instanceof PsiIfStatement)) {
+    if (!(parent instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
     final PsiElement nextStatement =
       PsiTreeUtil.skipWhitespacesForward(ifStatement);
-    if (!(nextStatement instanceof PsiIfStatement)) {
+    if (!(nextStatement instanceof PsiIfStatement nextIfStatement)) {
       return false;
     }
-    final PsiIfStatement nextIfStatement = (PsiIfStatement)nextStatement;
     if (ErrorUtil.containsError(ifStatement)) {
       return false;
     }
@@ -118,9 +116,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     if (statement instanceof PsiDeclarationStatement) {
       addDeclarations((PsiDeclarationStatement)statement, out);
     }
-    else if (statement instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)statement;
+    else if (statement instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock block = blockStatement.getCodeBlock();
       final PsiStatement[] statements = block.getStatements();
       for (PsiStatement statement1 : statements) {
@@ -136,8 +132,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
                                       Collection<? super String> declaredVariables) {
     final PsiElement[] elements = statement.getDeclaredElements();
     for (final PsiElement element : elements) {
-      if (element instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)element;
+      if (element instanceof PsiVariable variable) {
         final String name = variable.getName();
         declaredVariables.add(name);
       }
@@ -156,7 +151,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       final String name = variable.getName();
       for (String testName : declarations) {

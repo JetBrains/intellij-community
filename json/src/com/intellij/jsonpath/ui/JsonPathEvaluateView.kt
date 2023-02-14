@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -8,7 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.json.JsonBundle
-import com.intellij.json.json5.Json5FileType
+import com.intellij.json.JsonFileType
 import com.intellij.json.psi.JsonFile
 import com.intellij.jsonpath.JsonPathFileType
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager.Companion.JSON_PATH_EVALUATE_EXPRESSION_KEY
@@ -33,29 +33,47 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.serialization.ClassUtil.isPrimitive
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jayway.jsonpath.*
-import com.jayway.jsonpath.Configuration.ConfigurationBuilder
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.*
+import kotlin.collections.ArrayDeque
 
 internal abstract class JsonPathEvaluateView(protected val project: Project) : SimpleToolWindowPanel(true, true), Disposable {
+  companion object {
+    init {
+      Configuration.setDefaults(object : Configuration.Defaults {
+        private val jsonProvider = JacksonJsonProvider()
+        private val mappingProvider = JacksonMappingProvider()
+
+        override fun jsonProvider() = jsonProvider
+
+        override fun mappingProvider() = mappingProvider
+
+        override fun options() = EnumSet.noneOf(Option::class.java)
+      })
+    }
+  }
+
   protected val searchTextField: EditorTextField = object : EditorTextField(project, JsonPathFileType.INSTANCE) {
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
@@ -133,7 +151,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     fillToolbarOptions(actionGroup)
 
     val toolbar = ActionManager.getInstance().createActionToolbar("JsonPathEvaluateToolbar", actionGroup, true)
-    toolbar.setTargetComponent(this)
+    toolbar.targetComponent = this
 
     setToolbar(toolbar.component)
   }
@@ -150,7 +168,9 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
   private fun fillToolbarOptions(group: DefaultActionGroup) {
     val outputComboBox = object : ComboBoxAction() {
-      override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+      override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val outputItems = DefaultActionGroup()
         outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
         outputItems.add(OutputOptionAction(true, JsonBundle.message("jsonpath.evaluate.output.paths")))
@@ -174,7 +194,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         panel.add(JLabel(JsonBundle.message("jsonpath.evaluate.output.option")),
                   GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insetsLeft(5), 0, 0))
         panel.add(super.createCustomComponent(presentation, place),
-                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0))
+                  GridBagConstraints(1, 0, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0))
         return panel
       }
     }
@@ -192,7 +212,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   protected fun initJsonEditor(fileName: String, isViewer: Boolean, kind: EditorKind): Editor {
-    val sourceVirtualFile = LightVirtualFile(fileName, Json5FileType.INSTANCE, "")
+    val sourceVirtualFile = LightVirtualFile(fileName, JsonFileType.INSTANCE, "") // require strict JSON with quotes
     val sourceFile = PsiManager.getInstance(project).findFile(sourceVirtualFile)!!
     val document = PsiDocumentManager.getInstance(project).getDocument(sourceFile)!!
 
@@ -241,83 +261,28 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   private fun evaluate() {
-    val expression = searchTextField.text
-    val jsonPath: JsonPath = try {
-      if (expression.isBlank()) return
-      JsonPath.compile(expression)
-    }
-    catch (ip: InvalidPathException) {
-      setError(ip.localizedMessage)
-      return
+    val evaluator = JsonPathEvaluator(getJsonFile(), searchTextField.text, evalOptions)
+    val result = evaluator.evaluate()
+
+    when (result) {
+      is IncorrectExpression -> setError(result.message)
+      is IncorrectDocument -> setError(result.message)
+      is ResultNotFound -> setError(result.message)
+      is ResultString -> setResult(result.value)
+      else -> {}
     }
 
-    addJSONPathToHistory(expression)
-
-    val config = ConfigurationBuilder()
-      .options(evalOptions)
-      .build()
-
-    val json = getJsonFile()?.text
-    if (json == null) {
-      setError(JsonBundle.message("jsonpath.evaluate.file.not.found"))
-      return
+    if (result != null && result !is IncorrectExpression) {
+      addJSONPathToHistory(searchTextField.text.trim())
     }
-
-    val jsonDocument: DocumentContext = try {
-      JsonPath.parse(json, config)
-    }
-    catch (e: IllegalArgumentException) {
-      setError(e.localizedMessage)
-      return
-    }
-    catch (ej: InvalidJsonException) {
-      setError(ej.localizedMessage)
-      return
-    }
-
-    val result = try {
-      jsonDocument.read<Any>(jsonPath)
-    }
-    catch (pe: PathNotFoundException) {
-      setError(pe.localizedMessage)
-      return
-    }
-    catch (jpe: JsonPathException) {
-      setError(jpe.localizedMessage)
-      return
-    }
-    catch (ise: IllegalStateException) {
-      setError(ise.localizedMessage)
-      return
-    }
-
-    setResult(toResultString(config, result))
-  }
-
-  private fun toResultString(config: Configuration, result: Any?): String {
-    if (result == null) return "null"
-    if (result is String) return "\"" + StringUtil.escapeStringCharacters(result) + "\""
-
-    if (isPrimitive(result.javaClass)) {
-      return result.toString()
-    }
-
-    if (result is Collection<*>) {
-      // .keys() result is Set<String>
-      return "[" + result.joinToString(", ") {
-        toResultString(config, it)
-      } + "]"
-    }
-
-    return config.jsonProvider().toJson(result) ?: ""
   }
 
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(resultEditor)
   }
 
-  private inner class OutputOptionAction(private val enablePaths: Boolean, @NlsActions.ActionText message: String) : DumbAwareAction(
-    message) {
+  private inner class OutputOptionAction(private val enablePaths: Boolean, @NlsActions.ActionText message: String)
+    : DumbAwareAction(message) {
     override fun actionPerformed(e: AnActionEvent) {
       if (enablePaths) {
         evalOptions.add(Option.AS_PATH_LIST)
@@ -330,6 +295,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   private inner class OptionToggleAction(private val option: Option, @NlsActions.ActionText message: String) : ToggleAction(message) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun isSelected(e: AnActionEvent): Boolean {
       return evalOptions.contains(option)
     }
@@ -389,7 +356,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         history.removeLast()
       }
       setExpressionHistory(history)
-    } else {
+    }
+    else {
       if (history.firstOrNull() == path) {
         return
       }

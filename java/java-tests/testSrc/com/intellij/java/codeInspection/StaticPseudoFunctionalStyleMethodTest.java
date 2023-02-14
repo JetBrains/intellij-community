@@ -100,7 +100,7 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     myFixture.enableInspections(new StaticPseudoFunctionalStyleMethodInspection());
     IntentionAction action = myFixture.getAvailableIntention("Replace with Java Stream API pipeline");
     assertNotNull("Quick fix isn't found", action);
-    myFixture.launchAction(action);
+    myFixture.checkPreviewAndLaunchAction(action);
     myFixture.checkResultByFile(getTestName(true) + "/test_after.java");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +56,7 @@ public final class VcsCommitStyleFactory {
   /**
    * Combines a list of styles into one. For example, if first style in the list specifies text color but does not provide
    * background color and second style in the list does have a background color then this method will return a style with text color from the first
-   * and background color from the second. However if the first style in the list has all the attributes then the result will be equal to the first style
+   * and background color from the second. However, if the first style in the list has all the attributes then the result will be equal to the first style
    * and the rest of the list will be ignored.
    *
    * @param styles list of styles to combine into one.

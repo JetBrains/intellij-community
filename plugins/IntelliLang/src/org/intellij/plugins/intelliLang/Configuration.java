@@ -24,6 +24,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -90,7 +91,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   protected void invokeAfterReload(Runnable runnable) { runnable.run(); }
 
-  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"))
+  @State(name = Configuration.COMPONENT_NAME, defaultStateAsResource = true, storages = @Storage("IntelliLang.xml"), category = SettingsCategory.CODE)
   public static final class App extends Configuration implements Disposable {
     private volatile @NotNull List<BaseInjection> myDefaultInjections;
     private volatile @Nullable List<BaseInjection> myUnloadingDefaultInjections = null;
@@ -330,7 +331,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
     LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
-      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
+      final ClassLoader loader = pluginDescriptor.getClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
         if (enumeration == null || !enumeration.hasMoreElements()) {
@@ -569,7 +570,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                                    final T remove,
                                                    boolean global,
                                                    final List<? extends PsiElement> psiElementsToRemove,
-                                                   final PairProcessor<T, T> actualProcessor) {
+                                                   final PairProcessor<? super T, ? super T> actualProcessor) {
 
     PsiFile[] psiFiles = StreamEx.ofNullable(hostFile)
                                  .append(psiElementsToRemove

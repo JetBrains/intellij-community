@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +68,14 @@ public final class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<? super PsiElement> shouldIgnoreElement) {
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, @NotNull Predicate<? super PsiElement> shouldIgnoreElement) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, element, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
+  }
+
+  public static boolean mayHaveNonLocalSideEffects(@NotNull PsiElement element, @NotNull Predicate<PsiElement> shouldIgnoreElement) {
+    return mayHaveSideEffects(element, shouldIgnoreElement.or(e -> isLocalSideEffect(e)));
   }
 
   /**
@@ -95,8 +98,7 @@ public final class SideEffectChecker {
     if (e instanceof PsiLocalVariable) return true;
 
     PsiReferenceExpression ref = null;
-    if (e instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
+    if (e instanceof PsiAssignmentExpression assignment) {
       ref = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()), PsiReferenceExpression.class);
     }
     if (e instanceof PsiUnaryExpression) {
@@ -130,7 +132,7 @@ public final class SideEffectChecker {
                                                                  @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element, ignoreElement));
-    return StreamEx.of(list).select(PsiExpression.class).toList();
+    return ContainerUtil.filterIsInstance(list, PsiExpression.class);
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -200,7 +202,7 @@ public final class SideEffectChecker {
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(expression);
       if (!variables.isEmpty() &&
           !PsiTreeUtil.isAncestor(myStartElement, variables.get(0).getDeclarationScope(), false)) {
@@ -210,14 +212,14 @@ public final class SideEffectChecker {
     }
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       if (variable instanceof PsiPatternVariable) return;
       if (addSideEffect(variable)) return;
       super.visitVariable(variable);
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiStatement exitedStatement = statement.findExitedStatement();
       if (exitedStatement == null || !PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) {
         if (addSideEffect(statement)) return;
@@ -226,12 +228,12 @@ public final class SideEffectChecker {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // local or anonymous class declaration is not side effect per se (unless it's instantiated)
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiStatement exitedStatement = statement.findContinuedStatement();
       if (exitedStatement != null && PsiTreeUtil.isAncestor(myStartElement, exitedStatement, false)) return;
       if (addSideEffect(statement)) return;
@@ -239,7 +241,16 @@ public final class SideEffectChecker {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+      final PsiSwitchExpression enclosingExpression = statement.findEnclosingExpression();
+      if (enclosingExpression == null || !PsiTreeUtil.isAncestor(myStartElement, enclosingExpression, false)) {
+        if (addSideEffect(statement)) return;
+      }
+      super.visitYieldStatement(statement);
+    }
+
+    @Override
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       if (!(myStartElement.getParent() instanceof PsiParameterListOwner)) {
         if (addSideEffect(statement)) return;
       }
@@ -247,13 +258,13 @@ public final class SideEffectChecker {
     }
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       if (addSideEffect(statement)) return;
       super.visitThrowStatement(statement);
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       // lambda is not side effect per se (unless it's called)
     }
 

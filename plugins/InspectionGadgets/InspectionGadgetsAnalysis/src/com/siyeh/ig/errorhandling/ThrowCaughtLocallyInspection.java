@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class ThrowCaughtLocallyInspection extends BaseInspection {
 
@@ -42,11 +45,10 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "throw.caught.locally.ignore.option"), this,
-                                          "ignoreRethrownExceptions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreRethrownExceptions", InspectionGadgetsBundle.message(
+        "throw.caught.locally.ignore.option")));
   }
 
   @Override
@@ -57,7 +59,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
   private class ThrowCaughtLocallyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception = statement.getException();
       if (exception == null) {

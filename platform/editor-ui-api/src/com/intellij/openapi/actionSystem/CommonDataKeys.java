@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.lang.Language;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,10 +11,13 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
+
 /**
  * Common data keys used as parameter for {@link AnActionEvent#getData(DataKey)} in {@link AnAction#update(AnActionEvent)}/{@link AnAction#actionPerformed(AnActionEvent)} implementations.
  *
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
  * @see com.intellij.openapi.actionSystem.LangDataKeys
  */
 public class CommonDataKeys {
@@ -94,6 +85,8 @@ public class CommonDataKeys {
    */
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create("psi.Element");
 
+  public static final DataKey<Language> LANGUAGE = DataKey.create("Language");
+
   /**
    * Returns currently selected {@link PsiFile} instance.
    * <p/>
@@ -108,4 +101,13 @@ public class CommonDataKeys {
    * @see com.intellij.openapi.editor.EditorSettings#setVirtualSpace(boolean)
    */
   public static final DataKey<Boolean> EDITOR_VIRTUAL_SPACE = DataKey.create("editor.virtual.space");
+
+  /**
+   * Returns a list of target symbols.
+   * If there is an editor in the context, then it will return referenced or declared symbols
+   * by the current editor file and the caret offset.
+   *
+   * @see com.intellij.model.psi.impl.TargetSymbolsDataRule
+   */
+  public static final DataKey<List<Symbol>> SYMBOLS = DataKey.create("symbols");
 }

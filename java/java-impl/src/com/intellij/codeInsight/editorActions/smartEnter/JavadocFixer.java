@@ -17,8 +17,6 @@ import java.util.List;
  * Serves as a facade for javadoc smart completion.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class JavadocFixer {
 

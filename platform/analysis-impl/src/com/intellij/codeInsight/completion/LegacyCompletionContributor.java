@@ -22,10 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +31,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class LegacyCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LegacyCompletionContributor.class);
 
@@ -61,6 +55,17 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
     completionData.completeKeywordsBySet(lookupSet, keywordVariants);
     result.addAllElements(lookupSet);
+  }
+
+  @Override
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    final PsiFile file = context.getFile();
+    PsiElement element = file.findElementAt(context.getStartOffset());
+    if (element instanceof PsiWhiteSpace &&
+        element.textContains('\n') &&
+        element.getTextRange().getStartOffset() == context.getStartOffset()) {
+      context.setReplacementOffset(context.getStartOffset());
+    }
   }
 
   public static boolean completeReference(final CompletionParameters parameters, final CompletionResultSet result) {

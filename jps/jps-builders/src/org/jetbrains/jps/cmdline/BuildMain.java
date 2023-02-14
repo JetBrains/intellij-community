@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileSystemUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.TimeoutUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -33,11 +30,9 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Eugene Zhuravlev
- */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class BuildMain {
   private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
@@ -55,28 +50,27 @@ public final class BuildMain {
   private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
 
   private static NioEventLoopGroup ourEventLoopGroup;
-  @Nullable
-  private static PreloadedData ourPreloadedData;
+  private static @Nullable PreloadedData ourPreloadedData;
 
   public static void main(String[] args) {
     try {
       final long processStart = System.nanoTime();
       final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
       System.out.println(startMessage);
-      LOG.info(StringUtil.repeatSymbol('=', 50));
+      LOG.info("==================================================");
       LOG.info(startMessage);
 
       final String host = args[HOST_ARG];
       final int port = Integer.parseInt(args[PORT_ARG]);
       final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
-      final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
+      final File systemDir = new File(FileUtilRt.toCanonicalPath(args[SYSTEM_DIR_ARG], File.separatorChar, true));
       Utils.setSystemRoot(systemDir);
 
       final long connectStart = System.nanoTime();
       // IDEA-123132, let's try again
-      for (int attempt = 0; attempt < 3; attempt++) {
+      for (int attempt = 0; ; attempt++) {
         try {
-          ourEventLoopGroup = new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("JPS event loop"));
+          ourEventLoopGroup = new NioEventLoopGroup(1, (ThreadFactory)r -> new Thread(r, "JPS event loop"));
           break;
         }
         catch (IllegalStateException e) {
@@ -86,12 +80,12 @@ public final class BuildMain {
           }
           else {
             LOG.warn("Cannot create event loop, attempt #" + attempt, e);
-            TimeoutUtil.sleep(10 * (attempt + 1));
+            TimeoutUtil.sleep(10L * (attempt + 1));
           }
         }
       }
 
-      final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+      final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer<>() {
         @Override
         protected void initChannel(Channel channel) {
           channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
@@ -115,8 +109,6 @@ public final class BuildMain {
           final PreloadedData data = new PreloadedData();
           ourPreloadedData = data;
           try {
-            FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
-
             final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, false, null));
             data.setRunner(runner);
 
@@ -135,7 +127,7 @@ public final class BuildMain {
               final int version = in.readInt();
               if (version == BuildFSState.VERSION) {
                 final long savedOrdinal = in.readLong();
-                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
+                final boolean hasWorkToDo = in.readBoolean();
                 fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
                 data.setFsEventOrdinal(savedOrdinal);
                 data.setHasHasWorkToDo(hasWorkToDo);
@@ -163,7 +155,7 @@ public final class BuildMain {
           }
           catch (Throwable e) {
             LOG.info("Failed to pre-load project " + projectPathToPreload, e);
-            // just failed to preload the project, the situation will be handled later, when real build starts
+            // failed to preload the project; the situation will be handled later, when real build starts
           }
         }
         else if (projectPathToPreload != null || globalsPathToPreload != null){
@@ -240,7 +232,6 @@ public final class BuildMain {
             }
             return;
           }
-
           case CONSTANT_SEARCH_RESULT: {
             // ignored, functionality deprecated
             return;
@@ -262,7 +253,7 @@ public final class BuildMain {
               catch (Throwable e) {
                 LOG.info(e);
               }
-              Thread.interrupted(); // to clear 'interrupted' flag
+              Thread.interrupted(); // to clear the 'interrupted' flag
               final PreloadedData preloaded = ourPreloadedData;
               final ProjectDescriptor pd = preloaded != null? preloaded.getProjectDescriptor() : null;
               if (pd != null) {

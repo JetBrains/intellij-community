@@ -39,35 +39,29 @@ public class ModifierKeyDoubleClickHandlerTest extends LightPlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     Clock.setTime(0);
-    ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_ACTION, new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myShiftShiftActionInvocationCount++;
-      }
-    });
-    ActionManager.getInstance().registerAction(MY_SHIFT_KEY_ACTION, new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myShiftKeyActionInvocationCount++;
-      }
-    });
-    ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_KEY_ACTION, new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myShiftShiftKeyActionInvocationCount++;
-      }
-    });
-    ActionManager.getInstance().registerAction(MY_SHIFT_OTHER_KEY_ACTION, new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myShiftOtherKeyActionInvocationCount++;
-      }
-    });
+    ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_ACTION, createAction(() -> myShiftShiftActionInvocationCount++));
+    ActionManager.getInstance().registerAction(MY_SHIFT_KEY_ACTION, createAction(() -> myShiftKeyActionInvocationCount++));
+    ActionManager.getInstance().registerAction(MY_SHIFT_SHIFT_KEY_ACTION, createAction(() -> myShiftShiftKeyActionInvocationCount++));
+    ActionManager.getInstance().registerAction(MY_SHIFT_OTHER_KEY_ACTION, createAction(() -> myShiftOtherKeyActionInvocationCount++));
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     activeKeymap.addShortcut(MY_SHIFT_KEY_ACTION, SHIFT_KEY_SHORTCUT);
     activeKeymap.addShortcut(MY_SHIFT_OTHER_KEY_ACTION, SHIFT_OTHER_KEY_SHORTCUT);
     ModifierKeyDoubleClickHandler.getInstance().registerAction(MY_SHIFT_SHIFT_ACTION, KeyEvent.VK_SHIFT, -1);
     ModifierKeyDoubleClickHandler.getInstance().registerAction(MY_SHIFT_SHIFT_KEY_ACTION, KeyEvent.VK_SHIFT, KeyEvent.VK_BACK_SPACE);
+  }
+
+  private static @NotNull AnAction createAction(@NotNull Runnable runnable) {
+    return new AnAction() {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabledAndVisible(true);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        runnable.run();
+      }
+    };
   }
 
   @Override

@@ -24,10 +24,15 @@ import java.util.List;
 /**
  * @author Dennis.Ushakov
  */
-public class PyExtractSuperclassTest extends PyClassRefactoringTest {
+public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   public PyExtractSuperclassTest() {
     super("extractsuperclass");
+  }
+
+  // PY-21099
+  public void testClassPropertyDependsOnMethod() {
+    doSimpleTest("C", "Spam", null, true, true, ".__add__", "#__radd__");
   }
 
   // Checks if class explicitly extends object we shall move it even in Py3K (PY-19137)
@@ -243,5 +248,10 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
   // PY-46099
   public void testNoClassCastExceptionInCopiedFunctionWithClassInitAndMethodCall() {
     doSimpleTest("Baz", "Bar", null, true, false, ".baz");
+  }
+
+  // PY-16221
+  public void testFromFutureImports() {
+    multiFileTestHelper(".foo", false);
   }
 }

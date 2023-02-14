@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -41,11 +44,10 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("throw,from.finally.block.everywhere.option"),
-                                          this, "warnOnAllExceptions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("warnOnAllExceptions", InspectionGadgetsBundle.message("throw,from.finally.block.everywhere.option")));
   }
 
   @Override
@@ -68,7 +70,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   private class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCallExpression(PsiCallExpression expression) {
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
       super.visitCallExpression(expression);
       if (!warnOnAllExceptions) {
         return;
@@ -92,7 +94,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     }
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception = PsiUtil.skipParenthesizedExprDown(statement.getException());
       if (exception == null) {
@@ -106,8 +108,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
       if (finallyBlock == null) {
         return;
       }
-      if (exception instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)exception;
+      if (exception instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement target = referenceExpression.resolve();
         if (target == null || !PsiTreeUtil.isAncestor(finallyBlock, target, true)) {
           // variable from outside finally block is thrown
@@ -121,11 +122,10 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
     private boolean isHidingOfPreviousException(PsiCodeBlock finallyBlock, PsiElement throwElement) {
       final PsiElement parent = finallyBlock.getParent();
-      if (!(parent instanceof PsiTryStatement)) {
+      if (!(parent instanceof PsiTryStatement tryStatement)) {
         // never reached
         return false;
       }
-      final PsiTryStatement tryStatement = (PsiTryStatement)parent;
       final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
       if (catchBlocks.length == 0) {
         return true;

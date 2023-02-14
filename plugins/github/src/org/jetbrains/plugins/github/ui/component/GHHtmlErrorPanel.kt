@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -36,7 +36,7 @@ object GHHtmlErrorPanel {
   fun create(model: GHErrorPanelModel, horizontalAlignment: Int = SwingConstants.CENTER): JComponent {
 
     val pane = HtmlEditorPane().apply {
-      foreground = UIUtil.getErrorForeground()
+      foreground = NamedColorUtil.getErrorForeground()
       isFocusable = true
 
       removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE)

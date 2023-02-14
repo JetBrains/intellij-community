@@ -76,12 +76,15 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   protected String getRequestForStateTransition(@NotNull CustomTaskState state) {
     try {
       switch (Integer.parseInt(state.getId())) {
-        case 4: // In Progress
+        case 4 -> { // In Progress
           return "{\"transition\": \"4\"}";
-        case 5: // Resolved (2 for "Closed")
+        }
+        case 5 -> { // Resolved (2 for "Closed")
           return "{\"transition\": \"5\", \"resolution\": \"Fixed\"}";
-        case 3: // Reopened
+        }
+        case 3 -> { // Reopened
           return "{\"transition\": \"3\"}";
+        }
       }
     }
     catch (NumberFormatException ignored) {

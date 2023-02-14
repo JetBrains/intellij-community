@@ -1,16 +1,11 @@
 fragment commit on Commit {
     ...commitShort
     committer {
-        name
-        email
-        avatarUrl
-        date
-        user {
-            url
-        }
+        ...gitActorInfo
     }
     messageHeadline
     messageBodyHTML
+    committedDate
     parents(first: 100) {
         nodes {
             ...commitHash

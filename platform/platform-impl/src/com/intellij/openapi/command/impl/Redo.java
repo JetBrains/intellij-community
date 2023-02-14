@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -10,18 +11,28 @@ import com.intellij.openapi.util.text.StringUtil;
  * @author lesya
  */
 class Redo extends UndoRedo {
-  Redo(UndoManagerImpl manager, FileEditor editor) {
-    super(manager, editor);
+  Redo(UndoManagerImpl.ClientState state, FileEditor editor) {
+    super(state, editor);
   }
 
   @Override
-  protected UndoRedoStacksHolder getStackHolder() {
-    return myManager.getRedoStacksHolder();
+  protected UndoRedoStacksHolder getStacksHolder() {
+    return myState.myRedoStacksHolder;
   }
 
   @Override
-  protected UndoRedoStacksHolder getReverseStackHolder() {
-    return myManager.getUndoStacksHolder();
+  protected UndoRedoStacksHolder getReverseStacksHolder() {
+    return myState.myUndoStacksHolder;
+  }
+
+  @Override
+  protected SharedUndoRedoStacksHolder getSharedStacksHolder() {
+    return myManager.getSharedRedoStacksHolder();
+  }
+
+  @Override
+  protected SharedUndoRedoStacksHolder getSharedReverseStacksHolder() {
+    return myManager.getSharedUndoStacksHolder();
   }
 
   @Override
@@ -36,7 +47,7 @@ class Redo extends UndoRedo {
   }
 
   @Override
-  protected void performAction() {
+  protected void performAction() throws UnexpectedUndoException {
     myUndoableGroup.redo();
   }
 

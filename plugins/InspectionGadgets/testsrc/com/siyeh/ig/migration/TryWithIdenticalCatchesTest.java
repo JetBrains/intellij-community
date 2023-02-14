@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,9 +12,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
 public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String PATH = "com/siyeh/igtest/errorhandling/try_identical_catches/";
 
@@ -41,7 +24,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testMethodQualifier() {
-    highlightTest(false);
+    highlightTest(false, false);
   }
 
   public void testIdenticalCatchUnrelatedExceptions() {
@@ -49,7 +32,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalCatchThreeOutOfFour() {
-    doTest(true, false);
+    doTest(true, false, false);
   }
 
   public void testIdenticalCatchWithComments() {
@@ -61,7 +44,7 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalCatchWithDifferentComments() {
-    doTest(false, true);
+    doTest(false, true, false);
   }
 
   public void testIdenticalCatchDifferentCommentStyle() {
@@ -73,23 +56,36 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
   }
 
   public void testIdenticalNonemptyCatchWithDifferentCommentsProcessAll() {
-    doTest(true, true);
+    doTest(true, true, false);
   }
 
   public void testIdenticalNonemptyCatchWithDifferentCommentsProcessOne() {
-    doTest(false, true);
+    doTest(false, true, false);
+  }
+
+  public void testIdenticalNonemptyCatchWithDifferentCommentsStrict() {
+    highlightTest(true, true);
   }
 
   public void testCatchParameterRewritten() {
-    highlightTest(false);
+    highlightTest(false, false);
   }
 
+  public void testMoreCommonCatchPreserved() {
+    doTest();
+  }
+  public void testMoreCommonCatchPreservedWithOneLine() {
+    doTest();
+  }
+  public void testPreservedNewLine() {
+    doTest();
+  }
   public void doTest() {
-    doTest(false, false);
+    doTest(false, false, false);
   }
 
-  public void doTest(boolean processAll, boolean checkInfos) {
-    highlightTest(checkInfos);
+  private void doTest(boolean processAll, boolean checkInfos, boolean strictComments) {
+    highlightTest(checkInfos, strictComments);
     String name = getTestName(false);
     if (processAll) {
       PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiTryStatement.class);
@@ -113,9 +109,11 @@ public class TryWithIdenticalCatchesTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkResultByFile(PATH + name + ".after.java");
   }
 
-  private void highlightTest(boolean checkInfos) {
+  private void highlightTest(boolean checkInfos, boolean strictComments) {
     String name = getTestName(false);
-    myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
+    TryWithIdenticalCatchesInspection inspection = new TryWithIdenticalCatchesInspection();
+    inspection.ignoreBlocksWithDifferentComments = strictComments;
+    myFixture.enableInspections(inspection);
     myFixture.configureByFile(PATH + name + ".java");
     myFixture.checkHighlighting(true, checkInfos, false);
   }

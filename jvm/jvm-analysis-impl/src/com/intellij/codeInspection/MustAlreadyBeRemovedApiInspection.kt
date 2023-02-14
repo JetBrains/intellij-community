@@ -1,22 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.pane
+import com.intellij.codeInspection.options.OptPane.string
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.fields.valueEditors.TextFieldValueEditor
 import com.intellij.util.text.VersionComparatorUtil
-import com.intellij.util.ui.FormBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.sourcePsiElement
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.awt.BorderLayout
-import javax.swing.JComponent
-import javax.swing.JPanel
 
 /**
  * Reports declarations (classes, methods, fields) marked with [ApiStatus.ScheduledForRemoval] annotation
@@ -70,41 +67,6 @@ class MustAlreadyBeRemovedApiInspection : LocalInspectionTool() {
     }
   }
 
-  override fun createOptionsPanel(): JComponent? {
-    val versionField = VersionField("Version", "")
-    versionField.version = currentVersion
-    versionField.versionEditor.addListener { version ->
-      currentVersion = version
-    }
-
-    val formBuilder = FormBuilder.createFormBuilder().addLabeledComponent(JvmAnalysisBundle.message("current.version"), versionField)
-
-    val container = JPanel(BorderLayout())
-    container.add(formBuilder.panel, BorderLayout.NORTH)
-    return container
-  }
-
-  private class VersionField(valueName: String, defaultValue: String) : JBTextField() {
-
-    val versionEditor: VersionEditor = VersionEditor(this, valueName, defaultValue)
-
-    var version: String
-      get() = versionEditor.value
-      set(value) {
-        versionEditor.value = value
-      }
-
-  }
-
-  private class VersionEditor(textField: JBTextField, valueName: String, defaultValue: String)
-    : TextFieldValueEditor<String>(textField, valueName, defaultValue) {
-
-    override fun parseValue(text: String?): String = text ?: ""
-    override fun valueToString(value: String) = value
-
-    override fun isValid(value: String): Boolean = true
-
-  }
-
+  override fun getOptionsPane(): OptPane = pane(string("currentVersion", JvmAnalysisBundle.message("current.version")))
 }
 

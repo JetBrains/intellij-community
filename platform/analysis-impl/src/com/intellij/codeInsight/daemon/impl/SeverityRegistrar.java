@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -32,7 +33,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
-  static final int SHOWN_SEVERITIES_OFFSET = 1;
+  static final int SHOWN_SEVERITIES_OFFSET = 2;
 
   private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
@@ -64,17 +65,17 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     map.put(HighlightSeverity.INFO.getName(), HighlightInfoType.INFO);
     map.put(HighlightSeverity.WEAK_WARNING.getName(), HighlightInfoType.WEAK_WARNING);
     map.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.getName(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
+    map.put(HighlightDisplayLevel.CONSIDERATION_ATTRIBUTES.getName(), HighlightInfoType.TEXT_ATTRIBUTES);
     map.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
     STANDARD_SEVERITIES = new ConcurrentHashMap<>(map);
   }
 
-  @SuppressWarnings("unused")
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
     STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
-  public static void registerStandard(@NotNull Map<String, HighlightInfoType> map) {
+  public static void registerStandard(@NotNull Map<String, ? extends HighlightInfoType> map) {
     STANDARD_SEVERITIES.putAll(map);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
@@ -90,7 +91,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return myModificationTracker.getModificationCount();
   }
 
-  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
+  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, @Nullable Color renderColor) {
     HighlightSeverity severity = info.getType().getSeverity(null);
     myMap.put(severity.getName(), info);
     if (renderColor != null) {
@@ -138,6 +139,10 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
+  public @Nullable TextAttributes getCustomSeverityTextAttributes(@NotNull TextAttributesKey key) {
+    final SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
+    return attributes != null ? attributes.getAttributes() : null;
+  }
 
   public void readExternal(@NotNull Element element) {
     myMap.clear();
@@ -163,7 +168,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     severitiesChanged();
   }
 
-  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
+  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<? extends HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
     Object2IntMap<HighlightSeverity> orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       return fromList(knownSeverities);
@@ -202,14 +207,15 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
       }
     }
 
-    @SuppressWarnings("deprecation")
+
+    //noinspection deprecation
     JDOMExternalizableStringList readOrder = myReadOrder;
     if (readOrder != null && !readOrder.isEmpty()) {
       readOrder.writeExternal(element);
     }
     else if (!getDefaultOrder().equals(list)) {
       Object2IntMap<HighlightSeverity> orderMap = getOrderMap();
-      @SuppressWarnings("deprecation")
+      //noinspection deprecation
       JDOMExternalizableStringList ext = new JDOMExternalizableStringList(Collections.nCopies(orderMap.size(), ""));
       for (Object2IntMap.Entry<HighlightSeverity> entry : getOrderMap().object2IntEntrySet()) {
         ext.set(entry.getIntValue(), entry.getKey().getName());
@@ -249,14 +255,14 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return null;
   }
 
-  Icon getRendererIconByIndex(int index, boolean defaultIcon) {
-    HighlightSeverity severity = getSeverityByIndex(index);
+  @NotNull
+  Icon getRendererIconBySeverity(@NotNull HighlightSeverity severity, boolean defaultIcon) {
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
     if (level != null) {
       return defaultIcon ? level.getIcon() : level.getOutlineIcon();
     }
 
-    return severity != null ? HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName())) : null;
+    return HighlightDisplayLevel.createIconByMask(myRendererColors.get(severity.getName()));
   }
 
   public boolean isSeverityValid(@NotNull String severityName) {
@@ -280,7 +286,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return orderMap.updateAndGet(oldMap -> oldMap == null ? fromList(getDefaultOrder()) : oldMap);
   }
 
-  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<HighlightSeverity> orderList) {
+  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<? extends HighlightSeverity> orderList) {
     if (orderList.isEmpty()) {
       return Object2IntMaps.emptyMap();
     }
@@ -309,7 +315,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return order;
   }
 
-  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
     orderMap.set(ensureAllStandardIncluded(orderList, getDefaultOrder()));
     myReadOrder = null;
     severitiesChanged();
@@ -379,11 +385,11 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   @NotNull
-  Collection<SeverityBasedTextAttributes> allRegisteredAttributes() {
+  Collection<@NotNull SeverityBasedTextAttributes> allRegisteredAttributes() {
     return Collections.unmodifiableCollection(myMap.values());
   }
   @NotNull
-  Collection<HighlightInfoType> standardSeverities() {
+  public static Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

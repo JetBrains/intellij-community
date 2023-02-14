@@ -52,11 +52,10 @@ public class DivideByZeroInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)infos[0];
+    if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression binOp) {
       if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand())) {
         PsiType type = binOp.getType();
-        if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
+        if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
           return new ReplaceWithNaNFix();
         }
       }
@@ -72,7 +71,7 @@ public class DivideByZeroInspection extends BaseInspection {
   private static class DivisionByZeroVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!JavaTokenType.DIV.equals(tokenType) && !JavaTokenType.PERC.equals(tokenType)) {
@@ -89,7 +88,7 @@ public class DivideByZeroInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression rhs = expression.getRExpression();
       if (rhs == null) {
@@ -104,7 +103,7 @@ public class DivideByZeroInspection extends BaseInspection {
   }
 
   private static boolean isZero(PsiExpression expression) {
-    final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
+    final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiTypes.doubleType());
     if (value instanceof Double) {
       final double constantValue = ((Double)value).doubleValue();
       return constantValue == 0.0;
@@ -116,7 +115,7 @@ public class DivideByZeroInspection extends BaseInspection {
 
   private static class ReplaceWithNaNFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiBinaryExpression division = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiBinaryExpression.class);
       if (division == null) return;
       PsiType type = division.getType();

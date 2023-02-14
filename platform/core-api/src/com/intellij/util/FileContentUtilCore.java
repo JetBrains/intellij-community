@@ -13,8 +13,6 @@ import java.util.*;
 
 /**
  * Utility functions to trigger file reparsing programmatically.
- *
- * @author peter
  */
 public final class FileContentUtilCore {
   public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtilCore.saveOrReload";
@@ -47,6 +45,8 @@ public final class FileContentUtilCore {
       List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
       publisher.before(eventList);
       publisher.after(eventList);
+
+      ForcefulReparseModificationTracker.increment();
     });
   }
 }

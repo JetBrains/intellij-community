@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.pyqt;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,17 +27,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class QtFileType extends LanguageFileType implements INativeFileType {
   private final String myName;
+  private final @Nls String myDisplayName;
   private final @Label String myDescription;
   private final String myDefaultExtension;
 
-  QtFileType(@NonNls String name, @Label String description, String defaultExtension) {
+  QtFileType(@NonNls String name, @NotNull @Nls String displayName, @Label String description, String defaultExtension) {
     super(XMLLanguage.INSTANCE, true);
     myName = name;
+    myDisplayName = displayName;
     myDescription = description;
     myDefaultExtension = defaultExtension;
   }
@@ -53,6 +54,12 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   @Override
   public String getDescription() {
     return myDescription;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return myDisplayName;
   }
 
   @NotNull

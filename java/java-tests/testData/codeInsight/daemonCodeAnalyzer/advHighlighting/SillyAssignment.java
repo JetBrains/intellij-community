@@ -8,9 +8,9 @@ class a {
   int f;
   JPanel fpanel;
 
-  void f(int i) {
+  void f(int <text_attr descr="Reassigned parameter">i</text_attr>) {
 
-   i = <warning descr="Variable 'i' is assigned to itself">i</warning>;
+   <text_attr descr="Reassigned parameter">i</text_attr> = <warning descr="Variable 'i' is assigned to itself"><text_attr descr="Reassigned parameter">i</text_attr></warning>;
   }
 
   void f2() {
@@ -19,14 +19,14 @@ class a {
     f = <warning descr="Variable 'f' is assigned to itself">this.f</warning>;
   }
 
-  void f3(Object o) {
-    int i = 0;
-    i = <warning descr="Variable 'i' is assigned to itself">i</warning>;
-    i = (int)<warning descr="Variable 'i' is assigned to itself">i</warning>;
-    o = ((Object)(<warning descr="Variable 'o' is assigned to itself">o</warning>));
-    Object o1 = o = ((Object)(<warning descr="Variable 'o' is assigned to itself">o</warning>));
+  void f3(Object <text_attr descr="Reassigned parameter">o</text_attr>) {
+    int <text_attr descr="Reassigned local variable">i</text_attr> = 0;
+    <text_attr descr="Reassigned local variable">i</text_attr> = <warning descr="Variable 'i' is assigned to itself"><text_attr descr="Reassigned local variable">i</text_attr></warning>;
+    <text_attr descr="Reassigned local variable">i</text_attr> = (int)<warning descr="Variable 'i' is assigned to itself"><text_attr descr="Reassigned local variable">i</text_attr></warning>;
+    <text_attr descr="Reassigned parameter">o</text_attr> = ((Object)(<warning descr="Variable 'o' is assigned to itself"><text_attr descr="Reassigned parameter">o</text_attr></warning>));
+    Object o1 = <text_attr descr="Reassigned parameter">o</text_attr> = ((Object)(<warning descr="Variable 'o' is assigned to itself"><text_attr descr="Reassigned parameter">o</text_attr></warning>));
     System.out.println(o1);
-    o = (double)o;
+    <text_attr descr="Reassigned parameter">o</text_attr> = (double)<text_attr descr="Reassigned parameter">o</text_attr>;
   }
   void f4() {
     fpanel.getSize().height = this.fpanel.getSize().height; // not silly. Are you sure you can bet getSize() has no side effects? 
@@ -42,7 +42,7 @@ class a {
   }
 
   void m() {
-    double m = 1.5;
-    m = (double) (int) m;
+    double <text_attr descr="Reassigned local variable">m</text_attr> = 1.5;
+    <text_attr descr="Reassigned local variable">m</text_attr> = (double) (int) <text_attr descr="Reassigned local variable">m</text_attr>;
   }
 }

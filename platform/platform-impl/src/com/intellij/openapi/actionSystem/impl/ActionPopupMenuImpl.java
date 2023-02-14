@@ -1,24 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.UILatencyLogger;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.inspector.UiInspectorUtil;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.lang.Language;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,16 +37,12 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.Objects;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
+  private static final IntSet SEEN_ACTION_GROUPS = new IntOpenHashSet(50);
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
@@ -43,11 +50,14 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
-  private boolean myIsToolWindowContextMenu;
 
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
                       @Nullable PresentationFactory factory) {
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the popup menu location will do.", new Throwable("popup menu creation trace"));
+    }
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
   }
@@ -70,44 +80,41 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myMenu.myGroup;
   }
 
-  void setDataContextProvider(@NotNull Supplier<? extends DataContext> dataContextProvider) {
-    myDataContextProvider = dataContextProvider;
+  @Override
+  public void setTargetComponent(@NotNull JComponent component) {
+    setDataContext(() -> DataManager.getInstance().getDataContext(component));
   }
 
   @Override
-  public void setTargetComponent(@NotNull JComponent component) {
-    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
-    myIsToolWindowContextMenu = ComponentUtil.getParentOfType(InternalDecoratorImpl.class, component) != null;
+  public void setDataContext(@NotNull Supplier<? extends DataContext> dataProvider) {
+    myDataContextProvider = dataProvider;
   }
 
-  boolean isToolWindowContextMenu() {
-    return myIsToolWindowContextMenu;
-  }
-
-  private class MyMenu extends JBPopupMenu {
+  private class MyMenu extends JBPopupMenu implements PlaceProvider {
     @NotNull
     private final String myPlace;
     @NotNull
     private final ActionGroup myGroup;
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
+    @NotNull
+    private final MyPopupMenuListener myListener;
 
     MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
-      addPopupMenuListener(new MyPopupMenuListener());
-      // This fake event might be sent from BegMenuItemUI
-      // to update items in case of multiple choice when there are dependencies between items like:
-      // 1. Selected A means unselected B and vise versa
-      // 2. Selected/unselected A means enabled/disabled B
-      addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          updateChildren(null);
-        }
+      myListener = new MyPopupMenuListener();
+      addPopupMenuListener(myListener);
+      BegMenuItemUI.registerMultiChoiceSupport(this, popupMenu -> {
+        Utils.updateMenuItems(popupMenu, myContext, myPlace, myPresentationFactory);
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
+    }
+
+    @Override
+    public @NotNull String getPlace() {
+      return myPlace;
     }
 
     @Override
@@ -122,10 +129,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
                                         DataManager.getInstance().getDataContext(component, x2, y2));
       updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
-        LOG.warn("no components in popup menu " + myPlace);
+        LOG.warn("'" + myPlace + "' popup menu fails to show: no menu items");
         return;
       }
       if (!component.isShowing()) {
+        LOG.warn("'" + myPlace + "' popup menu fails to show: component is not showing (" + component.getClass().getName() + ")");
         return;
       }
 
@@ -138,7 +146,27 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
           myConnection.subscribe(ApplicationActivationListener.TOPIC, ActionPopupMenuImpl.this);
         }
       }
+      myListener.targetComponent = component;
       super.show(component, x, y);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      long startedTime = IdeEventQueue.getInstance().getPopupTriggerTime();
+      long time = (startedTime > 0) ? System.currentTimeMillis() - startedTime : -1;
+      PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
+      Language language = psiFile == null ? null : psiFile.getLanguage();
+      boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
+      UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                        EventFields.ActionPlace.with(myPlace),
+                                        UILatencyLogger.COLD_START.with(coldStart),
+                                        EventFields.Language.with(language));
+      if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
+        //noinspection HardCodedStringLiteral
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms",
+                         NotificationType.INFORMATION).notify(null);
+      }
     }
 
     @Override
@@ -149,10 +177,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      TimeoutUtil.run(
-        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                             myPresentationFactory, myContext, myPlace, false, false, point),
-        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                     myPresentationFactory, myContext, myPlace, false, false, point, null);
     }
 
     private void disposeMenu() {
@@ -167,6 +193,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
+      Component targetComponent;
+
       @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
         disposeMenu();
@@ -174,11 +202,16 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        HelpTooltip.enableTooltip(targetComponent);
+        if (targetComponent instanceof Tree tree) {
+          tree.unblockAutoScrollFromSource();
+        }
         disposeMenu();
       }
 
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+        HelpTooltip.disableTooltip(targetComponent);
         if (getComponentCount() == 0) {
           updateChildren(null);
         }

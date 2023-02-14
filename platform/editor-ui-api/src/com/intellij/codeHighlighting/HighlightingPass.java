@@ -28,6 +28,7 @@ public interface HighlightingPass {
    */
   void applyInformationToEditor();
 
+  @NotNull
   default Condition<?> getExpiredCondition() {
     return Conditions.alwaysFalse();
   }

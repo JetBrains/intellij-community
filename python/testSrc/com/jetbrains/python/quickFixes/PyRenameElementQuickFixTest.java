@@ -17,7 +17,6 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.PythonLanguage;
@@ -170,7 +169,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
       @NotNull
       @Override
       public List<Class<? extends PsiElement>> elementsToInjectIn() {
-        return ContainerUtil.newArrayList(PyStringLiteralExpression.class);
+        return List.of(PyStringLiteralExpression.class);
       }
     };
     manager.registerMultiHostInjector(multiHostInjector, testDisposable);

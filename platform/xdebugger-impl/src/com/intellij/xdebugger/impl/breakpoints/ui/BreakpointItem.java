@@ -1,27 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
-import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
-import java.awt.*;
 
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
@@ -35,42 +24,6 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
   public abstract void setEnabled(boolean state);
 
   public abstract boolean isDefaultBreakpoint();
-
-  protected static void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
-    TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-
-    DetailView.PreviewEditorState state = DetailView.PreviewEditorState.create(virtualFile, line, attributes);
-
-    if (state.equals(panel.getEditorState())) {
-      return;
-    }
-
-    panel.navigateInPreviewEditor(state);
-
-    TextAttributes softerAttributes = attributes.clone();
-    Color backgroundColor = softerAttributes.getBackgroundColor();
-    if (backgroundColor != null) {
-      softerAttributes.setBackgroundColor(ColorUtil.softer(backgroundColor));
-    }
-
-    final Editor editor = panel.getEditor();
-    if (editor != null) {
-      final MarkupModel editorModel = editor.getMarkupModel();
-      final MarkupModel documentModel =
-        DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
-
-      for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
-        if (highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
-          final int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
-          if (line1 != line) {
-            editorModel.addLineHighlighter(line1,
-                                           DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER + 1, softerAttributes);
-          }
-        }
-      }
-    }
-  }
 
   @Override
   public void updateAccessoryView(JComponent component) {

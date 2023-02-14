@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,9 +35,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
+public class ConfusingFloatingPointLiteralInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreScientificNotation = false;
@@ -46,18 +49,15 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("confusing.floating.point.literal.option"), this,
-                                          "ignoreScientificNotation");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreScientificNotation", InspectionGadgetsBundle.message("confusing.floating.point.literal.option")));
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (ignoreScientificNotation) {
-      node.addContent(new Element("option").setAttribute("name", "ignoreScientificNotation").setAttribute("value", "true"));
-    }
+    writeBooleanOption(node, "ignoreScientificNotation", false);
   }
 
   @Override
@@ -74,7 +74,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression literalExpression = (PsiExpression)descriptor.getPsiElement();
       final String text = literalExpression.getText();
       final String newText = getCanonicalForm(text);
@@ -143,7 +143,7 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
       super.visitLiteralExpression(literal);
       final PsiType type = literal.getType();
       final String literalText = literal.getText();
-      if ((!PsiType.FLOAT.equals(type) && !PsiType.DOUBLE.equals(type)) || !isConfusing(literalText)) {
+      if ((!PsiTypes.floatType().equals(type) && !PsiTypes.doubleType().equals(type)) || !isConfusing(literalText)) {
         return;
       }
       if (ignoreScientificNotation && StringUtil.containsAnyChar(literalText, "EePp")) {

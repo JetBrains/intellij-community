@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -13,10 +13,14 @@ import com.intellij.ui.tree.LeafState
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
-internal abstract class Root(val panel: ProblemsViewPanel)
+abstract class Root(val panel: ProblemsViewPanel)
   : Node(panel.project), ProblemsCollector, Disposable {
 
   private val nodes = mutableMapOf<VirtualFile, FileNode>()
+
+  private val nodesCache = ProblemsNodeCache<Pair<FileNode, Problem>> {
+    ProblemNode(it.first, it.first.file, it.second)
+  }
 
   override fun dispose() = Unit
 
@@ -42,15 +46,16 @@ internal abstract class Root(val panel: ProblemsViewPanel)
     return getChildren(node)
   }
 
-  open fun getChildren(node: FileNode): Collection<Node> {
-    return getFileProblems(node.file).map { ProblemNode(node, node.file, it) }
-  }
+  open fun getChildren(node: FileNode): Collection<Node> = getNodesForProblems(getFileProblems(node.file).map { Pair(node, it) })
+
+  protected fun getNodesForProblems(fileProblems: List<Pair<FileNode, Problem>>): List<Node> = nodesCache.getNodes(fileProblems)
 
   override fun problemAppeared(problem: Problem) = when (problem) {
     !is FileProblem -> structureChanged()
     else -> {
       val file = problem.file
-      when (1 == getFileProblemCount(file)) {
+      // add new file node if it does not exist
+      when (null == synchronized(nodes) { nodes[file] }) {
         true -> fileAppeared(file)
         else -> fileUpdated(file)
       }
@@ -61,6 +66,7 @@ internal abstract class Root(val panel: ProblemsViewPanel)
     !is FileProblem -> structureChanged()
     else -> {
       val file = problem.file
+      // remove old file node if no more corresponding problems
       when (0 == getFileProblemCount(file)) {
         true -> fileDisappeared(file)
         else -> fileUpdated(file)
@@ -81,8 +87,8 @@ internal abstract class Root(val panel: ProblemsViewPanel)
   }
 
   private fun fileDisappeared(file: VirtualFile) {
-    synchronized(nodes) { nodes.remove(file) }
-    structureChanged()
+    val node = synchronized(nodes) { nodes.remove(file) }
+    if (node != null) structureChanged()
   }
 
   private fun fileUpdated(file: VirtualFile) {
@@ -91,7 +97,7 @@ internal abstract class Root(val panel: ProblemsViewPanel)
     }
   }
 
-  private fun structureChanged(path: TreePath? = null) {
+  open fun structureChanged(path: TreePath? = null) {
     panel.updateToolWindowContent()
     panel.treeModel.structureChanged(path)
   }

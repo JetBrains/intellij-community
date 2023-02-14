@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.keyStorage;
 
-import com.intellij.util.Processor;
 import com.intellij.util.io.InlineKeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,12 +15,12 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
   }
 
   @Override
-  public Data read(int addr) throws IOException {
+  public Data read(int addr, boolean checkAccess) throws IOException {
     return myDescriptor.fromInt(addr);
   }
 
   @Override
-  public boolean processAll(@NotNull Processor<? super Data> processor) throws IOException {
+  public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -35,6 +34,10 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
     return false;
   }
 
+  @Override
+  public void clear() throws IOException {
+    //do nothing
+  }
 
   @Override
   public void lockRead() {
@@ -58,7 +61,7 @@ public class InlinedKeyStorage<Data> implements AppendableObjectStorage<Data> {
 
   @Override
   public int getCurrentLength() {
-    throw new UnsupportedOperationException();
+    return -1;
   }
 
   @Override

@@ -1,28 +1,29 @@
 <html>
 <body>
-Reports <code>continue</code> statements if they are last reachable statements in the loop.
+Reports <code>continue</code> statements if they are the last reachable statements in the loop.
 These <code>continue</code> statements are unnecessary and can be safely removed.
 <p>Example:</p>
-<pre>
+<pre><code>
   for (String element: elements) {
     System.out.println();
     continue;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   for (String element: elements) {
     System.out.println();
   }
-</pre>
-<p>The inspection doesn't analyze the JSP files.</p>
+</code></pre>
+<p>The inspection doesn't analyze JSP files.</p>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore <code>continue</code> statements when they are placed in 'then' branch of a complete
+  Use the <b>Ignore in then branch of 'if' statement with 'else' branch</b> option to ignore
+  <code>continue</code> statements when they are placed in a <code>then</code> branch of a complete
   <code>if</code>-<code>else</code> statement.
 </p>
 <p>Example:</p>
-<pre>
+<pre><code>
   for (String element: elements) {
     if(element.isEmpty()) {
       continue;
@@ -30,6 +31,6 @@ These <code>continue</code> statements are unnecessary and can be safely removed
       //...
     }
   }
-</pre>
+</code></pre>
 </body>
 </html>

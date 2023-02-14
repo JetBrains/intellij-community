@@ -15,24 +15,18 @@ import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PyFlipComparisonIntention extends PyBaseIntentionAction {
-  private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<>(7);
-
-  static {
-    FLIPPED_OPERATORS.put(PyTokenTypes.EQEQ, "==");
-    FLIPPED_OPERATORS.put(PyTokenTypes.NE, "!=");
-    FLIPPED_OPERATORS.put(PyTokenTypes.NE_OLD, "<>");
-    FLIPPED_OPERATORS.put(PyTokenTypes.GE, "<=");
-    FLIPPED_OPERATORS.put(PyTokenTypes.LE, ">=");
-    FLIPPED_OPERATORS.put(PyTokenTypes.GT, "<");
-    FLIPPED_OPERATORS.put(PyTokenTypes.LT, ">");
+  private static class Holder {
+    private static final Map<PyElementType, String> FLIPPED_OPERATORS = Map.of(
+      PyTokenTypes.EQEQ, "==",
+      PyTokenTypes.NE, "!=",
+      PyTokenTypes.NE_OLD, "<>",
+      PyTokenTypes.GE, "<=",
+      PyTokenTypes.LE, ">=",
+      PyTokenTypes.GT, "<",
+      PyTokenTypes.LT, ">");
   }
 
   @Override
@@ -51,9 +45,9 @@ public class PyFlipComparisonIntention extends PyBaseIntentionAction {
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
     while (binaryExpression != null) {
       PyElementType operator = binaryExpression.getOperator();
-      if (FLIPPED_OPERATORS.containsKey(operator)) {
+      if (operator != null && Holder.FLIPPED_OPERATORS.containsKey(operator)) {
         String operatorText = binaryExpression.getPsiOperator().getText();
-        String flippedOperatorText = FLIPPED_OPERATORS.get(operator);
+        String flippedOperatorText = Holder.FLIPPED_OPERATORS.get(operator);
         if (flippedOperatorText.equals(operatorText)) {
           setText(PyPsiBundle.message("INTN.flip.comparison", operatorText));
         }
@@ -72,9 +66,10 @@ public class PyFlipComparisonIntention extends PyBaseIntentionAction {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
     while (binaryExpression != null) {
-      if (FLIPPED_OPERATORS.containsKey(binaryExpression.getOperator())) {
+      PyElementType operator = binaryExpression.getOperator();
+      if (operator != null && Holder.FLIPPED_OPERATORS.containsKey(operator)) {
         PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-        binaryExpression.replace(elementGenerator.createBinaryExpression(FLIPPED_OPERATORS.get(binaryExpression.getOperator()),
+        binaryExpression.replace(elementGenerator.createBinaryExpression(Holder.FLIPPED_OPERATORS.get(operator),
                                                                          binaryExpression.getRightExpression(),
                                                                          binaryExpression.getLeftExpression()));
         return;

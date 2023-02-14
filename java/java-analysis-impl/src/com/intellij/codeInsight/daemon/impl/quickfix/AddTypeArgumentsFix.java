@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -28,7 +28,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   @Override
   @NotNull
   public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list != null && list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
 
@@ -54,18 +55,21 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   @Nullable
   public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+    return addTypeArguments(expression, toType, true);
+  }
+
+  @Nullable
+  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
     if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
 
     PsiExpression orig = expression;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCall) {
       final PsiReferenceParameterList list = methodCall.getMethodExpression().getParameterList();
       if (list == null || list.getTypeArguments().length > 0) return null;
       final JavaResolveResult resolveResult = methodCall.resolveMethodGenerics();
       final PsiElement element = resolveResult.getElement();
-      if (element instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)element;
+      if (element instanceof PsiMethod method) {
         final PsiType returnType = method.getReturnType();
         if (returnType == null) return null;
 
@@ -84,7 +88,7 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
             else {
               substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
             }
-            if (substitution == null || PsiType.NULL.equals(substitution)) return null;
+            if (substitution == null || PsiTypes.nullType().equals(substitution)) return null;
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }
 
@@ -109,7 +113,10 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
             methodExpression.setQualifierExpression(qualifierExpression);
           }
 
-          PsiExpression result = (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy);
+          PsiExpression result = withShortening
+                                 ? (PsiExpression)JavaCodeStyleManager.getInstance(copy.getProject()).shortenClassReferences(copy)
+                                 : copy;
+
           if (orig != expression) {
             PsiExpression parenthesized = (PsiExpression)orig.copy();
             Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(parenthesized)).replace(result);
@@ -123,8 +130,10 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return null;
+    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                    myArgumentFixerActionFactory);
   }
 

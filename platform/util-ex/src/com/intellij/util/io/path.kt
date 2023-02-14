@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.util.io.NioFiles
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -12,34 +11,15 @@ import java.nio.channels.Channels
 import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
-import java.util.function.Predicate
-import kotlin.math.min
+import java.util.*
+import kotlin.io.path.exists
 
-fun Path.exists(): Boolean = Files.exists(this)
+@Suppress("DeprecatedCallableAddReplaceWith") // ReplaceWith does not work
+@Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
+fun Path.exists(): Boolean = exists()
 
-fun Path.createDirectories(): Path {
-  // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
-  if (!Files.isDirectory(this)) {
-    try {
-      doCreateDirectories(toAbsolutePath())
-    }
-    catch (ignored: FileAlreadyExistsException) {
-      // toAbsolutePath can return resolved path or file exists now
-    }
-  }
-  return this
-}
-
-private fun doCreateDirectories(path: Path) {
-  path.parent?.let {
-    if (!Files.isDirectory(it)) {
-      doCreateDirectories(it)
-    }
-  }
-  Files.createDirectory(path)
-}
+fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -60,9 +40,6 @@ fun Path.safeOutputStream(): OutputStream {
 
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
-
-@Throws(IOException::class)
-fun Path.inputStreamSkippingBom() = CharsetToolkit.inputStreamSkippingBOM(inputStream().buffered())
 
 fun Path.inputStreamIfExists(): InputStream? {
   try {
@@ -85,71 +62,10 @@ fun Path.createSymbolicLink(target: Path): Path {
 @JvmOverloads
 fun Path.delete(recursively: Boolean = true) {
   if (recursively) {
-    doDelete(this)
+    return NioFiles.deleteRecursively(this)
   }
   else {
-    Files.delete(this)
-  }
-}
-
-private fun doDelete(file: Path) {
-  val attributes = try {
-    Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
-  }
-  catch (e: NoSuchFileException) {
-    return
-  }
-
-  if (!attributes.isDirectory) {
-    deleteFile(file)
-    return
-  }
-
-  Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      deleteFile(file)
-      return FileVisitResult.CONTINUE
-    }
-
-    override fun postVisitDirectory(dir: Path, exception: IOException?): FileVisitResult {
-      if (exception != null) {
-        throw exception
-      }
-
-      Files.deleteIfExists(dir)
-      return FileVisitResult.CONTINUE
-    }
-  })
-}
-
-private fun deleteFile(file: Path) {
-  // repeated delete is required for bad OS like Windows
-  val maxAttemptCount = 10
-  var attemptCount = 0
-  while (true) {
-    try {
-      Files.deleteIfExists(file)
-      return
-    }
-    catch (e: IOException) {
-      if (++attemptCount == maxAttemptCount) {
-        throw e
-      }
-
-      if (SystemInfoRt.isWindows && e is AccessDeniedException) {
-        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
-        if (view != null && view.readAttributes().isReadOnly) {
-          view.setReadOnly(false)
-        }
-      }
-
-      try {
-        Thread.sleep(10)
-      }
-      catch (ignored: InterruptedException) {
-        throw e
-      }
-    }
+    return Files.delete(this)
   }
 }
 
@@ -188,9 +104,6 @@ fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
   get() = toString().replace(File.separatorChar, '/')
-
-val Path.parentSystemIndependentPath: String
-  get() = parent!!.toString().replace(File.separatorChar, '/')
 
 @Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
@@ -271,6 +184,15 @@ fun Path.copy(target: Path): Path {
   return Files.copy(this, target, StandardCopyOption.REPLACE_EXISTING)
 }
 
+fun Path.copyRecursively(target: Path) {
+  target.parent?.createDirectories()
+  Files.walk(this).use { stream ->
+    stream.forEach { file ->
+      Files.copy(file, target.resolve(this.relativize(file)))
+    }
+  }
+}
+
 /**
  * Opposite to Java, parent directories will be created
  */
@@ -291,50 +213,17 @@ inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>
 
 inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Boolean), task: (stream: DirectoryStream<Path>) -> R): R? {
   try {
-    return Files.newDirectoryStream(this, DirectoryStream.Filter { filter(it) }).use(task)
+    return Files.newDirectoryStream(this, makeFilter(filter)).use(task)
   }
   catch (ignored: NoSuchFileException) {
   }
   return null
 }
 
-private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
-
-// https://github.com/parshap/node-sanitize-filename/blob/master/index.js
-fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
-  var result: StringBuilder? = null
-  var last = 0
-  val length = name.length
-  for (i in 0 until length) {
-    val c = name[i]
-    if (!illegalChars.contains(c) && !c.isISOControl() && (extraIllegalChars == null || !extraIllegalChars.test(c))) {
-      continue
-    }
-
-    if (result == null) {
-      result = StringBuilder()
-    }
-    if (last < i) {
-      result.append(name, last, i)
-    }
-
-    if (replacement != null) {
-      result.append(replacement)
-    }
-    last = i + 1
-  }
-
-  fun truncateFileName(s: String) = if (truncateIfNeeded) s.substring(0, min(length, 255)) else s
-
-  if (result == null) {
-    return truncateFileName(name)
-  }
-
-  if (last < length) {
-    result.append(name, last, length)
-  }
-
-  return truncateFileName(result.toString())
+@PublishedApi
+internal fun makeFilter(filter: (path: Path) -> Boolean): DirectoryStream.Filter<Path> {
+  // extracted in order to not introduce additional JVM class for every directoryStreamIfExists call site
+  return DirectoryStream.Filter { filter(it) }
 }
 
 val Path.isWritable: Boolean
@@ -349,3 +238,17 @@ fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
 }
 
 fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
+
+@Throws(IOException::class)
+fun generateRandomPath(parentDirectory: Path): Path {
+  var path = parentDirectory.resolve(UUID.randomUUID().toString())
+  var i = 0
+  while (path.exists() && i < 5) {
+    path = parentDirectory.resolve(UUID.randomUUID().toString())
+    ++i
+  }
+  if (path.exists()) {
+    throw IOException("Couldn't generate unique random path.")
+  }
+  return path
+}

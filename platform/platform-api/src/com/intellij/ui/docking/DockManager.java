@@ -4,21 +4,15 @@ package com.intellij.ui.docking;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public abstract class DockManager {
-  /**
-   * @deprecated Use {@link #register(DockContainer, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void register(@NotNull DockContainer container);
 
   public abstract void register(@NotNull DockContainer container, @NotNull Disposable parentDisposable);
 
@@ -36,5 +30,11 @@ public abstract class DockManager {
 
   public abstract String getDimensionKeyForFocus(@NotNull String key);
 
+  /**
+   * @deprecated use {@link #getContainerFor(Component, Predicate)} instead
+   */
+  @Deprecated(forRemoval = true)
   public abstract @Nullable DockContainer getContainerFor(Component c);
+
+  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter);
 }

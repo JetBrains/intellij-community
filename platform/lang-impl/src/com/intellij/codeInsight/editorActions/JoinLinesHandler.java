@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -8,9 +8,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -39,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
+import static com.intellij.psi.util.PsiUtilCore.getElementType;
 
 public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
@@ -52,19 +51,18 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   public void doExecute(@NotNull final Editor editor, @NotNull Caret caret, final DataContext dataContext) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
-    if (!(editor.getDocument() instanceof DocumentEx)) {
-      myOriginalHandler.execute(editor, caret, dataContext);
+    if (!(editor.getDocument() instanceof DocumentEx document)) {
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
-    final DocumentEx doc = (DocumentEx)editor.getDocument();
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
-    if (project == null) return;
-
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = docManager.getPsiFile(doc);
-
+    Project project = editor.getProject();
+    PsiFile psiFile = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) {
-      myOriginalHandler.execute(editor, caret, dataContext);
+      if (myOriginalHandler != null) {
+        myOriginalHandler.execute(editor, caret, dataContext);
+      }
       return;
     }
 
@@ -72,12 +70,12 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     int startLine = caretPosition.line;
     int endLine = startLine + 1;
     if (caret.hasSelection()) {
-      startLine = doc.getLineNumber(caret.getSelectionStart());
-      endLine = doc.getLineNumber(caret.getSelectionEnd());
-      if (doc.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
+      startLine = document.getLineNumber(caret.getSelectionStart());
+      endLine = document.getLineNumber(caret.getSelectionEnd());
+      if (document.getLineStartOffset(endLine) == caret.getSelectionEnd()) endLine--;
     }
 
-    if (endLine >= doc.getLineCount()) return;
+    if (endLine >= document.getLineCount()) return;
 
     int lineCount = endLine - startLine;
     int line = startLine;
@@ -85,7 +83,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       LangBundle.message("progress.title.join.lines"), project, null, indicator -> {
         indicator.setIndeterminate(false);
-        JoinLineProcessor processor = new JoinLineProcessor(doc, psiFile, line, indicator);
+        JoinLineProcessor processor = new JoinLineProcessor(document, psiFile, line, indicator);
         processor.process(editor, caret, lineCount);
       });
   }
@@ -149,7 +147,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
             int nextStart = CharArrayUtil.shiftForward(text, myDoc.getLineStartOffset(line + 1), " \t\n");
             if (nextStart < text.length() &&
                 myDoc.getLineNumber(nextStart) <= myLine + lineCount &&
-                getCommentElement(myFile.findElementAt(nextStart)) == null) {
+                !isLineComment(getCommentElement(myFile.findElementAt(nextStart)))) {
               endComments.add(comment);
             }
           }
@@ -165,6 +163,13 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       if (changed) {
         myManager.doPostponedOperationsAndUnblockDocument(myDoc);
       }
+    }
+
+    private static boolean isLineComment(@Nullable PsiComment element) {
+      if (element == null) return false;
+      Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(element.getLanguage());
+      return commenter instanceof CodeDocumentationAwareCommenter &&
+             ((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType() == getElementType(element);
     }
 
     /**
@@ -365,7 +370,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       LOG.error("Handler returned negative offset: handler class="+delegate.getClass()+"; offset="+offset);
       return 0;
     } else if (offset > doc.getTextLength()) {
-      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() + 
+      LOG.error("Handler returned an offset which exceeds the document length: handler class=" + delegate.getClass() +
                 "; offset=" + offset + "; length=" + doc.getTextLength());
       return doc.getTextLength();
     }
@@ -387,8 +392,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
 
   private static boolean tryConvertEndOfLineComment(PsiElement commentElement) {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(commentElement.getLanguage());
-    if (commenter instanceof CodeDocumentationAwareCommenter) {
-      CodeDocumentationAwareCommenter docCommenter = (CodeDocumentationAwareCommenter) commenter;
+    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
       String lineCommentPrefix = commenter.getLineCommentPrefix();
       String blockCommentPrefix = commenter.getBlockCommentPrefix();
       String blockCommentSuffix = commenter.getBlockCommentSuffix();
@@ -400,9 +404,13 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
           String fixedSuffix = suffix.charAt(0)+" "+suffix.substring(1);
           commentText = commentText.replace(suffix, fixedSuffix);
         }
+        if (commentText.startsWith(" ") && !commentText.endsWith(" ")) {
+          // "// foo" should be translated to "/* foo */" not "/* foo*/"
+          commentText += " ";
+        }
         try {
           Project project = commentElement.getProject();
-          PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+          PsiParserFacade parserFacade = PsiParserFacade.getInstance(project);
           PsiComment newComment = parserFacade.createBlockCommentFromText(commentElement.getLanguage(), commentText);
           commentElement.replace(newComment);
           return true;

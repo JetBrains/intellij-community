@@ -7,6 +7,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 
+import java.util.Objects;
+
 public final class LanguageOptions implements Cloneable {
   public static final int NO_COPYRIGHT = 1;
   public static final int USE_TEMPLATE = 2;
@@ -31,6 +33,7 @@ public final class LanguageOptions implements Cloneable {
     fileTypeOverride = USE_TEMPLATE;
     relativeBefore = true;
     addBlankAfter = true;
+    addBlankBefore = false;
     fileLocation = 1;
   }
 
@@ -57,6 +60,14 @@ public final class LanguageOptions implements Cloneable {
 
   public void setAddBlankAfter(boolean addBlankAfter) {
     this.addBlankAfter = addBlankAfter;
+  }
+
+  public boolean isAddBlankBefore() {
+    return addBlankBefore;
+  }
+
+  public void setAddBlankBefore(boolean addBlankBefore) {
+    this.addBlankBefore = addBlankBefore;
   }
 
   public int getFileLocation() {
@@ -89,6 +100,9 @@ public final class LanguageOptions implements Cloneable {
     if (addBlankAfter != that.addBlankAfter) {
       return false;
     }
+    if(addBlankBefore != that.addBlankBefore){
+      return false;
+    }
     if (fileLocation != that.fileLocation) {
       return false;
     }
@@ -104,7 +118,7 @@ public final class LanguageOptions implements Cloneable {
     if (box != that.box) {
       return false;
     }
-    if (filler != that.filler) {
+    if (!Objects.equals(filler, that.filler)) {
       return false;
     }
     if (lenAfter != that.lenAfter) {
@@ -136,6 +150,7 @@ public final class LanguageOptions implements Cloneable {
     result = 29 * result + fileTypeOverride;
     result = 29 * result + (relativeBefore ? 1 : 0);
     result = 29 * result + (addBlankAfter ? 1 : 0);
+    result = 29 * result + (addBlankBefore ? 1 : 0);
     result = 29 * result + fileLocation;
     return result;
   }
@@ -145,6 +160,7 @@ public final class LanguageOptions implements Cloneable {
            ", fileTypeOverride=" + fileTypeOverride +
            ", relativeBefore=" + relativeBefore +
            ", addBlankAfter=" + addBlankAfter +
+           ", addBlankBefore=" + addBlankBefore +
            ", fileLocation=" + fileLocation +
            ", block=" + block +
            ", separateBefore=" + separateBefore +
@@ -234,9 +250,12 @@ public final class LanguageOptions implements Cloneable {
     this.trim = trim;
   }
 
+  public void setNotice(String notice){this.notice = notice;}
+
   public int fileTypeOverride;
   public boolean relativeBefore;
   public boolean addBlankAfter;
+  public boolean addBlankBefore;
   public int fileLocation;
 
   public boolean block;
@@ -248,4 +267,5 @@ public final class LanguageOptions implements Cloneable {
   public boolean box;
   public String filler;
   public boolean trim;
+  public String notice;
 }

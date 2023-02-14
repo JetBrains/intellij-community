@@ -17,49 +17,139 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.awt.*;
+import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
-  protected CoverageSuitesBundle myBundle;
-  protected CoverageViewManager.StateBean myStateBean;
+  protected final CoverageSuitesBundle myBundle;
+  protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
+  private volatile List<AbstractTreeNode<?>> myChildren;
+  private final boolean myIsLeaf;
+  private boolean myFullyCovered = false;
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
+    this(project, classOrPackage, bundle, stateBean, false);
+  }
+
+  public CoverageListNode(Project project,
+                          @NotNull PsiNamedElement classOrPackage,
+                          CoverageSuitesBundle bundle,
+                          CoverageViewManager.StateBean stateBean,
+                          boolean isLeaf) {
     super(project, classOrPackage);
 
     myName = ReadAction.compute(() -> classOrPackage.getName());
     myBundle = bundle;
     myStateBean = stateBean;
     myFileStatusManager = FileStatusManager.getInstance(myProject);
+    myIsLeaf = isLeaf;
+  }
+
+  public synchronized void reset() {
+    myChildren = null;
+  }
+
+  public boolean isLeaf() {
+    return myIsLeaf;
+  }
+
+  protected boolean isFullyCovered() {
+    return myFullyCovered;
+  }
+
+  public void setFullyCovered(boolean value) {
+    myFullyCovered = value;
+  }
+
+  private CoverageListRootNode myRoot;
+
+  CoverageListRootNode getRoot() {
+    if (myRoot == null) {
+      var parent = (CoverageListNode)getParent();
+      if (parent == null) {
+        if (this instanceof CoverageListRootNode root) {
+          myRoot = root;
+        }
+        else {
+          throw new RuntimeException("Coverage node unexpectedly has no parent " + this +
+                                     ". Each coverage node is supposed to have a parent or to be CoverageListRootNode instance.");
+        }
+      }
+      else {
+        myRoot = parent.getRoot();
+      }
+    }
+    return myRoot;
   }
 
   @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
-    final Object[] children = CoverageViewTreeStructure.getChildren(this, myBundle, myStateBean);
-    return Arrays.asList((CoverageListNode[])children);
+  public List<? extends AbstractTreeNode<?>> getChildren() {
+    return getChildrenInternal();
+  }
+
+  private synchronized List<? extends AbstractTreeNode<?>> getChildrenInternal() {
+    if (myChildren == null) {
+      final var nodes = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+        .getChildrenNodes(this);
+      myChildren = filterChildren(nodes);
+    }
+    return myChildren;
+  }
+
+  protected List<AbstractTreeNode<?>> filterChildren(List<AbstractTreeNode<?>> nodes) {
+    if (myStateBean.isShowOnlyModified() || myStateBean.isHideFullyCovered()) {
+      nodes = nodes.stream().filter((node) -> {
+        boolean filtered = true;
+        boolean isLeaf = false;
+        if (node instanceof CoverageListNode coverageNode) {
+          isLeaf = coverageNode.isLeaf();
+          final boolean fullyCovered = coverageNode.isFullyCovered();
+          if (myStateBean.isHideFullyCovered() && fullyCovered) {
+            filtered = false;
+            getRoot().setHasFullyCoveredChildren(true);
+          }
+        }
+        if (myStateBean.isShowOnlyModified() && isLeaf) {
+          final FileStatus status = node.getFileStatus();
+          final boolean isModified = status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
+          if (!isModified) {
+            filtered = false;
+            getRoot().setHasVCSFilteredChildren(true);
+          }
+        }
+        return filtered;
+      }).toList();
+    }
+
+    return nodes.stream().filter((node) -> {
+      if (node instanceof CoverageListNode) {
+        if (((CoverageListNode)node).isLeaf()) return true;
+      }
+      return !node.getChildren().isEmpty();
+    }).toList();
   }
 
   @Override
   protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
-      final Object value = getValue();
-      if (value instanceof PsiNamedElement) {
-
+      final Object object = getValue();
+      if (object instanceof PsiNamedElement value) {
         if (value instanceof PsiQualifiedNamedElement &&
-            (myStateBean.myFlattenPackages && ((PsiNamedElement)value).getContainingFile() == null ||
-             getParent() instanceof CoverageListRootNode)) {
+            (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
         }
         else {
-          presentation.setPresentableText(((PsiNamedElement)value).getName());
+          presentation.setPresentableText(value.getName());
         }
-        presentation.setIcon(((PsiElement)value).getIcon(0));
+        presentation.setIcon(value.getIcon(0));
+        presentation.setForcedTextForeground(getFileStatus().getColor());
       }
     });
   }
@@ -74,6 +164,16 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
       return null;
     });
     return containingFile != null ? myFileStatusManager.getStatus(containingFile.getVirtualFile()) : super.getFileStatus();
+  }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    return null;
+  }
+
+  @Override
+  protected boolean shouldPostprocess() {
+    return false;
   }
 
   @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -16,6 +17,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 final class RemovedMappingTracker {
+  private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
+
   static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
@@ -81,25 +84,30 @@ final class RemovedMappingTracker {
   RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
     RemovedMapping mapping = new RemovedMapping(matcher, fileTypeName, approved);
     List<RemovedMapping> mappings = (List<RemovedMapping>)myRemovedMappings.getModifiable(matcher);
+    boolean found = false;
     for (int i = 0; i < mappings.size(); i++) {
       RemovedMapping removedMapping = mappings.get(i);
       if (removedMapping.getFileTypeName().equals(fileTypeName)) {
         mappings.set(i, mapping);
-        return mapping;
+        found = true;
+        break;
       }
     }
-    mappings.add(mapping);
+    if (!found) {
+      mappings.add(mapping);
+    }
     return mapping;
   }
 
   void load(@NotNull Element e) {
-    myRemovedMappings.clear();
     List<RemovedMapping> removedMappings = readRemovedMappings(e);
-    Set<RemovedMapping> uniques = new HashSet<>(removedMappings.size());
+    Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
     for (RemovedMapping mapping : removedMappings) {
       if (!uniques.add(mapping)) {
-        throw new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping);
+        LOG.warn(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
       }
+    }
+    for (RemovedMapping mapping : uniques) {
       myRemovedMappings.putValue(mapping.myFileNameMatcher, mapping);
     }
   }
@@ -138,7 +146,10 @@ final class RemovedMappingTracker {
     }
   }
 
-  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Collection<? extends FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map,
+                                      @NotNull String fileTypeName,
+                                      @NotNull Collection<? extends FileNameMatcher> associations,
+                                      boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
       Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher, fileTypeName));
       if (content != null) {
@@ -190,9 +201,13 @@ final class RemovedMappingTracker {
     return result;
   }
 
-  @NotNull
-  List<RemovedMapping> deleteUnapprovedMappings() {
-    return removeIf(mapping -> !mapping.isApproved());
+  void approveUnapprovedMappings() {
+    for (RemovedMapping mapping : new ArrayList<>(myRemovedMappings.values())) {
+      if (!mapping.isApproved()) {
+        myRemovedMappings.remove(mapping.getFileNameMatcher(), mapping);
+        myRemovedMappings.putValue(mapping.getFileNameMatcher(), new RemovedMapping(mapping.getFileNameMatcher(), mapping.getFileTypeName(), true));
+      }
+    }
   }
 
   private static Element writeRemovedMapping(@NotNull String fileTypeName,

@@ -3,7 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A Processor + Flow, or the Poor man's Flow: a reactive-stream-like wrapper around [Processor].
@@ -16,13 +15,12 @@ import org.jetbrains.annotations.ApiStatus
  * but depending on the idempotence of the [producingFunction] this contract could be violated,
  * so to be careful, and it is better to obtain the new [Plow] instance each time.
  */
-@ApiStatus.Experimental
 class Plow<T> private constructor(private val producingFunction: (Processor<T>) -> Boolean) {
 
   @Suppress("UNCHECKED_CAST")
   fun processWith(processor: Processor<in T>): Boolean = producingFunction(processor as Processor<T>)
 
-  fun <P : Processor<T>> processTo(processor: P): P = processor.apply { producingFunction(this) }
+  private fun <P : Processor<T>> processTo(processor: P): P = processor.apply { producingFunction(this) }
 
   fun findAny(): T? = processTo(CommonProcessors.FindFirstProcessor()).foundValue
 
@@ -42,6 +40,8 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     Plow { pr -> producingFunction(transformation(pr)) }
 
   fun <R> map(mapping: (T) -> R): Plow<R> = transform { pr -> Processor { v -> pr.process(mapping(v)) } }
+  
+  fun <R> mapNotNull(mapping: (T) -> R?): Plow<R> = transform { pr -> Processor { v -> mapping(v)?.let { pr.process(it) } ?: true } }
 
   fun filter(test: (T) -> Boolean): Plow<T> = transform { pr -> Processor { v -> !test(v) || pr.process(v) } }
 
@@ -49,8 +49,20 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     Plow { rProcessor -> producingFunction(Processor { t -> mapping(t, rProcessor) }) }
 
   fun <R> flatMap(mapping: (T) -> Plow<R>): Plow<R> = mapToProcessor { t, processor -> mapping(t).processWith(processor) }
+  
+  fun <R> flatMapSeq(mapping: (T) -> Sequence<R>): Plow<R> = mapToProcessor { t, processor -> mapping(t).all { processor.process(it) } }
 
   fun cancellable(): Plow<T> = transform { pr -> Processor { v -> ProgressManager.checkCanceled();pr.process(v) } }
+
+  fun limit(n: Int): Plow<T> {
+    var processedCount = 0
+    return transform { pr ->
+      Processor {
+        processedCount++
+        processedCount <= n && pr.process(it)
+      }
+    }
+  }
 
   companion object {
 
@@ -66,7 +78,11 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
 
     @JvmStatic
     @JvmName("ofIterable")
-    fun <T> Iterable<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
+    fun <T> Iterable<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }  
+    
+    @JvmStatic
+    @JvmName("ofSequence")
+    fun <T> Sequence<T>.toPlow(): Plow<T> = Plow { pr -> all { pr.process(it) } }
 
     @JvmStatic
     fun <T> concat(vararg plows: Plow<T>): Plow<T> = of { pr -> plows.all { it.processWith(pr) } }

@@ -54,11 +54,6 @@ public class EmojiSearchField extends ExtendableTextField {
       }
 
       @Override
-      public boolean isIconBeforeText() {
-        return false;
-      }
-
-      @Override
       public int getIconGap() {
         return JBUIScale.scale(6);
       }

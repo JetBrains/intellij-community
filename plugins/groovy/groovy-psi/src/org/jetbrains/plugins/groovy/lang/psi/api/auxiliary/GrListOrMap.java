@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
-/**
- * @author ilyas
- */
 public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GrExpression,
                                      PsiArrayInitializerMemberValue, GrNamedArgumentsOwner {
   /*

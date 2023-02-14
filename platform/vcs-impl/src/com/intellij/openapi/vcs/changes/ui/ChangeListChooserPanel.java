@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
@@ -80,9 +81,9 @@ public final class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      public void init(LocalChangeList initial) {
+      public void init(@Nullable LocalChangeList initial) {
         super.init(initial);
-        myDescriptionTextArea.addFocusListener(new FocusAdapter() {
+        descriptionTextArea.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
             super.focusLost(e);
@@ -94,12 +95,15 @@ public final class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      protected void nameChangedImpl(Project project, LocalChangeList initial) {
+      protected void nameChangedImpl(@Nullable LocalChangeList initial) {
         nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
     myOkEnabledListener = okEnabledListener;
     add(myListPanel, BorderLayout.CENTER);
+
+    setChangeLists(null);
+    setDefaultSelection(null);
   }
 
   public void init() {
@@ -112,16 +116,20 @@ public final class ChangeListChooserPanel extends JPanel {
   }
 
   public void setSuggestedName(@NlsSafe @NotNull String name) {
-    setSuggestedName(name, null);
+    setSuggestedName(name, false);
   }
 
-  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment) {
+  public void setSuggestedName(@NlsSafe @NotNull String name, boolean forceCreate) {
+    setSuggestedName(name, null, forceCreate);
+  }
+
+  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment, boolean forceCreate) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {
       myExistingListsCombo.setSelectedItem(changelistByName);
     }
-    else {
+    else if (forceCreate || VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
       myNewNameSuggested = true;
       myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
       if (StringUtil.isEmptyOrSpaces(myLastTypedDescription)) {
@@ -147,7 +155,7 @@ public final class ChangeListChooserPanel extends JPanel {
 
   public void updateEnabled() {
     if (myProject != null) {
-      myListPanel.nameChangedImpl(myProject, null);
+      myListPanel.nameChangedImpl(null);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.runReadAction
@@ -9,6 +9,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
+import com.intellij.util.io.impl.FileTextMatchers
 import com.intellij.util.io.systemIndependentPath
 import org.junit.ClassRule
 import org.junit.Rule
@@ -34,7 +35,7 @@ class SaveProjectTest {
   fun `save single module`() {
     projectModel.createModule("foo")
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module")))
+    assertMatches("single-module")
   }
 
   @Test
@@ -42,7 +43,7 @@ class SaveProjectTest {
     val module = projectModel.createModule("foo")
     fun setGroupPath(path: Array<String>?) {
       runWriteActionAndWait {
-        val model = projectModel.moduleManager.modifiableModel
+        val model = projectModel.moduleManager.getModifiableModel()
         model.setModuleGroupPath(module, path)
         model.commit()
       }
@@ -50,15 +51,15 @@ class SaveProjectTest {
 
     setGroupPath(arrayOf("group"))
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("module-in-group")))
+    assertMatches("module-in-group")
 
     setGroupPath(arrayOf("group", "subGroup"))
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("module-in-sub-group")))
+    assertMatches("module-in-sub-group")
 
     setGroupPath(null)
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module")))
+    assertMatches("single-module")
   }
 
   @Test
@@ -68,7 +69,7 @@ class SaveProjectTest {
     projectModel.saveProjectState()
     projectModel.removeModule(module)
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("detached-module")))
+    assertMatches("detached-module")
   }
 
   @Test
@@ -78,16 +79,22 @@ class SaveProjectTest {
                  OrderRootType.CLASSES)
     }
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-library")))
+    assertMatches("single-library")
   }
 
   @Test
   fun `save renamed module`() {
-    val model = runReadAction { projectModel.moduleManager.modifiableModel }
+    val model = runReadAction { projectModel.moduleManager.getModifiableModel() }
     val module = projectModel.createModule("foo", model)
     model.renameModule(module, "bar")
     runWriteActionAndWait { model.commit() }
     projectModel.saveProjectState()
-    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(configurationStoreTestDataRoot.resolve("single-module-renamed")))
+    assertMatches("single-module-renamed")
+  }
+
+  private fun assertMatches(name: String) {
+    projectModel.baseProjectDir.root.assertMatches(
+      directoryContentOf(configurationStoreTestDataRoot.resolve(name)),
+      fileTextMatcher = FileTextMatchers.lines)
   }
 }

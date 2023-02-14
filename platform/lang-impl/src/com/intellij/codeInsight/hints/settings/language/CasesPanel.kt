@@ -48,8 +48,7 @@ internal class CasesPanel(
     caseListPanel.updateCheckBoxes()
   }
 }
-
-private class CaseListPanel(val cases: List<ImmediateConfigurable.Case>, listener: ChangeListener) : JPanel() {
+class CaseListPanel(val cases: List<ImmediateConfigurable.Case>, listener: ChangeListener) : JPanel() {
   val checkBoxes = mutableListOf<JCheckBox>()
 
   init {

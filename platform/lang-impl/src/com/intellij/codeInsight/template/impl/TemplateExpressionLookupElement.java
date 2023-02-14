@@ -16,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* @author peter
-*/
 class TemplateExpressionLookupElement extends LookupElementDecorator<LookupElement> {
   private final TemplateState myState;
 

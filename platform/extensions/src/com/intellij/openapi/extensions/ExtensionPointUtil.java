@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -25,12 +25,12 @@ public final class ExtensionPointUtil {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint());
   }
 
-  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
+  public static @NotNull <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<@NotNull T> extensionPoint) {
     return createExtensionDisposable(extensionObject, extensionPoint, removed -> removed == extensionObject);
   }
 
   public static @NotNull <T, U> Disposable createExtensionDisposable(@NotNull T extensionObject,
-                                                                     @NotNull ExtensionPoint<U> extensionPoint,
+                                                                     @NotNull ExtensionPoint<@NotNull U> extensionPoint,
                                                                      @NotNull Predicate<? super U> removePredicate) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<U>() {
@@ -44,8 +44,8 @@ public final class ExtensionPointUtil {
     return disposable;
   }
 
-  public static @NotNull <T> Disposable  createKeyedExtensionDisposable(@NotNull T extensionObject,
-                                                                       @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
+  public static @NotNull <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
+                                                                       @NotNull ExtensionPoint<@NotNull KeyedLazyInstance<T>> extensionPoint) {
     Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
       @Override

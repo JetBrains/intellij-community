@@ -12,5 +12,6 @@ object LogbackFileType : LanguageFileType(GroovyLanguage, true) {
   override fun getIcon(): Icon? = GroovyFileType.GROOVY_FILE_TYPE.icon
   override fun getName(): String = "logback"
   override fun getDescription(): String = GroovyBundle.message("filetype.logback.description")
+  override fun getDisplayName(): String = GroovyBundle.message("filetype.logback.display.name")
   override fun getDefaultExtension(): String = "groovy"
 }

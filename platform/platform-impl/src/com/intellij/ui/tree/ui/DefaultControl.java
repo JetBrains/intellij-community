@@ -4,15 +4,29 @@ package com.intellij.ui.tree.ui;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.Icon;
+import javax.swing.*;
+import java.awt.*;
 
 public final class DefaultControl implements Control {
-  private final Icon expandedDefault = UIUtil.getTreeExpandedIcon();
-  private final Icon collapsedDefault = UIUtil.getTreeCollapsedIcon();
-  private final Icon expandedSelected = UIUtil.getTreeSelectedExpandedIcon();
-  private final Icon collapsedSelected = UIUtil.getTreeSelectedCollapsedIcon();
+  private final Icon expandedDefault;
+  private final Icon collapsedDefault;
+  private final Icon expandedSelected;
+  private final Icon collapsedSelected;
+
+  public DefaultControl(@NotNull Icon expandedDefault, @NotNull Icon collapsedDefault,
+                        @NotNull Icon expandedSelected, @NotNull Icon collapsedSelected) {
+    this.expandedDefault = expandedDefault;
+    this.collapsedDefault = collapsedDefault;
+    this.expandedSelected = expandedSelected;
+    this.collapsedSelected = collapsedSelected;
+  }
+
+  public DefaultControl() {
+    expandedDefault = UIUtil.getTreeExpandedIcon();
+    collapsedDefault = UIUtil.getTreeCollapsedIcon();
+    expandedSelected = UIUtil.getTreeSelectedExpandedIcon();
+    collapsedSelected = UIUtil.getTreeSelectedCollapsedIcon();
+  }
 
   @NotNull
   @Override

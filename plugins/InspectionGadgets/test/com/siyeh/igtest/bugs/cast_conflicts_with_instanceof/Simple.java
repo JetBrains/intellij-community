@@ -23,7 +23,7 @@ class U {
 
     } else {
       if (o instanceof A) {
-        B bb = <warning descr="Cast '(B)(o)' conflicts with surrounding 'instanceof' check">(B)(o)</warning>;
+        B bb = <warning descr="Cast to 'B' type conflicts with preceding 'instanceof A' check">(B)(o)</warning>;
       } else {
       }
     }

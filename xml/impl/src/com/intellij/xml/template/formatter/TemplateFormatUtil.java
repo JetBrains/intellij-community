@@ -40,8 +40,7 @@ public final class TemplateFormatUtil {
   @NotNull
   static List<PsiElement> findAllMarkupLanguageElementsInside(PsiElement outerLangElement) {
     PsiFile file = outerLangElement.getContainingFile();
-    if (file != null && file.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-      TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)file.getViewProvider();
+    if (file != null && file.getViewProvider() instanceof TemplateLanguageFileViewProvider viewProvider) {
       return findAllElementsInside(outerLangElement.getTextRange(), viewProvider, false);
     }
     return EMPTY_PSI_ELEMENT_LIST;

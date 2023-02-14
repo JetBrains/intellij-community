@@ -17,6 +17,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TooBroadCatchInspection extends BaseInspection {
 
@@ -71,11 +74,10 @@ public class TooBroadCatchInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option"), "ignoreThrown");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnRootExceptions", InspectionGadgetsBundle.message("too.broad.catch.option")),
+      checkbox("ignoreThrown", InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option")));
   }
 
   @Override
@@ -117,12 +119,11 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeElement)) {
+      if (!(element instanceof PsiTypeElement typeElement)) {
         return;
       }
-      final PsiTypeElement typeElement = (PsiTypeElement)element;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiClassType type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
       final PsiTypeElement newTypeElement = factory.createTypeElement(type);
@@ -153,7 +154,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiType thrownType = myThrown.getType();
       if (thrownType == null) {
         return;
@@ -167,10 +168,9 @@ public class TooBroadCatchInspection extends BaseInspection {
         return;
       }
       final PsiElement catchBlock = ((PsiParameter)catchParameter).getDeclarationScope();
-      if (!(catchBlock instanceof PsiCatchSection)) {
+      if (!(catchBlock instanceof PsiCatchSection myBeforeCatchSection)) {
         return;
       }
-      final PsiCatchSection myBeforeCatchSection = (PsiCatchSection)catchBlock;
       final PsiTryStatement myTryStatement = myBeforeCatchSection.getTryStatement();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);

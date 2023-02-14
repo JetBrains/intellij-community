@@ -2,18 +2,20 @@
 package com.intellij.grazie.ide.ui.search
 
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.ui.components.dsl.msg
+import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
+import com.intellij.openapi.options.OptionsBundle
 
 private class GrazieSearchableOptionContributor : SearchableOptionContributor() {
   private val proofreadId = "proofread"
-  private val proofreadName = msg("grazie.group.name")
+  private val proofreadName = OptionsBundle.message("configurable.group.proofread.settings.display.name")
 
   private val grammarId = "reference.settingsdialog.project.grazie"
-  private val grammarName = GraziePlugin.name
+  private val grammarName = GraziePlugin.settingsPageName
 
   private fun SearchableOptionProcessor.addProofreadOptions(text: String, path: String? = null, hit: String? = text) {
     addOptions(text, path, hit, proofreadId, proofreadName, false)
@@ -27,9 +29,19 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
     for (lang in Lang.values()) {
       processor.addProofreadOptions("${lang.displayName} ${lang.nativeName}", hit = msg("grazie.settings.proofreading.languages.text"))
     }
-    for (name in LanguageGrammarChecking.getStrategies().map { it.getName() }) {
-      processor.addGrammarOptions(name, hit = msg("grazie.settings.grammar.scope.file-types.text"))
+    for (language in TextExtractor.getSupportedLanguages()) {
+      processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
     }
     processor.addGrammarOptions("grazie", null, null)
+
+    val categories = HashSet<String>()
+    for (rule in allRules().values.flatten()) {
+      processor.addGrammarOptions(rule.presentableName, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      for (cat in rule.categories) {
+        if (categories.add(cat)) {
+          processor.addGrammarOptions(cat, hit = msg("grazie.settings.grammar.scope.rules.text"))
+        }
+      }
+    }
   }
 }

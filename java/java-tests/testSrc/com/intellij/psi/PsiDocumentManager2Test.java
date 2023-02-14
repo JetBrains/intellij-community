@@ -11,7 +11,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
@@ -43,7 +42,6 @@ public class PsiDocumentManager2Test extends LightPlatformTestCase {
       }
 
       @Override
-      @Nullable
       public Icon getIcon() {
         return null;
       }

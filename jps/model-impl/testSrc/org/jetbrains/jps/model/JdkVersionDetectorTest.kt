@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
-import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
@@ -15,7 +14,7 @@ class JdkVersionDetectorTest {
     val jdkHome = SystemProperties.getJavaHome()
     val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)
     assertThat(jdkVersion?.version?.trim()).isEqualTo(JavaVersion.current().trim())
-    assertThat(jdkVersion?.bitness).isEqualTo(if (CpuArch.is32Bit()) Bitness.x32 else Bitness.x64)
+    assertThat(jdkVersion?.arch).isEqualTo(CpuArch.CURRENT)
 
     if (SystemInfo.isMac && jdkHome.endsWith("/Contents/Home")) {
       val altHome = jdkHome.substring(0, jdkHome.length - "/Contents/Home".length)

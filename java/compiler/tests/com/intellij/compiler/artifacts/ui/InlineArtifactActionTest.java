@@ -48,10 +48,11 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
 
     selectNode("dir/included");
     perform();
-    assertLayout("<root>\n" +
-                 " artifact:a\n" +
-                 " dir/\n" +
-                 "  module:mod");
+    assertLayout("""
+                   <root>
+                    artifact:a
+                    dir/
+                     module:mod""");
   }
 
   @Override

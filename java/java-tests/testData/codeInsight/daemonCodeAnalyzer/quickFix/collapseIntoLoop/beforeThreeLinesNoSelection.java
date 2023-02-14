@@ -1,4 +1,4 @@
-// "Collapse into loop" "true"
+// "Collapse into loop" "true-preview"
 class X {
   void test(int[] data) {
     <caret>System.out.print("data["+0+"]");

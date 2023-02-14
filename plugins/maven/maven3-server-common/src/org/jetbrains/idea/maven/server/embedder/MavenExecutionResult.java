@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
@@ -22,35 +23,39 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenExecutionResult {
   private File myPomFile;
   private final MavenProject myMavenProject;
   private final List<Exception> myExceptions;
+  private final List<ModelProblem> myModelProblems;
   private final DependencyResolutionResult myDependencyResolutionResult;
 
   public MavenExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
-    this(mavenProject, null, exceptions);
+    this(mavenProject, null, exceptions, Collections.emptyList());
   }
 
   public MavenExecutionResult(List<Exception> exceptions) {
-    this(null, null, exceptions);
+    this(null, null, exceptions, Collections.emptyList());
   }
 
   public MavenExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
-    this(null, null, exceptions);
+    this(null, null, exceptions, Collections.emptyList());
     myPomFile = pomFile;
   }
 
   public MavenExecutionResult(@Nullable MavenProject mavenProject,
                               @Nullable DependencyResolutionResult dependencyResolutionResult,
-                              List<Exception> exceptions) {
+                              @NotNull List<Exception> exceptions,
+                              @NotNull List<ModelProblem> modelProblems) {
     myMavenProject = mavenProject;
+    myModelProblems = modelProblems;
     if (mavenProject != null) {
       myPomFile = mavenProject.getFile();
     }
-    myExceptions = exceptions == null ? new ArrayList<Exception>() : exceptions;
+    myExceptions = exceptions;
     myDependencyResolutionResult = dependencyResolutionResult;
     if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
       myExceptions.addAll(myDependencyResolutionResult.getCollectionErrors());
@@ -74,6 +79,10 @@ public class MavenExecutionResult {
 
   public boolean hasExceptions() {
     return !myExceptions.isEmpty();
+  }
+
+  public List<ModelProblem> getModelProblems() {
+    return myModelProblems;
   }
 
   @Nullable

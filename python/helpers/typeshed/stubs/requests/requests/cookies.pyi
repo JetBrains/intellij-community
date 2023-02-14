@@ -1,10 +1,6 @@
-import sys
-from typing import Any, MutableMapping
-
-if sys.version_info < (3, 0):
-    from cookielib import CookieJar
-else:
-    from http.cookiejar import CookieJar
+from collections.abc import MutableMapping
+from http.cookiejar import CookieJar
+from typing import Any
 
 class MockRequest:
     type: Any

@@ -10,9 +10,6 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomHighlightingHelper {
 
   @NotNull
@@ -24,7 +21,7 @@ public abstract class DomHighlightingHelper {
   @NotNull
   public abstract List<DomElementProblemDescriptor> checkNameIdentity(DomElement element, DomElementAnnotationHolder holder);
 
-  public abstract void runAnnotators(DomElement element, DomElementAnnotationHolder holder, Class<? extends DomElement> rootClass);
+  public abstract void runAnnotators(DomElement element, DomElementAnnotationHolder holder, @NotNull Class<? extends DomElement> rootClass);
 
   /**
    * Runs all registered {@link DomCustomAnnotationChecker}s.

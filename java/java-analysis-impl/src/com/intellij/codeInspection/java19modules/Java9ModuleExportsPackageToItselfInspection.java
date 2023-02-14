@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -31,7 +28,7 @@ public class Java9ModuleExportsPackageToItselfInspection extends AbstractBaseJav
     }
 
     @Override
-    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+    public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
       super.visitPackageAccessibilityStatement(statement);
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {

@@ -137,6 +137,12 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
   protected abstract ContentRevision getNewContentRevision();
 
   @NotNull
+  protected FilePath getFilePath() {
+    return FilePatchStatus.ADDED.equals(myStatus) ? VcsUtil.getFilePath(myIoCurrentBase, false)
+                                                  : detectNewFilePathForMovedOrModified();
+  }
+
+  @NotNull
   protected FilePath detectNewFilePathForMovedOrModified() {
     return FilePatchStatus.MOVED_OR_RENAMED.equals(myStatus)
            ? VcsUtil.getFilePath(Objects.requireNonNull(PathMerger.getFile(new File(myBase.getPath()), myPatch.getAfterName())), false)

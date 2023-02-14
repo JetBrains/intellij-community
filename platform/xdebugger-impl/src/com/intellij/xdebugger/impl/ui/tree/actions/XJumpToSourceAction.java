@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
@@ -30,5 +31,10 @@ public class XJumpToSourceAction extends XJumpToSourceActionBase {
   @Override
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && node.getValueContainer().canNavigateToSource();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

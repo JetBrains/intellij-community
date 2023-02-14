@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -11,7 +11,9 @@ import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
 
 import java.util.Collections;
@@ -36,9 +39,14 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar
       .registerUastReferenceProvider(registrar,
-                                     injectionHostUExpression().methodCallParameter(0, psiMethod()
-                                       .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
-                                       .definedInClass(Registry.class.getName())),
+                                     injectionHostUExpression()
+                                       .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+                                       .methodCallParameter(0, psiMethod()
+                                         .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
+                                         .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
+                                           Registry.class.getName(),
+                                           RegistryManager.class.getName()
+                                         )))),
                                      new UastInjectionHostReferenceProvider() {
                                        @Override
                                        public boolean acceptsTarget(@NotNull PsiElement target) {
@@ -55,7 +63,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static final class RegistryKeyIdReference extends ExtensionPointReferenceBase {
+  private static final class RegistryKeyIdReference extends ExtensionReferenceBase {
 
     private RegistryKeyIdReference(@NotNull PsiElement element) {
       super(element);
@@ -72,14 +80,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
       return DevKitBundle.message("code.convert.registry.key.cannot.resolve", getValue());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected GenericAttributeValue<?> getNameElement(Extension extension) {
-      return getAttribute(extension, "key");
-    }
-
-    @Override
-    protected boolean hasCustomNameElement() {
-      return true;
+    protected @Nullable GenericAttributeValue<String> getNameElement(Extension extension) {
+      return (GenericAttributeValue<String>)getAttribute(extension, "key");
     }
 
     @Nullable
@@ -105,7 +109,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
 
       final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
       processCandidates(extension -> {
-        final String key = getNameElement(extension).getStringValue();
+        final GenericAttributeValue<String> nameElement = getNameElement(extension);
+        if (nameElement == null) return true;
+
+        final String key = nameElement.getStringValue();
         if (key == null || extension.getXmlElement() == null) return true;
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "restartRequired"));

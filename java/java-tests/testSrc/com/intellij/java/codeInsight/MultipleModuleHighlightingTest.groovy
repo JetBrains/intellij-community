@@ -26,9 +26,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 
-/**
- * @author peter
- */
 class MultipleModuleHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   void "test use original place classpath for reference type resolving"() {

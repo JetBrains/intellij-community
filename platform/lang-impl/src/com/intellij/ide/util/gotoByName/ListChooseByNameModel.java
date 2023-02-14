@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -94,10 +95,10 @@ public class ListChooseByNameModel<T extends ChooseByNameItem> extends SimpleCho
         final Color bg = isSelected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground();
         panel.setBackground(bg);
 
-        if (value instanceof ChooseByNameItem) {
-          final ChooseByNameItem item = (ChooseByNameItem) value;
+        if (value instanceof ChooseByNameItem item) {
 
-          final Color fg = isSelected ? UIUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
+          final Color fg;
+          fg = isSelected ? NamedColorUtil.getListSelectionForeground(true) : UIUtil.getListForeground();
 
           final JLabel actionLabel = new JLabel(item.getName(), null, LEFT);
           actionLabel.setBackground(bg);

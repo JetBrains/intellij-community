@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.BuildNumber;
@@ -64,8 +64,6 @@ public abstract class ApplicationInfo {
 
   public abstract String getJetBrainsTvUrl();
 
-  public abstract String getEvalLicenseUrl();
-
   public abstract String getKeyConversionUrl();
 
   public abstract boolean hasHelp();
@@ -93,7 +91,7 @@ public abstract class ApplicationInfo {
 
   /** @deprecated use {@link #getBuild()} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   public String getBuildNumber() {
     return getBuild().asString();
   }

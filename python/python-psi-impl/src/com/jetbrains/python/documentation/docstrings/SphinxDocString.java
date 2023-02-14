@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class SphinxDocString extends TagBasedDocString {
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "key" };
   public static String[] ALL_TAGS = new String[] { ":param", ":parameter", ":arg", ":argument", ":keyword", ":key",
@@ -38,12 +36,6 @@ public class SphinxDocString extends TagBasedDocString {
   @Nullable
   protected static String concatTrimmedLines(@Nullable Substring s) {
     return s != null ? s.concatTrimmedLines(" ") : null;
-  }
-
-  @NotNull
-  @Override
-  public List<String> getParameters() {
-    return toUniqueStrings(getParameterSubstrings());
   }
 
   @NotNull
@@ -127,5 +119,11 @@ public class SphinxDocString extends TagBasedDocString {
   @Override
   public String getDescription() {
     return myDescription.replaceAll("\n", "<br/>");
+  }
+
+  @Nullable
+  @Override
+  public String getAttributeDescription(@Nullable String attrName) {
+    return attrName != null ? concatTrimmedLines(getTagValue(VARIABLE_TAGS, attrName)) : null;
   }
 }

@@ -44,7 +44,7 @@ class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementWalkin
   }
 
   @Override
-  public void visitCallExpression(PsiCallExpression callExpression) {
+  public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
     if (passed) {
       return;
     }
@@ -53,7 +53,7 @@ class VariablePassedAsArgumentExcludedVisitor extends JavaRecursiveElementWalkin
   }
 
   @Override
-  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+  public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
     if (passed) {
       return;
     }

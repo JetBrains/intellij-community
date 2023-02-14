@@ -13,9 +13,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Future;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class SvnProcessHandler extends OSProcessHandler {
 
   private final boolean myForceUtf8;

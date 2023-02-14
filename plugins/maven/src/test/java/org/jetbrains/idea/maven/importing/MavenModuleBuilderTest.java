@@ -15,15 +15,17 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import com.intellij.testFramework.RunAll;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
@@ -32,11 +34,21 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder;
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder;
+import org.junit.Assume;
+import org.junit.Test;
 
 import java.util.List;
 
-public class MavenModuleBuilderTest extends MavenImportingTestCase {
+public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   private AbstractMavenModuleBuilder myBuilder;
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> stopMavenImportManager(),
+      () -> super.tearDown()
+    );
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -47,6 +59,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath());
   }
 
+  @Test
   public void testModuleRecreation() throws Exception {
     MavenId id = new MavenId("org.foo", "module", "1.0");
 
@@ -57,6 +70,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertModules(id.getArtifactId());
   }
 
+  @Test
   public void testCreatingBlank() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -80,6 +94,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
+  @Test
   public void testInheritJdkFromProject() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -88,6 +103,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTrue(manager.isSdkInherited());
   }
 
+  @Test
   public void testCreatingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -108,33 +124,40 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
+  @Test
   public void testAddingNewlyCreatedModuleToTheAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setAggregatorProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals(createPomXml("<groupId>test</groupId>" +
-                              "<artifactId>project</artifactId>\n" +
-                              "    <packaging>pom</packaging>\n" +
-                              "    <version>1</version>\n" +
-                              "    <modules>\n" +
-                              "        <module>module</module>\n" +
-                              "    </modules>\n"),
+    assertEquals(createPomXml("""
+                                <groupId>test</groupId><artifactId>project</artifactId>
+                                    <packaging>pom</packaging>
+                                    <version>1</version>
+                                    <modules>
+                                        <module>module</module>
+                                    </modules>
+                                """),
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
+  @Test
   public void testAddingManagedProjectIfNoArrgerator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
 
@@ -146,12 +169,15 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
+  @Test
   public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
 
@@ -163,73 +189,84 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
+  @Test
   public void testAddingParent() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "\n" +
-                 "    <groupId>org.foo</groupId>\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "    <version>1.0</version>\n" +
-                 "\n" +
-                 "\n" +
-                 "</project>",
+    assertEquals("""
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <project xmlns="http://maven.apache.org/POM/4.0.0"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                       <parent>
+                           <artifactId>project</artifactId>
+                           <groupId>test</groupId>
+                           <version>1</version>
+                       </parent>
+                       <modelVersion>4.0.0</modelVersion>
+
+                       <groupId>org.foo</groupId>
+                       <artifactId>module</artifactId>
+                       <version>1.0</version>
+
+
+                   </project>""",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
+  @Test
   public void testAddingParentWithInheritedProperties() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
     setInheritedOptions(true, true);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "\n" +
-                 "\n" +
-                 "</project>",
+    assertEquals("""
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <project xmlns="http://maven.apache.org/POM/4.0.0"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                       <parent>
+                           <artifactId>project</artifactId>
+                           <groupId>test</groupId>
+                           <version>1</version>
+                       </parent>
+                       <modelVersion>4.0.0</modelVersion>
+
+                       <artifactId>module</artifactId>
+
+
+                   </project>""",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
+  @Test
   public void testAddingParentAndInheritWhenGeneratingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
@@ -237,74 +274,85 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "    <packaging>jar</packaging>\n" +
-                 "\n" +
-                 "    <name>module</name>\n" +
-                 "    <url>http://maven.apache.org</url>\n" +
-                 "\n" +
-                 "    <properties>\n" +
-                 "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
-                 "    </properties>\n" +
-                 "\n" +
-                 "    <dependencies>\n" +
-                 "        <dependency>\n" +
-                 "            <groupId>junit</groupId>\n" +
-                 "            <artifactId>junit</artifactId>\n" +
-                 "            <version>3.8.1</version>\n" +
-                 "            <scope>test</scope>\n" +
-                 "        </dependency>\n" +
-                 "    </dependencies>\n" +
-                 "</project>\n",
+    assertEquals("""
+                   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                       <parent>
+                           <artifactId>project</artifactId>
+                           <groupId>test</groupId>
+                           <version>1</version>
+                       </parent>
+                       <modelVersion>4.0.0</modelVersion>
+
+                       <artifactId>module</artifactId>
+                       <packaging>jar</packaging>
+
+                       <name>module</name>
+                       <url>http://maven.apache.org</url>
+
+                       <properties>
+                           <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                       </properties>
+
+                       <dependencies>
+                           <dependency>
+                               <groupId>junit</groupId>
+                               <artifactId>junit</artifactId>
+                               <version>3.8.1</version>
+                               <scope>test</scope>
+                           </dependency>
+                       </dependencies>
+                   </project>
+                   """,
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("module/pom.xml")));
   }
 
+  @Test
   public void testAddingParentWithRelativePath() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/subDir/module");
     setParentProject(myProjectPom);
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                 "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                 "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                 "    <parent>\n" +
-                 "        <artifactId>project</artifactId>\n" +
-                 "        <groupId>test</groupId>\n" +
-                 "        <version>1</version>\n" +
-                 "        <relativePath>../../pom.xml</relativePath>\n" +
-                 "    </parent>\n" +
-                 "    <modelVersion>4.0.0</modelVersion>\n" +
-                 "\n" +
-                 "    <groupId>org.foo</groupId>\n" +
-                 "    <artifactId>module</artifactId>\n" +
-                 "    <version>1.0</version>\n" +
-                 "\n" +
-                 "\n" +
-                 "</project>",
+    assertEquals("""
+                   <?xml version="1.0" encoding="UTF-8"?>
+                   <project xmlns="http://maven.apache.org/POM/4.0.0"
+                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                       <parent>
+                           <artifactId>project</artifactId>
+                           <groupId>test</groupId>
+                           <version>1</version>
+                           <relativePath>../../pom.xml</relativePath>
+                       </parent>
+                       <modelVersion>4.0.0</modelVersion>
+
+                       <groupId>org.foo</groupId>
+                       <artifactId>module</artifactId>
+                       <version>1.0</version>
+
+
+                   </project>""",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
   }
 
+  @Test
   public void testSameFolderAsParent() throws Exception {
+    Assume.assumeFalse(Registry.is("maven.linear.import"));
+
     VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
-                                                    "<groupId>test</groupId>" +
-                                                    "<artifactId>project</artifactId>" +
-                                                    "<version>1</version>"));
+      """
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+        """));
     importProject(customPomXml);
     assertModules("project");
 
@@ -313,11 +361,21 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
 
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertContentRoots("project",
-                       getProjectPath() + "/src/main/java",
-                       getProjectPath() + "/src/main/resources",
-                       getProjectPath() + "/src/test/java"
-    );
+    if (supportsImportOfNonExistingFolders()) {
+      assertContentRoots("project",
+                         getProjectPath() + "/src/main/java",
+                         getProjectPath() + "/src/main/resources",
+                         getProjectPath() + "/src/test/java",
+                         getProjectPath() + "/src/test/resources"
+      );
+    }
+    else {
+      assertContentRoots("project",
+                         getProjectPath() + "/src/main/java",
+                         getProjectPath() + "/src/main/resources",
+                         getProjectPath() + "/src/test/java"
+      );
+    }
     assertContentRoots("module",
                        getProjectPath());
 

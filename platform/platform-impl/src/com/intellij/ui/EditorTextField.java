@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -30,13 +30,14 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,6 +46,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.LineSeparator;
@@ -62,7 +65,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.ui.dsl.gridLayout.GapsKt.JBGaps;
 
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
@@ -77,6 +84,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private final Project myProject;
   private FileType myFileType;
   private EditorEx myEditor;
+  private final Set<Editor> myEditorsToBeReleased = new HashSet<>();
   private Component myNextFocusable;
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -99,6 +107,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private int myCaretPosition = -1;
   private final List<EditorSettingsProvider> mySettingsProviders = new ArrayList<>();
   private Disposable myDisposable;
+  private Disposable myManualDisposable;
+  private boolean myInHierarchy;
 
   public EditorTextField() {
     this("");
@@ -133,26 +143,42 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     myFileType = fileType;
     setLayout(new BorderLayout());
     enableEvents(AWTEvent.KEY_EVENT_MASK);
-    // todo[dsl,max]
-    setFocusable(true);
-    // dsl: this is a weird way of doing things....
-    super.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        requestFocus();
-      }
-    });
+    setFocusable(false);
 
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new Jdk7DelegatingToRootTraversalPolicy());
 
     setFont(UIManager.getFont("TextField.font"));
+    addHierarchyListener(e -> {
+      if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getChanged().isShowing()) {
+        if (myEditor == null) initEditor();
+      }
+    });
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(3, 3, 3, 3));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
+  }
+
+  @Nullable
+  private Project getProjectIfValid() {
+    return myProject == null || myProject.isDisposed() ? null : myProject;
+  }
+
+  //prevent from editor reinitialisation on add/remove
+  public void setDisposedWith(@NotNull Disposable disposable) {
+    assert myManualDisposable == null;
+    Disposer.register(disposable, () -> {
+      myManualDisposable = null;
+      deInitEditor();
+    });
+    myManualDisposable = disposable;
   }
 
   public void setSupplementary(boolean supplementary) {
     myIsSupplementary = supplementary;
-    if (myEditor != null) {
-      myEditor.putUserData(SUPPLEMENTARY_KEY, supplementary);
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.putUserData(SUPPLEMENTARY_KEY, supplementary);
     }
   }
 
@@ -163,16 +189,18 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   public void setShowPlaceholderWhenFocused(boolean b) {
     myShowPlaceholderWhenFocused = b;
-    if (myEditor != null) {
-      myEditor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
+    EditorEx editor = getEditor(false);
+    if (editor != null) {
+      editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
     }
   }
 
   @NotNull
   @Override
   public String getText() {
-    String text = myDocument.getText();
-    LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+    Document document = getDocument();
+    String text = document.getText();
+    LineSeparator separator = LINE_SEPARATOR_KEY.get(document);
     if (separator != null) {
       return StringUtil.convertLineSeparators(text, separator.getSeparatorString());
     }
@@ -183,8 +211,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public void setBackground(Color bg) {
     super.setBackground(bg);
     myEnforcedBgColor = bg;
-    if (myEditor != null) {
-      myEditor.setBackgroundColor(bg);
+    EditorEx editor = getEditor(false);
+    if (editor != null) {
+      editor.setBackgroundColor(bg);
     }
   }
 
@@ -239,21 +268,15 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     myDocument = document;
     installDocumentListener();
-    if (myEditor != null) {
-      //MainWatchPanel watches the oldEditor's focus in order to remove debugger combobox when focus is lost
-      //we should first transfer focus to new oldEditor and only then remove current oldEditor
-      //MainWatchPanel check that oldEditor.getParent == newEditor.getParent and does not remove oldEditor in such cases
-
-      boolean isFocused = isFocusOwner();
+    Editor editor = getEditor();
+    if (editor != null) {
       EditorEx newEditor = createEditor();
-      releaseEditorNow();
+      releaseEditorAndScheduleForRemoval();
       myEditor = newEditor;
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      add(newEditor.getComponent(), BorderLayout.CENTER);
+      removeScheduledEditors();
 
       validate();
-      if (isFocused) {
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(newEditor.getContentComponent(), true));
-      }
     }
   }
 
@@ -281,8 +304,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         }
         LINE_SEPARATOR_KEY.set(myDocument, separator);
         myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
-        if (myEditor != null) {
-          final CaretModel caretModel = myEditor.getCaretModel();
+        Editor editor = getEditor();
+        if (editor != null) {
+          final CaretModel caretModel = editor.getCaretModel();
           if (caretModel.getOffset() >= myDocument.getTextLength()) {
             caretModel.moveToOffset(myDocument.getTextLength());
           }
@@ -308,18 +332,20 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
    * is instantiated lazily by the editor text field and provided placeholder text is applied to the editor during its
    * actual construction then.
    *
-   * @param text    {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
+   * @param text {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
    */
   public void setPlaceholder(@Nls @Nullable CharSequence text) {
     myHintText = text;
-    if (myEditor != null) {
-      myEditor.setPlaceholder(text);
+    EditorEx editor = getEditor(false);
+    if (editor != null) {
+      editor.setPlaceholder(text);
     }
   }
 
   public void selectAll() {
-    if (myEditor != null) {
-      doSelectAll(myEditor);
+    Editor editor = getEditor();
+    if (editor != null) {
+      doSelectAll(editor);
     }
     else {
       myWholeTextSelected = true;
@@ -332,8 +358,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   public void removeSelection() {
-    if (myEditor != null) {
-      myEditor.getSelectionModel().removeSelection();
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.getSelectionModel().removeSelection();
     }
     else {
       myWholeTextSelected = false;
@@ -348,27 +375,34 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (position > document.getTextLength() || position < 0) {
       throw new IllegalArgumentException("bad position: " + position);
     }
-    if (myEditor != null) {
-      myEditor.getCaretModel().moveToOffset(position);
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.getCaretModel().moveToOffset(position);
     }
     else {
       myCaretPosition = position;
     }
   }
+
   public CaretModel getCaretModel() {
-    return myEditor.getCaretModel();
+    Editor editor = getEditor(true);
+    return editor == null ? null : editor.getCaretModel();
   }
 
   @Override
   public boolean isFocusOwner() {
-    if (myEditor != null) {
-      return IJSwingUtilities.hasFocus(myEditor.getContentComponent());
+    Editor editor = getEditor();
+    if (editor != null) {
+      return IJSwingUtilities.hasFocus(editor.getContentComponent());
     }
     return super.isFocusOwner();
   }
 
-  @Override
-  public void addNotify() {
+  protected void onEditorAdded(@NotNull Editor editor) {
+
+  }
+
+  private EditorEx initEditor() {
     Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
@@ -378,16 +412,17 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     myDisposable = Disposer.newDisposable("ETF dispose");
-    Disposer.register(myDisposable, this::releaseEditorLater);
-    if (myProject != null) {
-      ProjectManagerListener listener = new ProjectManagerListener() {
+    Disposer.register(myDisposable, this::releaseEditorAndScheduleForRemovalLater);
+    Project project = getProjectIfValid();
+    if (project != null) {
+      project.getMessageBus().connect(myDisposable).subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
         @Override
-        public void projectClosing(@NotNull Project project) {
-          releaseEditorNow();
+        public void projectClosing(@NotNull Project p) {
+          if (p == project) {
+            releaseEditorNow();
+          }
         }
-      };
-      ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
-      Disposer.register(myDisposable, ()->ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
+      });
     }
     Disposer.register(myDisposable, () -> {
       // remove traces of this editor from UndoManager to avoid leaks
@@ -399,96 +434,114 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
     });
     if (myEditor != null) {
-      releaseEditorLater();
+      releaseEditorAndScheduleForRemovalLater();
     }
 
     boolean isFocused = isFocusOwner();
 
-    initEditor();
-
-    super.addNotify();
+    EditorEx editor = initEditorInner();
+    onEditorAdded(editor);
 
     if (myNextFocusable != null) {
-      myEditor.getContentComponent().setNextFocusableComponent(myNextFocusable);
+      editor.getContentComponent().setNextFocusableComponent(myNextFocusable);
       myNextFocusable = null;
     }
     revalidate();
     if (isFocused) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> requestFocus());
     }
+    return editor;
   }
 
-  private void initEditor() {
-    myEditor = createEditor();
-    myEditor.getContentComponent().setEnabled(isEnabled());
+  private EditorEx initEditorInner() {
+    EditorEx editor = createEditor();
+    editor.getContentComponent().setEnabled(isEnabled());
     if (myCaretPosition >= 0) {
-      myEditor.getCaretModel().moveToOffset(myCaretPosition);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      editor.getCaretModel().moveToOffset(myCaretPosition);
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     String tooltip = getToolTipText();
     if (StringUtil.isNotEmpty(tooltip)) {
-      myEditor.getContentComponent().setToolTipText(tooltip);
+      editor.getContentComponent().setToolTipText(tooltip);
     }
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    myEditor = editor;
+    add(editor.getComponent(), BorderLayout.CENTER);
+    return editor;
   }
 
   @Override
   public void removeNotify() {
+    myInHierarchy = false;
     super.removeNotify();
+    if (myManualDisposable == null) deInitEditor();
+  }
+
+  private void deInitEditor() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
     }
   }
 
-  private void releaseEditor(@NotNull Editor editor) {
-    // todo IMHO this should be removed completely
-    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+  private void releaseEditorNow() {
+    releaseEditorAndScheduleForRemoval();
+    removeScheduledEditors();
+  }
+
+  // releasing an editor implies removing it from a component hierarchy
+  // invokeLater is required because releaseEditor() may be called from
+  // removeNotify(), so we need to let swing complete its removeNotify() chain
+  // and only then execute another removal from the hierarchy. Otherwise
+  // swing goes nuts because of nested removals and indices get corrupted
+  private boolean releaseEditorAndScheduleForRemoval() {
+    EditorEx editor = myEditor;
+    if (editor == null) return false;
+
+    //TODO: this probably should be removed completely (see 6c7c95cef4e5accc03f9cb1c6b2b2952c01395cd)
+    Project project = getProjectIfValid();
+    if (project != null && myIsViewer) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
       }
     }
-
-    remove(editor.getComponent());
-
-    editor.getContentComponent().removeFocusListener(this);
-    editor.getContentComponent().removeMouseListener(this);
 
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+
+    myEditorsToBeReleased.add(editor);
+    myEditor = null;
+    return true;
   }
 
-  private void releaseEditorNow() {
-    EditorEx editor = myEditor;
-    if (editor == null) return;
-    myEditor = null;
-    releaseEditor(editor);
+  void releaseEditorAndScheduleForRemovalLater() {
+    if (releaseEditorAndScheduleForRemoval()) {
+      ApplicationManager.getApplication().invokeLater(() -> removeScheduledEditors(), ModalityState.stateForComponent(this));
+    }
   }
 
-  void releaseEditorLater() {
-    // releasing an editor implies removing it from a component hierarchy
-    // invokeLater is required because releaseEditor() may be called from
-    // removeNotify(), so we need to let swing complete its removeNotify() chain
-    // and only then execute another removal from the hierarchy. Otherwise
-    // swing goes nuts because of nested removals and indices get corrupted
-    EditorEx editor = myEditor;
-    if (editor == null) return;
-    ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
-    myEditor = null;
+  private void removeScheduledEditors() {
+    for (Editor editorToRelease : myEditorsToBeReleased) {
+      remove(editorToRelease.getComponent());
+      editorToRelease.getContentComponent().removeFocusListener(this);
+      editorToRelease.getContentComponent().removeMouseListener(this);
+    }
+    myEditorsToBeReleased.clear();
   }
 
   @Override
   public void setFont(Font font) {
     super.setFont(font);
-    if (myEditor != null) {
-      setupEditorFont(myEditor);
+    EditorEx editor = getEditor(false);
+    if (editor != null) {
+      setupEditorFont(editor);
     }
   }
 
   /**
    * This option will be used for embedded editor creation. It's ok to override this method if you don't want to configure
    * it using class constructor
+   *
    * @return is one line mode or not
    */
   protected boolean isOneLineMode() {
@@ -507,6 +560,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
+    editor.getSettings().setDndEnabled(false);
 
     // color scheme settings:
     setupEditorFont(editor);
@@ -519,34 +573,36 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   protected Document createDocument() {
-    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    Project project = getProjectIfValid();
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
-    return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+    return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
   @NotNull
   protected EditorEx createEditor() {
+    Project project = getProjectIfValid();
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
     setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
 
-    if (myProject != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+    if (project != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
-        DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, !myIsViewer);
+        DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, !myIsViewer);
       }
     }
 
-    if (myProject != null) {
+    if (project != null) {
       EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
       VirtualFile virtualFile = myDocument == null ? null : FileDocumentManager.getInstance().getFile(myDocument);
-      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(myProject, virtualFile) :
-                                      myFileType != null ? highlighterFactory.createEditorHighlighter(myProject, myFileType) : null;
+      EditorHighlighter highlighter = virtualFile != null ? highlighterFactory.createEditorHighlighter(project, virtualFile) :
+                                      myFileType != null ? highlighterFactory.createEditorHighlighter(project, myFileType) : null;
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
@@ -616,8 +672,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void updateBorder(@NotNull final EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
-        && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
+        &&
+        !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        &&
+        (SwingUtilities.getAncestorOfClass(JTable.class, this) == null ||
+         Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
@@ -648,8 +707,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.getColorsScheme().setEditorFontSize(getFont().getSize());
       return;
     }
-    UISettings settings = UISettings.getInstance();
-    if (settings.getPresentationMode()) editor.setFontSize(settings.getPresentationModeFontSize());
+    float currentEditorFontSize = UISettingsUtils.getInstance().getScaledEditorFontSize();
+    if (editor.getColorsScheme().getEditorFontSize2D() != currentEditorFontSize) {
+      editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true);
+      editor.setFontSize(currentEditorFontSize);
+    }
   }
 
   protected boolean shouldHaveBorder() {
@@ -674,8 +736,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     final EditorEx editor = myEditor;
 
     if (editor != null) {
-      releaseEditor(editor);
-      initEditor();
+      releaseEditorAndScheduleForRemoval();
+      initEditorInner();
+      removeScheduledEditors();
       revalidate();
     }
   }
@@ -698,10 +761,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return color != null ? color : super.getBackground();
   }
 
-  private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme){
+  private Color getBackgroundColor(boolean enabled, final EditorColorsScheme colorsScheme) {
     if (myEnforcedBgColor != null) return myEnforcedBgColor;
-    if (ComponentUtil.getParentOfType((Class<? extends CellRendererPane>)CellRendererPane.class, (Component)this) != null && (StartupUiUtil
-                                                                                                                                .isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (ComponentUtil.getParentOfType(CellRendererPane.class, this) != null &&
+        (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       return getParent().getBackground();
     }
 
@@ -722,25 +785,28 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
+  public void validate() {
+    getEditor(true);
+    super.validate();
+  }
+
+  @Override
   public Dimension getPreferredSize() {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     }
 
+    Editor editor = getEditor(true);
     boolean toReleaseEditor = false;
-    if (myEditor == null && myEnsureWillComputePreferredSize) {
+    if (editor == null && myEnsureWillComputePreferredSize) {
       myEnsureWillComputePreferredSize = false;
-      initEditor();
+      editor = initEditorInner();
       toReleaseEditor = true;
     }
 
     Dimension size = JBUI.size(100, 10);
-    if (myEditor != null) {
-      Dimension preferredSize = myEditor.getComponent().getPreferredSize();
-
-      if (myPreferredWidth != -1) {
-        preferredSize.width = myPreferredWidth;
-      }
+    if (editor != null) {
+      Dimension preferredSize = editor.getComponent().getPreferredSize();
 
       JBInsets.addTo(preferredSize, getInsets());
       size = preferredSize;
@@ -754,6 +820,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       myPassivePreferredSize = size;
     }
 
+    if (myPreferredWidth != -1) {
+      size.width = myPreferredWidth;
+    }
     return size;
   }
 
@@ -764,15 +833,16 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     Dimension size = JBUI.size(1, 10);
-    if (myEditor != null) {
-      size.height = myEditor.getLineHeight();
+    Editor editor = getEditor();
+    if (editor != null) {
+      size.height = editor.getLineHeight();
 
       if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUIScale.scale(16));
       }
 
       JBInsets.addTo(size, getInsets());
-      JBInsets.addTo(size, myEditor.getInsets());
+      JBInsets.addTo(size, editor.getInsets());
     }
 
     return size;
@@ -784,15 +854,17 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public Component getNextFocusableComponent() {
-    if (myEditor == null && myNextFocusable == null) return super.getNextFocusableComponent();
-    if (myEditor == null) return myNextFocusable;
-    return myEditor.getContentComponent().getNextFocusableComponent();
+    Editor editor = getEditor();
+    if (editor == null && myNextFocusable == null) return super.getNextFocusableComponent();
+    if (editor == null) return myNextFocusable;
+    return editor.getContentComponent().getNextFocusableComponent();
   }
 
   @Override
   public void setNextFocusableComponent(Component aComponent) {
-    if (myEditor != null) {
-      myEditor.getContentComponent().setNextFocusableComponent(aComponent);
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.getContentComponent().setNextFocusableComponent(aComponent);
       return;
     }
     myNextFocusable = aComponent;
@@ -801,27 +873,50 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (e.isConsumed() || myEditor != null && !myEditor.processKeyTyped(e)) {
+    EditorEx editor = getEditor(false);
+    if (e.isConsumed() || editor != null && !editor.processKeyTyped(e)) {
       return super.processKeyBinding(ks, e, condition, pressed);
     }
     return true;
   }
 
+  //use addSettingsProvider or onEditorAdded
+  @Override
+  public final void addNotify() {
+    myInHierarchy = true;
+    if (myManualDisposable == null && myEditor == null && !Registry.is("editor.text.field.init.on.shown")) {
+      initEditor();
+    }
+    super.addNotify();
+  }
+
+  @Nullable
+  public EditorEx getEditor(boolean initializeIfSafe) {
+    EditorEx editor = myEditor;
+    if (editor == null && initializeIfSafe && (myInHierarchy || myManualDisposable != null)) {
+      return initEditor();
+    }
+    return editor;
+  }
+
   @Override
   public void requestFocus() {
-    if (myEditor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        if (myEditor != null) IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-      });
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    Editor editor = getEditor(true);
+    if (editor != null) {
+      IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+    else {
+      super.requestFocus();
     }
   }
 
   @Override
   public boolean requestFocusInWindow() {
-    if (myEditor != null) {
-      final boolean b = myEditor.getContentComponent().requestFocusInWindow();
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    Editor editor = getEditor();
+    if (editor != null) {
+      final boolean b = editor.getContentComponent().requestFocusInWindow();
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return b;
     }
     else {
@@ -830,14 +925,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   /**
-   *
    * @return null if the editor is not initialized (e.g. if the field is not added to a container)
    * @see #createEditor()
    * @see #addNotify()
    */
   @Nullable
   public Editor getEditor() {
-    return myEditor;
+    return getEditor(false);
   }
 
   public FileType getFileType() {
@@ -846,7 +940,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @NotNull
   public JComponent getFocusTarget() {
-    return myEditor == null ? this : myEditor.getContentComponent();
+    Editor editor = getEditor();
+    return editor == null ? this : editor.getContentComponent();
   }
 
   @Override
@@ -922,15 +1017,16 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (myEditor != null && myEditor.isRendererMode()) {
+    EditorEx editor = getEditor(false);
+    if (editor != null && editor.isRendererMode()) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return myEditor.getCopyProvider();
+        return editor.getCopyProvider();
       }
       return null;
     }
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
+      return editor;
     }
 
     return null;
@@ -959,12 +1055,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     mySettingsProviders.add(provider);
   }
 
-  public boolean removeSettingsProvider(@NotNull EditorSettingsProvider provider) {
-    return mySettingsProviders.remove(provider);
-  }
-
   private static class Jdk7DelegatingToRootTraversalPolicy extends AbstractDelegatingToRootTraversalPolicy {
     private boolean invokedFromBeforeOrAfter;
+
     @Override
     public Component getFirstComponent(Container aContainer) {
       return getDefaultComponent(aContainer);
@@ -977,25 +1070,36 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
     @Override
     public Component getComponentAfter(Container aContainer, Component aComponent) {
+      if (aContainer instanceof EditorTextField) {
+        int count = aContainer.getComponentCount();
+        if (count > 1 && aComponent != aContainer.getComponent(count - 1)) {
+          return getDefaultComponent(aContainer);
+        }
+      }
+
       invokedFromBeforeOrAfter = true;
       Component after;
       try {
         after = super.getComponentAfter(aContainer, aComponent);
-      } finally {
+      }
+      finally {
         invokedFromBeforeOrAfter = false;
       }
-      return after != aComponent? after: null;  // escape our container
+      return after != aComponent ? after : null;  // escape our container
     }
 
     @Override
     public Component getComponentBefore(Container aContainer, Component aComponent) {
       Component before = super.getComponentBefore(aContainer, aComponent);
-      return before != aComponent ? before: null;  // escape our container
+      return before != aComponent ? before : null;  // escape our container
     }
 
     @Override
     public Component getDefaultComponent(Container aContainer) {
       if (invokedFromBeforeOrAfter) return null;     // escape our container
+      if (!(aContainer.isVisible() && aContainer.isDisplayable())) {
+        return null; // shamelessly copied from ContainerOrderFocusTraversalPolicy to fix the case of focus trying to get inside an invisible EditorTextField
+      }
       Editor editor = aContainer instanceof EditorTextField ? ((EditorTextField)aContainer).getEditor() : null;
       if (editor != null) return editor.getContentComponent();
       return aContainer;

@@ -1,14 +1,9 @@
-import sys
 from _typeshed import ReadableBuffer
-from typing import Callable, Optional
+from collections.abc import Callable
+from hashlib import _Hash
 
 from paramiko.message import Message
 from paramiko.transport import Transport
-
-if sys.version_info < (3, 0):
-    from hashlib import _hash as _Hash
-else:
-    from hashlib import _Hash
 
 c_MSG_KEXDH_GEX_REQUEST_OLD: bytes
 c_MSG_KEXDH_GEX_GROUP: bytes
@@ -23,12 +18,12 @@ class KexGex:
     preferred_bits: int
     hash_algo: Callable[[ReadableBuffer], _Hash] = ...
     transport: Transport
-    p: Optional[int]
-    q: Optional[int]
-    g: Optional[int]
-    x: Optional[int]
-    e: Optional[int]
-    f: Optional[int]
+    p: int | None
+    q: int | None
+    g: int | None
+    x: int | None
+    e: int | None
+    f: int | None
     old_style: bool
     def __init__(self, transport: Transport) -> None: ...
     def start_kex(self, _test_old_style: bool = ...) -> None: ...

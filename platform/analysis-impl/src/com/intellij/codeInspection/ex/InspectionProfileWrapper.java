@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -10,10 +10,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -26,7 +28,8 @@ public class InspectionProfileWrapper {
    * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns
    * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<Function<InspectionProfileImpl, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  private static final Key<Function<? super InspectionProfile, ? extends InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  public static final Key<Map<Class<? extends PsiElement>, Set<PsiElement>>> PSI_ELEMENTS_BEING_COMMITTED = Key.create("PsiElements that are being committed");
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
@@ -78,5 +81,27 @@ public class InspectionProfileWrapper {
 
   public @NotNull InspectionProfile getInspectionProfile() {
     return myProfile;
+  }
+
+  public static void runWithCustomInspectionWrapper(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> customizer, @NotNull Runnable runnable) {
+    file.putUserData(CUSTOMIZATION_KEY, customizer);
+    try {
+      runnable.run();
+    }
+    finally {
+      file.putUserData(CUSTOMIZATION_KEY, null);
+    }
+  }
+
+  public static Function<? super InspectionProfile, ? extends InspectionProfileWrapper> getCustomInspectionProfileWrapper(@NotNull PsiFile file) {
+    return file.getUserData(CUSTOMIZATION_KEY);
+  }
+
+  /**
+   * @deprecated use more structured {@link #runWithCustomInspectionWrapper(PsiFile, Function, Runnable)} instead
+   */
+  @Deprecated
+  public static void setCustomInspectionProfileWrapperTemporarily(@NotNull PsiFile file, @NotNull Function<? super InspectionProfile, ? extends InspectionProfileWrapper> function) {
+    file.putUserData(CUSTOMIZATION_KEY, function);
   }
 }

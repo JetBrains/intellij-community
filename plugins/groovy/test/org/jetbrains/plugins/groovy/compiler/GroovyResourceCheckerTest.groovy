@@ -26,9 +26,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-/**
- * @author peter
- */
 @CompileStatic
 class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
   @Override

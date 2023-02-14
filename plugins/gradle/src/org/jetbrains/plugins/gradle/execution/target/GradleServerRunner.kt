@@ -1,13 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.process.*
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
-import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.*
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -15,10 +11,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
@@ -26,20 +24,23 @@ import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
-import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.*
 import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
+import org.gradle.tooling.internal.provider.action.BuildActionSerializer
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleBundle
+import java.io.ByteArrayInputStream
 import java.net.InetAddress
 import java.util.concurrent.Future
 
 internal class GradleServerRunner(private val connection: TargetProjectConnection,
-                                  private val consumerOperationParameters: ConsumerOperationParameters) {
+                                  private val consumerOperationParameters: ConsumerOperationParameters,
+                                  private val prepareTaskState: Boolean) {
 
   fun run(classpathInferer: GradleServerClasspathInferer,
           targetBuildParametersBuilder: TargetBuildParameters.Builder,
@@ -47,17 +48,17 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
-    val environmentConfigurationProvider = connection.environmentConfigurationProvider
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, connection, prepareTaskState)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
-    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler)
+    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler,classpathInferer)
   }
 
   private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
                                serverEnvironmentSetup: GradleServerEnvironmentSetupImpl,
                                targetProgressIndicator: GradleServerProgressIndicator,
-                               resultHandler: ResultHandler<Any?>) {
+                               resultHandler: ResultHandler<Any?>,
+                               classpathInferer: GradleServerClasspathInferer) {
     targetProgressIndicator.checkCanceled()
     val remoteEnvironment = serverEnvironmentSetup.targetEnvironment
     val process = remoteEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
@@ -75,9 +76,13 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     val serverConfigurationProvider = connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
     val connectionAddressResolver: (HostPort) -> HostPort = {
-      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, it) ?: it
+      val serverBindingPort = serverEnvironmentSetup.serverBindingPort
+      val localPort = serverBindingPort?.localValue?.blockingGet(0)
+      val targetPort = serverBindingPort?.targetValue?.blockingGet(0)
+      val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
+      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, hostPort) ?: hostPort
     }
-    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver) {
+    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver, classpathInferer) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -101,7 +106,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       }
     }
 
-    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true) null
+    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) null
     else {
       connection.putUserData(targetPreparationKey, true)
       val targetTypeId = serverEnvironmentSetup.environmentConfiguration.typeId
@@ -118,9 +123,15 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     if (targetPlatform.platform == Platform.current()) this
     else replace(targetPlatform.platform.lineSeparator, Platform.current().lineSeparator)
 
-  private fun String.useLocalFileSeparators(targetPlatform: TargetPlatform) =
-    if (targetPlatform.platform == Platform.current()) this
-    else replace(targetPlatform.platform.fileSeparator, Platform.current().fileSeparator)
+  private fun String.useLocalFileSeparators(platform: Platform, uriMode: Boolean): String {
+    val separator = if (uriMode)
+        '/'
+      else
+        Platform.current().fileSeparator
+
+    return if (platform.fileSeparator == separator) this
+    else replace(platform.fileSeparator, separator)
+  }
 
   @NlsSafe
   private fun resolveFistPath(@NlsSafe text: String,
@@ -141,18 +152,20 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     if (pathIndexEnd == -1) pathIndexEnd = text.length
-    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform)
+
+    val isUri = text.substring(maxOf(0, pathIndexStart - 7), maxOf(0,pathIndexStart - 1)).endsWith("file:/")
+    val path = text.substring(pathIndexStart + targetProjectBasePath.length, pathIndexEnd).useLocalFileSeparators(targetPlatform.platform, isUri)
 
     val buf = StringBuilder()
     buf.append(text.subSequence(0, pathIndexStart))
-    buf.append(localProjectBasePath)
+    buf.append(localProjectBasePath.useLocalFileSeparators(Platform.current(), isUri))
     buf.append(path)
     buf.append(text.substring(pathIndexEnd))
     return buf.toString()
   }
-
   private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
                                            private val connectionAddressResolver: (HostPort) -> HostPort,
+                                           private val classpathInferer: GradleServerClasspathInferer,
                                            private val buildEventConsumer: BuildEventConsumer) {
     private lateinit var listenerTask: Future<*>
     fun start(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
@@ -167,7 +180,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         }
       }
     }
-
     private fun doRun(targetBuildParameters: TargetBuildParameters,
                       hostName: HostPort,
                       resultHandler: ResultHandler<Any?>,
@@ -184,7 +196,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           val message = connection.receive() ?: break
           when (message) {
             is Success -> {
-              resultHandler.onComplete(message.value)
+              val value = deserializeIfNeeded(message.value)
+              resultHandler.onComplete(value)
               break@loop
             }
             is Failure -> {
@@ -206,6 +219,14 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       finally {
         connection.sendResultAck()
       }
+    }
+
+    private fun deserializeIfNeeded(value: Any?): Any? {
+      val bytes = value as? ByteArray ?: return value
+      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classpathInferer.getClassloaders()).use {
+        it.readObject()
+      }
+      return deserialized
     }
 
     private fun RemoteConnection<Message>.sendResultAck() {
@@ -237,7 +258,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  private class GradleServerProcessListener(private val appStartedMessage: String?,
+  private class GradleServerProcessListener(private val appStartedMessage: @Nls String?,
                                             private val targetProgressIndicator: TargetProgressIndicator,
                                             private val resultHandler: ResultHandler<Any?>,
                                             private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
@@ -296,7 +317,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     companion object {
-      private const val connectionConfLinePrefix = "Gradle target server hostName: "
+      private const val connectionConfLinePrefix = "Gradle target server hostAddress: "
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util;
 
@@ -25,6 +25,15 @@ public final class VisibilityUtil  {
   private VisibilityUtil() {
   }
 
+  @SuppressWarnings("MagicConstant")
+  @PsiUtil.AccessLevel
+  public static int getAccessLevel(String visibilityString) {
+    if (ESCALATE_VISIBILITY.equals(visibilityString)) {
+      return getAccessLevel(PsiModifier.PRIVATE);
+    }
+    return ArrayUtil.indexOf(visibilityModifiers, visibilityString) + 1;
+  }
+  
   public static int compare(@PsiModifier.ModifierConstant String v1, @PsiModifier.ModifierConstant String v2) {
     return ArrayUtilRt.find(visibilityModifiers, v2) - ArrayUtilRt.find(visibilityModifiers, v1);
   }

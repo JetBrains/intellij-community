@@ -101,6 +101,23 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testChangeCSInDirectoryWithManyChildrenMustLeadToChildrenResort() throws Exception {
+    File dir = myTempDir.newDirectory();
+    assertTrue(new File(dir, "xt_esp.h").createNewFile());
+    assertTrue(new File(dir, "xt_LED.h").createNewFile());
+    VirtualDirectoryImpl root = (VirtualDirectoryImpl)myTempDir.getVirtualFileRoot();
+    root.getCachedChildren().get(0).getChildren();
+    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertNotNull(vDir);
+    assertEquals(2, vDir.getCachedChildren().size());
+    assertEquals(FileAttributes.CaseSensitivity.UNKNOWN, vDir.getChildrenCaseSensitivity());
+    IoTestUtil.setCaseSensitivity(dir, true);
+    VirtualFile v3 = createChildData(vDir, "xt_MARK.h");
+    // no assertion "child wrongly placed before blah blah"
+    assertTrue(vDir.isCaseSensitive());
+  }
+
+  @Test
   public void vfsEventMustBeFiredOnCaseSensitivityChange() throws IOException {
     String childName = "0";
     File ioFile = myTempDir.newFile("xxx/" + childName);
@@ -111,7 +128,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         VFileEvent changeEvent = ContainerUtil.find(events, event -> event instanceof VFilePropertyChangeEvent
-                 && ((VFilePropertyChangeEvent)event).getPropertyName() == VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY
+                 && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY)
                  && dir.equals(event.getFile())
                  && ((VFilePropertyChangeEvent)event).getNewValue() == FileAttributes.CaseSensitivity.SENSITIVE);
         if (changeEvent != null) {

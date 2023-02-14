@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class OpenTasksActivationManagerAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
+public class  OpenTasksActivationManagerAction extends ExternalSystemNodeAction<AbstractExternalEntityData> {
 
   public OpenTasksActivationManagerAction() {
     super(AbstractExternalEntityData.class);

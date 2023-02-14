@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.testFramework.LightIdeaTestCase
@@ -33,7 +33,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
 
   override fun setUp() {
     super.setUp()
-    modelsProvider = IdeModifiableModelsProviderImpl(project)
+    modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
 
     resolver = TestExternalAnnotationsResolver()
     locationProvider = TestExternalAnnotationLocationProvider()

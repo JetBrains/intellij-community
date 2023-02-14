@@ -2,31 +2,53 @@
 package training.learn.lesson.general.refactorings
 
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.ui.components.JBList
+import com.intellij.ui.EngravedLabel
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.adaptToNotNativeLocalization
+import training.util.isToStringContains
 import javax.swing.JList
 
 abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
+  protected abstract val sample: LessonSample
+
   fun LessonContext.extractParameterTasks() {
+    prepareSample(sample)
+
+    showWarningIfInplaceRefactoringsDisabled()
+
     lateinit var showPopupTaskId: TaskContext.TaskId
-    actionTask("Refactorings.QuickListPopupAction") {
+    task("Refactorings.QuickListPopupAction") {
       showPopupTaskId = taskId
-      restoreIfModifiedOrMoved()
-      LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
+      text(LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it)))
+      val refactorThisTitle = RefactoringBundle.message("refactor.this.title")
+      triggerUI().component { ui: EngravedLabel ->
+        ui.text.isToStringContains(refactorThisTitle)
+      }
+      restoreIfModifiedOrMoved(sample)
+      test { actions(it) }
+    }
+
+    if (TaskTestContext.inTestMode) {
+      task {
+        stateCheck {
+          focusOwner !is EditorComponentImpl
+        }
+      }
     }
 
     if (!adaptToNotNativeLocalization) {
       task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
         text(LessonsBundle.message("refactoring.menu.introduce.parameter.eng", strong(it)))
-        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
-          ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
+        triggerUI().component { ui: JList<*> ->
+          ui.model.size > 0 && ui.model.getElementAt(0).isToStringContains(it)
         }
-        restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
+        restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)
         test {
           type("pa")
         }
@@ -42,7 +64,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       text(message)
       trigger(it)
       stateCheck { hasInplaceRename() }
-      restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }
+      restoreByUi(restoreId = showPopupTaskId, delayMillis = defaultRestoreDelay)
       test {
         invokeActionViaShortcut("ENTER")
       }
@@ -60,4 +82,9 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
   }
 
   private fun TaskRuntimeContext.hasInplaceRename() = editor.getUserData(InplaceRefactoring.INPLACE_RENAMER) != null
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("refactoring.menu.help.link"),
+         LessonUtil.getHelpLink("refactoring-source-code.html#refactoring_invoke")),
+  )
 }

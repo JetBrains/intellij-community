@@ -38,6 +38,7 @@ public final class PlatformActionsReplacer {
     addEditorActionHandler(IdeActions.ACTION_FIND, LfeEditorActionHandlerFind::new);
     addDisablingEditorActionHandler(IdeActions.ACTION_REPLACE);
     addDisablingEditorActionHandler(IdeActions.ACTION_FIND_WORD_AT_CARET);
+    addDisablingEditorActionHandler(IdeActions.ACTION_FIND_PREV_WORD_AT_CARET);
     addDisablingEditorActionHandler(IdeActions.ACTION_SELECT_ALL_OCCURRENCES);
     addDisablingEditorActionHandler(IdeActions.ACTION_SELECT_NEXT_OCCURENCE);
     addDisablingEditorActionHandler(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE);

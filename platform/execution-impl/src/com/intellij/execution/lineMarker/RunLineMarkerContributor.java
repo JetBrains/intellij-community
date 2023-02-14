@@ -61,6 +61,10 @@ public abstract class RunLineMarkerContributor {
   @Nullable
   public abstract Info getInfo(@NotNull PsiElement element);
 
+  public Info getSlowInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
   /**
    * @param file any file with a language this contributor is registered for
    * @return whether there's no possibility that a {@link com.intellij.execution.actions.RunConfigurationProducer}'would
@@ -98,13 +102,14 @@ public abstract class RunLineMarkerContributor {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
       if (magnitude != null) {
         switch (magnitude) {
-          case ERROR_INDEX:
-          case FAILED_INDEX:
+          case ERROR_INDEX, FAILED_INDEX -> {
             return AllIcons.RunConfigurations.TestState.Red2;
-          case PASSED_INDEX:
-          case COMPLETE_INDEX:
+          }
+          case PASSED_INDEX, COMPLETE_INDEX -> {
             return AllIcons.RunConfigurations.TestState.Green2;
-          default:
+          }
+          default -> {
+          }
         }
       }
     }

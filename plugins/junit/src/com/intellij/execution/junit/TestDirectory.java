@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -117,7 +118,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests5(Module module, Set<Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(directory);
@@ -168,10 +169,18 @@ class TestDirectory extends TestPackage {
     }
   }
 
+  @NotNull
   @Override
-  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
-    final PsiDirectory directory = getDirectory(data);
-    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+  protected PsiPackage getPackage() throws CantRunException {
+    final PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
+    PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+    if (aPackage == null) throw CantRunException.packageNotFound(directory.getName());
+    return aPackage;
+  }
+
+  @Override
+  protected @NotNull String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    return getPackage().getQualifiedName();
   }
 
   private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {

@@ -28,10 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- */
 public class PySmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(PySmartEnterProcessor.class);
   private static final List<PyFixer> ourFixers = ImmutableList.<PyFixer>builder()
@@ -49,6 +45,8 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     .add(new PyClassFixer())
     .add(new PyWithFixer())
     .add(new PyCollectionLiteralFixer())
+    .add(new PyMatchStatementFixer())
+    .add(new PyCaseClauseFixer())
     .build();
   private static final List<EnterProcessor> ourProcessors = ImmutableList.of(new PyCommentBreakerEnterProcessor(),
                                                                              new PyPlainEnterProcessor());

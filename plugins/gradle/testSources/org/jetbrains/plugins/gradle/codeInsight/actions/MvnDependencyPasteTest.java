@@ -66,13 +66,14 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     try {
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
       performPaste();
-      checkResultByText(null, "dependencies {\n" +
-                              "    <dependency>\n" +
-                              "<groupId>group</groupId>\n" +
-                              "<version>1.0</version>\n" +
-                              "<scope>runtime</scope>\n" +
-                              "</dependency>\n" +
-                              "}", true);
+      checkResultByText(null, """
+        dependencies {
+            <dependency>
+        <groupId>group</groupId>
+        <version>1.0</version>
+        <scope>runtime</scope>
+        </dependency>
+        }""", true);
     }
     finally {
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = old;
@@ -89,9 +90,10 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
   private void configureGradleFile() {
     configureFromFileText("build.gradle",
-                          "dependencies {\n" +
-                          "    <caret>\n" +
-                          "}");
+                          """
+                            dependencies {
+                                <caret>
+                            }""");
   }
 
   private void selectWholeFile() {

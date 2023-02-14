@@ -20,20 +20,22 @@ import org.jetbrains.annotations.NonNls;
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
-/**
-* @author Denis Fokin
-*/
 public class FoldingData implements Cloneable, Serializable {
   private static @NonNls DataFlavor ourFlavor;
 
   public int startOffset;
   public int endOffset;
   public final boolean isExpanded;
+  public final String placeholderText;
 
-  public FoldingData(int startOffset, int endOffset, boolean expanded){
+  public FoldingData(int startOffset,
+                     int endOffset,
+                     boolean expanded,
+                     String placeholderText){
     this.startOffset = startOffset;
     this.endOffset = endOffset;
     isExpanded = expanded;
+    this.placeholderText = placeholderText;
   }
 
   @Override

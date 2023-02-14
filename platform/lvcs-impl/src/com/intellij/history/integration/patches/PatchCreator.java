@@ -9,26 +9,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.project.ProjectKt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 public final class PatchCreator {
-  /**
-   * @deprecated Use {@link #create(Project, List, Path, boolean, CommitContext)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void create(Project p, List<? extends Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
-    throws IOException, VcsException {
-    create(p, changes, Paths.get(filePath), isReverse, commitContext);
-  }
-
   public static void create(@NotNull Project project, @NotNull List<? extends Change> changes, @NotNull Path file, boolean isReverse, @Nullable CommitContext commitContext)
     throws IOException, VcsException {
     Path basePath = ProjectKt.getStateStore(project).getProjectBasePath();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
@@ -12,11 +12,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * History must be provided via {@link History#KEY}.
+ *
+ * @see History
+ */
 abstract class NavigationAction extends AnAction implements DumbAware {
-  protected NavigationAction(JComponent c, final String originalActionID, @NotNull Disposable parentDisposable) {
-    final AnAction original = ActionManager.getInstance().getAction(originalActionID);
-    new ShadowAction(this, original, c, parentDisposable);
-    getTemplatePresentation().setIcon(original.getTemplatePresentation().getIcon());
+  protected NavigationAction(JComponent c, String originalActionID, @NotNull Disposable parentDisposable) {
+    new ShadowAction(this, originalActionID, c,  parentDisposable);
+    getTemplatePresentation().setIcon(ActionManager.getInstance().getAction(originalActionID).getTemplatePresentation().getIcon());
   }
 
   @Override

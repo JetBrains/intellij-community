@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
+import com.intellij.codeInsight.navigation.CtrlMouseData;
 import com.intellij.codeInsight.navigation.CtrlMouseInfo;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
@@ -18,15 +19,13 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -39,11 +38,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -88,9 +85,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return GotoDeclarationOrUsageHandler2.INSTANCE;
   }
 
+  @Deprecated
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     return GotoDeclarationOrUsageHandler2.getCtrlMouseInfo(editor, file, offset);
+  }
+
+  @Override
+  public @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    return GotoDeclarationOrUsageHandler2.getCtrlMouseData(editor, file, offset);
   }
 
   @Override
@@ -122,30 +125,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
   }
 
-  static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
-      int offset = element.getTextOffset();
-      PsiElement leaf = currentFile.findElementAt(offset);
-      // check that element is really physically inside the file
-      // there are fake elements with custom navigation (e.g. opening URL in browser) that override getContainingFile for various reasons
-      if (leaf != null && PsiTreeUtil.isAncestor(element, leaf, false)) {
-        Project project = element.getProject();
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-        }, "", null);
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * @deprecated use chooseAmbiguousTarget(Project, Editor, int, PsiElementProcessor, String, PsiElement[])
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused") // for external usages only
+  @Deprecated(forRemoval = true)
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
@@ -272,8 +255,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }
 
     // if no references found in injected fragment, try outer document
-    if (editor instanceof EditorWindow) {
-      EditorWindow window = (EditorWindow)editor;
+    if (editor instanceof EditorWindow window) {
       return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
 
@@ -282,17 +264,20 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
+    InputEvent inputEvent = event.getInputEvent();
+    boolean isMouseShortcut = inputEvent instanceof MouseEvent && ActionPlaces.MOUSE_SHORTCUT.equals(event.getPlace());
+
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
-        Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+        !isMouseShortcut && Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       event.getPresentation().setEnabled(false);
       return;
     }
 
-    InputEvent inputEvent = event.getInputEvent();
     Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor != null && inputEvent instanceof MouseEvent && event.getPlace().equals(ActionPlaces.MOUSE_SHORTCUT) &&
-        !EditorUtil.isPointOverText(editor, new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent()))) {
+    if (editor != null && isMouseShortcut &&
+        !Boolean.TRUE.equals(event.getUpdateSession().compute(this, "isPointOverText", ActionUpdateThread.EDT, () ->
+          event.getData(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT)))) {
       event.getPresentation().setEnabled(false);
       return;
     }

@@ -1,15 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,10 +20,11 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +40,7 @@ public final class CodeInsightUtil {
     PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
       PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, JavaLanguage.INSTANCE);
-      if (element2 instanceof PsiJavaToken) {
-        final PsiJavaToken token = (PsiJavaToken)element2;
+      if (element2 instanceof PsiJavaToken token) {
         final IElementType tokenType = token.getTokenType();
         if (tokenType.equals(JavaTokenType.SEMICOLON) || element2.getParent() instanceof PsiErrorElement) {
           expression = findElementInRange(file, startOffset, element2.getTextRange().getStartOffset(), PsiExpression.class);
@@ -172,18 +175,16 @@ public final class CodeInsightUtil {
   }
 
   @Nullable
-  public static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
+  private static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
-    for (final Language language : languages) {
-      if (language == JavaLanguage.INSTANCE) return language;
-    }
+    if (languages.contains(JavaLanguage.INSTANCE)) return JavaLanguage.INSTANCE;
     for (final Language language : languages) {
       if (language.isKindOf(JavaLanguage.INSTANCE)) return language;
     }
     return null;
   }
 
-  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(T[] members, @NotNull PsiReference context) {
+  public static <T extends PsiMember & PsiDocCommentOwner> void sortIdenticalShortNamedMembers(@NotNull T @NotNull [] members, @NotNull PsiReference context) {
     if (members.length <= 1) return;
 
     PsiElement leaf = context.getElement().getFirstChild(); // the same proximity weighers are used in completion, where the leafness is critical
@@ -212,7 +213,8 @@ public final class CodeInsightUtil {
 
   public static PsiExpression @NotNull [] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<>();
-    addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
+    TrackingEquivalenceChecker equivalenceChecker = new TrackingEquivalenceChecker();
+    addExpressionOccurrences(CommonJavaRefactoringUtil.unparenthesizeExpression(expr), array, scope, equivalenceChecker);
     if (expr.isPhysical()) {
       boolean found = false;
       for (PsiExpression psiExpression : array) {
@@ -226,16 +228,17 @@ public final class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope) {
+  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope, EquivalenceChecker equivalenceChecker) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
-        if (JavaPsiEquivalenceUtil.areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
+        PsiExpression unparenthesized = CommonJavaRefactoringUtil.unparenthesizeExpression((PsiExpression)child);
+        if (equivalenceChecker.expressionsAreEquivalent(unparenthesized, expr)) {
           array.add((PsiExpression)child);
           continue;
         }
       }
-      addExpressionOccurrences(expr, array, child);
+      addExpressionOccurrences(expr, array, child, equivalenceChecker);
     }
   }
 
@@ -264,12 +267,25 @@ public final class CodeInsightUtil {
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
 
-  public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
+  @Nullable("no virtual file is associated with a targetFile")
+  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
-    LOG.assertTrue(range != null, "element: " + element + "; valid: " + element.isValid());
+    LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
-
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    if (IntentionPreviewUtils.isPreviewElement(targetFile)) {
+      Editor editor = IntentionPreviewUtils.getPreviewEditor();
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(textOffset);
+      }
+      return editor;
+    }
+    VirtualFile file = targetFile.getVirtualFile();
+    if (file == null) {
+      file = PsiUtilCore.getVirtualFile(element);
+      if (file == null) return null;
+    }
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
+    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
@@ -372,7 +388,7 @@ public final class CodeInsightUtil {
                                              @NotNull PsiClass inheritor) {
     Project project = baseClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    if (!PsiResolveHelper.SERVICE.getInstance(project).isAccessible(inheritor, context, null)) {
+    if (!PsiResolveHelper.getInstance(project).isAccessible(inheritor, context, null)) {
       return null;
     }
 

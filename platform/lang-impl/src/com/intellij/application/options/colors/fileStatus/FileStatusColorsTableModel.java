@@ -28,14 +28,7 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     new ColumnInfo(String.class, descriptor -> descriptor.getStatus().getText())
   };
 
-  private static class ColumnInfo {
-    Class<?> columnClass;
-    Function<? super FileStatusColorDescriptor, Object> dataFunction;
-
-    ColumnInfo(Class<?> columnClass, Function<? super FileStatusColorDescriptor, Object> dataFunction) {
-      this.columnClass = columnClass;
-      this.dataFunction = dataFunction;
-    }
+  private record ColumnInfo(Class<?> columnClass, Function<? super FileStatusColorDescriptor, Object> dataFunction) {
   }
 
   public FileStatusColorsTableModel(FileStatus @NotNull [] fileStatuses, @NotNull EditorColorsScheme scheme) {

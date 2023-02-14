@@ -45,7 +45,7 @@ public final class ErrorMessageBuilder {
   /**
    * @deprecated use {@link ModelBuilderContext#report} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public String build() {
     Message message = buildMessage();

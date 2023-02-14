@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
@@ -23,6 +25,7 @@ import java.util.*;
 
 public final class CommandMerger {
   private final UndoManagerImpl myManager;
+  private final UndoManagerImpl.ClientState myState;
   private Reference<Object> myLastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private boolean myForcedGlobal;
   private boolean myTransparent;
@@ -38,12 +41,14 @@ public final class CommandMerger {
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  CommandMerger(@NotNull UndoManagerImpl manager) {
-    myManager = manager;
+  CommandMerger(@NotNull UndoManagerImpl.ClientState state) {
+    myManager = state.myManager;
+    myState = state;
   }
 
-  CommandMerger(@NotNull UndoManagerImpl manager, boolean isTransparent) {
-    myManager = manager;
+  CommandMerger(@NotNull UndoManagerImpl.ClientState state, boolean isTransparent) {
+    myManager = state.myManager;
+    myState = state;
     myTransparent = isTransparent;
   }
 
@@ -53,11 +58,27 @@ public final class CommandMerger {
 
   void addAction(@NotNull UndoableAction action) {
     myCurrentActions.add(action);
+    addActionToSharedStack(action);
     DocumentReference[] refs = action.getAffectedDocuments();
     if (refs != null) {
       Collections.addAll(myAllAffectedDocuments, refs);
     }
     myForcedGlobal |= action.isGlobal();
+  }
+
+  private void addActionToSharedStack(@NotNull UndoableAction action) {
+    if (action instanceof AdjustableUndoableAction adjustable) {
+      DocumentReference[] affected = action.getAffectedDocuments();
+      if (affected == null) {
+        return;
+      }
+      for (DocumentReference reference : affected) {
+        for (ActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
+          myManager.getSharedUndoStacksHolder().addToStack(reference, changeRange);
+          myManager.getSharedRedoStacksHolder().addToStack(reference, changeRange.createIndependentCopy(true));
+        }
+      }
+    }
   }
 
   void commandFinished(@NlsContexts.Command String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
@@ -68,7 +89,7 @@ public final class CommandMerger {
 
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
-      myManager.compact();
+      myManager.compact(myState);
     }
     merge(nextCommandToMerge);
 
@@ -86,7 +107,13 @@ public final class CommandMerger {
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
-    return !myForcedGlobal && !nextCommandToMerge.myForcedGlobal && canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+
+    if ((myForcedGlobal || nextCommandToMerge.myForcedGlobal) && !isMergeGlobalCommandsAllowed()) return false;
+    return canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+  }
+
+  private static boolean isMergeGlobalCommandsAllowed() {
+    return ((CoreCommandProcessor)CommandProcessor.getInstance()).isMergeGlobalCommandsAllowed();
   }
 
   // remove all references to document to avoid memory leaks
@@ -163,21 +190,27 @@ public final class CommandMerger {
   }
 
   void flushCurrentCommand() {
+    flushCurrentCommand(myState.nextCommandTimestamp(), myState.myUndoStacksHolder);
+  }
+
+  void flushCurrentCommand(int commandTimestamp, @NotNull UndoRedoStacksHolder stacksHolder) {
     if (hasActions()) {
       if (!myAdditionalAffectedDocuments.isEmpty()) {
         DocumentReference[] refs = myAdditionalAffectedDocuments.toArray(DocumentReference.EMPTY_ARRAY);
         myCurrentActions.add(new MyEmptyUndoableAction(refs));
       }
 
-      myManager.getUndoStacksHolder().addToStacks(new UndoableGroup(myCommandName,
-                                                                    isGlobal(),
-                                                                    myManager,
-                                                                    myStateBefore,
-                                                                    myStateAfter,
-                                                                    myCurrentActions,
-                                                                    myUndoConfirmationPolicy,
-                                                                    isTransparent(),
-                                                                    myValid));
+      stacksHolder.addToStacks(new UndoableGroup(myCommandName,
+                                                 isGlobal(),
+                                                 commandTimestamp,
+                                                 myStateBefore,
+                                                 myStateAfter,
+                                                 myCurrentActions,
+                                                 stacksHolder,
+                                                 myManager.getProject(),
+                                                 myUndoConfirmationPolicy,
+                                                 isTransparent(),
+                                                 myValid));
     }
 
     reset();
@@ -198,7 +231,7 @@ public final class CommandMerger {
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
-    myManager.getRedoStacksHolder().clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
+    myState.myRedoStacksHolder.clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
@@ -255,8 +288,21 @@ public final class CommandMerger {
           if (undoRedo.confirmSwitchTo(blockingChange)) blockingChange.execute(false, true);
           break;
         }
+
+        // if undo is block by other global command, trying to split global command and undo only local change in editor
+        if (isUndo && undoRedo.myUndoableGroup.isGlobal() && Registry.is("ide.undo.fallback")) {
+          if (myManager.splitGlobalCommand(undoRedo)) {
+            var splittedUndo = createUndoOrRedo(editor, true);
+            if (splittedUndo != null) undoRedo = splittedUndo;
+          }
+        }
       }
       if (!undoRedo.execute(false, isInsideStartFinishGroup)) return;
+
+      if(editor != null && !isUndo && Registry.is("ide.undo.fallback")){
+        myManager.gatherGlobalCommand(undoRedo);
+      }
+
       isInsideStartFinishGroup = undoRedo.myUndoableGroup.isInsideStartFinishGroup(isUndo, isInsideStartFinishGroup);
       if (isInsideStartFinishGroup) continue;
       boolean shouldRepeat = undoRedo.isTransparent() && undoRedo.hasMoreActions();
@@ -267,7 +313,7 @@ public final class CommandMerger {
   @Nullable
   private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
     if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
-    return isUndo ? new Undo(myManager, editor) : new Redo(myManager, editor);
+    return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }
 
   UndoConfirmationPolicy getUndoConfirmationPolicy() {

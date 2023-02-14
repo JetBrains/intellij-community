@@ -55,7 +55,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
@@ -71,7 +71,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
     pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS = mySortImports.isSelected();
@@ -101,7 +101,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
     mySortImports.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS);

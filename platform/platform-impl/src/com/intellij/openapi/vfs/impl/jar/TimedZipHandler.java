@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +50,10 @@ public class TimedZipHandler extends ZipHandlerBase {
     };
   }
 
-  static void closeOpenZipReferences() {
+  @ApiStatus.Internal
+  public static void closeOpenZipReferences() {
     synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::dispose);
+      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::clearCaches);
     }
   }
 
@@ -66,8 +68,8 @@ public class TimedZipHandler extends ZipHandlerBase {
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
+  public void clearCaches() {
+    super.clearCaches();
     myHandle.invalidateZipReference();
   }
 
@@ -130,7 +132,7 @@ public class TimedZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    public final void close() {
+    public void close() {
       assert myLock.isLocked();
       ScheduledFuture<?> invalidationRequest;
       try {
@@ -146,7 +148,7 @@ public class TimedZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    public final @NotNull ZipFile get() {
+    public @NotNull ZipFile get() {
       assert myLock.isLocked();
       return myFile;
     }

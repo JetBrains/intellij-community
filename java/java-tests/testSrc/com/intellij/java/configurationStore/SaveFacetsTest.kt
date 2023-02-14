@@ -8,18 +8,20 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.facet.mock.runWithRegisteredFacetTypes
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -42,7 +44,7 @@ class SaveFacetsTest {
 
   @Before
   fun setUp() {
-    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({}, disposable.disposable)
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(disposable.disposable, {})
   }
 
   @Test
@@ -66,10 +68,10 @@ class SaveFacetsTest {
 
   @Test
   fun `facet in module with custom storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
     val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
-    val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
+    val source = SampleCustomModuleSource(
+      JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.addModuleEntity("foo", listOf(ModuleDependencyItem.ModuleSourceDependency), source, null)
@@ -87,8 +89,8 @@ class SaveFacetsTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
         val moduleEntity = it.entities(ModuleEntity::class.java).single()
-        it.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-          dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
+        it.modifyEntity(moduleEntity) {
+          dependencies = mutableListOf(ModuleDependencyItem.ModuleSourceDependency, ModuleDependencyItem.InheritedSdkDependency)
         }
       }
     }

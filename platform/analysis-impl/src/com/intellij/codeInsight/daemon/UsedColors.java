@@ -8,21 +8,10 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 public final class UsedColors {
   private static final Key<Object/*UsedColor or UsedColor[]*/> USED_COLOR = Key.create("USED_COLOR");
 
-  public static final AtomicInteger counter = new AtomicInteger();
-  private static class UsedColor {
-    @NotNull final String name;
-    final int index;
-
-    UsedColor(@NotNull String name, int index) {
-      this.name = name;
-      this.index = index;
-      counter.incrementAndGet();
-    }
+  private record UsedColor(@NotNull String name, int index) {
   }
 
   public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -12,6 +12,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +32,10 @@ public final class ClassLiteralGetter {
 
     boolean addInheritors = false;
     PsiElement position = parameters.getPosition();
-    if (classParameter instanceof PsiWildcardType) {
-      final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
+    if (classParameter instanceof PsiWildcardType wildcardType) {
       classParameter = wildcardType.isSuper() ? wildcardType.getSuperBound() : wildcardType.getExtendsBound();
-      addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
+      addInheritors = !wildcardType.isSuper() && classParameter instanceof PsiClassType &&
+                    !(matcher.getPrefix().isEmpty() && TypeUtils.isJavaLangObject(classParameter));
     } else if (!matcher.getPrefix().isEmpty()) {
       addInheritors = true;
       classParameter = PsiType.getJavaLangObject(position.getManager(), position.getResolveScope());

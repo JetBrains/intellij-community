@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 // have to extend ArrayList because otherwise the spliterator() methods declared in Set and List are in conflict
-public class OrderedSet<@NotNull T> extends ArrayList<T> implements Set<T>, RandomAccess {
+public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess {
   private final ObjectOpenCustomHashSet<T> hashSet;
 
   public OrderedSet() {

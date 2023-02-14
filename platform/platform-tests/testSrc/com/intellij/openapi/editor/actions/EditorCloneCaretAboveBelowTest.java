@@ -20,68 +20,81 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class EditorCloneCaretAboveBelowTest extends BasePlatformTestCase {
   public void testStoringDesiredXPosition() {
-    init("long line<caret>\n" +
-         "line\n" +
-         "long line\n" +
-         "very long line");
+    init("""
+           long line<caret>
+           line
+           long line
+           very long line""");
     cloneCaretBelow();
-    checkResult("long line<caret>\n" +
-                "line<caret>\n" +
-                "long line\n" +
-                "very long line");
+    checkResult("""
+                  long line<caret>
+                  line<caret>
+                  long line
+                  very long line""");
     cloneCaretBelow();
-    checkResult("long line<caret>\n" +
-                "line<caret>\n" +
-                "long line<caret>\n" +
-                "very long line");
+    checkResult("""
+                  long line<caret>
+                  line<caret>
+                  long line<caret>
+                  very long line""");
     cloneCaretBelow();
-    checkResult("long line<caret>\n" +
-                "line<caret>\n" +
-                "long line<caret>\n" +
-                "very long<caret> line");
+    checkResult("""
+                  long line<caret>
+                  line<caret>
+                  long line<caret>
+                  very long<caret> line""");
   }
 
   public void testCloneAndMove() {
-    init("long line<caret>\n" +
-         "line\n" +
-         "long line");
+    init("""
+           long line<caret>
+           line
+           long line""");
     cloneCaretBelow();
     moveCaretDown();
-    checkResult("long line\n" +
-                "line<caret>\n" +
-                "long line<caret>");
+    checkResult("""
+                  long line
+                  line<caret>
+                  long line<caret>""");
   }
 
   public void testCloneBelowAndAbove() {
-    init("line\n" +
-         "<caret>li<caret>ne\n" +
-         "line");
+    init("""
+           line
+           <caret>li<caret>ne
+           line""");
     cloneCaretBelow();
-    checkResult("line\n" +
-                "<caret>li<caret>ne\n" +
-                "<caret>li<caret>ne");
+    checkResult("""
+                  line
+                  <caret>li<caret>ne
+                  <caret>li<caret>ne""");
     cloneCaretAbove();
-    checkResult("line\n" +
-                "<caret>li<caret>ne\n" +
-                "line");
+    checkResult("""
+                  line
+                  <caret>li<caret>ne
+                  line""");
     cloneCaretAbove();
-    checkResult("<caret>li<caret>ne\n" +
-                "<caret>li<caret>ne\n" +
-                "line");
+    checkResult("""
+                  <caret>li<caret>ne
+                  <caret>li<caret>ne
+                  line""");
     cloneCaretBelow();
-    checkResult("line\n" +
-                "<caret>li<caret>ne\n" +
-                "line");
+    checkResult("""
+                  line
+                  <caret>li<caret>ne
+                  line""");
   }
 
   public void testCloneWithSelection() {
-    init("long <selection>line<caret></selection>\n" +
-         "line\n" +
-         "long line");
+    init("""
+           long <selection>line<caret></selection>
+           line
+           long line""");
     cloneCaretBelow();
-    checkResult("long <selection>line<caret></selection>\n" +
-                "line\n" +
-                "long <selection>line<caret></selection>");
+    checkResult("""
+                  long <selection>line<caret></selection>
+                  line
+                  long <selection>line<caret></selection>""");
   }
 
   private void cloneCaretBelow() {

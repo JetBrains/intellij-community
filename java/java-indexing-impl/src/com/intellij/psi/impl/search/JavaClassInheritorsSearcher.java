@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.java.indexing.JavaIndexingBundle;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -78,10 +79,14 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return;
     }
 
-    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters.isIncludeAnonymous());
+    Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope, parameters);
 
     for (final PsiClass subClass : cached) {
       ProgressManager.checkCanceled();
+      if (subClass == null) {
+        // PsiAnchor failed to retrieve?
+        continue;
+      }
       if (ReadAction.compute(() ->
         checkCandidate(subClass, parameters) && !consumer.process(subClass))) {
         return;
@@ -90,30 +95,43 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
   }
 
   @NotNull
-  private static Iterable<PsiClass> getOrComputeSubClasses(@NotNull Project project,
-                                                           @NotNull PsiClass baseClass,
-                                                           @NotNull SearchScope searchScopeForNonPhysical,
-                                                           boolean includeAnonymous) {
+  private static Iterable<@NotNull PsiClass> getOrComputeSubClasses(@NotNull Project project,
+                                                                    @NotNull PsiClass baseClass,
+                                                                    @NotNull SearchScope searchScopeForNonPhysical,
+                                                                    @NotNull ClassInheritorsSearch.SearchParameters parameters) {
     HighlightingCaches caches = HighlightingCaches.getInstance(project);
-    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = includeAnonymous ? caches.ALL_SUB_CLASSES : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
+    ConcurrentMap<PsiClass, Iterable<PsiClass>> map = parameters.isIncludeAnonymous()
+                                                      ? caches.ALL_SUB_CLASSES
+                                                      : caches.ALL_SUB_CLASSES_NO_ANONYMOUS;
     Iterable<PsiClass> cached = map.get(baseClass);
     if (cached == null) {
       // returns lazy collection of subclasses. Each call to next() leads to calculation of next batch of subclasses.
-      Function<PsiAnchor, PsiClass> converter =
-        anchor -> ReadAction.compute(() -> (PsiClass)anchor.retrieve());
+      Function<@NotNull PsiAnchor, @NotNull PsiClass> converter =
+        anchor -> ReadAction.compute(() -> (@NotNull PsiClass)anchor.retrieve());
       Predicate<PsiClass> applicableFilter =
         candidate -> !(candidate instanceof PsiAnonymousClass) && candidate != null && !candidate.hasModifierProperty(PsiModifier.FINAL);
       // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
       boolean isPhysical = ReadAction.compute(baseClass::isPhysical);
       SearchScope scopeToUse = isPhysical ? GlobalSearchScope.allScope(project) : searchScopeForNonPhysical;
-      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) ->
-        DirectClassInheritorsSearch.search(candidate, scopeToUse, includeAnonymous).allowParallelProcessing().forEach(subClass -> {
-          ProgressManager.checkCanceled();
-          PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
-          // append found result to subClasses as early as possible to allow other waiting threads to continue
-          processor.accept(pointer);
-          return true;
-        });
+      LazyConcurrentCollection.MoreElementsGenerator<PsiAnchor, PsiClass> generator = (candidate, processor) -> DirectClassInheritorsSearch
+          .search(new DirectClassInheritorsSearch.SearchParameters(candidate, scopeToUse, parameters.isIncludeAnonymous(), true) {
+            @Override
+            public boolean shouldSearchInLanguage(@NotNull Language language) {
+              return parameters.shouldSearchInLanguage(language);
+            }
+
+            @Override
+            public ClassInheritorsSearch.SearchParameters getOriginalParameters() {
+              return parameters;
+            }
+          })
+          .allowParallelProcessing().forEach(subClass -> {
+            ProgressManager.checkCanceled();
+            @NotNull PsiAnchor pointer = ReadAction.compute(() -> PsiAnchor.create(subClass));
+            // append found result to subClasses as early as possible to allow other waiting threads to continue
+            processor.accept(pointer);
+            return true;
+          });
 
       PsiAnchor seed = ReadAction.compute(() -> PsiAnchor.create(baseClass));
       // lazy collection: store underlying queue as PsiAnchors, generate new elements by running direct inheritors
@@ -134,31 +152,40 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
 
     final boolean[] success = {true};
+    if (virtualFiles.length == 0) {
+      for (PsiElement element : searchScope.getScope()) {
+        processFile(element.getContainingFile(), consumer, parameters, baseClass, success);
+      }
+    }
     for (VirtualFile virtualFile : virtualFiles) {
       ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile != null) {
-            psiFile.accept(new JavaRecursiveElementVisitor() {
-              @Override
-              public void visitClass(PsiClass candidate) {
-                ProgressManager.checkCanceled();
-                if (!success[0]) return;
-                if (candidate.isInheritor(baseClass, true)
-                    && checkCandidate(candidate, parameters)
-                    && !consumer.process(candidate)) {
-                  success[0] = false;
-                  return;
-                }
-                super.visitClass(candidate);
-              }
-            });
-          }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile != null) {
+          processFile(psiFile, consumer, parameters, baseClass, success);
         }
       });
     }
+  }
+
+  private static void processFile(PsiFile psiFile,
+                           final Processor<? super PsiClass> consumer,
+                           final ClassInheritorsSearch.@NotNull SearchParameters parameters,
+                           @NotNull final PsiClass baseClass, final boolean[] success) {
+    psiFile.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitClass(@NotNull PsiClass candidate) {
+        ProgressManager.checkCanceled();
+        if (!success[0]) return;
+        if (candidate.isInheritor(baseClass, true)
+            && checkCandidate(candidate, parameters)
+            && !consumer.process(candidate)) {
+          success[0] = false;
+          return;
+        }
+        super.visitClass(candidate);
+      }
+    });
   }
 
   private static boolean checkCandidate(@NotNull PsiClass candidate, @NotNull ClassInheritorsSearch.SearchParameters parameters) {

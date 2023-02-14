@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -60,11 +60,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   @NotNull
   private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
-    AsyncPromise<List<SmartStepTarget>> res = new AsyncPromise<>();
+    var res = new AsyncPromise<List<SmartStepTarget>>();
     session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        res.setResult(ReadAction.compute(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)));
+        Promises.compute(res, () ->
+          ReadAction.nonBlocking(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)).executeSynchronously());
+      }
+
+      @Override
+      protected void commandCancelled() {
+        res.setError("Cancelled");
       }
 
       @Override
@@ -100,6 +106,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                                   @Nullable SuspendContextImpl suspendContext,
                                                   @NotNull DebuggerContextImpl debuggerContext,
                                                   boolean smart) {
+    return reorderWithSteppingFilters(findStepTargetsInt(position, suspendContext, debuggerContext, smart));
+  }
+
+  private List<SmartStepTarget> findStepTargetsInt(final SourcePosition position,
+                                                   @Nullable SuspendContextImpl suspendContext,
+                                                   @NotNull DebuggerContextImpl debuggerContext,
+                                                   boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -142,7 +155,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Deque<PsiMethod> myContextStack = new LinkedList<>();
-        final Deque<String> myParamNameStack =  new LinkedList<>();
+        final Deque<String> myParamNameStack = new LinkedList<>();
         private int myNextLambdaExpressionOrdinal = 0;
         private boolean myInsideLambda = false;
 
@@ -152,7 +165,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
           PsiExpressionList argumentList = aClass.getArgumentList();
           if (argumentList != null) {
             argumentList.accept(this);
@@ -163,7 +176,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
           boolean inLambda = myInsideLambda;
           myInsideLambda = true;
           super.visitLambdaExpression(expression);
@@ -177,7 +190,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
           PsiElement element = expression.resolve();
           if (element instanceof PsiMethod) {
             PsiElement navMethod = element.getNavigationElement();
@@ -188,33 +201,33 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
           if (checkTextRange(field, false)) {
             super.visitField(field);
           }
         }
 
         @Override
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
           if (checkTextRange(method, false)) {
             super.visitMethod(method);
           }
         }
 
         @Override
-        public void visitStatement(PsiStatement statement) {
+        public void visitStatement(@NotNull PsiStatement statement) {
           if (checkTextRange(statement, true)) {
             super.visitStatement(statement);
           }
         }
 
         @Override
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
           visitConditional(statement.getCondition(), statement.getThenBranch(), statement.getElseBranch());
         }
 
         @Override
-        public void visitConditionalExpression(PsiConditionalExpression expression) {
+        public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
           visitConditional(expression.getCondition(), expression.getThenExpression(), expression.getElseExpression());
         }
 
@@ -247,7 +260,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           checkTextRange(expression, true);
           super.visitExpression(expression);
         }
@@ -264,7 +277,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitExpressionList(PsiExpressionList expressionList) {
+        public void visitExpressionList(@NotNull PsiExpressionList expressionList) {
           visitArguments(expressionList, myContextStack.peekFirst());
         }
 
@@ -292,7 +305,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
-        public void visitCallExpression(final PsiCallExpression expression) {
+        public void visitCallExpression(final @NotNull PsiCallExpression expression) {
           int pos = -1;
           if (myContextStack.isEmpty()) { // always move the outmost item in the group to the top
             pos = targets.size();
@@ -340,7 +353,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           }
         }
-
       };
 
       element.accept(methodCollector);
@@ -451,8 +463,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   private interface MethodInsnVisitor {
     void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal);
-    default void visitJumpInsn(int opcode, Label label) {}
-    default void visitCode() {}
+
+    default void visitJumpInsn(int opcode, Label label) { }
+
+    default void visitCode() { }
   }
 
   private static void visitLinesInstructions(Location location, boolean full, Set<Integer> lines, MethodInsnVisitor visitor) {

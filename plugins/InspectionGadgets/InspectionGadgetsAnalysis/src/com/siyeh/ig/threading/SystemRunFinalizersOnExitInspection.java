@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
 public class SystemRunFinalizersOnExitInspection extends BaseInspection {
-
   @Override
   @NotNull
   public String getID() {
@@ -41,45 +40,26 @@ public class SystemRunFinalizersOnExitInspection extends BaseInspection {
   }
 
   @Override
+  public boolean shouldInspect(@NotNull PsiFile file) {
+    // The method was removed in JDK 11
+    return PsiUtil.getLanguageLevel(file).isLessThan(LanguageLevel.JDK_11);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SystemRunFinalizersOnExitVisitor();
   }
 
-  private static class SystemRunFinalizersOnExitVisitor
-    extends BaseInspectionVisitor {
+  private static class SystemRunFinalizersOnExitVisitor extends BaseInspectionVisitor {
+    private static final CallMatcher RUN_FINALIZERS_ON_EXIT = CallMatcher.anyOf(
+      CallMatcher.staticCall("java.lang.System", "runFinalizersOnExit"),
+      CallMatcher.staticCall("java.lang.Runtime", "runFinalizersOnExit"));
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!isRunFinalizersOnExit(expression)) {
-        return;
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+      if (RUN_FINALIZERS_ON_EXIT.test(call)) {
+        registerMethodCallError(call);
       }
-      registerMethodCallError(expression);
-    }
-
-    private static boolean isRunFinalizersOnExit(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      @NonNls final String runFinalizers = "runFinalizersOnExit";
-      if (!runFinalizers.equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return false;
-      }
-      final String className = aClass.getQualifiedName();
-      if (className == null) {
-        return false;
-      }
-      return "java.lang.System".equals(className);
     }
   }
 }

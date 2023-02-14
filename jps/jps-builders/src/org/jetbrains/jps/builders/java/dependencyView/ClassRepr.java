@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -13,11 +12,9 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
+import java.util.function.Predicate;
 
-/**
- * @author: db
- */
-public class ClassRepr extends ClassFileRepr {
+public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
@@ -81,6 +78,10 @@ public class ClassRepr extends ClassFileRepr {
     return (access & Opcodes.ACC_INTERFACE) != 0;
   }
 
+  public boolean isEnum() {
+    return (access & Opcodes.ACC_ENUM) != 0;
+  }
+
   public abstract static class Diff extends DifferenceImpl {
 
     Diff(@NotNull Difference delegate) {
@@ -127,7 +128,7 @@ public class ClassRepr extends ClassFileRepr {
     if (hasInlinedConstants() != pastClass.hasInlinedConstants()) {
       base |= Difference.CONSTANT_REFERENCES;
     }
-    
+
     final int d = base;
 
     return new Diff(diff) {
@@ -171,9 +172,11 @@ public class ClassRepr extends ClassFileRepr {
       public boolean targetAttributeCategoryMightChange() {
         final Specifier<ElemType, Difference> targetsDiff = targets();
         if (!targetsDiff.unchanged()) {
-          return targetsDiff.added().contains(ElemType.TYPE_USE) ||
-                 targetsDiff.removed().contains(ElemType.TYPE_USE) ||
-                 pastClass.getAnnotationTargets().contains(ElemType.TYPE_USE);
+          for (ElemType elemType : Set.of(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+            if (targetsDiff.added().contains(elemType) || targetsDiff.removed().contains(elemType) || pastClass.getAnnotationTargets().contains(elemType) ) {
+              return true;
+            }
+          }
         }
         return false;
       }
@@ -226,7 +229,7 @@ public class ClassRepr extends ClassFileRepr {
                    final Set<UsageRepr.Usage> usages, boolean isGenerated) {
     super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
-    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new HashSet<>(1));
     myFields = fields;
     myMethods = methods;
     myAnnotationTargets = annotationTargets;
@@ -242,9 +245,9 @@ public class ClassRepr extends ClassFileRepr {
     super(context, in);
     try {
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new HashSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new HashSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new HashSet<>(), in);
       myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
@@ -336,11 +339,11 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
+  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
-      if (p.satisfy(mm)) {
+      if (p.test(mm)) {
         result.add(mm);
       }
     }

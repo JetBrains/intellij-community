@@ -1,6 +1,16 @@
 <html>
 <body>
-This inspection detects situations when dictionary creation
-could be rewritten with dictionary literal.
+<p>Reports situations when you can rewrite dictionary creation
+  by using a dictionary literal.</p>
+<p>This approach brings performance improvements.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+dic = {}
+dic['var'] = 1
+</pre>
+<p>When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+dic = {'var': 1}
+</pre>
 </body>
 </html>

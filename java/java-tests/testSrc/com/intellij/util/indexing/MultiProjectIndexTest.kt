@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -46,7 +47,7 @@ class MultiProjectIndexTest {
   @Test
   fun `test index extension process files intersection`() {
     val text = "<fileBasedIndexInfrastructureExtension implementation=\"" + CountingTestExtension::class.java.name + "\"/>"
-    Disposer.register(disposable.disposable, loadExtensionWithText(text, CountingTestExtension::class.java.classLoader))
+    Disposer.register(disposable.disposable, loadExtensionWithText(text))
     val ext = FileBasedIndexInfrastructureExtension.EP_NAME.findExtension(CountingTestExtension::class.java)!!
 
     val projectPath1 = tempDir.newDirectory("project1").toPath()
@@ -89,12 +90,13 @@ class MultiProjectIndexTest {
   private fun Path.toVirtualFile(): VirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(this)!!
 }
 
-class CountingTestExtension : FileBasedIndexInfrastructureExtension {
+@InternalIgnoreDependencyViolation
+internal class CountingTestExtension : FileBasedIndexInfrastructureExtension {
   val stubCounter = AtomicInteger()
   val trigramCounter = AtomicInteger()
   val commonBundledFileCounter = AtomicInteger()
 
-  override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor? {
+  override fun createFileIndexingStatusProcessor(project: Project): FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
     return object : FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor {
       override fun shouldProcessUpToDateFiles(): Boolean = true
 
@@ -120,7 +122,7 @@ class CountingTestExtension : FileBasedIndexInfrastructureExtension {
   }
 
   override fun <K : Any?, V : Any?> combineIndex(indexExtension: FileBasedIndexExtension<K, V>,
-                                                 baseIndex: UpdatableIndex<K, V, FileContent>): UpdatableIndex<K, V, FileContent> {
+                                                 baseIndex: UpdatableIndex<K, V, FileContent, *>): UpdatableIndex<K, V, FileContent, *> {
     return baseIndex
   }
 
@@ -128,7 +130,7 @@ class CountingTestExtension : FileBasedIndexInfrastructureExtension {
 
   override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) = Unit
 
-  override fun initialize(): FileBasedIndexInfrastructureExtension.InitializationResult =
+  override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult =
     FileBasedIndexInfrastructureExtension.InitializationResult.SUCCESSFULLY
 
   override fun resetPersistentState() = Unit

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package com.intellij.execution.process.mediator.client
@@ -23,7 +23,7 @@ private val CLEANER = Cleaner.create()
 class MediatedProcess private constructor(
   private val handle: MediatedProcessHandle,
   command: List<String>, workingDir: File, environVars: Map<String, String>,
-  inFile: File?, outFile: File?, errFile: File?,
+  inFile: File?, outFile: File?, errFile: File?, redirectErrorStream: Boolean
 ) : Process(), SelfKiller {
 
   companion object {
@@ -41,7 +41,7 @@ class MediatedProcess private constructor(
       return try {
         MediatedProcess(handle,
                         processBuilder.command(), workingDir, processBuilder.environment(),
-                        inFile, outFile, errFile).apply {
+                        inFile, outFile, errFile, processBuilder.redirectErrorStream()).apply {
           val cleanable = CLEANER.register(this, handle::releaseAsync)
           onExit().thenRun { cleanable.clean() }
         }
@@ -55,13 +55,13 @@ class MediatedProcess private constructor(
 
   private val pid = runBlocking {
     handle.rpc { handleId ->
-      createProcess(handleId, command, workingDir, environVars, inFile, outFile, errFile)
+      createProcess(handleId, command, workingDir, environVars, inFile, outFile, errFile, redirectErrorStream)
     }
   }
 
-  private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else NullOutputStream
-  private val stdout: InputStream = if (outFile == null) createInputStream(1) else NullInputStream
-  private val stderr: InputStream = if (errFile == null) createInputStream(2) else NullInputStream
+  private val stdin: OutputStream = if (inFile == null) createOutputStream(0) else OutputStream.nullOutputStream().also { it.close() }
+  private val stdout: InputStream = if (outFile == null) createInputStream(1) else InputStream.nullInputStream()
+  private val stderr: InputStream = if (errFile == null && !redirectErrorStream) createInputStream(2) else InputStream.nullInputStream()
 
   private val termination: Deferred<Int> = handle.rpcScope.async {
     handle.rpc { handleId ->
@@ -148,15 +148,6 @@ class MediatedProcess private constructor(
       }
     }
   }
-
-  private object NullInputStream : InputStream() {
-    override fun read(): Int = -1
-    override fun available(): Int = 0
-  }
-
-  private object NullOutputStream : OutputStream() {
-    override fun write(b: Int) = throw IOException("Stream closed")
-  }
 }
 
 /**
@@ -172,16 +163,14 @@ private class MediatedProcessHandle private constructor(
   companion object {
     fun create(client: ProcessMediatorClient): MediatedProcessHandle {
       val lifetimeChannel = client.openHandle().produceIn(client.coroutineScope)
-      try {
-        val handleId = runBlocking {
-          lifetimeChannel.receiveOrNull() ?: throw IOException("Failed to receive handleId")
+      val handleId = runBlocking {
+        lifetimeChannel.receiveCatching().getOrElse {
+          val ex = it ?: IOException("Failed to receive handleId")
+          lifetimeChannel.cancel(ex as? CancellationException ?: CancellationException("Failed to initialize client-side handle", ex))
+          throw ex
         }
-        return MediatedProcessHandle(client, handleId, lifetimeChannel)
       }
-      catch (e: Throwable) {
-        lifetimeChannel.cancel(e as? CancellationException ?: CancellationException("Failed to initialize client-side handle", e))
-        throw e
-      }
+      return MediatedProcessHandle(client, handleId, lifetimeChannel)
     }
   }
 

@@ -1,0 +1,1 @@
+class B : A<caret>(4)

@@ -1,72 +1,44 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.ThrowableConsumer
 import com.intellij.util.ThrowablePairConsumer
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.throwIfNotEmpty
 
-/**
- * Runs all given runnables and throws all the caught exceptions at the end.
- */
-class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
-  constructor(vararg actions: ThrowableRunnable<Throwable?>) : this(listOf(*actions))
-
-  override fun run() {
-    doRun(actions.asSequence(), null)
-  }
-
-  fun run(earlierExceptions: List<Throwable>? = null) {
-    doRun(actions.asSequence(), earlierExceptions)
-  }
-
-  companion object {
-    @JvmStatic
-    fun runAll(vararg actions: ThrowableRunnable<*>) {
-      doRun(actions.asSequence())
-    }
-
-    @JvmStatic
-    fun <T> runAll(input: Collection<T>, action: ThrowableConsumer<in T, Throwable?>) {
-      if (input.isNotEmpty()) {
-        doRun(input.asSequence().map { ThrowableRunnable<Throwable> { action.consume(it) } }, null)
-      }
-    }
-
-    @JvmStatic
-    fun <K, V> runAll(input: Map<out K?, V?>, action: ThrowablePairConsumer<in K?, in V?, Throwable?>) {
-      if (input.isNotEmpty()) {
-        doRun(input.entries.asSequence().map { ThrowableRunnable<Throwable> { action.consume(it.key, it.value) } }, null)
-      }
-    }
-  }
+@Deprecated(
+  "Moved to com.intellij.testFramework.RunAll",
+  ReplaceWith("com.intellij.testFramework.RunAll.runAll(input, action)")
+)
+fun <K, V> runAll(input: Map<out K?, V?>, action: ThrowablePairConsumer<in K?, in V?, Throwable?>) {
+  RunAll.runAll(input, action)
 }
 
-private fun doRun(actions: Sequence<ThrowableRunnable<*>>, earlierExceptions: List<Throwable>? = null) {
-  val exceptions: MutableList<Throwable> = if (earlierExceptions == null) ArrayList() else ArrayList(earlierExceptions)
-  for (action in actions) {
-    try {
-      action.run()
-    }
-    catch (e: CompoundRuntimeException) {
-      exceptions.addAll(e.exceptions)
-    }
-    catch (e: Throwable) {
-      exceptions.add(e)
-    }
-  }
-  throwIfNotEmpty(exceptions)
+@Deprecated(
+  "Moved to com.intellij.testFramework.RunAll",
+  ReplaceWith("com.intellij.testFramework.RunAll.runAll(input, action)")
+)
+fun <T> runAll(input: Collection<T>, action: ThrowableConsumer<in T, Throwable?>) {
+  RunAll.runAll(input, action)
 }
 
+@Deprecated(
+  "Moved to com.intellij.testFramework.common",
+  ReplaceWith("com.intellij.testFramework.common.runAll(*actions)"),
+)
 fun runAll(vararg actions: () -> Unit) {
-  doRun(actions.asSequence().map { ThrowableRunnable<Throwable> { it() } })
+  runAll(*actions)
 }
 
+@Deprecated(
+  "Moved to com.intellij.testFramework.common",
+  ReplaceWith("actions.runAll()", "com.intellij.testFramework.common.runAll"),
+)
 fun runAll(actions: Sequence<() -> Unit>) {
-  doRun(actions.map { ThrowableRunnable<Throwable> { it() } })
+  actions.runAll()
 }
 
+@Deprecated("Use other runAll methods or com.intellij.testFramework.common.runAllCatching")
 inline fun MutableList<Throwable>.catchAndStoreExceptions(executor: () -> Unit) {
   try {
     executor()

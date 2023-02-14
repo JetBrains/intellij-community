@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,11 +8,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,13 +70,13 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   }
 
   /**
-   * Strips any separator chars from a root (obtained via {@link VfsUtilCore#getRootFile} path to obtain a path to a local file.
+   * Strips any separator chars from a root path (obtained via {@link VfsUtilCore#getRootFile}) to obtain a path to a local file.
    */
   protected abstract @NotNull String extractLocalPath(@NotNull String rootPath);
 
   /**
    * A reverse to {@link #extractLocalPath(String)} - i.e. dresses a local file path to make it a suitable root path for this filesystem.
-   * E.g. "/x/y.jar" -> "/x/y.jar!/"
+   * E.g., "/x/y.jar" -> "/x/y.jar!/"
    */
   protected abstract @NotNull String composeRootPath(@NotNull String localPath);
 
@@ -134,6 +132,13 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return myAttrGetter.apply(file);
   }
 
+  @ApiStatus.Internal
+  public @NotNull FileAttributes getArchiveRootAttributes(@NotNull VirtualFile file) {
+    // Hack for handler initialization to have a caching e.g. JarFileSystemImpl.getHandler
+    getHandler(file);
+    return ArchiveHandler.DIRECTORY_ATTRIBUTES;
+  }
+
   private final Function<VirtualFile, String[]> myChildrenGetter =
     ManagingFS.getInstance().accessDiskWithCheckCanceled(file -> getHandler(file).list(getRelativePath(file)));
 
@@ -144,10 +149,7 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
 
   @Override
   public boolean exists(@NotNull VirtualFile file) {
-    if (file.getParent() == null) {
-      return getLocalByEntry(file) != null;
-    }
-    return getAttributes(file) != null;
+    return file.getParent() == null ? getLocalByEntry(file) != null : getAttributes(file) != null;
   }
 
   @Override
@@ -247,5 +249,10 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    */
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
     return FileTypeRegistry.getInstance().getFileTypeByFileName(local.getNameSequence()) == ArchiveFileType.INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  public final void clearArchiveCache(@NotNull VirtualFile sampleEntry) {
+    getHandler(sampleEntry).clearCaches();
   }
 }

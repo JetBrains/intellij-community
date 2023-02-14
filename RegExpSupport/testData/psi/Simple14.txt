@@ -1,7 +1,7 @@
 REGEXP_FILE
   RegExpPatternImpl: <*a>
     RegExpBranchImpl: <*a>
-      PsiErrorElement:Dangling metacharacter
+      PsiErrorElement:Dangling quantifier '*'
         <empty list>
       PsiElement(STAR)('*')
       RegExpCharImpl: <a>

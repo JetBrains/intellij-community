@@ -1,16 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
-import gnu.trove.THashMap;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.WildcardQuery;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
@@ -22,27 +17,28 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
+public final class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
   public static final String TERM = MavenServerIndexer.SEARCH_TERM_CLASS_NAMES;
 
   @Override
   protected List<MavenClassSearchResult> searchImpl(Project project, String pattern, int maxResult) {
-    Pair<String, Query> patternAndQuery = preparePatternAndQuery(pattern);
+    String patternForQuery = preparePattern(pattern);
 
-    MavenProjectIndicesManager m = MavenProjectIndicesManager.getInstance(project);
-    Set<MavenArtifactInfo> infos = m.getIndices().stream().flatMap(
-      i -> i.search(patternAndQuery.second, 50).stream()
-    ).collect(Collectors.toSet());
+    MavenIndicesManager m = MavenIndicesManager.getInstance(project);
+    Set<MavenArtifactInfo> infos = m.getIndex()
+      .getIndices().stream()
+      .flatMap(i -> i.search(patternForQuery, 50).stream())
+      .collect(Collectors.toSet());
 
-    ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternAndQuery.first, maxResult));
+    ArrayList<MavenClassSearchResult> results = new ArrayList<>(processResults(infos, patternForQuery, maxResult));
     results.sort(Comparator.comparing(MavenClassSearchResult::getClassName));
     return results;
   }
 
-  protected Pair<String, Query> preparePatternAndQuery(String pattern) {
+  private static String preparePattern(String pattern) {
     pattern = pattern.toLowerCase();
     if (pattern.trim().length() == 0) {
-      return new Pair<>(pattern, new MatchAllDocsQuery());
+      return StringUtils.EMPTY;
     }
 
     List<String> parts = StringUtil.split(pattern, ".");
@@ -59,13 +55,10 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
     newPattern.append(className.trim());
     if (!exactSearch) newPattern.append("*");
 
-    pattern = newPattern.toString();
-    String queryPattern = "*/" + pattern.replaceAll("\\.", "/");
-
-    return new Pair<>(pattern, new WildcardQuery(new Term(TERM, queryPattern)));
+    return newPattern.toString();
   }
 
-  protected Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
+  private static Collection<MavenClassSearchResult> processResults(Set<MavenArtifactInfo> infos, String pattern, int maxResult) {
     if (pattern.length() == 0 || pattern.equals("*")) {
       pattern = "^/(.*)$";
     }
@@ -92,7 +85,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       return Collections.emptyList();
     }
 
-    Map<String, MavenClassSearchResult> result = new THashMap<>();
+    Map<String, MavenClassSearchResult> result = new HashMap<>();
     for (MavenArtifactInfo each : infos) {
       if (each.getClassNames() == null) continue;
 
@@ -119,8 +112,8 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
           }
         }
         else {
-          List<String> versions = ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion());
-          versions.add(each.getVersion());
+          List<String> versions = ContainerUtil.append(ContainerUtil.map(classResult.getSearchResults().getItems(), i -> i.getVersion()),
+          each.getVersion());
           MavenRepositoryArtifactInfo artifactInfo = new MavenRepositoryArtifactInfo(
             each.getGroupId(), each.getArtifactId(),
             versions);

@@ -3,6 +3,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * Mostly handles escapes, differently in byte / unicode / raw strings.
  * Snatched from com.intellij.lexer.StringLiteralLexer and may inherit from it in the future.
  * Lexes the entire string, with u/b/r designator, quotes, and content, thus self-adjusts for the format.
- * User: dcheryasov
  */
 public class PyStringLiteralLexer extends PyStringLiteralLexerBase {
 
@@ -38,7 +38,7 @@ public class PyStringLiteralLexer extends PyStringLiteralLexerBase {
     myLastState = initialState;
     
     // the following could be parsing steps if we wanted this info as tokens
-    final String prefix = PyStringLiteralUtil.getPrefix(buffer, myStart);
+    final String prefix = PyStringLiteralCoreUtil.getPrefix(buffer, myStart);
 
     myIsRaw = PyStringLiteralUtil.isRawPrefix(prefix);
 

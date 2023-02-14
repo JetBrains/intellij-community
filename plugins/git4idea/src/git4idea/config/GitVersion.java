@@ -16,7 +16,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +58,8 @@ public final class GitVersion implements Comparable<GitVersion> {
   /**
    * The minimal supported version
    */
-  public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 4, 0, 0)
-                                                            : new GitVersion(1, 8, 0, 0);
+  public static final GitVersion MIN = SystemInfo.isWindows ? new GitVersion(2, 19, 2, 0)
+                                                            : new GitVersion(2, 17, 0, 0);
 
   /**
    * Special version with a special Type which indicates, that Git version information is unavailable.
@@ -168,8 +167,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * @deprecated use {@link GitExecutableManager#identifyVersion(String)} with appropriate {@link ProgressIndicator}
    * or {@link GitExecutableManager#getVersion(Project)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @NotNull
   public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -217,10 +215,9 @@ public final class GitVersion implements Comparable<GitVersion> {
    */
   @Override
   public boolean equals(Object obj) {
-    if (!(obj instanceof GitVersion)) {
+    if (!(obj instanceof GitVersion other)) {
       return false;
     }
-    GitVersion other = (GitVersion) obj;
     if (compareTo(other) != 0) {
       return false;
     }

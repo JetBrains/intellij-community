@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,8 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
   }
 
   static boolean isTargetedToProduct(@NotNull Configurable configurable) {
-    return DebuggerConfigurableProvider.EXTENSION_POINT.extensions().anyMatch(provider -> provider.isTargetedToProduct(configurable));
+    return ContainerUtil.exists(DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList(),
+                                provider -> provider.isTargetedToProduct(configurable));
   }
 
   @NotNull

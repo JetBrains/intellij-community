@@ -1,0 +1,7 @@
+fun foo(start: Int = 999, paramTest: Int = 12) {
+
+}
+
+fun test() {
+    foo(paramTest = <caret>, start = 100)
+}

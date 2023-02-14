@@ -22,36 +22,29 @@ public abstract class TextEditorHighlightingPassRegistrar {
    * @param anchorPassId id of the anchor pass. Predefined pass Ids are declared in {@link Pass}
    * @return the id of the new pass which, e.g., can be used as an anchor for the other pass.
    */
-  public int registerTextEditorHighlightingPass(final TextEditorHighlightingPassFactory factory,
-                                                final Anchor anchor,
-                                                final int anchorPassId,
+  public int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
+                                                @NotNull Anchor anchor,
+                                                int anchorPassId,
                                                 boolean needAdditionalIntentionsPass,
                                                 boolean inPostHighlightingPass) {
-    int[] ids = null;
-    switch (anchor) {
-      case AFTER:
-        ids = new int[]{anchorPassId};
-        break;
-      case BEFORE:
+    int[] ids = switch (anchor) {
+      case AFTER -> new int[]{anchorPassId};
+      case BEFORE ->
         //todo
-        ids = null;
-        break;
-      case FIRST:
-        ids = null;
-        break;
-      case LAST:
+        null;
+      case FIRST -> null;
+      case LAST ->
         //todo
-        ids = new int[]{Pass.UPDATE_ALL,
-          Pass.UPDATE_FOLDING, Pass.LINE_MARKERS,
+        new int[]{Pass.UPDATE_ALL,
+          Pass.UPDATE_FOLDING, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS,
           Pass.EXTERNAL_TOOLS,
           Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS};
-        break;
-    }
+    };
     return registerTextEditorHighlightingPass(factory, ids, null, needAdditionalIntentionsPass, -1);
   }
 
   public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
-                                                         final int @Nullable [] runAfterCompletionOf,
+                                                         int @Nullable [] runAfterCompletionOf,
                                                          int @Nullable [] runAfterStartingOf,
                                                          boolean runIntentionsPassAfter,
                                                          int forcedPassId);

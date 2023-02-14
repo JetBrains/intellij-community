@@ -1,4 +1,4 @@
-// "Delete return value" "true"
+// "Delete return value" "true-preview"
 
 class Test {
 

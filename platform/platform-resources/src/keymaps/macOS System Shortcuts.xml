@@ -70,6 +70,9 @@
     <keyboard-shortcut first-keystroke="ctrl meta K"/>
     <keyboard-shortcut first-keystroke="meta F3"/>
   </action>
+  <action id="ShowTypeBookmarks">
+    <keyboard-shortcut first-keystroke="meta alt F3"/>
+  </action>
 
   <action id="ToggleBookmarkWithMnemonic">
     <keyboard-shortcut first-keystroke="shift ctrl alt K"/>
@@ -342,7 +345,7 @@
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
 
-  <action id="EditorDecreaseFontSize">
+  <action id="EditorDecreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift MINUS"/>
   </action>
 
@@ -350,7 +353,7 @@
     <keyboard-shortcut first-keystroke="shift alt MINUS"/>
   </action>
 
-  <action id="EditorIncreaseFontSize">
+  <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift PLUS"/>
   </action>
 
@@ -448,5 +451,9 @@
 
   <action id="ShowContent">
     <keyboard-shortcut first-keystroke="shift meta alt DOWN"/>
+  </action>
+
+  <action id="TextSearchAction">
+    <keyboard-shortcut first-keystroke="shift ctrl alt E"/>
   </action>
 </keymap>

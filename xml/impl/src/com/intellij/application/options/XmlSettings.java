@@ -2,6 +2,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "XmlSettings", storages = @Storage("editor.xml"))
+@State(name = "XmlSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class XmlSettings implements PersistentStateComponent<XmlSettings> {
   public boolean SHOW_XML_ADD_IMPORT_HINTS = true;
 

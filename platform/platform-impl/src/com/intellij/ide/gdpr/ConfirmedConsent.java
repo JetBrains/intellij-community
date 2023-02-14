@@ -9,7 +9,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Dec-17
  */
 public final class ConfirmedConsent extends ConsentBase {
   private boolean myIsAccepted;

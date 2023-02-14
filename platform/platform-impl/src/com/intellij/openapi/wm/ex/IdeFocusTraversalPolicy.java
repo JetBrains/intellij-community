@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -16,6 +16,8 @@ import java.lang.reflect.Field;
 import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
+  private static final SwingDefaultFocusTraversalPolicy DEFAULT_TRAVERSAL_POLICY = new SwingDefaultFocusTraversalPolicy();
+
   @Override
   public Component getDefaultComponent(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
@@ -58,14 +60,13 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       }
     }
 
-    return siblingComponent.isFocusable() ? siblingComponent : findFocusableComponentIn((JComponent)siblingComponent, null);
+    return siblingComponent.isFocusable() ? siblingComponent : findFocusableComponentIn(siblingComponent, null);
   }
 
   /**
    * @return preferred focused component inside the specified {@code component}.
    * Method can return component itself if the {@code component} is legal
    * (JTextField)focusable
-   *
    */
   @Nullable
   public static JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore) {
@@ -73,7 +74,9 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   }
 
   @Nullable
-  private static JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore, @Nullable Field focusTraversalPolicyField) {
+  private static JComponent getPreferredFocusedComponent(@NotNull JComponent component,
+                                                         @Nullable FocusTraversalPolicy policyToIgnore,
+                                                         @Nullable Field focusTraversalPolicyField) {
     if (!component.isVisible()) {
       return null;
     }
@@ -89,10 +92,11 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       }
 
       try {
-        focusTraversalPolicy = focusTraversalPolicyField != null && component.isFocusTraversalPolicySet() ? (FocusTraversalPolicy)focusTraversalPolicyField.get(component) : null;
+        focusTraversalPolicy =
+          focusTraversalPolicyField != null && component.isFocusTraversalPolicySet() ? (FocusTraversalPolicy)focusTraversalPolicyField.get(
+            component) : null;
       }
-      catch (IllegalAccessException e) {
-        focusTraversalPolicy = null;
+      catch (IllegalAccessException ignored) {
       }
     }
 
@@ -107,8 +111,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       }
     }
 
-    if (component instanceof JTabbedPane) {
-      JTabbedPane tabbedPane = (JTabbedPane)component;
+    if (component instanceof JTabbedPane tabbedPane) {
       Component selectedComponent = tabbedPane.getSelectedComponent();
       if (selectedComponent instanceof JComponent) {
         return getPreferredFocusedComponent((JComponent)selectedComponent);
@@ -154,11 +157,22 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       return ((JTextComponent)component).isEditable();
     }
 
-    return
-      component instanceof AbstractButton ||
-      component instanceof JList ||
-      component instanceof JTree ||
-      component instanceof JTable ||
-      component instanceof JComboBox;
+    if (component instanceof JLabel) {
+      return DEFAULT_TRAVERSAL_POLICY.accept(component);
+    }
+
+    return component instanceof AbstractButton ||
+           component instanceof JList ||
+           component instanceof JTree ||
+           component instanceof JTable ||
+           component instanceof JComboBox;
+  }
+
+  // Create our own subclass and change accept to public so that we can call accept.
+  private static final class SwingDefaultFocusTraversalPolicy extends DefaultFocusTraversalPolicy {
+    @Override
+    public boolean accept(Component aComponent) {
+      return super.accept(aComponent);
+    }
   }
 }

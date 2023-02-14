@@ -1,4 +1,4 @@
-// "Extract variable 'fn' to 'map' operation" "true"
+// "Extract variable 'fn' to 'map' operation" "true-preview"
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;

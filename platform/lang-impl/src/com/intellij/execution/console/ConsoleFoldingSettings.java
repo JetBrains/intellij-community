@@ -2,6 +2,7 @@
 package com.intellij.execution.console;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -14,10 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author peter
- */
-@State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"))
+@State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"), category = SettingsCategory.CODE)
 public final class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<>();
   private final List<String> myNegativePatterns = new ArrayList<>();

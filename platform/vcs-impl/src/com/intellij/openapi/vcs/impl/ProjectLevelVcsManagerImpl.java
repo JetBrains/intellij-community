@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -65,7 +66,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   private static final Logger LOG = Logger.getInstance(ProjectLevelVcsManagerImpl.class);
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
-  private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
   private final NewMappings myMappings;
@@ -93,7 +93,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myProject = project;
     myExcludedIndex = FileIndexFacade.getInstance(project);
 
-    mySerialization = new ProjectLevelVcsManagerSerialization();
     myOptionsAndConfirmations = new OptionsAndConfirmations();
 
     myMappings = new NewMappings(myProject, this);
@@ -104,6 +103,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return (ProjectLevelVcsManagerImpl)getInstance(project);
   }
 
+  @TestOnly
   public void registerVcs(AbstractVcs vcs) {
     AllVcses.getInstance(myProject).registerManually(vcs);
   }
@@ -158,7 +158,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull VirtualFile file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -166,7 +166,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @Nullable AbstractVcs getVcsFor(@NotNull FilePath file) {
+  public @Nullable AbstractVcs getVcsFor(@Nullable FilePath file) {
     if (myProject.isDisposed()) return null;
 
     NewMappings.MappedRoot root = myMappings.getMappedRootFor(file);
@@ -209,6 +209,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return root != null ? new VcsRoot(root.vcs, root.root) : null;
   }
 
+  @TestOnly
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && myMappings.haveActiveVcs(vcs.getName())) {
       // unlikely
@@ -248,6 +249,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public boolean hasActiveVcss() {
     return myMappings.hasActiveVcss();
+  }
+
+  @Override
+  public boolean areVcsesActivated() {
+    return myMappings.isActivated();
   }
 
   @Override
@@ -322,11 +328,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return options;
   }
 
-  @Override
-  public @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName, @NotNull AbstractVcs vcs) {
-    return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
-  }
-
   @RequiresEdt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
@@ -336,7 +337,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @RequiresEdt
   @Override
-  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
+  public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
+                                                        String displayActionName,
+                                                        ActionInfo actionInfo,
+                                                        boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
@@ -387,7 +391,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
   }
 
-  public void setAutoDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> mappings) {
+  public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myMappings.setDirectoryMappings(mappings);
     myMappings.cleanupMappings();
   }
@@ -411,10 +415,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     myMappings.updateMappedVcsesImmediately();
   }
 
-  private void activateActiveVcses() {
-    myMappings.activateActiveVcses();
-  }
-
   @Override
   public void iterateVcsRoot(final VirtualFile root, final Processor<? super FilePath> iterator) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator);
@@ -430,7 +430,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @NotNull Element getState() {
     Element element = new Element("state");
-    mySerialization.writeExternalUtil(element, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.writeExternalUtil(element, myOptionsAndConfirmations);
     if (myHaveLegacyVcsConfiguration) {
       element.setAttribute(SETTINGS_EDITED_MANUALLY, "true");
     }
@@ -439,7 +439,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void loadState(@NotNull Element state) {
-    mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
+    ProjectLevelVcsManagerSerialization.readExternalUtil(state, myOptionsAndConfirmations);
     final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
       try {
@@ -478,7 +478,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void stopBackgroundVcsOperation() {
     // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similar"
-    assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     int counter = myBackgroundOperationCounter.getAndDecrement();
     LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
   }
@@ -627,7 +627,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       String vcsName = checker.getSupportedVcs().getName();
       checkedVcses.add(vcsName);
 
-      if (checker.isRoot(file.getPath())) {
+      if (checker.isRoot(file)) {
         return findVcsByName(vcsName);
       }
     }
@@ -665,7 +665,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public void fireDirectoryMappingsChanged() {
     if (myProject.isOpen() && !myProject.isDisposed()) {
-      myMappings.mappingsChanged();
+      myMappings.notifyMappingsChanged();
     }
   }
 
@@ -675,16 +675,6 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @Nullable String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
-  }
-
-  /**
-   * @deprecated use {@link BackgroundableActionLock}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return new BackgroundableActionEnabledHandler(myProject, action);
   }
 
   @CalledInAny
@@ -756,6 +746,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
+        // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
           if (fileTypeManager.isFileIgnored(name)) {
@@ -901,6 +892,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       DefaultActionGroup actionGroup = new DefaultActionGroup(myConsole.createConsoleActions());
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsManager", actionGroup, false);
+      toolbar.setTargetComponent(myConsole.getComponent());
       panel.setToolbar(toolbar.getComponent());
 
       setComponent(panel);
@@ -943,12 +935,20 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   static final class ActivateVcsesStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstanceImpl(project).activateActiveVcses();
+      project.getService(VcsDirectoryMappingStorage.class); // read vcs.xml
+      getInstanceImpl(project).myMappings.activateActiveVcses();
     }
 
     @Override
     public int getOrder() {
       return VcsInitObject.MAPPINGS.getOrder();
+    }
+  }
+
+  static final class TrustListener implements TrustedProjectsListener {
+    @Override
+    public void onProjectTrusted(@NotNull Project project) {
+      getInstanceImpl(project).updateMappedVcsesImmediately();
     }
   }
 }

@@ -121,7 +121,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
           }
         }
         result.restartCompletionOnAnyPrefixChange()
-        val additionalData = CompletionData(suffix, quote)
+        val additionalData = CompletionData(completionPrefix, suffix, quote)
         if (version != null) {
           val newResult = result.withRelevanceSorter(CompletionSorter.emptySorter().weigh(MavenVersionNegatingWeigher()))
           waitAndAdd(searchPromise, cld, completeVersions(newResult, additionalData))
@@ -191,7 +191,7 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
     internal const val VERSION_LABEL = "version"
     internal const val DEPENDENCIES_SCRIPT_BLOCK = "dependencies"
 
-    data class CompletionData(val suffix: String?, val quote: Char)
+    data class CompletionData(val completionPrefix: String, val suffix: String?, val quote: Char)
 
     val COMPLETION_DATA_KEY = Key.create<CompletionData>("COMPLETION_DATA")
 

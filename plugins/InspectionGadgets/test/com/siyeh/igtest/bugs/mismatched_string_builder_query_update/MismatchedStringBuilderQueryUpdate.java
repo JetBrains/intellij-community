@@ -115,13 +115,6 @@ public class MismatchedStringBuilderQueryUpdate {
     fn.accept("foo");
   }
 }
-interface List<T> {
-  default void forEach(Consumer<? super T> action) {
-  }
-}
-interface Consumer<T> {
-  void accept(T t);
-}
 class EnumConstant {
   private static final StringBuilder sb = new StringBuilder();
   static {
@@ -149,5 +142,30 @@ class Main {
 
   public static void main(String[] args) {
     System.out.println(foo());
+  }
+}
+class Sample {
+  private final int NUMBER = 1;
+  CharSequence sequence = "test";
+
+  public void foo(int type) {
+    final String tokenValue = switch (type) {
+      case NUMBER -> {
+        final StringBuilder  value = new StringBuilder();
+        iterateWhile(Character::isDigit, value::append);
+        yield value.toString();
+      }
+
+      default -> throw new IllegalStateException("Unexpected value: " + type);
+    };
+
+  }
+
+  private void iterateWhile(Predicate<Character> condition, Consumer<Character> action) {
+    int currentIndex = 0;
+    while (currentIndex < sequence.length() && condition.test(sequence.charAt(currentIndex))) {
+      action.accept(sequence.charAt(currentIndex));
+      currentIndex++;
+    }
   }
 }

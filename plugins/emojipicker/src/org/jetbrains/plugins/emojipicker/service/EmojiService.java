@@ -227,7 +227,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
     }
 
     synchronized List<Emoji> lookupEmoji(@NonNls String prefix) {
-      if (myIndex.lookupIds(myIdMap, prefix)) {
+      if (myIndex.lookupIds(myIdMap, prefix.toLowerCase())) {
         List<Emoji> result = new ArrayList<>(100);
         for (int i = 0; i < myIdMap.length; i++) {
           if (myIdMap[i]) result.add(myEmoji.get(i));
@@ -292,7 +292,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     private CldrData(EmojiData emojiData) throws ParserConfigurationException {
       myEmojiData = emojiData;
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
       factory.setValidating(false);
       factory.setNamespaceAware(true);
       factory.setFeature("http://xml.org/sax/features/namespaces", false);
@@ -324,7 +324,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
             @NonNls String value = node.getTextContent();
             if (node.getAttributes().getNamedItem("type") == null) {
               for (String keyword : value.split("\\|")) {
-                myIndexTree.add(keyword.strip(), index);
+                myIndexTree.add(keyword.strip().toLowerCase(), index);
               }
             }
             else if (names != null) {

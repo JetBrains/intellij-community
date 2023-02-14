@@ -11,6 +11,7 @@ interface GHLoadingModel {
 
   fun addStateChangeListener(listener: StateChangeListener)
 
+  @JvmDefaultWithCompatibility
   interface StateChangeListener : EventListener {
     fun onLoadingStarted() {}
     fun onLoadingCompleted() {}

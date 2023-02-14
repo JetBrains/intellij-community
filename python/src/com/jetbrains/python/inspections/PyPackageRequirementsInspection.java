@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.core.CoreBundle;
@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonLanguage;
@@ -39,6 +40,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -48,23 +50,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
-/**
- * @author vlan
- */
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public class PyPackageRequirementsInspection extends PyInspection {
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
 
   @NotNull
-  private static final NotificationGroup BALLOON_NOTIFICATIONS =
-    new NotificationGroup("Package requirements", NotificationDisplayType.BALLOON, false);
+  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Package requirements");
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), ignoredPackages);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message("INSP.requirements.ignore.packages.label")));
   }
 
   @NotNull
@@ -76,7 +74,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new Visitor(holder, session, ignoredPackages);
+    return new Visitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session));
   }
 
   private boolean isPythonInTemplateLanguages(PsiFile psiFile) {
@@ -95,8 +93,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredPackages;
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            Collection<String> ignoredPackages,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
       myIgnoredPackages = ImmutableSet.copyOf(ignoredPackages);
     }
 
@@ -130,7 +130,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                                 requirementsList, unsatisfied.size());
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
 
-            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.extensions()
+            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.getExtensionList().stream()
               .map(ext -> ext.createInstallPackagesQuickFix(module))
               .filter(fix -> fix != null)
               .findFirst();
@@ -348,12 +348,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
     if (!PythonSdkUtil.isRemote(sdk) && PySdkExtKt.adminPermissionsNeeded(sdk)) {
       final int answer = askToConfigureInterpreter(project, sdk);
       switch (answer) {
-        case Messages.YES:
+        case Messages.YES -> {
           new PyInterpreterInspection.ConfigureInterpreterFix().applyFix(project, descriptor);
           return true;
-        case Messages.CANCEL:
-        case -1:
+        }
+        case Messages.CANCEL, -1 -> {
           return true;
+        }
       }
     }
     return false;
@@ -656,7 +657,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             notification.addAction(
               NotificationAction
                 .createSimpleExpiring(
-                  InspectionsBundle.message("inspection.action.edit.settings"),
+                  PyBundle.message("notification.action.edit.settings"),
                   () -> {
                     final InspectionProfileImpl profile = profileManager.getCurrentProfile();
                     final String toolName = PyPackageRequirementsInspection.class.getSimpleName();

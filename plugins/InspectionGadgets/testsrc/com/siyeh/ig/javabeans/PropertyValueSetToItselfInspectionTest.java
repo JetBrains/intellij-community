@@ -22,30 +22,32 @@ import org.jetbrains.annotations.Nullable;
 public class PropertyValueSetToItselfInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
-    doTest("class Bean {\n" +
-           "  private String x;\n" +
-           "  public void setX(String x) {\n" +
-           "    this.x = x;\n" +
-           "  }\n" +
-           "  public String getX() { return x; }\n" +
-           "  void m(Bean b) {\n" +
-           "    (b)./*Property value set to itself*/setX/**/(b.getX());\n" +
-           "    this./*Property value set to itself*/setX/**/(getX());\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class Bean {
+               private String x;
+               public void setX(String x) {
+                 this.x = x;
+               }
+               public String getX() { return x; }
+               void m(Bean b) {
+                 (b)./*Property value set to itself*/setX/**/(b.getX());
+                 this./*Property value set to itself*/setX/**/(getX());
+               }
+             }""");
   }
 
   public void testNoWarn() {
-    doTest("class Bean {\n" +
-           "  private String x;\n" +
-           "  public void setX(String x) {\n" +
-           "    this.x = x;\n" +
-           "  }\n" +
-           "  public String getX() { return x; }\n" +
-           "  void m(Bean b, Bean c) {\n" +
-           "    (b).setX(c.getX());\n" +
-           "  }\n" +
-           "}");
+    doTest("""
+             class Bean {
+               private String x;
+               public void setX(String x) {
+                 this.x = x;
+               }
+               public String getX() { return x; }
+               void m(Bean b, Bean c) {
+                 (b).setX(c.getX());
+               }
+             }""");
   }
 
   @Nullable

@@ -1,0 +1,1 @@
+import Main.Companion.hasNext

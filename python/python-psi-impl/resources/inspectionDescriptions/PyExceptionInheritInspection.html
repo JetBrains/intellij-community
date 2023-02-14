@@ -1,5 +1,25 @@
 <html>
 <body>
-This inspection detects when a custom exception class is raised but doesn&#39;t inherit from the builtin &quot;Exception&quot; class.
+<p>Reports cases when a custom exception class is
+  raised but does not inherit from the
+  <a href="https://docs.python.org/3/library/exceptions.html">builtin Exception class</a>.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class A:
+    pass
+
+
+def me_exception():
+    raise A()
+</pre>
+<p>The proposed quick-fix changes the code to:</p>
+<pre style="font-family: monospace">
+class A(Exception):
+    pass
+
+
+def me_exception():
+    raise A()
+</pre>
 </body>
 </html>

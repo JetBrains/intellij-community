@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.editor.selection;
 
@@ -11,14 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
@@ -29,7 +26,7 @@ public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   private static boolean isLiteral(PsiElement element) {
     return element instanceof GrListOrMap ||
            element instanceof GrArgumentLabel ||
-           element instanceof GrLiteralImpl && ((GrLiteralImpl)element).isStringLiteral();
+           element instanceof GrLiteral && ((GrLiteral)element).isString();
   }
 
   @Override

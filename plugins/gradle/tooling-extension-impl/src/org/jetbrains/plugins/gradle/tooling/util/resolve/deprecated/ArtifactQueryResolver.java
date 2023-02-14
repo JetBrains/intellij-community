@@ -55,7 +55,7 @@ class ArtifactQueryResolver {
   }
 
   public ExternalDepsResolutionResult resolve() {
-    final Collection<ExternalDependency> extDependencies = new LinkedHashSet<ExternalDependency>();
+    final Collection<ExternalDependency> extDependencies = new LinkedHashSet<>();
 
     Class<? extends Component> jvmLibrary = tryLoadingJvmLibraryClass();
 
@@ -69,7 +69,7 @@ class ArtifactQueryResolver {
     if(unresolvedModuleDependencies.isEmpty() || !is31OrBetter) {
       resolvedArtifacts = lenientConfiguration.getArtifacts(Specs.SATISFIES_ALL);
     } else {
-      resolvedArtifacts = new LinkedHashSet<ResolvedArtifact>();
+      resolvedArtifacts = new LinkedHashSet<>();
       // org.gradle.api.artifacts.LenientConfiguration.getAllModuleDependencies method was added in Gradle 3.1
       Set<ResolvedDependency> allModuleDependencies = lenientConfiguration.getAllModuleDependencies();
       for (ResolvedDependency dependency : allModuleDependencies) {
@@ -104,7 +104,7 @@ class ArtifactQueryResolver {
     extDependencies.addAll(dependencyResultsTransformer.buildExternalDependencies(resolutionResult.getRoot().getDependencies()));
 
     return new ExternalDepsResolutionResult(extDependencies,
-                                            new ArrayList<File>(dependencyResultsTransformer.getResolvedDepsFiles()));
+                                            new ArrayList<>(dependencyResultsTransformer.getResolvedDepsFiles()));
   }
 
   @NotNull
@@ -120,7 +120,7 @@ class ArtifactQueryResolver {
   @NotNull
   public Map<ComponentIdentifier, ComponentArtifactsResult> buildAuxiliaryArtifactsMap(@NotNull final Class<? extends Component> jvmLibrary,
                                                                                        @NotNull final Set<ResolvedArtifact> resolvedArtifacts) {
-    List<ComponentIdentifier> components = new ArrayList<ComponentIdentifier>();
+    List<ComponentIdentifier> components = new ArrayList<>();
     for (ResolvedArtifact artifact : resolvedArtifacts) {
       final ModuleVersionIdentifier moduleVersionId = artifact.getModuleVersion().getId();
       if (!DeprecatedDependencyResolver.isProjectDependencyArtifact(artifact)) {
@@ -138,7 +138,7 @@ class ArtifactQueryResolver {
                                                                       .getResolvedComponents();
 
     Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap =
-      new HashMap<ComponentIdentifier, ComponentArtifactsResult>();
+      new HashMap<>();
 
     for (ComponentArtifactsResult artifactsResult : componentResults) {
       componentResultsMap.put(artifactsResult.getId(), artifactsResult);
@@ -148,9 +148,9 @@ class ArtifactQueryResolver {
 
   protected Collection<ExternalDependency> buildFileCollectionDeps(Collection<ResolvedArtifact> resolvedArtifactToFilter,
                                                                    Collection<ProjectDependency> projectDepsToFilter) {
-    Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
+    Collection<ExternalDependency> result = new ArrayList<>();
 
-    Set<File> fileDeps = new LinkedHashSet<File>(myConfiguration.getIncoming().getFiles().getFiles());
+    Set<File> fileDeps = new LinkedHashSet<>(myConfiguration.getIncoming().getFiles().getFiles());
     for (ResolvedArtifact artifact : resolvedArtifactToFilter) {
       fileDeps.remove(artifact.getFile());
     }
@@ -161,7 +161,7 @@ class ArtifactQueryResolver {
         if (targetConfiguration == null) continue;
         Set<File> depFiles = targetConfiguration.getAllArtifacts().getFiles().getFiles();
 
-        final Set<File> intersection = new LinkedHashSet<File>(Sets.intersection(fileDeps, depFiles));
+        final Set<File> intersection = new LinkedHashSet<>(Sets.intersection(fileDeps, depFiles));
         if (!intersection.isEmpty()) {
           DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
           fileCollectionDependency.setScope(myScope);
@@ -182,7 +182,7 @@ class ArtifactQueryResolver {
 
   @NotNull
   protected List<Class<? extends Artifact>> additionalArtifactsTypes() {
-    List<Class<? extends Artifact>> artifactTypes = new ArrayList<Class<? extends Artifact>>();
+    List<Class<? extends Artifact>> artifactTypes = new ArrayList<>();
     if (myDownloadSources) { artifactTypes.add(SourcesArtifact.class); }
     if (myDownloadJavadoc) { artifactTypes.add(JavadocArtifact.class); }
     return artifactTypes;

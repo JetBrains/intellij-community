@@ -267,7 +267,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   private ModifiableWorkspace doGetModifiableWorkspace() {
     return ReadAction.compute(() -> myProject.getService(ExternalProjectsWorkspaceImpl.class)
-                  .createModifiableWorkspace(this));
+                  .createModifiableWorkspace(() -> Arrays.asList(getModules())));
   }
 
   private Graph<Module> getModuleGraph() {
@@ -304,7 +304,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         Library.ModifiableModel modifiableModel = entry.getValue();
         // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
         // the modifiable model of such library shouldn't be committed
-        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) ||
+            (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
           Disposer.dispose(modifiableModel);
         }
         else {
@@ -343,7 +344,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     assert !myDisposed : "Already disposed!";
     myDisposed = true;
 
@@ -389,10 +390,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
     else {
       ModifiableRootModel modifiableRootModel = getModifiableRootModel(ownerModule);
-      ModuleOrderEntry moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
+      ModuleOrderEntry moduleOrderEntry = modifiableRootModel.findModuleOrderEntry(workspaceModule);
+      if (moduleOrderEntry == null) // if that module exists already (after re-import)
+        moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
       moduleOrderEntry.setScope(libraryOrderEntry.getScope());
       moduleOrderEntry.setExported(libraryOrderEntry.isExported());
       ModifiableWorkspace workspace = getModifiableWorkspace();
+
       assert workspace != null;
       workspace.addSubstitution(ownerModule.getName(),
                                 workspaceModule.getName(),
@@ -492,8 +496,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
           }
         }
 
-        if (!(orderEntry instanceof LibraryOrderEntry)) continue;
-        LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (!(orderEntry instanceof LibraryOrderEntry libraryOrderEntry)) continue;
         if (!libraryOrderEntry.isModuleLevel() && libraryOrderEntry.getLibraryName() != null) {
           String workspaceModule = toSubstitute.get(libraryOrderEntry.getLibraryName());
           if (workspaceModule != null) {
@@ -507,6 +510,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
               workspace.addSubstitution(module.getName(), workspaceModule,
                                         libraryOrderEntry.getLibraryName(),
                                         libraryOrderEntry.getScope());
+
             }
           }
         }

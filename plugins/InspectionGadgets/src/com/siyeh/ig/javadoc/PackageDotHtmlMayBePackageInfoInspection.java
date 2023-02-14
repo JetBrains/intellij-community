@@ -17,8 +17,7 @@ package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -69,7 +68,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;
@@ -93,12 +92,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(final Project project, ProblemDescriptor descriptor) {
+    protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof XmlFile)) {
+      if (!(element instanceof XmlFile xmlFile)) {
         return;
       }
-      final XmlFile xmlFile = (XmlFile)element;
       final PsiDirectory directory = xmlFile.getContainingDirectory();
       if (directory == null) {
         return;
@@ -149,10 +147,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
       if (rootTag != null) {
         final PsiElement[] children = rootTag.getChildren();
         for (PsiElement child : children) {
-          if (!(child instanceof HtmlTag)) {
+          if (!(child instanceof HtmlTag htmlTag)) {
             continue;
           }
-          final HtmlTag htmlTag = (HtmlTag)child;
           @NonNls final String name = htmlTag.getName();
           if ("body".equalsIgnoreCase(name)) {
             final XmlTagValue value = htmlTag.getValue();
@@ -191,9 +188,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     public static String getPackage(@NotNull PsiDirectory directory) {
       final VirtualFile virtualFile = directory.getVirtualFile();
       final Project project = directory.getProject();
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-      final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-      return fileIndex.getPackageNameByDirectory(virtualFile);
+      return PackageIndex.getInstance(project).getPackageNameByDirectory(virtualFile);
     }
   }
 }

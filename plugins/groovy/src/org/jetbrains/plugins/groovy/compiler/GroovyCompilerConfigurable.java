@@ -26,10 +26,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -44,9 +41,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class GroovyCompilerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private JPanel myMainPanel;
@@ -166,7 +160,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
-    tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    tipComponent.setEditorKit(HTMLEditorKitBuilder.simple());
 
     EditorKit kit = tipComponent.getEditorKit();
     if (kit instanceof HTMLEditorKit) {

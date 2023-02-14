@@ -25,6 +25,11 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Implement this class and register implementations of its {@link Factory} in META-INF/services/org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumerationHandler$Factory
+ * file to change how dependencies of modules are processed. The same logic must be implemented in {@link com.intellij.openapi.roots.OrderEnumerationHandler}
+ * extension on IDE side.
+ */
 public abstract class JpsJavaDependenciesEnumerationHandler {
   public static List<JpsJavaDependenciesEnumerationHandler> createHandlers(Collection<JpsModule> rootModules) {
     List<JpsJavaDependenciesEnumerationHandler> handlers = null;

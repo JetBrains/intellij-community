@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public abstract class Identikit {
   private static final Interner<ByType> ourPlainInterner = Interner.createWeakInterner();
   private static final Interner<ByAnchor> ourAnchorInterner = Interner.createWeakInterner();
@@ -33,7 +30,7 @@ public abstract class Identikit {
 
   public abstract boolean isForPsiFile();
 
-  public static ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
+  public static @NotNull ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     return fromTypes(element.getClass(), PsiUtilCore.getElementType(element), fileLanguage);
   }
 
@@ -102,7 +99,7 @@ public abstract class Identikit {
     }
 
     @Nullable
-    private PsiElement findParent(int startOffset, int endOffset, PsiElement anchor) {
+    private PsiElement findParent(int startOffset, int endOffset, @NotNull PsiElement anchor) {
       TextRange range = anchor.getTextRange();
 
       if (range.getStartOffset() != startOffset) return null;
@@ -145,7 +142,7 @@ public abstract class Identikit {
     public String toString() {
       return "Identikit(" +
              "class='" + myElementClassName + '\'' +
-             ", elementType=" + myElementTypeId +
+             ", elementType=" + (myElementTypeId==-1 ? "-1" : IElementType.find(myElementTypeId)) +
              ", fileLanguage='" + myFileLanguageId + '\'' +
              ')';
     }

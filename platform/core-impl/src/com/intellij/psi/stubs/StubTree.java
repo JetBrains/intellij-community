@@ -28,18 +28,18 @@ import java.util.List;
 public class StubTree extends ObjectStubTree<StubElement<?>> {
   private final StubSpine mySpine = new StubSpine(this);
 
-  public StubTree(@NotNull final PsiFileStub root) {
+  public StubTree(@NotNull PsiFileStub root) {
     this(root, true);
   }
 
-  public StubTree(@NotNull final PsiFileStub root, final boolean withBackReference) {
+  public StubTree(@NotNull PsiFileStub root, boolean withBackReference) {
     super((ObjectStubBase)root, withBackReference);
   }
 
   @NotNull
   @Override
   protected List<StubElement<?>> enumerateStubs(@NotNull Stub root) {
-    return ((StubBase)root).myStubList.finalizeLoadingStage().toPlainList();
+    return ((StubBase<?>)root).myStubList.finalizeLoadingStage().toPlainList();
   }
 
   @NotNull
@@ -48,7 +48,7 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
     PsiFileStub[] roots = ((PsiFileStubImpl<?>)getRoot()).getStubRoots();
     if (roots.length == 1) return super.getPlainListFromAllRoots();
 
-    return ContainerUtil.concat(roots, stub -> ((PsiFileStubImpl)stub).myStubList.toPlainList());
+    return ContainerUtil.concat(roots, stub -> ((PsiFileStubImpl<?>)stub).myStubList.toPlainList());
   }
 
   @NotNull

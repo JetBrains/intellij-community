@@ -19,9 +19,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ImmutableUserMap;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public abstract class LookAheadLexer extends LexerBase {
   private int myLastOffset;
   private int myLastState;

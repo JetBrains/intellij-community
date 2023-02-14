@@ -2,7 +2,6 @@
 package git4idea.update
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.*
 import com.intellij.util.containers.toArray
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitNotificationIdsHolder.Companion.BRANCH_SET_UPSTREAM_ERROR
 import git4idea.GitNotificationIdsHolder.Companion.UPDATE_NOTHING_TO_UPDATE
 import git4idea.branch.GitBranchPair
 import git4idea.commands.Git
@@ -74,12 +74,11 @@ internal class GitUpdateExecutionProcess(private val project: Project,
 
       val result = Git.getInstance().runCommand(handler)
       if (!result.success()) {
-        LOG.error("Failed to set '${remote.name}' as upstream for '${local.name}' in '${repository.root.path}'")
+        VcsNotifier.getInstance(project).notifyError(BRANCH_SET_UPSTREAM_ERROR,
+                                                     GitBundle.message("update.process.error.notification.title"),
+                                                     result.errorOutputAsHtmlString,
+                                                     true)
       }
-    }
-
-    companion object {
-      private val LOG = Logger.getInstance(UpdateExecution::class.java)
     }
   }
 }

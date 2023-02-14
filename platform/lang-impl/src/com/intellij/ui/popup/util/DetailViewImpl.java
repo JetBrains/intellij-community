@@ -3,6 +3,7 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -21,7 +22,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JPanel myDetailPanelWrapper;
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
-  private @NlsContexts.Label String myEmptyLabel = UIBundle.message("message.nothingToShow");
+  private @NlsContexts.Label String myEmptyLabel = IdeCoreBundle.message("message.nothingToShow");
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());

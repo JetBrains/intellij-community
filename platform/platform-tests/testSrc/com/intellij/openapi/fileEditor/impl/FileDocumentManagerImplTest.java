@@ -24,6 +24,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.common.ThreadUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.MemoryDumpHelper;
@@ -246,6 +248,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     document = null;
 
     myDocumentManager.saveAllDocuments();
+    UIUtil.dispatchAllInvocationEvents();
 
     GCWatcher.tracking(myDocumentManager.getDocument(file)).ensureCollected();
 
@@ -637,10 +640,22 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static void checkDocumentFiles(List<VirtualFile> files) throws Exception {
+  public void testDropAllUnsavedDocuments() throws Exception {
+    VirtualFile file = createFile("test.txt", "unedited");
+    Document document = myDocumentManager.getDocument(file);
+    assertEquals("unedited", document.getText());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("edited"));
+    assertEquals("edited", myDocumentManager.getDocument(file).getText());
+
+    ApplicationManager.getApplication().runWriteAction(myDocumentManager::dropAllUnsavedDocuments);
+    assertEquals("unedited", myDocumentManager.getDocument(file).getText());
+  }
+
+  private static void checkDocumentFiles(List<? extends VirtualFile> files) throws Exception {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
 
-    List<Future> futures = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
     for (VirtualFile file : files) {
       if (fdm.getCachedDocument(file) != null) {
         MemoryDumpHelper.captureMemoryDumpZipped("fileDocTest.hprof.zip");
@@ -654,14 +669,12 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       }
     }
 
-    for (Future future : futures) {
-      try {
-        future.get(20, TimeUnit.SECONDS);
-      }
-      catch (TimeoutException e) {
-        printThreadDump();
-        throw e;
-      }
+    try {
+      ConcurrencyUtil.getAll(20, TimeUnit.SECONDS, futures);
+    }
+    catch (TimeoutException e) {
+      ThreadUtil.printThreadDump();
+      throw e;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.CommonBundle
@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButto
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBFont
+import com.jetbrains.CustomWindowDecoration.*
 import java.awt.Font
 import java.awt.Frame
 import java.awt.Toolkit
@@ -108,10 +109,14 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
   }
 
-  override fun getHitTestSpots(): List<RelativeRectangle> {
-    return listOf(
-      RelativeRectangle(productIcon),
-      RelativeRectangle(buttonPanes.getView())
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    val buttons = buttonPanes as ResizableCustomFrameTitleButtons
+    return sequenceOf(
+      Pair(RelativeRectangle(productIcon), OTHER_HIT_SPOT),
+      Pair(RelativeRectangle(buttons.minimizeButton), MINIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.maximizeButton), MAXIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.restoreButton), MAXIMIZE_BUTTON),
+      Pair(RelativeRectangle(buttons.closeButton), CLOSE_BUTTON)
     )
   }
 }

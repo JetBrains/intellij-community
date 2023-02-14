@@ -7,11 +7,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- * @author yole
- */
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   public static VGapProperty getInstance(Project project) {
     return project.getService(VGapProperty.class);
@@ -35,8 +30,7 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
       CardLayout layout = (CardLayout) component.getLayout();
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof AbstractLayout) {
-      final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
+    if (component.getLayout() instanceof AbstractLayout layoutManager) {
       return layoutManager.getVGap();
     }
     return null;

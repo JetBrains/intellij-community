@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -22,8 +22,12 @@ public interface DocumentationMarkup {
   @NlsSafe String GRAYED_END = "</span>";
 
   HtmlChunk.Element SECTION_CONTENT_CELL = HtmlChunk.tag("td").attr("valign", "top");
-  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").attr("class", "section");
-  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").attr("class", "sections");
-  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().attr("class", "content");
-  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().attr("class", "definition");
+  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").setClass("section");
+  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass("sections");
+  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass("content");
+  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass("definition");
+  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass("grayed");
+  HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass("centered");
+  HtmlChunk.Element EXTERNAL_LINK_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow");
+  HtmlChunk.Element INFORMATION_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.General.Information");
 }

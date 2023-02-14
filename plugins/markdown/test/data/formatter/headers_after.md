@@ -2,13 +2,13 @@
 
 # Header with excessive spaces
 
-# Header with missing spaces
+#Header with missing spaces
 
 # Minor header
 
 #### Minor header with excessive spaces
 
-#### Minor header with missing spaces
+####Minor header with missing spaces
 
 # Two headers one by one
 
@@ -40,7 +40,7 @@ One paragraph
 
 * # Normal header in list
 
-* # Header with missing space in list
+* #Header with missing space in list
 
 * # Header with excessive spaces in list
 
@@ -55,7 +55,8 @@ One paragraph
 
 > # Normal header in blockquote
 
-> # Header with missing space in blockquote
+> #Header with missing space in
+blockquote
 
 > # Header with excessive spaces in blockquote
 

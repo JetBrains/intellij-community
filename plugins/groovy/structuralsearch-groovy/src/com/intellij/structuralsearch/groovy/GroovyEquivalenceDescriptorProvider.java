@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorProvider {
   private static final TokenSet IGNORED_TOKENS = TokenSet.orSet(TokenSets.WHITE_SPACES_OR_COMMENTS, TokenSets.SEPARATORS);
 
@@ -38,45 +35,39 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
     if (e instanceof GrVariableDeclaration) {
       return builder.elements(((GrVariableDeclaration)e).getVariables());
     }
-    else if (e instanceof GrParameter) {
-      final GrParameter p = (GrParameter)e;
+    else if (e instanceof GrParameter p) {
       return builder
         .element(p.getNameIdentifierGroovy())
         .optionally(p.getTypeElementGroovy())
         .optionallyInPattern(p.getInitializerGroovy());
     }
-    else if (e instanceof GrVariable) {
-      final GrVariable v = (GrVariable)e;
+    else if (e instanceof GrVariable v) {
       return builder
         .element(v.getNameIdentifierGroovy())
         .optionally(v.getTypeElementGroovy())
         .optionallyInPattern(v.getInitializerGroovy());
     }
-    else if (e instanceof GrMethod) {
-      final GrMethod m = (GrMethod)e;
+    else if (e instanceof GrMethod m) {
       return builder
         .element(m.getNameIdentifierGroovy())
         .elements(m.getParameters())
         .optionally(m.getReturnTypeElementGroovy())
         .optionallyInPattern(m.getBlock());
     }
-    else if (e instanceof GrTypeDefinitionBody) {
-      final GrTypeDefinitionBody b = (GrTypeDefinitionBody)e;
+    else if (e instanceof GrTypeDefinitionBody b) {
       return builder
         .inAnyOrder(b.getFields())
         .inAnyOrder(b.getMethods())
         .inAnyOrder(b.getInitializers())
         .inAnyOrder(b.getInnerClasses());
     }
-    else if (e instanceof GrTypeDefinition) {
-      GrTypeDefinition d = (GrTypeDefinition)e;
+    else if (e instanceof GrTypeDefinition d) {
       return builder.element(d.getNameIdentifierGroovy())
         .optionallyInPattern(d.getExtendsClause())
         .optionallyInPattern(d.getImplementsClause())
         .optionallyInPattern(d.getBody());
     }
-    else if (e instanceof GrForInClause) {
-      final GrForInClause f = (GrForInClause)e;
+    else if (e instanceof GrForInClause f) {
       return builder
         .element(f.getDeclaredVariable())
         .element(f.getIteratedExpression());

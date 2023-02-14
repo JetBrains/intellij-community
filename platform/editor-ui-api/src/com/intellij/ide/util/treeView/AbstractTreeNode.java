@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,11 +9,17 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.presentation.FilePresentationService;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.LeafState;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -61,11 +67,29 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
+    setFileStatusErrors(presentation);
+    setForcedForeground(presentation);
+    appendInplaceComments(presentation);
+  }
+
+  private void setFileStatusErrors(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
       presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
+  }
 
-    setForcedForeground(presentation);
+  private void appendInplaceComments(@NotNull PresentationData presentation) {
+    appendInplaceComments(new PresentationDataInplaceCommentAppender(presentation));
+  }
+
+  /**
+   * Generates inplace comments and appends it to the given appender.
+   * <p>
+   *   The default implementation does nothing. Subclasses may override this method to append their inplace comments.
+   * </p>
+   * @param appender the appender to append comments to
+   */
+  protected void appendInplaceComments(@NotNull InplaceCommentAppender appender) {
   }
 
   private void setForcedForeground(@NotNull PresentationData presentation) {
@@ -143,7 +167,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   public final T getValue() {
     Object value = getEqualityObject();
-    return value == null ? null : (T)SlowOperations.allowSlowOperations(() -> TreeAnchorizer.getService().retrieveElement(value));
+    return value == null ? null : (T)TreeAnchorizer.getService().retrieveElement(value);
   }
 
   public final void setValue(T value) {
@@ -259,9 +283,67 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    Object value = getValue();
+    if (!(value instanceof PsiElement element)) {
+      return null;
+    }
+    return FilePresentationService.getInstance(element.getProject()).getFileBackgroundColor(element);
+  }
+
+  private @Nullable VirtualFile extractFileFromValue() {
+    Object value = getEqualityObject();
+    if (value instanceof SmartPsiElementPointer<?> pointer) {
+      // see #getValue && default implementation of TreeAnchorizer
+      return pointer.getVirtualFile();
+    }
+    return null;
+  }
+
+  /**
+   * This method is intended to optimize a search through a PSI-based nodes.
+   * It can be used within a tree model with file hierarchy (i.e. Project View).
+   */
+  @ApiStatus.Internal
+  public final boolean mayContain(@Nullable Object object) {
+    if (object == null) return false;
+    VirtualFile ancestor = extractFileFromValue();
+    if (ancestor == null) return true; // always search in unknown nodes
+    if (!ancestor.isValid()) return false; // do not search in invalid files
+    if (object instanceof PsiElement) {
+      object = PsiUtilCore.getVirtualFile((PsiElement)object);
+    }
+    if (object instanceof VirtualFile file) {
+      if (!file.isValid()) return false; // do not search for invalid files
+      return VfsUtilCore.isAncestor(ancestor, file, false);
+    }
+    return true; // any custom object can be contained somewhere in a tree
+  }
+
+  private static class PresentationDataInplaceCommentAppender implements InplaceCommentAppender {
+
+    private final @NotNull PresentationData myPresentation;
+
+    PresentationDataInplaceCommentAppender(@NotNull PresentationData presentation) {
+      myPresentation = presentation;
+    }
+
+    @Override
+    public void append(@NotNull @NlsSafe String text, @NotNull SimpleTextAttributes attributes) {
+      if (myPresentation.getColoredText().isEmpty() && myPresentation.getPresentableText() != null) {
+        // Convert plain text into colored text before appending comments.
+        // Keep the plain text (it's used for sorting nodes, for example).
+        myPresentation.addText(myPresentation.getPresentableText(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      myPresentation.addText(text, attributes);
+    }
+
+  }
+
 }

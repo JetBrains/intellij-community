@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ven
- */
 public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;
@@ -56,7 +53,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
     } : null;
     mySmartPointerManager = SmartPointerManager.getInstance(project);
     myDelegate = InvertBooleanDelegate.findInvertBooleanDelegate(myElement);
-    LOG.assertTrue(myDelegate != null);
+    LOG.assertTrue(myDelegate != null, myElement);
   }
 
   @Override
@@ -127,8 +124,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<>(usages.length);
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveRenameUsageInfo) {
-        MoveRenameUsageInfo usageInfo = (MoveRenameUsageInfo)usage;
+      if (usage instanceof MoveRenameUsageInfo usageInfo) {
         if (element.equals(usageInfo.getReferencedElement())) {
           extractedUsages.add(usageInfo);
         }

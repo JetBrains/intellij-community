@@ -32,7 +32,7 @@ interface GitExecutableProblemHandler {
 
   @RequiresEdt
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
-    showError(exception, errorNotifier, {})
+    showError(exception, errorNotifier) {}
   }
 }
 
@@ -69,8 +69,8 @@ interface ErrorNotifier {
     GitExecutableManager.getInstance().dropExecutableCache()
   }
 
-  sealed class FixOption(@Nls(capitalization = Title) val text: String, @RequiresEdt val fix: () -> Unit) {
-    class Standard(@Nls(capitalization = Title) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Sentence) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {

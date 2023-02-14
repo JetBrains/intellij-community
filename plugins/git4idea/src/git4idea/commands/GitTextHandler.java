@@ -41,11 +41,11 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
+  protected GitTextHandler(@Nullable Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(@NotNull Project project,
+  protected GitTextHandler(@Nullable Project project,
                            @NotNull VirtualFile vcsRoot,
                            @NotNull GitCommand command,
                            List<String> configParameters) {
@@ -86,6 +86,7 @@ public abstract class GitTextHandler extends GitHandler {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         final int exitCode = event.getExitCode();
+        OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), GitTextHandler.this.hashCode(), exitCode));
         try {
           setExitCode(exitCode);
           GitTextHandler.this.processTerminated(exitCode);
@@ -118,17 +119,20 @@ public abstract class GitTextHandler extends GitHandler {
   @Override
   protected void waitForProcess() {
     if (myHandler != null) {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      ProgressManager progressManager = ProgressManager.getInstance();
       while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
+          ProgressIndicator indicator = progressManager.getProgressIndicator();
           if (indicator != null) {
             indicator.checkCanceled();
           }
         }
         catch (ProcessCanceledException pce) {
-          if (!tryKill()) {
-            LOG.error("Could not terminate [" + printableCommandLine() + "].");
-          }
+          progressManager.executeNonCancelableSection(() -> {
+            if (!tryKill()) {
+              LOG.warn("Could not terminate [" + printableCommandLine() + "].");
+            }
+          });
           throw pce;
         }
       }

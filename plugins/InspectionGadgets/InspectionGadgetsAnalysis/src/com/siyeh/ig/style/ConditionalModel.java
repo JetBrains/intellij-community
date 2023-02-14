@@ -58,8 +58,9 @@ public class ConditionalModel {
 
   /**
    * Conditional result type.
-   * In case when conditional is if statement type is determined from types of both branches, essentially interpreting
-   * if statement like 'if (cond) then_expr else else_expr' as conditional expression 'cond ? then_expr : else_expr'.
+   * In case when conditional is an if statement and the type can not be deduced from context the type is determined from types of
+   * both branches, essentially interpreting if statement like 'if (cond) then_expr else else_expr' as conditional expression
+   * 'cond ? then_expr : else_expr'.
    *
    * @return result type
    * @see ConditionalModel#getType(PsiExpression, PsiExpression, PsiExpression)

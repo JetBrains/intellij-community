@@ -18,8 +18,15 @@ package com.intellij.codeInspection.bulkOperation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * An extension to enhance {@link UseBulkOperationInspection}. It can provide information
+ * which bulk processing method (e.g., {@link List#addAll(Collection)}) can be used
+ * instead of per-element method (e.g., {@link List#add(Object)}).
+ */
 public interface BulkMethodInfoProvider {
   ExtensionPointName<BulkMethodInfoProvider> KEY = ExtensionPointName.create("com.intellij.java.inspection.bulkMethodInfo");
 

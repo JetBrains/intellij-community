@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Deque;
 
 /**
- * @author ven
  * @see org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder#visitTryStatement(org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement)
  * @see ReturnInstruction#successors(CallEnvironment)
  * @see CallInstruction#successors(CallEnvironment)

@@ -20,9 +20,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Denis Zhdanov
- */
 public class JavadocTypedHandlerTest {
 
   private static final String CARET_MARKER = "<caret>";

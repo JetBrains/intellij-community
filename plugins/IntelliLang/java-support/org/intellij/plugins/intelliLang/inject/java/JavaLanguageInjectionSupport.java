@@ -1,14 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
@@ -21,6 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.*;
@@ -34,7 +39,6 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
-import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -146,7 +150,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   }
 
   private static BaseInjection showInjectionUI(final Project project, final MethodParameterInjection methodParameterInjection) {
-    final AbstractInjectionPanel panel = new MethodParameterPanel(methodParameterInjection, project);
+    final MethodParameterPanel panel = new MethodParameterPanel(methodParameterInjection, project);
     panel.reset();
     String helpID = "reference.settings.injection.language.injection.settings.java.parameter";
     return showEditInjectionDialog(project, panel, null, helpID)
@@ -183,10 +187,10 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
       }
     }
     else if (parent instanceof PsiVariable) {
-      if (doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId)) return true;
+      return doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId);
     }
     else if (target instanceof PsiVariable) {
-      if (doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId)) return true;
+      return doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId);
     }
     return false;
   }
@@ -219,7 +223,19 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
                                                 @NotNull final PsiLanguageInjectionHost host,
                                                 final String languageId,
                                                 Processor<? super PsiLanguageInjectionHost> annotationFixer) {
-    final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
+    if (modifierListOwner == null) return false;
+
+    final Task.WithResult<Boolean, RuntimeException> task = new Task.WithResult<>(project,
+                                                                            IntelliLangBundle.message("progress.looking.for", AnnotationUtil.LANGUAGE),
+                                                                            true) {
+      @Override
+      protected Boolean compute(@NotNull ProgressIndicator indicator) {
+        return ReadAction.nonBlocking(() -> isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner)))
+          .executeSynchronously();
+      }
+    };
+
+    final boolean addAnnotation = ProgressManager.getInstance().run(task)
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
     final PsiElement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class, PsiField.class);
@@ -514,7 +530,8 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
   @Override
   public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
-      new AnAction(IntelliLangBundle.message("java.parameter"), null, PlatformIcons.PARAMETER_ICON) {
+      new AnAction(IntelliLangBundle.message("java.parameter"), null,
+                   IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter)) {
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());

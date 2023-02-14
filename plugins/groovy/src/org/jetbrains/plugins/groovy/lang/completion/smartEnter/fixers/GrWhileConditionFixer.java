@@ -28,9 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 public class GrWhileConditionFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
   @Override
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-    if (psiElement instanceof GrWhileStatement) {
+    if (psiElement instanceof GrWhileStatement whileStatement) {
       final Document doc = editor.getDocument();
-      final GrWhileStatement whileStatement = (GrWhileStatement) psiElement;
       final PsiElement rParenth = whileStatement.getRParenth();
       final PsiElement lParenth = whileStatement.getLParenth();
       final GrCondition condition = whileStatement.getCondition();

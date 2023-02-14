@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenRunnerParametersSettingEditor extends SettingsEditor<MavenRunConfiguration> implements MavenSettingsObservable {
 
   private final MavenRunnerParametersPanel myPanel;

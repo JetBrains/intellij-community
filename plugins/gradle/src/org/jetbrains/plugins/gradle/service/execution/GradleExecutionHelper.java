@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -16,18 +17,19 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -36,9 +38,14 @@ import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.properties.models.Property;
+import org.jetbrains.plugins.gradle.properties.GradleProperties;
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -46,18 +53,21 @@ import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.awt.geom.IllegalPathStateException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
+import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
-/**
- * @author Denis Zhdanov
- */
 public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
@@ -118,7 +128,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          return f.fun(connection);
+          return maybeFixSystemProperties(() -> f.fun(connection), projectDir);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -131,6 +141,49 @@ public class GradleExecutionHelper {
           throw externalSystemException;
         }
       });
+  }
+
+  private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
+    Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
+    Map<String, String> oldValues = new HashMap<>();
+    try {
+      keyToMask.forEach((key, newVal) -> {
+        String oldVal = System.getProperty(key);
+        oldValues.put(key, oldVal);
+        if (oldVal != null) {
+          SystemProperties.setProperty(key, newVal);
+        }
+      });
+      return action.compute();
+    }
+    finally {
+      // restore original properties
+      oldValues.forEach((k, v) -> {
+        if (v != null) {
+          System.setProperty(k, v);
+        }
+      });
+    }
+  }
+
+  /**
+   * Use with caution! IDE system properties will be changed for the period of running Gradle long-running operations.
+   * This is a workaround to fix leaking unwanted IDE system properties to Gradle process.
+   */
+  @ApiStatus.Internal
+  public static class SystemPropertiesAdjuster {
+    public SystemPropertiesAdjuster() {
+      LOG.info("Gradle system adjuster service: " + this.getClass().getName());
+    }
+
+    public Map<String, String> getKeyToMask(@NotNull String projectDir) {
+      Map<String, String> propertiesFixes = new HashMap<>();
+      if (Registry.is("gradle.tooling.adjust.user.dir", true)) {
+        propertiesFixes.put("user.dir", projectDir);
+      }
+      propertiesFixes.put("java.system.class.loader", null);
+      return propertiesFixes;
+    }
   }
 
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
@@ -147,92 +200,122 @@ public class GradleExecutionHelper {
                                      @Nullable GradleVersion gradleVersion,
                                      @NotNull ExternalSystemTaskNotificationListener listener,
                                      @NotNull CancellationToken cancellationToken) {
-
-    if (!settings.getDistributionType().isWrapped()) return;
-
+    if (!settings.getDistributionType().isWrapped()) {
+      return;
+    }
     if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
         GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
       return;
     }
+    withGradleConnection(projectPath, id, settings, listener, cancellationToken, connection -> {
+      ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, connection, cancellationToken);
+      return null;
+    });
+  }
 
-    withGradleConnection(
-      projectPath, id, settings, listener, cancellationToken,
-      connection -> {
-        long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-        try {
-          settings.setRemoteProcessIdleTtlInMs(100);
-          TargetEnvironmentConfigurationProvider configurationProvider =
-            ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-          if (configurationProvider != null) {
-            // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
+  private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
+                                      @NotNull String projectPath,
+                                      @NotNull GradleExecutionSettings settings,
+                                      @Nullable GradleVersion gradleVersion,
+                                      @NotNull ExternalSystemTaskNotificationListener listener,
+                                      @NotNull ProjectConnection connection,
+                                      @NotNull CancellationToken cancellationToken) {
+    long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+    try {
+      settings.setRemoteProcessIdleTtlInMs(100);
 
-            Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
-            if (wrapperPropertiesFile != null) {
-              settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
-            }
-            return null;
-          }
-          try {
-            final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
-            final String fileName = "gradle-wrapper";
-            final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
-            final File scriptFile = new File(wrapperFilesLocation, "gradlew");
-            final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
+      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+        // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
-
-            StringJoiner lines = new StringJoiner(System.lineSeparator());
-            lines.add("");
-            lines.add("gradle.projectsEvaluated { gr ->");
-            lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
-            lines.add("  if (wrapper != null) {");
-            lines.add("    if (wrapper.jarFile.exists()) {");
-            lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')");
-            lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')");
-            lines.add("    }");
-            if (gradleVersion != null) {
-              lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
-            }
-            lines.add("    wrapper.doLast {");
-            lines.add("      new File('" +
-                      StringUtil.escapeBackSlashes(pathToProperties.getCanonicalPath()) +
-                      "').write wrapper.propertiesFile.getCanonicalPath()");
-            lines.add("    }");
-            lines.add("  }");
-            lines.add("}");
-            lines.add("");
-            final File tempFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
-            settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
-            settings.setWrapperPropertyFile(FileUtil.loadFile(pathToProperties));
-          }
-          catch (IOException e) {
-            LOG.warn("Can't update wrapper", e);
-          }
+        Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+        if (wrapperPropertiesFile != null) {
+          settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.warn("Can't update wrapper", e);
-          Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
-          externalSystemException.initCause(e);
-          throw externalSystemException;
-        }
-        finally {
-          settings.setRemoteProcessIdleTtlInMs(ttlInMs);
-        }
-        return null;
       }
-    );
+      else {
+        Supplier<String> propertiesFile = setupWrapperTaskInInitScript(gradleVersion, settings);
+
+        executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
+
+        String wrapperPropertiesFile = propertiesFile.get();
+        if (wrapperPropertiesFile != null) {
+          settings.setWrapperPropertyFile(wrapperPropertiesFile);
+        }
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (IOException e) {
+      LOG.warn("Can't update wrapper", e);
+    }
+    catch (Throwable e) {
+      LOG.warn("Can't update wrapper", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
+      externalSystemException.initCause(e);
+      throw externalSystemException;
+    }
+    finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      try {
+        // if autoimport is active, it should be notified of new files creation as early as possible,
+        // to avoid triggering unnecessary re-imports (caused by creation of wrapper)
+        VfsUtil.markDirtyAndRefresh(false, true, true, Path.of(projectPath, "gradle").toFile());
+      } catch (IllegalPathStateException ignore) {}
+    }
+  }
+
+  private void executeWrapperTask(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @NotNull ProjectConnection connection,
+    @NotNull CancellationToken cancellationToken) {
+    maybeFixSystemProperties(() -> {
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      launcher.withCancellationToken(cancellationToken);
+      launcher.forTasks("wrapper");
+      launcher.run();
+      return null;
+    }, projectPath);
+  }
+
+  private static @NotNull Supplier<String> setupWrapperTaskInInitScript(
+    @Nullable GradleVersion gradleVersion,
+    @NotNull GradleExecutionSettings settings
+  ) throws IOException {
+    String wrapperFilesLocationPath = FileUtil.createTempDirectory("wrap", "loc").getCanonicalPath();
+    String jarFile = FileUtil.join(wrapperFilesLocationPath, "gradle-wrapper.jar");
+    String scriptFile = FileUtil.join(wrapperFilesLocationPath, "gradlew");
+    String fileWithPathToProperties = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
+
+    StringJoiner lines = new StringJoiner(System.lineSeparator());
+    lines.add("");
+    lines.add("gradle.projectsEvaluated { gr ->");
+    lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
+    lines.add("  if (wrapper != null) {");
+    lines.add("    if (wrapper.jarFile.exists()) {");
+    lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile) + "')");
+    lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile) + "')");
+    lines.add("    }");
+    if (gradleVersion != null) {
+      lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
+    }
+    lines.add("    wrapper.doLast {");
+    lines.add("      def fileWithPathToProperties = new File('" + StringUtil.escapeBackSlashes(fileWithPathToProperties) + "')");
+    lines.add("      fileWithPathToProperties.write wrapper.propertiesFile.getCanonicalPath()");
+    lines.add("    }");
+    lines.add("  }");
+    lines.add("}");
+    lines.add("");
+
+    File initScriptFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
+    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getCanonicalPath());
+
+    return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
 
   @NotNull
@@ -319,44 +402,14 @@ public class GradleExecutionHelper {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
-    final Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
-        if (!settings.getArguments().contains("--debug")) {
-          settings.withArgument("--info");
-        }
-      }
+    setupLogging(settings, buildEnvironment);
+
+    if (forTestLauncher) {
+      setupTestLauncherArguments(operation, settings, tasks);
     }
-
-    List<String> filteredArgs = new ArrayList<>();
-    if (!settings.getArguments().isEmpty()) {
-      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
-      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
-
-      // filter nulls and empty strings
-      filteredArgs.addAll(ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s));
-
-      if (forTestLauncher) {
-        List<String> tasksWithArgs = new ArrayList<>(tasks);
-        tasksWithArgs.addAll(filteredArgs);
-        filteredArgs = tasksWithArgs;
-        MultiMap<String, String> testTasksConfiguration = extractTestCommandOptions(tasksWithArgs);
-        if (operation instanceof TestLauncher) {
-          TestLauncher testLauncher = (TestLauncher)operation;
-          for (Map.Entry<String, Collection<String>> entry : testTasksConfiguration.entrySet()) {
-            // TODO we need better point of call to pass this info
-            testLauncher.withTaskAndTestClasses(entry.getKey(), entry.getValue());
-          }
-        }
-      }
-      else {
-        // TODO remove this replacement when --tests option will become available for tooling API
-        replaceTestCommandOptionWithInitScript(filteredArgs);
-      }
+    else {
+      setupOperationArguments(operation, settings);
     }
-    filteredArgs.add("-Didea.active=true");
-    filteredArgs.add("-Didea.version=" + getIdeaVersion());
-    operation.withArguments(ArrayUtilRt.toStringArray(filteredArgs));
 
     setupEnvironment(operation, settings, gradleVersion, id, listener);
 
@@ -378,18 +431,118 @@ public class GradleExecutionHelper {
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     if (forTestLauncher) {
       operation.addProgressListener(gradleProgressListener,
+                                    OperationType.FILE_DOWNLOAD,
                                     OperationType.TASK,
                                     OperationType.TEST,
                                     OperationType.TEST_OUTPUT);
     } else {
       operation.addProgressListener(gradleProgressListener,
-                                    OperationType.TASK);
+                                    OperationType.TASK,
+                                    OperationType.FILE_DOWNLOAD);
     }
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
+    }
+
+    GradleOperationHelperExtension.EP_NAME
+      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
+  }
+
+  private static void setupTestLauncherArguments(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull List<String> tasks
+  ) {
+    var arguments = new ArrayList<String>();
+    if (!settings.getArguments().isEmpty()) {
+      arguments.addAll(tasks);
+      addSettingsArguments(arguments, settings);
+      var testTasksConfiguration = extractTestCommandOptions(arguments);
+      if (operation instanceof TestLauncher) {
+        for (var entry : testTasksConfiguration.entrySet()) {
+          // TODO we need better point of call to pass this info
+          ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
+  }
+
+  private static void setupOperationArguments(
+    @NotNull LongRunningOperation operation,
+    @NotNull GradleExecutionSettings settings
+  ) {
+    var arguments = new ArrayList<String>();
+    addSettingsArguments(arguments, settings);
+    var testTaskPatterns = extractTestTaskPatterns(arguments);
+    var path = renderTestFilterInitScript(testTaskPatterns, isTestExecForced(settings));
+    if (path != null) {
+      ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
+    }
+    addIdeaParameters(arguments);
+    operation.withArguments(arguments);
+  }
+
+  private static boolean isTestExecForced(GradleExecutionSettings settings) {
+    return Optional.ofNullable(settings)
+      .map(s -> s.getUserData(GradleConstants.FORCE_TEST_EXECUTION))
+      .orElse(false);
+  }
+
+  private static void addSettingsArguments(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
+    LOG.info("Passing command-line args to Gradle Tooling API: " +
+             StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
+
+    arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
+  }
+
+  private static void addIdeaParameters(@NotNull ArrayList<String> arguments) {
+    arguments.add("-Didea.active=true");
+    arguments.add("-Didea.version=" + getIdeaVersion());
+  }
+
+  private static void setupLogging(@NotNull GradleExecutionSettings settings,
+                                   @Nullable BuildEnvironment buildEnvironment) {
+    var arguments = settings.getArguments();
+    var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+    var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+
+    // workaround for https://github.com/gradle/gradle/issues/19340
+    // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
+    // try to read this file manually and apply log level explicitly
+    if (buildEnvironment == null) {
+      return;
+    }
+    GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
+                                                                              buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    Property<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
+
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
+        && gradleLogLevel != null) {
+          try {
+            LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+            switch (logLevel) {
+              case DEBUG -> settings.withArgument("-d");
+              case INFO -> settings.withArgument("-i");
+              case WARN -> settings.withArgument("-w");
+              case QUIET -> settings.withArgument("-q");
+            }
+          } catch (IllegalArgumentException e) {
+            LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+          }
+    }
+
+    // Default logging level for integration tests
+    final Application application = ApplicationManager.getApplication();
+    if (application != null && application.isUnitTestMode()) {
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
+      }
     }
   }
 
@@ -419,6 +572,19 @@ public class GradleExecutionHelper {
       }
       return;
     }
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+    TargetEnvironmentConfiguration environmentConfiguration =
+      environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
+    if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
+      if (settings.isPassParentEnvs()) {
+        LOG.warn("Host system environment variables will not be passed for the target run.");
+      }
+      operation.setEnvironmentVariables(settings.getEnv());
+      return;
+    }
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withEnvironment(settings.getEnv());
     commandLine.withParentEnvironmentType(
@@ -509,7 +675,7 @@ public class GradleExecutionHelper {
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
       String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
+      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), Matcher.quoteReplacement(toolingExtensionsJarPaths));
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
@@ -542,6 +708,19 @@ public class GradleExecutionHelper {
       }
       return false;
     });
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {
+    final String initScript = configuration.getUserData(INIT_SCRIPT_KEY);
+    if (StringUtil.isNotEmpty(initScript)) {
+      String prefix = Objects.requireNonNull(configuration.getUserData(INIT_SCRIPT_PREFIX_KEY), "init script file prefix is required");
+      Map<String, String> map = new LinkedHashMap<>();
+      map.put(prefix, initScript);
+      return map;
+    }
+    return Collections.emptyMap();
   }
 
   @ApiStatus.Internal
@@ -635,14 +814,17 @@ public class GradleExecutionHelper {
       }
     }
     catch (Throwable t) {
-      LOG.debug(t);
+      LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
     }
     return buildEnvironment;
   }
 
-  private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
-    Set<String> testIncludePatterns = new LinkedHashSet<>();
-    Iterator<String> it = args.iterator();
+  /**
+   * @return test include patterns: classes, methods, etc.
+   */
+  private static Set<String> extractTestTaskPatterns(@NotNull List<String> args) {
+    var testIncludePatterns = new LinkedHashSet<String>();
+    var it = args.iterator();
     while (it.hasNext()) {
       final String next = it.next();
       if (GradleConstants.TESTS_ARG_NAME.equals(next)) {
@@ -653,24 +835,7 @@ public class GradleExecutionHelper {
         }
       }
     }
-    if (!testIncludePatterns.isEmpty()) {
-      StringBuilder buf = new StringBuilder();
-      buf.append('[');
-      for (Iterator<String> iterator = testIncludePatterns.iterator(); iterator.hasNext(); ) {
-        String pattern = iterator.next();
-        String groovyPattern = toGroovyString(pattern);
-        buf.append('\'').append(groovyPattern).append('\'');
-        if (iterator.hasNext()) {
-          buf.append(',');
-        }
-      }
-      buf.append(']');
-
-      String path = renderInitScript(buf.toString());
-      if (path != null) {
-        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
-      }
-    }
+    return testIncludePatterns;
   }
 
   /**
@@ -723,6 +888,13 @@ public class GradleExecutionHelper {
     return taskToTestsPatterns;
   }
 
+  private static String toGroovyList(@NotNull List<String> list) {
+    var rawList = list.stream()
+      .map(it -> toGroovyString(it))
+      .collect(Collectors.joining(","));
+    return "[" + rawList + "]";
+  }
+
   @NotNull
   public static String toGroovyString(@NotNull String string) {
     StringBuilder stringBuilder = new StringBuilder();
@@ -733,9 +905,6 @@ public class GradleExecutionHelper {
       else if (ch == '\'') {
         stringBuilder.append("\\'");
       }
-      else if (ch == '"') {
-        stringBuilder.append("\\\"");
-      }
       else if (ch == '$') {
         stringBuilder.append("\\$");
       }
@@ -743,18 +912,21 @@ public class GradleExecutionHelper {
         stringBuilder.append(ch);
       }
     }
-    return stringBuilder.toString();
+    return "'" + stringBuilder + "'";
   }
 
   @Nullable
-  public static String renderInitScript(@NotNull String testArgs) {
+  public static String renderTestFilterInitScript(@NotNull Set<String> testTasksPatterns, boolean forceExecution) {
     InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
     if (stream == null) {
       LOG.error("Can't find test filter init script template");
       return null;
     }
     try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
+      var testNameIncludes = Matcher.quoteReplacement(toGroovyList(new ArrayList<>(testTasksPatterns)));
+      String script = StreamUtil.readText(reader)
+        .replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes)
+        .replaceFirst(Pattern.quote("${FORCE_TEST_EXECUTION}"), forceExecution ? " task.outputs.upToDateWhen { false } " : "");
       File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
       return tempFile.getAbsolutePath();
     }
@@ -772,6 +944,14 @@ public class GradleExecutionHelper {
         if (FileUtilRt.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
           LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
           return null;
+        }
+        if (FileUtil.normalize(path).endsWith("lib/app.jar")) {
+          final String message = "Attempting to pass whole IDEA app [" + path + "] into Gradle Daemon for class [" + aClass + "]";
+          if (Boolean.parseBoolean(System.getProperty("idea.is.integration.test"))) {
+            LOG.error(message);
+          } else {
+            LOG.warn(message);
+          }
         }
         return FileUtil.toCanonicalPath(path);
       }

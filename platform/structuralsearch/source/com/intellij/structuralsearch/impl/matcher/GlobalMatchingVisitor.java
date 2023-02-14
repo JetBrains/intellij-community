@@ -75,7 +75,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   @Contract("true->true;false->false")
   public boolean setResult(boolean result) {
-    return this.myResult = result;
+    return myResult = result;
   }
 
   @NotNull

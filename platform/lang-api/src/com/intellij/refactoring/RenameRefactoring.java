@@ -8,8 +8,6 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * @author dsl
- *
  * @see RefactoringFactory#createRename(PsiElement, String)
  */
 public interface RenameRefactoring extends Refactoring {

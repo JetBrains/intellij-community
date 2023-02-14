@@ -6,9 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class JavaCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
 
   public JavaCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {

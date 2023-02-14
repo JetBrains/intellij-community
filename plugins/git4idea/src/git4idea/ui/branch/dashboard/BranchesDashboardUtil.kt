@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
@@ -13,13 +14,15 @@ import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 
 internal object BranchesDashboardUtil {
 
-  fun getLocalBranches(project: Project): Set<BranchInfo> {
+  fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val localMap = mutableMapOf<String, MutableSet<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (branch in repo.branches.localBranches) {
         localMap.computeIfAbsent(branch.name) { hashSetOf() }.add(repo)
       }
@@ -39,9 +42,11 @@ internal object BranchesDashboardUtil {
     return local
   }
 
-  fun getRemoteBranches(project: Project): Set<BranchInfo> {
+  fun getRemoteBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val remoteMap = mutableMapOf<String, MutableList<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (remoteBranch in repo.branches.remoteBranches) {
         remoteMap.computeIfAbsent(remoteBranch.name) { mutableListOf() }.add(repo)
       }
@@ -59,7 +64,7 @@ internal object BranchesDashboardUtil {
                                      branchesToCheck: Collection<BranchInfo>,
                                      indicator: ProgressIndicator): Set<BranchInfo> {
     val myCommits = findMyCommits(log)
-    if (myCommits.isNullOrEmpty()) return emptySet()
+    if (myCommits.isEmpty()) return emptySet()
 
     indicator.isIndeterminate = false
     val myBranches = hashSetOf<BranchInfo>()
@@ -114,7 +119,7 @@ internal object BranchesDashboardUtil {
                          myCommits: Set<Int>): Boolean {
     // branch is "my" if all its exclusive commits are made by me
     val exclusiveCommits = findExclusiveCommits(log, branchName, repo) ?: return false
-    if (exclusiveCommits.isEmpty) return false
+    if (exclusiveCommits.isEmpty()) return false
 
     for (commit in exclusiveCommits) {
       if (!myCommits.contains(commit)) {
@@ -125,7 +130,7 @@ internal object BranchesDashboardUtil {
     return true
   }
 
-  private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): TIntHashSet? {
+  private fun findExclusiveCommits(log: VcsProjectLog, branchName: String, repo: GitRepository): IntSet? {
     val dataPack = log.dataManager!!.dataPack
 
     val ref = dataPack.findBranch(branchName, repo.root) ?: return null

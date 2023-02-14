@@ -17,16 +17,12 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.JList
 
-/**
- * @author vlan
- */
 open class PySdkListCellRenderer @JvmOverloads constructor(@Nls private val nullSdkName: String = noInterpreterMarker,
                                                            private val nullSdkValue: Sdk? = null) : ColoredListCellRenderer<Any>() {
 
@@ -40,41 +36,7 @@ open class PySdkListCellRenderer @JvmOverloads constructor(@Nls private val null
     }
 
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    when (value) {
-      is PySdkToInstall -> {
-        value.renderInList(this)
-      }
-      is Sdk -> {
-        appendName(value, name(value))
-        icon = icon(value)
-      }
-      is String -> append(value)
-      null -> {
-        if (nullSdkValue != null) {
-          appendName(nullSdkValue, name(nullSdkValue, nullSdkName))
-          icon = icon(nullSdkValue)
-        }
-        else {
-          append(nullSdkName)
-        }
-      }
-    }
-  }
-
-  private fun appendName(sdk: Sdk, name: Triple<String?, String, String?>) {
-    val (modifier, primary, secondary) = name
-    if (modifier != null) {
-      append("[$modifier] $primary", SimpleTextAttributes.ERROR_ATTRIBUTES)
-    }
-    else {
-      append(primary)
-    }
-
-    if (secondary != null) {
-      append(" $secondary", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-    }
-
-    path(sdk)?.let { append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES) }
+    customizeWithSdkValue(value, nullSdkName, nullSdkValue)
   }
 
   companion object {

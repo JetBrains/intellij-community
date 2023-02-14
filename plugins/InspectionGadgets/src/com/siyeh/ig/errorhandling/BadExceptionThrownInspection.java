@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
@@ -26,11 +26,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class BadExceptionThrownInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -59,9 +60,11 @@ public class BadExceptionThrownInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListTable table = new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message( "exception.class.column.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), CommonClassNames.JAVA_LANG_THROWABLE);
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
+                  .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))));
   }
 
   @Override
@@ -87,7 +90,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
   private class BadExceptionThrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
       final PsiExpression exception = statement.getException();
       if (exception == null) {

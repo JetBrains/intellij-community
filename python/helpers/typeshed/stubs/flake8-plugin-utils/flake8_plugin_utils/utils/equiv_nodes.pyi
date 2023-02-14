@@ -1,0 +1,3 @@
+import ast
+
+def check_equivalent_nodes(node1: ast.AST, node2: ast.AST) -> bool: ...

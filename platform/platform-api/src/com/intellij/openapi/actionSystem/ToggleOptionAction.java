@@ -45,7 +45,7 @@ public class ToggleOptionAction extends ToggleAction {
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Option option = optionSupplier.apply(event);
     boolean enabled = option != null && option.isEnabled();
     boolean visible = enabled || option != null && option.isAlwaysVisible();
@@ -62,9 +62,14 @@ public class ToggleOptionAction extends ToggleAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public interface Option {
     /**
-     * @return a not null string to override an action name
+     * @return a string to override an action name
      */
     @Nullable
     @ActionText
@@ -73,7 +78,7 @@ public class ToggleOptionAction extends ToggleAction {
     }
 
     /**
-     * @return a not null string to override an action description
+     * @return a string to override an action description
      */
     @Nullable
     @ActionDescription

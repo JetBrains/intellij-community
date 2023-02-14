@@ -7,9 +7,7 @@ import com.jetbrains.python.psi.PyAssertStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 
-/**
- * @author yole
- */
+
 public class PyAssertStatementImpl extends PyElementImpl implements PyAssertStatement {
   public PyAssertStatementImpl(ASTNode astNode) {
     super(astNode);

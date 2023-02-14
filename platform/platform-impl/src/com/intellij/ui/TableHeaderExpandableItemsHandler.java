@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 
@@ -20,21 +20,21 @@ public class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHa
 
   @Override
   protected @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(TableColumn column) {
-    TableCellRenderer renderer = column.getHeaderRenderer();
-    if (renderer == null) {
-      renderer = myComponent.getDefaultRenderer();
-    }
-    boolean hasFocus = !myComponent.isPaintingForPrint() && myComponent.hasFocus();
-    Component comp = renderer.getTableCellRendererComponent(myComponent.getTable(),
-                                                            column.getHeaderValue(),
-                                                            false, hasFocus,
-                                                            -1, myComponent.getTable().convertColumnIndexToView(column.getModelIndex()));
+    int index = TableUtil.getColumnIndex(myComponent, column);
+    Component comp = TableUtil.getRendererComponent(myComponent, column, index, TableUtil.isFocused(myComponent));
+    if (comp == null) return null;
+
     AppUIUtil.targetToDevice(comp, myComponent);
 
-    int viewIndex = myComponent.getTable().convertColumnIndexToView(column.getModelIndex());
-    Rectangle rect = myComponent.getHeaderRect(viewIndex);
-    rect.width = comp.getPreferredSize().width;
+    Rectangle rect = TableUtil.getColumnBounds(myComponent, index);
+    rect.width = comp.getPreferredSize().width + JBUI.scale(5);
+    if (rect.height > 0) rect.height--;
     return Pair.create(comp, rect);
+  }
+
+  @Override
+  protected Rectangle getVisibleRect(TableColumn column) {
+    return myComponent.getVisibleRect().intersection(TableUtil.getColumnBounds(myComponent,column));
   }
 
   @Override

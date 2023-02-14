@@ -8,6 +8,15 @@ import com.intellij.psi.SmartPointerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This symbol intentionally does not have {@link #equals} or {@link #hashCode}
+ * implementation, since nobody is supposed to use its equivalence in any meaningful way.
+ * <p>
+ * See {@link com.intellij.model.psi.PsiSymbolService#extractElementFromSymbol}
+ * if you want to check if two such symbols point to the same PSI.
+ *
+ * @see com.intellij.model.psi.PsiSymbolService
+ */
 final class Psi2Symbol implements Symbol {
 
   private final @NotNull PsiElement myElement;

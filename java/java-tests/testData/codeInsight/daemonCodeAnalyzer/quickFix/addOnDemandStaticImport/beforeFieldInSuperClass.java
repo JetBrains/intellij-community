@@ -1,4 +1,4 @@
-// "Add static import for 'test.StaticImport.v'" "true"
+// "Add static import for 'test.StaticImport.v'" "true-preview"
 package test;
 
 class StaticImport {

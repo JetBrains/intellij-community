@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.module.ModulePointerManager;
@@ -8,7 +8,7 @@ import com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class ModuleDeploymentSourceType extends DeploymentSourceType<ModuleDeploymentSource> {
+public final class ModuleDeploymentSourceType extends DeploymentSourceType<ModuleDeploymentSource> {
   private static final String NAME_ATTRIBUTE = "name";
 
   public ModuleDeploymentSourceType() {

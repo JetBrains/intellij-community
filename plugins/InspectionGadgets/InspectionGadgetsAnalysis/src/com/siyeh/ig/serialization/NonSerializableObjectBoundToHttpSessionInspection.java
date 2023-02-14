@@ -43,14 +43,14 @@ public class NonSerializableObjectBoundToHttpSessionInspection
 
     @Override
     public void visitMethodCallExpression(
-      PsiMethodCallExpression methodCallExpression) {
+      @NotNull PsiMethodCallExpression methodCallExpression) {
       super.visitMethodCallExpression(methodCallExpression);
       if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
-                                                "javax.servlet.http.HttpSession", PsiType.VOID,
+                                                "javax.servlet.http.HttpSession", PsiTypes.voidType(),
                                                 "putValue", CommonClassNames.JAVA_LANG_STRING,
                                                 CommonClassNames.JAVA_LANG_OBJECT) &&
           !MethodCallUtils.isSimpleCallToMethod(methodCallExpression,
-                                                "javax.servlet.http.HttpSession", PsiType.VOID,
+                                                "javax.servlet.http.HttpSession", PsiTypes.voidType(),
                                                 "setAttribute", CommonClassNames.JAVA_LANG_STRING,
                                                 CommonClassNames.JAVA_LANG_OBJECT)) {
         return;

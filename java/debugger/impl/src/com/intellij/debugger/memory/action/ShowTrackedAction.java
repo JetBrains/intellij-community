@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
@@ -31,5 +32,10 @@ public class ShowTrackedAction extends ToggleAction {
     if (e.getProject() != null) {
       MemoryViewManager.getInstance().setShowTrackedOnly(state);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

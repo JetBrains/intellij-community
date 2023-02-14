@@ -1,0 +1,3 @@
+fun kjjk() {
+    KJJK().test()
+}

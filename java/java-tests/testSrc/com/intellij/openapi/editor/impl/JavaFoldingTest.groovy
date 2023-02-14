@@ -27,9 +27,6 @@ import com.intellij.util.DocumentUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 
-/**
- * @author Denis Zhdanov
- */
 @SuppressWarnings("ALL") // too many warnings in injections
 class JavaFoldingTest extends JavaFoldingTestCase {
   @NotNull
@@ -850,7 +847,7 @@ class Foo {
 
     def document = (DocumentEx)myFixture.editor.document
     WriteCommandAction.runWriteCommandAction myFixture.project, {
-      DocumentUtil.executeInBulk(document, true, {
+      DocumentUtil.executeInBulk(document, {
         document.insertString(document.getText().indexOf("}") + 1, "\n");
       } as Closure)
     }

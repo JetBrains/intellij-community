@@ -14,8 +14,6 @@ import java.io.StringWriter;
  * <p/>
  * This class allows to extract textual description of the target problem and deliver it for further processing without risking to 
  * get the problems mentioned above. I.e. it doesn't require anything specific can be safely delivered to ide process then.
- * 
- * @author Denis Zhdanov
  */
 public class ExternalSystemException extends RuntimeException {
 
@@ -54,12 +52,8 @@ public class ExternalSystemException extends RuntimeException {
     }
     
     StringWriter stringWriter = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(stringWriter);
-    try {
+    try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
       cause.printStackTrace(printWriter);
-    }
-    finally {
-      printWriter.close();
     }
     myOriginalReason = stringWriter.toString();
   }

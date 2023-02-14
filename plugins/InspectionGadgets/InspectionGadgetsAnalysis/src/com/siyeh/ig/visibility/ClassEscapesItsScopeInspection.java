@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -29,16 +29,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -53,14 +55,12 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     return "ClassEscapesDefinedScope";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.module.option"), "checkModuleApi");
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.public.option"), "checkPublicApi");
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option"), "checkPackageLocal");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkModuleApi", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.module.option")),
+      checkbox("checkPublicApi", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.public.option")),
+      checkbox("checkPackageLocal", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option")));
   }
 
   @NotNull
@@ -69,17 +69,16 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     List<VisibilityChecker> checkers = new ArrayList<>(2);
     if (checkModuleApi) {
       PsiFile file = holder.getFile();
-      if (file instanceof PsiJavaFile) {
-        PsiJavaFile javaFile = (PsiJavaFile)file;
+      if (file instanceof PsiJavaFile javaFile) {
         if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
           PsiJavaModule psiModule = JavaModuleGraphUtil.findDescriptorByElement(file);
           if (psiModule != null) {
             VirtualFile vFile = file.getVirtualFile();
             if (vFile != null) {
-              Module module = ProjectFileIndex.SERVICE.getInstance(holder.getProject()).getModuleForFile(vFile);
+              Module module = ProjectFileIndex.getInstance(holder.getProject()).getModuleForFile(vFile);
               if (module != null) {
                 Set<String> exportedPackageNames =
-                  new THashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
+                  new HashSet<>(ContainerUtil.mapNotNull(psiModule.getExports(), PsiPackageAccessibilityStatement::getPackageName));
                 if (exportedPackageNames.contains(javaFile.getPackageName())) {
                   checkers.add(new Java9NonAccessibleTypeExposedVisitor(holder, module, psiModule.getName(), exportedPackageNames));
                 }
@@ -95,6 +94,26 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     return !checkers.isEmpty() ? new VisibilityVisitor(checkers.toArray(VisibilityChecker.EMPTY_ARRAY)) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
+  public static PsiMember getExportingMember(PsiJavaCodeReferenceElement reference) {
+    PsiElement parent = reference.getParent();
+    if (!(parent instanceof PsiTypeElement) && !(parent instanceof PsiReferenceList)) {
+      return null;
+    }
+    PsiElement grandParent = PsiTreeUtil.skipParentsOfType(reference,
+                                                           PsiTypeElement.class,
+                                                           PsiReferenceList.class,
+                                                           PsiParameter.class,
+                                                           PsiParameterList.class,
+                                                           PsiReferenceParameterList.class,
+                                                           PsiJavaCodeReferenceElement.class,
+                                                           PsiTypeParameter.class,
+                                                           PsiTypeParameterList.class);
+    if (grandParent instanceof PsiField || grandParent instanceof PsiMethod) {
+      return (PsiMember)grandParent;
+    }
+    return null;
+  }
+
   private static class VisibilityVisitor extends JavaElementVisitor {
     private final VisibilityChecker[] myCheckers;
 
@@ -103,27 +122,19 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
-      PsiElement parent = reference.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiReferenceList) {
-        PsiElement grandParent = PsiTreeUtil.skipParentsOfType(reference, PsiTypeElement.class, PsiReferenceList.class,
-                                                               PsiParameter.class, PsiParameterList.class,
-                                                               PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class,
-                                                               PsiTypeParameter.class, PsiTypeParameterList.class);
-        if (grandParent instanceof PsiField || grandParent instanceof PsiMethod) {
-          PsiMember member = (PsiMember)grandParent;
-          if (!isPrivate(member)) {
-            PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiClass && !(resolved instanceof PsiTypeParameter)) {
-              PsiClass psiClass = (PsiClass)resolved;
-              for (VisibilityChecker checker : myCheckers) {
-                if (checker.checkVisibilityIssue(member, psiClass, reference)) {
-                  return;
-                }
-              }
-            }
-          }
+      PsiMember member = getExportingMember(reference);
+      if (member == null || isPrivate(member)) {
+        return;
+      }
+      PsiElement resolved = reference.resolve();
+      if (!(resolved instanceof PsiClass psiClass) || resolved instanceof PsiTypeParameter) {
+        return;
+      }
+      for (VisibilityChecker checker : myCheckers) {
+        if (checker.checkVisibilityIssue(member, psiClass, reference)) {
+          return;
         }
       }
     }

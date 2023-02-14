@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="sqlite-native" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.sqlite:native:3.40.0-11" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/sqlite/native/3.40.0-11/native-3.40.0-11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

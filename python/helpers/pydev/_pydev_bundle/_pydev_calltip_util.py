@@ -5,7 +5,7 @@ Author: Yuli Fitterman
 # noinspection PyBroadException
 import types
 
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_PY3K, IS_PY311
 
 try:
     import inspect
@@ -38,14 +38,58 @@ def get_bound_class_name(obj):
     return get_class_name(my_self)
 
 
+def getargspec_py2(obj):
+    doc_str = obj.__doc__
+    args_str = ''
+
+    args = []
+    varargs = None
+    keywords = None
+    defaults = []
+
+    if doc_str:
+        lines = doc_str.split('\n')
+        if lines:
+            func_descr = lines[0]
+            s = func_descr.replace(obj.__name__, '')
+            idx1 = s.find('(')
+            idx2 = s.find(')', idx1)
+            if idx1 != -1 and idx2 != -1 and (idx2 > idx1 + 1):
+                args_str = s[idx1+1 : idx2]
+
+    if args_str == '':
+        return inspect.ArgSpec(args=args, varargs=varargs, keywords=keywords, defaults=tuple(defaults))
+
+    args_list = args_str.split(",")
+    for arg in args_list:
+        arg = arg.replace(" ", "")
+        idx = arg.find("=")
+
+        if idx != -1:
+            default = arg[idx+1 :]
+            defaults.append(default)
+            arg = arg[:idx]
+
+        if arg.startswith("**"):
+            keywords = arg
+        elif arg.startswith("*"):
+            varargs = arg
+        else:
+            args.append(arg)
+
+    return inspect.ArgSpec(args=args, varargs=varargs, keywords=keywords, defaults=tuple(defaults))
+
+
 def get_description(obj):
     try:
         ob_call = obj.__call__
     except:
         ob_call = None
 
+    is_init_func = False
     if isinstance(obj, type) or type(obj).__name__ == 'classobj':
         fob = getattr(obj, '__init__', lambda: None)
+        is_init_func = True
         if not callable(fob):
             fob = obj
     elif is_bound_method(ob_call):
@@ -56,8 +100,26 @@ def get_description(obj):
     argspec = ""
     fn_class = None
     if callable(fob):
-        spec_info = inspect.getfullargspec(fob) if IS_PY3K else inspect.getargspec(fob)
-        argspec = inspect.formatargspec(*spec_info)
+        try:
+            if IS_PY311:
+                spec_info = inspect.signature(fob)
+                argspec = str(spec_info)
+            else:
+                if IS_PY3K:
+                    spec_info = inspect.getfullargspec(fob)
+                else:
+                    spec_info = inspect.getargspec(fob)
+                argspec = inspect.formatargspec(*spec_info)
+        except TypeError:
+            if is_init_func:
+                spec_info = getargspec_py2(obj)
+            else:
+                spec_info = getargspec_py2(fob)
+            argspec = inspect.formatargspec(*spec_info)
+        except ValueError:
+            # function/method defined in C for example str.count
+            argspec = None
+
         fn_name = getattr(fob, '__name__', None)
         if isinstance(obj, type) or type(obj).__name__ == 'classobj':
             fn_name = "__init__"

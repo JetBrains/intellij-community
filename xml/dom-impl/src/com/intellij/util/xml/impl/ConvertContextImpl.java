@@ -20,9 +20,6 @@ import com.intellij.util.xml.AbstractConvertContext;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class ConvertContextImpl extends AbstractConvertContext {
   private final DomInvocationHandler myHandler;
 

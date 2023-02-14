@@ -1,4 +1,4 @@
-// "Replace 'for each' loop with iterator 'for' loop" "true"
+// "Replace 'for each' loop with iterator 'for' loop" "true-preview"
 import java.util.Iterator;
 
 public class EmptyBlockBody {

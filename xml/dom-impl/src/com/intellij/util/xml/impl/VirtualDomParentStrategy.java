@@ -20,9 +20,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class VirtualDomParentStrategy implements DomParentStrategy {
   private final DomInvocationHandler myParentHandler;
   private long myModCount;
@@ -98,9 +95,7 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof VirtualDomParentStrategy)) return false;
-
-    final VirtualDomParentStrategy that = (VirtualDomParentStrategy)o;
+    if (!(o instanceof VirtualDomParentStrategy that)) return false;
 
     if (!myParentHandler.equals(that.myParentHandler)) return false;
 

@@ -25,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 public class StringEnumeratorTest extends TestCase {
   private static final String COLLISION_1 = "";
@@ -152,15 +155,12 @@ public class StringEnumeratorTest extends TestCase {
 
   public void testPerformance() throws IOException {
     final IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
-    final IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {
-      @Override
-      public void objectRemoved(final int key, final Object value) {
-        try {
-          assertEquals(myEnumerator.enumerate((String)value), key);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    final IntObjectCache.DeletedPairsListener<String> listener = (key, value) -> {
+      try {
+        assertEquals(myEnumerator.enumerate(value), key);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     };
 
@@ -172,7 +172,7 @@ public class StringEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).assertTiming();
+    }).attempts(1).assertTiming();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
   }

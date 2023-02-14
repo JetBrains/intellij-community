@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author peter
- */
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
   @Nullable

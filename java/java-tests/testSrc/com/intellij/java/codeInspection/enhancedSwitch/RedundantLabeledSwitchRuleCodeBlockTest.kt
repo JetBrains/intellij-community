@@ -5,13 +5,11 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.enhancedSwitch.RedundantLabeledSwitchRuleCodeBlockInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-/**
- * @author Pavel.Dolgov
- */
 class RedundantLabeledSwitchRuleCodeBlockTest  : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(RedundantLabeledSwitchRuleCodeBlockInspection())
+    myFixture.enableInspections(
+      RedundantLabeledSwitchRuleCodeBlockInspection())
   }
   
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/redundantLabeledSwitchRuleCodeBlock"

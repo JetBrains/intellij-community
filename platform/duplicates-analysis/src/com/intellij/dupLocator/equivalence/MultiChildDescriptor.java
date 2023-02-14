@@ -3,9 +3,6 @@ package com.intellij.dupLocator.equivalence;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class MultiChildDescriptor {
   private final MyType myType;
   private final PsiElement[] myElements;

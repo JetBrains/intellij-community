@@ -107,9 +107,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
 
   @Override
   public @NotNull List<TextRange> getTextRanges() {
-    List<TextRange> ranges = ContainerUtil.map(myRanges, FormatTextRange::getTextRange);
-    ranges.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
-    return ranges;
+    return ContainerUtil.sorted(ContainerUtil.map(myRanges, FormatTextRange::getTextRange), Segment.BY_START_OFFSET_THEN_END_OFFSET);
   }
 
   public void setExtendedRanges(@NotNull List<? extends TextRange> extendedRanges) {
@@ -120,10 +118,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
     return myExtendedRanges.isEmpty() ? getTextRanges() : myExtendedRanges;
   }
 
-
-  /**
-   * @return A range containing all ranges or null if no ranges.
-   */
+  @Override
   @Nullable
   public TextRange getBoundRange() {
     List<TextRange> ranges = getTextRanges();

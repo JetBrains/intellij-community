@@ -17,6 +17,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,8 @@ public interface InvertedIndex<Key, Value, Input> {
    */
   @NotNull
   Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
+
+  @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data);
 
   void flush() throws StorageException;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -31,7 +31,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.roots.impl.FilePropertyPusher
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
@@ -43,6 +44,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -52,7 +54,6 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
@@ -94,8 +95,6 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 
 import java.util.concurrent.CountDownLatch
 
-import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadExtensionWithText
-
 @SkipSlowTestLocally
 class IndexTest extends JavaCodeInsightFixtureTestCase {
 
@@ -103,9 +102,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     if (getName() == "test indexed state for file without content requiring indices") {
       // should add file to test dire as soon as possible
-      String otherRoot = myFixture.getTempDirPath() + "/otherRoot";
-      assertTrue(new File(otherRoot).mkdirs());
-      assertTrue(new File(otherRoot, "intellij.exe").createNewFile());
+      String otherRoot = myFixture.getTempDirPath() + "/otherRoot"
+      assertTrue(new File(otherRoot).mkdirs())
+
+      def exe = new File(otherRoot, "intellij.exe")
+      assertTrue(exe.createNewFile())
+      FileUtil.writeToFile(exe, new byte[]{1,2,3,22}) // convince IDEA it's binary
       moduleBuilder.addSourceContentRoot(otherRoot)
     }
   }
@@ -533,12 +535,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void "test no index stamp update when no change"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
     def stamp = FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project)
-    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
+    assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "Foo class") }
     assertTrue(!((VirtualFileSystemEntry)vFile).isFileIndexed())
     assertTrue(stamp == FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
-    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed())
+    assertIsIndexed(vFile)
 
     WriteAction.run { VfsUtil.saveText(vFile, "class Foo2 {}") }
     assertTrue(stamp != FileBasedIndex.instance.getIndexModificationStamp(IdIndex.NAME, project))
@@ -559,6 +561,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(project) { document.text = "class Foo { Runnable x = () -> { }; }" }
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assert stamp == FileBasedIndex.instance.getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+  }
+
+  private static assertIsIndexed(VirtualFile vFile) {
+    assertTrue(((VirtualFileSystemEntry)vFile).isFileIndexed() || VfsData.isIsIndexedFlagDisabled())
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -666,7 +672,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
     def foundFile = [null]
 
-    def key = qName.hashCode()
     def searchScope = GlobalSearchScope.allScope(project)
     def processor = new Processor<PsiFile>() {
       @Override
@@ -679,10 +684,10 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
 
       StubIndex.instance.
-        processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiClass.class, new Processor<PsiClass>() {
+        processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiClass.class, new Processor<PsiClass>() {
           @Override
           boolean process(PsiClass aClass) {
-            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
+            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
 
             return false
           }
@@ -696,7 +701,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
 
     try {
-      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
+      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
 
       fail("Unexpected")
     }
@@ -820,7 +825,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
 
     assertTrue(foundId[0])
-    assertTrue(!foundStub[0])
+    assertTrue(foundStub[0])
   }
 
   void testNullProjectScope() throws Throwable {
@@ -876,18 +881,18 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
 
     assertEquals("file: $fileName; " +
-                 "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
+                 "operation: UPDATE ADD", listener.indexingOperation(testFile))
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile))
 
     assertEquals("file: $fileName; " +
-                 "operation: REMOVE ADD", listener.indexingOperation(testFile))
+                 "operation: ADD", listener.indexingOperation(testFile))
 
     WriteAction.run { VfsUtil.saveText(testFile, "foo") }
     WriteAction.run { VfsUtil.saveText(testFile, "bar") }
 
     assertEquals("file: $fileName; " +
-                 "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile))
+                 "operation: UPDATE", listener.indexingOperation(testFile))
 
     WriteAction.run { VfsUtil.saveText(testFile, "baz") }
     WriteAction.run { testFile.delete(null) }
@@ -926,7 +931,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
 
     try {
-      IndexDebugProperties.IS_UNIT_TEST_MODE = false;
+      IndexDebugProperties.IS_UNIT_TEST_MODE = false
       assertFalse(index.update("qwe/asd", "some_string"))
       def rebuildThrowable = index.getRebuildThrowable()
       assertInstanceOf(rebuildThrowable, StorageException.class)
@@ -934,7 +939,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertInstanceOf(rebuildCause, IncorrectOperationException.class)
     }
     finally {
-      IndexDebugProperties.IS_UNIT_TEST_MODE = true;
+      IndexDebugProperties.IS_UNIT_TEST_MODE = true
       index.dispose()
     }
   }
@@ -1035,7 +1040,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns()
     TodoPattern[] newPatterns = [pattern]
     TodoConfiguration.getInstance().setTodoPatterns(newPatterns)
-    FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    FileBasedIndex.instance.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project))
     myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
     try {
@@ -1053,7 +1059,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
         {
           try {
             progressStarted.countDown()
-            FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
+            FileBasedIndex.instance.ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project))
           }
           catch (ProcessCanceledException ignore) {
             canceled[0] = true
@@ -1147,16 +1153,15 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test indexed state for file without content requiring indices"() {
     def scope = GlobalSearchScope.allScope(getProject())
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
 
     def files = FilenameIndex.getFilesByName(getProject(), "intellij.exe", scope)
     def file = assertOneElement(files).virtualFile
-    assertTrue(file.getFileType().isBinary())
-    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+    assertIsIndexed(file)
 
     WriteCommandAction.runWriteCommandAction(getProject(), { file.rename(this, 'intellij2.exe') })
-    FileBasedIndex.instance.ensureUpToDate(FilenameIndex.NAME, project, scope)
-    assertTrue(((VirtualFileSystemEntry)file).isFileIndexed())
+    FileBasedIndex.instance.ensureUpToDate(FileTypeIndex.NAME, project, scope)
+    assertIsIndexed(file)
   }
 
   void "test IDEA-188028" () {
@@ -1181,19 +1186,19 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     def scope = GlobalSearchScope.allScope(getProject())
     assertEquals(foo, assertOneElement(FilenameIndex.getVirtualFilesByName("a.java", scope)))
-    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName( "main", scope)))
-    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName( "src", scope)))
+    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName("main", scope)))
+    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName("src", scope)))
 
     // content-less indexes has been passed
     // now all directories are indexed
 
     assertFalse(((VirtualFileSystemEntry)foo).isFileIndexed())
-    assertTrue(((VirtualFileSystemEntry)main).isFileIndexed())
-    assertTrue(((VirtualFileSystemEntry)src).isFileIndexed())
+    assertIsIndexed(main)
+    assertIsIndexed(src)
 
     assert findClass("Foo") // ensure content dependent indexes are passed
 
-    assertTrue(((VirtualFileSystemEntry)foo).isFileIndexed())
+    assertIsIndexed(foo)
   }
 
   void "test stub updating index stamp"() {
@@ -1258,7 +1263,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), false)
     try {
       def stamp = index.getModificationStamp()
-      index.clear();
+      index.clear()
       assertTrue(stamp != index.getModificationStamp())
     }
     finally {
@@ -1405,8 +1410,8 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
     def idQuery = CachedValuesManager.getManager(project).createCachedValue {
       indexQueries++
-      GlobalSearchScope fileScope = GlobalSearchScope.fileScope(clazz.containingFile);
-      IdIndexEntry key = new IdIndexEntry('Foo', true);
+      GlobalSearchScope fileScope = GlobalSearchScope.fileScope(clazz.containingFile)
+      IdIndexEntry key = new IdIndexEntry('Foo', true)
       def hasId = !FileBasedIndex.instance.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty()
       CachedValueProvider.Result.create(hasId, PsiModificationTracker.MODIFICATION_COUNT)
     }
@@ -1489,8 +1494,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void 'test requestReindex'() {
     def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
 
-    def text = "<fileBasedIndex implementation=\"" + CountingFileBasedIndexExtension.class.getName() + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text, CountingFileBasedIndexExtension.class.classLoader))
+    CountingFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)
 
     FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
     assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)
@@ -1521,6 +1525,32 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     fileBasedIndex.ensureUpToDate(trigramId, project, GlobalSearchScope.everythingScope(project))
     assertEmpty(fileBasedIndex.getIndex(trigramId).getIndexedFileData(fileId).values())
     assertFalse(((VirtualFileSystemEntry)file).isFileIndexed())
+  }
+
+  void 'test stub index updated after language level change'() {
+    def file = myFixture.addFileToProject("src1/A.java", "class A {}").virtualFile
+    def javaLanguageLevelKey = FilePropertyPusher.EP_NAME.findExtension(JavaLanguageLevelPusher.class).getFilePropertyKey()
+
+    def languageLevel = javaLanguageLevelKey.getPersistentValue(file.parent)
+    assertNotNull(languageLevel)
+    assertNotNull(findClass("A"))
+
+    // be a :hacker:😀
+    // do it manually somehow
+    // seems property pushers are crazy, we know it from its name
+    javaLanguageLevelKey.setPersistentValue(file.parent, null)
+    // fire any event
+    FileContentUtilCore.reparseFiles(file)
+
+    assertNull(javaLanguageLevelKey.getPersistentValue(file.parent))
+    assertNull(findClass("A"))
+
+    // and return everything to a normal state
+    javaLanguageLevelKey.setPersistentValue(file.parent, languageLevel)
+    FileContentUtilCore.reparseFiles(file)
+
+    assertNotNull(javaLanguageLevelKey.getPersistentValue(file.parent))
+    assertNotNull(findClass("A"))
   }
 
   private static <T> ThrowableComputable<T, RuntimeException> asComputable(CachedValue<T> cachedValue) {

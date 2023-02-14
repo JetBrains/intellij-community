@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import javax.swing.Action
 import kotlin.properties.Delegates
 

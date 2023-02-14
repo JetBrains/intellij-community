@@ -1,19 +1,10 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
+
+import com.intellij.util.xml.DomElement;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Component;
+import org.jetbrains.idea.devkit.dom.Listeners;
 
 class RegistrationEntry {
 
@@ -53,13 +44,58 @@ class RegistrationEntry {
     return result;
   }
 
+  // update IdeaPluginRegistrationIndex.INDEX_VERSION
   enum RegistrationType {
-    ACTION,
-    APPLICATION_COMPONENT,
-    PROJECT_COMPONENT,
-    MODULE_COMPONENT,
+    ACTION(true, RegistrationDomType.ACTION_OR_GROUP),
 
-    ACTION_ID,
-    ACTION_GROUP_ID
+    APPLICATION_COMPONENT(true, RegistrationDomType.COMPONENT),
+    PROJECT_COMPONENT(true, RegistrationDomType.COMPONENT),
+    MODULE_COMPONENT(true, RegistrationDomType.COMPONENT),
+    COMPONENT_INTERFACE(true, RegistrationDomType.COMPONENT),
+
+    ACTION_ID(false, RegistrationDomType.ACTION_OR_GROUP),
+    ACTION_GROUP_ID(false, RegistrationDomType.ACTION_OR_GROUP),
+
+    APPLICATION_LISTENER(true, RegistrationDomType.LISTENER),
+    PROJECT_LISTENER(true, RegistrationDomType.LISTENER),
+    LISTENER_TOPIC(true, RegistrationDomType.LISTENER);
+
+    private final boolean myIsClass;
+    private final RegistrationDomType myRegistrationDomType;
+
+    RegistrationType(boolean isClass, RegistrationDomType registrationDomType) {
+      myIsClass = isClass;
+      myRegistrationDomType = registrationDomType;
+    }
+
+    boolean isClass() {
+      return myIsClass;
+    }
+
+    RegistrationDomType getRegistrationDomType() {
+      return myRegistrationDomType;
+    }
+  }
+
+  enum RegistrationDomType {
+    ACTION_OR_GROUP(ActionOrGroup.class, false),
+    COMPONENT(Component.class, true),
+    LISTENER(Listeners.Listener.class, true);
+
+    private final Class<? extends DomElement> myDomClass;
+    private final boolean myUseParentDom;
+
+    RegistrationDomType(Class<? extends DomElement> domClazz, boolean useParentDom) {
+      myDomClass = domClazz;
+      myUseParentDom = useParentDom;
+    }
+
+    Class<? extends DomElement> getDomClass() {
+      return myDomClass;
+    }
+
+    boolean isUseParentDom() {
+      return myUseParentDom;
+    }
   }
 }

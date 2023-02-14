@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.builders.rebuild;
+package org.jetbrains.jps.builders.rebuild
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
@@ -32,25 +32,25 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
 
   override fun setUp() {
     super.setUp()
-    addJdk("1.6");
+    addJdk("1.6")
   }
 
   fun doTest(projectPath: String, expectedOutput: DirectoryContentSpec) {
-    doTest(projectPath, LinkedHashMap<String, String>(), expectedOutput);
+    doTest(projectPath, LinkedHashMap<String, String>(), expectedOutput)
   }
 
   fun doTest(projectPath: String, pathVariables: Map<String, String>, expectedOutput: DirectoryContentSpec) {
-    loadAndRebuild(projectPath, pathVariables);
-    assertOutput(myOutputDirectory.absolutePath, expectedOutput);
+    loadAndRebuild(projectPath, pathVariables)
+    assertOutput(myOutputDirectory.absolutePath, expectedOutput)
   }
 
   fun loadAndRebuild(projectPath: String, pathVariables: Map<String, String>) {
-    loadProject(projectPath, pathVariables);
-    rebuild();
+    loadProject(projectPath, pathVariables)
+    rebuild()
   }
 
   fun rebuild() {
-    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath));
+    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath))
     doBuild(CompileScopeTestBuilder.rebuild().allModules().allArtifacts()).assertSuccessful()
   }
 
@@ -58,6 +58,6 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
     hashMapOf("ARTIFACTS_OUT" to FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath) + "/artifacts")
 
   override fun getTestDataRootPath(): String {
-    return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.absolutePath;
+    return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.absolutePath
   }
 }

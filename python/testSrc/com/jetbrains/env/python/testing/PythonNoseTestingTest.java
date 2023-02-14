@@ -9,10 +9,9 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
-import com.jetbrains.python.testing.PyTestFrameworkService;
+import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -26,7 +25,6 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
-  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST);
 
   @Test
   public void testNoseGenerators() {
@@ -42,15 +40,17 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
-        assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
-                                                           "[root](-)\n" +
-                                                           ".test_nose_generator(-)\n" +
-                                                           "..test_evens(-)\n" +
-                                                           "...(0, 0)(+)\n" +
-                                                           "...(1, 3)(-)\n" +
-                                                           "...(2, 6)(+)\n" +
-                                                           "...(3, 9)(-)\n" +
-                                                           "...(4, 12)(+)\n", runner.getFormattedTestTree());
+        assertEquals("Nose genenerator produced bad tree", """
+          Test tree:
+          [root](-)
+          .test_nose_generator(-)
+          ..test_evens(-)
+          ...(0, 0)(+)
+          ...(1, 3)(-)
+          ...(2, 6)(+)
+          ...(3, 9)(-)
+          ...(4, 12)(+)
+          """, runner.getFormattedTestTree());
       }
     });
   }
@@ -111,7 +111,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST),
+      new CreateConfigurationMultipleCasesTask<>(new PyNoseTestFactory(PythonTestConfigurationType.getInstance()).getId(),
                                                  PyNoseTestConfiguration.class));
   }
 
@@ -166,7 +166,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyNoseTestFactory createFactory() {
-          return new PyNoseTestFactory();
+          return new PyNoseTestFactory(PythonTestConfigurationType.getInstance());
         }
       });
   }
@@ -174,13 +174,13 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(myFrameworkName, PyNoseTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(getFrameworkId(), PyNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(getFrameworkId(),
                                                                                      PyNoseTestConfiguration.class));
   }
 
@@ -188,7 +188,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   public void testRenameClass() {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        myFrameworkName,
+        getFrameworkId(),
         PyNoseTestConfiguration.class));
   }
 
@@ -284,11 +284,18 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                     @NotNull String stdout,
                                     @NotNull String stderr,
                                     @NotNull String all, int exitCode) {
-      assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
-                                                                      "[root](+)\n" +
-                                                                      ".test_with_slow(+)\n" +
-                                                                      "..test_fast(+)\n",
+      assertEquals("--slow runner broken on arguments" + myArguments, """
+                     Test tree:
+                     [root](+)
+                     .test_with_slow(+)
+                     ..test_fast(+)
+                     """,
                    runner.getFormattedTestTree());
     }
+  }
+
+  @NotNull
+  private static String getFrameworkId() {
+    return PyNoseTestFactory.id;
   }
 }

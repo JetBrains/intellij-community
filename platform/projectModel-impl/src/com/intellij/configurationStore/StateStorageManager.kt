@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 interface StateStorageManager {
@@ -24,6 +24,7 @@ interface StateStorageManager {
 
   fun expandMacro(collapsedPath: String): Path
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
   fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).systemIndependentPath
 }
@@ -41,17 +42,6 @@ interface StorageCreator {
   val key: String
 
   fun create(storageManager: StateStorageManager): StateStorage
-}
-
-/**
- * Low-level method to save component manager state store. Use it with care and only if you understand what are you doing.
- * Intended for Java clients only. Do not use in Kotlin.
- */
-@JvmOverloads
-fun saveComponentManager(componentManager: ComponentManager, forceSavingAllSettings: Boolean = false) {
-  runBlocking {
-    componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
-  }
 }
 
 // no need to fire events for known requestors - all current subscribers are not interested in internal changes,

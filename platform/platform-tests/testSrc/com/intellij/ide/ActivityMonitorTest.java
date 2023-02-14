@@ -113,7 +113,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
   public void testModalityState() {
     assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
     assertTrue(ApplicationManager.getApplication().getClass().getName().contains("ApplicationImpl"));
-    assertTrue(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     assertReady(null);
 

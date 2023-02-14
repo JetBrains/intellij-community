@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.xdebugger.impl.actions.handlers.XEvaluateInConsoleFromEditorActionHandler;
@@ -26,6 +27,10 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return super.getActionUpdateThread();
+  }
   @Nullable
   private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
     return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));
@@ -35,7 +40,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
   protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
     final ConsoleExecuteAction action = getConsoleExecuteAction(e);
     if (action != null) {
-      node.getValueContainer().calculateEvaluationExpression()
+      node.calculateEvaluationExpression()
           .onSuccess(expression -> {
             if (expression != null) {
               action.execute(null, expression.getExpression(), null);

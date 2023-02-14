@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
@@ -77,10 +78,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     String fieldName = myReferenceExpression.getReferenceName();
     assert fieldName != null;
 
-    PsiField field = factory.createField(fieldName, PsiType.INT);
-    if (createConstantField()) {
-      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-    }
+    PsiField field = factory.createField(fieldName, PsiTypes.intType());
 
     if (createConstantField()) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
@@ -108,7 +106,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
                                                   final boolean createConstantField,
                                                   final PsiElement context) {
     final PsiFile targetFile = targetClass.getContainingFile();
-    final Editor newEditor = positionCursor(project, targetFile, field);
+    final Editor newEditor = CodeInsightUtil.positionCursor(project, targetFile, field);
     if (newEditor == null) return;
     Template template =
       CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, context, createConstantField);

@@ -1,18 +1,25 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import java.util.Locale.ROOT
+
+class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+}
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
 private val GROUP = EventLogGroup(
   FUS_GROUP_ID,
-  1,
+  5,
 )
 
 private val SOURCE_FIELD = EventFields.Enum(
@@ -27,7 +34,12 @@ private val CONFIGURE_PLUGINS_EVENT = GROUP.registerEvent(
 
 private val PLUGINS_FIELD = EventFields.StringListValidatedByCustomRule(
   "plugins",
+  PluginIdRuleValidator::class.java,
+)
+
+private val PLUGIN_FIELD = EventFields.StringValidatedByCustomRule(
   "plugin",
+  PluginIdRuleValidator::class.java,
 )
 
 private val ENABLE_PLUGINS_EVENT = GROUP.registerEvent(
@@ -50,6 +62,12 @@ private val IGNORE_ULTIMATE_EVENT = GROUP.registerEvent(
 private val OPEN_DOWNLOAD_PAGE_EVENT = GROUP.registerEvent(
   "open.download.page",
   SOURCE_FIELD,
+  PLUGIN_FIELD
+)
+
+private val LEARN_MORE_EVENT = GROUP.registerEvent(
+  "learn.more",
+  SOURCE_FIELD,
 )
 
 private val IGNORE_EXTENSIONS_EVENT = GROUP.registerEvent(
@@ -64,10 +82,11 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
 
 enum class FUSEventSource {
   EDITOR,
-  NOTIFICATION;
+  NOTIFICATION,
+  SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
-    isIgnoreUltimate = true
+    isIgnoreIdeSuggestion = true
     IGNORE_ULTIMATE_EVENT.log(project, this)
   }
 
@@ -87,9 +106,15 @@ enum class FUSEventSource {
   ) = INSTALL_PLUGINS_EVENT.log(project, plugins, this)
 
   @JvmOverloads
-  fun openDownloadPageAndLog(project: Project? = null) {
-    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"))
-    OPEN_DOWNLOAD_PAGE_EVENT.log(project, this)
+  fun openDownloadPageAndLog(project: Project? = null, url: String, pluginId: PluginId? = null) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
+    OPEN_DOWNLOAD_PAGE_EVENT.log(project, this, pluginId?.idString)
+  }
+
+  @JvmOverloads
+  fun learnMoreAndLog(project: Project? = null) {
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/products.html#type=ide"))
+    LEARN_MORE_EVENT.log(project, this)
   }
 
   @JvmOverloads

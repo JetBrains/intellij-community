@@ -24,7 +24,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.RunTab;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -255,7 +255,6 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
       addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.2.jar"));
     }
     else {
       //running from sources
@@ -278,7 +277,7 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
 
   @NotNull
   private static Path getPluginEngineDirInSources() {
-    Path path = Paths.get(PathManager.getCommunityHomePath(), "plugins", "xslt-debugger", "engine");
+    Path path = PluginPathManager.getPluginHome("xslt-debugger").toPath().resolve("engine");
     assert Files.isDirectory(path) : path.toString();
     return path;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl;
 
 import com.intellij.ProjectTopics;
@@ -46,7 +46,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
     }, project);
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
-      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
+      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
         myIndex = null;
       }
 
@@ -69,17 +69,17 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
 
   @NotNull
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = myIndex;
-    if (index == null) {
-      index = MultiMap.createLinked();
+    MultiMap<FacetTypeId<?>, Module> index = null == myIndex ? MultiMap.createLinkedSet() : myIndex;
+    if (myIndex == null) {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-        for (Facet<?> facet : FacetManager.getInstance(module).getAllFacets()) {
-          index.putValue(facet.getTypeId(), module);
-        }
+        Arrays.stream(FacetManager.getInstance(module).getAllFacets())
+          .map(facet -> facet.getTypeId())
+          .distinct()
+          .forEach(facetTypeId -> index.putValue(facetTypeId, module));
       }
       myIndex = index;
     }
-    return index;
+    return myIndex;
   }
 
   @NotNull
@@ -92,7 +92,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
   @Override
   public List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId) {
     //noinspection unchecked
-    return Collections.unmodifiableList((List)getIndex().get(typeId));
+    return getIndex().get(typeId).stream().toList();
   }
 
   @Override

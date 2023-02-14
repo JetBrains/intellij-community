@@ -27,9 +27,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import static org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo.ParamInfo;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenPluginParamReferenceContributor extends PsiReferenceContributor {
 
   @Override

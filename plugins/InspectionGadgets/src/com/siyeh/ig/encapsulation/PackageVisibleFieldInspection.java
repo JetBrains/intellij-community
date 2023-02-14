@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -34,8 +35,7 @@ public class PackageVisibleFieldInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "package.visible.field.problem.descriptor");
+    return InspectionGadgetsBundle.message("package.visible.field.problem.descriptor");
   }
 
   @Override
@@ -48,8 +48,7 @@ public class PackageVisibleFieldInspection extends BaseInspection {
     return new PackageVisibleFieldVisitor();
   }
 
-  private static class PackageVisibleFieldVisitor
-    extends BaseInspectionVisitor {
+  private static class PackageVisibleFieldVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(@NotNull PsiField field) {
@@ -60,6 +59,10 @@ public class PackageVisibleFieldInspection extends BaseInspection {
       }
       if (field.hasModifierProperty(PsiModifier.STATIC) &&
           field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      final PsiClass aClass = field.getContainingClass();
+      if (aClass != null && aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
       }
       registerFieldError(field, field);

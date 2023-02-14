@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,12 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Denis Zhdanov
- */
-@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
+import static com.intellij.util.containers.ContainerUtil.concat;
 
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+public final class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
   private static final Logger LOG = Logger.getInstance(ModuleDependencyDataService.class);
 
   @NotNull
@@ -45,7 +43,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
   protected String getOrderEntryName(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull ModuleOrderEntry orderEntry) {
     String moduleName = orderEntry.getModuleName();
     final Module orderEntryModule = orderEntry.getModule();
-    if(orderEntryModule != null) {
+    if (orderEntryModule != null) {
       moduleName = modelsProvider.getModifiableModuleModel().getActualName(orderEntryModule);
     }
     return moduleName;
@@ -58,11 +56,16 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       new HashMap<>();
     final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();
-
+    final List<ModuleOrderEntry> duplicatesToRemove = new ArrayList<>();
     for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry e = (ModuleOrderEntry)entry;
-        toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
+      if (entry instanceof ModuleOrderEntry e) {
+        Pair<String, DependencyScope> key = Pair.create(e.getModuleName(), e.getScope());
+        if (toRemove.containsKey(key)) {
+          duplicatesToRemove.add(e);
+        }
+        else {
+          toRemove.put(key, e);
+        }
       }
     }
     final Set<ModuleDependencyData> processed = new HashSet<>();
@@ -73,9 +76,14 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       if (processed.contains(dependencyData)) continue;
       processed.add(dependencyData);
 
-      toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
       final ModuleData moduleData = dependencyData.getTarget();
       Module ideDependencyModule = modelsProvider.findIdeModule(moduleData);
+
+      if (ideDependencyModule != null) {
+        final String targetModuleName = ideDependencyModule.getName();
+        toRemove.remove(Pair.create(targetModuleName, dependencyData.getScope()));
+        dependencyData.setInternalName(targetModuleName);
+      }
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
@@ -106,12 +114,13 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       orderEntryDataMap.put(orderEntry, dependencyData);
     }
 
-    if (!toRemove.isEmpty()) {
-      removeData(toRemove.values(), module, modelsProvider);
+    if (!toRemove.isEmpty() || !duplicatesToRemove.isEmpty()) {
+      Collection<ModuleOrderEntry> orderEntries = ContainerUtil.toCollection(concat(duplicatesToRemove, toRemove.values()));
+      removeData(orderEntries, module, modelsProvider);
     }
-
     return orderEntryDataMap;
   }
+
 
   @Override
   protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,

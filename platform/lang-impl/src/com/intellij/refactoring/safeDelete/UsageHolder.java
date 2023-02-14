@@ -28,9 +28,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 class UsageHolder {
   private final SmartPsiElementPointer myElementPointer;
   private int myUnsafeUsages;
@@ -41,8 +38,7 @@ class UsageHolder {
     myElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
 
     for (UsageInfo usageInfo : usageInfos) {
-      if (!(usageInfo instanceof SafeDeleteReferenceUsageInfo)) continue;
-      final SafeDeleteReferenceUsageInfo usage = (SafeDeleteReferenceUsageInfo)usageInfo;
+      if (!(usageInfo instanceof SafeDeleteReferenceUsageInfo usage)) continue;
       if (usage.getReferencedElement() != element) continue;
 
       if (!usage.isSafeDelete()) {

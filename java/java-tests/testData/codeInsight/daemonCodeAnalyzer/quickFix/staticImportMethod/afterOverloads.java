@@ -1,4 +1,4 @@
-// "Import static method..." "true"
+// "Import static method..." "true-preview"
 package foo;
 
 import static foo.B.a;

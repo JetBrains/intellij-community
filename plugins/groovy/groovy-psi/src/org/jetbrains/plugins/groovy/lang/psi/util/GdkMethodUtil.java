@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter;
@@ -35,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType;
@@ -61,15 +64,23 @@ public final class GdkMethodUtil {
   @NlsSafe public static final String WITH_STREAMS = "withStreams";
   @NlsSafe public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
 
+  private static final Map<String, String> AST_TO_EXPR_MAPPER =
+    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", "groovy.lang.Closure",
+           "org.codehaus.groovy.ast.expr.ListExpression", "java.util.List",
+           "org.codehaus.groovy.ast.expr.MapExpression", "java.util.Map",
+           "org.codehaus.groovy.ast.expr.TupleExpression", "groovy.lang.Tuple",
+           "org.codehaus.groovy.ast.expr.MethodCallExpression", "java.lang.Object");
+
+  private static final String MACRO_ORIGIN_INFO = "Macro method";
+
+
   private GdkMethodUtil() {
   }
 
   /**
-   *
-   * @param place - context of processing
-   * @param processor - processor to use
+   * @param place         - context of processing
+   * @param processor     - processor to use
    * @param categoryClass - category class to process
-   * @return
    */
   public static boolean processCategoryMethods(final PsiElement place,
                                                final PsiScopeProcessor processor,
@@ -79,8 +90,7 @@ public final class GdkMethodUtil {
       final PsiScopeProcessor delegate = new DelegatingScopeProcessor(each) {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
-          if (element instanceof PsiMethod && isCategoryMethod((PsiMethod)element, null, null, null)) {
-            PsiMethod method = (PsiMethod)element;
+          if (element instanceof PsiMethod method && isCategoryMethod((PsiMethod)element, null, null, null)) {
             return each.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
           }
           return true;
@@ -133,12 +143,12 @@ public final class GdkMethodUtil {
     for (GrStatement statement : statements) {
       if (statement == lastParent) break;
 
-      final Trinity<PsiClassType, GrReferenceExpression, PsiClass> result = getMixinTypes(statement);
+      final MixinInfo result = getMixinTypes(statement);
 
       if (result != null) {
-        final PsiClassType subjectType = result.first;
-        final GrReferenceExpression qualifier = result.second;
-        final PsiClass mixin = result.third;
+        final PsiClassType subjectType = result.subjectType;
+        final GrReferenceExpression qualifier = result.ref;
+        final PsiClass mixin = result.mixin;
 
         for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
           if (!mixin.processDeclarations(new MixinMemberContributor.MixinProcessor(each, subjectType, qualifier), state, null, place)) {
@@ -245,10 +255,15 @@ public final class GdkMethodUtil {
   }
 
   /**
-   * @return (type[1] in which methods mixed, reference to type[1], type[2] to mixin)
+   * @param subjectType the type into which the methods are mixed in
+   * @param ref         reference to subjectType
+   * @param mixin       the type that is mixed into subjectType
    */
+  record MixinInfo(PsiClassType subjectType, GrReferenceExpression ref, PsiClass mixin) {
+  }
+
   @Nullable
-  private static Trinity<PsiClassType, GrReferenceExpression, PsiClass> getMixinTypes(final GrStatement statement) {
+  private static MixinInfo getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
 
     return CachedValuesManager.getCachedValue(statement, () -> {
@@ -261,8 +276,7 @@ public final class GdkMethodUtil {
       if (mix == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
       return CachedValueProvider.Result
-        .create(new Trinity<>(original.first, original.second, mix),
-                PsiModificationTracker.MODIFICATION_COUNT);
+        .create(new MixinInfo(original.first, original.second, mix), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -294,8 +308,7 @@ public final class GdkMethodUtil {
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression)) return null;
-    GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
+    if (!(invoked instanceof GrReferenceExpression referenceExpression)) return null;
     if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
 
       PsiElement resolved = referenceExpression.resolve();
@@ -333,7 +346,9 @@ public final class GdkMethodUtil {
     if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
     PsiClass containingClass = method.getContainingClass();
     String name = method.getName();
-    return "mixin".equals(name) && containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
+    return "mixin".equals(name) &&
+           containingClass != null &&
+           GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
   }
 
   private static boolean isMetaClassMethod(@NotNull PsiMethod method) {
@@ -382,7 +397,10 @@ public final class GdkMethodUtil {
     return Pair.create((PsiClassType)type, ref);
   }
 
-  public static boolean isCategoryMethod(@NotNull PsiMethod method, @Nullable PsiType qualifierType, @Nullable PsiElement place, @Nullable PsiSubstitutor substitutor) {
+  public static boolean isCategoryMethod(@NotNull PsiMethod method,
+                                         @Nullable PsiType qualifierType,
+                                         @Nullable PsiElement place,
+                                         @Nullable PsiSubstitutor substitutor) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
 
@@ -455,5 +473,41 @@ public final class GdkMethodUtil {
       }
     }
     return false;
+  }
+
+  public static PsiMethod createMacroMethod(@NotNull PsiMethod prototype) {
+    GrLightMethodBuilder syntheticMacro = new GrLightMethodBuilder(prototype.getManager(), prototype.getName());
+    syntheticMacro.setModifiers(new String[]{PsiModifier.STATIC});
+    PsiParameterList list = prototype.getParameterList();
+    for (int i = 1; i < list.getParametersCount(); ++i) {
+      PsiParameter actualParameter = list.getParameter(i);
+      String generatedParameterType;
+      String name;
+      if (actualParameter == null) {
+        generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
+        name = "expression";
+      }
+      else {
+        PsiType type = actualParameter.getType();
+        if (!type.equals(PsiTypes.nullType())) {
+          generatedParameterType = AST_TO_EXPR_MAPPER.getOrDefault(type.getCanonicalText(), CommonClassNames.JAVA_LANG_OBJECT);
+        }
+        else {
+          generatedParameterType = CommonClassNames.JAVA_LANG_OBJECT;
+        }
+        name = actualParameter.getName();
+      }
+      syntheticMacro.addParameter(
+        new GrLightParameter(name,
+                             PsiType.getTypeByName(generatedParameterType, prototype.getProject(), GlobalSearchScope.allScope(prototype.getProject())),
+                             prototype));
+    }
+    syntheticMacro.setNavigationElement(prototype);
+    syntheticMacro.setOriginInfo(MACRO_ORIGIN_INFO);
+    return syntheticMacro;
+  }
+
+  public static boolean isMacro(@Nullable PsiMethod method) {
+    return method instanceof OriginInfoAwareElement && MACRO_ORIGIN_INFO.equals(((OriginInfoAwareElement)method).getOriginInfo());
   }
 }

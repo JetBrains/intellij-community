@@ -1,0 +1,11 @@
+// "Implement members" "true"
+// WITH_STDLIB
+interface I {
+    fun foo()
+}
+
+class A : I {
+    override fun foo() {
+        TODO("Not yet implemented")
+    }
+}

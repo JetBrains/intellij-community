@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -13,11 +15,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.systemIndependentPath
 import java.util.concurrent.locks.ReentrantLock
@@ -42,7 +42,8 @@ private val LOG = logger<JdkUpdateNotification>()
 class JdkUpdateNotification(val jdk: Sdk,
                             val oldItem: JdkItem,
                             val newItem: JdkItem,
-                            private val whenComplete: (JdkUpdateNotification) -> Unit
+                            private val whenComplete: (JdkUpdateNotification) -> Unit,
+                            private val showVendorVersion: Boolean = false,
 ) {
   private val lock = ReentrantLock()
 
@@ -123,17 +124,22 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   val isUpdateActionVisible get() = !myIsUpdateRunning && !myIsTerminated
 
-  inner class JdkUpdateSuggestionAction : DumbAwareAction() {
+  inner class JdkUpdateSuggestionAction : SettingsEntryPointAction.UpdateAction() {
     val jdkUpdateNotification = this@JdkUpdateNotification
 
     init {
-      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
+      templatePresentation.text = ProjectBundle.message("action.title.jdk.update.found",
+                                                        jdk.name,
+                                                        if (showVendorVersion) newItem.fullPresentationWithVendorText else newItem.fullPresentationText,
+                                                        oldItem.versionPresentationText)
       templatePresentation.description = ProjectBundle.message("action.description.jdk.update.found", jdk.name, newItem.fullPresentationText, oldItem.versionPresentationText)
     }
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isUpdateActionVisible
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
       performUpdateAction(e)
@@ -142,9 +148,10 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   private fun showUpdateErrorNotification(feedItem: JdkItem) : Unit = lock.withLock {
     NotificationGroupManager.getInstance().getNotificationGroup("JDK Update Error")
-      .createNotification(type = NotificationType.ERROR)
-      .setTitle(ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText))
-      .setContent(ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText))
+      .createNotification(
+        ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText),
+        ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText),
+        NotificationType.ERROR)
       .addAction(InstallUpdateNotification())
       .bindNextNotificationAndShow()
   }

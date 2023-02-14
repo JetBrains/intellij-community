@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * The alternative way to register {@link PsiReferenceProvider} is by using {@link PsiReferenceProviderBean}.
  *
- * @author peter
  * @see PsiReferenceProviderBean
  */
 public abstract class PsiReferenceContributor implements Disposable {

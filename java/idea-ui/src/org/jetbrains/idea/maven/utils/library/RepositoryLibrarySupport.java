@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.google.common.collect.Iterables;
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
 
 import java.util.Arrays;
@@ -31,9 +32,20 @@ public class RepositoryLibrarySupport {
     this.model = model;
   }
 
+  /**
+   * @deprecated Use {@link #addSupport(Module, ModifiableRootModel, ModifiableModelsProvider, DependencyScope)}
+   */
+  @Deprecated(forRemoval = true)
   public void addSupport(@NotNull Module module,
                          @NotNull final ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
+    addSupport(module, rootModel, modifiableModelsProvider, null);
+  }
+
+  public void addSupport(@NotNull Module module,
+                         @NotNull final ModifiableRootModel rootModel,
+                         @NotNull ModifiableModelsProvider modifiableModelsProvider,
+                         @Nullable DependencyScope scope) {
     LibraryTable.ModifiableModel modifiableModel = modifiableModelsProvider.getLibraryTableModifiableModel(module.getProject());
 
     Library library = Iterables.find(Arrays.asList(modifiableModel.getLibraries()), library1 -> isLibraryEqualsToSelected(library1), null);
@@ -43,7 +55,7 @@ public class RepositoryLibrarySupport {
     else {
       modifiableModelsProvider.disposeLibraryTableModifiableModel(modifiableModel);
     }
-    final DependencyScope dependencyScope = LibraryDependencyScopeSuggester.getDefaultScope(library);
+    final DependencyScope dependencyScope = scope != null ? scope : LibraryDependencyScopeSuggester.getDefaultScope(library);
     final ModifiableRootModel moduleModifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
     LibraryOrderEntry foundEntry =
       (LibraryOrderEntry)Iterables.find(Arrays.asList(moduleModifiableModel.getOrderEntries()), entry -> entry instanceof LibraryOrderEntry
@@ -65,10 +77,17 @@ public class RepositoryLibrarySupport {
     final LibraryEx library = (LibraryEx)modifiableModel.createLibrary(
       LibraryEditingUtil.suggestNewLibraryName(modifiableModel, RepositoryLibraryType.getInstance().getDescription(libraryProperties)),
       RepositoryLibraryType.REPOSITORY_LIBRARY_KIND);
-    RepositoryLibraryProperties realLibraryProperties = (RepositoryLibraryProperties)library.getProperties();
-    realLibraryProperties.setMavenId(libraryProperties.getMavenId());
 
-    ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit());
+    LibraryEx.ModifiableModelEx modifiableLibrary = library.getModifiableModel();
+
+    RepositoryLibraryProperties realLibraryProperties = (RepositoryLibraryProperties)modifiableLibrary.getProperties();
+    realLibraryProperties.setMavenId(libraryProperties.getMavenId());
+    modifiableLibrary.setProperties(realLibraryProperties);
+
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      modifiableLibrary.commit();
+      modifiableModel.commit();
+    });
     RepositoryUtils.loadDependenciesToLibrary(
       module.getProject(),
       library,
@@ -79,20 +98,18 @@ public class RepositoryLibrarySupport {
   }
 
   private boolean isLibraryEqualsToSelected(Library library) {
-    if (!(library instanceof LibraryEx)) {
+    if (!(library instanceof LibraryEx libraryEx)) {
       return false;
     }
 
-    LibraryEx libraryEx = (LibraryEx)library;
     if (!RepositoryLibraryType.REPOSITORY_LIBRARY_KIND.equals(libraryEx.getKind())) {
       return false;
     }
 
-    LibraryProperties libraryProperties = libraryEx.getProperties();
-    if (!(libraryProperties instanceof RepositoryLibraryProperties)) {
+    LibraryProperties<?> libraryProperties = libraryEx.getProperties();
+    if (!(libraryProperties instanceof RepositoryLibraryProperties repositoryLibraryProperties)) {
       return false;
     }
-    RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)libraryProperties;
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(repositoryLibraryProperties);
 
     if (!description.equals(libraryDescription)) {

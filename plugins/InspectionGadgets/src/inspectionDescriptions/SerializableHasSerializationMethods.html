@@ -1,18 +1,28 @@
 <html>
 <body>
-Reports <b>Serializable</b> classes
-which do not provide <b>readObject</b> and
-<b>writeObject</b> methods. If <b>readObject</b>
-and <b>writeObject</b> methods are not provided, the default serialization
-algorithms are used, which may be sub-optimal in many environments for performance and compatibility
-purposes.
+Reports <code>Serializable</code> classes
+that do not implement <code>readObject()</code> and <code>writeObject()</code> methods.
+<p>
+  If <code>readObject()</code> and <code>writeObject()</code> methods are not implemented,
+  the default serialization algorithms are used,
+  which may be sub-optimal for performance and compatibility in many environments.
+</p>
 <!-- tooltip end -->
 <p>
-Use the table below to specify what specific classes and inheritors should be excluded
-from being checked by this inspection. This is meant for those classes which, although they inherit
-Serializable from a superclass, are not intended for serialization. Such classes would lead this
-inspection to report unnecessarily.
-<p>
-
+  Use the following options to configure the inspection:
+</p>
+<ul>
+  <li>
+    List classes whose inheritors should not be reported by this inspection.
+    This is meant for classes that inherit
+    <code>Serializable</code> from a superclass but are not intended for serialization.
+  </li>
+  <li>
+    Whether to ignore <code>Serializable</code> classes without non-static fields.
+  </li>
+  <li>
+    Whether to ignore <code>Serializable</code> anonymous classes.
+  </li>
+</ul>
 </body>
 </html>

@@ -1,13 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -25,7 +22,6 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
                                                   FileEditor editor,
                                                   PropertiesGroupingStructureViewModel structureViewModel) {
     super(editor, structureViewModel, project, true);
-    showToolbar();
   }
 
 
@@ -53,6 +49,11 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       myPredefinedSeparators.add("/");
       myPredefinedSeparators.add(getCurrentSeparator());
       refillActionGroup();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -93,7 +94,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       }
 
       @Override
-      public final void actionPerformed(@NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         String[] strings = ArrayUtilRt.toStringArray(myPredefinedSeparators);
         String current = getCurrentSeparator();
         String separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),

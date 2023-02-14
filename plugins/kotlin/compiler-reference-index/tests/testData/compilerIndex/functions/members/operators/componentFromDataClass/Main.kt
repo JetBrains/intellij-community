@@ -1,0 +1,1 @@
+data class Main(val a: String = "", val b: String = "")

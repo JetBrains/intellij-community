@@ -1,19 +1,26 @@
 <html>
 <body>
-Reports any calls to
+Reports calls to
 <code>String.replaceAll()</code> or <code>String.split()</code> where the first argument is a single regex meta character argument.
-The regex meta characters are one of ".$|()[{^?*+\", and these have a special meaning in regular expressions.
-For example calling <code>"ab.cd".replaceAll(".", "-")</code> produces <code>"-----"</code>, because the dot matches any character.
-Most likely the escaped variant <code>"\\."</code> was intended instead.
+<p>
+  The regex meta characters are one of <code>.$|()[{^?*+\</code>. They have a special meaning in regular expressions.
+  For example, calling <code>"ab.cd".replaceAll(".", "-")</code> produces <code>"-----"</code>, because the dot matches any character.
+  Most likely the escaped variant <code>"\\."</code> was intended instead.
+</p>
+<p>
+  Using <code>File.separator</code> as a regex is also reported. The <code>File.separator</code> has a platform specific value. It
+  equals to <code>/</code> on Linux and Mac but equals to <code>\</code> on Windows, which is not a valid regular expression, so 
+  such code is not portable.
+</p>
 
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   s.replaceAll(".", "-");
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   s.replaceAll("\\.", "-");
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

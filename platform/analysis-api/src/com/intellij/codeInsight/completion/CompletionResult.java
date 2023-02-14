@@ -5,9 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class CompletionResult {
   private final LookupElement myLookupElement;
   private final PrefixMatcher myMatcher;

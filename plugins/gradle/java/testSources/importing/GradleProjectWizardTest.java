@@ -1,126 +1,193 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
-import com.intellij.ide.projectWizard.ProjectTypeStep;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.ProjectBuilder;
+import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.model.project.ProjectId;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.SmartList;
+import com.intellij.testFramework.fixtures.SdkTestFixture;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder;
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleStructureWizardStep;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
+import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory;
+import org.jetbrains.plugins.gradle.testFramework.util.GradleFileTestUtil;
 import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside;
+import static com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.getJavaBuildSystemData;
+import static com.intellij.ide.wizard.LanguageNewProjectWizardData.getLanguageData;
+import static com.intellij.ide.wizard.NewProjectWizardBaseData.getBaseData;
+import static com.intellij.testFramework.utils.module.ModuleAssertions.assertModules;
+import static org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.getJavaGradleData;
+import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 
-/**
- * @author Dmitry Avdeev
- */
 public class GradleProjectWizardTest extends NewProjectWizardTestCase {
-  private static final String GRADLE_JDK_NAME = "Gradle JDK";
-  private final List<Sdk> removedSdks = new SmartList<>();
-  private String myJdkHome;
+  private SdkTestFixture gradleJvmFixture = null;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    gradleJvmFixture = GradleTestFixtureFactory.getFixtureFactory()
+      .createGradleJvmTestFixture(GradleVersion.current());
+    gradleJvmFixture.setUp();
+
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
+    var javaHome = ExternalSystemJdkUtil.getJavaHome();
+    if (javaHome != null) {
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), javaHome);
+    }
+  }
+
+  @Override
+  public void tearDown() {
+    RunAll.runAll(
+      () -> gradleJvmFixture.tearDown(),
+      () -> TestDialogManager.setTestDialog(TestDialog.DEFAULT),
+      super::tearDown
+    );
+  }
+
+  public void testGradleNPWPropertiesSuggestion() throws Exception {
+    Project project = createProjectFromTemplate(UIBundle.message("label.project.wizard.empty.project.generator.name"), step -> {
+      getBaseData(step).setName("project");
+    });
+    assertModules(project, "project");
+
+    var projectPath = project.getBasePath();
+    var externalProjectPath1 = projectPath + "/untitled";
+    var externalProjectPath2 = projectPath + "/untitled1";
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate(project, step -> {
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertNull(getJavaGradleData(step).getParentData());
+        assertEquals("untitled", getBaseData(step).getName());
+        assertEquals(projectPath, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
+      });
+    });
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate(project, step -> {
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertNull(getJavaGradleData(step).getParentData());
+        assertEquals("untitled1", getBaseData(step).getName());
+        assertEquals(projectPath, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
+      });
+    });
+    assertModules(
+      project, "project",
+      "untitled", "untitled.main", "untitled.test",
+      "untitled1", "untitled1.main", "untitled1.test"
+    );
+
+    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath1);
+    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath2);
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate(project, step -> {
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setParentData(projectNode1.getData());
+        assertEquals("untitled2", getBaseData(step).getName());
+        assertEquals(externalProjectPath1, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
+      });
+    });
+    GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createModuleFromTemplate(project, step -> {
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setParentData(projectNode2.getData());
+        assertEquals("untitled2", getBaseData(step).getName());
+        assertEquals(externalProjectPath2, getBaseData(step).getPath());
+        getJavaGradleData(step).setAddSampleCode(false);
+      });
+    });
+    assertModules(
+      project, "project",
+      "untitled", "untitled.main", "untitled.test",
+      "untitled1", "untitled1.main", "untitled1.test",
+      "untitled.untitled2", "untitled.untitled2.main", "untitled.untitled2.test",
+      "untitled1.untitled2", "untitled1.untitled2.main", "untitled1.untitled2.test"
+    );
+  }
 
   public void testGradleProject() throws Exception {
-    final String projectName = "testProject";
-    Project project = GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createProject(step -> {
-        if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(3, steps.size());
-          final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
-          assertInstanceOf(projectBuilder, AbstractGradleModuleBuilder.class);
-          AbstractGradleModuleBuilder gradleProjectBuilder = (AbstractGradleModuleBuilder)projectBuilder;
-          gradleProjectBuilder.setName(projectName);
-          gradleProjectBuilder.setProjectId(new ProjectId("", null, null));
-        }
+    var projectName = "testProject";
+    var project = GradleImportingTestUtil.waitForProjectReload(() -> {
+      return createProjectFromTemplate(step -> {
+        getBaseData(step).setName(projectName);
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
 
     assertEquals(projectName, project.getName());
     assertModules(project, projectName, projectName + ".main", projectName + ".test");
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    final Module module = ContainerUtil.find(modules, it -> it.getName().equals(projectName));
+
+    var modules = ModuleManager.getInstance(project).getModules();
+    var module = ContainerUtil.find(modules, it -> it.getName().equals(projectName));
     assertTrue(ModuleRootManager.getInstance(module).isSdkInherited());
 
-    VirtualFile root = ProjectRootManager.getInstance(project).getContentRoots()[0];
-    VirtualFile settingsScript = VfsUtilCore.findRelativeFile("settings.gradle", root);
-    assertNotNull(settingsScript);
-    assertEquals(String.format("rootProject.name = '%s'\n\n", projectName),
-                 StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsScript)));
+    var root = ProjectUtil.guessProjectDir(project);
+    assertEquals(projectName, root.getName());
 
-    VirtualFile buildScript = VfsUtilCore.findRelativeFile("build.gradle", root);
-    assertNotNull(buildScript);
-    assertEquals("plugins {\n" +
-                 "    id 'java'\n" +
-                 "}\n" +
-                 "\n" +
-                 "version '1.0-SNAPSHOT'\n" +
-                 "\n" +
-                 "repositories {\n" +
-                 "    mavenCentral()\n" +
-                 "}\n" +
-                 "\n" +
-                 "dependencies {\n" +
-                 "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'\n" +
-                 "}\n" +
-                 "\n" +
-                 "test {\n" +
-                 "    useJUnitPlatform()\n" +
-                 "}",
-                 StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
+    var settingsFile = GradleFileTestUtil.getSettingsFile(root, ".", true);
+    assertEquals(
+      GradleSettingScriptBuilder.create(true)
+        .setProjectName(projectName)
+        .generate(),
+      StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsFile)).trim()
+    );
+
+    var buildFile = GradleFileTestUtil.getBuildFile(root, ".", true);
+    assertEquals(
+      GradleBuildScriptBuilder.create(GradleVersion.current(), true)
+        .withJavaPlugin()
+        .withJUnit()
+        .addGroup("org.example")
+        .addVersion("1.0-SNAPSHOT")
+        .generate(),
+      StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildFile)).trim()
+    );
+
+    var settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID);
+    assertEquals(1, settings.getLinkedProjectsSettings().size());
 
     Module childModule = GradleImportingTestUtil.waitForProjectReload(() -> {
-      return createModuleFromTemplate("Gradle", null, project, step -> {
-        if (step instanceof ProjectTypeStep) {
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(3, steps.size());
-        }
-        else if (step instanceof GradleStructureWizardStep) {
-          GradleStructureWizardStep gradleStructureWizardStep = (GradleStructureWizardStep)step;
-          assertEquals(projectName, gradleStructureWizardStep.getParentData().getExternalName());
-          gradleStructureWizardStep.setArtifactId("childModule");
-          gradleStructureWizardStep.setGroupId("");
-        }
+      return createModuleFromTemplate(project, step -> {
+        getLanguageData(step).setLanguage("Java");
+        getJavaBuildSystemData(step).setBuildSystem("Gradle");
+        assertEquals(projectName, getJavaGradleData(step).getParentData().getExternalName());
+        getJavaGradleData(step).setArtifactId("childModule");
+        getJavaGradleData(step).setAddSampleCode(false);
       });
     });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
@@ -129,20 +196,18 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                   projectName + ".childModule", projectName + ".childModule.main", projectName + ".childModule.test");
 
     assertEquals("childModule", childModule.getName());
-    assertEquals(String.format("rootProject.name = '%s'\n" +
-                               "include '%s'\n\n", projectName, childModule.getName()),
-                 StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsScript)));
-  }
 
-  private static void assertModules(@NotNull Project project, String @NotNull ... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(project).getModules();
-    Collection<String> actualNames = ContainerUtil.map(actual, it -> it.getName());
-    assertEquals(ContainerUtil.newHashSet(expectedNames), new HashSet<>(actualNames));
+    assertEquals(
+      GradleSettingScriptBuilder.create(true)
+        .setProjectName(projectName)
+        .include(childModule.getName())
+        .generate(),
+      StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsFile)).trim()
+    );
   }
 
   @Override
-  protected Project createProject(Consumer adjuster) throws IOException {
-    @SuppressWarnings("unchecked")
+  protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     Project project = super.createProject(adjuster);
     Disposer.register(getTestRootDisposable(), () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(project)));
     return project;
@@ -150,81 +215,16 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   @Override
   protected void createWizard(@Nullable Project project) throws IOException {
-    Collection<?> linkedProjectsSettings = project == null
-                                        ? Collections.emptyList()
-                                        : ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).getLinkedProjectsSettings();
-    assertTrue(linkedProjectsSettings.size() <= 1);
-    File directory;
-    Object settings = ContainerUtil.getFirstItem(linkedProjectsSettings);
-    if (settings instanceof ExternalProjectSettings) {
-      directory = new File(((ExternalProjectSettings)settings).getExternalProjectPath());
-      FileUtil.createDirectory(directory);
-      Disposer.register(getTestRootDisposable(), () -> FileUtil.delete(directory));
+    if (project != null) {
+      LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      localFileSystem.refreshAndFindFileByPath(project.getBasePath());
     }
-    else {
-      directory = createTempDirectoryWithSuffix("new").toFile();
-    }
+    File directory = project == null ? createTempDirectoryWithSuffix("New").toFile() : null;
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
       myWizard = null;
     }
     myWizard = createWizard(project, directory);
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-  }
-
-  private void collectAllowedRoots(final List<String> roots) {
-    roots.add(myJdkHome);
-    roots.addAll(collectRootsInside(myJdkHome));
-    roots.add(PathManager.getConfigPath());
-    String javaHome = Environment.getVariable("JAVA_HOME");
-    if (javaHome != null) roots.add(javaHome);
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    myJdkHome = IdeaTestUtil.requireRealJdkHome();
-    super.setUp();
-    removedSdks.clear();
-    WriteAction.runAndWait(() -> {
-      for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-        if (GRADLE_JDK_NAME.equals(sdk.getName())) continue;
-        removedSdks.add(sdk);
-      }
-      VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-      JavaSdk javaSdk = JavaSdk.getInstance();
-      SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
-      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
-      assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-      ProjectJdkTable.getInstance().addJdk(jdk);
-    });
-    List<String> allowedRoots = new ArrayList<>();
-    collectAllowedRoots(allowedRoots);
-    if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
-    }
-  }
-
-  @Override
-  public void tearDown() {
-    if (myJdkHome == null) {
-      //super.setUp() wasn't called
-      return;
-    }
-    new RunAll(
-      () -> {
-        WriteAction.runAndWait(() -> {
-          Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).forEach(ProjectJdkTable.getInstance()::removeJdk);
-          for (Sdk sdk : removedSdks) {
-            SdkConfigurationUtil.addSdk(sdk);
-          }
-          removedSdks.clear();
-        });
-      },
-      () -> {
-        TestDialogManager.setTestDialog(TestDialog.DEFAULT);
-      },
-      super::tearDown
-    ).run();
   }
 }

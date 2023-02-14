@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.JavaBundle;
@@ -30,12 +31,11 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COMPARE_METHOD.test(call)) return;
         checkComparison(call);
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-        if (parent instanceof PsiLocalVariable) {
-          PsiLocalVariable var = (PsiLocalVariable)parent;
+        if (parent instanceof PsiLocalVariable var) {
           PsiCodeBlock block = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
           PsiExpression initializer = var.getInitializer();
           if (block != null && initializer != null) {
@@ -52,7 +52,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
         if (binOp == null) return;
         PsiJavaToken sign = binOp.getOperationSign();
         IElementType tokenType = sign.getTokenType();
-        RelationType relation = RelationType.fromElementType(tokenType);
+        RelationType relation = DfaPsiUtil.getRelationByToken(tokenType);
         if (relation == null) return;
         PsiExpression constOperand =
           PsiTreeUtil.isAncestor(binOp.getLOperand(), compareExpression, false) ? binOp.getROperand() : binOp.getLOperand();
@@ -74,7 +74,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
       }
 
       private boolean coversPartially(LongRangeSet testedRange, LongRangeSet coveredRange) {
-        LongRangeSet intersection = testedRange.intersect(coveredRange);
+        LongRangeSet intersection = testedRange.meet(coveredRange);
         return !intersection.isEmpty() && !coveredRange.subtract(intersection).isEmpty();
       }
 

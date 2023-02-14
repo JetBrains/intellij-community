@@ -2,6 +2,7 @@
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.util.text.NaturalComparator;
 
 import java.util.Comparator;
@@ -12,6 +13,9 @@ public final class InspectionsConfigTreeComparator {
       .thenComparing(n -> getDisplayTextToSort(n.getText()), NaturalComparator.INSTANCE);
 
   public static String getDisplayTextToSort(String s) {
+    if (s.equals(InspectionsBundle.message("group.names.user.defined"))) {
+      return " " + InspectionsBundle.message("group.names.user.defined"); // sort at the top
+    }
     if (s.isEmpty()) {
       return s;
     }

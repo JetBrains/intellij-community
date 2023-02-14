@@ -11,7 +11,6 @@ import java.awt.dnd.DragSource;
  * Interface which should be implemented to handle drag and drop of gutter icons. An example of
  * a gutter icon which can be dragged and dropped is the breakpoint icon.
  *
- * @author ven
  * @author Konstantin Bulenkov
  * @see GutterIconRenderer#getDraggableObject()
  */

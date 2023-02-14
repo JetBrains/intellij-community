@@ -16,6 +16,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
@@ -348,10 +349,26 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
           if (myWritable) {
             myAddedLibraries.add(library);
           }
-          fireLibraryAdded(library);
         }
         else {
           Disposer.dispose(library);
+        }
+      }
+      if (!myLibraries.isEmpty()) {
+        /* this is a temporary workaround until IDEA-296918 is implemented: we need to invoke 'fireLibraryAdded' under write action,
+           but 'readExternal' may be called from a background thread (IDEA-272575) */
+        ThrowableRunnable<RuntimeException> fireEvents = () -> {
+          for (Library library : myLibraries) {
+            fireLibraryAdded(library);
+          }
+        };
+        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          fireEvents.run();
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            WriteAction.run(fireEvents);
+          });
         }
       }
       myLibraryByNameCache = null;
@@ -364,10 +381,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void writeExternal(Element element) {
-      final List<Library> libraries = ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed());
-
+      final List<Library> libraries = ContainerUtil.sorted(ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed()),
       // todo: do not sort if project is directory-based
-      ContainerUtil.sort(libraries, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
+      (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final Library library : libraries) {
         if (library.getName() != null) {

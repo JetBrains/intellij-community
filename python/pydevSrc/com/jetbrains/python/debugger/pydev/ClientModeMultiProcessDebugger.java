@@ -186,8 +186,16 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException {
-    return debugger(threadId).loadFrame(threadId, frameId);
+  public XValueChildrenList loadFrame(String threadId, String frameId, GROUP_TYPE groupType) throws PyDebuggerException {
+    return debugger(threadId).loadFrame(threadId, frameId, groupType);
+  }
+
+  @Override
+  public @Nullable String execTableCommand(String threadId,
+                                           String frameId,
+                                           String command,
+                                           TableCommandType commandType) throws PyDebuggerException {
+    return debugger(threadId).execTableCommand(threadId, frameId, command, commandType);
   }
 
   @Override
@@ -453,6 +461,11 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setUserTypeRenderers(@NotNull List<@NotNull PyUserTypeRenderer> renderers) {
+    allDebuggers().forEach(d -> d.setUserTypeRenderers(renderers));
+  }
+
+  @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     allDebuggers().forEach(d -> d.setShowReturnValues(isShowReturnValues));
   }
@@ -526,6 +539,13 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     @Override
     public void detached() {
       myListeners.forEach(RemoteDebuggerCloseListener::detached);
+    }
+  }
+
+  @Override
+  public void interruptDebugConsole() {
+    for (RemoteDebugger debugger : myDebuggers) {
+      debugger.interruptDebugConsole();
     }
   }
 }

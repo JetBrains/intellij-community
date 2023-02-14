@@ -1,4 +1,4 @@
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 def smart_truncate(
     string: str, max_length: int = ..., word_boundary: bool = ..., separator: str = ..., save_order: bool = ...
@@ -13,7 +13,8 @@ def slugify(
     separator: str = ...,
     save_order: bool = ...,
     stopwords: Iterable[str] = ...,
-    regex_pattern: Optional[str] = ...,
+    regex_pattern: str | None = ...,
     lowercase: bool = ...,
-    replacements: Iterable[str] = ...,
+    replacements: Iterable[Iterable[str]] = ...,
+    allow_unicode: bool = ...,
 ) -> str: ...

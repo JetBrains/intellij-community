@@ -1,0 +1,59 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.formatting.FormattingModelBuilder"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.formatter.newLineIndentMarkerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.codeStyle.NewLineIndentMarkerProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.formatter.restriction" interface="com.intellij.lang.LanguageFormattingRestriction" dynamic="true"/>
+    <extensionPoint name="lang.formatter.syntaxErrorsVerifier" interface="com.intellij.lang.CustomAutoFormatSyntaxErrorsVerifier"
+                    dynamic="true"/>
+    <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.ImportOptimizer"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.arrangement.Rearranger"/>
+    </extensionPoint>
+
+    <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor" dynamic="true"/>
+    <extensionPoint name="formattingService" interface="com.intellij.formatting.service.FormattingService" dynamic="true"/>
+    <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
+    <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor" dynamic="true"/>
+    <extensionPoint name="disabledIndentRangesProvider" interface="com.intellij.psi.impl.source.DisabledIndentRangesProvider"
+                    dynamic="true"/>
+    <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier"
+                    dynamic="true"/>
+
+    <extensionPoint name="lang.lineWrapStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.LineWrapPositionStrategy"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.whiteSpaceFormattingStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.psi.formatter.WhiteSpaceFormattingStrategy"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.indentStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
+    </extensionPoint>
+
+    <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider" dynamic="true"/>
+    <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
+                        serviceImplementation="com.intellij.psi.impl.source.codeStyle.IndentHelperImpl"/>
+    <applicationService serviceImplementation="com.intellij.psi.codeStyle.AppCodeStyleSettingsManager"/>
+    <applicationService serviceInterface="com.intellij.formatting.Formatter" serviceImplementation="com.intellij.formatting.FormatterImpl"/>
+    <formattingService implementation="com.intellij.formatting.service.CoreFormattingService" order="last"/>
+    <projectService serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager" preload="true"/>
+    <projectService serviceInterface="com.intellij.application.options.codeStyle.cache.CodeStyleCachingService"
+                    serviceImplementation="com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl"/>
+    <projectService serviceInterface="com.intellij.pom.PomModel"
+                    serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspect$LangPomModel" overrides="true"
+                    preload="await"/>
+  </extensions>
+</idea-plugin>

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -23,23 +23,26 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker.TypeMismatch;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("equals.between.inconvertible.types.mutual.subclass.option"),
-                                          this, "WARN_IF_NO_MUTUAL_SUBCLASS_FOUND");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("WARN_IF_NO_MUTUAL_SUBCLASS_FOUND",
+               InspectionGadgetsBundle.message("equals.between.inconvertible.types.mutual.subclass.option")));
   }
 
   @Override
@@ -75,7 +78,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   private class EqualsBetweenInconvertibleTypesVisitor extends BaseEqualsVisitor {
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
       if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) {
@@ -93,13 +96,22 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      InconvertibleTypesChecker.TypeMismatch mismatch =
-        InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
+      if (LambdaUtil.notInferredType(lhsType) || LambdaUtil.notInferredType(rhsType)) return;
+      TypeMismatch mismatch = InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
       if (mismatch != null) {
-        registerError(expression.getOperationSign(), mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(expression.getOperationSign(), mismatch);
       }
     }
-    
+
+    private void registerError(@NotNull PsiElement anchor, @NotNull TypeMismatch mismatch) {
+      Convertible convertible = mismatch.isConvertible();
+      if (convertible == Convertible.CONVERTIBLE_MUTUAL_SUBCLASS_UNKNOWN) {
+        registerPossibleProblem(anchor);
+      } else {
+        registerError(anchor, mismatch.getLeft(), mismatch.getRight(), convertible != Convertible.NOT_CONVERTIBLE);
+      }
+    }
+
     private InconvertibleTypesChecker.LookForMutualSubclass getMutualSubclassMode() {
       if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) {
         return InconvertibleTypesChecker.LookForMutualSubclass.NEVER;
@@ -110,12 +122,13 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
     }
 
     @Override
-    public void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
-      InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
+    public boolean checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
+      TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
       if (mismatch != null) {
-        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), 
-                      mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), mismatch);
+        return true;
       }
+      return false;
     }
   }
 }

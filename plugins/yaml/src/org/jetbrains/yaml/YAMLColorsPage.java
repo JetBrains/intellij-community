@@ -15,25 +15,26 @@ import java.util.Map;
 
 public class YAMLColorsPage implements ColorSettingsPage {
 
-  private static final String DEMO_TEXT = "---\n" +
-                                          "# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html\n" +
-                                          "static_sidebar:\n" +
-                                          "  id: \"foo\"\n" +
-                                          "  name: 'side_bar'\n" +
-                                          "  staged_position: 1\n" +
-                                          "  blog_id: 1\n" +
-                                          "  config: |+\n" +
-                                          "    --- !map:HashWithIndifferentAccess\n" +
-                                          "      title: Static Sidebar\n" +
-                                          "      body: The body of a static sidebar\n" +
-                                          "  type: StaticSidebar\n" +
-                                          "  description: >\n" +
-                                          "    Sidebar configuration example\n" +
-                                          "  extensions:\n" +
-                                          "    - &params \n" +
-                                          "        auto_run: true\n" +
-                                          "        reload: true\n" +
-                                          "    - *params";
+  private static final String DEMO_TEXT = """
+    ---
+    # Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+    static_sidebar:
+      id: "foo"
+      name: 'side_bar'
+      staged_position: 1
+      blog_id: 1
+      config: |+
+        --- !map:HashWithIndifferentAccess
+          title: Static Sidebar
+          body: The body of a static sidebar
+      type: StaticSidebar
+      description: >
+        Sidebar configuration example
+      extensions:
+        - &params\s
+            auto_run: true
+            reload: true
+        - *params""";
 
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.key"), YAMLHighlighter.SCALAR_KEY),

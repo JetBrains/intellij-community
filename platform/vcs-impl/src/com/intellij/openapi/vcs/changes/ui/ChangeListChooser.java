@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,10 +21,7 @@ public class ChangeListChooser extends DialogWrapper {
   private final ChangeListChooserPanel myPanel;
 
   public ChangeListChooser(@NotNull Project project,
-                           @Nullable Collection<? extends ChangeList> changelists,
-                           @Nullable ChangeList defaultSelection,
-                           @NlsContexts.DialogTitle String title,
-                           @Nullable final @Nls String suggestedName) {
+                           @NlsContexts.DialogTitle String title) {
     super(project, false);
     myProject = project;
 
@@ -36,15 +34,26 @@ public class ChangeListChooser extends DialogWrapper {
     });
 
     myPanel.init();
-    myPanel.setChangeLists(changelists);
-    myPanel.setDefaultSelection(defaultSelection);
-
     setTitle(title);
-    if (suggestedName != null) {
-      myPanel.setSuggestedName(suggestedName);
-    }
-
+    setSize(JBUI.scale(500), JBUI.scale(230));
     init();
+  }
+
+  public void setChangeLists(@Nullable Collection<? extends ChangeList> changelists) {
+    myPanel.setChangeLists(changelists);
+  }
+
+  public void setDefaultSelection(@Nullable ChangeList defaultSelection) {
+    myPanel.setDefaultSelection(defaultSelection);
+  }
+
+  public void setSuggestedName(@Nls @Nullable String suggestedName) {
+    setSuggestedName(suggestedName, false);
+  }
+
+  public void setSuggestedName(@Nls @Nullable String suggestedName, boolean forceCreate) {
+    if (suggestedName == null) return;
+    myPanel.setSuggestedName(suggestedName, forceCreate);
   }
 
   @Override

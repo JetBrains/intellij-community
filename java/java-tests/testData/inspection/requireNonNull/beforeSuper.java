@@ -1,4 +1,4 @@
-// "Replace condition with Objects.requireNonNullElse" "false"
+// "Replace 'if' statement with 'Objects.requireNonNullElse()' call" "false"
 
 class Component {
   public Component add(Component component, int index) {

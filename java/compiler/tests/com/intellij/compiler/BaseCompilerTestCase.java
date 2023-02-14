@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
@@ -127,10 +127,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   }
 
   protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
-    return addModule(moduleName, sourceRoot, null);
+    return addModule(moduleName, sourceRoot, null, null);
   }
 
-  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot) {
+  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot, @Nullable VirtualFile resourceRoot) {
     return WriteAction.computeAndWait(() -> {
       Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -138,6 +138,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
       }
       if (testRoot != null) {
         PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
+      }
+      if (resourceRoot != null) {
+        PsiTestUtil.addResourceContentToRoots(module, resourceRoot, false);
       }
       ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
       return module;
@@ -238,9 +241,10 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         generatedFilePaths.add(relativePath);
       }
     });
+
+    PlatformTestUtil.saveProject(myProject);
+    CompilerTestUtil.saveApplicationSettings();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      PlatformTestUtil.saveProject(myProject);
-      CompilerTestUtil.saveApplicationSettings();
       CompilerTester.enableDebugLogging();
       action.accept(new CompileStatusNotification() {
         @Override

@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrMethodNameIndex;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * @author ilyas
- */
 public class GrMethodElementType extends GrStubElementType<GrMethodStub, GrMethod> {
 
   public GrMethodElementType(final String debugName) {

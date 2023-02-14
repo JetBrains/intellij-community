@@ -2,16 +2,14 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.containers.UnsignedShortArrayList;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.util.function.IntUnaryOperator;
 
-/** An int list where most values are in range 0..2^16 */
+/** An int list where most values are in the range 0..2^16 */
 final class MostlyUShortIntList implements IntUnaryOperator {
   private static final int IN_MAP = Character.MAX_VALUE;
   private final UnsignedShortArrayList myList;
-  private Int2IntMap myMap;
+  private StrippedIntOpenHashMap myMap;
 
   MostlyUShortIntList(int initialCapacity) {
     myList = new UnsignedShortArrayList(initialCapacity);
@@ -33,9 +31,9 @@ final class MostlyUShortIntList implements IntUnaryOperator {
     myList.setQuick(index, value);
   }
 
-  private Int2IntMap initMap() {
+  private StrippedIntOpenHashMap initMap() {
     if (myMap == null) {
-      myMap = new Int2IntOpenHashMap();
+      myMap = new StrippedIntOpenHashMap();
     }
     return myMap;
   }
@@ -47,7 +45,7 @@ final class MostlyUShortIntList implements IntUnaryOperator {
 
   public int get(int index) {
     int value = myList.getQuick(index);
-    return value == IN_MAP ? myMap.get(index) : value;
+    return value == IN_MAP ? myMap.get(index, 0) : value;
   }
 
   int size() {
@@ -56,8 +54,5 @@ final class MostlyUShortIntList implements IntUnaryOperator {
 
   void trimToSize() {
     myList.trimToSize();
-    if (myMap != null) {
-      ((Int2IntOpenHashMap)myMap).trim();
-    }
   }
 }

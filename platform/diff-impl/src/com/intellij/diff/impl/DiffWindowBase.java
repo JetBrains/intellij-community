@@ -1,14 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.impl;
 
 import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +25,9 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class DiffWindowBase {
+
+  @NotNull @NonNls public static final String DEFAULT_DIALOG_GROUP_KEY = "DiffContextDialog";
+
   @Nullable protected final Project myProject;
   @NotNull protected final DiffDialogHints myHints;
 
@@ -32,8 +44,8 @@ public abstract class DiffWindowBase {
 
     myProcessor = createProcessor();
 
-    String dialogGroupKey = myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY);
-    if (dialogGroupKey == null) dialogGroupKey = "DiffContextDialog";
+    String dialogGroupKey = ObjectUtils
+      .notNull(myProcessor.getContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY), DEFAULT_DIALOG_GROUP_KEY);
 
     myWrapper = new WindowWrapperBuilder(DiffUtil.getWindowMode(myHints), new MyPanel(myProcessor.getComponent()))
       .setProject(myProject)
@@ -47,6 +59,18 @@ public abstract class DiffWindowBase {
 
     Consumer<WindowWrapper> wrapperHandler = myHints.getWindowConsumer();
     if (wrapperHandler != null) wrapperHandler.consume(myWrapper);
+
+    MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect(myProcessor);
+    appConnection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+      @Override
+      public void applicationActivated(@NotNull IdeFrame ideFrame) {
+        DiffRequest request = myProcessor.getActiveRequest();
+        if (request != null) {
+          VirtualFile[] files = VfsUtilCore.toVirtualFileArray(request.getFilesToRefresh());
+          DiffUtil.refreshOnFrameActivation(files);
+        }
+      }
+    });
   }
 
   public void show() {

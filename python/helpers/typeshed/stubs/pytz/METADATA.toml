@@ -1,0 +1,4 @@
+version = "2022.1"
+
+[tool.stubtest]
+ignore_missing_stub = false

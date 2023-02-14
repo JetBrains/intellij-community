@@ -1,16 +1,27 @@
 <html>
 <body>
-Reports <b>@GuardedBy</b> annotations on <b>static</b> fields or methods,
-where the guard is either a non-static field or <b>this</b>. Guarding a <b>static</b> by a non-static may result in
-excessive concurrency, multiple threads may be able to access the guarded field simultaneously, by locking in different object contexts.
-Supported <b>@GuardedBy</b> annotations are:
+Reports <code>@GuardedBy</code> annotations on <code>static</code> fields or methods in which the guard is either a non-static field or
+<code>this</code>.
+<p>Guarding a static element with a non-static element may result in
+  excessive concurrency, multiple threads may be able to access the guarded field simultaneously by locking in different object contexts.</p>
+<p>Example:</p>
+<pre><code>
+    private ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    @GuardedBy("lock")
+    public static void bar() {
+        // ...
+    }
+</code></pre>
+<!-- tooltip end -->
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
-  <li>net.jcip.annotations.GuardedBy</li>
-  <li>javax.annotation.concurrent.GuardedBy</li>
-  <li>org.apache.http.annotation.GuardedBy</li>
-  <li>com.android.annotations.concurrency.GuardedBy</li>
-  <li>androidx.annotation.GuardedBy</li>
-  <li>com.google.errorprone.annotations.concurrent.GuardedBy</li>
+  <li><code>net.jcip.annotations.GuardedBy</code></li>
+  <li><code>javax.annotation.concurrent.GuardedBy</code></li>
+  <li><code>org.apache.http.annotation.GuardedBy</code></li>
+  <li><code>com.android.annotations.concurrency.GuardedBy</code></li>
+  <li><code>androidx.annotation.GuardedBy</code></li>
+  <li><code>com.google.errorprone.annotations.concurrent.GuardedBy</code></li>
 </ul>
 </body>
 </html>

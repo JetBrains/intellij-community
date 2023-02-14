@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class OSAssociateFileTypesUtil {
+public final class OSAssociateFileTypesUtil {
   public final static String ENABLE_REG_KEY = "system.file.type.associations.enabled";
 
   private static final Logger LOG = Logger.getInstance(OSAssociateFileTypesUtil.class);
@@ -93,7 +93,7 @@ public class OSAssociateFileTypesUtil {
     return null;
   }
 
-  private static void doAssociate(@NotNull Callback callback, @NotNull SystemFileTypeAssociator associator, List<FileType> fileTypes) {
+  private static void doAssociate(@NotNull Callback callback, @NotNull SystemFileTypeAssociator associator, List<? extends FileType> fileTypes) {
     if (fileTypes.size() > 0) {
       ApplicationManager.getApplication().executeOnPooledThread(
         () -> {
@@ -212,7 +212,7 @@ public class OSAssociateFileTypesUtil {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public Icon getIcon() {
       return myOriginalType.getIcon();
     }
 

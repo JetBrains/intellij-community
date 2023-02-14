@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
@@ -24,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +24,10 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
@@ -69,20 +55,25 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
   }
 
   private static List<Module> getModulesWithGroovyResources(@NotNull Project project, @NotNull JpsModuleSourceRootType<?> rootType) {
-    return ContainerUtil.filter(ModuleManager.getInstance(project).getModules(), module -> containsGroovyResources(rootType, module));
+    return ContainerUtil.filter(ModuleManager.getInstance(project).getModules(), module -> containsGroovyResources(rootType, module, false));
   }
 
-  static boolean containsGroovyResources(@NotNull JpsModuleSourceRootType<?> rootType, Module module) {
+  static boolean containsGroovyResources(@NotNull JpsModuleSourceRootType<?> rootType, Module module, boolean isSmartMode) {
     return ContainerUtil
-      .exists(ModuleRootManager.getInstance(module).getSourceRoots(rootType), root -> containsGroovyResources(module, root));
+      .exists(ModuleRootManager.getInstance(module).getSourceRoots(rootType), root -> containsGroovyResources(module, root, isSmartMode));
   }
 
-  private static boolean containsGroovyResources(Module module, VirtualFile root) {
-    return !ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(root, file -> {
-      if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
-        return false; // found
-      }
-      return true;
-    });
+  private static boolean containsGroovyResources(Module module, VirtualFile root, boolean isSmartMode) {
+    if (isSmartMode) {
+      Collection<?> files = FileTypeIndex.getFiles(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScopes.directoryScope(module.getProject(), root, true));
+      return !files.isEmpty();
+    } else {
+      return !ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(root, file -> {
+        if (!file.isDirectory() && FileTypeRegistry.getInstance().isFileOfType(file, GroovyFileType.GROOVY_FILE_TYPE)) {
+          return false; // found
+        }
+        return true;
+      });
+    }
   }
 }

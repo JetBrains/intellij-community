@@ -7,12 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface ProcessListener extends EventListener {
-  void startNotified(@NotNull ProcessEvent event);
+  default void startNotified(@NotNull ProcessEvent event) {
+  }
 
-  void processTerminated(@NotNull ProcessEvent event);
+  default void processTerminated(@NotNull ProcessEvent event) {
+  }
 
   default void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
   }
 
-  void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType);
+  default void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+  }
 }

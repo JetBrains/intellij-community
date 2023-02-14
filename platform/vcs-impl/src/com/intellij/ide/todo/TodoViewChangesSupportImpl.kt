@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.messages.MessageBusConnection
@@ -47,12 +47,12 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
   private class MyVcsListener(
     private val project: Project,
     private val contentManagerFunc: () -> ContentManager?,
-    private val contentFunc: () -> Content) : VcsListener, Listener {
+    private val contentFunc: () -> Content) : VcsMappingListener, Listener {
 
     private var myIsVisible = false
 
     override fun setVisible(value: Boolean) {
-      myIsVisible = value;
+      myIsVisible = value
     }
 
     override fun directoryMappingChanged() {

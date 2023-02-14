@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports property declarations that can be joined with the following assignment.
+<p><b>Example:</b></p>
+<pre><code>
+  val x: String
+  x = System.getProperty("")
+</code></pre>
+<p>The quick fix joins the declaration with the assignment:</p>
+<pre><code>
+  val x = System.getProperty("")
+</code></pre>
+</body>
+</html>

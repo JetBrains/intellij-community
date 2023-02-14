@@ -23,9 +23,6 @@ import com.intellij.util.xml.events.DomEvent;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public class IncrementalUpdateEventsTest extends DomTestCase {
   private MyElement myElement;
 

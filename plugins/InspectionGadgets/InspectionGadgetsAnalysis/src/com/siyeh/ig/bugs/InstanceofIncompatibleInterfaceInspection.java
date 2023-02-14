@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -45,16 +46,14 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
         return;
       }
       final PsiType castType = castTypeElement.getType();
-      if (!(castType instanceof PsiClassType)) {
+      if (!(castType instanceof PsiClassType castClassType)) {
         return;
       }
-      final PsiClassType castClassType = (PsiClassType)castType;
       final PsiExpression operand = expression.getOperand();
       final PsiType operandType = operand.getType();
-      if (!(operandType instanceof PsiClassType)) {
+      if (!(operandType instanceof PsiClassType operandClassType)) {
         return;
       }
-      final PsiClassType operandClassType = (PsiClassType)operandType;
       final PsiClass castClass = castClassType.resolve();
       if (castClass == null || !castClass.isInterface()) {
         return;
@@ -63,10 +62,13 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
       if (operandClass == null || operandClass.isInterface()) {
         return;
       }
-      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
-        return;
+      ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
+      if (hasMutualSubclass == ThreeState.NO) {
+        registerError(castTypeElement);
       }
-      registerError(castTypeElement);
+      else if (hasMutualSubclass == ThreeState.UNSURE) {
+        registerPossibleProblem(castTypeElement);
+      }
     }
   }
 }

@@ -13,9 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey Chmutov
- */
 final class BlockUtil {
   private BlockUtil() {
   }

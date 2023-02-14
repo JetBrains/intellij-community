@@ -53,7 +53,7 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
   private static class LambdaUnfriendlyMethodOverloadVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiParameterList parameterList = method.getParameterList();
       final int parametersCount = parameterList.getParametersCount();
@@ -123,7 +123,7 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
       }
       final PsiType returnType1 = method1.getReturnType();
       final PsiType returnType2 = method2.getReturnType();
-      if (PsiType.VOID.equals(returnType1) ^ PsiType.VOID.equals(returnType2)) {
+      if (PsiTypes.voidType().equals(returnType1) ^ PsiTypes.voidType().equals(returnType2)) {
         return false;
       }
       return method1.getParameterList().getParametersCount() == method2.getParameterList().getParametersCount();

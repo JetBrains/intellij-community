@@ -29,23 +29,23 @@ public class CollectionAddedToSelfInspectionTest extends LightJavaInspectionTest
   }
 
   public void testSimple() {
-    doTest("import java.util.*;\n" +
-           "\n" +
-           "class CollectionAddedToSelf {\n" +
-           "    private List foo = new ArrayList();\n" +
-           "    private List bar = new ArrayList();" +
-           "    private Map baz = new HashMap();\n" +
-           "\n" +
-           "    public void escher()\n" +
-           "    {\n" +
-           "        foo.add(/*'add()' called on collection 'foo' with itself as argument*/foo/**/);\n" +
-           "        foo.set(0, /*'set()' called on collection 'foo' with itself as argument*/foo/**/);\n" +
-           "        foo.add(bar);\n" +
-           "        baz.put(/*'put()' called on collection 'baz' with itself as argument*/baz/**/, foo);\n" +
-           "        baz.put(foo, /*'put()' called on collection 'baz' with itself as argument*/baz/**/);\n" +
-           "        baz.put(foo, bar);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             import java.util.*;
+
+             class CollectionAddedToSelf {
+                 private List foo = new ArrayList();
+                 private List bar = new ArrayList();    private Map baz = new HashMap();
+
+                 public void escher()
+                 {
+                     foo.add(/*'add()' called on collection 'foo' with itself as argument*/foo/**/);
+                     foo.set(0, /*'set()' called on collection 'foo' with itself as argument*/foo/**/);
+                     foo.add(bar);
+                     baz.put(/*'put()' called on collection 'baz' with itself as argument*/baz/**/, foo);
+                     baz.put(foo, /*'put()' called on collection 'baz' with itself as argument*/baz/**/);
+                     baz.put(foo, bar);
+                 }
+             }""");
   }
 
   public void testSomeOtherMethods() {

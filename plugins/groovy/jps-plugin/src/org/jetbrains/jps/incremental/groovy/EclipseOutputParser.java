@@ -20,8 +20,6 @@ import java.util.List;
  * Adapted from org.codehaus.groovy.eclipse.compiler.GroovyEclipseCompiler, part of maven groovy-eclipse-compiler plugin.
  *
  * The source is distributed under Eclipse Public License (http://www.eclipse.org/legal/epl-v10.html, eclipse_license.txt).
- *
- * @author peter
  */
 class EclipseOutputParser {
   private final @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String myBuilderName;

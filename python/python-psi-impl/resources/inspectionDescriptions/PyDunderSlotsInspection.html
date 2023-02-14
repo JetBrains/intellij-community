@@ -1,5 +1,14 @@
 <html>
 <body>
-This inspection detects invalid definition of __slots__ in a class.
+<p>Reports invalid usages of a class with <code>__slots__</code> definitions.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Foo:
+    __slots__ = ['foo', 'bar']
+
+
+foo = Foo()
+foo.baz = 'spam'
+</pre>
 </body>
 </html>

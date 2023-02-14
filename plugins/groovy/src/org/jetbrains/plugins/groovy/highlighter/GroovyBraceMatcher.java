@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.highlighter;
 
@@ -14,9 +14,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
-/**
- * @author ilyas
- */
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.NL;
+
 public class GroovyBraceMatcher implements PairedBraceMatcher {
 
   private static final BracePair[] PAIRS = {
@@ -41,6 +40,7 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType braceType, @Nullable IElementType tokenType) {
     return tokenType == null
            || tokenType == TokenType.WHITE_SPACE
+           || tokenType == NL
            || tokenType == GroovyTokenTypes.mSEMI
            || tokenType == GroovyTokenTypes.mCOMMA
            || tokenType == GroovyTokenTypes.mRPAREN

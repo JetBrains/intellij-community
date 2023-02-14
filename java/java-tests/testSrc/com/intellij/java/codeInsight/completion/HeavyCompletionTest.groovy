@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -8,8 +8,10 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,7 +20,6 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.statistics.StatisticsManager
@@ -35,9 +36,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
-/**
- * @author peter
- */
+
 @CompileStatic
 class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
 
@@ -232,7 +231,9 @@ class Foo {{ Books.Test.v1<caret> }}
 
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', myFixture.tempDirFixture.findOrCreateDir('another'))
     ModuleRootModificationUtil.setModuleSdk(anotherModule, IdeaTestUtil.mockJdk17)
-    ModuleRootModificationUtil.setModuleSdk(myFixture.module, IdeaTestUtil.mockJdk14)
+    def jdk14 = IdeaTestUtil.mockJdk14
+    WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk14, getTestRootDisposable()))
+    ModuleRootModificationUtil.setModuleSdk(myFixture.module, jdk14)
     ModuleRootModificationUtil.addDependency(myFixture.module, anotherModule)
 
     myFixture.addFileToProject 'another/Decl.java', '''public class Decl {

@@ -1,4 +1,0 @@
-version = "0.1"
-python2 = true
-python3 = false
-requires = ["types-typing-extensions"]

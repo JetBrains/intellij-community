@@ -15,9 +15,6 @@ import java.util.List;
 
 import static com.intellij.psi.util.NameUtilMatchingTest.*;
 
-/**
- * @author peter
- */
 public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";

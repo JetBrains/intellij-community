@@ -1,23 +1,10 @@
-/*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,21 +20,22 @@ public class SingleIntegerFieldOptionsPanel extends InspectionOptionsPanel {
 
     public SingleIntegerFieldOptionsPanel(@NlsContexts.Label String labelString,
                                           final InspectionProfileEntry owner,
-                                          @NonNls final String property) {
+                                          @Language("jvm-field-name") @NonNls final String property) {
         this(labelString, owner, property, 4);
     }
 
     public SingleIntegerFieldOptionsPanel(@NlsContexts.Label String labelString,
                                           final InspectionProfileEntry owner,
-                                          @NonNls final String property,
+                                          @Language("jvm-field-name") @NonNls final String property,
                                           int integerFieldColumns) {
+        super(owner);
         final JLabel label = new JLabel(labelString);
         final JFormattedTextField valueField = createIntegerFieldTrackingValue(owner, property, integerFieldColumns);
         addRow(label, valueField);
     }
 
     public static JFormattedTextField createIntegerFieldTrackingValue(@NotNull InspectionProfileEntry owner,
-                                                                      @NotNull String property,
+                                                                      @Language("jvm-field-name") @NotNull String property,
                                                                       int integerFieldColumns) {
         JFormattedTextField valueField = new JFormattedTextField();
         valueField.setColumns(integerFieldColumns);
@@ -66,7 +54,7 @@ public class SingleIntegerFieldOptionsPanel extends InspectionOptionsPanel {
      */
     public static void setupIntegerFieldTrackingValue(final JFormattedTextField textField,
                                                       final InspectionProfileEntry owner,
-                                                      final String property) {
+                                                      @Language("jvm-field-name") final String property) {
         NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
         textField.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(formatter)));

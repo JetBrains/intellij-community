@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
@@ -49,6 +50,14 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         return new DataProviderReference[]{new DataProviderReference((PsiLiteral)element)};
       }
     });
+
+    registrar.registerReferenceProvider(getElementPattern("name"), new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+        return new DataProviderTestReference[]{new DataProviderTestReference((PsiLiteral)element)};
+      }
+    });
+
     registrar.registerReferenceProvider(getElementPattern("groups"), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -63,7 +72,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     });
   }
 
-  private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
+  private static class MethodReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference {
 
     MethodReference(PsiLiteral element) {
       super(element, false);

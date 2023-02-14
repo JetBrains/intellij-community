@@ -27,7 +27,7 @@ import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
-    private final XPathType myType;
+    @SafeFieldForPreview private final XPathType myType;
 
     public MakeTypeExplicitFix(XPathExpression expression, XPathType type) {
         super(expression);

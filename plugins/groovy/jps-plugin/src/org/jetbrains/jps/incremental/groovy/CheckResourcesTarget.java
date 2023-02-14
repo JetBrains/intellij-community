@@ -34,13 +34,10 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author peter
- */
 public class CheckResourcesTarget extends BuildTarget<GroovyResourceRootDescriptor> {
   @NotNull private final JpsModule myModule;
 
-  CheckResourcesTarget(@NotNull JpsModule module, Type targetType) {
+  CheckResourcesTarget(@NotNull JpsModule module, @NotNull Type targetType) {
     super(targetType);
     myModule = module;
   }

@@ -20,9 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.atomic.*;
 
@@ -30,7 +30,7 @@ enum AtomicConversionType {
   ATOMIC_INTEGER {
     @Override
     protected boolean accept(PsiType from, PsiClassType to, PsiExpression context) {
-      return PsiType.INT.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicInteger.class.getName());
+      return PsiTypes.intType().isAssignableFrom(from) && to.getCanonicalText().equals(AtomicInteger.class.getName());
     }
 
     @Override
@@ -41,7 +41,7 @@ enum AtomicConversionType {
   ATOMIC_LONG {
     @Override
     protected boolean accept(PsiType from, PsiClassType to, PsiExpression context) {
-      return PsiType.LONG.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicLong.class.getName());
+      return PsiTypes.longType().isAssignableFrom(from) && to.getCanonicalText().equals(AtomicLong.class.getName());
     }
 
     @Override
@@ -52,7 +52,7 @@ enum AtomicConversionType {
   ATOMIC_BOOLEAN {
     @Override
     protected boolean accept(PsiType from, PsiClassType to, PsiExpression context) {
-      return PsiType.BOOLEAN.equals(from) && to.getCanonicalText().equals(AtomicBoolean.class.getName());
+      return PsiTypes.booleanType().equals(from) && to.getCanonicalText().equals(AtomicBoolean.class.getName());
     }
 
     @Override
@@ -63,10 +63,10 @@ enum AtomicConversionType {
   ATOMIC_REFERENCE_OR_ARRAY {
     @Override
     protected boolean accept(PsiType from, PsiClassType to, PsiExpression context) {
-      if (from.equals(PsiType.INT.createArrayType()) && to.getCanonicalText().equals(AtomicIntegerArray.class.getName())) {
+      if (from.equals(PsiTypes.intType().createArrayType()) && to.getCanonicalText().equals(AtomicIntegerArray.class.getName())) {
         return true;
       }
-      if (from.equals(PsiType.LONG.createArrayType()) && to.getCanonicalText().equals(AtomicLongArray.class.getName())) {
+      if (from.equals(PsiTypes.longType().createArrayType()) && to.getCanonicalText().equals(AtomicLongArray.class.getName())) {
         return true;
       }
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
@@ -85,11 +85,11 @@ enum AtomicConversionType {
           if (from.getDeepComponentType() instanceof PsiPrimitiveType) {
             final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(toTypeParameterValue);
             if (unboxedInitialType != null) {
-              return TypeConversionUtil.areTypesConvertible(from.getDeepComponentType(), unboxedInitialType);
+              return TypeConversionUtil.areTypesConvertible(unboxedInitialType, from.getDeepComponentType());
             }
           }
           else {
-            return TypeConversionUtil.isAssignable(from.getDeepComponentType(), PsiUtil.captureToplevelWildcards(toTypeParameterValue, context));
+            return TypeConversionUtil.isAssignable(PsiUtil.captureToplevelWildcards(toTypeParameterValue, context), from.getDeepComponentType());
           }
         }
       }
@@ -98,7 +98,7 @@ enum AtomicConversionType {
 
     @Override
     protected boolean checkDefaultValue(PsiExpression expr) {
-      return PsiType.NULL.equals(expr.getType());
+      return PsiTypes.nullType().equals(expr.getType());
     }
   };
 
@@ -108,6 +108,6 @@ enum AtomicConversionType {
 
   @Nullable
   static AtomicConversionType getConversionType(PsiType from, PsiClassType to, PsiExpression context) {
-    return Arrays.stream(values()).filter(type -> type.accept(from, to, context)).findFirst().orElse(null);
+    return ContainerUtil.find(values(), type -> type.accept(from, to, context));
   }
 }

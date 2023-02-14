@@ -49,16 +49,12 @@ public abstract class OccurrencesChooser<T> {
 
     @Override
     public @Nls String formatDescription(int occurrencesCount) {
-      switch (this) {
-        case NO:
-          return RefactoringBundle.message("replace.this.occurrence.only");
-        case NO_WRITE:
-          return RefactoringBundle.message("replace.all.occurrences.but.write");
-        case ALL:
-          return RefactoringBundle.message("replace.all.occurrences", occurrencesCount);
-        default:
-          throw new IllegalStateException("Unexpected value: " + this);
-      }
+      return switch (this) {
+        case NO -> RefactoringBundle.message("replace.this.occurrence.only");
+        case NO_WRITE -> RefactoringBundle.message("replace.all.occurrences.but.write");
+        case ALL -> RefactoringBundle.message("replace.all.occurrences", occurrencesCount);
+        default -> throw new IllegalStateException("Unexpected value: " + this);
+      };
     }
   }
 

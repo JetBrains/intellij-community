@@ -38,7 +38,7 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
 
   /**
    * <p>Checks if the variable has an initializer.</p>
-   * <p>Please note that even when {@link #hasInitializer()} returns true, {@link #getInitializer()} still can return null,
+   * <p>Please note that even when {@code hasInitializer()} returns true, {@link #getInitializer()} still can return null,
    * e.g. for implicit initializer in case of enum constant declaration.</p>
    *
    * @return true if the variable has an initializer, false otherwise.

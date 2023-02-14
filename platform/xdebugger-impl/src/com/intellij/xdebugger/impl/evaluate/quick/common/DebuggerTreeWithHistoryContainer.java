@@ -77,7 +77,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  protected final JComponent createToolbar(JPanel parent, Tree tree) {
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
@@ -89,7 +89,9 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_MASK)), parent);
     group.add(forward);
 
-    return ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DebuggerTreeWithHistory", group, true);
+    toolbar.setTargetComponent(tree);
+    return toolbar.getComponent();
   }
 
   private class GoForwardAction extends AnAction {
@@ -108,6 +110,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -129,6 +136,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class SetAsRootAction extends AnAction {
@@ -149,6 +161,11 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
         enabled = !((XValueNodeImpl)component).isLeaf();
       }
       e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

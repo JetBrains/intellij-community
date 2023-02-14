@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -15,6 +16,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PostfixPrefixIntention extends MutablyNamedIntention {
 
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("postfix.prefix.intention.family.name");
+  }
+
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
@@ -22,15 +28,13 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
       @Override
       public boolean satisfiedBy(PsiElement element) {
         final IElementType tokenType;
-        if (element instanceof PsiPrefixExpression) {
-          final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
+        if (element instanceof PsiPrefixExpression prefixExpression) {
           tokenType = prefixExpression.getOperationTokenType();
           if (prefixExpression.getOperand() == null) {
             return false;
           }
         }
-        else if (element instanceof PsiPostfixExpression) {
-          final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
+        else if (element instanceof PsiPostfixExpression postfixExpression) {
           tokenType = postfixExpression.getOperationTokenType();
         }
         else {
@@ -48,8 +52,7 @@ public class PostfixPrefixIntention extends MutablyNamedIntention {
 
   @NotNull
   private static String getReplacementText(PsiElement element) {
-    if (element instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
+    if (element instanceof PsiPrefixExpression prefixExpression) {
       final PsiExpression operand = prefixExpression.getOperand();
       assert operand != null;
       final PsiJavaToken sign = prefixExpression.getOperationSign();

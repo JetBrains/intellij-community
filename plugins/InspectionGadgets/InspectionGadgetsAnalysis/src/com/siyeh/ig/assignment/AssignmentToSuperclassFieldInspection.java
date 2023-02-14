@@ -45,34 +45,32 @@ public class AssignmentToSuperclassFieldInspection extends  BaseInspection {
   private static class AssignmentToSuperclassFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression lhs = expression.getLExpression();
       checkSuperclassField(lhs);
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       final PsiExpression operand = expression.getOperand();
       checkSuperclassField(operand);
     }
 
     private void checkSuperclassField(PsiExpression expression) {
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
       if (qualifierExpression != null &&
           !(qualifierExpression instanceof PsiThisExpression) && !(qualifierExpression instanceof PsiSuperExpression)) {
         return;
       }
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass fieldClass = field.getContainingClass();
       if (fieldClass == null) {
         return;

@@ -24,9 +24,6 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdBrowseClient extends BaseSvnClient implements BrowseClient {
 
   @Override

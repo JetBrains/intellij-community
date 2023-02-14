@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.runAnything
 
 import com.intellij.execution.RunManager
@@ -12,9 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.run.PythonConfigurationType
 import com.jetbrains.python.run.PythonRunConfiguration
 
-/**
- * @author vlan
- */
 class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
   override fun createConfiguration(dataContext: DataContext, pattern: String): RunnerAndConfigurationSettings {
     val runManager = RunManager.getInstance(dataContext.project)
@@ -43,6 +40,7 @@ class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
       }
       workingDir?.findPythonSdk(project)?.let {
         sdkHome = it.homePath
+        sdk = it
       }
       workingDir?.let {
         workingDirectory = it.canonicalPath
@@ -68,7 +66,7 @@ class PyRunAnythingProvider : RunAnythingMatchedRunConfigurationProvider() {
 
   override fun getHelpCommand() = "python"
 
-  override fun getHelpGroupTitle(): String? = "Python"  // NON-NLS
+  override fun getHelpGroupTitle(): String = "Python"  // NON-NLS
 
   override fun getHelpCommandPlaceholder() = "python <file name>"
 }

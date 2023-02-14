@@ -1,0 +1,14 @@
+// "Import extension function 'String.genericExt'" "true"
+package p
+
+import p.Obj.genericExt
+
+open class Base<T> {
+    fun T.genericExt() {}
+}
+
+object Obj : Base<String>()
+
+fun usage() {
+    "hello".genericExt()
+}

@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class ExtensionMethodsHelper {
+public final class ExtensionMethodsHelper {
 
   private static final Logger LOG = Logger.getInstance(ExtensionMethodsHelper.class);
 

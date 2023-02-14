@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.Location;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 
 class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUsage, DataProvider {
   @NotNull
@@ -162,6 +161,13 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
   @NotNull
   private SmartPsiElementPointer<? extends PsiMember> getPointer() {
     return myTestClassPointer != null ? myTestClassPointer : myTestMethodPointer;
+  }
+
+  @Override
+  public int getNavigationOffset() {
+    Segment segment = getPointer().getPsiRange();
+    if (segment == null) return -1;
+    return segment.getStartOffset();
   }
 
   @Override

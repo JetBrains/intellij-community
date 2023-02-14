@@ -9,6 +9,18 @@
   <item name='java.util.AbstractCollection java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.AbstractCollection boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean containsAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean removeAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.AbstractCollection boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.AbstractMap java.util.Collection&lt;V&gt; values()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -17,6 +29,21 @@
     </item>
   <item name='java.util.AbstractMap java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.ArrayDeque ArrayDeque()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.ArrayDeque ArrayDeque(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.ArrayDeque ArrayDeque(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.ArrayDeque E element()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -60,10 +87,25 @@
   <item name='java.util.ArrayDeque void push(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.ArrayList ArrayList()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.ArrayList ArrayList(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.ArrayList ArrayList(int) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0">
@@ -1887,11 +1929,6 @@
   <item name="java.util.Collection boolean removeAll(java.util.Collection&lt;?&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.util.Collection boolean removeIf(java.util.function.Predicate&lt;? super E&gt;)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;this&quot;"/>
-    </annotation>
-  </item>
   <item name="java.util.Collection boolean retainAll(java.util.Collection&lt;?&gt;)">
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
@@ -2099,6 +2136,10 @@
   </item>
   <item name="java.util.Collections java.util.Collection&lt;E&gt; checkedCollection(java.util.Collection&lt;E&gt;, java.lang.Class&lt;E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Collection&lt;E&gt; checkedCollection(java.util.Collection&lt;E&gt;, java.lang.Class&lt;E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2111,6 +2152,10 @@
   </item>
   <item name="java.util.Collections java.util.Collection&lt;T&gt; synchronizedCollection(java.util.Collection&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Collection&lt;T&gt; unmodifiableCollection(java.util.Collection&lt;? extends T&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2118,6 +2163,10 @@
   </item>
   <item name="java.util.Collections java.util.Collection&lt;T&gt; unmodifiableCollection(java.util.Collection&lt;? extends T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Comparator&lt;T&gt; reverseOrder()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2164,6 +2213,10 @@
   </item>
   <item name="java.util.Collections java.util.List&lt;E&gt; checkedList(java.util.List&lt;E&gt;, java.lang.Class&lt;E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.List&lt;E&gt; checkedList(java.util.List&lt;E&gt;, java.lang.Class&lt;E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2183,12 +2236,22 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name="java.util.Collections java.util.List&lt;T&gt; nCopies(int, T) 1">
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.Collections java.util.List&lt;T&gt; singletonList(T)">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name="org.jetbrains.annotations.Unmodifiable" />
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;_-&gt;new&quot;"/>
       <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name="java.util.Collections java.util.List&lt;T&gt; singletonList(T) 0">
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Collections java.util.List&lt;T&gt; synchronizedList(java.util.List&lt;T&gt;)'>
@@ -2199,6 +2262,10 @@
   </item>
   <item name="java.util.Collections java.util.List&lt;T&gt; synchronizedList(java.util.List&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.List&lt;T&gt; unmodifiableList(java.util.List&lt;? extends T&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2206,6 +2273,10 @@
   </item>
   <item name="java.util.Collections java.util.List&lt;T&gt; unmodifiableList(java.util.List&lt;? extends T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.ListIterator&lt;T&gt; emptyListIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2303,6 +2374,10 @@
   </item>
   <item name="java.util.Collections java.util.Queue&lt;E&gt; checkedQueue(java.util.Queue&lt;E&gt;, java.lang.Class&lt;E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Queue&lt;E&gt; checkedQueue(java.util.Queue&lt;E&gt;, java.lang.Class&lt;E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2315,6 +2390,10 @@
   </item>
   <item name="java.util.Collections java.util.Queue&lt;T&gt; asLifoQueue(java.util.Deque&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Collections java.util.Set&lt;E&gt; checkedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2324,6 +2403,10 @@
   </item>
   <item name="java.util.Collections java.util.Set&lt;E&gt; checkedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Set&lt;E&gt; checkedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2352,6 +2435,11 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name="java.util.Collections java.util.Set&lt;T&gt; singleton(T) 0">
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Collections java.util.Set&lt;T&gt; synchronizedSet(java.util.Set&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -2360,6 +2448,10 @@
   </item>
   <item name="java.util.Collections java.util.Set&lt;T&gt; synchronizedSet(java.util.Set&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.Set&lt;T&gt; unmodifiableSet(java.util.Set&lt;? extends T&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2367,6 +2459,10 @@
   </item>
   <item name="java.util.Collections java.util.Set&lt;T&gt; unmodifiableSet(java.util.Set&lt;? extends T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Collections java.util.SortedMap&lt;K,V&gt; checkedSortedMap(java.util.SortedMap&lt;K,V&gt;, java.lang.Class&lt;K&gt;, java.lang.Class&lt;V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2413,6 +2509,10 @@
   </item>
   <item name="java.util.Collections java.util.SortedSet&lt;E&gt; checkedSortedSet(java.util.SortedSet&lt;E&gt;, java.lang.Class&lt;E&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.SortedSet&lt;E&gt; checkedSortedSet(java.util.SortedSet&lt;E&gt;, java.lang.Class&lt;E&gt;) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2432,6 +2532,10 @@
   </item>
   <item name="java.util.Collections java.util.SortedSet&lt;T&gt; synchronizedSortedSet(java.util.SortedSet&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name="java.util.Collections java.util.SortedSet&lt;T&gt; unmodifiableSortedSet(java.util.SortedSet&lt;T&gt;)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -2439,6 +2543,10 @@
   </item>
   <item name="java.util.Collections java.util.SortedSet&lt;T&gt; unmodifiableSortedSet(java.util.SortedSet&lt;T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Collections void copy(java.util.List&lt;? super T&gt;, java.util.List&lt;? extends T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -2575,20 +2683,36 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getDay()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="6"/>
     </annotation>
   </item>
   <item name='java.util.Date int getHours()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getMinutes()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
     </annotation>
   </item>
   <item name="java.util.Date int getMonth()">
@@ -2598,10 +2722,18 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getSeconds()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
     </annotation>
   </item>
   <item name='java.util.Date int getYear()'>
@@ -2640,14 +2772,32 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Date void setDate(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
   <item name='java.util.Date void setHours(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Date void setHours(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
   <item name='java.util.Date void setMinutes(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setMinutes(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="60"/>
     </annotation>
   </item>
   <item name='java.util.Date void setMonth(int)'>
@@ -2659,10 +2809,20 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
   </item>
   <item name='java.util.Date void setSeconds(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setSeconds(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
     </annotation>
   </item>
   <item name='java.util.Date void setTime(long)'>
@@ -2677,6 +2837,11 @@
   </item>
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Enumeration boolean hasMoreElements()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Formatter Formatter(java.io.File) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2739,15 +2904,85 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
   </item>
   <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
   </item>
   <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashMap HashMap()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashMap HashMap(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.HashMap HashMap(int) 0'>
@@ -2756,10 +2991,30 @@
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.util.HashMap HashMap(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.HashMap HashMap(int, float) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashMap HashMap(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashSet HashSet()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashSet HashSet(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.HashSet HashSet(int) 0'>
@@ -2768,10 +3023,20 @@
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.util.HashSet HashSet(int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.HashSet HashSet(int, float) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.HashSet HashSet(java.util.Collection&lt;? extends E&gt;) 0'>
@@ -2950,6 +3215,11 @@
   <item name='java.util.List void sort(java.util.Comparator&lt;? super E&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map int size()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Map V compute(K, java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
@@ -3188,10 +3458,26 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Objects boolean equals(java.lang.Object, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Objects boolean equals(java.lang.Object, java.lang.Object) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.util.Objects java.lang.String toString(java.lang.Object, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;null, _ -&gt; param2&quot;"/>
       <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; of(T) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; ofNullable(T) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Optional T get()'>
@@ -3199,11 +3485,23 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Optional T orElse(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;!null -&gt; !null&quot;"/>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional T orElse(T) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
@@ -3650,11 +3948,51 @@
   <item name="java.util.TimeZone java.util.TimeZone getTimeZone(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.util.TreeMap TreeMap()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeMap TreeMap(java.util.Comparator&lt;? super K&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeMap TreeMap(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeMap TreeMap(java.util.SortedMap&lt;K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeSet TreeSet()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeSet TreeSet(java.util.Collection&lt;? extends E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.TreeSet TreeSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeSet TreeSet(java.util.Comparator&lt;? super E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.TreeSet TreeSet(java.util.SortedSet&lt;E&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name="java.util.UUID">

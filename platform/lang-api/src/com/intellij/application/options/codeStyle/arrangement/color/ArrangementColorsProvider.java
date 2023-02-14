@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public interface ArrangementColorsProvider {
   
   @NotNull

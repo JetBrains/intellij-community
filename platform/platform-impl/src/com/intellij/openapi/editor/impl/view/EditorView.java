@@ -1,12 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -41,10 +42,10 @@ import java.text.Bidi;
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
  * and coordinate conversions (offset <-> logical position <-> visual position <-> x,y).
- * 
+ * <p>
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
-public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
+public final class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
   private static final Logger LOG = Logger.getInstance(EditorView.class);
   private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
@@ -76,7 +77,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   private final Object myLock = new Object();
   
-  public EditorView(EditorImpl editor) {
+  public EditorView(@NotNull EditorImpl editor) {
     myEditor = editor;
     myDocument = editor.getDocument();
     
@@ -147,16 +148,26 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
     checkFontRenderContext(null);
   }
+
   public int yToVisualLine(int y) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
     return myMapper.yToVisualLine(y);
   }
 
   public int visualLineToY(int line) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
     return myMapper.visualLineToY(line);
   }
 
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(int offset) {
+  public int[] visualLineToYRange(int line) {
+    assertIsDispatchThread();
+    assertNotInBulkMode();
+    return myMapper.visualLineToYRange(line);
+  }
+
+  public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
     assertIsReadAccess();
     return myMapper.offsetToLogicalPosition(offset);
   }
@@ -166,24 +177,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return myMapper.logicalPositionToOffset(pos);
   }
 
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
   }
 
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
+  public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualToLogicalPosition(pos);
   }
 
-  @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -211,24 +219,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return myMapper.visualLineToOffset(visualLine);
   }
   
-  @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.xyToVisualPosition(p);
   }
 
-  @NotNull
-  public Point2D visualPositionToXY(@NotNull VisualPosition pos) {
+  public @NotNull Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToXY(pos);
   }
 
-  @NotNull
-  public Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+  public @NotNull Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
     assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -247,13 +252,19 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   public float getPrefixTextWidthInPixels() {
-    synchronized (myLock) {
-      return myPrefixLayout == null ? 0 : myPrefixLayout.getWidth();
-    }
+    LineLayout layout = getPrefixLayout();
+    return layout == null ? 0 : layout.getWidth();
   }
 
   LineLayout getPrefixLayout() {
     synchronized (myLock) {
+      FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
+      if (topLevelRegions != null && topLevelRegions.length > 0) {
+        FoldRegion firstRegion = topLevelRegions[0];
+        if (firstRegion instanceof CustomFoldRegion && firstRegion.getStartOffset() == 0) {
+          return null; // prefix is hidden
+        }
+      }
       return myPrefixLayout;
     }
   }
@@ -274,8 +285,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myPainter.repaintCarets();
   }
 
-  @NotNull
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
@@ -328,23 +338,18 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return maxWidth;
   }
 
+  @RequiresEdt
   public void reinitSettings() {
-    assertIsDispatchThread();
     synchronized (myLock) {
       myPlainSpaceWidth = -1;
       myTabSize = -1;
       setFontRenderContext(null);
     }
-    switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
-      case LTR:
-        myBidiFlags = Bidi.DIRECTION_LEFT_TO_RIGHT;
-        break;
-      case RTL:
-        myBidiFlags = Bidi.DIRECTION_RIGHT_TO_LEFT;
-        break;
-      default:
-        myBidiFlags = Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
-    }
+    myBidiFlags = switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
+      case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
+      case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
+      default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
+    };
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -577,11 +582,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
                                            contextToSet.getAntiAliasingHint(), contextToSet.getFractionalMetricsHint());
     }
 
-    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue
+    Object fmHint = UISettings.getEditorFractionalMetricsHint();
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == fmHint
                           ? contextToSet
                           : new FontRenderContext(contextToSet.getTransform(), 
                                                   contextToSet.getAntiAliasingHint(), 
-                                                  myEditor.myFractionalMetricsHintValue);
+                                                  fmHint);
     return true;
   }
 
@@ -597,6 +603,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
+      myEditor.getFoldingModel().updateCachedOffsets();
     }
   }
 
@@ -669,15 +676,6 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    if (myEditor.getSettings().isShowingSpecialChars()) {
-      // This is a simplification - we don't account for special characters not rendered in certain circumstances (based on surrounding
-      // characters), so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
-      // original character).
-      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(this, codePoint, null, 0);
-      if (specialCharacterFragment != null) {
-        return specialCharacterFragment.visualColumnToX(0, 1);
-      }
-    }
     return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
   }
 
@@ -702,9 +700,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     String prefixText = myPrefixText;
     TextAttributes prefixAttributes = myPrefixAttributes;
     synchronized (myLock) {

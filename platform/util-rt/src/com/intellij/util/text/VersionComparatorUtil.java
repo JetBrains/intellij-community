@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.util.Function;
@@ -18,15 +18,19 @@ import java.util.regex.Pattern;
  */
 public final class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
+  private static final Pattern ZERO_PATTERN = Pattern.compile("0+");
+  private static final Pattern DIGITS_PATTERN = Pattern.compile("\\d+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();
 
   public static final Comparator<String> COMPARATOR = new Comparator<String>() {
+    @Override
     public int compare(String s1, String s2) {
       return VersionComparatorUtil.compare(s1, s2);
     }
   };
 
   public static final Function<String, Integer> DEFAULT_TOKEN_PRIORITY_PROVIDER = new Function<String, Integer>() {
+    @Override
     public Integer fun(String s) {
       return VersionTokenType.lookup(s).getPriority();
     }
@@ -81,11 +85,11 @@ public final class VersionComparatorUtil {
         }
       }
 
-      if (str.matches("0+")) {
+      if (ZERO_PATTERN.matcher(str).matches()) {
         return _WS;
       }
 
-      if (str.matches("\\d+")) {
+      if (DIGITS_PATTERN.matcher(str).matches()) {
         return _DIGITS;
       }
 
@@ -97,9 +101,9 @@ public final class VersionComparatorUtil {
     }
   }
 
-  static List<String> splitVersionString(final String ver) {
+  public static List<String> splitVersionString(final String ver) {
     StringTokenizer st = new StringTokenizer(ver.trim(), "()._-;:/, +~");
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     while (st.hasMoreTokens()) {
       final Matcher matcher = WORDS_SPLITTER.matcher(st.nextToken());

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -42,12 +28,16 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightJavaInspection
       "    protected void setUp() throws Exception {}" +
       "    protected void tearDown() throws Exception {}" +
       "}",
-      "package junit.framework;\n" +
-      "public interface Test {\n" +
-      "    public abstract int countTestCases();\n" +
-      "    public abstract void run(TestResult result);\n" +
-      "}",
+      """
+package junit.framework;
+public interface Test {
+    int countTestCases();
+    void run(TestResult result);
+}""",
+      "package org.junit; public @interface Ignore {}",
       "package org.junit.jupiter.api;" +
+      "import org.junit.platform.commons.annotation.Testable;" +
+      "@Testable\n" +
       "public @interface Test {}",
       "package org.junit.jupiter.api;" +
       "public @interface Nested {}",

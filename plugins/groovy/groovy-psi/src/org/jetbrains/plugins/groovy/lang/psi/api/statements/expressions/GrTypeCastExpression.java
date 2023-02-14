@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 
-/**
- * @author ilyas
- */
 public interface GrTypeCastExpression extends GrExpression {
   GrTypeElement getCastTypeElement();
 

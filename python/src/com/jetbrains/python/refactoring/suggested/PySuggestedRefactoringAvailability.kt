@@ -14,11 +14,12 @@ internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactorin
   override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
     val declaration = state.declaration
     return when {
+      declaration == null -> null
       PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration) -> {
         SuggestedChangeSignatureData.create(state, RefactoringBundle.message("suggested.refactoring.usages"))
       }
       PySuggestedRefactoringSupport.isAvailableForRename(declaration) -> {
-        SuggestedRenameData(state.declaration as PsiNameIdentifierOwner, state.oldSignature.name)
+        SuggestedRenameData(declaration as PsiNameIdentifierOwner, state.oldSignature.name)
       }
       else -> null
     }

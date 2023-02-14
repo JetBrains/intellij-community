@@ -108,35 +108,21 @@ public class TabImpl extends AbstractTab implements Tab {
 
   @Override
   public boolean isDetached(PlaceInGrid place) {
-    switch (place) {
-      case bottom:
-        return isBottomDetached();
-      case center:
-        return isCenterDetached();
-      case left:
-        return isLeftDetached();
-      case right:
-        return isRightDetached();
-    }
-
-    return false;
+    return switch (place) {
+      case bottom -> isBottomDetached();
+      case center -> isCenterDetached();
+      case left -> isLeftDetached();
+      case right -> isRightDetached();
+    };
   }
 
   @Override
   public void setDetached(PlaceInGrid place, boolean detached) {
     switch (place) {
-      case bottom:
-        setBottomDetached(detached);
-        break;
-      case center:
-        setCenterDetached(detached);
-        break;
-      case left:
-        setLeftDetached(detached);
-        break;
-      case right:
-        setRightDetached(detached);
-        break;
+      case bottom -> setBottomDetached(detached);
+      case center -> setCenterDetached(detached);
+      case left -> setLeftDetached(detached);
+      case right -> setRightDetached(detached);
     }
   }
 

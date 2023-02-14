@@ -8,14 +8,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows skipping completion autopopup according to current context.
- *
- * @author peter
  */
 public abstract class CompletionConfidence {
 
   /**
    * Invoked first when a completion autopopup is scheduled. Extensions are able to cancel this completion process based on location.
-   * For example, in string literals or comments completion autopopup may do more harm than good.
+   * For example, in string literals or comments, completion autopopup may do more harm than good.
    */
   @NotNull
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {

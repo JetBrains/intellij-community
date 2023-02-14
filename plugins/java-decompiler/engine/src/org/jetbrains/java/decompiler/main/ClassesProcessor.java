@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -42,7 +43,7 @@ public class ClassesProcessor implements CodeConstants {
     private int accessFlags;
 
     private static boolean equal(Inner o1, Inner o2) {
-      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && InterpreterUtil.equalObjects(o1.simpleName, o2.simpleName);
+      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && Objects.equals(o1.simpleName, o2.simpleName);
     }
   }
 
@@ -119,6 +120,25 @@ public class ClassesProcessor implements CodeConstants {
         ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
         node.access = cl.getAccessFlags();
         mapRootClasses.put(cl.qualifiedName, node);
+      }
+    }
+
+    // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
+    for (ClassNode clazz : mapRootClasses.values()) {
+      if (clazz.classStruct.hasSealedClassesSupport() &&
+          (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
+          clazz.classStruct.getPermittedSubclasses() == null) {
+        List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
+        PrimitiveConstant superConst = clazz.classStruct.superClass;
+        if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
+        clazz.setNonSealed(
+          qualifiedSealedSuperNames.stream()
+            .map(mapRootClasses::get)
+            .filter(Objects::nonNull)
+            .map(potentialSuper -> potentialSuper.classStruct.getPermittedSubclasses())
+            .filter(Objects::nonNull)
+            .anyMatch(permittedList -> permittedList.contains(clazz.classStruct.qualifiedName))
+        );
       }
     }
 
@@ -253,26 +273,23 @@ public class ClassesProcessor implements CodeConstants {
           for (int i = 0; i < len; i++) {
             Instruction instr = seq.getInstr(i);
             switch (instr.opcode) {
-              case opc_checkcast:
-              case opc_instanceof:
+              case opc_checkcast, opc_instanceof -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                   refNotNew = true;
                 }
-                break;
-              case opc_new:
-              case opc_anewarray:
-              case opc_multianewarray:
+              }
+              case opc_new, opc_anewarray, opc_multianewarray -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                 }
-                break;
-              case opc_getstatic:
-              case opc_putstatic:
+              }
+              case opc_getstatic, opc_putstatic -> {
                 if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
                   refCounter++;
                   refNotNew = true;
                 }
+              }
             }
           }
         }
@@ -387,7 +404,7 @@ public class ClassesProcessor implements CodeConstants {
 
   private static void addClassNameToImport(ClassNode node, ImportCollector imp) {
     if (node.simpleName != null && node.simpleName.length() > 0) {
-      imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
+      imp.getNestedName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
     }
 
     for (ClassNode nd : node.nested) {
@@ -418,6 +435,7 @@ public class ClassesProcessor implements CodeConstants {
 
     public int type;
     public int access;
+    public boolean isNonSealed = false;
     public String simpleName;
     public final StructClass classStruct;
     private ClassWrapper wrapper;
@@ -456,7 +474,7 @@ public class ClassesProcessor implements CodeConstants {
 
       anonymousClassType = new VarType(lambda_class_name, true);
 
-      boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
+      boolean is_method_reference = !Objects.equals(content_class_name, classStruct.qualifiedName);
       if (!is_method_reference) { // content method in the same class, check synthetic flag
         StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
@@ -489,6 +507,14 @@ public class ClassesProcessor implements CodeConstants {
         node = node.parent;
       }
       return node.wrapper;
+    }
+
+    public boolean isNonSealed() {
+      return isNonSealed;
+    }
+
+    public void setNonSealed(boolean nonSealed) {
+      isNonSealed = nonSealed;
     }
 
     public static class LambdaInformation {

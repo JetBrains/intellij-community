@@ -32,6 +32,7 @@ import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.testng.Assert;
 import org.testng.ITestNGListener;
 import org.testng.TestNG;
@@ -280,7 +281,6 @@ public final class TestNGUtil {
   }
 
   /**
-   * @return were javadoc params used
    */
   public static void collectAnnotationValues(final Map<String, Collection<String>> results, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<>(1);
@@ -467,11 +467,26 @@ public final class TestNGUtil {
     return topLevelClass;
   }
 
+  /**
+   * Returns whether the version is greater or equal to the one passed into this method.
+   * Check only works when the supplied version is <= 7.4.0, otherwise it will always return true.
+   */
+  public static boolean isVersionOrGreaterThan(@NotNull Project project,
+                                               @Nullable Module module,
+                                               @Range(from = 0, to = 7) int major,
+                                               int minor,
+                                               int bugfix) {
+    if (module == null) return false;
+    Version version = detectVersion(project, module);
+    if (version == null) return false;
+    if (version.major == Integer.MAX_VALUE) return true;
+    return version.isOrGreaterThan(major, minor, bugfix);
+  }
+
   @Nullable
-  public static Version detectVersion(Project project, @Nullable Module module) {
-    if (module == null) return null;
+  private static Version detectVersion(@NotNull Project project, @NotNull Module module) {
     return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
-      Version version = null;
+      String version = null;
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       PsiClass aClass = psiFacade.findClass("org.testng.internal.Version",
                                             GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
@@ -482,12 +497,16 @@ public final class TestNGUtil {
           if (initializer instanceof PsiLiteralExpression) {
             Object eval = ((PsiLiteralExpression)initializer).getValue();
             if (eval instanceof String) {
-              version = Version.parseVersion((String)eval);
+              version = (String)eval;
             }
+          } else {
+            version = String.valueOf(Integer.MAX_VALUE);
           }
         }
       }
-      return CachedValueProvider.Result.createSingleDependency(version, ProjectRootManager.getInstance(module.getProject()));
+      if (version == null) return null;
+      return CachedValueProvider.Result.createSingleDependency(Version.parseVersion(version),
+                                                               ProjectRootManager.getInstance(module.getProject()));
     });
   }
 }

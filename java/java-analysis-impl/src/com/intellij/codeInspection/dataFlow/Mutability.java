@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -12,6 +10,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -22,6 +21,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -33,9 +33,21 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Lattice:
+ *     UNKNOWN
+ *     |      \
+ * MUTABLE   MUST_NOT_MODIFY
+ *     |       |
+ *     |     UNMODIFIABLE_VIEW
+ *     |       |
+ *     |     UNMODIFIABLE
+ *     \      /
+ *     BOTTOM (null)
+ */
 public enum Mutability {
   /**
-   * Mutability is not known; probably value can be mutated
+   * Mutability is not known; probably value can be mutated; TOP
    */
   UNKNOWN("mutability.unknown", null),
   /**
@@ -61,6 +73,12 @@ public enum Mutability {
 
   public static final @NotNull String UNMODIFIABLE_ANNOTATION = UNMODIFIABLE.myAnnotation;
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
+  private static final @NotNull CallMatcher STREAM_COLLECT = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+  private static final @NotNull CallMatcher STREAM_TO_LIST = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "toList").withLanguageLevelAtLeast(LanguageLevel.JDK_16);
+  private static final @NotNull CallMatcher UNMODIFIABLE_COLLECTORS = CallMatcher.staticCall(
+    CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toUnmodifiableList", "toUnmodifiableSet", "toUnmodifiableMap");
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myResourceKey;
   private final String myAnnotation;
   private final Key<CachedValue<PsiAnnotation>> myKey;
@@ -70,11 +88,11 @@ public enum Mutability {
     myAnnotation = annotation;
     myKey = annotation == null ? null : Key.create(annotation);
   }
-  
+
   public DfReferenceType asDfType() {
-    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfTypes.BOTTOM);
+    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfType.BOTTOM);
   }
-  
+
   public @NotNull @Nls String getPresentationName() {
     return JavaAnalysisBundle.message(myResourceKey);
   }
@@ -82,29 +100,34 @@ public enum Mutability {
   public boolean isUnmodifiable() {
     return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
   }
-  
+
   public boolean canBeModified() {
     return this == MUTABLE || this == UNKNOWN;
   }
 
   @NotNull
-  public Mutability unite(Mutability other) {
+  public Mutability join(@NotNull Mutability other) {
     if (this == other) return this;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
+    if (this == MUTABLE || other == MUTABLE) return UNKNOWN;
     if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
     return UNMODIFIABLE;
   }
 
-  @NotNull
-  public Mutability intersect(Mutability other) {
+  /**
+   * @param other mutability to meet
+   * @return resulting mutability; null if bottom
+   */
+  @Nullable
+  public Mutability meet(@NotNull Mutability other) {
     if (this == other) return this;
+    if (this == UNKNOWN) return other;
+    if (other == UNKNOWN) return this;
+    if (this == MUTABLE || other == MUTABLE) return null;
     if (this == UNMODIFIABLE || other == UNMODIFIABLE) return UNMODIFIABLE;
     if (this == UNMODIFIABLE_VIEW || other == UNMODIFIABLE_VIEW) return UNMODIFIABLE_VIEW;
-    if (this == MUST_NOT_MODIFY || other == MUST_NOT_MODIFY) return MUST_NOT_MODIFY;
-    if (this == MUTABLE || other == MUTABLE) return MUTABLE;
-    return UNKNOWN;
+    return MUST_NOT_MODIFY;
   }
 
   @Nullable
@@ -129,14 +152,13 @@ public enum Mutability {
   @NotNull
   public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof LightElement) return UNKNOWN;
-    return CachedValuesManager.getCachedValue(owner, () -> 
+    return CachedValuesManager.getCachedValue(owner, () ->
       CachedValueProvider.Result.create(calcMutability(owner), owner, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @NotNull
   private static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-      PsiParameterList list = (PsiParameterList)owner.getParent();
+    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList list) {
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
       if (method != null) {
         int index = list.getParameterIndex((PsiParameter)owner);
@@ -164,8 +186,7 @@ public enum Mutability {
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE_VIEW;
     }
-    if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
-      PsiField field = (PsiField)owner;
+    if (owner instanceof PsiField field && owner.hasModifierProperty(PsiModifier.FINAL)) {
       List<PsiExpression> initializers = ContainerUtil.createMaybeSingletonList(field.getInitializer());
       if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         initializers = DfaPsiUtil.findAllConstructorInitializers(field);
@@ -177,11 +198,18 @@ public enum Mutability {
         Mutability newMutability = UNKNOWN;
         if (ClassUtils.isImmutable(initializer.getType())) {
           newMutability = UNMODIFIABLE;
-        } else if (initializer instanceof PsiMethodCallExpression) {
-          PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
-          newMutability = method == null ? UNKNOWN : getMutability(method);
+        } else if (initializer instanceof PsiMethodCallExpression call) {
+          if (STREAM_COLLECT.test(call)) {
+            PsiExpression collector = call.getArgumentList().getExpressions()[0];
+            newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
+          } else if (STREAM_TO_LIST.test(call)) {
+            newMutability = UNMODIFIABLE;
+          } else {
+            PsiMethod method = call.resolveMethod();
+            newMutability = method == null ? UNKNOWN : getMutability(method);
+          }
         }
-        mutability = mutability.unite(newMutability);
+        mutability = mutability.join(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

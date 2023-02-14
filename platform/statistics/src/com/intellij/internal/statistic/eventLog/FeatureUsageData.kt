@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
-import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
@@ -54,7 +54,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   companion object {
-    // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
+    // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
                                                 "file_path", "anonymous_id", "client_id")
   }
@@ -62,7 +62,7 @@ class FeatureUsageData(private val recorderId: String) {
   fun addClientId(clientId: String?): FeatureUsageData {
     clientId?.let {
       val permanentClientId = parsePermanentClientId(clientId)
-      data["client_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(permanentClientId)
+      data["client_id"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(permanentClientId)
     }
     return this
   }
@@ -83,7 +83,7 @@ class FeatureUsageData(private val recorderId: String) {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = StatisticsUtil.getProjectId(project, recorderId)
+      data["project"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
     }
     return this
   }
@@ -105,7 +105,7 @@ class FeatureUsageData(private val recorderId: String) {
 
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
-      addPluginInfoTo(info, data)
+      StatisticsUtil.addPluginInfoTo(info, data)
     }
     return this
   }
@@ -185,21 +185,21 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   private fun isCommonPlace(place: String): Boolean {
-    return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
+    return ActionPlaces.isCommonPlace(place)
   }
 
   fun addAnonymizedPath(@NonNls path: String?): FeatureUsageData {
-    data["file_path"] = path?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(path) } ?: "undefined"
+    data["file_path"] = path?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(path) } ?: "undefined"
     return this
   }
 
   fun addAnonymizedId(@NonNls id: String): FeatureUsageData {
-    data["anonymous_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(id)
+    data["anonymous_id"] = EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(id)
     return this
   }
 
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
-    data[key] = value?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(value) } ?: "undefined"
+    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value) } ?: "undefined"
     return this
   }
 
@@ -275,8 +275,12 @@ class FeatureUsageData(private val recorderId: String) {
    *
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
-  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+  internal fun addListNumberData(@NonNls key: String, value: List<Number>): FeatureUsageData {
     return addDataInternal(key, value)
+  }
+
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+    return addListNumberData(key, value)
   }
 
   internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {

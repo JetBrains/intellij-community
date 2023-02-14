@@ -17,9 +17,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -54,7 +56,7 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement superCall = descriptor.getPsiElement();
       final PsiElement callStatement = superCall.getParent();
       assert callStatement != null;
@@ -79,7 +81,7 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
       if (!call.getArgumentList().isEmpty()) {
         return;
       }
-      registerError(call, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      registerError(call);
     }
   }
 }

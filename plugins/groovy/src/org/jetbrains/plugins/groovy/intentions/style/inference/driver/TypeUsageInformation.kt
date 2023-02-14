@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
-import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.intentions.style.inference.CollectingGroovyInferenceSession
 import org.jetbrains.plugins.groovy.intentions.style.inference.SignatureInferenceContext
@@ -62,8 +59,8 @@ class TypeUsageInformationBuilder(method: GrMethod, val signatureInferenceContex
     when (type) {
       is PsiWildcardType -> when {
         type.isSuper -> listOf(type.superBound, getJavaLangObject(context))
-        type.isExtends -> listOf(type.extendsBound, PsiType.NULL)
-        else -> listOf(javaLangObject, PsiType.NULL)
+        type.isExtends -> listOf(type.extendsBound, PsiTypes.nullType())
+        else -> listOf(javaLangObject, PsiTypes.nullType())
       }
       else -> listOf(type)
     }

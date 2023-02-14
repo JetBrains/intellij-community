@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public abstract class Html5SchemaProvider {
   private static final Logger LOG = Logger.getInstance(Html5SchemaProvider.class);
   private static final NotNullLazyValue<String> HTML5_SCHEMA_LOCATION = NotNullLazyValue.atomicLazy(() -> loadLocation(getInstance().getHtmlSchemaLocation(), "HTML5_SCHEMA"));

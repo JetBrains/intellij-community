@@ -1,10 +1,18 @@
 <html>
 <body>
-Reports any uses of concrete AWT peer classes. Such classes represent
+Reports uses of AWT peer classes. Such classes represent
 native windowing system widgets, and will be non-portable between different windowing
 systems.
-<!-- tooltip end -->
-<p>
+<p><b>Example:</b></p>
+<pre><code>
+  import java.awt.peer.ButtonPeer;
 
+  abstract class Sample implements ButtonPeer {
+    public void foo() {
+        Sample sample;
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

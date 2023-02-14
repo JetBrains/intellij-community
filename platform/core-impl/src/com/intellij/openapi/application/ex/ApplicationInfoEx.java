@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,22 +23,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getAboutImageUrl();
 
   /**
-   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
-   */
-  @Deprecated
-  public abstract String getIconUrl();
-
-  /**
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract @NotNull String getSmallIconUrl();
-
-  /**
-   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
-   */
-  @Deprecated
-  public abstract @Nullable String getBigIconUrl();
 
   /**
    * Return path to an SVG file containing icon of the current version of the product. The path is a relative path inside the product's JAR
@@ -53,12 +43,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getToolWindowIconUrl();
 
   public abstract @Nullable String getWelcomeScreenLogoUrl();
-
-  /**
-   * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
-   * standalone tool so different licensing scheme should be applied.
-   */
-  public abstract @Nullable String getPackageCode();
 
   public abstract boolean showLicenseeInfo();
 
@@ -100,9 +84,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
-  public static final int WHATS_NEW_EMBED = 1;
-  public static final int WHATS_NEW_AUTO = 2;
-  public abstract boolean isWhatsNewEligibleFor(int role);
+  public abstract String getWhatsNewEapUrl();
+
+  public abstract boolean isShowWhatsNewOnUpdate();
 
   public abstract String getWinKeymapUrl();
 
@@ -124,9 +108,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
-  public abstract @Nullable String getCustomizeIDEWizardDialog();
-
-  public abstract @Nullable String getCustomizeIDEWizardStepsProvider();
+  public abstract @Nullable String getWelcomeWizardDialog();
 
   public abstract int @Nullable [] getAboutLogoRect();
 
@@ -165,6 +147,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 
+  /**
+   * @deprecated Not used anymore.
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public abstract @Nullable String getDefaultLightLaf();
 
   public abstract @Nullable String getDefaultDarkLaf();

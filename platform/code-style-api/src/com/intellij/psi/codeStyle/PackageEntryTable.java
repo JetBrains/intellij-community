@@ -30,10 +30,9 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
   private final List<PackageEntry> myEntries = new ArrayList<>();
 
   public boolean equals(Object obj) {
-    if (!(obj instanceof PackageEntryTable)) {
+    if (!(obj instanceof PackageEntryTable other)) {
       return false;
     }
-    PackageEntryTable other = (PackageEntryTable)obj;
     if (other.myEntries.size() != myEntries.size()) {
       return false;
     }

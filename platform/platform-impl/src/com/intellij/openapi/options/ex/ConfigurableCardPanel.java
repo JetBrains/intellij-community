@@ -20,6 +20,7 @@ import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +131,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
               panel.add(BorderLayout.CENTER, component);
               component = panel;
             }
-            component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+            if (component.getLayout() instanceof GridLayout) {
+              // GridLayout uses SpacingConfiguration.verticalComponentGap = 6 as a part of components
+              component.setBorder(JBUI.Borders.empty(5, 16, 10, 16));
+            } else{
+              component.setBorder(JBUI.Borders.empty(11, 16, 16, 16));
+            }
           }
           if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
             JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);

@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
+import com.intellij.configurationStore.runInAllowSaveMode
+import com.intellij.facet.FacetManager
+import com.intellij.facet.mock.MockFacetType
+import com.intellij.facet.mock.registerFacetType
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
@@ -14,10 +18,16 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.JavaModuleTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import java.io.File
 import java.nio.file.Paths
 
 class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
+  private val unloadedModuleEntities: List<ModuleEntity>
+    get() = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).toList()
+  
   fun `test load project`() {
     val projectPath = FileUtilRt.toSystemIndependentName(File(PathManagerEx.getTestDataPath(), "moduleRootManager/unloadedModules").absolutePath)
     val project = PlatformTestUtil.loadAndOpenProject(Paths.get(projectPath), testRootDisposable)
@@ -33,6 +43,9 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     val dep = moduleManager.unloadedModuleDescriptions.find { it.name == "dep" }!!
     assertEquals("$projectDirUrl/dep", assertOneElement(dep.contentRoots).url)
     assertEquals("util", assertOneElement(dep.dependencyModuleNames))
+    
+    assertSameElements(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(ModuleEntity::class.java).map { it.name }.toList(), 
+                       "dep", "util")
   }
 
   fun `test set unloaded modules`() {
@@ -42,46 +55,131 @@ class UnloadedModulesConfigurationTest : JavaModuleTestCase() {
     ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
     ModuleRootModificationUtil.addDependency(a, b)
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     assertNull(moduleManager.findModuleByName("a"))
     assertNotNull(moduleManager.findModuleByName("b"))
 
-    moduleManager.setUnloadedModules(listOf("b"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("b"))
+    }
     assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
     val newA = moduleManager.findModuleByName("a")
     assertNotNull(newA)
     assertNull(moduleManager.findModuleByName("b"))
     assertEquals(VfsUtilCore.pathToUrl(contentRootPath), assertOneElement(ModuleRootManager.getInstance(newA!!).contentRootUrls))
+    
+    assertEquals("b", unloadedModuleEntities.single().name)
+  }
+
+  @TestFor(issues = ["IDEA-296840"])
+  fun `test reload module and check if facet is not disposed`() {
+    registerFacetType(MockFacetType(), project)
+    val a = createModule("a")
+    val b = createModule("b")
+    val contentRootPath = FileUtil.toSystemIndependentName(createTempDirectory().absolutePath)
+    ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
+    ModuleRootModificationUtil.addDependency(a, b)
+
+    runWriteAction {
+      FacetManager.getInstance(a).addFacet(MockFacetType.getInstance(), "myFacet", null)
+    }
+
+    val moduleManager = ModuleManager.getInstance(project)
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+    assertNull(moduleManager.findModuleByName("a"))
+    assertNotNull(moduleManager.findModuleByName("b"))
+
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf())
+    }
+
+    val moduleA = ModuleManager.getInstance(project).findModuleByName("a")!!
+    val allFacets = FacetManager.getInstance(moduleA).allFacets
+
+    allFacets.forEach {
+      assertFalse(it.isDisposed)
+    }
   }
 
   fun `test add unloaded module back`() {
     val a = createModule("a")
     val aImlPath = a.moduleFilePath
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
 
     runWriteAction {
       moduleManager.newModule(aImlPath, StdModuleTypes.JAVA.id)
     }
     assertEmpty(moduleManager.unloadedModuleDescriptions)
+    assertEmpty(unloadedModuleEntities)
+  }
+  
+  fun `test rename iml file of unloaded module`() {
+    val a = createModule("a")
+    runInAllowSaveMode { project.save() }
+    val imlFile = a.moduleFile!!
+    val moduleManager = ModuleManager.getInstance(project)
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
+
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+
+    runWriteAction {
+      imlFile.rename(this, "b.iml")
+    }
+    assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
   }
 
   fun `test rename module to unloaded module`() {
     createModule("a")
     val b = createModule("b")
     val moduleManager = ModuleManager.getInstance(project)
-    moduleManager.setUnloadedModules(listOf("a"))
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
     assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
 
     runWriteAction {
-      val model = moduleManager.modifiableModel
+      val model = moduleManager.getModifiableModel()
       model.renameModule(b, "a")
       model.commit()
     }
     assertEmpty(moduleManager.unloadedModuleDescriptions)
+    assertEmpty(unloadedModuleEntities)
   }
 
-  private fun getProjectManager() = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+  fun `test unload module with module-level libraries`() {
+    val a = createModule("a")
+    val root = getVirtualFile(createTempDir("module-lib"))
+    ModuleRootModificationUtil.addModuleLibrary(a, "lib", listOf(root.url), emptyList())
+    val moduleManager = ModuleManager.getInstance(project)
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf("a"))
+    }
+    
+    val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+    assertEquals(project.name, entityStorage.entities(ModuleEntity::class.java).single().name)
+    assertEmpty(entityStorage.entities(LibraryEntity::class.java).toList())
+
+    assertEquals("a", unloadedModuleEntities.single().name)
+    val unloadedStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
+    assertEquals("lib", unloadedStorage.entities(LibraryEntity::class.java).single().name)
+
+    runUnderModalProgressIfIsEdt {
+      moduleManager.setUnloadedModules(listOf())
+    }
+    assertEmpty(unloadedModuleEntities)
+    assertEmpty(WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities.entities(LibraryEntity::class.java).toList())
+    assertEquals("lib", WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryEntity::class.java).single().name)
+  }
 }

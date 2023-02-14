@@ -1,4 +1,4 @@
-// "Make 'foo' return 'java.util.List<java.lang.Integer>'" "true"
+// "Make 'foo()' return 'java.util.List<java.lang.Integer>'" "true"
 import java.util.List;
 interface Main<A, B> {
   List<A> foo();

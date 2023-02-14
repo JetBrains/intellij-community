@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -26,6 +27,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -35,7 +37,7 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GroovyPostHighlightingPass.class);
   private final boolean onTheFly;
 
-  public GroovyOptimizeImportsFix(boolean onTheFly) {
+  GroovyOptimizeImportsFix(boolean onTheFly) {
     this.onTheFly = onTheFly;
   }
 
@@ -43,6 +45,15 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final Runnable optimize = new GroovyImportOptimizer().processFile(file);
     invokeOnTheFlyImportOptimizer(optimize, file, editor);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    String originalText = file.getText();
+    final Runnable optimize = new GroovyImportOptimizer().processFile(file);
+    optimize.run();
+    String newText = file.getText();
+    return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, originalText, newText);
   }
 
   @Override
@@ -92,7 +103,9 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
     Document myDocument = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     boolean errors = containsErrorsPreventingOptimize(myFile, myDocument);
 
-    return !errors && DaemonListeners.canChangeFileSilently(myFile);
+    // computed in GroovyPostHighlightingPass.doCollectInformation()
+    boolean isInContent = true;
+    return !errors && DaemonListeners.canChangeFileSilently(myFile, isInContent);
   }
 
   private static boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {

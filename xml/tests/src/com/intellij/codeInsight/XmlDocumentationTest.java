@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -29,42 +15,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
-/**
- * @author maxim
- */
-public class XmlDocumentationTest extends BasePlatformTestCase {
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+public class XmlDocumentationTest extends BasePlatformTestCase {
   public void testXmlDoc() {
-    doOneTest("1.xml", "display-name", false, "web-app_2_3.dtd");
-    doOneTest("2.xml", null, false, "web-app_2_4.xsd");
-    doOneTest("3.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
-    doOneTest("3_2.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
-    doOneTest("3_3.xml", null, false, "web-app_2_4.xsd", "j2ee_1_4.xsd");
+    doOneTest("1.xml", "display-name", "web-app_2_3.dtd");
+    doOneTest("2.xml", null, "web-app_2_4.xsd");
+    doOneTest("3.xml", null, "web-app_2_4.xsd", "j2ee_1_4.xsd");
+    doOneTest("3_2.xml", null, "web-app_2_4.xsd", "j2ee_1_4.xsd");
+    doOneTest("3_3.xml", null, "web-app_2_4.xsd", "j2ee_1_4.xsd");
 
     doOneTest("4.xml", "context-param", false, false, "web-app_2_4.xsd");
     doOneTest("5.xml", "aaa:context-param", false, false, "web-app_2_4.xsd");
     doOneTest("6.xsd", "xs:complexType", true, true);
-    doOneTest("7.xml", "bbb", false);
-    doOneTest("8.xml", "bbb", false);
-    doOneTest("9.xml", "laquo", false);
+    doOneTest("7.xml", "bbb");
+    doOneTest("8.xml", "bbb");
+    doOneTest("9.xml", "laquo");
   }
 
-  public void testXmlDocWithCData() throws Exception {
+  public void testXmlDocWithCData() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + "2.xml", "spring-beans.xsd");
   }
 
-  public void testXmlDoc2() throws Exception {
+  public void testXmlDoc2() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "web-app_2_4.xsd");
   }
 
-  public void testXmlDoc3() throws Exception {
+  public void testXmlDoc3() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "hibernate-mapping-3.0.dtd");
   }
 
-  public void testXmlDoc4() throws Exception {
+  public void testXmlDoc4() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult(testName + ".xml", testName + ".xsd");
   }
@@ -79,51 +64,78 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     assertEquals("\"&#171;\"", context.getQuickNavigateInfo());
   }
 
-  public void testXmlDoc6() throws Exception {
+  public void testXmlDoc6() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"car", testName + ".xml", testName + ".xsd");
   }
 
-  public void testXmlDoc7() throws Exception {
+  public void testXmlDoc7() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"$Paste", testName + ".xml", testName + ".xsd");
   }
 
-  public void testSvgDoc() throws Exception {
+  public void testSvgDoc() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"rect", testName + ".svg");
   }
 
-  public void testSvgDoc2() throws Exception {
+  public void testSvgDoc2() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"stroke-width", testName + ".svg");
   }
 
-  public void testSvgDoc3() throws Exception {
+  public void testSvgDoc3() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".svg");
   }
 
-  private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) throws Exception {
+  public void testScopeAttribute() {
+    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
+  }
+
+  public void testClassAttribute() {
+    doQuickDocGenerationTestWithNullExpectedResult("class.xml");
+  }
+
+  public void testXslCompletion() {
+    doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
+  }
+
+  public void testNoHtmlDocInXml() {
+    doQuickDocGenerationTestWithNullExpectedResult("component.xml");
+  }
+
+  private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) {
     doQuickDocGenerationTestWithCheckExpectedResult(null, baseFileNames);
   }
 
-  private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) throws Exception {
+  private void doQuickDocGenerationTestWithNullExpectedResult(final String... baseFileNames) {
+    final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
+    String text = context.generateDoc();
+    assertThat(text).isNull();
+  }
+
+  private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) {
     final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
     String pathname = getTestDataPath() + baseFileNames[0] + ".expected.html";
     VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(pathname));
     assertNotNull(pathname + " not found", vfile);
-    String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-    String text = context.generateDoc();
-    assertNotNull(text);
-    assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                 stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+", ""));
-
-    if (completionVariant != null) {
-      vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() + baseFileNames[0] + ".expected.completion.html"));
-      expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
+    try {
+      String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
+      String text = context.generateDoc();
+      assertThat(text).isNotNull();
       assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                   stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
-                     .replaceAll("\\s+", ""));
+                   stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+", ""));
+
+      if (completionVariant != null) {
+        vfile =
+          LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() + baseFileNames[0] + ".expected.completion.html"));
+        expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
+        assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
+                     stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
+                       .replaceAll("\\s+", ""));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -138,9 +150,9 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     doOneTest("dtd.xml", "foo", false, true, "web-app_2_4.xsd");
   }
 
-  private void doOneTest(String fileName, String lookupObject, boolean testExternal, String... additional) {
+  private void doOneTest(String fileName, String lookupObject, String... additional) {
     copyAdditionalFiles(additional);
-    doOneTest(fileName, lookupObject, testExternal, true, "web-app_2_4.xsd");
+    doOneTest(fileName, lookupObject, false, true, "web-app_2_4.xsd");
   }
 
   private void copyAdditionalFiles(String[] additional) {
@@ -149,13 +161,13 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     }
   }
 
-  public class DocumentationTestContext {
-    final DocumentationProvider documentationProvider;
-    final PsiElement originalElement;
-    PsiElement element;
-    final PsiFile psiFile;
+  private final class DocumentationTestContext {
+    private final DocumentationProvider documentationProvider;
+    private final PsiElement originalElement;
+    private PsiElement element;
+    private final PsiFile psiFile;
 
-    DocumentationTestContext(String... fileNames) {
+    private DocumentationTestContext(String... fileNames) {
       copyAdditionalFiles(fileNames);
       psiFile = myFixture.configureByFile(fileNames[0]);
       originalElement = psiFile.findElementAt(myFixture.getEditor().getCaretModel().getOffset());
@@ -168,18 +180,15 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
       documentationProvider = DocumentationManager.getProviderFromElement(element);
     }
 
-    @Nullable
-    String generateDoc() {
+    private @Nullable String generateDoc() {
       return documentationProvider.generateDoc(element, originalElement);
     }
 
-    @Nullable
-    String getQuickNavigateInfo() {
+    private @Nullable String getQuickNavigateInfo() {
       return documentationProvider.getQuickNavigateInfo(element, originalElement);
     }
 
-    @Nullable
-    public String generateDocForCompletion(Object completionVariant) {
+    private @Nullable String generateDocForCompletion(Object completionVariant) {
       PsiElement lookupItem = documentationProvider.getDocumentationElementForLookupItem(getPsiManager(), completionVariant,
                                                                                          originalElement);
       if (lookupItem == null && completionVariant instanceof String) {
@@ -222,17 +231,8 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     }
   }
 
-  public void testScopeAttribute() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
-  }
-
-  public void testXslCompletion() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
-  }
-
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/documentation/";
   }
 }

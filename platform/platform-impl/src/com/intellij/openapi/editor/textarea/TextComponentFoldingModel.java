@@ -20,9 +20,6 @@ import com.intellij.openapi.editor.FoldingModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Denis Zhdanov
- */
 class TextComponentFoldingModel implements FoldingModel {
 
   @Override

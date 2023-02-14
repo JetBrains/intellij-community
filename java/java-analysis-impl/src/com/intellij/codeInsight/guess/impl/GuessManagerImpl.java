@@ -1,11 +1,24 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.project.Project;
@@ -20,11 +33,11 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,8 +107,7 @@ public final class GuessManagerImpl extends GuessManager {
 
   @Nullable
   private static PsiType getGenericElementType(PsiType collectionType) {
-    if (collectionType instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType) collectionType;
+    if (collectionType instanceof PsiClassType classType) {
       PsiType[] parameters = classType.getParameters();
       if (parameters.length == 1) {
         return parameters[0];
@@ -124,12 +136,12 @@ public final class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    GuessManagerRunner runner = createRunner(honorAssignments, scope);
+    GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, null);
 
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(runner, forPlace);
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, visitor);
+    var interceptor = new ExpressionTypeListener(runner, forPlace);
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
-      return visitor.getResult();
+      return interceptor.getResult();
     }
     return MultiMap.empty();
   }
@@ -147,82 +159,108 @@ public final class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    GuessManagerRunner runner = createRunner(honorAssignments, scope);
+    GuessManagerRunner runner = new GuessManagerRunner(scope.getProject(), honorAssignments, forPlace);
 
-    class Visitor extends CastTrackingVisitor {
+    class MyListener implements JavaDfaListener {
       TypeConstraint constraint = TypeConstraints.BOTTOM;
 
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        if (expression == forPlace && range == null) {
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @NotNull DfaMemoryState state) {
+        if (expression == forPlace) {
           if (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) {
-            value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
+            value = value.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
           }
           constraint = constraint.join(TypeConstraint.fromDfType(state.getDfType(value)));
           runner.placeVisited();
         }
-        super.beforeExpressionPush(value, expression, range, state);
-      }
-
-      @Override
-      boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
-        return (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) &&
-               ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression, forPlace);
       }
     }
-    final Visitor visitor = new Visitor();
-    RunnerResult result = runner.analyzeMethodWithInlining(scope, visitor);
+    var interceptor = new MyListener();
+    RunnerResult result = runner.analyzeMethodWithInlining(scope, interceptor);
     if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
-      return visitor.constraint.meet(initial).getPsiType(scope.getProject());
+      return interceptor.constraint.meet(initial).getPsiType(scope.getProject());
     }
     return null;
   }
 
-  @NotNull
-  private static GuessManagerRunner createRunner(boolean honorAssignments, PsiElement scope) {
-    return new GuessManagerRunner(scope.getProject(), honorAssignments); 
-  }
-
-  private static class GuessManagerRunner extends DataFlowRunner {
+  private static class GuessManagerRunner extends StandardDataFlowRunner {
     private final boolean myAssignments;
+    private final PsiExpression myPlace;
     private boolean myPlaceVisited;
-    private int[] myLoopNumbers;
 
-    GuessManagerRunner(@NotNull Project project, boolean honorAssignments) {
+    GuessManagerRunner(@NotNull Project project, boolean honorAssignments, @Nullable PsiExpression place) {
       super(project);
       myAssignments = honorAssignments;
+      myPlace = place;
     }
 
     @Override
-    protected int getComplexityLimit() {
-      // Limit analysis complexity for completion as it could be relaunched many times
-      return DEFAULT_MAX_STATES_PER_BRANCH / 3;
+    protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+      return new StandardDataFlowInterpreter(flow, listener) {
+        @Override
+        public int getComplexityLimit() {
+          // Limit analysis complexity for completion as it could be relaunched many times
+          return DEFAULT_MAX_STATES_PER_BRANCH / 3;
+        }
+
+        @Override
+        protected void afterInstruction(Instruction instruction) {
+          super.afterInstruction(instruction);
+          if (myPlaceVisited && flow.getLoopNumbers()[instruction.getIndex()] == 0) {
+            // We cancel the analysis first time we exit all the loops
+            // after the target expression is visited (in this case,
+            // we can be sure we'll not reach it again)
+            cancel();
+          }
+        }
+
+        @Override
+        protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+          Instruction instruction = instructionState.getInstruction();
+          DfaMemoryState memState = instructionState.getMemoryState();
+          if (instruction instanceof TypeCastInstruction) {
+            DfaValue value = memState.pop();
+            memState.push(adjustValue(value, ((TypeCastInstruction)instruction).getCasted()));
+          }
+          else if (instruction instanceof InstanceofInstruction) {
+            DfaValue dfaRight = memState.pop();
+            DfaValue dfaLeft = memState.pop();
+            memState.push(adjustValue(dfaLeft, getInstanceOfOperand(((InstanceofInstruction)instruction))));
+            memState.push(dfaRight);
+          }
+          return super.acceptInstruction(instructionState);
+        }
+
+        @Nullable
+        private PsiExpression getInstanceOfOperand(InstanceofInstruction instruction) {
+          if (instruction.getDfaAnchor() instanceof JavaExpressionAnchor) {
+            PsiExpression expression = ((JavaExpressionAnchor)instruction.getDfaAnchor()).getExpression();
+            if (expression instanceof PsiInstanceOfExpression) {
+              return ((PsiInstanceOfExpression)expression).getOperand();
+            }
+          }
+          return null;
+        }
+
+        private DfaValue adjustValue(@NotNull DfaValue value, @Nullable PsiExpression expression) {
+          if (expression != null && isInteresting(value, expression)) {
+            return getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
+          }
+          return value;
+        }
+
+        private boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
+          if (myPlace == null) return true;
+          return (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) &&
+                 ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression, myPlace);
+        }
+      };
     }
 
     void placeVisited() {
       myPlaceVisited = true;
-    }
-
-    @Override
-    protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                                @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                                @NotNull ControlFlow flow) {
-      myLoopNumbers = flow.getLoopNumbers();
-      return super.createInitialInstructionStates(psiBlock, memStates, flow);
-    }
-
-    @Override
-    protected void afterInstruction(Instruction instruction) {
-      super.afterInstruction(instruction);
-      if (myPlaceVisited && myLoopNumbers[instruction.getIndex()] == 0) {
-        // We cancel the analysis first time we exit all the loops 
-        // after the target expression is visited (in this case, 
-        // we can be sure we'll not reach it again)
-        cancel();
-      }
     }
 
     @NotNull
@@ -270,12 +308,11 @@ public final class GuessManagerImpl extends GuessManager {
   }
 
   private void addExprTypesWhenContainerElement(LinkedHashSet<? super PsiType> set, PsiExpression expr) {
-    if (expr instanceof PsiMethodCallExpression){
-      PsiMethodCallExpression callExpr = (PsiMethodCallExpression)expr;
+    if (expr instanceof PsiMethodCallExpression callExpr){
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
       String methodName = methodExpr.getReferenceName();
       MethodPattern pattern = myMethodPatternMap.findPattern(methodName, callExpr.getArgumentList().getExpressionCount());
-      if (pattern != null && pattern.parameterIndex < 0/* return value */){
+      if (pattern != null && pattern.parameterIndex() < 0/* return value */){
         PsiExpression qualifier = methodExpr.getQualifierExpression();
         if (qualifier != null) {
           PsiType[] types = guessContainerElementType(qualifier, null);
@@ -316,8 +353,7 @@ public final class GuessManagerImpl extends GuessManager {
         }
 
         if (BitUtil.isSet(flags, CHECK_DOWN)) {
-          if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
-            PsiExpressionList list = (PsiExpressionList)ref.getParent();
+          if (ref.getParent() instanceof PsiExpressionList list && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
             int argIndex = ArrayUtil.indexOf(list.getExpressions(), ref);
 
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
@@ -335,32 +371,19 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     if (BitUtil.isSet(flags, CHECK_UP)){
-      if (var instanceof PsiParameter && var.getParent() instanceof PsiParameterList && var.getParent().getParent() instanceof PsiMethod){
-        PsiParameterList list = (PsiParameterList)var.getParent();
+      if (var instanceof PsiParameter &&
+          var.getParent() instanceof PsiParameterList list &&
+          var.getParent().getParent() instanceof PsiMethod method){
         PsiParameter[] parameters = list.getParameters();
-        int argIndex = -1;
-        for(int i = 0; i < parameters.length; i++){
-          PsiParameter parameter = parameters[i];
-          if (parameter.equals(var)){
-            argIndex = i;
-            break;
-          }
-        }
+        int argIndex = ArrayUtil.indexOf(parameters, var);
 
-        PsiMethod method = (PsiMethod)var.getParent().getParent();
-        //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
         for (PsiReference methodRef : ReferencesSearch.search(method, searchScope, false)) {
-          PsiElement ref = methodRef.getElement();
-          if (ref.getParent() instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
+          if (methodRef.getElement().getParent() instanceof PsiMethodCallExpression methodCall) {
             PsiExpression[] args = methodCall.getArgumentList().getExpressions();
             if (args.length <= argIndex) continue;
             PsiExpression arg = args[argIndex];
-            if (arg instanceof PsiReferenceExpression) {
-              PsiElement refElement = ((PsiReferenceExpression)arg).resolve();
-              if (refElement instanceof PsiVariable) {
-                addTypesByVariable(typesSet, (PsiVariable)refElement, scopeFile, checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
-              }
+            if (arg instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable variable) {
+              addTypesByVariable(typesSet, variable, scopeFile, checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
             }
             //TODO : constructor
           }
@@ -374,23 +397,21 @@ public final class GuessManagerImpl extends GuessManager {
                                                        PsiElement ref,
                                                        TextRange rangeToIgnore) {
     PsiElement refParent = ref.getParent();
-    if (refParent instanceof PsiReferenceExpression){
-      PsiReferenceExpression parentExpr = (PsiReferenceExpression)refParent;
-      if (ref.equals(parentExpr.getQualifierExpression()) && parentExpr.getParent() instanceof PsiMethodCallExpression){
-        String methodName = parentExpr.getReferenceName();
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parentExpr.getParent();
-        PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-        MethodPattern pattern = methodPatternMap.findPattern(methodName, args.length);
-        if (pattern != null){
-          if (pattern.parameterIndex < 0){ // return value
-            if (methodCall.getParent() instanceof PsiTypeCastExpression &&
-                (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
-              return ((PsiTypeCastExpression)methodCall.getParent()).getType();
-            }
+    if (refParent instanceof PsiReferenceExpression parentExpr &&
+        ref.equals(parentExpr.getQualifierExpression()) &&
+        parentExpr.getParent() instanceof PsiMethodCallExpression methodCall) {
+      String methodName = parentExpr.getReferenceName();
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      MethodPattern pattern = methodPatternMap.findPattern(methodName, args.length);
+      if (pattern != null) {
+        if (pattern.parameterIndex() < 0) { // return value
+          if (methodCall.getParent() instanceof PsiTypeCastExpression cast &&
+              (rangeToIgnore == null || !rangeToIgnore.contains(methodCall.getTextRange()))) {
+            return cast.getType();
           }
-          else{
-            return args[pattern.parameterIndex].getType();
-          }
+        }
+        else {
+          return args[pattern.parameterIndex()].getType();
         }
       }
     }
@@ -478,7 +499,7 @@ public final class GuessManagerImpl extends GuessManager {
         type = ((PsiPrimitiveType)type).getBoxedType(expression);
       }
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-      if (rawType == null || rawType.equals(PsiType.NULL)) return;
+      if (rawType == null || rawType.equals(PsiTypes.nullType())) return;
       if (mySpecificType == null) {
         mySpecificType = rawType;
       }
@@ -488,7 +509,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
         handleAssignment(expression.getRExpression());
       }
@@ -496,7 +517,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       if (ExpressionUtils.isReferenceTo(myPlace, variable)) {
         myDeclared = true;
         handleAssignment(variable.getInitializer());
@@ -505,7 +526,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       PsiExpression operand = expression.getOperand();
       if (operand != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(operand, myPlace)) {
         myNeedDfa = true;
@@ -514,7 +535,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (OBJECT_GET_CLASS.test(call)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
         if (qualifier != null && ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(qualifier, myPlace)) {
@@ -525,7 +546,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       if (ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
         myNeedDfa = true;
       }
@@ -541,49 +562,20 @@ public final class GuessManagerImpl extends GuessManager {
     }
   }
 
-  abstract static class CastTrackingVisitor extends StandardInstructionVisitor {
-    @Override
-    public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaValue value = memState.pop();
-      memState.push(adjustValue(runner, value, instruction.getCasted()));
-      return super.visitTypeCast(instruction, runner, memState);
-    }
-
-    @Override
-    public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaValue dfaRight = memState.pop();
-      DfaValue dfaLeft = memState.pop();
-      memState.push(adjustValue(runner, dfaLeft, instruction.getLeft()));
-      memState.push(dfaRight);
-      return super.visitInstanceof(instruction, runner, memState);
-    }
-
-    private DfaValue adjustValue(DataFlowRunner runner, DfaValue value, @Nullable PsiExpression expression) {
-      if (expression != null && isInteresting(value, expression)) {
-        value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
-      }
-      return value;
-    }
-
-    boolean isInteresting(@NotNull DfaValue value, @NotNull PsiExpression expression) {
-      return true;
-    }
-  }
-
-  private static final class ExpressionTypeInstructionVisitor extends CastTrackingVisitor {
+  private static final class ExpressionTypeListener implements JavaDfaListener {
     private final Map<DfaVariableValue, TypeConstraint> myResult = new HashMap<>();
     private final GuessManagerRunner myRunner;
     private final PsiElement myForPlace;
 
-    private ExpressionTypeInstructionVisitor(GuessManagerRunner runner,
-                                             @NotNull PsiElement forPlace) {
+    private ExpressionTypeListener(GuessManagerRunner runner,
+                                   @NotNull PsiElement forPlace) {
       myRunner = runner;
       myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
     }
 
     MultiMap<PsiExpression, PsiType> getResult() {
       MultiMap<PsiExpression, PsiType> result = MultiMap.createSet(
-        new Object2ObjectOpenCustomHashMap<>(ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY));
+        CollectionFactory.createCustomHashingStrategyMap(ExpressionVariableDescriptor.EXPRESSION_HASHING_STRATEGY));
       Project project = myForPlace.getProject();
       myResult.forEach((value, constraint) -> {
         if (value.getDescriptor() instanceof ExpressionVariableDescriptor) {
@@ -601,17 +593,15 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected void beforeExpressionPush(@NotNull DfaValue value,
-                                        @NotNull PsiExpression expression,
-                                        @Nullable TextRange range,
-                                        @NotNull DfaMemoryState state) {
-      if (range == null && myForPlace == expression) {
+    public void beforeExpressionPush(@NotNull DfaValue value,
+                                     @NotNull PsiExpression expression,
+                                     @NotNull DfaMemoryState state) {
+      if (myForPlace == expression) {
         ((DfaMemoryStateImpl)state).forRecordedVariableTypes((var, dfType) -> {
           myResult.merge(var, TypeConstraint.fromDfType(dfType), TypeConstraint::join);
         });
         myRunner.placeVisited();
       }
-      super.beforeExpressionPush(value, expression, range, state);
     }
   }
 }

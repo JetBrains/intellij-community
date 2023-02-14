@@ -14,15 +14,18 @@ import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(IdeActivity::class.java)
 
-private enum class State { NOT_STARTED, STARTED, FINISHED }
+internal enum class IdeActivityState { NOT_STARTED, STARTED, FINISHED }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use com.intellij.internal.statistic.StructuredIdeActivity instead. " +
+            "It allows us to generate events scheme from the product code and ensures that only data matching the scheme is being sent.")
 @ApiStatus.Internal
 class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplication: Project?,
                                             private val group: String,
                                             private val activityName: String? = null) {
   private val id = counter.incrementAndGet()
 
-  private var state = State.NOT_STARTED
+  private var state = IdeActivityState.NOT_STARTED
   private var startedTimestamp = 0L
 
   private fun createDataWithActivityId(): FeatureUsageData {
@@ -33,9 +36,9 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     return startedWithData(Consumer { })
   }
 
-  fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
-    if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
-    state = State.STARTED
+  private fun startedWithData(consumer: Consumer<FeatureUsageData>): IdeActivity {
+    if (!LOG.assertTrue(state == IdeActivityState.NOT_STARTED, state.name)) return this
+    state = IdeActivityState.STARTED
 
     val data = createDataWithActivityId()
     consumer.accept(data)
@@ -46,8 +49,8 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   }
 
   fun startedWithDataAsync(dataSupplier: (FeatureUsageData) -> Promise<FeatureUsageData>): IdeActivity {
-    if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
-    state = State.STARTED
+    if (!LOG.assertTrue(state == IdeActivityState.NOT_STARTED, state.name)) return this
+    state = IdeActivityState.STARTED
     startedTimestamp = System.nanoTime()
 
     dataSupplier(createDataWithActivityId()).then { data ->
@@ -57,14 +60,14 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   }
 
   fun stageStarted(stageName: String): IdeActivity {
-    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
+    if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
 
     FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(stageName), createDataWithActivityId())
     return this
   }
 
   fun stageStarted(stageClass: Class<*>): IdeActivity {
-    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
+    if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
 
     val data = createDataWithActivityId().addData("stage_class", stageClass.name)
     FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("stage"), data)
@@ -74,8 +77,8 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
   fun finished(): IdeActivity = finished(null)
 
   fun finished(consumer: Consumer<FeatureUsageData>?): IdeActivity {
-    if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
-    state = State.FINISHED
+    if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
+    state = IdeActivityState.FINISHED
 
     val data = createDataWithActivityId()
     consumer?.accept(data)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -6,12 +6,13 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,9 +55,10 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     setLayout(new BorderLayout());
     add(decorator.createPanel(), BorderLayout.CENTER);
     if (myTitle != null) {
-      final JLabel label = new JLabel(myTitle);
-      label.setBorder(JBUI.Borders.emptyBottom(3));
-      add(label, BorderLayout.NORTH);
+      @SuppressWarnings("DialogTitleCapitalization") var outerBorder = IdeBorderFactory.createTitledBorder(
+        myTitle, false, JBInsets.emptyInsets()
+      ).setShowLine(false);
+      setBorder(new CompoundBorder(outerBorder, getBorder()));
     }
   }
 

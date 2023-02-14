@@ -1,7 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
-import java.lang.management.*;
+import com.sun.management.OperatingSystemMXBean;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -10,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 public class SamplingTask {
   private final static ThreadMXBean THREAD_MX_BEAN = ManagementFactory.getThreadMXBean();
-  private final static OperatingSystemMXBean OS_MX_BEAN = ManagementFactory.getOperatingSystemMXBean();
   private final static List<GarbageCollectorMXBean> GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans();
 
   private final int myDumpInterval;
@@ -24,14 +29,14 @@ public class SamplingTask {
   private long myCurrentTime;
   private final long myGcStartTime;
   private long myGcCurrentTime;
-  private final double myOsAverageLoad;
+  private final double myProcessCpuLoad;
 
   public SamplingTask(int intervalMs, int maxDurationMs) {
     myDumpInterval = intervalMs;
     myMaxDumps = maxDurationMs / intervalMs;
     myCurrentTime = myStartTime = System.nanoTime();
     myGcCurrentTime = myGcStartTime = currentGcTime();
-    myOsAverageLoad = OS_MX_BEAN.getSystemLoadAverage();
+    myProcessCpuLoad = ((OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean()).getProcessCpuLoad();
     ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
     myFuture = executor.scheduleWithFixedDelay(this::dumpThreads, 0, myDumpInterval, TimeUnit.MILLISECONDS);
   }
@@ -45,42 +50,38 @@ public class SamplingTask {
       if (myThreadInfos.size() >= myMaxDumps) {
         stop();
       }
-      dumpedThreads(infos);
+      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos));
     }
   }
 
-  protected void dumpedThreads(ThreadInfo[] infos) {
+  protected void dumpedThreads(@NotNull ThreadDump threadDump) {
   }
 
   private static long currentGcTime() {
     return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
   }
 
-  public int getDumpInterval() {
+  public final int getDumpInterval() {
     return myDumpInterval;
   }
 
-  public List<ThreadInfo[]> getThreadInfos() {
+  public final List<ThreadInfo[]> getThreadInfos() {
     return myThreadInfos;
   }
 
-  public long getSampledTime() {
-    return (long)myThreadInfos.size() * myDumpInterval;
-  }
-
-  public long getTotalTime() {
+  public final long getTotalTime() {
     return TimeUnit.NANOSECONDS.toMillis(myCurrentTime - myStartTime);
   }
 
-  public long getGcTime() {
+  public final long getGcTime() {
     return myGcCurrentTime - myGcStartTime;
   }
 
-  public double getOsAverageLoad() {
-    return myOsAverageLoad;
+  public final double getProcessCpuLoad() {
+    return myProcessCpuLoad;
   }
 
-  public boolean isValid(long dumpingDuration) {
+  public final boolean isValid(long dumpingDuration) {
     return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
   }
 

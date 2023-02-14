@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisitor {
 
   @Override
-  public void visitForeachStatement(PsiForeachStatement statement) {
+  public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     super.visitForeachStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
@@ -35,7 +35,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
   }
 
   @Override
-  public void visitForStatement(PsiForStatement statement) {
+  public void visitForStatement(@NotNull PsiForStatement statement) {
     super.visitForStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
@@ -45,7 +45,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
 
 
   @Override
-  public void visitWhileStatement(PsiWhileStatement statement) {
+  public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
     super.visitWhileStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
@@ -54,7 +54,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
   }
 
   @Override
-  public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+  public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
     super.visitDoWhileStatement(statement);
     final PsiStatement body = statement.getBody();
     if (isApplicable(body)) {
@@ -63,7 +63,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
   }
 
   @Override
-  public void visitIfStatement(PsiIfStatement statement) {
+  public void visitIfStatement(@NotNull PsiIfStatement statement) {
     super.visitIfStatement(statement);
     final PsiStatement thenBranch = statement.getThenBranch();
     if (isApplicable(thenBranch)) {

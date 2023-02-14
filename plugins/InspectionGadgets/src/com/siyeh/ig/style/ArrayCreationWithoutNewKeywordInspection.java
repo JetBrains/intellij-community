@@ -52,7 +52,7 @@ public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
 
   private static class ArrayCreationExpressionVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
       final PsiType type = expression.getType();
       if (!(type instanceof PsiArrayType)) {
@@ -88,10 +88,9 @@ public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiArrayInitializerExpression) {
-        final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
+      if (element instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
         final PsiType type = arrayInitializerExpression.getType();
         if (type != null) {
           PsiReplacementUtil.replaceExpression(arrayInitializerExpression, "new " +

@@ -61,6 +61,59 @@ class KotlincOutputParserTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
+  fun `test kotlin error message with uri file location`() {
+    generateBuildWithOutput(
+      """
+          e: file://C:/A.kt: (7, 5): Unresolved reference: bbb
+                      
+      """.trimIndent()
+    )
+    with(buildViewTestFixture) {
+      assertBuildViewTreeEquals(
+        """
+          -
+           -finished
+            file://C:/A.kt: (7, 5): Unresolved reference: bbb
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `test kotlin error message with file location`() {
+    generateBuildWithOutput(
+      """
+          e: C:\A.kt: (7, 5): Unresolved reference: bbb
+            
+      """.trimIndent()
+    )
+    with(buildViewTestFixture) {
+      assertBuildViewTreeEquals(
+        """
+          -
+           -finished
+            C:\A.kt: (7, 5): Unresolved reference: bbb
+        """.trimIndent()
+      )
+    }
+  }
+
+  @Test
+  fun `test different file paths are parsed`() {
+    val paths = listOf("e: file:///C:/JB/tasks/KTIJ-22428/untitled/src/main/kotlin/A.kt:7:5 Unresolved reference: bbb\n",
+      "e: C:\\A.kt: (7, 5): Unresolved reference: bbb\n",
+      "e: file:////wsl$/Ubuntu/home/A.kt:7:5 Unresolved reference: bbb\n",
+      "e: \\\\wsl\$\\Ubuntu\\home\\A.kt: (7, 5): Unresolved reference: bbb\n"
+    )
+    for (line in paths) {
+      assert(line.contains(KotlincOutputParser.Companion.extractPath(line) ?: "path not found")) {
+        "Failed to find path in [$line]"
+      }
+    }
+
+  }
+
   private fun generateBuildWithOutput(output: String) {
     BuildViewManager.createBuildProgress(project)
       .start(progressDescriptor())

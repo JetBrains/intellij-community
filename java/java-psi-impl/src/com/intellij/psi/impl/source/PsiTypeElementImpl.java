@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -13,10 +14,7 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -139,7 +137,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
 
-    if (type == null) return PsiType.NULL;
+    if (type == null) return PsiTypes.nullType();
 
     if (!arrayComponentAnnotations.isEmpty()) {
       type = createArray(type, arrayComponentAnnotations, ellipsis);
@@ -164,7 +162,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   private PsiType inferVarType(PsiElement parent) {
     if (parent instanceof PsiParameter) {
-      PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+      PsiParameter parameter = (PsiParameter)parent;
+      if (parameter instanceof PsiPatternVariable) {
+        return JavaPsiPatternUtil.getDeconstructedImplicitPatternVariableType((PsiPatternVariable)parameter);
+      }
+      PsiElement declarationScope = parameter.getDeclarationScope();
       if (declarationScope instanceof PsiForeachStatement) {
         PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
         if (iteratedValue != null) {
@@ -174,7 +176,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
 
       if (declarationScope instanceof PsiLambdaExpression) {
-        return ((PsiParameter)parent).getType();
+        return parameter.getType();
       }
     }
     else {
@@ -182,8 +184,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (e instanceof PsiExpression) {
           if (!(e instanceof PsiArrayInitializerExpression)) {
             PsiExpression expression = (PsiExpression)e;
+            RecursionGuard.StackStamp stamp = RecursionManager.markStack();
             PsiType type = RecursionManager.doPreventingRecursion(expression, true, () -> expression.getType());
-            return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
+            if (stamp.mayCacheNow()) {
+              return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
+            }
+            return null;
           }
           return null;
         }
@@ -386,7 +392,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public boolean acceptsAnnotations() {
     if (isInferredType()) return false;
     PsiType type = getType();
-    return !PsiType.VOID.equals(type) && !PsiType.NULL.equals(type);
+    return !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
   }
 
   @Override

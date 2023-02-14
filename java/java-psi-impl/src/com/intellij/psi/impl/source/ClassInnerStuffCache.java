@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public final class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_15_PREVIEW) && PsiKeyword.SEALED.equals(myClass.getName());
+    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_17);
   }
 
   @Nullable
@@ -163,7 +162,7 @@ public final class ClassInnerStuffCache {
 
   @NotNull
   private Map<String, PsiField> getFieldsMap() {
-    Map<String, PsiField> cachedFields = new java.util.HashMap<>();
+    Map<String, PsiField> cachedFields = new HashMap<>();
     for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
       if (!cachedFields.containsKey(name)) {
@@ -196,7 +195,7 @@ public final class ClassInnerStuffCache {
     for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
       if (name == null) {
-        Logger.getInstance(ClassInnerStuffCache.class).error(psiClass);
+        Logger.getInstance(ClassInnerStuffCache.class).error("getName() returned null for " + psiClass);
       }
       else if (!(psiClass instanceof ExternallyDefinedPsiElement) || !cachedInners.containsKey(name)) {
         cachedInners.put(name, psiClass);
@@ -215,14 +214,6 @@ public final class ClassInnerStuffCache {
 
   private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
     return new EnumSyntheticMethod(enumClass, EnumMethodKind.ValueOf);
-  }
-
-  /**
-   * @deprecated does nothing
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public void dropCaches() {
   }
 
   private enum EnumMethodKind {
@@ -246,6 +237,16 @@ public final class ClassInnerStuffCache {
       myModifierList = createModifierList();
     }
 
+    @Override
+    public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitMethod(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
+    }
+    
     private @NotNull PsiType createReturnType() {
       PsiClassType type = JavaPsiFacade.getElementFactory(getProject()).createType(myClass);
       if (myKind == EnumMethodKind.Values) {

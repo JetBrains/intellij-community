@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -32,10 +32,14 @@ public abstract class FlyIdeaTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    if (myTempDir != null) {
-      FileUtil.asyncDelete(myTempDir);
+    try {
+      if (myTempDir != null) {
+        FileUtil.asyncDelete(myTempDir);
+      }
+      Disposer.dispose(myRootDisposable);
     }
-    Disposer.dispose(myRootDisposable);
+    finally {
+      super.tearDown();
+    }
   }
 }

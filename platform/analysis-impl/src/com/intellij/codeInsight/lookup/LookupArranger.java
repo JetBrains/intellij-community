@@ -15,7 +15,6 @@ import java.util.*;
 /**
  * An object holding the items to be shown in a {@link Lookup} and determining their order.
  * If accessed from multiple threads, it needs to take care of proper synchronization itself.
- * @author peter
  */
 public abstract class LookupArranger implements WeighingContext {
   protected final List<LookupElement> myItems = new ArrayList<>();
@@ -23,7 +22,7 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
   private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
   private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
-  private String myAdditionalPrefix = "";
+  private volatile String myAdditionalPrefix = "";
 
   public void addElement(LookupElement item, LookupElementPresentation presentation) {
     myItems.add(item);
@@ -50,6 +49,9 @@ public abstract class LookupArranger implements WeighingContext {
   @Override
   @NotNull
   public String itemPattern(@NotNull LookupElement element) {
+    // This method is not synchronized in BaseCompletionLookupArranger.
+    // The only shared state accessed here is myAdditionalPrefix,
+    // which is declared as volatile and accessed atomically.
     String prefix = itemMatcher(element).getPrefix();
     String additionalPrefix = myAdditionalPrefix;
     return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;

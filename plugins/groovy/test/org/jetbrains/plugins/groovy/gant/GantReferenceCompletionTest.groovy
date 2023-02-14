@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_1_7
 
-/**
- * @author ilyas
- */
 @CompileStatic
 class GantReferenceCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 

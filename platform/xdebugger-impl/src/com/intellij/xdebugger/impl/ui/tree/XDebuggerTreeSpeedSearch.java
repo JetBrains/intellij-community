@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -36,7 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +47,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   private ShortcutSet myOptionShortcutSet;
 
   XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
-    super(tree, toStringConvertor, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false));
+    super(tree, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false), toStringConvertor.asFunction());
     setComparator(new SpeedSearchComparator(false, false) {
 
       @Override
@@ -171,7 +157,8 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     final HintHint hintHint = new HintHint(component, point)
       .setPreferredPosition(Balloon.Position.above)
       .setAwtTooltip(true)
-      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setBorderColor(HintUtil.getHintBorderColor())
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
 
@@ -193,7 +180,8 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return TreeUtil.treePathTraverser(myComponent)
         .expand(n -> myComponent.isExpanded(n) || (myCanExpand && n.getPathCount() - initialLevel < SEARCH_DEPTH))
         .traverse()
-        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode || o.equals(root.getPath())));
+        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode
+                       || (o.equals(root.getPath()) && !myComponent.isRootVisible())));
   }
 
   protected void setSearchOption(AnAction searchOption) {
@@ -265,6 +253,11 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myCanExpand;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

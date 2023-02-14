@@ -15,36 +15,43 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MavenImportingConfigurable implements SearchableConfigurable {
+  public static final String SETTINGS_ID = "reference.settings.project.maven.importing";
+
   private final MavenImportingSettings myImportingSettings;
   private final MavenImportingSettingsForm mySettingsForm;
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
+
+  private final @NotNull Disposable myDisposable;
 
   private final Project myProject;
 
   public MavenImportingConfigurable(@NotNull Project project) {
     myProject = project;
-    myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
+    final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    myImportingSettings = mavenProjectsManager.getImportingSettings();
+    myDisposable = Disposer.newDisposable(mavenProjectsManager, "Maven importing configurable disposable");
 
     myAdditionalConfigurables = new ArrayList<>();
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }
-    mySettingsForm = new MavenImportingSettingsForm(myProject);
+    mySettingsForm = new MavenImportingSettingsForm(myProject, myDisposable);
   }
 
   @Override
@@ -66,6 +73,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     for (final UnnamedConfigurable additionalConfigurable : myAdditionalConfigurables) {
       additionalConfigurable.disposeUIResources();
     }
+    Disposer.dispose(myDisposable);
   }
 
   @Override
@@ -109,7 +117,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   @NotNull
   @NonNls
   public String getHelpTopic() {
-    return "reference.settings.project.maven.importing";
+    return SETTINGS_ID;
   }
 
   @Override

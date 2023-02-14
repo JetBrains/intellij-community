@@ -40,6 +40,13 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     myLineSet = LineSet.createLineSet(myString);
   }
 
+  @Override
+  public int getLineSeparatorLength(int line) {
+    int separatorLength = myLineSet.getSeparatorLength(line);
+    assert separatorLength >= 0;
+    return separatorLength;
+  }
+
   @NotNull
   @Override
   public LineIterator createLineIterator() {
@@ -88,7 +95,12 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
   public int getLineStartOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineStart(line); }
 
   @Override
-  public int getLineEndOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineEnd(line); }
+  public int getLineEndOffset(int line) {
+    if (getTextLength() == 0 && line == 0) return 0;
+    int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    assert result >= 0;
+    return result;
+  }
 
   @Override
   public void insertString(int offset, @NotNull CharSequence s) {

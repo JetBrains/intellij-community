@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -9,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.EditorLastActionTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,7 +19,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
@@ -101,10 +102,6 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.
 
     Range<Integer> elementRange = findRangeOfElementsToMove(elementList, selectionStart, selectionEnd);
     if (elementRange == null) return;
-
-    if (!OUR_ACTIONS.contains(EditorLastActionTracker.getInstance().getLastActionId())) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("move.element.left.right");
-    }
 
     int toMoveStart = elementList[elementRange.getFrom()].getTextRange().getStartOffset();
     int toMoveEnd = elementList[elementRange.getTo()].getTextRange().getEndOffset();

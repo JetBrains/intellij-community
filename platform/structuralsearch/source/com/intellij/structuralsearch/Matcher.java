@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -191,12 +192,15 @@ public class Matcher {
       if (scheduler == null) scheduler = new TaskScheduler();
       matchContext.getSink().setMatchingProcess(scheduler);
       scheduler.init();
-      findMatches();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        findMatches();
 
-      if (scheduler.getTaskQueueEndAction() == null) {
-        scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
-      }
-      scheduler.executeNext();
+        if (scheduler.getTaskQueueEndAction() == null) {
+          scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
+        }
+        scheduler.executeNext();
+        return null;
+      });
     }
   }
 
@@ -212,7 +216,7 @@ public class Matcher {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
 
       final ContentIterator ci = fileOrDir -> {
-        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && !FileTypeRegistry.getInstance().isFileOfType(fileOrDir, FileTypes.UNKNOWN)) {
           ++totalFilesToScan;
           scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
         }
@@ -251,8 +255,6 @@ public class Matcher {
    * Finds the matches of given pattern starting from given tree element.
    * @param source string for search
    * @return list of matches found
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public List<MatchResult> testFindMatches(String source,
                                            boolean fileContext,
@@ -282,8 +284,6 @@ public class Matcher {
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @param sink match result destination
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public void testFindMatches(MatchResultSink sink) throws MalformedPatternException, UnsupportedPatternException {
     isTesting = true;
@@ -315,7 +315,10 @@ public class Matcher {
     public void resume() {
       if (!suspended) return;
       suspended = false;
-      executeNext();
+      PsiManager.getInstance(project).runInBatchFilesMode(() -> {
+        executeNext();
+        return null;
+      });
     }
 
     @Override
@@ -367,20 +370,15 @@ public class Matcher {
       assert project != null;
       ended = false;
       suspended = false;
-      PsiManager.getInstance(project).startBatchFilesProcessingMode();
     }
 
     private void clearSchedule() {
       assert project != null;
       if (tasks != null) {
         taskQueueEndAction.run();
-        if (!project.isDisposed()) {
-          PsiManager.getInstance(project).finishBatchFilesProcessingMode();
-        }
         tasks = null;
       }
     }
-
   }
 
   /**
@@ -408,8 +406,6 @@ public class Matcher {
 
   /**
    * Tests if given element is matched by given pattern starting from target variable.
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   @NotNull
   public List<MatchResult> matchByDownUp(PsiElement element) throws MalformedPatternException, UnsupportedPatternException {
@@ -547,9 +543,7 @@ public class Matcher {
         ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
-            final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(file);
-            if (profile == null) return;
-            match(profile.extendMatchOnePsiFile(file));
+            match(file);
           }
         ).inSmartMode(project).executeSynchronously();
       }

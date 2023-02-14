@@ -4,9 +4,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 
-/**
- * @author yole
- */
 public abstract class ProjectRootModificationTracker implements ModificationTracker {
   private static final ProjectRootModificationTracker NEVER_CHANGED = new ProjectRootModificationTracker() {
     @Override

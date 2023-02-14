@@ -1,0 +1,4 @@
+version = "1.7.*"
+
+[tool.stubtest]
+skip = true  # A display server (e.g. X11) is required to import pynput

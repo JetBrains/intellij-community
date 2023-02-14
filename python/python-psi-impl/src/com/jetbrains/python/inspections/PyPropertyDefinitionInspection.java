@@ -36,7 +36,6 @@ import java.util.function.Predicate;
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
- * User: dcheryasov
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
@@ -45,7 +44,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
@@ -55,9 +54,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private PyFunction myOneParamFunction;
     private PyFunction myTwoParamFunction; // arglist with two args, 'self' and 'value'
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
-      super(holder, session);
-      PsiFile psiFile = session.getFile();
+    public Visitor(final ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
+      PsiFile psiFile = holder.getFile();
       // save us continuous checks for level, module, stc
       myLevel = LanguageLevel.forElement(psiFile);
       // string classes
@@ -78,11 +77,6 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-
-    @Override
-    public void visitPyFile(@NotNull PyFile node) {
-      super.visitPyFile(node);
-    }
 
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
@@ -279,8 +273,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                                          @NotNull PsiElement beingChecked,
                                          boolean allowed,
                                          @NotNull @InspectionMessage String message) {
-      if (callable instanceof PyFunction) {
-        final PyFunction function = (PyFunction)callable;
+      if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;

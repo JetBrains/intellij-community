@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -40,7 +41,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Ref<Boolean> toLowerCase = new Ref<>(Boolean.FALSE);
       runForCaret(editor, caret, c -> {
         if (!c.hasSelection()) {
@@ -57,9 +58,15 @@ public class ToggleCaseAction extends TextComponentEditorAction {
         VisualPosition caretPosition = c.getVisualPosition();
         int selectionStartOffset = c.getSelectionStart();
         int selectionEndOffset = c.getSelectionEnd();
+        String originalText = editor.getDocument().getText(new TextRange(selectionStartOffset, selectionEndOffset));
+        String result = toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get());
         editor.getDocument().replaceString(selectionStartOffset, selectionEndOffset,
-                                           toCase(editor, selectionStartOffset, selectionEndOffset, toLowerCase.get()));
+                                           result);
         c.moveToVisualPosition(caretPosition);
+        //Restore selection for TextComponentEditorImpl/TextAreaDocument etc.
+        if (!c.hasSelection()) {
+          c.setSelection(selectionStartOffset, selectionEndOffset + result.length() - originalText.length());
+        }
       });
     }
 

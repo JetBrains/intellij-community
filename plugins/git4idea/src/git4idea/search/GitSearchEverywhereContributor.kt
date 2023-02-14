@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.search
 
 import com.intellij.icons.AllIcons
@@ -14,9 +14,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.render.IconCompCompPanel
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -24,6 +26,7 @@ import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -35,12 +38,10 @@ import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
 import git4idea.search.GitSearchEverywhereItemType.*
-import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
 import javax.swing.JLabel
 import javax.swing.JList
-import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 internal class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
@@ -71,9 +72,9 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
         it.hash.asString().startsWith(pattern, true) && dataPack.containsAll(listOf(it), storage)
       }?.let { commitId ->
         val id = storage.getCommitIndex(commitId.hash, commitId.root)
-        dataManager.miniDetailsGetter.loadCommitsData(listOf(id), {
+        dataManager.miniDetailsGetter.loadCommitsDataSynchronously(listOf(id), progressIndicator) {
           consumer.process(FoundItemDescriptor(it, COMMIT_BY_HASH.weight))
-        }, progressIndicator)
+        }
       }
     }
 
@@ -99,9 +100,9 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
       index.dataGetter?.filterMessages(VcsLogFilterObject.fromPattern(pattern)) { commitIdx ->
         progressIndicator.checkCanceled()
-        dataManager.miniDetailsGetter.loadCommitsData(listOf(commitIdx), {
+        dataManager.miniDetailsGetter.loadCommitsDataSynchronously(listOf(commitIdx), progressIndicator) {
           consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE.weight))
-        }, progressIndicator)
+        }
       }
     }
   }
@@ -125,16 +126,8 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
   private val renderer = object : ListCellRenderer<Any> {
 
-    private val leftLabel = JLabel().apply {
-      border = JBUI.Borders.empty(0, 8, 0, 2)
-    }
-    private val rightLabel = JLabel().apply {
-      border = JBUI.Borders.empty(0, 2, 0, 8)
-    }
-
-    private val panel = JPanel(BorderLayout(0, 0)).apply {
-      add(leftLabel, BorderLayout.CENTER)
-      add(rightLabel, BorderLayout.EAST)
+    private val panel = IconCompCompPanel(JLabel(), JLabel()).apply {
+      border = JBUI.Borders.empty(0, 8)
     }
 
     override fun getListCellRendererComponent(
@@ -142,29 +135,30 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       value: Any?, index: Int,
       isSelected: Boolean, cellHasFocus: Boolean
     ): Component {
+      panel.reset()
       panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
-      leftLabel.apply {
+      panel.setIcon(when (value) {
+                      is VcsRef -> LabelIcon(panel.center, JBUI.scale(16), panel.background, listOf(value.type.backgroundColor))
+                      else -> AllIcons.Vcs.CommitNode
+                    })
+      panel.center.apply {
         font = list.font
         text = when (value) {
           is VcsRef -> value.name
           is VcsCommitMetadata -> value.subject
           else -> null
         }
-        icon = when (value) {
-          is VcsRef -> LabelIcon(this, JBUI.scale(16), background, listOf(value.type.backgroundColor))
-          else -> AllIcons.Vcs.CommitNode
-        }
         foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
       }
 
-      rightLabel.apply {
+      panel.right.apply {
         font = list.font
         text = when (value) {
           is VcsRef -> getTrackingRemoteBranchName(value)
           is VcsCommitMetadata -> value.id.toShortString()
           else -> null
         }
-        foreground = if (!isSelected) UIUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
+        foreground = if (!isSelected) NamedColorUtil.getInactiveTextColor() else UIUtil.getListForeground(isSelected, cellHasFocus)
       }
       return panel
     }
@@ -200,9 +194,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
     }
 
     if (hash != null && root != null) {
-      VcsLogContentUtil.runInMainLog(project) {
-        it.vcsLog.jumpToCommit(hash, root)
-      }
+      VcsLogContentUtil.runInMainLog(project) { it.jumpToCommit(hash, root, false, true) }
       return true
     }
     return false

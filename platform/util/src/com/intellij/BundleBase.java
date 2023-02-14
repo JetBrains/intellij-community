@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,9 +14,9 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 
 @ApiStatus.NonExtendable
-@ApiStatus.Internal
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
   public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
@@ -36,7 +36,7 @@ public abstract class BundleBase {
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains params.length+unassignedParams placeholders. Parameters
+   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
    * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.
@@ -53,18 +53,17 @@ public abstract class BundleBase {
                                            Object @NotNull ... params) {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
     Object[] newParams = Arrays.copyOf(params, params.length + unassignedParams);
-    @NonNls String prefix = "#$$$TemplateParameter$$$#";
-    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
+    String prefix = "#$$$TemplateParameter$$$#", suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
       newParams[i + params.length] = prefix + i + suffix;
     }
     String message = message(bundle, key, newParams);
-    return quotePattern(message).replace(prefix, "{").replace(suffix, "}"); //NON-NLS
+    return quotePattern(message).replace(prefix, "{").replace(suffix, "}");
   }
 
-  private static String quotePattern(String message) {
+  private static @NlsSafe String quotePattern(String message) {
     boolean inQuotes = false;
-    StringBuilder sb = new StringBuilder(message.length()+5);
+    StringBuilder sb = new StringBuilder(message.length() + 5);
     for (int i = 0; i < message.length(); i++) {
       char c = message.charAt(i);
       boolean needToQuote = c == '{' || c == '}';
@@ -74,7 +73,8 @@ public abstract class BundleBase {
       }
       if (c == '\'') {
         sb.append("''");
-      } else {
+      }
+      else {
         sb.append(c);
       }
     }
@@ -107,6 +107,9 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
+    BiConsumer<? super String, ? super String> consumer = ourTranslationConsumer;
+    if (consumer != null) consumer.accept(key, result);
+
     if (!resourceFound) {
       return result;
     }
@@ -126,7 +129,6 @@ public abstract class BundleBase {
     return result;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static @NotNull String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
     try {
       Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
@@ -160,7 +162,8 @@ public abstract class BundleBase {
     }
 
     if (assertOnMissedKeys) {
-      LOG.error("'" + key + "' is not found in " + bundle);
+      String bundleName = bundle != null ? "(" + bundle.getBaseBundleName() + ")" : "";
+      LOG.error("'" + key + "' is not found in " + bundle + bundleName);
     }
 
     return "!" + key + "!";
@@ -198,6 +201,7 @@ public abstract class BundleBase {
 
     StringBuilder builder = new StringBuilder();
     boolean macMnemonic = value.contains("&&");
+    boolean mnemonicAdded = false;
     int i = 0;
     while (i < value.length()) {
       char c = value.charAt(i);
@@ -213,12 +217,18 @@ public abstract class BundleBase {
       else if (c == '&') {
         if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
           if (SystemInfoRt.isMac) {
-            builder.append(MNEMONIC);
+            if (!mnemonicAdded) {
+              mnemonicAdded = true;
+              builder.append(MNEMONIC);
+            }
           }
           i++;
         }
         else if (!SystemInfoRt.isMac || !macMnemonic) {
-          builder.append(MNEMONIC);
+          if (!mnemonicAdded) {
+            mnemonicAdded = true;
+            builder.append(MNEMONIC);
+          }
         }
       }
       else {
@@ -229,4 +239,14 @@ public abstract class BundleBase {
     @NlsSafe String result = builder.toString();
     return result;
   }
+
+  //<editor-fold desc="Test stuff">
+  private static volatile BiConsumer<? super String, ? super String> ourTranslationConsumer;
+
+  /** The consumer is used by the "robot-server" plugin to collect key/text pairs - handy for writing UI tests for different locales. */
+  @TestOnly
+  public static void setTranslationConsumer(@Nullable BiConsumer<? super String, ? super String> consumer) {
+    ourTranslationConsumer = consumer;
+  }
+  //</editor-fold>
 }

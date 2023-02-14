@@ -1,0 +1,7 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "usage/JUsage.java",
+  "newName": "getBar",
+  "withRuntime": "true",
+  "enabledInK2": true
+}

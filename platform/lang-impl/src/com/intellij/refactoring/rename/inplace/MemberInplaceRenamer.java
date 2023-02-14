@@ -250,7 +250,10 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     finally {
       try {
-        ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+        Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+        if (editor instanceof EditorImpl) {
+          ((EditorImpl)editor).stopDumbLater();
+        }
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -282,7 +285,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<? super Pair<PsiElement, TextRange>> stringUsages) {
     if (!Registry.is("enable.rename.options.inplace", true)) return;
     if (!RenamePsiElementProcessor.forElement(myElementToRename).isToSearchInComments(myElementToRename)) {
       return;

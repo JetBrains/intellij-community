@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-public class JpsExcludePatternImpl extends JpsElementBase<JpsExcludePatternImpl> implements JpsExcludePattern {
+public final class JpsExcludePatternImpl extends JpsElementBase<JpsExcludePatternImpl> implements JpsExcludePattern {
   private final String myBaseDirUrl;
   private final String myPattern;
 

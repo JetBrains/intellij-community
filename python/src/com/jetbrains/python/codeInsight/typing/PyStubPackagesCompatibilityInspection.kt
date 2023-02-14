@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,8 +20,8 @@ import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
-import javax.swing.JComponent
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
 
@@ -51,18 +51,18 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredStubPackages: MutableList<String> = mutableListOf()
 
-  override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
-                                                               ignoredStubPackages).contentPanel
+  override fun getOptionsPane() =
+    OptPane.pane(OptPane.stringList("ignoredStubPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor {
-    return Visitor(ignoredStubPackages, holder, session)
+    return Visitor(ignoredStubPackages, holder, PyInspectionVisitor.getContext(session))
   }
 
   private class Visitor(val ignoredStubPackages: MutableList<String>,
                         holder: ProblemsHolder,
-                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
+                        context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyFile(node: PyFile) {
       val module = ModuleUtilCore.findModuleForFile(node) ?: return

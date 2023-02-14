@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.siyeh.ig.dependency;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -30,8 +32,20 @@ import org.jetbrains.uast.UDeclarationKt;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CyclicClassDependencyInspection extends BaseGlobalInspection {
+
+  public boolean ignoreInSameFile = false;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInSameFile", InspectionGadgetsBundle.message("cyclic.class.dependency.ignore.in.same.file")));
+  }
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(
@@ -39,15 +53,20 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
     if (refClass.isAnonymous() || refClass.isLocalClass() || refClass.isSyntheticJSP()) {
       return null;
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
     final Set<RefClass> dependents = DependencyUtils.calculateTransitiveDependentsForClass(refClass);
+    final VirtualFile vFile = refClass.getPointer().getVirtualFile();
+    if (ignoreInSameFile) {
+      final Predicate<RefClass> filter = aClass -> aClass.getPointer().getVirtualFile().equals(vFile);
+      dependencies.removeIf(filter);
+      dependents.removeIf(filter);
+    }
     final Set<RefClass> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
     final int numMutualDependents = mutualDependents.size();

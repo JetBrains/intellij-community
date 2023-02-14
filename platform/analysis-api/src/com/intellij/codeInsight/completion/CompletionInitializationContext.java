@@ -12,16 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class CompletionInitializationContext {
   public static final OffsetKey START_OFFSET = OffsetKey.create("startOffset", false);
   public static final OffsetKey SELECTION_END_OFFSET = OffsetKey.create("selectionEnd");
   public static final OffsetKey IDENTIFIER_END_OFFSET = OffsetKey.create("identifierEnd");
 
   /**
-   * A default string that is inserted to the file before completion to guarantee that there'll always be some non-empty element there
+   * A default string that is inserted into the file before completion to guarantee that there'll always be some non-empty element there
    */
   public static @NonNls final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
   public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;

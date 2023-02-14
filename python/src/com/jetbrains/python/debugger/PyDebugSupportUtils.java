@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -10,9 +11,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,8 @@ public final class PyDebugSupportUtils {
 
   private PyDebugSupportUtils() {
   }
+
+  public static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {
@@ -56,8 +60,6 @@ public final class PyDebugSupportUtils {
   private static boolean isSimpleEnough(final PsiElement element) {
     return element instanceof PyLiteralExpression ||
            element instanceof PyQualifiedExpression ||
-           element instanceof PyBinaryExpression ||
-           element instanceof PyPrefixExpression ||
            element instanceof PySliceExpression ||
            element instanceof PyNamedParameter;
   }
@@ -100,8 +102,8 @@ public final class PyDebugSupportUtils {
     return false;
   }
 
-  public static boolean isCurrentPythonDebugProcess(@NotNull Project project) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+  public static boolean isCurrentPythonDebugProcess(@NotNull AnActionEvent event) {
+    XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && session.getDebugProcess() instanceof PyDebugProcess;
   }
 }

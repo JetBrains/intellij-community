@@ -1,41 +1,43 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.JUnitBundle;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.testIntegration.JavaTestFramework;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class JUnit5Framework extends JavaTestFramework {
+public class JUnit5Framework extends JUnitTestFramework {
   @Override
   @NotNull
   public String getName() {
     return "JUnit5";
   }
 
-  @NotNull
-  @Override
-  public Icon getIcon() {
-    return AllIcons.RunConfigurations.Junit;
-  }
-
   @Override
   protected String getMarkerClassFQName() {
     return JUnitUtil.TEST5_ANNOTATION;
+  }
+
+  @Override
+  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
+           //check explicit jupiter to support library with broken dependency       
+           isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
+  }
+
+  @Override
+  public boolean shouldRunSingleClassAsJUnit5(Project project, GlobalSearchScope scope) {
+    return true;
   }
 
   @Nullable
@@ -131,22 +133,7 @@ public class JUnit5Framework extends JavaTestFramework {
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
     final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, JUnitUtil.IGNORE_ANNOTATION, 0);
-  }
-
-  @Override
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
-  }
-
-  @Override
-  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
-    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
-  }
-
-  @Override
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return type instanceof JUnitConfigurationType;
+    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.jupiter.api.Disabled", 0);
   }
 
   @Override
@@ -183,5 +170,10 @@ public class JUnit5Framework extends JavaTestFramework {
   @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Class.java");
+  }
+
+  @Override
+  public boolean isSuiteClass(PsiClass psiClass) {
+    return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
   }
 }

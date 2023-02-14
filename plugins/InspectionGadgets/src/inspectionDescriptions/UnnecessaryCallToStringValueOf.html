@@ -1,30 +1,29 @@
 <html>
 <body>
 Reports calls to static methods like <code>String.valueOf()</code> or <code>Integer.toString()</code> when they are used in
- a string concatenation or as an argument of a library method where the explicit string conversion is not needed.
-
+ a string concatenation or as an argument of a library method in which the explicit string conversion is not needed.
 <p>Example:</p>
-<pre>
+<pre><code>
   System.out.println("Number: " + Integer.toString(count));
-</pre>
-<p>After the quick-fix applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   System.out.println("Number: " + count);
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>Library methods where explicit string conversion considered as not needed:</p>
+<p>Library methods in which explicit string conversion is considered redundant:</p>
 <ul>
   <li>
-    classes <code>java.io.PrintWriter</code>, <code>java.io.PrintStream</code>
+    Classes <code>java.io.PrintWriter</code>, <code>java.io.PrintStream</code>
     <ul><li><code>print()</code>, <code>println()</code></li></ul>
   </li>
   <li>
-    classes <code>java.lang.StringBuilder</code>, <code>java.lang.StringBuffer</code>
+    Classes <code>java.lang.StringBuilder</code>, <code>java.lang.StringBuffer</code>
     <ul><li><code>append()</code></li></ul>
   </li>
 
   <li>
-    class <code>org.slf4j.Logger</code>
+    Class <code>org.slf4j.Logger</code>
     <ul>
       <li><code>trace()</code>, <code>debug()</code>, <code>info()</code>, <code>warn()</code>, <code>error()</code></li>
     </ul>

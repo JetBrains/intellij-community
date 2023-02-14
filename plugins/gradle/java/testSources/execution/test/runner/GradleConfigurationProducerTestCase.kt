@@ -5,7 +5,9 @@ import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Computable
@@ -27,7 +29,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(testFilter, executionSettings.toString())
   }
 
   protected fun assertParameterizedLocationTestFilter(className: String, methodName: String?, paramSetName: String, testFilter: String) {
@@ -35,7 +37,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(testFilter, executionSettings.toString())
   }
 
   private fun getConfigurations(className: String,
@@ -47,11 +49,11 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
       val method = if (methodName != null) PsiClassImplUtil.findMethodsByName(clazz!!, methodName, false).first() else null
       val dataContext = MapDataContext().apply {
         put(LangDataKeys.PROJECT, myProject)
-        put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(clazz!!))
+        put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(clazz!!))
         put(Location.DATA_KEY, locationProvider(clazz, method))
       }
 
-      ConfigurationContext.getFromContext(dataContext).configurationsFromContext
+      ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
         ?.filter { it.configuration is GradleRunConfiguration }
         ?.map { configurationFromContext -> configurationFromContext.configuration as GradleRunConfiguration }
       ?: emptyList()
@@ -64,6 +66,6 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
      */
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(GradleImportingTestCase.BASE_GRADLE_VERSION))
+    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
 }

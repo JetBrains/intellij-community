@@ -1,1 +1,1 @@
-${EXCEPTION}.printStackTrace();
+throw new RuntimeException(${EXCEPTION});

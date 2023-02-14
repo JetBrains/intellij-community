@@ -21,14 +21,11 @@ public class JavaClassAndFileEqualityProvider extends AbstractEqualityProvider {
     return newElementPsi != null && alreadyFoundPsi != null
            && newElementPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
            && alreadyFoundPsi.getLanguage().isKindOf(JavaLanguage.INSTANCE)
-           && isClassAndFile(newItemInfo, alreadyFoundItemInfo)
+           && isClassAndFile(newElementPsi, alreadyFoundPsi)
            && isSameFile(newElementPsi, alreadyFoundPsi);
   }
 
-  private static boolean isClassAndFile(@NotNull SearchEverywhereFoundElementInfo newItemInfo, @NotNull SearchEverywhereFoundElementInfo alreadyFoundItemInfo) {
-    Object newElement = newItemInfo.getElement();
-    Object oldElement = alreadyFoundItemInfo.getElement();
-
+  private static boolean isClassAndFile(@NotNull PsiElement newElement, @NotNull PsiElement oldElement) {
     return isClass(newElement) && isFile(oldElement)
            || isClass(oldElement) && isFile(newElement);
   }

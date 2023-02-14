@@ -15,5 +15,8 @@ class Test {
     new SimpleDateFormat("HH:<warning descr="Uppercase 'MM' (month) pattern is used: probably 'mm' (minute) was intended">MM</warning>:SS");
     new SimpleDateFormat("HH:mm:<warning descr="Uppercase 'SS' (milliseconds) pattern is used: probably 'ss' (seconds) was intended">SS</warning>");
     new SimpleDateFormat("HH:mm:ss");
+
+    // IDEA-267021
+    new SimpleDateFormat("'Yesterday' hh:mm aa");
   }
 }

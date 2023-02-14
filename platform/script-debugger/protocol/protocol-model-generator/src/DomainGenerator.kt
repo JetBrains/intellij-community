@@ -2,7 +2,6 @@
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.util.SmartList
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 import org.jetbrains.protocolReader.FileUpdater
@@ -93,7 +92,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
         out.append(')')
       }
 
-      if (!properties.isNullOrEmpty()) {
+      if (!properties.isEmpty()) {
         val qualifier = if (baseType == null) null else "m"
         classScope.writeWriteCalls(out, mandatoryParameters, qualifier)
         classScope.writeWriteCalls(out, optionalParameters, qualifier)
@@ -118,15 +117,13 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
 
     val mandatoryParameters = SmartList<Pair<P, BoxableType>>()
     val optionalParameters = SmartList<Pair<P, BoxableType>>()
-    if (properties != null) {
-      for (parameter in properties) {
-        val type = MemberScope(classScope, parameter.name()).resolveType(parameter).type
-        if (parameter.optional) {
-          optionalParameters.add(parameter to type)
-        }
-        else {
-          mandatoryParameters.add(parameter to type)
-        }
+    for (parameter in properties) {
+      val type = MemberScope(classScope, parameter.name()).resolveType(parameter).type
+      if (parameter.optional) {
+        optionalParameters.add(parameter to type)
+      }
+      else {
+        mandatoryParameters.add(parameter to type)
       }
     }
     return Pair(mandatoryParameters, optionalParameters)

@@ -1,4 +1,4 @@
-// "Insert 'super();'" "true"
+// "Insert 'super();'" "true-preview"
 import java.io.*;
 
 class c {

@@ -1,0 +1,6 @@
+// "Convert expression to 'Char'" "true"
+fun char(x: Char) {}
+
+fun test() {
+    char(1.0f.toInt().toChar())
+}

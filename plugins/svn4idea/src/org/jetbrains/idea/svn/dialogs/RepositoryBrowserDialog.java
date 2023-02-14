@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
@@ -325,6 +326,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       final RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.getURL() != null && !myProject.isDefault());
@@ -359,6 +365,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myBrowserComponent.getSelectedNode() != null);
     }
@@ -379,6 +390,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public AddLocationAction(final RepositoryBrowserComponent browserComponent) {
       super(messagePointer("repository.browser.add.location.menu.item"));
       myBrowserComponent = browserComponent;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -419,6 +435,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public EditLocationAction(@NotNull RepositoryBrowserComponent browserComponent) {
       super(messagePointer("repository.browser.edit.location.menu.item"));
       myBrowserComponent = browserComponent;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -472,6 +493,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       RepositoryTreeNode node = myBrowserComponent.getSelectedNode();
       e.getPresentation().setEnabled(node != null && node.getParent() instanceof RepositoryTreeRootNode);
@@ -502,6 +528,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     public MkDirAction(final RepositoryBrowserComponent browserComponent) {
       super(messagePointer("repository.browser.new.folder.action"));
       myBrowserComponent = browserComponent;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -538,6 +569,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class DiffAction extends DumbAwareAction {
     public DiffAction() {
       super(messagePointer("action.Subversion.RepositoryBrowser.CompareWith.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -613,6 +649,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             ? messagePointer("action.DumbAware.RepositoryBrowserDialog.text.move.or.rename")
             : messagePointer("action.DumbAware.RepositoryBrowserDialog.text.branch.or.tag"));
       myMove = move;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -760,6 +801,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
       e.getPresentation().setEnabled(node != null);
@@ -782,6 +828,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       super(IdeBundle.messagePointer("action.delete.ellipsis"));
       myBrowserComponent = browserComponent;
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myBrowserComponent);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -864,6 +915,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
       setEnabled(e, getRepositoryBrowser().getSelectedNode(),
@@ -880,6 +936,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class ExportAction extends DumbAwareAction {
     public ExportAction() {
       super(messagePointer("action.Subversion.RepositoryBrowser.Export.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -910,6 +971,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   protected class CheckoutAction extends DumbAwareAction {
     public CheckoutAction() {
       super(messagePointer("action.Subversion.RepositoryBrowser.Checkout.text"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -945,6 +1011,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       RepositoryTreeNode node = getSelectedNode();
       if (node == null) {
@@ -974,6 +1045,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         messagePointer("repository.browser.details.action"),
         AllIcons.Actions.Annotate
       );
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -1158,8 +1234,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(() -> {
-      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(getRepositoryBrowser(), myProject, changes);
-      dlg.markChangesInAir(true);
+      LoadingCommittedChangeListPanel panel = new LoadingCommittedChangeListPanel(myProject);
+      panel.markChangesInAir(true);
+      panel.setChanges(changes, null);
+
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, getRepositoryBrowser(), panel);
       dlg.setTitle(title);
       dlg.show();
     });

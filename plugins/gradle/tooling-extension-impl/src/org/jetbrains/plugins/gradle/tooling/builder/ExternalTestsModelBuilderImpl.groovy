@@ -25,6 +25,10 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
   @Override
   Object buildAll(String modelName, Project project) {
     def defaultTestsModel = new DefaultExternalTestsModel()
+    // Projects using android plugins are not supported by this model builder.
+    if (project.plugins.hasPlugin("com.android.base")) {
+      return defaultTestsModel
+    }
     if (javaPluginIsApplied(project)) {
       defaultTestsModel.sourceTestMappings = getMapping(project)
     }
@@ -46,7 +50,10 @@ class ExternalTestsModelBuilderImpl implements ModelBuilderService {
     def classesDirToSourceDirs = new LinkedHashMap<String, Set<String>>()
     for (sourceSet in sourceSetContainer) {
       def sourceDirectorySet = sourceSet.allSource
-      def sourceFolders = sourceDirectorySet.srcDirs.collect { it -> it.absolutePath }
+      List<String> sourceFolders = []
+      for (File dir : sourceDirectorySet.srcDirs) {
+        sourceFolders.add(dir.absolutePath)
+      }
       for (classDirectory in getPaths(sourceSet.output)) {
         def storedSourceFolders = classesDirToSourceDirs.get(classDirectory)
         if (storedSourceFolders == null) {

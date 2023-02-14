@@ -1,5 +1,7 @@
 import datetime
-from typing import Any, Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Any
+from typing_extensions import TypeAlias
 
 from ._common import weekday as weekdaybase
 
@@ -13,6 +15,7 @@ SECONDLY: int
 
 class weekday(weekdaybase): ...
 
+weekdays: tuple[weekday, weekday, weekday, weekday, weekday, weekday, weekday]
 MO: weekday
 TU: weekday
 WE: weekday
@@ -29,28 +32,28 @@ class rrulebase:
     def count(self): ...
     def before(self, dt, inc: bool = ...): ...
     def after(self, dt, inc: bool = ...): ...
-    def xafter(self, dt, count: Optional[Any] = ..., inc: bool = ...): ...
+    def xafter(self, dt, count: Any | None = ..., inc: bool = ...): ...
     def between(self, after, before, inc: bool = ..., count: int = ...): ...
 
 class rrule(rrulebase):
     def __init__(
         self,
         freq,
-        dtstart: Optional[datetime.date] = ...,
+        dtstart: datetime.date | None = ...,
         interval: int = ...,
-        wkst: Optional[Union[weekday, int]] = ...,
-        count: Optional[int] = ...,
-        until: Optional[Union[datetime.date, int]] = ...,
-        bysetpos: Optional[Union[int, Iterable[int]]] = ...,
-        bymonth: Optional[Union[int, Iterable[int]]] = ...,
-        bymonthday: Optional[Union[int, Iterable[int]]] = ...,
-        byyearday: Optional[Union[int, Iterable[int]]] = ...,
-        byeaster: Optional[Union[int, Iterable[int]]] = ...,
-        byweekno: Optional[Union[int, Iterable[int]]] = ...,
-        byweekday: Optional[Union[int, weekday, Iterable[int], Iterable[weekday]]] = ...,
-        byhour: Optional[Union[int, Iterable[int]]] = ...,
-        byminute: Optional[Union[int, Iterable[int]]] = ...,
-        bysecond: Optional[Union[int, Iterable[int]]] = ...,
+        wkst: weekday | int | None = ...,
+        count: int | None = ...,
+        until: datetime.date | int | None = ...,
+        bysetpos: int | Iterable[int] | None = ...,
+        bymonth: int | Iterable[int] | None = ...,
+        bymonthday: int | Iterable[int] | None = ...,
+        byyearday: int | Iterable[int] | None = ...,
+        byeaster: int | Iterable[int] | None = ...,
+        byweekno: int | Iterable[int] | None = ...,
+        byweekday: int | weekday | Iterable[int] | Iterable[weekday] | None = ...,
+        byhour: int | Iterable[int] | None = ...,
+        byminute: int | Iterable[int] | None = ...,
+        bysecond: int | Iterable[int] | None = ...,
         cache: bool = ...,
     ) -> None: ...
     def replace(self, **kwargs): ...
@@ -81,6 +84,8 @@ class _iterinfo:
     def mtimeset(self, hour, minute, second): ...
     def stimeset(self, hour, minute, second): ...
 
+_RRule: TypeAlias = rrule
+
 class rruleset(rrulebase):
     class _genitem:
         dt: Any = ...
@@ -93,13 +98,14 @@ class rruleset(rrulebase):
         def __gt__(self, other): ...
         def __eq__(self, other): ...
         def __ne__(self, other): ...
+
     def __init__(self, cache: bool = ...) -> None: ...
-    def rrule(self, rrule): ...
+    def rrule(self, rrule: _RRule): ...
     def rdate(self, rdate): ...
     def exrule(self, exrule): ...
     def exdate(self, exdate): ...
 
 class _rrulestr:
-    def __call__(self, s, **kwargs): ...
+    def __call__(self, s, **kwargs) -> rrule | rruleset: ...
 
 rrulestr: _rrulestr

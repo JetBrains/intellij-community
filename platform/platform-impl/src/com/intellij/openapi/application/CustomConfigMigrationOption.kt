@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 private val log = logger<CustomConfigMigrationOption>()
 
@@ -26,8 +26,9 @@ private val log = logger<CustomConfigMigrationOption>()
  * ```
  */
 sealed class CustomConfigMigrationOption {
-  fun writeConfigMarkerFile() {
-    val markerFile = getCustomConfigMarkerFilePath(PathManager.getConfigDir())
+  @JvmOverloads
+  fun writeConfigMarkerFile(configDir: Path = PathManager.getConfigDir()) {
+    val markerFile = getCustomConfigMarkerFilePath(configDir)
     if (markerFile.exists()) {
       log.error("Marker file $markerFile shouldn't exist")
     }

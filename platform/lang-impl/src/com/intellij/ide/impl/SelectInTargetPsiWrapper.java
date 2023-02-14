@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SlowOperations;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +73,9 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
       if (original != null && !original.isValid()) {
         throw new PsiInvalidElementAccessException(original, "Returned by " + selector + " of " + selector.getClass());
       }
-      SlowOperations.allowSlowOperations(() -> select(original, requestFocus));
+      try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        select(original, requestFocus);
+      }
     }
     else {
       select(selector, file, requestFocus);
@@ -82,15 +83,6 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   }
 
   protected abstract void select(Object selector, VirtualFile virtualFile, boolean requestFocus);
-
-  /**
-   * @deprecated unused, implement canSelectInner(context) instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
 
   protected abstract void select(PsiElement element, boolean requestFocus);
 

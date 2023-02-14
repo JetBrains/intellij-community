@@ -32,9 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection3K/";
 
@@ -266,16 +263,17 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-27866
   public void testUnionOwnSlots() {
-    doTestByText("from typing import Union\n" +
-                 "\n" +
-                 "class A:\n" +
-                 "    __slots__ = ['x']\n" +
-                 "\n" +
-                 "class B:\n" +
-                 "    __slots__ = ['y']\n" +
-                 "    \n" +
-                 "def foo(ab: Union[A, B]):\n" +
-                 "    print(ab.x)");
+    doTestByText("""
+                   from typing import Union
+
+                   class A:
+                       __slots__ = ['x']
+
+                   class B:
+                       __slots__ = ['y']
+                      \s
+                   def foo(ab: Union[A, B]):
+                       print(ab.x)""");
   }
 
   // PY-37755 PY-2700
@@ -283,7 +281,42 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doTest();
   }
 
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionNoneInt() {
+    doTestByText("print(None | int)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionIntNone() {
+    doTestByText("print(int | None)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionIntStrNone() {
+    doTestByText("print(int | str | None)");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionNoneParIntStr() {
+    doTestByText("print(None | (int | str))");
+  }
+
+  // PY-44974
+  public void testNoInspectionInBitwiseOrUnionWithParentheses() {
+    doTestByText("bar: int | ((list | dict) | (float | str)) = \"\"");
+  }
+
   public void testClassLevelDunderAll() {
     doMultiFileTest("a.py");
+  }
+
+  // PY-50885
+  public void testNamespacePackageReferenceInDocstringType() {
+    doMultiFileTest();
+  }
+
+  // PY-46257
+  public void testNoWarningForTypeGetItem() {
+    doTestByText("expr: type[str]");
   }
 }

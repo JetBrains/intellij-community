@@ -27,7 +27,7 @@ public class UseOfAnotherObjectsPrivateField {
 class SomewhereElse {
 
     void m(UseOfAnotherObjectsPrivateField tenacious) {
-        tenacious.<warning descr="Direct access of non-public field 'bar' on another object">bar</warning> = 1;
+        tenacious.<warning descr="Direct access to non-public field 'bar' of another object">bar</warning> = 1;
         tenacious.foo = 2;
     }
 }

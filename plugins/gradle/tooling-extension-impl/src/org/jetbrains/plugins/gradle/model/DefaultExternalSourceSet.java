@@ -13,7 +13,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private String name;
   private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
@@ -21,12 +21,14 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private Collection<File> artifacts;
   private String sourceCompatibility;
   private String targetCompatibility;
+
+  private String jdkInstallationPath;
   private boolean isPreview;
 
   public DefaultExternalSourceSet() {
-    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(0);
-    dependencies = new LinkedHashSet<ExternalDependency>(0);
-    artifacts = new ArrayList<File>(0);
+    sources = new HashMap<>(0);
+    dependencies = new LinkedHashSet<>(0);
+    artifacts = new ArrayList<>(0);
   }
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
@@ -36,16 +38,16 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     isPreview = sourceSet.isPreview();
 
     Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
-    sources = new HashMap<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>(entrySet.size());
+    sources = new HashMap<>(entrySet.size());
     for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
       sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
     }
 
-    dependencies = new LinkedHashSet<ExternalDependency>(sourceSet.getDependencies().size());
+    dependencies = new LinkedHashSet<>(sourceSet.getDependencies().size());
     for (ExternalDependency dependency : sourceSet.getDependencies()) {
       dependencies.add(ModelFactory.createCopy(dependency));
     }
-    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>(0) : new ArrayList<File>(sourceSet.getArtifacts());
+    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>(0) : new ArrayList<>(sourceSet.getArtifacts());
   }
 
   @NotNull
@@ -114,5 +116,14 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   @Override
   public String toString() {
     return "sourceSet '" + name + '\'' ;
+  }
+
+  @Nullable
+  public String getJdkInstallationPath() {
+    return jdkInstallationPath;
+  }
+
+  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
+    this.jdkInstallationPath = jdkInstallationPath;
   }
 }

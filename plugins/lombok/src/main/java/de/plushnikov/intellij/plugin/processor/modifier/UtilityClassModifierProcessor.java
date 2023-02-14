@@ -3,7 +3,7 @@ package de.plushnikov.intellij.plugin.processor.modifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,9 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
   public static boolean isModifierListSupported(@NotNull PsiModifierList modifierList) {
     PsiElement modifierListParent = modifierList.getParent();
 
-    if (modifierListParent instanceof PsiClass) {
-      PsiClass parentClass = (PsiClass) modifierListParent;
+    if (modifierListParent instanceof PsiClass parentClass) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(parentClass, LombokClassNames.UTILITY_CLASS)) {
-        return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemNewBuilder());
+        return UtilityClassProcessor.validateOnRightType(parentClass, new ProblemValidationSink());
       }
     }
 
@@ -31,7 +30,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierListParent, PsiClass.class, true);
 
-    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokClassNames.UTILITY_CLASS) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemNewBuilder());
+    return null != searchableClass && PsiAnnotationSearchUtil.isAnnotatedWith(searchableClass, LombokClassNames.UTILITY_CLASS) && UtilityClassProcessor.validateOnRightType(searchableClass, new ProblemValidationSink());
   }
 
   @Override
@@ -44,8 +43,7 @@ public class UtilityClassModifierProcessor implements ModifierProcessor {
     final PsiElement parent = modifierList.getParent();
 
     // FINAL
-    if (parent instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) parent;
+    if (parent instanceof PsiClass psiClass) {
       if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.UTILITY_CLASS)) {
         modifiers.add(PsiModifier.FINAL);
       }

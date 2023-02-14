@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * Handles nodes in Structure View.
- * @author yole
  */
 public class PyStructureViewElement implements StructureViewTreeElement {
 

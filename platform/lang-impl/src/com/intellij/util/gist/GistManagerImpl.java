@@ -6,28 +6,35 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
   private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
   private static final String ourPropertyName = "file.gist.reindex.count";
+  private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
   private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
+  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null).setRestartTimerOnAdd(true);
+  private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
 
   static final class MyBulkFileListener implements BulkFileListener {
     @Override
@@ -83,7 +90,8 @@ public final class GistManagerImpl extends GistManager {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Invalidating gist " + file);
     }
-    invalidateData(); // should be more granular in future
+    file.putUserDataIfAbsent(GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
+    invalidateDependentCaches();
   }
 
   private void invalidateGists() {
@@ -95,12 +103,42 @@ public final class GistManagerImpl extends GistManager {
     PropertiesComponent.getInstance().setValue(ourPropertyName, myReindexCount.incrementAndGet(), 0);
   }
 
-  private static void invalidateDependentCaches() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+  private void invalidateDependentCaches() {
+    Runnable dropCaches = () -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         PsiManager.getInstance(project).dropPsiCaches();
       }
-    }, ModalityState.NON_MODAL);
+    };
+    if (myMergingDropCachesRequestors.get() == 0) {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, dropCaches);
+    }
+    else {
+      myDropCachesQueue.queue(Update.create(this, dropCaches));
+    }
+  }
+
+  public void runWithMergingDependentCacheInvalidations(@NotNull Runnable runnable) {
+    myMergingDropCachesRequestors.incrementAndGet();
+    try {
+      runnable.run();
+    }
+    finally {
+      if (myMergingDropCachesRequestors.decrementAndGet() == 0) {
+        myDropCachesQueue.sendFlush();
+      }
+    }
+  }
+
+  public static int getGistStamp(@NotNull VirtualFile file) {
+    AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
+    return Objects.hash(file.getModificationCount(),
+                        ((GistManagerImpl)getInstance()).getReindexCount(),
+                        invalidationCount != null ? invalidationCount.get() : 0);
+  }
+
+  @TestOnly
+  public void clearQueueInTests() {
+    myDropCachesQueue.cancelAllUpdates();
   }
 
   @TestOnly

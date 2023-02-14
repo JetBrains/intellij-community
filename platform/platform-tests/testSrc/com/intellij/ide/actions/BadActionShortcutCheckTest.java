@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.RunAll;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,22 +18,20 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
   private final List<String> myLoggedWarnings = ContainerUtil.createConcurrentList();
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-        super.processWarn(message, t, logger);
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
         myLoggedWarnings.add(message);
+        return super.processWarn(category, message, t);
       }
-    });
+    }, ()-> super.runTestRunnable(testRunnable));
   }
 
   @Override
   public void tearDown() throws Exception {
     new RunAll(
       () -> myLoggedWarnings.clear(),
-      () -> LoggedErrorProcessor.restoreDefaultProcessor(),
       () -> super.tearDown()
     ).run();
   }

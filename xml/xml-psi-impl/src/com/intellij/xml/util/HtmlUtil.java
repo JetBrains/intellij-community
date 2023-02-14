@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
@@ -119,9 +120,9 @@ public final class HtmlUtil {
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name);
-      if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
+      final String tagName = StringUtil.toLowerCase(control.name());
+      if (control.endTag() == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
+      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy()));
     }
   }
 
@@ -205,9 +206,11 @@ public final class HtmlUtil {
       }
       else if (parent instanceof HtmlDocumentImpl) {
         final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-        for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
-          if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
-            variants.add(elementDescriptor);
+        if (nsDescriptor != null) {
+          for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
+            if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+              variants.add(elementDescriptor);
+            }
           }
         }
       }
@@ -494,6 +497,17 @@ public final class HtmlUtil {
     }
     while (true);
 
+    if (content.length() > charPrefix + 200) {
+      String name = tryFetchCharsetFromFileContent(content.subSequence(0, charPrefix + 200));
+      if (name != null) {
+        return CharsetToolkit.forName(name);
+      }
+    }
+    String name = tryFetchCharsetFromFileContent(content);
+    return CharsetToolkit.forName(name);
+  }
+
+  private static String tryFetchCharsetFromFileContent(@NotNull CharSequence content) {
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
@@ -589,8 +603,7 @@ public final class HtmlUtil {
       // some weird things can happen, like unbalanaced tree
     }
 
-    String name = charsetNameRef.get();
-    return CharsetToolkit.forName(name);
+    return charsetNameRef.get();
   }
 
   public static boolean isTagWithoutAttributes(@NonNls String tagName) {
@@ -628,6 +641,9 @@ public final class HtmlUtil {
     }
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
+      if (containingFile instanceof HtmlCompatibleFile) {
+        return true;
+      }
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
       if (tag instanceof HtmlTag) {
         return true;
@@ -746,7 +762,7 @@ public final class HtmlUtil {
     final List<XmlAttributeValue> result = new ArrayList<>();
     file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         XmlAttribute attribute = null;
         if ("link".equalsIgnoreCase(tag.getName())) {
           attribute = tag.getAttribute("href");

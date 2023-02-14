@@ -52,12 +52,11 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiJavaFile)) {
+      if (!(element instanceof PsiJavaFile file)) {
         return;
       }
-      final PsiJavaFile file = (PsiJavaFile)element;
       file.setPackageName(myPackageName);
     }
   }
@@ -68,14 +67,14 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiPackage.PACKAGE_INFO_FILE.equals(file.getName());
   }
 
   private static class PackageInfoWithoutPackageVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitJavaFile(PsiJavaFile file) {
+    public void visitJavaFile(@NotNull PsiJavaFile file) {
       @NonNls final String name = file.getName();
       if (!PsiPackage.PACKAGE_INFO_FILE.equals(name)) {
         return;

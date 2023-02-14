@@ -24,7 +24,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,7 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.XML_CUSTOM_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.matched.tag.name"), XmlHighlighterColors.MATCHED_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
@@ -77,31 +77,36 @@ public class XMLColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDemoText() {
-    return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
-           "<!DOCTYPE index>\n" +
-           "<!-- Some xml example -->\n" +
-           "<index version=\"1.0\" xmlns:<bg><np>pf</np></bg>=\"http://test\">\n" +
-           "   <name>Main Index</name>\n" +
-           "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
-           "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
-           "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
-           "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
-           "   <<matched>indexitem</matched>>Matched tag name</<matched>indexitem</matched>>\n" +
-           "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
-           "   <withCData><![CDATA[\n" +
-           "          <object class=\"MyClass\" key=\"constant\">\n" +
-           "          </object>\n" +
-           "        ]]>\n" +
-           "   </withCData>\n" +
-           "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
-           "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
-           "</index>";
+    return """
+      <?xml version='1.0' encoding='ISO-8859-1'  ?>
+      <!DOCTYPE index>
+      <!-- Some xml example -->
+      <index version="1.0" xmlns:<bg><np>pf</np></bg>="http://test">
+         <name>Main Index</name>
+         <indexitem text="rename" target="refactoring.rename"/>
+         <indexitem text="move" target="refactoring.move"/>
+         <indexitem text="migrate" target="refactoring.migrate"/>
+         <indexitem text="usage search" target="find.findUsages"/>
+         <<matched>indexitem</matched>>Matched tag name</<matched>indexitem</matched>>
+         <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>
+         <withCData><![CDATA[
+                <object class="MyClass" key="constant">
+                </object>
+              ]]>
+         </withCData>
+         <indexitem text="project" target="project.management"/>
+         <<custom_tag_name>custom-tag</custom_tag_name>>hello</<custom_tag_name>custom_tag</custom_tag_name>>
+         <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar="bar"/>
+      </index>""";
   }
 
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
-                                    Pair.create("bg", XmlHighlighterColors.XML_TAG),
-                                    Pair.create("matched", XmlHighlighterColors.MATCHED_TAG_NAME));
+    return new ContainerUtil.ImmutableMapBuilder<String, TextAttributesKey>()
+      .put("custom_tag_name", XmlHighlighterColors.XML_CUSTOM_TAG_NAME)
+      .put("np", XmlHighlighterColors.XML_NS_PREFIX)
+      .put("bg", XmlHighlighterColors.XML_TAG)
+      .put("matched", XmlHighlighterColors.MATCHED_TAG_NAME)
+      .build();
   }
 }

@@ -19,6 +19,9 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testEnhancedSwitchUnreachable() = doTest()
   fun testSwitchExpressionHasResult() = doTest()
   fun testYieldStatements() = doTest()
+  fun testAssignToFinalInSwitchExpression() = doTest()
+  fun testDeadCode() = doTest()
+  fun testComplexTernaryInSwitch() = doTest()
   fun testRedundantCastInSwitchBranch() {
     myFixture.enableInspections(RedundantCastInspection())
     doTest()

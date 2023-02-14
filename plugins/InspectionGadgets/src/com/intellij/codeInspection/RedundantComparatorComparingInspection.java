@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -64,7 +64,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (THEN_COMPARING_COMPARATOR.test(call)) {
           checkThenComparing(call);
         }
@@ -112,7 +112,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
         holder
           .registerProblem(comparingCall.getMethodExpression(),
                            JavaBundle.message("inspection.simplifiable.comparator.comparing.message", name),
-                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteComparingCallFix(name, targetMethod));
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new DeleteComparingCallFix(name, targetMethod));
       }
     };
   }

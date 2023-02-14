@@ -4,9 +4,8 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -15,17 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to replace true with True, false with False
  */
 public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
-  SmartPsiElementPointer<PsiElement> myElement;
   String newName;
-  public UnresolvedRefTrueFalseQuickFix(PsiElement element) {
-    myElement = SmartPointerManager.createPointer(element);
-    char[] charArray = element.getText().toCharArray();
-    charArray[0] = Character.toUpperCase(charArray[0]);
-    newName = new String(charArray);
+
+  public UnresolvedRefTrueFalseQuickFix(@NotNull String oldName) {
+    newName = StringUtil.capitalize(oldName);
   }
 
   @Override
@@ -44,7 +40,7 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    final PsiElement element = myElement.getElement();
+    final PsiElement element = descriptor.getPsiElement();
     if (element != null) {
       PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), newName);
       element.replace(expression);

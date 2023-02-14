@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -65,7 +66,9 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
       final XmlAttributeValue valueElement = ((XmlAttribute)newAttribute).getValueElement();
       if (valueElement != null) {
         editor.getCaretModel().moveToOffset(valueElement.getTextOffset());
-        AutoPopupController.getInstance(newAttribute.getProject()).scheduleAutoPopup(editor);
+        if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+          AutoPopupController.getInstance(newAttribute.getProject()).scheduleAutoPopup(editor);
+        }
       }
     }
   }

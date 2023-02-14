@@ -50,8 +50,7 @@ public final class CompleteReferencesWithSameQualifier {
   }
 
   private void addVariantsWithSameQualifier(@NotNull PsiElement element, @NotNull Set<String> result) {
-    if (element instanceof GrReferenceExpression && element != myRefExpr && !PsiUtil.isLValue((GroovyPsiElement)element)) {
-      final GrReferenceExpression refExpr = (GrReferenceExpression)element;
+    if (element instanceof GrReferenceExpression refExpr && element != myRefExpr && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final String refName = refExpr.getReferenceName();
       if (refName != null && !result.contains(refName) && myMatcher.prefixMatches(refName)) {
         final GrExpression hisQualifier = refExpr.getQualifierExpression();

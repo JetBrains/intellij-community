@@ -43,7 +43,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
   private static class ObjectInstantiationInEqualsHashCodeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitExpression(PsiExpression expression) {
+    public void visitExpression(@NotNull PsiExpression expression) {
       if (!ExpressionUtils.isAutoBoxed(expression) || isAutoBoxingFromCache(expression) || !isInsideEqualsOrHashCode(expression)) {
         return;
       }
@@ -56,7 +56,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null || iteratedValue.getType() instanceof PsiArrayType || !isInsideEqualsOrHashCode(statement)) {
         return;
@@ -65,7 +65,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
@@ -115,15 +115,13 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
         return true;
       }
       final Object value = ExpressionUtils.computeConstantExpression(expression);
-      if (value instanceof Number) {
-        final Number number = (Number)value;
+      if (value instanceof Number number) {
         final int l = number.intValue();
         if (l >= -128 && l <= 127) {
           return true;
         }
       }
-      else if (value instanceof Character) {
-        final Character character = (Character)value;
+      else if (value instanceof Character character) {
         final char c = character.charValue();
         if (c <= 127) {
           return true;
@@ -133,7 +131,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       if (!(expression.getParent() instanceof PsiVariable)) {
         // new expressions are already reported.
         return;
@@ -145,7 +143,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!ExpressionUtils.hasStringType(expression) || ExpressionUtils.isEvaluatedAtCompileTime(expression)) {
         return;
@@ -157,7 +155,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!isInsideEqualsOrHashCode(expression)) {
         return;

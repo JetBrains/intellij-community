@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.JavaTestUtil;
@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.MoreCollectors;
 
 import java.util.Collection;
 import java.util.List;
@@ -130,11 +129,11 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
 
     assertSize(6, classes);
     for (PsiClass aClass : classes) {
-      PsiClass inheritor = getDirectInheritorsFor(aClass)
+      List<PsiClass> inheritors = getDirectInheritorsFor(aClass)
         .getHierarchyChildren()
         .map(PsiClass.class::cast)
-        .collect(MoreCollectors.onlyOne())
-        .orElse(null);
+        .collect(Collectors.toList());
+      PsiClass inheritor = assertOneElement(inheritors);
       PsiAnonymousClass anonymousInheritor = assertInstanceOf(inheritor, PsiAnonymousClass.class);
       PsiClass superFromReference = PsiUtil.resolveClassInType(anonymousInheritor.getBaseClassType());
       assertEquals(superFromReference, aClass);
@@ -150,7 +149,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(foo);
     final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService
       .getInstance(myFixture.getProject());
-    compilerReferenceService.getScopeWithoutCodeReferences(foo);
+    compilerReferenceService.getScopeWithCodeReferences(foo);
     assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules());
   }
 
@@ -195,7 +194,7 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertNotNull(atCaret);
     final PsiMember memberAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiMember.class, false);
     assertNotNull(memberAtCaret);
-    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret);
+    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFilesForTests(memberAtCaret);
   }
 
   @Override

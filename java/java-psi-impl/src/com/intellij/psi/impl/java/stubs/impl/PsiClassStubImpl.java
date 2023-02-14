@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
@@ -117,18 +115,6 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   @Override
   public boolean hasDocComment() {
     return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
-  }
-
-  @Override
-  public LanguageLevel getLanguageLevel() {
-    StubElement parent = getParentStub();
-    if (parent instanceof PsiJavaFileStub) {
-      LanguageLevel level = ((PsiJavaFileStub)parent).getLanguageLevel();
-      if (level != null) {
-        return level;
-      }
-    }
-    return LanguageLevel.HIGHEST;
   }
 
   @Override

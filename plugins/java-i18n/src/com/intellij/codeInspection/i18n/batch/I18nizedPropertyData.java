@@ -3,44 +3,16 @@ package com.intellij.codeInspection.i18n.batch;
 
 import org.jetbrains.annotations.NotNull;
 
-public class I18nizedPropertyData<D> {
-  private final String myKey;
-  private final String myValue;
-  private final boolean myMarkAsNonNls;
-  private final D myContextData;
-
+public record I18nizedPropertyData<D>(@NotNull String key, @NotNull String value, @NotNull D contextData, boolean markAsNonNls) {
   public I18nizedPropertyData(@NotNull String key, @NotNull String value, @NotNull D contextData) {
     this(key, value, contextData, false);
   }
 
-  private I18nizedPropertyData(@NotNull String key, @NotNull String value, @NotNull D contextData, boolean markAsNonNls) {
-    myKey = key;
-    myValue = value;
-    myContextData = contextData;
-    myMarkAsNonNls = markAsNonNls;
-  }
-
-  public String getKey() {
-    return myKey;
-  }
-
-  public String getValue() {
-    return myValue;
-  }
-
-  public D getContextData() {
-    return myContextData;
-  }
-
-  public boolean isMarkAsNonNls() {
-    return myMarkAsNonNls;
-  }
-
   public I18nizedPropertyData<D> changeKey(@NotNull String newKey) {
-    return new I18nizedPropertyData<>(newKey, myValue, myContextData, myMarkAsNonNls);
+    return new I18nizedPropertyData<>(newKey, value, contextData, markAsNonNls);
   }
 
   public I18nizedPropertyData<D> setMarkAsNonNls(boolean markAsNonNls) {
-    return new I18nizedPropertyData<>(myKey, myValue, myContextData, markAsNonNls);
+    return new I18nizedPropertyData<>(key, value, contextData, markAsNonNls);
   }
 }

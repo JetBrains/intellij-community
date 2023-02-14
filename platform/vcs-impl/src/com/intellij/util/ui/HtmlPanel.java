@@ -31,7 +31,7 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     setOpaque(false);
     putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     addHyperlinkListener(this);
-    setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
+    setEditorKit(new HTMLEditorKitBuilder().withWordWrapViewFactory().build());
   }
 
   @Override

@@ -158,10 +158,6 @@
     <synonym>Manage templates</synonym>
   </configurable>
 
-  <configurable id="preferences.editor" configurable_name="Editor">
-
-  </configurable>
-
   <configurable id="preferences.externalTools" configurable_name="External Tools">
     <synonym>Manage tools</synonym>
     <synonym>Configure tools</synonym>

@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.build;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -27,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -128,10 +129,6 @@ public class Standalone {
     else {
       dataStorageRoot = Utils.getDataStorageRoot(projectPath);
     }
-    if (dataStorageRoot == null) {
-      System.err.println("Error: Cannot determine build data storage root for project " + projectPath);
-      return 1;
-    }
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.nanoTime();
@@ -185,15 +182,23 @@ public class Standalone {
 
   public static void runBuild(JpsModelLoader loader, File dataStorageRoot, MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
+    runBuild(loader, dataStorageRoot, Collections.emptyMap(), messageHandler, scopes, includeDependenciesToScope);
+  }
+
+  public static void runBuild(JpsModelLoader loader, File dataStorageRoot,
+                              Map<String, String> buildParameters,
+                              MessageHandler messageHandler, List<TargetTypeBuildScope> scopes,
+                              boolean includeDependenciesToScope) throws Exception {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);
+    buildRunner.setBuilderParams(buildParameters);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();
-      Disposer.dispose(memWatcher);
+      memWatcher.shutdown();
     }
   }
 

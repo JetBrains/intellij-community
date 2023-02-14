@@ -81,6 +81,12 @@ public final class PyKnownDecoratorUtil {
     ATTR_ATTRS("attr.attrs"),
     ATTR_ATTRIBUTES("attr.attributes"),
     ATTR_DATACLASS("attr.dataclass"),
+    ATTR_DEFINE("attr.define"),
+    ATTR_MUTABLE("attr.mutable"),
+    ATTR_FROZEN("attr.frozen"),
+    ATTRS_DEFINE("attrs.define"),
+    ATTRS_MUTABLE("attrs.mutable"),
+    ATTRS_FROZEN("attrs.frozen"),
 
     PYTEST_FIXTURE("pytest.fixture");
 
@@ -157,8 +163,7 @@ public final class PyKnownDecoratorUtil {
         resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (ScopeOwner)containingFile, context);
       }
       else {
-        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()),
-                                                  PyResolveContext.defaultContext().withTypeEvalContext(context));
+        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()), PyResolveContext.defaultContext(context));
       }
       return StreamEx.of(resolved)
         .select(PyQualifiedNameOwner.class)

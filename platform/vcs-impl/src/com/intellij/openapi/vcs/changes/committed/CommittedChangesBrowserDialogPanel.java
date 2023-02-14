@@ -4,8 +4,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -110,8 +108,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     gb.gridwidth = 2;
 
     myLeftPanel.add(listContainer, gb);
-    if (tableModel instanceof CommittedChangesNavigation) {
-      final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
+    if (tableModel instanceof CommittedChangesNavigation navigation) {
 
       final JButton backButton = new JButton(VcsBundle.message("changes.button.older"));
       final JButton forwardButton = new JButton(VcsBundle.message("changes.button.newer"));
@@ -204,7 +201,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
   }
 
   public void setTableContextMenu(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myChangeListsView, group, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myChangeListsView, group, "CommittedChangesTablePopup");
   }
 
   public void startLoading() {

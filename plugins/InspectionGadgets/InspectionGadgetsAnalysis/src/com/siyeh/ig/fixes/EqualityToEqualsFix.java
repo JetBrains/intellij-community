@@ -58,8 +58,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
     if (nullability == Nullability.NULLABLE) return null;
-    if (lhs instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+    if (lhs instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiModifierListOwner) {
         NullableNotNullManager.getInstance(expression.getProject());
@@ -99,13 +98,12 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement comparisonToken = descriptor.getPsiElement();
     final PsiElement parent = comparisonToken.getParent();
-    if (!(parent instanceof PsiBinaryExpression)) {
+    if (!(parent instanceof PsiBinaryExpression expression)) {
       return;
     }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)parent;
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     if (lhs == null || rhs == null) {

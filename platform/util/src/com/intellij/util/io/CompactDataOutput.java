@@ -64,7 +64,7 @@ public final class CompactDataOutput implements DataOutput {
     writeBuffer[4] = (byte)(v >>> 24);
     writeBuffer[5] = (byte)(v >>> 16);
     writeBuffer[6] = (byte)(v >>>  8);
-    writeBuffer[7] = (byte)(v >>>  0);
+    writeBuffer[7] = (byte)(v);
     out.write(writeBuffer, 0, 8);
   }
 
@@ -92,7 +92,7 @@ public final class CompactDataOutput implements DataOutput {
     for (int i = 0 ; i < len ; i++) {
         int v = s.charAt(i);
         out.write((v >>> 8) & 0xFF);
-        out.write((v >>> 0) & 0xFF);
+        out.write(v & 0xFF);
     }
   }
 

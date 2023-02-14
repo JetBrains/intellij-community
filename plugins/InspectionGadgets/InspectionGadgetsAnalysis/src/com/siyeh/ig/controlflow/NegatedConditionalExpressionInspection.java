@@ -44,17 +44,15 @@ public class NegatedConditionalExpressionInspection extends BaseInspection imple
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiPrefixExpression)) {
+      if (!(element instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
-      if (!(operand instanceof PsiConditionalExpression)) {
+      if (!(operand instanceof PsiConditionalExpression conditionalExpression)) {
         return;
       }
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)operand;
       final StringBuilder newExpression = new StringBuilder();
       final PsiExpression condition = conditionalExpression.getCondition();
       CommentTracker tracker = new CommentTracker();
@@ -80,7 +78,7 @@ public class NegatedConditionalExpressionInspection extends BaseInspection imple
   private static class NegatedConditionalExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) {
         return;

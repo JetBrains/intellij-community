@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author avereshchagin
- * @author vlan
  */
 public class NumPyDocStringParameter {
   private final String myName;

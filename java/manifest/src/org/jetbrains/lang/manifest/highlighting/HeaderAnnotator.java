@@ -40,8 +40,7 @@ import org.jetbrains.lang.manifest.psi.Header;
 final class HeaderAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (psiElement instanceof Header) {
-      Header header = (Header)psiElement;
+    if (psiElement instanceof Header header) {
       String name = header.getName();
       if (!isValidName(name)) {
         holder.newAnnotation(HighlightSeverity.ERROR, ManifestBundle.message("header.name.invalid")).range(header.getNameElement()).create();

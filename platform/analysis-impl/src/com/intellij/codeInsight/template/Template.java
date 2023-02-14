@@ -10,8 +10,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Used to build and run a live template.
+ *
  * @see TemplateManager
  */
 public abstract class Template implements PresentableLookupValue {
@@ -26,17 +29,24 @@ public abstract class Template implements PresentableLookupValue {
   private boolean myUseStaticImport;
 
   public abstract void addTextSegment(@NotNull String text);
+
   public abstract void addVariableSegment(@NonNls @NotNull String name);
 
   @NotNull
   public Variable addVariable(@NonNls @NotNull String name, @NotNull Expression defaultValueExpression, boolean isAlwaysStopAt) {
     return addVariable(name, defaultValueExpression, defaultValueExpression, isAlwaysStopAt);
   }
+
+  public abstract List<Variable> getVariables();
+
   @NotNull
   public abstract Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt);
 
   @NotNull
-  public Variable addVariable(@NonNls @NotNull String name, Expression expression, Expression defaultValueExpression, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NonNls @NotNull String name,
+                              Expression expression,
+                              Expression defaultValueExpression,
+                              boolean isAlwaysStopAt) {
     return addVariable(name, expression, defaultValueExpression, isAlwaysStopAt, false);
   }
 

@@ -23,7 +23,7 @@ data class EditorConfigQualifiedKeyDescriptor(
   override fun accept(visitor: EditorConfigDescriptorVisitor) = visitor.visitQualifiedKey(this)
 
   override fun matches(element: PsiElement): Boolean {
-    element as? EditorConfigQualifiedOptionKey ?: return false
+    if (element !is EditorConfigQualifiedOptionKey) return false
     val parts = element.qualifiedKeyPartList
     if (children.size != parts.size) return false
     return children.zip(parts).all { (descriptor, part) -> matches(descriptor, part) }

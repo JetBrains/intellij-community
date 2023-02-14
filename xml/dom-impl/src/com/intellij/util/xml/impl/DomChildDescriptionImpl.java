@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomChildDescriptionImpl extends AbstractDomChildDescriptionImpl implements DomChildrenDescription {
   private final XmlName myTagName;
 

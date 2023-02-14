@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -19,15 +20,13 @@ import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ItemEvent;
+import static com.intellij.codeInspection.options.OptPane.*;
 
-public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
+public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean myConstantShouldGoLeft = true;
+  public boolean myIgnoreNull = false;
 
   @Override
   @NotNull
@@ -37,23 +36,14 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
            : InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final String left = InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.left");
-    final String right = InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.right");
-    final ComboBox<String> comboBox = new ComboBox<>(new String[]{left, right});
-    comboBox.setSelectedIndex(myConstantShouldGoLeft ? 0 : 1);
-    comboBox.addItemListener(e -> {
-      if (e.getStateChange() == ItemEvent.SELECTED) {
-        myConstantShouldGoLeft = (e.getItem() == left);
-      }
-    });
-    final JLabel label = new JLabel(JavaAnalysisBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"));
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
-    panel.add(label);
-    panel.add(comboBox);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      dropdown("myConstantShouldGoLeft", JavaAnalysisBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"),
+               option("true", InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.left")),
+               option("false", InspectionGadgetsBundle.message("constant.on.lhs.of.comparison.options.item.right"))),
+      checkbox("myIgnoreNull", InspectionGadgetsBundle.message("checkbox.ignore.null.on.wrong.side"))
+    );
   }
 
   @Override
@@ -70,12 +60,11 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression expression)) {
         return;
       }
-      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) {
         return;
@@ -116,7 +105,8 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
     }
 
     private boolean isConstantExpression(PsiExpression expression) {
-      return ExpressionUtils.isNullLiteral(expression) || PsiUtil.isConstantExpression(expression);
+      if (ExpressionUtils.isNullLiteral(expression)) return !myIgnoreNull;
+      return PsiUtil.isConstantExpression(expression);
     }
   }
 }

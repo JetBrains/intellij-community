@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -59,7 +58,7 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement qualifier = descriptor.getPsiElement();
       final PsiElement parent = qualifier.getParent();
       CommentTracker tracker = new CommentTracker();
@@ -89,11 +88,11 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
       if (containingClass == null || !containingClass.equals(referent)) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, thisExpression);
+      registerError(qualifier, thisExpression);
     }
 
     @Override
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier == null) {
@@ -119,7 +118,7 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
         assert copyQualifierExpression != null;
         PsiReplacementUtil.replaceExpression(copyQualifierExpression, PsiKeyword.SUPER);
         if (copy.resolve() == ((PsiReferenceExpression)parent).resolve()) {
-          registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression);
+          registerError(qualifier, expression);
         }
       }
     }

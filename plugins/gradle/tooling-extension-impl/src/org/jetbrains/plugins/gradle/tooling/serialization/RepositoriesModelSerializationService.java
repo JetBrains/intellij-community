@@ -32,24 +32,16 @@ public class RepositoriesModelSerializationService implements SerializationServi
   @Override
   public byte[] write(RepositoriesModel repositoriesModel, Class<? extends RepositoriesModel> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, repositoriesModel);
-    }
-    finally {
-      writer.close();
     }
     return out.toByteArray();
   }
 
   @Override
   public RepositoriesModel read(byte[] object, Class<? extends RepositoriesModel> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       return read(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -126,7 +118,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static List<MavenRepositoryModel> readRepositories(IonReader reader, ReadContext context) {
-    List<MavenRepositoryModel> list = new ArrayList<MavenRepositoryModel>();
+    List<MavenRepositoryModel> list = new ArrayList<>();
     reader.next();
     reader.stepIn();
     MavenRepositoryModel entry;
@@ -153,14 +145,14 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<RepositoriesModelImpl> objectMap = new IntObjectMap<RepositoriesModelImpl>();
-    private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<MavenRepositoryModel>();
+    private final IntObjectMap<RepositoriesModelImpl> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<>();
   }
 
   private static class WriteContext {
-    private final ObjectCollector<RepositoriesModel, IOException> objectCollector = new ObjectCollector<RepositoriesModel, IOException>();
+    private final ObjectCollector<RepositoriesModel, IOException> objectCollector = new ObjectCollector<>();
     private final ObjectCollector<MavenRepositoryModel, IOException> repositoryCollector =
-      new ObjectCollector<MavenRepositoryModel, IOException>();
+      new ObjectCollector<>();
   }
 }
 

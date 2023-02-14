@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
@@ -35,7 +35,7 @@ public interface Extension extends DomElement {
 
   @NotNull
   @Attribute(OS_ATTRIBUTE)
-  GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
+  GenericAttributeValue<ExtensionDescriptor.Os> getOs();
 
   /**
    * @return extension declaration or {@code null} if unresolved
@@ -48,6 +48,8 @@ public interface Extension extends DomElement {
            fieldName.equals("className") ||
            fieldName.equals("serviceInterface") ||
            fieldName.equals("serviceImplementation") ||
+           fieldName.equals("class") ||
+           fieldName.endsWith("ClassName") ||
            (fieldName.endsWith("Class") && !fieldName.equals("forClass"));
   }
 }

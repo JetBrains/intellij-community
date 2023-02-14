@@ -20,9 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -35,9 +33,8 @@ import java.util.List;
 public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestCase {
   private static final ProjectDescriptor JDK_8_WITH_LEVEL_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6) {
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      super.configureModule(module, model, contentEntry);
-      model.setSdk(IdeaTestUtil.getMockJdk18());
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk18();
     }
   };
 
@@ -78,6 +75,21 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
       assertEquals("Cannot convert type of expression <b>&quot;&quot;</b> from <b>java.lang.String</b> to <b>T</b><br>", 
                    e.getMessage());
     }
+  }
+
+  public void testAtTypeCast() { doTest("Change cast type to List<?>"); }
+  public void testAtTypeCast2() { doTest("Change cast type to List<?>"); }
+  public void testAtTypeCast3() { assertIntentionNotAvailable("Change cast type to List<?>"); }
+  public void testAtTypeCast4() { doTest("Change cast type to X<?>"); }
+  public void testAtTypeCast5() { assertIntentionNotAvailable("Change cast type to X<?>"); }
+  public void testAtTypeCast6() { assertIntentionNotAvailable("Change cast type to Callable<><?>"); }
+
+  public void testAtConstructor1() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'")); }
+  public void testAtConstructor2() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
+  public void testAtConstructor3() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
+  public void testAtConstructor4() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'"));
   }
 
   public void testAtInitializer() {

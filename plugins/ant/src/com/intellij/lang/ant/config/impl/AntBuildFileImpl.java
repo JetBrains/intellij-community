@@ -94,7 +94,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
         entry.addFilesTo(files);
       }
     }
-
+                                                                       
     @Override
     public void set(AbstractProperty.AbstractPropertyContainer container, List<File> files) {
       throw new UnsupportedOperationException(getName());
@@ -107,7 +107,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   public static final BooleanProperty RUN_IN_BACKGROUND = new BooleanProperty("runInBackground", true);
-  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 128);
+  public static final IntProperty MAX_HEAP_SIZE = new IntProperty("maximumHeapSize", 512);
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
@@ -243,10 +243,9 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   @Nullable
   public XmlFile getAntFile() {
     final PsiFile psiFile = myVFile.isValid() ? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
-    if (!(psiFile instanceof XmlFile)) {
+    if (!(psiFile instanceof XmlFile xmlFile)) {
       return null;
     }
-    final XmlFile xmlFile = (XmlFile)psiFile;
     return AntDomFileDescription.isAntFile(xmlFile) ? xmlFile : null;
   }
 
@@ -371,7 +370,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
       myWorkspaceOptions.readExternal(parentNode);
       final Element expanded = parentNode.getChild("expanded");
       if (expanded != null) {
-        myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
+        myShouldExpand = Boolean.parseBoolean(expanded.getAttributeValue("value"));
       }
 
       // don't lose old command line parameters

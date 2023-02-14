@@ -6,6 +6,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.progress.Task;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +24,11 @@ public interface VcsPushUi {
   void executeAfterRunningPrePushHandlers(@NotNull Task.Backgroundable activity);
 
   /**
-    * Runs {@link PrePushHandler pre-push handlers} under a modal progress,
-    * and after that starts push in a background task.
-    */
-   @RequiresEdt
-   void push(boolean forcePush);
+   * Runs {@link PrePushHandler pre-push handlers} under a modal progress,
+   * and after that starts push in a background task.
+   */
+  @RequiresEdt
+  void push(boolean forcePush);
 
   /**
    * Returns push specifications (what is being pushed, where from and where to) collected from the push dialog,
@@ -46,6 +47,12 @@ public interface VcsPushUi {
    */
   @RequiresEdt
   boolean canPush();
+
+  @RequiresEdt
+  @ApiStatus.Experimental
+  default boolean hasWarnings() {
+    return false;
+  }
 
   /**
    * Returns special push options, usually selected by user at the bottom of the push dialog.

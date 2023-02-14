@@ -1,14 +1,24 @@
 <html>
 <body>
-Reports <b>@GuardedBy</b> annotations where the specified guarding field is unknown.
-Supported <b>@GuardedBy</b> annotations are:
+Reports <code>@GuardedBy</code> annotations in which the specified guarding field is unknown.
+<p>Example:</p>
+<pre><code>
+    private Object state;
+
+    @GuardedBy("lock") //unknown guard reference
+    public void bar() {
+        state = new Object();
+    }
+</code></pre>
+<!-- tooltip end -->
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
-  <li>net.jcip.annotations.GuardedBy</li>
-  <li>javax.annotation.concurrent.GuardedBy</li>
-  <li>org.apache.http.annotation.GuardedBy</li>
-  <li>com.android.annotations.concurrency.GuardedBy</li>
-  <li>androidx.annotation.GuardedBy</li>
-  <li>com.google.errorprone.annotations.concurrent.GuardedBy</li>
+  <li><code>net.jcip.annotations.GuardedBy</code></li>
+  <li><code>javax.annotation.concurrent.GuardedBy</code></li>
+  <li><code>org.apache.http.annotation.GuardedBy</code></li>
+  <li><code>com.android.annotations.concurrency.GuardedBy</code></li>
+  <li><code>androidx.annotation.GuardedBy</code></li>
+  <li><code>com.google.errorprone.annotations.concurrent.GuardedBy</code></li>
 </ul>
 </body>
 </html>

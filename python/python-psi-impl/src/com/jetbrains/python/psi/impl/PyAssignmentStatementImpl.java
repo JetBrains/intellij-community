@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
   private volatile PyExpression @Nullable [] myTargets;
 
@@ -241,8 +239,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   public PsiNamedElement getNamedElement(@NotNull final String the_name) {
     // performance: check simple case first
     PyExpression[] targets = getTargets();
-    if (targets.length == 1 && targets[0] instanceof PyTargetExpression) {
-      PyTargetExpression target = (PyTargetExpression)targets[0];
+    if (targets.length == 1 && targets[0] instanceof PyTargetExpression target) {
       return !target.isQualified() && the_name.equals(target.getName()) ? target : null;
     }
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);

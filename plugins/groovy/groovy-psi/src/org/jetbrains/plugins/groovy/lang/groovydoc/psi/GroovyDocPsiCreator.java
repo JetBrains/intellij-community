@@ -10,16 +10,12 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements.GroovyDocTagValueTokenType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.*;
 
-/**
- * @author ilyas
- */
 public final class GroovyDocPsiCreator {
 
   public static PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
 
-    if (type instanceof GroovyDocTagValueTokenType) {
-      GroovyDocTagValueTokenType value = (GroovyDocTagValueTokenType) type;
+    if (type instanceof GroovyDocTagValueTokenType value) {
       GroovyDocTagValueTokenType.TagValueTokenType valueType = GroovyDocTagValueTokenType.getValueType(node);
       if (valueType == GroovyDocTagValueTokenType.TagValueTokenType.REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
 

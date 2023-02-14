@@ -31,6 +31,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import com.intellij.xml.impl.XmlElementDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
@@ -72,17 +73,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   }
 
   @Override
-  protected String getCheckboxTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.checkbox.title");
-  }
-
-  @Override
-  @NotNull
-  protected String getPanelTitle() {
-    return XmlAnalysisBundle.message("html.inspections.unknown.tag.title");
-  }
-
-  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
@@ -96,6 +86,15 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
     XmlElementDescriptor ownDescriptor = isAbstractDescriptor(descriptorFromContext)
                                          ? tag.getDescriptor()
                                          : descriptorFromContext;
+
+    if (ownDescriptor instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)ownDescriptor).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
+    if (descriptorFromContext instanceof XmlElementDescriptorEx) {
+      ((XmlElementDescriptorEx)descriptorFromContext).validateTagName(tag, holder, isOnTheFly);
+      return;
+    }
 
     if (isAbstractDescriptor(ownDescriptor) ||
         (parentDescriptor instanceof HtmlElementDescriptorImpl &&
@@ -137,12 +136,14 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         ProblemHighlightType highlightType = tag.getContainingFile().getContext() == null ?
                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
                                              ProblemHighlightType.INFORMATION;
-        if (startTagName.getTextLength() > 0) {
-          holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-        }
+        if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+          if (startTagName.getTextLength() > 0) {
+            holder.registerProblem(startTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
 
-        if (endTagName != null) {
-          holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          if (endTagName != null) {
+            holder.registerProblem(endTagName, message, highlightType, quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
         }
       }
     }

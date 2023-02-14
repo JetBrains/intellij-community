@@ -33,12 +33,10 @@ public class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection
   protected String buildErrorString(Object... infos) {
     final PsiTypeElement typeElement = (PsiTypeElement)infos[0];
     final PsiElement parent = typeElement.getParent();
-    if (parent instanceof PsiField) {
-      final PsiField field = (PsiField)parent;
+    if (parent instanceof PsiField field) {
       return InspectionGadgetsBundle.message("optional.used.as.field.type.problem.descriptor", field.getName());
     }
-    else if (parent instanceof PsiParameter) {
-      final PsiParameter parameter = (PsiParameter)parent;
+    else if (parent instanceof PsiParameter parameter) {
       return InspectionGadgetsBundle.message("optional.used.as.parameter.type.problem.descriptor", parameter.getName());
     }
     throw new AssertionError();
@@ -52,19 +50,18 @@ public class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection
   private static class OptionUsedAsFieldOrParameterTypeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       checkTypeElement(field.getTypeElement());
     }
 
     @Override
-    public void visitParameter(PsiParameter parameter) {
+    public void visitParameter(@NotNull PsiParameter parameter) {
       super.visitParameter(parameter);
       final PsiElement scope = parameter.getDeclarationScope();
-      if (!(scope instanceof PsiMethod)) {
+      if (!(scope instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)scope;
       if (MethodUtils.hasSuper(method)) {
         return;
       }

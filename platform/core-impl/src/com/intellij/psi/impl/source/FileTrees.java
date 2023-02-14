@@ -22,22 +22,19 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * @author peter
- */
 final class FileTrees {
   private static final Logger LOG = Logger.getInstance(FileTrees.class);
   private static final int firstNonFilePsiIndex = 1;
   private final PsiFileImpl myFile;
   private final Reference<StubTree> myStub;
-  private final Supplier<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
+  private final Supplier<? extends FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
 
   /** Keeps references to all alive stubbed PSI (using {@link SpineRef}) to ensure PSI identity is preserved after AST/stubs are gc-ed and reloaded */
   private final Reference<StubBasedPsiElementBase<?>> @Nullable [] myRefToPsi;
 
   private FileTrees(@NotNull PsiFileImpl file,
                     @Nullable Reference<StubTree> stub,
-                    @Nullable Supplier<FileElement> ast,
+                    @Nullable Supplier<? extends FileElement> ast,
                     Reference<StubBasedPsiElementBase<?>> @Nullable [] refToPsi) {
     myFile = file;
     myStub = stub;
@@ -137,7 +134,7 @@ final class FileTrees {
     return new FileTrees(myFile, null, myTreeElementPointer, null);
   }
 
-  FileTrees withAst(@NotNull Supplier<FileElement> ast) {
+  FileTrees withAst(@NotNull Supplier<? extends FileElement> ast) {
     return new FileTrees(myFile, myStub, ast, myRefToPsi).reconcilePsi(derefStub(), ast.get(), true);
   }
 

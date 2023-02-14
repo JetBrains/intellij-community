@@ -12,7 +12,7 @@ public class WriteExternalException extends RuntimeException {
    * @deprecated Do not use WriteExternalException as a control flow exception.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   public WriteExternalException() {
     super();
   }

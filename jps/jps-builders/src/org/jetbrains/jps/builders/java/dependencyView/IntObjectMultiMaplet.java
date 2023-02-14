@@ -1,7 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
-
-import gnu.trove.TIntObjectProcedure;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -9,10 +7,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.ObjIntConsumer;
 
-/**
- * @author: db
- */
 abstract class IntObjectMultiMaplet<V> implements Streamable, CloseableMaplet {
   abstract boolean containsKey(final int key);
 
@@ -34,7 +30,7 @@ abstract class IntObjectMultiMaplet<V> implements Streamable, CloseableMaplet {
 
   abstract void removeAll(final int key, final Collection<V> value);
 
-  abstract void forEachEntry(TIntObjectProcedure<Collection<V>> procedure);
+  abstract void forEachEntry(ObjIntConsumer<? super Collection<V>> procedure);
 
   abstract void flush(boolean memoryCachesOnly);
 
@@ -42,13 +38,7 @@ abstract class IntObjectMultiMaplet<V> implements Streamable, CloseableMaplet {
   public void toStream(final DependencyContext context, final PrintStream stream) {
     final OrderProvider op = new OrderProvider(context);
 
-    forEachEntry(new TIntObjectProcedure<Collection<V>>() {
-      @Override
-      public boolean execute(final int a, final Collection<V> b) {
-        op.register(a);
-        return true;
-      }
-    });
+    forEachEntry((vs, value) -> op.register(value));
 
     final int[] keys = op.get();
 

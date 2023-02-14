@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.sender
 
@@ -11,7 +11,7 @@ import java.io.File
 
 class StatisticSenderImpl: StatisticSender {
     companion object {
-        const val DAILY_LIMIT = 15 * 1024 * 1024 // 15 mb
+        const val DAILY_LIMIT = 20 * 1024 * 1024 // 20 mb
     }
 
     private val limitWatcher = DailyLimitSendingWatcher(DAILY_LIMIT, PersistentSentDataInfo(PropertiesComponent.getInstance()))

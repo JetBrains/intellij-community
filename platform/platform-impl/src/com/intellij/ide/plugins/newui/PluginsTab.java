@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
@@ -17,10 +14,10 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +27,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author Alexander Lobas
@@ -65,13 +62,9 @@ public abstract class PluginsTab {
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
     int key = mySearchPanel.getPanel() == panel ? 1 : 0;
-    if (myCardPanel.getKey() != key) {
-      return;
+    if (myCardPanel.getKey() == key) {
+      myDetailsPage.showPlugins(panel.getSelection());
     }
-
-    List<ListPluginComponent> selection = panel.getSelection();
-    int size = selection.size();
-    myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   };
 
   @NotNull
@@ -161,6 +154,11 @@ public abstract class PluginsTab {
           }
 
           @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
+          @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             if (mySearchPanel.controller != null && mySearchPanel.controller.isPopupShow()) {
               mySearchPanel.controller.hidePopup();
@@ -189,7 +187,7 @@ public abstract class PluginsTab {
     mySearchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!mySearchTextField.isSkipDocumentEvents()) {
+        if (!mySearchTextField.isSkipDocumentEvents() && !mySearchUpdateAlarm.isDisposed()) {
           mySearchUpdateAlarm.cancelAllRequests();
           mySearchUpdateAlarm.addRequest(this::searchOnTheFly, flyDelay, ModalityState.stateForComponent(mySearchTextField));
         }
@@ -214,7 +212,7 @@ public abstract class PluginsTab {
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
-    editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
+    editor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
@@ -247,7 +245,6 @@ public abstract class PluginsTab {
 
   public void setSearchQuery(@Nullable String query) {
     mySearchTextField.setTextIgnoreEvents(query);
-    mySearchTextField.requestFocus();
     if (query == null) {
       hideSearchPanel();
     }
@@ -259,7 +256,7 @@ public abstract class PluginsTab {
   public void showSearchPanel(@NotNull String query) {
     if (mySearchPanel.isEmpty()) {
       myCardPanel.select(1, true);
-      myDetailsPage.showPlugin(null, false);
+      myDetailsPage.showPlugin(null);
     }
     mySearchPanel.setQuery(query);
     mySearchTextField.addCurrentTextToHistory();

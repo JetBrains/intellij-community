@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -80,18 +80,18 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
 
               //noinspection unchecked
               CompletableFuture<XValueChildrenList>[] futures = chunks.stream()
-                .map(l -> createNodes(l, refType, suspendContext))
+                .map(l -> createNodes(l, refType))
                 .toArray(CompletableFuture[]::new);
               CompletableFuture.allOf(futures)
-              .thenAccept(__ -> {
-                StreamEx.of(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
-                node.addChildren(XValueChildrenList.EMPTY, true);
-              });
-          }
-        );
+                .thenAccept(__ -> {
+                  StreamEx.of(futures).map(CompletableFuture::join).forEach(c -> node.addChildren(c, false));
+                  node.addChildren(XValueChildrenList.EMPTY, true);
+                });
+            }
+          );
       }
 
-      private CompletableFuture<XValueChildrenList> createNodes(List<Field> fields, ReferenceType refType, SuspendContext context) {
+      private CompletableFuture<XValueChildrenList> createNodes(List<Field> fields, ReferenceType refType) {
         return DebuggerUtilsAsync.getValues(refType, fields)
           .thenApply(cachedValues -> {
                        XValueChildrenList children = new XValueChildrenList();

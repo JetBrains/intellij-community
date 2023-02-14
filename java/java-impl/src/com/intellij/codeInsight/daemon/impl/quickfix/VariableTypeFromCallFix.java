@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -14,8 +14,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
-import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +54,9 @@ public final class VariableTypeFromCallFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    final TypeMigrationRules rules = new TypeMigrationRules(project);
-    rules.setBoundScope(PsiSearchHelper.getInstance(project).getUseScope(myVar));
-
-    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar, myExpressionType);
+    var scope = PsiSearchHelper.getInstance(project).getUseScope(myVar);
+    var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
+    handler.runHighlightingTypeMigrationSilently(project, editor, scope, myVar, myExpressionType);
   }
 
   @Override

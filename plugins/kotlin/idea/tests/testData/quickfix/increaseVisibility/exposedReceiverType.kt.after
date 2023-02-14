@@ -1,0 +1,13 @@
+// "Make 'Private' protected" "true"
+// ACTION: Convert receiver to parameter
+// ACTION: Introduce import alias
+// ACTION: Make 'Private' protected
+// ACTION: Make 'Private' public
+
+class Receiver<T>
+
+abstract class My {
+    protected class Private
+
+    abstract protected fun Receiver<Private>.foo()
+}

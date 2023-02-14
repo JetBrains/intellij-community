@@ -2,18 +2,22 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.impl.CoreProgressManager
-import java.util.function.Supplier
 
-interface AsyncSupplier<R> : Supplier<R> {
-  fun isBlocking(): Boolean =
-    ApplicationManager.getApplication().isHeadlessEnvironment &&
-    !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()
+interface AsyncSupplier<R> {
 
   /**
    * Supply a value to the consumer, when the value available
-   * If [isBlocking] is true, implementation should call [consumer] before returning from the method
+   * Note: Implementation can call [consumer] before returning from the method
    */
-  fun supply(consumer: (R) -> Unit, parentDisposable: Disposable)
+  fun supply(parentDisposable: Disposable, consumer: (R) -> Unit)
+
+  companion object {
+
+    fun <R> blocking(supplier: () -> R): AsyncSupplier<R> =
+      object : AsyncSupplier<R> {
+        override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
+          consumer(supplier())
+        }
+      }
+  }
 }

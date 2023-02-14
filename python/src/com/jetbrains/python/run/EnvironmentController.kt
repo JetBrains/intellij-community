@@ -4,9 +4,11 @@ package com.jetbrains.python.run
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.joinToStringFunction
+import com.intellij.execution.target.value.targetPath
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
 
 /**
  * This is a temporary interface for smoother transition to Targets API. Its
@@ -33,6 +35,8 @@ interface EnvironmentController {
    * puts the value to the environment variable with provided [name].
    */
   fun putTargetPathsValue(name: String, localPaths: Collection<String>)
+
+  fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence)
 
   /**
    * Composes the value based on [targetPaths] by joining them using the path
@@ -65,7 +69,11 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
-    envs[name] = localPaths.joinToString(separator = File.pathSeparator)
+    putTargetPathsValue(name, localPaths, File.pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
+    envs[name] = localPaths.joinToString(separator = separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {
@@ -91,14 +99,19 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun putTargetPathValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetPath(Path.of(localPath))
     envs[name] = targetValue
   }
 
   override fun putTargetPathsValue(name: String, localPaths: Collection<String>) {
+    val pathSeparator = targetEnvironmentRequest.targetPlatform.platform.pathSeparator.toString()
+    putTargetPathsValue(name, localPaths, pathSeparator)
+  }
+
+  override fun putTargetPathsValue(name: String, localPaths: Collection<String>, separator: CharSequence) {
     envs[name] = localPaths
-      .map { localPath -> targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath) }
-      .joinToPathValue(targetEnvironmentRequest.targetPlatform)
+      .map { localPath -> targetPath(Path.of(localPath)) }
+      .joinToStringFunction(separator)
   }
 
   override fun putResolvedTargetPathsValue(name: String, targetPaths: Collection<String>) {
@@ -107,7 +120,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
   }
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
-    val targetValue = targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+    val targetValue = targetPath(Path.of(localPath))
     envs.merge(name, targetValue) { originalValue, additionalValue ->
       listOf(originalValue, additionalValue).joinToPathValue(targetEnvironmentRequest.targetPlatform)
     }

@@ -25,8 +25,6 @@ import java.util.TreeSet;
 
 /**
  * Holds shared project-level gradle-related settings (should be kept at the '*.ipr' or under '.idea').
- *
- * @author peter
  */
 @State(name = "GradleSettings", storages = @Storage("gradle.xml"))
 public class GradleSettings extends AbstractExternalSystemSettings<GradleSettings, GradleProjectSettings, GradleSettingsListener>
@@ -41,11 +39,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @NotNull
   public static GradleSettings getInstance(@NotNull Project project) {
     return project.getService(GradleSettings.class);
-  }
-
-  @Override
-  public void subscribe(@NotNull ExternalSystemSettingsListener<GradleProjectSettings> listener) {
-    doSubscribe(new DelegatingGradleSettingsListenerAdapter(listener), getProject());
   }
 
   @Override
@@ -105,13 +98,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @Nullable
   @NlsSafe
   public String getServiceDirectoryPath() {
-    return GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    return GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
   }
 
   public void setServiceDirectoryPath(@Nullable String newPath) {
-    String myServiceDirectoryPath = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    String myServiceDirectoryPath = GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
     if (!Objects.equals(myServiceDirectoryPath, newPath)) {
-      GradleSystemSettings.getInstance().setServiceDirectoryPath(newPath);
+      GradleLocalSettings.getInstance(getProject()).setGradleUserHome(newPath);
       getPublisher().onServiceDirectoryPathChange(myServiceDirectoryPath, newPath);
     }
   }

@@ -51,11 +51,6 @@ public class MockChangeList extends LocalChangeList {
   }
 
   @Override
-  public void setName(@NotNull String name) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getComment() {
     throw new UnsupportedOperationException();
   }

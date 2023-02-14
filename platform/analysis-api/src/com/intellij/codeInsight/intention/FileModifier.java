@@ -32,7 +32,6 @@ import java.lang.reflect.Modifier;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
- * @author peter
  */
 public interface FileModifier extends WriteActionAware {
 
@@ -57,6 +56,13 @@ public interface FileModifier extends WriteActionAware {
    * Returns the equivalent file modifier that could be applied to the 
    * non-physical copy of the file used to preview the modification.
    * May return itself if the action doesn't depend on the file.
+   * <p>
+   * @implNote Default implementation checks all the fields of this FileModifier
+   * reflectively. If all the fields are safe then this FileModifier is returned.
+   * Otherwise, null is returned, as writing to the original file is possible.
+   * Fields are considered safe if they are annotated with {@link SafeFieldForPreview}
+   * or have safe type. Safe types are primitives, enums, strings, primitive wrappers,
+   * types annotated with {@link SafeTypeForPreview}, or arrays of any of these types.
    *
    * @param target target non-physical file 
    * @return the action that could be applied to the non-physical copy of the file.
@@ -66,11 +72,14 @@ public interface FileModifier extends WriteActionAware {
     if (!startInWriteAction()) return null;
     for (Field field : ReflectionUtil.collectFields(((Object)this).getClass())) {
       if (Modifier.isStatic(field.getModifiers())) continue;
-      Class<?> type = field.getType();
       if (field.getAnnotation(SafeFieldForPreview.class) != null) continue;
+      Class<?> type = field.getType();
       while (type.isArray()) type = type.getComponentType();
+      if (type.getAnnotation(SafeTypeForPreview.class) != null) continue;
       if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
           type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
+          type.equals(Long.class) || type.equals(Double.class) || type.equals(Float.class) ||
+          type.equals(Short.class) || type.equals(Byte.class) || type.equals(Character.class) ||
           // Back-link to the parent inspection looks safe, as inspection should not depend on the file 
           (field.isSynthetic() && field.getName().equals("this$0") && 
            LocalInspectionTool.class.isAssignableFrom(type))) {
@@ -83,12 +92,19 @@ public interface FileModifier extends WriteActionAware {
   }
 
   /**
-   * Use this annotation to mark fields in implementors that are known to contain no file-related state.
-   * It's mainly useful for the fields in abstract classes: marking unknown abstract class field as 
-   * safe for preview will enable default {@link #getFileModifierForPreview(PsiFile)} behavior for all
-   * subclasses (unless subclass declares its own suspicious field).
+   * Use this annotation to mark fields in implementors that are known to contain no writable
+   * file-related state. Default {@link #getFileModifierForPreview(PsiFile)} implementation
+   * can be used when all the fields are safe.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.FIELD)
   @interface SafeFieldForPreview {}
+
+  /**
+   * Use this annotation to mark classes whose instances never contain any file-related state.
+   * Any field whose type is marked with this annotation is considered to be safe.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.TYPE)
+  @interface SafeTypeForPreview {}
 }

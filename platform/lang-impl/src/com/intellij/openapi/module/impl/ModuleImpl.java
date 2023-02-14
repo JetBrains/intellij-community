@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.configurationStore.RenameableStateStorageManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -18,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
@@ -41,13 +39,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
 
-  @NotNull private final Project myProject;
-  @Nullable protected VirtualFilePointer myImlFilePointer;
+  private final @NotNull Project myProject;
+  protected @Nullable VirtualFilePointer myImlFilePointer;
   private volatile boolean isModuleAdded;
 
   private String myName;
@@ -75,14 +76,15 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project, @Nullable VirtualFilePointer virtualFilePointer) {
     this(name, project);
-    VirtualFilePointerManager.getInstance();
+
     myImlFilePointer = virtualFilePointer;
   }
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project) {
-    super((ComponentManagerImpl)project);
-    registerServiceInstance(Module.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    super((ComponentManagerImpl)project, false);
+
+    registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
     myName = name;
@@ -92,29 +94,21 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), null);
+    registerComponents();
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
-                      Objects.requireNonNull(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID),
-                                             "Could not find plugin by id: " + PluginManagerCore.CORE_ID),
+                      ComponentManagerImpl.fakeCorePluginDescriptor,
                       true);
     }
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();
     }
-    createComponents(null);
+    createComponents();
   }
 
   private boolean isPersistent() {
     return myImlFilePointer != null;
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
-    // Component loading progress is not reported for module, because at this stage minimal reporting unit it is the module itself.
-    // Stage "Loading modules" progress reported for each loaded module and module component count doesn't matter.
   }
 
   @Override
@@ -154,8 +148,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getModuleFile() {
+  public @Nullable VirtualFile getModuleFile() {
     if (myImlFilePointer == null) {
       return null;
     }
@@ -170,13 +163,17 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  private @NotNull IComponentStore getStore() {
+  protected @NotNull IComponentStore getStore() {
     return Objects.requireNonNull(getService(IComponentStore.class));
   }
 
   @Override
-  @NotNull
-  public Path getModuleNioFile() {
+  public boolean canStoreSettings() {
+    return !(getStore() instanceof NonPersistentModuleStore);
+  }
+
+  @Override
+  public @NotNull Path getModuleNioFile() {
     if (!isPersistent()) {
       return Paths.get("");
     }
@@ -189,40 +186,19 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     super.dispose();
   }
 
-  @NotNull
   @Override
-  protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getModule();
-  }
-
-  @Override
-  public void projectOpened() {
-    //noinspection deprecation
-    processInitializedComponents(ModuleComponent.class, (component, __) -> {
-      try {
-        //noinspection deprecation
-        component.projectOpened();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      return Unit.INSTANCE;
-    });
+  protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
+    return pluginDescriptor.moduleContainerDescriptor;
   }
 
   @Override
   public void projectClosed() {
-    //noinspection deprecation
-    List<ModuleComponent> components = new ArrayList<>();
-    //noinspection deprecation
-    processInitializedComponents(ModuleComponent.class, (component, __) -> {
-      components.add(component);
-      return Unit.INSTANCE;
-    });
-
+    @SuppressWarnings({"removal", "UnnecessaryFullyQualifiedName"})
+    List<com.intellij.openapi.module.ModuleComponent> components =
+      collectInitializedComponents(com.intellij.openapi.module.ModuleComponent.class);
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
-        //noinspection deprecation
+        //noinspection removal
         components.get(i).projectClosed();
       }
       catch (Throwable e) {
@@ -232,14 +208,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -248,12 +222,12 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
-  public void moduleAdded() {
+  public void moduleAdded(List<? super ModuleComponent> oldComponents) {
     isModuleAdded = true;
-    processInitializedComponents(ModuleComponent.class, (component, __) -> {
-      component.moduleAdded();
+    //noinspection removal,UnnecessaryFullyQualifiedName
+    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component) -> {
+      oldComponents.add(component);
       return Unit.INSTANCE;
     });
   }
@@ -271,8 +245,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
   }
 
-  @NotNull
-  private DeprecatedModuleOptionManager getOptionManager() {
+  private @NotNull DeprecatedModuleOptionManager getOptionManager() {
     //noinspection ConstantConditions
     return ((Module)this).getService(DeprecatedModuleOptionManager.class);
   }
@@ -282,64 +255,64 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return getOptionManager().state.options.get(key);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleScope() {
+  public @NotNull GlobalSearchScope getModuleScope() {
     return myModuleScopeProvider.getModuleScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleScope(boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithLibrariesScope() {
+  public @NotNull GlobalSearchScope getModuleWithLibrariesScope() {
     return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependenciesScope() {
+  public @NotNull GlobalSearchScope getModuleWithDependenciesScope() {
     return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleContentScope() {
+  public @NotNull GlobalSearchScope getModuleContentScope() {
     return myModuleScopeProvider.getModuleContentScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleContentWithDependenciesScope() {
+  public @NotNull GlobalSearchScope getModuleContentWithDependenciesScope() {
     return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleWithDependentsScope() {
+  public @NotNull GlobalSearchScope getModuleWithDependentsScope() {
     return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleTestsWithDependentsScope() {
+  public @NotNull GlobalSearchScope getModuleTestsWithDependentsScope() {
     return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
+  public @NotNull GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    return myModuleScopeProvider.getModuleProductionSourceScope();
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    return myModuleScopeProvider.getModuleTestSourceScope();
   }
 
   @Override
@@ -353,11 +326,6 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
   }
 
-  @Override
-  public long getOptionsModificationCount() {
-    return getOptionManager().getModificationCount();
-  }
-
   @ApiStatus.Internal
   @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false /* doesn't make sense to check it */)
   public static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State>,
@@ -369,8 +337,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     }
 
     @Override
-    @Nullable
-    public ProjectModelExternalSource getExternalSource() {
+    public @Nullable ProjectModelExternalSource getExternalSource() {
       if (state.options.size() > 1 || state.options.size() == 1 && !state.options.containsKey(Module.ELEMENT_TYPE) /* unrealistic case, but just to be sure */) {
         return null;
       }
@@ -385,9 +352,8 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
     private State state = new State();
 
-    @Nullable
     @Override
-    public State getState() {
+    public @Nullable State getState() {
       return state;
     }
 

@@ -22,8 +22,6 @@ import java.util.LinkedHashSet;
  *
  * If you want to change the matching prefix, use {@link #withPrefixMatcher(PrefixMatcher)} or {@link #withPrefixMatcher(String)}
  * to obtain another {@link CompletionResultSet} and give your lookup elements to that one.
- *
- * @author peter
  */
 public abstract class CompletionResultSet implements Consumer<LookupElement> {
   private final PrefixMatcher myPrefixMatcher;
@@ -72,7 +70,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   /**
    * Adds all elements from the given collection that match the prefix for further processing. The elements are processed in batch,
    * so that they'll appear in lookup all together.<p/>
-   * This can be useful to ensure predictable order of top suggested elements.
+   * This can be useful to ensure a predictable order of top suggested elements.
    * Otherwise, when the lookup is shown, most relevant elements processed to that moment are put to the top 
    * and remain there even if more relevant elements appear later. 
    * These "first" elements may differ from completion invocation to completion invocation due to performance fluctuations,

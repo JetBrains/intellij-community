@@ -2,7 +2,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -18,9 +18,8 @@ public class PropertiesCopyHandlerEx extends PropertiesCopyHandler {
       DataManager.getInstance()
                  .getDataContextFromFocusAsync()
                  .onSuccess(context -> {
-                   final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
-                   if (fileEditor instanceof ResourceBundleEditor) {
-                     final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+                   final FileEditor fileEditor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
+                   if (fileEditor instanceof ResourceBundleEditor resourceBundleEditor) {
                      resourceBundleEditor.updateTreeRoot();
                      resourceBundleEditor.selectProperty(newName);
                    }

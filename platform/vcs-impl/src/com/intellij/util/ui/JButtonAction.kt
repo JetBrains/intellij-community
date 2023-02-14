@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -18,38 +18,43 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = createButton()
+    button.isOpaque = false
     button.addActionListener {
-      val dataContext = ActionToolbar.getDataContextFor(button)
-      val action = this@JButtonAction
-      val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
-
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-        ActionUtil.performActionDumbAware(action, event)
-      }
+      performAction(button, place, presentation)
     }
+    button.text = presentation.getText(true)
 
-    updateButtonFromPresentation(button, presentation)
     return button
+  }
+
+  protected fun performAction(component: JComponent, place: String, presentation: Presentation) {
+    val dataContext = ActionToolbar.getDataContextFor(component)
+    val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
+
+    if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(this, event)
+    }
   }
 
   protected open fun createButton(): JButton = JButton().configureForToolbar()
 
-  protected fun JButton.configureForToolbar(): JButton =
+  private fun JButton.configureForToolbar(): JButton =
     apply {
       isFocusable = false
       font = JBUI.Fonts.toolbarFont()
       putClientProperty("ActionToolbar.smallVariant", true)
     }
 
-  protected fun updateButtonFromPresentation(e: AnActionEvent) {
-    val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
-    if (button != null) updateButtonFromPresentation(button, e.presentation)
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    if (component is JButton) {
+      updateButtonFromPresentation(component, presentation)
+    }
   }
 
   protected open fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     button.isEnabled = presentation.isEnabled
     button.isVisible = presentation.isVisible
-    button.text = presentation.text
+    button.text = presentation.getText(true)
     button.icon = presentation.icon
     button.mnemonic = presentation.mnemonic
     button.displayedMnemonicIndex = presentation.displayedMnemonicIndex

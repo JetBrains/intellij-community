@@ -41,8 +41,10 @@ public class HgHistoryTest extends HgPlatformTest {
   public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    appendToHgrc(myRepository, "[extensions]\n" +
-                                "largefiles=!\n");
+    appendToHgrc(myRepository, """
+      [extensions]
+      largefiles=!
+      """);
     mkdir(subDirName);
     cd(subDirName);
     touch(names[0], "f1");

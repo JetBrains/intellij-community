@@ -18,9 +18,6 @@ package com.intellij.codeInsight.generation;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author peter
- */
 public interface EncapsulatableClassMember extends ClassMember{
   /**
    * @return PsiElement or TemplateGenerationInfo

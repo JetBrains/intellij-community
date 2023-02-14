@@ -1,5 +1,3 @@
-from typing import Any, Optional
-
 from markdown.blockprocessors import BlockProcessor
 from markdown.extensions import Extension
 

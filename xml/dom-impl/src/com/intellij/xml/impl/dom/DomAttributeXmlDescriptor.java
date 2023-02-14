@@ -18,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDescriptor {
-  private final DomAttributeChildDescription myDescription;
+  private final DomAttributeChildDescription<?> myDescription;
   private final Project myProject;
 
-  public DomAttributeXmlDescriptor(final DomAttributeChildDescription description, Project project) {
+  public DomAttributeXmlDescriptor(final DomAttributeChildDescription<?> description, Project project) {
     myDescription = description;
     myProject = project;
   }
@@ -83,8 +83,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
 
   static String getQualifiedAttributeName(PsiElement context, XmlName xmlName) {
     final String localName = xmlName.getLocalName();
-    if (context instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)context;
+    if (context instanceof XmlTag tag) {
       final DomInvocationHandler handler = DomManagerImpl.getDomManager(context.getProject()).getDomHandler(tag);
       if (handler != null) {
         final String ns = handler.createEvaluatedXmlName(xmlName).getNamespace(tag, handler.getFile());

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GdslFileType;
 import org.jetbrains.plugins.groovy.dsl.DslActivationStatus.Status;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import org.jetbrains.plugins.groovy.dsl.holders.OriginAwareMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -51,9 +53,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-/**
- * @author peter
- */
 public final class GroovyDslFileIndex {
   private static final Key<Pair<GroovyDslExecutor, Long>> CACHED_EXECUTOR = Key.create("CachedGdslExecutor");
   private static final Key<CachedValue<List<GroovyDslScript>>> SCRIPTS_CACHE = Key.create("GdslScriptCache");
@@ -97,7 +96,7 @@ public final class GroovyDslFileIndex {
     }, app.getDisposed());
   }
 
-  static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @NlsSafe @Nullable String error) {
+  public static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @NlsSafe @Nullable String error) {
     assert status != Status.ACTIVE;
     setStatusAndError(vfile, status, error);
     vfile.putUserData(CACHED_EXECUTOR, null);
@@ -136,15 +135,12 @@ public final class GroovyDslFileIndex {
       final Collection infos = staticInfo.get("scriptSuperClass");
 
       for (Object info : infos) {
-        if (info instanceof Map) {
-          @NonNls final Map map = (Map)info;
+        if (info instanceof @NonNls Map map) {
 
           final Object _pattern = map.get("pattern");
           final Object _superClass = map.get("superClass");
 
-          if (_pattern instanceof String && _superClass instanceof String) {
-            final String pattern = (String)_pattern;
-            final String superClass = (String)_superClass;
+          if (_pattern instanceof String pattern && _superClass instanceof String superClass) {
 
             try {
               if (Pattern.matches(".*" + pattern, filePath)) {
@@ -205,6 +201,10 @@ public final class GroovyDslFileIndex {
     for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
       GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, psiClass, place, placeFile);
       CustomMembersHolder holder = script.processExecutor(descriptor);
+      VirtualFile origin = script.getFile();
+      if (origin != null) {
+        holder = new OriginAwareMembersHolder(origin, holder);
+      }
       if (!processor.process(holder, descriptor)) {
         return false;
       }
@@ -265,6 +265,9 @@ public final class GroovyDslFileIndex {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
     for (VirtualFile vfile : FileTypeIndex.getFiles(GdslFileType.INSTANCE, scope)) {
+      if (FileTypeRegistry.getInstance().getFileTypeByFileName(vfile.getNameSequence()) != GdslFileType.INSTANCE) {
+        continue;
+      }
       if (!vfile.isValid()) {
         continue;
       }
@@ -435,7 +438,7 @@ public final class GroovyDslFileIndex {
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
           VirtualFile file = event.getFile();
-          if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
+          if (!GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
             continue;
           }
 

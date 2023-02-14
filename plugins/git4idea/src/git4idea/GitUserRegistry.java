@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.VcsMappingListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public final class GitUserRegistry implements Disposable, VcsListener {
+public final class GitUserRegistry implements Disposable, VcsMappingListener {
   private static final Logger LOG = Logger.getInstance(GitUserRegistry.class);
 
   private final @NotNull Project myProject;
@@ -49,21 +49,26 @@ public final class GitUserRegistry implements Disposable, VcsListener {
   public @Nullable VcsUser getOrReadUser(@NotNull VirtualFile root) {
     VcsUser user = myUserMap.get(root);
     if (user == null) {
-      try {
-        user = readCurrentUser(myProject, root);
-        if (user != null) {
-          myUserMap.put(root, user);
-        }
-      }
-      catch (VcsException e) {
-        LOG.warn("Could not retrieve user name in " + root, e);
+      user = readUser(root);
+      if (user != null) {
+        myUserMap.put(root, user);
       }
     }
     return user;
   }
 
+  public @Nullable VcsUser readUser(@NotNull VirtualFile root) {
+    try {
+      return readCurrentUser(myProject, root);
+    }
+    catch (VcsException e) {
+      LOG.warn("Could not retrieve user name in " + root, e);
+      return null;
+    }
+  }
+
   private static @Nullable VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    String userName = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
+    String userName = StringUtil.nullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME));
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL));
     return userName == null ? null : project.getService(VcsLogObjectsFactory.class).createUser(userName, userEmail);
   }

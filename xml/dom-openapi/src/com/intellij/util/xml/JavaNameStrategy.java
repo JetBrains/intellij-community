@@ -10,8 +10,6 @@ import java.util.Arrays;
 
 /**
  * This strategy decapitalizes property name, e.g. getXmlElementName() will correspond to xmlElementName
- *
- * @author peter
  */
 public class JavaNameStrategy extends DomNameStrategy {
   public static final Function<String,String> DECAPITALIZE_FUNCTION = s -> StringUtil.decapitalize(s);

@@ -51,7 +51,7 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
     private Boolean newDateTimeApiPresent = null;
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
       if (!isNewDateTimeApiPresent(referenceElement)) {
         return;
       }
@@ -60,9 +60,8 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
       }
       super.visitReferenceElement(referenceElement);
       final PsiElement target = referenceElement.resolve();
-      if (!(target instanceof PsiClass)) return;
+      if (!(target instanceof PsiClass targetClass)) return;
 
-      final PsiClass targetClass = (PsiClass)target;
       if (!dateTimeNames.contains(targetClass.getQualifiedName())) {
         return;
       }
@@ -70,14 +69,12 @@ public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
       PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(referenceElement, PsiTypeElement.class);
       if (typeElement != null) {
         final PsiElement parent = typeElement.getParent();
-        if (parent instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)parent;
+        if (parent instanceof PsiMethod method) {
           if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
             return;
           }
         }
-        else if (parent instanceof PsiParameter) {
-          final PsiParameter parameter = (PsiParameter)parent;
+        else if (parent instanceof PsiParameter parameter) {
           if (LibraryUtil.isOverrideOfLibraryMethodParameter(parameter)) {
             return;
           }

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ import java.util.List;
 
 /**
  * Service for reformatting code fragments, getting names for elements
- * according to the user's code style and working with import statements and full-qualified names.
+ * according to the user's code style, and working with import statements and full-qualified names.
  *
  * @see com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
  * @see com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
@@ -128,7 +129,7 @@ public abstract class CodeStyleManager  {
   public abstract void reformatText(@NotNull PsiFile file, int startOffset, int endOffset) throws IncorrectOperationException;
 
   /**
-   * Re-formats a ranges of text in the specified file. This method works faster than
+   * Re-formats ranges of text in the specified file. This method works faster than
    * {@link #reformatRange(PsiElement, int, int)} but invalidates the
    * PSI structure for the file.
    *
@@ -202,6 +203,7 @@ public abstract class CodeStyleManager  {
   /**
    * Calculates the indent that should be used for the specified line in
    * the specified file.
+   * To get indents for several lines (or the whole file) use {@link #getLineIndents(PsiFile)}.
    *
    * @param file   the file for which the indent should be calculated.
    * @param offset the offset for the line at which the indent should be calculated.
@@ -210,6 +212,20 @@ public abstract class CodeStyleManager  {
    */
   @Nullable
   public abstract String getLineIndent(@NotNull PsiFile file, int offset);
+
+  /**
+   * Calculates the indent that should be used for all the lines in the specified file.
+   * Default implementation returns null to keep API backward compatibility.
+   * Client must take it into account.
+   *
+   * @param file   the file for which the indent should be calculated.
+   * @return the list of indent string (containing of tabs and/or whitespaces), or
+   *         {@code null} if method is not implemented.
+   */
+  @Nullable
+  public List<String> getLineIndents(@NotNull PsiFile file) {
+    return null;
+  }
 
   /**
    * Calculates the indent that should be used for the specified line in
@@ -270,7 +286,7 @@ public abstract class CodeStyleManager  {
    * that are executed sequentially. That is done primarily for ability to show progress dialog during formatting (formatting
    * is always performed from EDT, hence, the GUI freezes if we perform formatting as a single big iteration).
    * <p/>
-   * However, there are situation when we don't want to use such an approach - for example, the IDE sometimes inserts dummy
+   * However, there are situations when we don't want to use such an approach - for example, the IDE sometimes inserts dummy
    * text into file in order to calculate formatting-specific data and removes it after that. We don't want to allow Swing events
    * dispatching during that in order to not show that dummy text to the end-user.
    * <p/>
@@ -283,7 +299,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Disables automatic formatting of modified PSI elements, runs the specified operation
-   * and re-enables the formatting. Can be used to improve performance of PSI write
+   * and re-enables the formatting. Can be used to improve the performance of PSI write
    * operations.
    *
    * @param r the operation to run.
@@ -348,5 +364,11 @@ public abstract class CodeStyleManager  {
 
   public void scheduleReformatWhenSettingsComputed(final @NotNull PsiFile file) {
     throw new UnsupportedOperationException();
+  }
+
+  public interface Listener {
+    Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
+    void beforeReformatText(@NotNull PsiFile file);
+    void afterReformatText(@NotNull PsiFile file);
   }
 }

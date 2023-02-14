@@ -78,7 +78,7 @@ public class IdRefProvider extends PsiReferenceProvider {
       final ProcessingContext context = new ProcessingContext();
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(myCondition).save(TARGET), context) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           super.visitXmlTag(tag);
           if (shouldContinue()) {
             visitSubTags(tag);
@@ -109,7 +109,7 @@ public class IdRefProvider extends PsiReferenceProvider {
 
       final ResolvingVisitor visitor = new ResolvingVisitor(PATTERN.with(AddValueCondition.create(VARIANTS)), context) {
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
           super.visitXmlTag(tag);
           visitSubTags(tag);
         }

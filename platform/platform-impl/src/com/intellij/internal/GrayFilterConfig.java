@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +29,8 @@ import java.awt.*;
 /**
  * @author tav
  */
-public class GrayFilterConfig extends AnAction implements DumbAware {
+class GrayFilterConfig extends AnAction implements DumbAware {
+
   private static final String BRIGHTNESS = "brightness";
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
@@ -44,6 +46,11 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     data[0][1] = String.valueOf(getGrayFilterProperty(BRIGHTNESS));
     data[1][1] = String.valueOf(getGrayFilterProperty(CONTRAST));
     data[2][1] = String.valueOf(getGrayFilterProperty(ALPHA));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -66,7 +73,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
           JLabel label = new JLabel((String)data[row][column]);
           label.setOpaque(true);
           label.setBackground(JBColor.border());
-          label.setBorder(JBUI.Borders.emptyLeft(UISettings.getDefFontSize()));
+          label.setBorder(JBUI.Borders.emptyLeft((int) Math.ceil(UISettings.getDefFontSize())));
           return label;
         };
       }
@@ -117,7 +124,7 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
     for (int c=0; c<table.getColumnCount(); c++)
       table.getColumnModel().getColumn(c).setPreferredWidth(JBUIScale.scale(100));
     for (int r=0; r<table.getRowCount(); r++)
-      table.setRowHeight(r, UISettings.getDefFontSize() * 2);
+      table.setRowHeight(r, (int)Math.ceil(UISettings.getDefFontSize() * 2));
 
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.add(table, BorderLayout.CENTER);

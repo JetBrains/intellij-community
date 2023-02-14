@@ -1,0 +1,19 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.jvmDecompiler">
+  <dependencies>
+    <plugin id="org.jetbrains.java.decompiler"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaActionProvider"/>
+    <writingAccessProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompiledFileWritingAccessProvider"/>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade"
+                        serviceImplementation="org.jetbrains.kotlin.idea.jvmDecompiler.KotlinJvmDecompilerFacadeImpl"/>
+  </extensions>
+
+  <actions>
+    <action id="DecompileKotlinToJava" class="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
+  </actions>
+</idea-plugin>

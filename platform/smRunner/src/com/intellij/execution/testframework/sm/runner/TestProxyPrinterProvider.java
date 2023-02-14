@@ -17,6 +17,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.intellij.openapi.application.ActionsKt.runReadAction;
+
 public final class TestProxyPrinterProvider {
 
   private final TestProxyFilterProvider myFilterProvider;
@@ -47,16 +49,16 @@ public final class TestProxyPrinterProvider {
     private final Filter myFilter;
 
     HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
-                            @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
-                            @NotNull Filter filter) {
+                     @NotNull Condition<? super ConsoleViewContentType> contentTypeCondition,
+                     @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);
       myContentTypeCondition = contentTypeCondition;
       myFilter = filter;
     }
 
     @Override
-    public void print(String text, ConsoleViewContentType contentType) {
-      if (contentType == null || !myContentTypeCondition.value(contentType)) {
+    public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      if (!myContentTypeCondition.value(contentType)) {
         defaultPrint(text, contentType);
         return;
       }
@@ -78,13 +80,14 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result;
-      try {
-        result = myFilter.applyFilter(line, line.length());
-      }
-      catch (Throwable t) {
-        throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
-      }
+      Filter.Result result = runReadAction(() -> {
+        try {
+          return myFilter.applyFilter(line, line.length());
+        }
+        catch (Throwable t) {
+          throw new RuntimeException("Error while applying " + myFilter + " to '"+line+"'", t);
+        }
+      });
       if (result != null) {
         List<Filter.ResultItem> items = sort(result.getResultItems());
         int lastOffset = 0;

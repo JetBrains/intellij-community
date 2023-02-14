@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.hover;
 
 import com.intellij.openapi.util.Key;
@@ -35,8 +35,7 @@ public abstract class TableHoverListener extends HoverListener {
   private final AtomicInteger columnHolder = new AtomicInteger(-1);
 
   private void update(@NotNull Component component, @NotNull ToIntFunction<? super JTable> rowFunc, @NotNull ToIntFunction<? super JTable> columnFunc) {
-    if (component instanceof JTable) {
-      JTable table = (JTable)component;
+    if (component instanceof JTable table) {
       int rowNew = rowFunc.applyAsInt(table);
       int rowOld = rowHolder.getAndSet(rowNew);
       int columnNew = columnFunc.applyAsInt(table);
@@ -62,8 +61,14 @@ public abstract class TableHoverListener extends HoverListener {
     int rowOld = getHoveredRow(table);
     if (rowNew == rowOld) return;
     table.putClientProperty(HOVERED_ROW_KEY, rowNew < 0 ? null : rowNew);
-    if (RenderingUtil.isHoverPaintingDisabled(table)) return;
-    table.repaint();
+    // tables without scroll pane do not repaint rows correctly (BasicTableUI.paint:1868-1872)
+    if (table.getParent() instanceof JViewport) {
+      repaintRow(table, rowOld);
+      repaintRow(table, rowNew);
+    }
+    else {
+      table.repaint();
+    }
   }
 
   /**
@@ -74,5 +79,10 @@ public abstract class TableHoverListener extends HoverListener {
   public static int getHoveredRow(@NotNull JTable table) {
     Object property = table.getClientProperty(HOVERED_ROW_KEY);
     return property instanceof Integer ? (Integer)property : -1;
+  }
+
+  private static void repaintRow(@NotNull JTable table, int row) {
+    Rectangle bounds = row < 0 ? null : table.getCellRect(row, 0, false);
+    if (bounds != null) table.repaint(0, bounds.y, table.getWidth(), bounds.height);
   }
 }

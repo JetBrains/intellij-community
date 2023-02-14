@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion.builder
 
 class GrDefaultBuilderStrategyOnFactoryMethodTest extends GrBuilderTransformationCompletionTestBase {
 
   void 'test no builder method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -32,7 +18,7 @@ Pojo.<caret>
   }
 
   void 'test custom builder method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -46,7 +32,7 @@ Pojo.<caret>
   }
 
   void 'test null builder method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -60,7 +46,7 @@ Pojo.<caret>
   }
 
   void 'test empty builder method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -74,7 +60,7 @@ Pojo.<caret>
   }
 
   void 'test spaces builder method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -88,7 +74,7 @@ Pojo.<caret>
   }
 
   void 'test no prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -103,7 +89,7 @@ Pojo.builder().<caret>
 
 
   void 'test empty prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -117,7 +103,7 @@ Pojo.builder().<caret>
   }
 
   void 'test custom prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -131,7 +117,7 @@ Pojo.builder().<caret>
   }
 
   void 'test spaces prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -145,7 +131,7 @@ Pojo.builder().<caret>
   }
 
   void 'test null prefix'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -159,7 +145,7 @@ Pojo.builder().<caret>
   }
 
   void 'test custom build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -173,7 +159,7 @@ Pojo.builder().<caret>
   }
 
   void 'test null build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -187,7 +173,7 @@ Pojo.builder().<caret>
   }
 
   void 'test empty build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -201,7 +187,7 @@ Pojo.builder().<caret>
   }
 
   void 'test spaces build method'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -215,7 +201,7 @@ Pojo.builder().<caret>
   }
 
   void 'test next setter'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -229,7 +215,7 @@ Pojo.builder().counter(1).<caret>
   }
 
   void 'test one more setter further'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 
@@ -243,7 +229,7 @@ Pojo.builder().counter(1).name("Janet").<caret>
   }
 
   void 'test other return type'() {
-    doVariantableTest '''\
+    doCompletionTest '''\
 import groovy.transform.builder.Builder
 import groovy.transform.builder.DefaultStrategy
 

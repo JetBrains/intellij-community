@@ -1,11 +1,18 @@
 <html>
 <body>
-Reports any uses of non-<b>final</b> <b>static</b> variables during initialization
-of a class. Such uses may make the semantics of the code dependent on order of class
-creation, may cause variables to be used before initialized, and generally cause
-extremely difficult and confusing bugs.
-<!-- tooltip end -->
-<p>
+Reports the use of non-<code>final</code> <code>static</code> variables during class initialization.
+<p>In such cases, the code semantics may become dependent on the class creation order. Additionally, such cases may lead to the use of
+  variables before their initialization, and generally cause difficult and confusing bugs.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Foo {
+    public static int bar = 0;
 
+    static {
+      System.out.println(bar);
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

@@ -1,0 +1,33 @@
+{
+  "$schema": "../../web-types-gen/resources/web-types.json",
+  "name": "web-components",
+  "version": "1.0.0",
+  "js-types-syntax": "typescript",
+  "contributions": {
+    "html": {
+      "elements": [
+        {
+          "name": "demo-test",
+          "attributes": [
+            {
+              "name": "foo-bar",
+              "value": {
+                "type": "string"
+              }
+            }
+          ],
+          "js": {
+            "properties": [
+              {
+                "name": "fooBaz",
+                "value": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

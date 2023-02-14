@@ -74,9 +74,7 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
         boundVariable = (PsiVariable)target;
         type = LockType.REGULAR;
       }
-      else if (qualifierExpression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)qualifierExpression;
+      else if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression1 =
           methodCallExpression.getMethodExpression();
         @NonNls final String methodName =
@@ -115,12 +113,10 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
       while (nextStatement != null && !isSignificant(nextStatement)) {
         nextStatement = PsiTreeUtil.getNextSiblingOfType(nextStatement, PsiStatement.class);
       }
-      if (!(nextStatement instanceof PsiTryStatement)) {
+      if (!(nextStatement instanceof PsiTryStatement tryStatement)) {
         registerError(expression, referenceExpression);
         return;
       }
-      final PsiTryStatement tryStatement =
-        (PsiTryStatement)nextStatement;
       if (lockIsUnlockedInFinally(tryStatement, boundVariable, type)) {
         return;
       }
@@ -131,7 +127,7 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
       final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       statement.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitExpression(PsiExpression expression) {
+        public void visitExpression(@NotNull PsiExpression expression) {
           super.visitExpression(expression);
           result.set(Boolean.FALSE);
           stopWalking();
@@ -221,9 +217,7 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
           containsUnlock = true;
         }
       }
-      else if (qualifier instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)qualifier;
+      else if (qualifier instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiReferenceExpression methodExpression1 =
           methodCallExpression.getMethodExpression();
         @NonNls final String methodName1 =
@@ -233,11 +227,9 @@ public class SafeLockInspection extends BaseInspection { // todo extend Resource
             "writeLock".equals(methodName1)) {
           final PsiExpression qualifierExpression =
             methodExpression1.getQualifierExpression();
-          if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+          if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
             return;
           }
-          final PsiReferenceExpression referenceExpression =
-            (PsiReferenceExpression)qualifierExpression;
           final PsiElement target = referenceExpression.resolve();
           if (variable.equals(target)) {
             containsUnlock = true;

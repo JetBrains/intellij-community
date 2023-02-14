@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -9,7 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -32,12 +32,12 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodReferenceExpression(final PsiMethodReferenceExpression expression) {
+      public void visitMethodReferenceExpression(final @NotNull PsiMethodReferenceExpression expression) {
         doCheckMethodCallOnFunctionalExpression(expression, call -> expression.resolve() != null);
       }
 
       @Override
-      public void visitLambdaExpression(final PsiLambdaExpression expression) {
+      public void visitLambdaExpression(final @NotNull PsiLambdaExpression expression) {
         final PsiElement body = expression.getBody();
         if (body == null) return;
 
@@ -75,7 +75,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       }
 
       @Override
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false, Collections.emptySet())) {
           final PsiNewExpression newExpression = ObjectUtils.tryCast(aClass.getParent(), PsiNewExpression.class);
           doCheckMethodCallOnFunctionalExpression(call -> {
@@ -122,7 +122,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
           holder.registerProblem(referenceNameElement,
-                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"), fix);
+                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"),
+                                 fix);
         }
       }
     };
@@ -260,7 +261,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         final PsiElement referenceElement = reference.getElement();
         if (referenceElement instanceof PsiJavaCodeReferenceElement) {
           ct.markUnchanged(initializer);
-          InlineUtil.inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement);
+          CommonJavaInlineUtil.getInstance()
+            .inlineVariable(parameter, initializer, (PsiJavaCodeReferenceElement)referenceElement, null);
         }
       }
     }

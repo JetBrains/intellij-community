@@ -4,27 +4,31 @@ package com.intellij.internal.statistic;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 final class EventLogApplicationLifecycleListener implements AppLifecycleListener {
   @Override
   public void appWillBeClosed(boolean isRestart) {
     if (!isRestart && !PluginManagerCore.isRunningFromSources() && isSendingOnExitEnabled()) {
-      StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
-      if (config.isSendEnabled() && !isUpdateInProgress()) {
+      List<StatisticsEventLoggerProvider> enabledLoggerProviders =
+        ContainerUtil.filter(StatisticsEventLogProviderUtil.getEventLogProviders(), p -> p.isSendEnabled() && p.getSendLogsOnIdeClose());
+      if (!enabledLoggerProviders.isEmpty() && !isUpdateInProgress()) {
         ProgressManager.getInstance().run(new Task.Modal(null, "Starting External Log Uploader", false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
-            EventLogExternalUploader.INSTANCE.startExternalUpload(config.getRecorderId(), isPerformanceScript);
+            EventLogExternalUploader.INSTANCE.startExternalUpload(enabledLoggerProviders, StatisticsUploadAssistant.isUseTestStatisticsConfig());
           }
         });
       }

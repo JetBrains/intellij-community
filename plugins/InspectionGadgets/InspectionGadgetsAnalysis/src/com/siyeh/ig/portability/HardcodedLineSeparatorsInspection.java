@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.portability;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,18 +50,21 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
-      if (type == null || !TypeUtils.isJavaLangString(type) && !type.equals(PsiType.CHAR)) {
+      if (type == null || !TypeUtils.isJavaLangString(type) && !type.equals(PsiTypes.charType())) {
         return;
       }
       final String text = expression.getText();
       final int[] offsets = new int[text.length() + 1];
-      final StringBuilder result = new StringBuilder();
-      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
-      if (success) {
-        for (int i = 0, length = result.length(); i < length; i++) {
+      final CharSequence result = CodeInsightUtilCore.parseStringCharacters(text, offsets);
+      if (result != null) {
+        for (int i = 0, max = result.length(); i < max; i++) {
           final char c = result.charAt(i);
           if (c == '\n' || c == '\r') {
-            registerErrorAtOffset(expression, offsets[i], offsets[i + 1] - offsets[i]);
+            final int offset = offsets[i];
+            final int length = offsets[i + 1] - offset;
+            if (length > 1) {
+              registerErrorAtOffset(expression, offset, length);
+            }
           }
         }
       }

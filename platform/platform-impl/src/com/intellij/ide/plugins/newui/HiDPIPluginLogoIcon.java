@@ -8,12 +8,14 @@ import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 
 import static com.intellij.ui.scale.ScaleType.USR_SCALE;
 
@@ -89,9 +91,9 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     return getHiDPI(ScaleContext.create(), createDisabledIcon(icon, base));
   }
 
-  static @NotNull Icon loadSVG(@NotNull InputStream stream, int width, int height) throws IOException {
+  static @NotNull Icon loadSVG(@Nullable URL url, @NotNull InputStream stream, int width, int height) throws IOException {
     ScaleContext context = ScaleContext.create();
-    BufferedImage image = (BufferedImage)SVGLoader.load(null, stream, context, width, height);
+    BufferedImage image = (BufferedImage)SVGLoader.load(url, stream, context, width, height);
     BufferedImage t = (BufferedImage)ImageUtil.ensureHiDPI(image, context);
     return getHiDPI(context, t);
   }

@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class DomChildrenTest extends DomTestCase {
 
   private MyElement createElement(final String xml) throws IncorrectOperationException {
@@ -582,7 +579,7 @@ public class DomChildrenTest extends DomTestCase {
 
     @Override
     public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
-      tag.setAttribute("foo", ((Class)aClass).getName());
+      tag.setAttribute("foo", ((Class<?>)aClass).getName());
     }
 
     @Override

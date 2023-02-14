@@ -10,133 +10,74 @@
 #   [extension]
 #   pager =
 #
-# Run "hg help pager" to get info on configuration.
+# Run 'hg help pager' to get info on configuration.
 
-'''browse command output with an external pager
+'''browse command output with an external pager (DEPRECATED)
 
-To set the pager that should be used, set the application variable::
-
-  [pager]
-  pager = less -FRX
-
-If no pager is set, the pager extensions uses the environment variable
-$PAGER. If neither pager.pager, nor $PAGER is set, no pager is used.
-
-You can disable the pager for certain commands by adding them to the
-pager.ignore list::
+Forcibly enable paging for individual commands that don't typically
+request pagination with the attend-<command> option. This setting
+takes precedence over ignore options and defaults::
 
   [pager]
-  ignore = version, help, update
-
-You can also enable the pager only for certain commands using
-pager.attend. Below is the default list of commands to be paged::
-
-  [pager]
-  attend = annotate, cat, diff, export, glog, log, qdiff
-
-Setting pager.attend to an empty value will cause all commands to be
-paged.
-
-If pager.attend is present, pager.ignore will be ignored.
-
-To ignore global commands like :hg:`version` or :hg:`help`, you have
-to specify them in your user configuration file.
-
-The --pager=... option can also be used to control when the pager is
-used. Use a boolean value like yes, no, on, off, or use auto for
-normal behavior.
+  attend-cat = false
 '''
+from __future__ import absolute_import
 
-import atexit, sys, os, signal, subprocess, errno, shlex
-from mercurial import commands, dispatch, util, extensions
-from mercurial.i18n import _
+from mercurial import (
+    cmdutil,
+    commands,
+    dispatch,
+    extensions,
+    registrar,
+)
 
-testedwith = 'internal'
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
-def _pagerfork(ui, p):
-    if not util.safehasattr(os, 'fork'):
-        sys.stdout = util.popen(p, 'wb')
-        if ui._isatty(sys.stderr):
-            sys.stderr = sys.stdout
-        return
-    fdin, fdout = os.pipe()
-    pid = os.fork()
-    if pid == 0:
-        os.close(fdin)
-        os.dup2(fdout, sys.stdout.fileno())
-        if ui._isatty(sys.stderr):
-            os.dup2(fdout, sys.stderr.fileno())
-        os.close(fdout)
-        return
-    os.dup2(fdin, sys.stdin.fileno())
-    os.close(fdin)
-    os.close(fdout)
-    try:
-        os.execvp('/bin/sh', ['/bin/sh', '-c', p])
-    except OSError, e:
-        if e.errno == errno.ENOENT:
-            # no /bin/sh, try executing the pager directly
-            args = shlex.split(p)
-            os.execvp(args[0], args)
-        else:
-            raise
+configtable = {}
+configitem = registrar.configitem(configtable)
 
-def _pagersubprocess(ui, p):
-    pager = subprocess.Popen(p, shell=True, bufsize=-1,
-                             close_fds=util.closefds, stdin=subprocess.PIPE,
-                             stdout=sys.stdout, stderr=sys.stderr)
+configitem(
+    b'pager',
+    b'attend',
+    default=lambda: attended,
+)
 
-    stdout = os.dup(sys.stdout.fileno())
-    stderr = os.dup(sys.stderr.fileno())
-    os.dup2(pager.stdin.fileno(), sys.stdout.fileno())
-    if ui._isatty(sys.stderr):
-        os.dup2(pager.stdin.fileno(), sys.stderr.fileno())
-
-    @atexit.register
-    def killpager():
-        if util.safehasattr(signal, "SIGINT"):
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
-        pager.stdin.close()
-        os.dup2(stdout, sys.stdout.fileno())
-        os.dup2(stderr, sys.stderr.fileno())
-        pager.wait()
-
-def _runpager(ui, p):
-    # The subprocess module shipped with Python <= 2.4 is buggy (issue3533).
-    # The compat version is buggy on Windows (issue3225), but has been shipping
-    # with hg for a long time.  Preserve existing functionality.
-    if sys.version_info >= (2, 5):
-        _pagersubprocess(ui, p)
-    else:
-        _pagerfork(ui, p)
 
 def uisetup(ui):
-    if '--debugger' in sys.argv or not ui.formatted():
-        return
-
     def pagecmd(orig, ui, options, cmd, cmdfunc):
-        p = ui.config("pager", "pager", os.environ.get("PAGER"))
+        auto = options[b'pager'] == b'auto'
+        if auto and not ui.pageractive:
+            usepager = False
+            attend = ui.configlist(b'pager', b'attend')
+            ignore = ui.configlist(b'pager', b'ignore')
+            cmds, _ = cmdutil.findcmd(cmd, commands.table)
 
-        if p:
-            attend = ui.configlist('pager', 'attend', attended)
-            auto = options['pager'] == 'auto'
-            always = util.parsebool(options['pager'])
-            if (always or auto and
-                (cmd in attend or
-                 (cmd not in ui.configlist('pager', 'ignore') and not attend))):
-                ui.setconfig('ui', 'formatted', ui.formatted())
-                ui.setconfig('ui', 'interactive', False)
-                if util.safehasattr(signal, "SIGPIPE"):
-                    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-                _runpager(ui, p)
+            for cmd in cmds:
+                var = b'attend-%s' % cmd
+                if ui.config(b'pager', var, None):
+                    usepager = ui.configbool(b'pager', var, True)
+                    break
+                if cmd in attend or (cmd not in ignore and not attend):
+                    usepager = True
+                    break
+
+            if usepager:
+                # Slight hack: the attend list is supposed to override
+                # the ignore list for the pager extension, but the
+                # core code doesn't know about attend, so we have to
+                # lobotomize the ignore list so that the extension's
+                # behavior is preserved.
+                ui.setconfig(b'pager', b'ignore', b'', b'pager')
+                ui.pager(b'extension-via-attend-' + cmd)
+            else:
+                ui.disablepager()
         return orig(ui, options, cmd, cmdfunc)
 
-    extensions.wrapfunction(dispatch, '_runcommand', pagecmd)
+    extensions.wrapfunction(dispatch, b'_runcommand', pagecmd)
 
-def extsetup(ui):
-    commands.globalopts.append(
-        ('', 'pager', 'auto',
-         _("when to paginate (boolean, always, auto, or never)"),
-         _('TYPE')))
 
-attended = ['annotate', 'cat', 'diff', 'export', 'glog', 'log', 'qdiff']
+attended = [b'annotate', b'cat', b'diff', b'export', b'glog', b'log', b'qdiff']

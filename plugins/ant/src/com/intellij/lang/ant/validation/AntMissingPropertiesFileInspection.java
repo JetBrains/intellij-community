@@ -42,8 +42,7 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
 
   @Override
   protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
-    if (element instanceof AntDomProperty) {
-      final AntDomProperty property = (AntDomProperty)element;
+    if (element instanceof AntDomProperty property) {
       final GenericAttributeValue<PsiFileSystemItem> fileValue = property.getFile();
       final String fileName = fileValue.getStringValue();
       if (fileName != null) {

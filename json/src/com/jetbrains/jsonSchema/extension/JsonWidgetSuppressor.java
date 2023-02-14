@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implement to suppress showing JSON widget for particular files where assistance is powered by a custom provider.
+ */
 public interface JsonWidgetSuppressor {
   ExtensionPointName<JsonWidgetSuppressor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonWidgetSuppressor");
 

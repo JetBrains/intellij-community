@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,9 +23,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ExtendsUtilityClassInspection extends BaseInspection {
 
@@ -40,11 +40,10 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("class.extends.utility.class.problem.descriptor", superClassName);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("class.extends.utility.class.ignore.utility.class.option"),
-                                          this, "ignoreUtilityClasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreUtilityClasses", InspectionGadgetsBundle.message("class.extends.utility.class.ignore.utility.class.option")));
   }
 
   @Override
@@ -55,7 +54,7 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
   private class ClassExtendsUtilityClassVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }

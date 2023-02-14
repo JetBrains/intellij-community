@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuilti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ven
- */
 public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implements GrBuiltinTypeClassExpression {
 
   public GrBuiltinTypeClassExpressionImpl(@NotNull ASTNode node) {

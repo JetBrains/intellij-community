@@ -1,0 +1,6 @@
+// "Wrap with '?.let { ... }' call" "true"
+// WITH_STDLIB
+
+fun f(s: String, action: (String.() -> Unit)?) {
+    action?.let { s.it() }
+}

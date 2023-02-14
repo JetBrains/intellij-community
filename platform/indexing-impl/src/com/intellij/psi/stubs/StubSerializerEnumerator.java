@@ -9,6 +9,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.SelfDiagnosing;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -36,7 +37,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   private final Int2ObjectMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
   private final Object2IntMap<String> myNameToId = new Object2IntOpenHashMap<>();
-  private final Map<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
+  private final Map<String, Supplier<? extends ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final ConcurrentIntObjectMap<ObjectStubSerializer<?, ? extends Stub>> myIdToSerializer =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -80,9 +81,9 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return idValue;
   }
 
-  void assignId(@NotNull Supplier<ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
-    Supplier<ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
-    if (old != null) {
+  void assignId(@NotNull Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> serializer, String name) throws IOException {
+    Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> old = myNameToLazySerializer.put(name, serializer);
+    if (old != null && !isKnownDuplicatedIdViolation(name)) {
       ObjectStubSerializer<?, ? extends Stub> existing = old.get();
       ObjectStubSerializer<?, ? extends Stub> computed = serializer.get();
       if (existing != computed) {
@@ -107,6 +108,11 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     myNameToId.put(name, id);
   }
 
+  private static boolean isKnownDuplicatedIdViolation(String name) {
+    // // todo temporary https://github.com/JetBrains/kotlin/commit/298494fa08d11b9c374368aac4ae547b6f972f1a
+    return "kotlin.FILE".equals(name);
+  }
+
   @Nullable
   String getSerializerName(int id) {
     return myIdToName.get(id);
@@ -129,20 +135,10 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return myIdToName.get(getClassId(serializer));
   }
 
-  void copyFrom(@Nullable StubSerializerEnumerator helper) throws IOException {
-    if (helper == null) {
-      return;
-    }
-
-    for (Map.Entry<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> entry : helper.myNameToLazySerializer.entrySet()) {
-      assignId(entry.getValue(), entry.getKey());
-    }
-  }
-
   private @NotNull ObjectStubSerializer<?, ? extends Stub> instantiateSerializer(int id,
                                                                                  @NotNull MissingSerializerReporter reporter) throws SerializerNotFoundException {
     String name = myIdToName.get(id);
-    Supplier<ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
+    Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> lazy = name == null ? null : myNameToLazySerializer.get(name);
     ObjectStubSerializer<?, ? extends Stub> serializer = lazy == null ? null : lazy.get();
     if (serializer == null) {
       throw reportMissingSerializer(id, name, reporter);
@@ -196,6 +192,12 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
       LOG.error(e);
     }
     return Collections.emptyMap();
+  }
+
+  public void tryDiagnose() {
+    if (myNameStorage instanceof SelfDiagnosing) {
+      ((SelfDiagnosing)myNameStorage).diagnose();
+    }
   }
 
   @FunctionalInterface

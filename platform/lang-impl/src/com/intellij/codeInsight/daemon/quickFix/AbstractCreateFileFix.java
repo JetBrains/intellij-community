@@ -4,17 +4,20 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -31,10 +34,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.openapi.project.ProjectUtilCore.displayUrlRelativeToProject;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.util.text.HtmlChunk.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
@@ -45,7 +51,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected static final String CURRENT_DIRECTORY_REF = ".";
   protected static final String PARENT_DIRECTORY_REF = "..";
 
-  protected final String myNewFileName;
+  protected final @NlsSafe String myNewFileName;
   protected final List<TargetDirectory> myDirectories;
   protected final String[] mySubPath;
   @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE)
@@ -64,6 +70,13 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     mySubPath = newFileLocation.getSubPath();
     myKey = fixLocaleKey;
   }
+
+  /**
+   * {@inheritDoc}
+   * Must be implemented, as default implementation won't work anyway
+   */
+  @Override
+  abstract public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
   @Override
   public boolean isAvailable(@NotNull Project project,
@@ -147,6 +160,41 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected abstract void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException;
 
+  protected @Nullable HtmlChunk getDescription(@NotNull Icon itemIcon) {
+    Path filePath;
+    String directoryPath = null;
+    try {
+      if (myDirectories.size() == 1) {
+        TargetDirectory directory = myDirectories.get(0);
+        PsiDirectory psiDirectory = directory.getDirectory();
+        directoryPath = psiDirectory == null ? "" : psiDirectory.getVirtualFile().getPresentableUrl();
+        filePath = Path.of("", directory.getPathToCreate());
+        for (String component : mySubPath) {
+          filePath = filePath.resolve(component);
+        }
+        filePath = filePath.resolve(myNewFileName);
+      } else {
+        filePath = Path.of("", mySubPath).resolve(myNewFileName);
+      }
+    }
+    catch (InvalidPathException e) {
+      return null;
+    }
+    HtmlChunk fileReference = fragment(icon("file", itemIcon), nbsp(), text(filePath.toString()));
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(template(CodeInsightBundle.message(myKey, "$file$"), "file", fileReference));
+    if (filePath.getNameCount() > 1) {
+      builder.br().append(CodeInsightBundle.message("intention.description.including.intermediate.directories"));
+    }
+    if (directoryPath != null) {
+      HtmlChunk dirReference = fragment(icon("dir", AllIcons.Nodes.Folder), nbsp(), text(directoryPath));
+      builder.br()
+        .append(template(CodeInsightBundle.message("intention.description.inside.directory", "$directory$"),
+                         "directory", dirReference));
+    }
+    return builder.toFragment();
+  }
+
   @Nullable
   private static PsiDirectory findOrCreateSubdirectory(@Nullable PsiDirectory directory, @NotNull String subDirectoryName) {
     if (directory == null) {
@@ -196,7 +244,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .setItemChosenCallback(chosenValue -> {
 
         WriteCommandAction.writeCommandAction(project)
-          .withName(CodeInsightBundle.message("create.file.text", myNewFileName))
+          .withName(CodeInsightBundle.message(myKey, myNewFileName))
           .run(() -> apply(project, chosenValue.getTarget(), editor));
       })
       .addListener(new JBPopupListener() {
@@ -232,9 +280,9 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
 
     Project project = directory.getProject();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    SourceFolder sourceFolder = projectFileIndex.getSourceFolder(file);
-    if (sourceFolder != null && sourceFolder.getFile() != null) {
-      return IconUtil.getIcon(sourceFolder.getFile(), 0, project);
+    VirtualFile sourceRoot = projectFileIndex.getSourceRootForFile(file);
+    if (sourceRoot != null) {
+      return IconUtil.getIcon(sourceRoot, 0, project);
     }
 
     return IconUtil.getIcon(file, 0, project);

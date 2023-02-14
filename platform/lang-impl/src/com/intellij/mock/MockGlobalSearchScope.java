@@ -20,9 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class MockGlobalSearchScope extends GlobalSearchScope {
   @Override
   public boolean contains(@NotNull final VirtualFile file) {

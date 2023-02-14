@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -73,13 +74,13 @@ public final class PsiClassUtil {
   @NotNull
   public static Collection<PsiMethod> collectClassConstructorIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
-    return psiMethods.stream().filter(PsiMethod::isConstructor).collect(Collectors.toList());
+    return ContainerUtil.filter(psiMethods, PsiMethod::isConstructor);
   }
 
   @NotNull
   public static Collection<PsiMethod> collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
-    return psiMethods.stream().filter(psiMethod -> psiMethod.hasModifierProperty(PsiModifier.STATIC)).collect(Collectors.toList());
+    return ContainerUtil.filter(psiMethods, psiMethod -> psiMethod.hasModifierProperty(PsiModifier.STATIC));
   }
 
   public static boolean hasSuperClass(@NotNull final PsiClass psiClass) {
@@ -111,11 +112,13 @@ public final class PsiClassUtil {
   @NotNull
   public static PsiClassType getTypeWithGenerics(@NotNull PsiClass psiClass) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);
-    if (psiTypes.length > 0)
+    if (psiClass.hasTypeParameters()) {
+      final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);
       return factory.createType(psiClass, psiTypes);
-    else
+    }
+    else {
       return factory.createType(psiClass);
+    }
   }
 
   /**

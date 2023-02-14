@@ -1,0 +1,10 @@
+// "Remove 'inline' modifier" "true"
+open class Foo {
+    protected fun protectedMethod() {}
+
+    val inlineProperty: Int
+        get() {
+            protectedMethod()
+            return 42
+        }
+}

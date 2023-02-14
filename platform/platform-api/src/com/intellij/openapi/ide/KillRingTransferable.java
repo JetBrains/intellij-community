@@ -36,17 +36,15 @@ import java.lang.ref.WeakReference;
  * to distinguish if particular copy-paste strings are adjacent.
  * <p/>
  * Thread-safe.
- * 
- * @author Denis Zhdanov
  */
 public class KillRingTransferable implements Transferable {
 
   private static final DataFlavor[] DATA_FLAVORS = {DataFlavor.stringFlavor};
 
-  private final String                  myData;
+  private final @NotNull String         myData;
   private final WeakReference<Document> myDocument;
   private final int                     myStartOffset;
-  private final int myEndOffset;
+  private final int                     myEndOffset;
   private final boolean                 myCut;
   
   private volatile boolean myReadyToCombine = true;
@@ -83,10 +81,10 @@ public class KillRingTransferable implements Transferable {
     return flavor == DataFlavor.stringFlavor;
   }
 
-  @Nullable
   @Override
-  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-    return isDataFlavorSupported(flavor) ? myData : null;
+  public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+    if (!isDataFlavorSupported(flavor)) throw new UnsupportedFlavorException(flavor);
+    return myData;
   }
 
   @Nullable

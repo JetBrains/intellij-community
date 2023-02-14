@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,15 +59,6 @@ import java.util.Map;
    */
   public static @NotNull EmptyIcon create(@NotNull Icon base) {
     return create(base.getIconWidth(), base.getIconHeight());
-  }
-
-  /**
-   * @deprecated use {@linkplain #create(int)} for caching.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public EmptyIcon(int size) {
-    this(size, size, false);
   }
 
   /**
@@ -136,9 +126,7 @@ import java.util.Map;
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof EmptyIcon)) return false;
-
-    final EmptyIcon icon = (EmptyIcon)o;
+    if (!(o instanceof EmptyIcon icon)) return false;
 
     if (scaleVal(height, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.height, DerivedScaleType.PIX_SCALE)) return false;
     if (scaleVal(width, DerivedScaleType.PIX_SCALE) != icon.scaleVal(icon.width, DerivedScaleType.PIX_SCALE)) return false;

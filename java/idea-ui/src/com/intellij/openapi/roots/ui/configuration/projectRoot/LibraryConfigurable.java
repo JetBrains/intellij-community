@@ -38,7 +38,6 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   private final StructureConfigurableContext myContext;
   private final Project myProject;
   private final LibraryProjectStructureElement myProjectStructureElement;
-  private boolean myUpdatingName;
   private boolean myPropertiesLoaded;
 
   protected LibraryConfigurable(final StructureLibraryTableModifiableModelProvider modelProvider,
@@ -94,7 +93,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   @Override
   public void setDisplayName(final String name) {
-    if (!myUpdatingName) {
+    if (!isUpdatingNameFieldFromDisplayName()) {
       getLibraryEditor().setName(name);
       if (myLibraryEditorComponent != null) {
         myLibraryEditorComponent.onLibraryRenamed();
@@ -105,18 +104,6 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   protected LibraryEditor getLibraryEditor() {
     return myModel.getModifiableModel().getLibraryEditor(myLibrary);
-  }
-
-  @Override
-  public void updateName() {
-    //todo[nik] pull up to NamedConfigurable
-    myUpdatingName = true;
-    try {
-      super.updateName();
-    }
-    finally {
-      myUpdatingName = false;
-    }
   }
 
   @Override

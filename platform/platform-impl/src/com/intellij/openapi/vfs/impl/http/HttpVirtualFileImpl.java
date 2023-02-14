@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -216,13 +216,20 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
 
   @Override
   public long getLength() {
-    return -1;
+    return 0;
   }
 
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     if (myFileInfo != null) {
-      myFileInfo.refresh(postRunnable);
+      myFileInfo.refresh(() -> {
+        // com.intellij.openapi.vfs.VirtualFile.refresh(boolean, boolean, java.lang.Runnable) contract
+        // states that postRunnable should be run on EDT under write lock
+        if (postRunnable != null) {
+          ApplicationManager.getApplication().invokeLater(
+            () -> ApplicationManager.getApplication().runWriteAction(postRunnable));
+        }
+      });
     }
     else if (postRunnable != null) {
       postRunnable.run();

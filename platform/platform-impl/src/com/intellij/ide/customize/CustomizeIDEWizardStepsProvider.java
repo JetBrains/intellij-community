@@ -5,9 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Alexander Lobas
- */
+@Deprecated
 public interface CustomizeIDEWizardStepsProvider {
   /**
    * Called for the initial IDE customization wizard, which is shown before the splash screen.

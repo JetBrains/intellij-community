@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -14,8 +14,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Descriptor for structural search transformation
+ * 
+ * @see Replacer
+ */
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
+  /**
+   * Represents structural search template to search
+   */
   private @NonNls String myStringToReplace = null;
+  /**
+   * Represents structural search template for replacement
+   */
   private @NonNls String myReplaceByString = "$";
   private PsiExpression myExpression;
   private PsiType myConversionType;

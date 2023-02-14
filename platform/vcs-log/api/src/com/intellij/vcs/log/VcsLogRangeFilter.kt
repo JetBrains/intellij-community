@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log
 
 import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
@@ -12,7 +12,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection.RANGE_FILTER
 interface VcsLogRangeFilter : VcsLogBranchLikeFilter {
 
   /**
-   * The range between commits (or references pointing to commits), represented by this filter.
+   * The range between commits (or references pointing to the commits), represented by this filter.
    */
   val ranges: List<RefRange>
 
@@ -26,7 +26,7 @@ interface VcsLogRangeFilter : VcsLogBranchLikeFilter {
   }
 
   /**
-   * Represents a range between two references pointing to commits.
+   * Represents a range between two references pointing to the commits.
    *
    * The references are given as Strings and may be either names of [VcsRef]s or commit hashes.
    *

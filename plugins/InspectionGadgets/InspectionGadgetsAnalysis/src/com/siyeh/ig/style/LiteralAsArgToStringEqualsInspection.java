@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
+public class LiteralAsArgToStringEqualsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -74,7 +75,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression argument = (PsiExpression)descriptor.getPsiElement();
       final PsiElement argumentList = PsiUtil.skipParenthesizedExprUp(argument.getParent());
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();

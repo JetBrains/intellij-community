@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
@@ -24,6 +23,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests that {@link JBCefBrowser#loadHTML(String, String)} can load html that references JS via "file://"
@@ -39,15 +39,15 @@ public class JBCefLoadHtmlTest {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final String JS_FILE_PATH = PlatformTestUtil.getPlatformTestDataPath() + "ui/jcef/JBCefLoadHtmlTest.js";
-  static final String HTML = "<html>\n" +
-                             "<body>\n" +
-                             "\n" +
-                             "=== JBCefLoadHtmlTest ===" +
-                             "\n" +
-                             "<script src=\"JBCefLoadHtmlTest.js\"></script>\n" +
-                             "\n" +
-                             "</body>\n" +
-                             "</html>";
+  static final String HTML = """
+    <html>
+    <body>
+
+    === JBCefLoadHtmlTest ===
+    <script src="JBCefLoadHtmlTest.js"></script>
+
+    </body>
+    </html>""";
 
   static final CountDownLatch LATCH = new CountDownLatch(1);
   static volatile boolean testPassed;
@@ -71,14 +71,17 @@ public class JBCefLoadHtmlTest {
       public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
         System.out.println("JBCefLoadHtmlTest.onLoadingStateChange");
       }
+
       @Override
       public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
         System.out.println("JBCefLoadHtmlTest.onLoadStart");
       }
+
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
         System.out.println("JBCefLoadHtmlTest.onLoadEnd");
       }
+
       @Override
       public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
         System.out.println("JBCefLoadHtmlTest.onLoadError");
@@ -111,14 +114,15 @@ public class JBCefLoadHtmlTest {
       frame.setVisible(true);
     });
 
-    TestCase.assertTrue(testPassed);
+    assertTrue(testPassed);
   }
 
   private static void writeJS(@NotNull String javascript) {
     //noinspection ImplicitDefaultCharsetUsage
     try (FileWriter fileWriter = new FileWriter(JS_FILE_PATH)) {
       fileWriter.write(javascript);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       e.printStackTrace();
     }
   }

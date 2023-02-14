@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -26,9 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 
 public class InlineParameterTest extends LightRefactoringTestCase {
   @NotNull
@@ -50,6 +34,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   }
 
   public void testStaticFinalField() {
+    doTest(true);
+  }
+
+  public void testStaticFinalFieldDifferentQualifiers() {
     doTest(true);
   }
 
@@ -104,6 +92,14 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("Parameter initializer depends on this which is not available inside the method and cannot be inlined", e.getMessage());
     }
+  }
+
+  public void testInlineLambda() {
+    doTest(false);
+  }
+
+  public void testInlineLambdaWithOuterRef() {
+    doTest(false);
   }
 
   public void testRefThis() {
@@ -181,7 +177,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
       doTest(false);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside the method and cannot be inlined", e.getMessage());
+      assertEquals("Parameter initializer depends on local class <b><code>Local</code></b> which is not available inside the method and cannot be inlined", e.getMessage());
     }
   }
 
@@ -192,13 +188,17 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   public void testRefNewTopLevel() {
     doTest(false);
   }
+  
+  public void testConflictingFieldName() {
+    doTest(true);
+  }
 
   public void testRefNewLocal() {
     try {
       doTest(false);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter initializer depends on class <b><code>Local</code></b> which is not available inside the method and cannot be inlined", e.getMessage());
+      assertEquals("Parameter initializer depends on local class <b><code>Local</code></b> which is not available inside the method and cannot be inlined", e.getMessage());
     }
   }
 

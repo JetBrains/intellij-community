@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -96,7 +97,8 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       });
     }
 
-    assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
+    boolean finished = reads.await(5, TimeUnit.MINUTES);
+    assertTrue("Timed out: " + ThreadDumper.dumpThreadsToString(), finished);
     ConcurrencyUtil.getAll(threads);
   }
 
@@ -114,37 +116,35 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
   private synchronized void writeStep(final Random random) throws IncorrectOperationException {
     switch (random.nextInt(2)) {
-      case 0 :
+      case 0 -> {
         mark("+");
-        getPsiClass().add(myJavaFacade.getElementFactory().createMethod("foo" + System.currentTimeMillis(), PsiType.FLOAT));
-        break;
-      case 1 :
+        getPsiClass().add(myJavaFacade.getElementFactory().createMethod("foo" + System.currentTimeMillis(), PsiTypes.floatType()));
+      }
+      case 1 -> {
         mark("-");
         final PsiMethod[] psiMethods = getPsiClass().getMethods();
         if (psiMethods.length > 0) {
           WriteCommandAction.runWriteCommandAction(null, () -> psiMethods[random.nextInt(psiMethods.length)].delete());
         }
-        break;
+      }
     }
   }
 
   private void readStep(final Random random) {
     PsiClass aClass = getPsiClass();
     switch (random.nextInt(4)) {
-      case 0:
+      case 0 -> {
         mark("v");
         aClass.getContainingFile().accept(new PsiRecursiveElementVisitor() {
         });
-        break;
-
-      case 1:
+      }
+      case 1 -> {
         mark("m");
-        for (int offset=0; offset<myFile.getTextLength();offset++) {
+        for (int offset = 0; offset < myFile.getTextLength(); offset++) {
           myFile.findElementAt(offset);
         }
-        break;
-
-      case 2:
+      }
+      case 2 -> {
         mark("h");
         aClass.accept(new PsiRecursiveElementVisitor() {
           @Override
@@ -158,14 +158,13 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
             }
           }
         });
-        break;
-
-      case 3:
+      }
+      case 3 -> {
         mark("u");
         for (PsiMethod method : aClass.getMethods()) {
           method.getName();
         }
-        break;
+      }
     }
   }
 }

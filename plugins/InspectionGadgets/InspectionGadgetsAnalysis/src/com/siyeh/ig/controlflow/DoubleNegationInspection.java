@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DoubleNegationInspection extends BaseInspection {
+public class DoubleNegationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -58,15 +59,13 @@ public class DoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement expression = descriptor.getPsiElement();
       CommentTracker tracker = new CommentTracker();
-      if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+      if (expression instanceof PsiPrefixExpression prefixExpression) {
         final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
         PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker), tracker);
-      } else if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      } else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
         final PsiExpression[] operands = polyadicExpression.getOperands();
         final int length = operands.length;
         if (length == 2) {
@@ -108,7 +107,7 @@ public class DoubleNegationInspection extends BaseInspection {
   private static class DoubleNegationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!isUnaryNegation(expression)) {
         return;
@@ -128,7 +127,7 @@ public class DoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       if (!isBinaryNegation(expression)) {
         return;

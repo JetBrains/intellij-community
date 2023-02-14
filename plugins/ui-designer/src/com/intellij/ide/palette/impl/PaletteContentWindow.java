@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.palette.impl;
 
@@ -8,9 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class PaletteContentWindow extends JPanel implements Scrollable {
   public PaletteContentWindow() {
     setLayout(new PaletteLayoutManager());
@@ -63,8 +61,7 @@ public class PaletteContentWindow extends JPanel implements Scrollable {
 
       int height = 0;
       for(Component c: parent.getComponents()) {
-        if (c instanceof PaletteGroupHeader) {
-          PaletteGroupHeader groupHeader = (PaletteGroupHeader) c;
+        if (c instanceof PaletteGroupHeader groupHeader) {
           groupHeader.setLocation(0, height);
           if (groupHeader.isVisible()) {
             groupHeader.setSize(width, groupHeader.getPreferredSize().height);
@@ -93,8 +90,7 @@ public class PaletteContentWindow extends JPanel implements Scrollable {
       int height = 0;
       int width = parent.getWidth();
       for(Component c: parent.getComponents()) {
-        if (c instanceof PaletteGroupHeader) {
-          PaletteGroupHeader groupHeader = (PaletteGroupHeader) c;
+        if (c instanceof PaletteGroupHeader groupHeader) {
           height += groupHeader.getHeight();
           if (groupHeader.isSelected()) {
             height += groupHeader.getComponentList().getPreferredHeight(width);

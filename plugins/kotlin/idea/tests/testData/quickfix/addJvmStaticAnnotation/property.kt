@@ -1,0 +1,13 @@
+// "Add '@JvmStatic' annotation to 'foo'" "true"
+// WITH_STDLIB
+open class A {
+    companion object {
+        protected val foo = 2
+    }
+}
+
+class B : A() {
+    fun bar() {
+        print(foo<caret>)
+    }
+}

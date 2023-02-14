@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,13 +63,14 @@ public class PyAugmentAssignmentInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
 
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder,
+            @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -148,7 +150,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
         return SEQUENCE_METHODS.stream().anyMatch(attributeNames::contains);
       }
 
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       return !SEQUENCE_METHODS
         .stream()
@@ -159,10 +161,5 @@ public class PyAugmentAssignmentInspection extends PyInspection {
     private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
       return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 }

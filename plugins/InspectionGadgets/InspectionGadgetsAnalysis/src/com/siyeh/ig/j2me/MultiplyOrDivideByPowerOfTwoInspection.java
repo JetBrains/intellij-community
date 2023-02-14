@@ -16,6 +16,7 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class MultiplyOrDivideByPowerOfTwoInspection
   extends BaseInspection {
 
@@ -43,9 +46,10 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   public boolean checkDivision = false;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "multiply.or.divide.by.power.of.two.divide.option"), this, "checkDivision");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkDivision", InspectionGadgetsBundle.message(
+        "multiply.or.divide.by.power.of.two.divide.option")));
   }
 
   @Override
@@ -100,15 +104,13 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       final IElementType operationTokenType = binaryExpression.getOperationTokenType();
       if (JavaTokenType.DIV.equals(operationTokenType)) {
         return null;
       }
     }
-    else if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    else if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       final IElementType operationTokenType = assignmentExpression.getOperationTokenType();
       if (JavaTokenType.DIVEQ.equals(operationTokenType)) {
         return null;
@@ -126,7 +128,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression expression = (PsiExpression)descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementShift(expression, commentTracker);

@@ -2,28 +2,24 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 
 class MavenProjectsAware(
   project: Project,
-  private val projectsTree: MavenProjectsTree,
   private val manager: MavenProjectsManager,
   private val watcher: MavenProjectsManagerWatcher,
   private val backgroundExecutor: ExecutorService
@@ -36,26 +32,26 @@ class MavenProjectsAware(
   override val settingsFiles: Set<String>
     get() = collectSettingsFiles().map { FileUtil.toCanonicalPath(it) }.toSet()
 
-  override fun subscribe(listener: ExternalSystemProjectRefreshListener, parentDisposable: Disposable) {
-    isImportCompleted.afterReset({ listener.beforeProjectRefresh() }, parentDisposable)
-    isImportCompleted.afterSet({ listener.afterProjectRefresh(SUCCESS) }, parentDisposable)
+  override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
+    isImportCompleted.afterReset(parentDisposable) { listener.onProjectReloadStart() }
+    isImportCompleted.afterSet(parentDisposable) { listener.onProjectReloadFinish(SUCCESS) }
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
     FileDocumentManager.getInstance().saveAllDocuments()
     val settingsFilesContext = context.settingsFilesContext
     if (context.hasUndefinedModifications) {
-      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+      manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(true, true, context.isExplicitReload))
     }
     else {
       submitSettingsFilesPartition(settingsFilesContext) { (filesToUpdate, filesToDelete) ->
         val updated = settingsFilesContext.created + settingsFilesContext.updated
         val deleted = settingsFilesContext.deleted
         if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-          watcher.scheduleUpdate(filesToUpdate, filesToDelete, false, true)
+          watcher.scheduleUpdate(filesToUpdate, filesToDelete, MavenImportSpec(false, true, context.isExplicitReload))
         }
         else {
-          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+          manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenImportSpec(false, true, context.isExplicitReload))
         }
       }
     }
@@ -65,36 +61,34 @@ class MavenProjectsAware(
     context: ExternalSystemSettingsFilesReloadContext,
     action: (Pair<List<VirtualFile>, List<VirtualFile>>) -> Unit
   ) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment &&
-        !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      action(partitionSettingsFiles(context))
-      return
-    }
-    ReadAction.nonBlocking(Callable { partitionSettingsFiles(context) })
-      .expireWith(manager)
-      .finishOnUiThread(ModalityState.defaultModalityState(), action)
-      .submit(backgroundExecutor)
+    ReadAsyncSupplier.Builder { partitionSettingsFiles(context) }
+      .build(backgroundExecutor)
+      .supply(manager, action)
   }
 
   private fun partitionSettingsFiles(context: ExternalSystemSettingsFilesReloadContext): Pair<List<VirtualFile>, List<VirtualFile>> {
-    val localFileSystem = LocalFileSystem.getInstance()
-    val created = context.created.mapNotNull { localFileSystem.findFileByPath(it) }
-    val projectsFiles = projectsTree.projectsFiles
-    val updated = projectsFiles.filter { it.path in context.updated }
-    val deleted = projectsFiles.filter { it.path in context.deleted }
-    return created + updated to deleted
+    val updated = mutableListOf<VirtualFile>()
+    val deleted = mutableListOf<VirtualFile>()
+    for (projectsFile in manager.projectsTree.projectsFiles) {
+      val path = projectsFile.path
+      if (path in context.created) updated.add(projectsFile)
+      if (path in context.updated) updated.add(projectsFile)
+      if (path in context.deleted) deleted.add(projectsFile)
+    }
+    return updated to deleted
   }
 
   private fun hasPomFile(rootDirectory: String): Boolean {
     return MavenConstants.POM_NAMES.asSequence()
       .map { join(rootDirectory, it) }
-      .any { projectsTree.isPotentialProject(it) }
+      .any { manager.projectsTree.isPotentialProject(it) }
   }
 
+
   private fun collectSettingsFiles() = sequence {
-    yieldAll(projectsTree.managedFilesPaths)
-    yieldAll(projectsTree.projectsFiles.map { it.path })
-    for (mavenProject in projectsTree.projects) {
+    yieldAll( manager.projectsTree.managedFilesPaths)
+    yieldAll( manager.projectsTree.projectsFiles.map { it.path })
+    for (mavenProject in manager.projectsTree.projects) {
       ProgressManager.checkCanceled()
 
       val rootDirectory = mavenProject.directory
@@ -111,9 +105,15 @@ class MavenProjectsAware(
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
 
   init {
-    manager.addManagerListener(object : MavenProjectsManager.Listener {
-      override fun importAndResolveScheduled() = isImportCompleted.set(false)
-      override fun projectImportCompleted() = isImportCompleted.set(true)
-    })
+    project.messageBus.connect(manager)
+      .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
+        override fun importFinished(importedProjects: MutableCollection<MavenProject>, newModules: MutableList<Module>) {
+          isImportCompleted.set(true)
+        }
+
+        override fun importStarted(spec: MavenImportSpec?) {
+          isImportCompleted.set(false)
+        }
+      })
   }
 }

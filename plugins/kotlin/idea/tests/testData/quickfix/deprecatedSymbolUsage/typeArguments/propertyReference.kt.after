@@ -1,0 +1,12 @@
+// "Replace with 'this.bar'" "true"
+import kotlin.reflect.KProperty0
+
+class A {
+    @Deprecated("...", ReplaceWith("this.bar"))
+    val foo = 1
+    val bar = 2
+}
+
+fun test() {
+    val a: KProperty0<Int> = A()::bar
+}

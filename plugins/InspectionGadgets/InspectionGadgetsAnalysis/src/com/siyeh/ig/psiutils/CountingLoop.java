@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -88,8 +89,8 @@ public final class CountingLoop {
   }
 
   /**
-   * @return true if the loop variable may experience integer overflow before reaching the bound, 
-   * like for(int i = 10; i != -10; i++) will go through MAX_VALUE and MIN_VALUE. 
+   * @return true if the loop variable may experience integer overflow before reaching the bound,
+   * like for(int i = 10; i != -10; i++) will go through MAX_VALUE and MIN_VALUE.
    */
   public boolean mayOverflow() {
     return myMayOverflow;
@@ -105,7 +106,7 @@ public final class CountingLoop {
     PsiLocalVariable counter = tryCast(declaredElements[0], PsiLocalVariable.class);
     if(counter == null) return null;
     PsiType counterType = counter.getType();
-    if(!counterType.equals(PsiType.INT) && !counterType.equals(PsiType.LONG)) return null;
+    if(!counterType.equals(PsiTypes.intType()) && !counterType.equals(PsiTypes.longType())) return null;
 
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(counter.getInitializer());
     if(initializer == null) return null;
@@ -119,7 +120,7 @@ public final class CountingLoop {
     if(condition == null) return null;
     IElementType type = condition.getOperationTokenType();
     boolean closed = false;
-    RelationType relationType = RelationType.fromElementType(type);
+    RelationType relationType = DfaPsiUtil.getRelationByToken(type);
     if (relationType == null || !relationType.isInequality()) return null;
     if (relationType.isSubRelation(RelationType.EQ)) {
       closed = true;

@@ -4,6 +4,10 @@ class MyTest<K> {
     }
 
     //not an error in java 8?!
+
+   /**
+    * {@link A}
+   */
     static class C<T extends <error descr="'MyTest.this' cannot be referenced from a static context">A<String></error>> {
     }
 

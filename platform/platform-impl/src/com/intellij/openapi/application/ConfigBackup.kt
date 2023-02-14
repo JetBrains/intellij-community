@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -15,8 +14,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
 import kotlin.io.path.createDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.moveTo
 import kotlin.io.path.name
 
 @ApiStatus.Internal
@@ -86,10 +85,9 @@ class ConfigBackup(private val configDir: Path) {
     private val LOG = logger<ConfigBackup>()
     private const val DATE_FORMAT = "yyyy-MM-dd-HH-mm"
 
-    fun getNextBackupPath(configDir: Path): Path {
-      val now = LocalDateTime.now()
+    fun getNextBackupPath(configDir: Path, currentDate: LocalDateTime = LocalDateTime.now()): Path {
       val format = DateTimeFormatter.ofPattern(DATE_FORMAT)
-      val date = now.format(format)
+      val date = currentDate.format(format)
 
       val dir = getBackupsDir(configDir).resolve(date)
       if (!dir.exists()) {

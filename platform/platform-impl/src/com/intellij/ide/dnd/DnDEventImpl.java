@@ -10,6 +10,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public void updateAction(DnDAction action) {
+  public void updateAction(@NotNull DnDAction action) {
     myAction = action;
   }
 
@@ -283,11 +284,9 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     if( this == o ) {
       return true;
     }
-    if( !(o instanceof DnDEventImpl) ) {
+    if( !(o instanceof DnDEventImpl event) ) {
       return false;
     }
-
-    final DnDEventImpl event = (DnDEventImpl) o;
 
     if( myDropPossible != event.myDropPossible ) {
       return false;

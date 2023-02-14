@@ -185,7 +185,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     if (e.getType() == DocumentEvent.EventType.INSERT) {
       String text = textField.getText();
       if (isMvnDependency(text)) {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
         factory.setValidating(false);
         try {
           DocumentBuilder builder = factory.newDocumentBuilder();
@@ -277,7 +277,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
       myShownItems.add(it.coord);
     }
 
-    ((CollectionComboBoxModel)myCombobox.getModel()).update();
+    ((CollectionComboBoxModel<?>)myCombobox.getModel()).update();
     myInUpdate = false;
     field.setText(myFilterString);
     field.setCaretPosition(caret);

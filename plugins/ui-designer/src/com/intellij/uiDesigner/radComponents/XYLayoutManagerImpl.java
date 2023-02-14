@@ -6,10 +6,6 @@ import com.intellij.uiDesigner.shared.XYLayoutManager;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class XYLayoutManagerImpl extends XYLayoutManager {
   private final Dimension myPreferredSize;
   private static final Dimension MIN_SIZE = new Dimension(20,20);

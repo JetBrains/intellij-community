@@ -28,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author vlan
- */
 public interface PyClassLikeType extends PyCallableType, PyWithAncestors, PyInstantiableType<PyClassLikeType> {
 
   @Nullable

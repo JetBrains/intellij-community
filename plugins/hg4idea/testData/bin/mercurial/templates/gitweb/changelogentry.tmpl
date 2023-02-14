@@ -1,0 +1,16 @@
+<div>
+ <a class="title" href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">
+  <span class="age">{date|rfc822date}</span>
+  {desc|strip|firstline|escape|nonempty}
+  {alltags}
+ </a>
+</div>
+<div class="title_text">
+<div class="log_link">
+<a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">changeset</a><br/>
+</div>
+<i>{author|obfuscate} [{date|rfc822date}] rev {rev}</i><br/>
+</div>
+<div class="log_body description">{desc|strip|escape|websub|nonempty}
+
+</div>

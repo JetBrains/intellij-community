@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,12 +26,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class BadExceptionDeclaredInspection extends BaseInspection {
 
@@ -72,28 +70,12 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-    final ListTable table =
-      new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    final JPanel tablePanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), CommonClassNames.JAVA_LANG_THROWABLE);
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(tablePanel, constraints);
-
-
-    final CheckBox checkBox2 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), this,
-                   "ignoreLibraryOverrides");
-    constraints.weighty = 0.0;
-    constraints.gridy = 1;
-    panel.add(checkBox2, constraints);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("exceptions", InspectionGadgetsBundle.message("choose.exception.label"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_THROWABLE)
+                  .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))),
+      checkbox("ignoreLibraryOverrides", InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option")));
   }
 
   @Override
@@ -125,10 +107,9 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement element = reference.resolve();
-        if (!(element instanceof PsiClass)) {
+        if (!(element instanceof PsiClass thrownClass)) {
           continue;
         }
-        final PsiClass thrownClass = (PsiClass)element;
         final String qualifiedName = thrownClass.getQualifiedName();
         if (qualifiedName != null && exceptions.contains(qualifiedName)) {
           registerError(reference, reference);

@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
@@ -24,21 +25,24 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
   }
 
   public void testExceptionFilterPerformance() {
-    String trace = "java.lang.RuntimeException\n" +
-                   "\tat ExceptionTest.main(ExceptionTest.java:5)\n" +
-                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)\n" +
-                   "\tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:64)\n" +
-                   "\tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n" +
-                   "\tat java.base/java.lang.reflect.Method.invoke(Method.java:564)\n" +
-                   "\tat com.intellij.rt.execution.application.AppMainV2.main(AppMainV2.java:114)\n";
-    myFixture.addClass("public class ExceptionTest {\n" +
-                       "    public static void main(String[] args) {\n" +
-                       "        //noinspection InfiniteLoopStatement\n" +
-                       "        while (true) {\n" +
-                       "            new RuntimeException().printStackTrace();\n" +
-                       "        }\n" +
-                       "    }\n" +
-                       "}");
+    String trace = """
+      java.lang.RuntimeException
+      \tat ExceptionTest.main(ExceptionTest.java:5)
+      \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+      \tat java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:64)
+      \tat java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+      \tat java.base/java.lang.reflect.Method.invoke(Method.java:564)
+      \tat com.intellij.rt.execution.application.AppMainV2.main(AppMainV2.java:114)
+      """;
+    myFixture.addClass("""
+                         public class ExceptionTest {
+                             public static void main(String[] args) {
+                                 //noinspection InfiniteLoopStatement
+                                 while (true) {
+                                     new RuntimeException().printStackTrace();
+                                 }
+                             }
+                         }""");
     PlatformTestUtil.startPerformanceTest("Many exceptions", 10_000, () -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
       TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
@@ -55,16 +59,16 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
         console.print("start\n", ConsoleViewContentType.NORMAL_OUTPUT);
         console.flushDeferredText();
         console.getEditor().getCaretModel().moveToOffset(0); // avoid stick-to-end
-        console.getEditor().getDocument().setInBulkUpdate(true); // avoid editor size validation
-        for (int i = 0; i < 25; i++) {
-          for (int j = 0; j < 1_000; j++) {
-            console.print(trace, ConsoleViewContentType.ERROR_OUTPUT);
+        DocumentUtil.executeInBulk(console.getEditor().getDocument(), ()-> { // avoid editor size validation
+          for (int i = 0; i < 25; i++) {
+            for (int j = 0; j < 1_000; j++) {
+              console.print(trace, ConsoleViewContentType.ERROR_OUTPUT);
+            }
+            // Write action is necessary to apply filters right in the current thread
+            // see AsyncFilterRunner#highlightHyperlinks
+            WriteAction.run(console::flushDeferredText);
           }
-          // Write action is necessary to apply filters right in the current thread
-          // see AsyncFilterRunner#highlightHyperlinks
-          WriteAction.run(console::flushDeferredText);
-        }
-        console.getEditor().getDocument().setInBulkUpdate(false);
+        });
         console.waitAllRequests();
       }
       finally {

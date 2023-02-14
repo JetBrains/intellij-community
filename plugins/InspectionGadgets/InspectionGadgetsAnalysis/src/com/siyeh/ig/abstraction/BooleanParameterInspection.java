@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,9 +24,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -53,11 +53,10 @@ public class BooleanParameterInspection extends BaseInspection {
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("boolean.parameter.only.report.multiple.option"), this, "onlyReportMultiple");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportMultiple", InspectionGadgetsBundle.message("boolean.parameter.only.report.multiple.option")));
   }
 
   @Override
@@ -68,7 +67,7 @@ public class BooleanParameterInspection extends BaseInspection {
   private class BooleanParameterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
         final PsiClass aClass = method.getContainingClass();
@@ -84,7 +83,7 @@ public class BooleanParameterInspection extends BaseInspection {
       int count = 0;
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
-        if (!PsiType.BOOLEAN.equals(type)) {
+        if (!PsiTypes.booleanType().equals(type)) {
           continue;
         }
         if (MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, true)) {

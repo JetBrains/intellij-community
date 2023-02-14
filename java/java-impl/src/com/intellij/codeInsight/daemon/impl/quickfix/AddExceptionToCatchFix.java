@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,9 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    if (file.isPhysical()) {
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    }
 
     PsiCodeBlock catchBlockToSelect = null;
 
@@ -101,8 +103,8 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       addTryBlock(tryStatement, factory);
     }
 
-    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER).byType(exceptionType)
-      .byName("e", "ex", "exception").generate(false);
+    String name = new VariableNameGenerator(tryStatement, VariableKind.PARAMETER)
+      .byName("e", "ex", "exception").byType(exceptionType).generate(false);
 
     PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
 
@@ -172,7 +174,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
-    PsiElement parentStatement = RefactoringUtil.getParentStatement(element, false);
+    PsiElement parentStatement = CommonJavaRefactoringUtil.getParentStatement(element, false);
     if (parentStatement instanceof PsiDeclarationStatement) {
       PsiElement[] declaredElements = ((PsiDeclarationStatement)parentStatement).getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiClass) {

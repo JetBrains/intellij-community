@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.fileTypes
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -19,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ObjectUtils
@@ -117,7 +117,7 @@ private fun sendRequest(url: String) {
   try {
     HttpRequests.request(url).connect {
       try {
-        JDOMUtil.load(it.reader)
+        JDOMUtil.load(it.inputStream)
       }
       catch (e: JDOMException) {
         LOG.warn(e)
@@ -137,7 +137,7 @@ private fun getUpdateUrl(pluginIdString: String, pluginVersion: String): String 
   val applicationInfo = ApplicationInfoEx.getInstanceEx()
   val buildNumber = applicationInfo.build.asString()
   val os = URLEncoder.encode("${SystemInfo.OS_NAME} ${SystemInfo.OS_VERSION}", Charsets.UTF_8.name())
-  val uid = PermanentInstallationID.get()
+  val uid = PluginDownloader.getMarketplaceDownloadsUUID()
   val baseUrl = "https://plugins.jetbrains.com/plugins/list"
   return "$baseUrl?pluginId=$pluginIdString&build=$buildNumber&pluginVersion=$pluginVersion&os=$os&uuid=$uid"
 }

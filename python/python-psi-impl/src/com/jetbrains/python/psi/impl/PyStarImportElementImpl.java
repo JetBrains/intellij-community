@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +39,6 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author dcheryasov
- */
 public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportElementStub> implements PyStarImportElement {
   public PyStarImportElementImpl(ASTNode astNode) {
     super(astNode);
@@ -53,14 +51,12 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    if (getParent() instanceof PyFromImportStatement) {
-      PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
+    if (getParent() instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       ChainIterable<PyElement> chain = new ChainIterable<>();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
-        if (source instanceof PyFile) {
-          final PyFile sourceFile = (PyFile)source;
+        if (source instanceof PyFile sourceFile) {
           chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
         }
       }
@@ -86,15 +82,15 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   @NotNull
   private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     final PsiElement parent = getParentByStub();
-    if (parent instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)parent;
+    if (parent instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PyFile sourceFile = as(PyUtil.turnDirIntoInit(importedFile), PyFile.class);
         if (sourceFile != null && PyUtil.isStarImportableFrom(name, sourceFile)) {
           final PyModuleType moduleType = new PyModuleType(sourceFile);
+          final var context = TypeEvalContext.codeInsightFallback(sourceFile.getProject());
           final List<? extends RatedResolveResult> results = moduleType.resolveMember(name, null, AccessDirection.READ,
-                                                                                      PyResolveContext.defaultContext());
+                                                                                      PyResolveContext.defaultContext(context));
           if (!ContainerUtil.isEmpty(results)) {
             return Lists.newArrayList(results);
           }

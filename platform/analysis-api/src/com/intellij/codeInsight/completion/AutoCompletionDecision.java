@@ -5,9 +5,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class AutoCompletionDecision {
   public static final AutoCompletionDecision SHOW_LOOKUP = new AutoCompletionDecision();
   public static final AutoCompletionDecision CLOSE_LOOKUP = new AutoCompletionDecision();

@@ -13,7 +13,12 @@ import com.intellij.jsonpath.ui.JsonPathEvaluateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +33,7 @@ import static com.intellij.jsonpath.JsonPathConstants.STANDARD_NAMED_OPERATORS;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_DOT_NAVIGATION_SET;
 import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_EQUALITY_OPERATOR_SET;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public final class JsonPathCompletionContributor extends CompletionContributor {
 
@@ -37,13 +43,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
              .inside(psiElement().withElementType(JsonPathTypes.QUOTED_PATHS_LIST)),
            new JsonKeysCompletionProvider(false));
 
-    extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-           new JsonKeysCompletionProvider(true));
+    ElementPattern<PsiElement> identifierPattern = or(
+      psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
+      psiElement().withElementType(JsonPathTypes.IDENTIFIER)
+    );
 
-    extend(CompletionType.BASIC,
-           psiElement().afterLeaf(psiElement().withElementType(JSONPATH_DOT_NAVIGATION_SET)),
-           new FunctionNamesCompletionProvider());
+    extend(CompletionType.BASIC, identifierPattern, new JsonKeysCompletionProvider(true));
+
+    extend(CompletionType.BASIC, identifierPattern, new FunctionNamesCompletionProvider());
 
     extend(CompletionType.BASIC,
            psiElement().withParent(JsonPathBinaryConditionalOperator.class),
@@ -133,6 +140,8 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       Supplier<JsonFile> targetFileGetter = file.getUserData(JsonPathEvaluateManager.JSON_PATH_EVALUATE_SOURCE_KEY);
       if (targetFileGetter != null) {
         JsonFile targetFile = targetFileGetter.get();
+        if (targetFile == null) return; // it could be already removed
+
         targetFile.accept(new JsonRecursiveElementVisitor() {
           @Override
           public void visitProperty(@NotNull JsonProperty o) {
@@ -170,21 +179,14 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
             if (files == null) return;
 
             for (Pair<PsiElement, TextRange> rangePair : files) {
-              if (rangePair.getFirst() instanceof JsonPathFile) {
-                JsonPathFile jsonPathFile = (JsonPathFile)rangePair.getFirst();
-
-                LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper =
-                  ((PsiLanguageInjectionHost)element).createLiteralTextEscaper();
-
-                visitJsonPathLiterals(jsonPathFile, rangePair.getSecond(), escaper);
+              if (rangePair.getFirst() instanceof JsonPathFile jsonPathFile) {
+                visitJsonPathLiterals(jsonPathFile);
               }
             }
           }
         }
 
-        private void visitJsonPathLiterals(JsonPathFile jsonPathFile,
-                                           TextRange fileRange,
-                                           LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper) {
+        private void visitJsonPathLiterals(JsonPathFile jsonPathFile) {
           jsonPathFile.accept(new JsonPathRecursiveElementVisitor() {
             @Override
             public void visitIdSegment(@NotNull JsonPathIdSegment o) {
@@ -192,31 +194,37 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
 
               JsonPathId id = o.getId();
               if (!id.getTextRange().isEmpty()) {
-                StringBuilder decodeBuilder = new StringBuilder();
-                TextRange idTextRange = id.getTextRange().shiftRight(fileRange.getStartOffset());
-                if (escaper.decode(idTextRange, decodeBuilder)) {
-                  pathNameConsumer.accept(decodeBuilder.toString());
+                String literalText = getElementTextWithoutHostEscaping(id);
+                if (!StringUtil.isEmptyOrSpaces(literalText)) {
+                  pathNameConsumer.accept(literalText);
                 }
               }
             }
 
             @Override
-            public void visitQuotedSegment(@NotNull JsonPathQuotedSegment o) {
-              super.visitQuotedSegment(o);
+            public void visitExpressionSegment(@NotNull JsonPathExpressionSegment o) {
+              super.visitExpressionSegment(o);
 
-              for (JsonPathStringLiteral stringLiteral : o.getQuotedPathsList().getStringLiteralList()) {
-                TextRange literalTextRange = stringLiteral.getTextRange().shiftRight(fileRange.getStartOffset());
+              JsonPathQuotedPathsList quotedPathsList = o.getQuotedPathsList();
+              if (quotedPathsList == null) return;
 
-                StringBuilder decodeBuilder = new StringBuilder();
-                for (Pair<TextRange, String> fragment : stringLiteral.getTextFragments()) {
-                  if (!fragment.getFirst().isEmpty()) {
-                    escaper.decode(fragment.getFirst().shiftRight(literalTextRange.getStartOffset()), decodeBuilder);
+              for (JsonPathStringLiteral stringLiteral : quotedPathsList.getStringLiteralList()) {
+                String literalText = getElementTextWithoutHostEscaping(stringLiteral);
+                if (literalText != null) {
+                  String literalValue = StringUtil.unquoteString(literalText);
+                  if (!StringUtil.isEmptyOrSpaces(literalValue)) {
+                    pathNameConsumer.accept(literalValue);
                   }
                 }
+              }
+            }
 
-                if (decodeBuilder.length() > 0) {
-                  pathNameConsumer.accept(decodeBuilder.toString());
-                }
+            private String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+              if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) {
+                return injectedLanguageManager.getUnescapedText(element);
+              }
+              else {
+                return element.getText();
               }
             }
           });

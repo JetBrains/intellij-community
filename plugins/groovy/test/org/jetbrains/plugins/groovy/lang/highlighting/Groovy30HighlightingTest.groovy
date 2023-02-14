@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -165,5 +165,83 @@ class Foo implements ATrain {
 class Bar extends Foo {
     String getName() { 'bar' }
 }'''
+  }
+
+  void 'test sealed'() {
+    highlightingTest '''
+<error>sealed</error> class Foo {}
+
+<error>non-sealed</error> trait Bar {}
+'''
+  }
+
+  void 'test permits'() {
+    highlightingTest '''
+<error>sealed</error> class Foo <error>permits</error> Bar {}
+
+class Bar extends Foo {}
+'''
+  }
+
+  void 'test switch expression'() {
+    highlightingTest """
+def x = <error>switch</error> (10) {
+}"""
+  }
+
+  void 'test switch with multiple expressions'() {
+    highlightingTest """
+switch (10) {
+  case <error>20, 30</error>:
+    break
+}"""
+  }
+
+  void 'test enhanced range'() {
+    highlightingTest """
+<error>1<..<2</error>
+"""
+  }
+
+  void 'test literal without leading zero'() {
+    highlightingTest """
+<error>.5555d</error>
+"""
+  }
+
+  void 'test record definition'() {
+    highlightingTest """
+<error>record</error> X() {}
+"""
+  }
+
+  void 'test IDEA-285153'() {
+    highlightingTest """
+<error>class MyClass implements MyInterface</error> {
+}
+
+interface MyInterface {
+    void myAbstractMethod()
+
+    default void myDefaultMethod() {}
+}"""
+  }
+
+  void 'test statically imported method with DELEGATE_ONLY'() {
+    highlightingTest """
+import groovy.transform.CompileStatic
+import static java.lang.String.valueOf
+
+@CompileStatic
+class Main {
+
+  static void func(@DelegatesTo(value = Main, strategy = Closure.DELEGATE_ONLY) Closure<String> cl) {}
+
+  static void main(String[] args) {
+    func {
+      valueOf(3) 
+    }
+  }
+}"""
   }
 }

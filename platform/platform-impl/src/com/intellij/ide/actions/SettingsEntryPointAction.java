@@ -1,31 +1,31 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
+import com.intellij.ui.BadgeIconSupplier;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,22 +33,30 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
-  private boolean myShowPopup = true;
+  private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
+  private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
+
+  public SettingsEntryPointAction() {
+    super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (myShowPopup) {
-      myShowPopup = false;
-      ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
+    if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
+      ListPopup popup = createMainPopup(e.getDataContext());
+      myPopupState.prepareToShow(popup);
       PopupUtil.showForActionButtonEvent(popup, e);
     }
   }
@@ -56,13 +64,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setText("");
+    if (e.isFromActionToolbar()) presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
+  }
 
-    for (AnAction child : getTemplateActions()) {
-      child.update(e);
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static AnAction @NotNull [] getTemplateActions() {
@@ -71,28 +80,33 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
-    DefaultActionGroup group = new DefaultActionGroup();
+  private static ListPopup createMainPopup(@NotNull DataContext context) {
+    List<AnAction> appActions = new ArrayList<>();
+    List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      Collection<AnAction> actions = provider.getUpdateActions(context);
-      if (!actions.isEmpty()) {
-        for (AnAction action : actions) {
-          Presentation presentation = action.getTemplatePresentation();
-          if (presentation.getClientProperty(ActionProvider.ICON_KEY) == IconState.ApplicationUpdate) {
-            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
-          }
-          else {
-            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          }
-          group.add(action);
+      for (UpdateAction action : provider.getUpdateActions(context)) {
+        Presentation presentation = action.getTemplatePresentation();
+        if (action.isIdeUpdate()) {
+          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+          appActions.add(action);
         }
-        group.addSeparator();
+        else {
+          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+          pluginActions.add(action);
+        }
+        action.markAsRead();
       }
     }
 
+    DefaultActionGroup group = new DefaultActionGroup(appActions);
+    group.addAll(pluginActions);
+
     if (group.getChildrenCount() == 0) {
       resetActionIcon();
+    }
+    else {
+      group.addSeparator();
     }
 
     for (AnAction child : getTemplateActions()) {
@@ -101,12 +115,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
       else {
         String text = child.getTemplateText();
-        if (text != null && !text.endsWith("...")) {
+        if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof NoDots)) {
           AnActionButton button = new AnActionButton.AnActionButtonWrapper(child.getTemplatePresentation(), child) {
             @Override
             public void updateButton(@NotNull AnActionEvent e) {
               getDelegate().update(e);
-              e.getPresentation().setText(e.getPresentation().getText() + "...");
+              e.getPresentation().setText(e.getPresentation().getText() + "…");
             }
 
             @Override
@@ -125,43 +139,111 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true, () -> {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(
-          () -> ApplicationManager.getApplication().invokeLater(disposeCallback, ModalityState.any()), 250, TimeUnit.MILLISECONDS);
-      }, -1);
+      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
   }
 
-  private static boolean myShowPlatformUpdateIcon;
-  private static boolean myShowPluginsUpdateIcon;
+  private static boolean ourShowPlatformUpdateIcon;
+  private static boolean ourShowPluginsUpdateIcon;
+  private static boolean ourNewUiIcon;
 
-  public static void updateState(IconState state) {
-    if (state == IconState.ApplicationUpdate) {
-      myShowPlatformUpdateIcon = true;
+  public static void updateState() {
+    resetActionIcon();
+
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    ourNewUiIcon = !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+                   && ExperimentalUI.getPromotionDaysCount() < 14;
+
+    loop:
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+        if (action.isNewAction()) {
+          if (action.isIdeUpdate()) {
+            ourShowPlatformUpdateIcon = true;
+          }
+          else {
+            ourShowPluginsUpdateIcon = true;
+          }
+          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
+            break loop;
+          }
+        }
+      }
     }
-    else if (state == IconState.ApplicationComponentUpdate) {
-      myShowPluginsUpdateIcon = true;
-    }
+
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
   }
 
   private static @NotNull @Nls String getActionTooltip() {
-    return IdeBundle.message("settings.entry.point.tooltip");
+    boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
+    if (!updates) {
+      for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+        if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+          updates = true;
+          break;
+        }
+      }
+    }
+    if (updates) {
+      return IdeBundle.message("settings.entry.point.with.updates.tooltip");
+    }
+    return IdeBundle.message(ourNewUiIcon ? "settings.entry.point.newUi.tooltip" : "settings.entry.point.tooltip");
   }
 
   private static void resetActionIcon() {
-    myShowPlatformUpdateIcon = myShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = false;
+    ourShowPluginsUpdateIcon = false;
+    ourNewUiIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
-    if (myShowPlatformUpdateIcon) {
-      return AllIcons.Ide.Notification.IdeUpdate;
+    if (ourShowPlatformUpdateIcon) {
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getWarningIcon()
+             : getCustomizedIcon(IDE_UPDATE_ICON);
     }
-    if (myShowPluginsUpdateIcon) {
-      return AllIcons.Ide.Notification.PluginUpdate;
+    if (ourShowPluginsUpdateIcon) {
+      return ExperimentalUI.isNewUI()
+             ? GEAR_ICON.getInfoIcon()
+             : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
-    return AllIcons.General.GearPlain;
+    if (ourNewUiIcon) {
+      return GEAR_ICON.getInfoIcon();
+    }
+
+    return getCustomizedIcon(GEAR_ICON);
+  }
+
+  private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
+    for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
+      Icon icon = customizer.getCustomIcon(supplier);
+      if (icon != null) return icon;
+    }
+    return supplier.getOriginalIcon();
+  }
+
+  /**
+   * Allows to modify a base icon provided by {@link BadgeIconSupplier}. The icon of the first extension which returns a non-null value
+   * will be used.
+   */
+  public interface IconCustomizer {
+    ExtensionPointName<IconCustomizer> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointIconCustomizer");
+
+    /**
+     * Returns a customized icon optionally based on the given {@link BadgeIconSupplier}. For example, {@code supplier.getInfoIcon()}.
+     *
+     * @param supplier The supplier to use for a base icon.
+     *
+     * @return A customized icon using {@link BadgeIconSupplier} or an alternative (custom) icon.
+     */
+    @Nullable Icon getCustomIcon(@NotNull BadgeIconSupplier supplier);
+  }
+
+  /**
+   * Marker interface to suppress automatic dots "..." addition after action name.
+   */
+  public interface NoDots {
   }
 
   private static UISettingsListener mySettingsListener;
@@ -188,19 +270,24 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static boolean isAvailableInStatusBar() {
     initUISettingsListener();
-    return ToolbarSettings.Companion.getInstance().showSettingsEntryPointInStatusBar();
+    UISettings uiSettings = UISettings.getInstance();
+    ToolbarSettings toolbarSettings = ToolbarSettings.getInstance();
+    return !uiSettings.getShowMainToolbar() &&
+           !uiSettings.getShowNavigationBar() &&
+           !ExperimentalUI.isNewUI() &&
+           !(toolbarSettings.isAvailable() && toolbarSettings.isVisible());
   }
 
   private static final String WIDGET_ID = "settingsEntryPointWidget";
 
-  public static class StatusBarManager implements StatusBarWidgetFactory {
+  static final class StatusBarManager implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return WIDGET_ID;
     }
 
     @Override
-    public @Nls @NotNull String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return IdeBundle.message("settings.entry.point.widget.name");
     }
 
@@ -215,19 +302,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return isAvailableInStatusBar();
     }
   }
 
-  private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+  private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
+    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
-    private boolean myShowPopup = true;
 
     @Override
     public @NotNull String ID() {
@@ -240,28 +322,28 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public @Nullable @NlsContexts.Tooltip String getTooltipText() {
+    public @NlsContexts.Tooltip @NotNull String getTooltipText() {
       return getActionTooltip();
     }
 
     @Override
-    public @Nullable Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> {
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myShowPopup) {
+        if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
           return;
         }
-        myShowPopup = false;
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), () -> myShowPopup = true);
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -275,23 +357,41 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return getActionIcon();
     }
-
-    @Override
-    public void dispose() { }
-  }
-
-  public enum IconState {
-    Current, ApplicationUpdate, ApplicationComponentUpdate
   }
 
   public interface ActionProvider {
     ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
 
-    String ICON_KEY = "Update_Type_Icon_Key";
+    @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context);
+  }
 
-    @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
+  public static abstract class UpdateAction extends DumbAwareAction {
+    private boolean myNewAction = true;
+
+    protected UpdateAction() {
+    }
+
+    protected UpdateAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isRestartRequired() {
+      return false;
+    }
+
+    public boolean isNewAction() {
+      return myNewAction;
+    }
+
+    public void markAsRead() {
+      myNewAction = false;
+    }
   }
 }

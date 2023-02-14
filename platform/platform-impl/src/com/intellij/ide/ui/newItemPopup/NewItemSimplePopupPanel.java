@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -14,10 +14,11 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,19 +29,24 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.function.Predicate;
 
 public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   protected final ExtendableTextField myTextField;
 
-  private JBPopup myErrorPopup;
+  protected JBPopup myErrorPopup;
   protected RelativePoint myErrorShowPoint;
 
   protected Consumer<? super InputEvent> myApplyAction;
 
   public NewItemSimplePopupPanel() {
+    this(false);
+  }
+
+  public NewItemSimplePopupPanel(boolean liveValidation) {
     super(new BorderLayout());
 
-    myTextField = createTextField();
+    myTextField = createTextField(liveValidation);
     add(myTextField, BorderLayout.NORTH);
 
     myErrorShowPoint = new RelativePoint(myTextField, new Point(0, myTextField.getHeight()));
@@ -66,8 +72,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
       Point point = new Point(0, insets.top - JBUIScale.scale(6) - hintSize.height);
       myErrorShowPoint = new RelativePoint(myTextField, point);
     }).setCancelOnWindowDeactivation(false)
-      .setCancelOnClickOutside(true)
-      .addUserData("SIMPLE_WINDOW");
+      .setCancelOnClickOutside(true);
 
     myErrorPopup = popupBuilder.createPopup();
     myErrorPopup.show(myErrorShowPoint);
@@ -83,7 +88,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   }
 
   @NotNull
-  protected ExtendableTextField createTextField() {
+  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
     ExtendableTextField res = new ExtendableTextField();
 
     Dimension minSize = res.getMinimumSize();
@@ -99,7 +104,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     res.setBorder(JBUI.Borders.merge(border, errorBorder, false));
     res.setBackground(JBUI.CurrentTheme.NewClassDialog.searchFieldBackground());
 
-    res.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
+    res.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
     res.getEmptyText().setText(IdeBundle.message("action.create.new.class.name.field"));
     res.addKeyListener(new KeyAdapter() {
       @Override
@@ -113,11 +118,15 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     res.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setError(null);
+        if (!liveErrorValidation) setError(null);
       }
     });
 
     return res;
+  }
+  
+  public boolean hasError() {
+    return myErrorPopup != null;
   }
 
   private static final class ErrorBorder implements Border {
@@ -134,7 +143,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBUI.emptyInsets();
+      return checkError(c) ? errorDelegateBorder.getBorderInsets(c) : JBInsets.emptyInsets();
     }
 
     @Override
@@ -143,12 +152,8 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     }
 
     private static boolean checkError(Component c) {
-      Object outlineObj = ((JComponent)c).getClientProperty("JComponent.outline");
-      if (outlineObj == null) return false;
-
-      DarculaUIUtil.Outline outline = outlineObj instanceof DarculaUIUtil.Outline
-                                      ? (DarculaUIUtil.Outline) outlineObj : DarculaUIUtil.Outline.valueOf(outlineObj.toString());
-      return outline == DarculaUIUtil.Outline.error || outline == DarculaUIUtil.Outline.warning;
+      DarculaUIUtil.Outline outline = DarculaUIUtil.getOutline((JComponent)c);
+      return DarculaUIUtil.isWarningOrError(outline);
     }
   }
 }

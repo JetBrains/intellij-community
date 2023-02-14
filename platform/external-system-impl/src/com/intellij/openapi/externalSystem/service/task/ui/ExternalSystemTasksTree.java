@@ -23,16 +23,13 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTaskExecutionInfo> {
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
   @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
 
-  @NotNull private final Alarm myCollapseStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Alarm myCollapseStateAlarm = new Alarm();
 
   /** Holds list of paths which 'expand/collapse' state should be restored. */
   @NotNull private final Set<TreePath> myPathsToProcessCollapseState = new HashSet<>();
@@ -172,8 +169,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
       }
 
       Object element = ((ExternalSystemNode)component).getDescriptor().getElement();
-      if (element instanceof ExternalTaskExecutionInfo) {
-        ExternalTaskExecutionInfo taskExecutionInfo = (ExternalTaskExecutionInfo)element;
+      if (element instanceof ExternalTaskExecutionInfo taskExecutionInfo) {
         ExternalSystemTaskExecutionSettings executionSettings = taskExecutionInfo.getSettings();
         String key = executionSettings.getExternalSystemIdString() + executionSettings.getExternalProjectPath() + executionSettings.getVmOptions();
         ExternalTaskExecutionInfo executionInfo = map.get(key);

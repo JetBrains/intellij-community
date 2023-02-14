@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Files
@@ -23,13 +22,13 @@ object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
-  afterChange(action, lifetime)
+  afterChange(lifetime, action)
 }
 
 class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
-  val currentRuntime : GraphProperty<RuntimeChooserCurrentItem?> = graph.graphProperty { null }
+  val currentRuntime = graph.property<RuntimeChooserCurrentItem?>(null)
 
   private var downloadableJbs: List<JdkItem> = listOf()
   private val customJdks = mutableListOf<RuntimeChooserCustomItem>()

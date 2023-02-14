@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleAwareNode;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -19,6 +20,11 @@ import org.jetbrains.annotations.Nullable;
 public class AddNewPropertyFileAction extends AnAction {
  protected AddNewPropertyFileAction() {
     super(PropertiesBundle.messagePointer("add.property.files.to.resource.bundle.dialog.action.title"), AllIcons.FileTypes.Properties);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

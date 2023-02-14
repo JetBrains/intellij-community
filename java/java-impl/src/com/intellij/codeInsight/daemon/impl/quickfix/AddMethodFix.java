@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  @SafeFieldForPreview
   private final SmartPsiElementPointer<PsiMethod> myMethodPrototype;
+  @SafeFieldForPreview
   private final List<String> myExceptions = new ArrayList<>();
   private @IntentionName String myText;
 

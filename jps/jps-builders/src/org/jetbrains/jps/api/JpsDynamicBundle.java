@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import com.intellij.AbstractBundle;
@@ -47,26 +47,43 @@ public abstract class JpsDynamicBundle extends AbstractBundle {
     }
   }
 
+  /**
+   * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
+   * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
+   *
+   * @param bundleClass  any class from the module containing the bundle, it's used to locate the file with the messages
+   * @param pathToBundle qualified name of the file with the messages (without the extension, with slashes replaced by dots)
+   */
+  public JpsDynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
+    super(bundleClass, pathToBundle);
+  }
+
+  /**
+   * Use this constructor in bundle classes which inherit from this class.
+   * Note that it's better to prefer delegation to inheritance, and use {@link #JpsDynamicBundle(Class, String)} instead.
+   */
   protected JpsDynamicBundle(@NonNls @NotNull String pathToBundle) {
     super(pathToBundle);
   }
 
   @Override
-  protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+  protected @NotNull ResourceBundle findBundle(
+    @NotNull @NonNls String pathToBundle,
+    @NotNull ClassLoader loader,
+    @NotNull ResourceBundle.Control control
+  ) {
     final ResourceBundle base = super.findBundle(pathToBundle, loader, control);
     final ClassLoader languageBundleLoader = ourLangBundleLoader;
     if (languageBundleLoader != null) {
       ResourceBundle languageBundle = super.findBundle(pathToBundle, languageBundleLoader, control);
-      if (languageBundle != null) {
-        try {
-          if (SET_PARENT != null) {
-            SET_PARENT.invoke(languageBundle, base);
-          }
-          return languageBundle;
+      try {
+        if (SET_PARENT != null) {
+          SET_PARENT.invoke(languageBundle, base);
         }
-        catch (Throwable e) {
-          LOG.warn(e);
-        }
+        return languageBundle;
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
       }
     }
     

@@ -52,14 +52,13 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestModeFlags;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -154,7 +153,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                 new ProjectEmptyCompletionNotifier();
 
     myLookupManagerListener = evt -> {
-      if (evt.getNewValue() != null) {
+      @Nullable Lookup newLookup = (Lookup)evt.getNewValue();
+      if (newLookup != null && newLookup.getEditor() == myEditor) {
         LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
       }
     };
@@ -421,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ProgressManager.checkCanceled();
 
     if (!myHandler.isTestingMode()) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
 
     LookupElement lookupElement = item.getLookupElement();
@@ -581,7 +581,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore.up();
     myFinishSemaphore.up();
 
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(myQueue.getModalityState(), () -> {
       final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
       if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != this) return;
 
@@ -619,7 +619,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
         }
       }
-    }, myQueue.getModalityState());
+    });
   }
 
   private boolean hideAutopopupIfMeaningless() {
@@ -758,7 +758,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (this != current) {
-      LOG.error(current + "!=" + this);
+      LOG.error(current + "!=" + this + ";" +
+                "current phase=" + CompletionServiceImpl.getCompletionPhase() + ";" +
+                "clientId=" + ClientId.getCurrent());
     }
 
     hideAutopopupIfMeaningless();
@@ -813,7 +815,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private LightweightHint showErrorHint(Project project, Editor editor, @HintText String text) {
     LightweightHint[] result = {null};
-    EditorHintListener listener = (project1, hint, flags) -> result[0] = hint;
+    EditorHintListener listener = new EditorHintListener() {
+      @Override
+      public void hintShown(Project project, @NotNull LightweightHint hint, int flags) {
+        result[0] = hint;
+      }
+    };
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     try {
       connection.subscribe(EditorHintListener.TOPIC, listener);
@@ -889,7 +896,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   /**
    * @deprecated intended for Rider
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
@@ -932,7 +939,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     public void showIncompleteHint(@NotNull Editor editor, @NotNull @HintText String text, boolean isDumbMode) {
       String message = isDumbMode ?
                        text + CodeInsightBundle.message("completion.incomplete.during.indexing.suffix") : text;
-      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.UNDER);
+      HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.ABOVE);
     }
   }
 }

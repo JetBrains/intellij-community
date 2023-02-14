@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -22,23 +8,23 @@ import org.jetbrains.annotations.Nullable;
 public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightJavaInspectionTestCase {
 
   public void testFinalWithoutInnerClass() {
-    doTest("class Issue {\n" +
-           "    public static void main(String[] args) {\n" +
-           "        /*Unnecessary 'final' on variable 's'*/final/**/ int s;\n" +
-           "        if (args.length == 0) {\n" +
-           "            s = 1;\n" +
-           "        } else {\n" +
-           "            s = 2;\n" +
-           "        }\n" +
-           "        new Runnable() {\n" +
-           "            @Override\n" +
-           "            public void run() {\n" +
-           "                System.out.println(s);\n" +
-           "            }\n" +
-           "        };" +
-           "        System.out.println(s);\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Issue {
+                 public static void main(String[] args) {
+                     /*Unnecessary 'final' on variable 's'*/final/**/ int s;
+                     if (args.length == 0) {
+                         s = 1;
+                     } else {
+                         s = 2;
+                     }
+                     new Runnable() {
+                         @Override
+                         public void run() {
+                             System.out.println(s);
+                         }
+                     };        System.out.println(s);
+                 }
+             }""");
   }
 
   public void testInterfaceMethods() {
@@ -50,6 +36,38 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
            "  static void n(final String s) {}" +
            "  void o(/*Unnecessary 'final' on parameter 's'*/final/**/ String s);" +
            "}");
+  }
+  
+  public void testTryWithResources() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.reportLocalVariables = false;
+    myFixture.enableInspections(inspection);
+    doTest("""
+             import java.io.*;
+             import java.util.*;
+
+             class FinalTest {
+               public List<String> foobar(/*Unnecessary 'final' on parameter 'shouldBeNonFinal'*/final/**/ String shouldBeNonFinal) throws IOException {
+                 List<String> finalVar = new ArrayList<>();
+
+                 try (final BufferedReader reader = new BufferedReader(new FileReader(""))) {
+                   for (String nonFinalVar = reader.readLine(); nonFinalVar != null; nonFinalVar = reader.readLine()) {
+                     finalVar.add(nonFinalVar);
+                   }
+                 }
+
+                 for (/*Unnecessary 'final' on parameter 's'*/final/**/ String s : finalVar) {
+
+                 }
+                 for (final Iterator<String> it = finalVar.iterator(); it.hasNext(); ) {
+                   if (it.next() == null) {
+                     System.out.println("deleting");
+                     it.remove();
+                   }
+                 }
+                 return finalVar;
+               }
+             }""");
   }
 
   @Nullable

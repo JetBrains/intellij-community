@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -30,9 +29,11 @@ import com.jetbrains.python.inspections.quickfix.PyConvertToNewStyleQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,18 +48,18 @@ public class PyOldStyleClassesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyClass(final @NotNull PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
-      List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+      List<LocalQuickFix> quickFixes = new ArrayList<>();
+      quickFixes.add(new PyConvertToNewStyleQuickFix());
       if (!expressions.isEmpty()) {
         quickFixes.add(new PyChangeBaseClassQuickFix());
       }
@@ -91,7 +92,8 @@ public class PyOldStyleClassesInspection extends PyInspection {
           if (qName != null && qName.contains("PyQt")) return;
           if (!(type instanceof PyClassType)) return;
         }
-        List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
+        List<LocalQuickFix> quickFixes = new ArrayList<>();
+        quickFixes.add(new PyConvertToNewStyleQuickFix());
         if (!types.isEmpty()) {
           quickFixes.add(new PyChangeBaseClassQuickFix());
         }

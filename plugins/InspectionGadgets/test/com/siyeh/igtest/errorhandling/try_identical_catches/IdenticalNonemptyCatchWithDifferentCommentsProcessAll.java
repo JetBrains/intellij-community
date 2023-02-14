@@ -2,7 +2,12 @@ class C {
   void foo() {
     try {
       bar();
-    } catch (java.//line comment
+    }
+    catch (NumberFormatException e) {
+      e = null;
+      //non final
+    }
+    catch (java.//line comment
       lang.NullPointerException e) {
       /*same comment*/
       // comment 1

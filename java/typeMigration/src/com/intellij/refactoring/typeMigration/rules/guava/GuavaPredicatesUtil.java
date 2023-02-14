@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +10,6 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,26 +20,28 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public final class GuavaPredicatesUtil {
+final class GuavaPredicatesUtil {
   private static final Logger LOG = Logger.getInstance(GuavaPredicatesUtil.class);
 
-  static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
-  static final String PREDICATES_NOT = "not";
+  private static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
+  private static final String PREDICATES_NOT = "not";
   public static final Set<String> PREDICATES_METHOD_NAMES =
     ContainerUtil.newHashSet("alwaysTrue", "alwaysFalse", "isNull", "notNull", "equalTo", "not", "or", "and");
 
   @Nullable
   static TypeConversionDescriptorBase tryConvertIfPredicates(PsiMethod method, PsiExpression context) {
     final String name = method.getName();
-    if (name.equals("alwaysTrue") || name.equals("alwaysFalse")) {
-      return createConstantPredicate(name, name.contains("True"));
-    }
-    else if (name.equals("isNull") || name.equals("notNull")) {
-      final String operation = name.equals("isNull") ? "==" : "!=";
-      return new TypeConversionDescriptorWithLocalVariable(name, "$x$ -> $x$" + operation + " null");
-    }
-    else if (name.equals("equalTo")) {
-      return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
+    switch (name) {
+      case "alwaysTrue", "alwaysFalse" -> {
+        return createConstantPredicate(name, name.contains("True"));
+      }
+      case "isNull", "notNull" -> {
+        final String operation = name.equals("isNull") ? "==" : "!=";
+        return new TypeConversionDescriptorWithLocalVariable(name, "$x$ -> $x$" + operation + " null");
+      }
+      case "equalTo" -> {
+        return new TypeConversionDescriptorWithLocalVariable("equalTo", "$x$ -> java.util.Objects.equals($x$, $v$)");
+      }
     }
     if (!isConvertablePredicatesMethod(method, (PsiMethodCallExpression)context)) return null;
     if (((PsiMethodCallExpression)context).getArgumentList().isEmpty()) {
@@ -123,7 +124,7 @@ public final class GuavaPredicatesUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       @NonNls String newExpressionString =
         GuavaConversionUtil.adjustLambdaContainingExpression(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator).getText() + ".negate()";
 
@@ -156,17 +157,15 @@ public final class GuavaPredicatesUtil {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-      final String methodName = methodCall.getMethodExpression().getReferenceName();
-
       final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       if (arguments.length == 1) {
         return (PsiExpression)expression.replace(GuavaConversionUtil.adjustLambdaContainingExpression(arguments[0], true, myTargetType, evaluator));
       }
       LOG.assertTrue(arguments.length != 0);
-      @NonNls StringBuilder replaceBy = new StringBuilder();
+      final @NonNls StringBuilder replaceBy = new StringBuilder();
+      final String methodName = methodCall.getMethodExpression().getReferenceName();
       for (int i = 1; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
         replaceBy.append(".").append(methodName).append("(").append(GuavaConversionUtil.adjustLambdaContainingExpression(argument, false, myTargetType, evaluator).getText()).append(")");
@@ -179,6 +178,7 @@ public final class GuavaPredicatesUtil {
       else if (!GuavaConversionUtil.isJavaLambda(parent, evaluator)) {
         replaceBy.append("::test");
       }
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(replaceBy.toString(), expression));
     }
   }

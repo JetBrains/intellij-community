@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,14 +22,14 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
       TreePath path = event.getOldLeadSelectionPath();
       if (path != null && null != path.getParentPath()) {
         Object source = event.getSource();
-        if (source instanceof JTree) {
-          JTree tree = (JTree)source;
+        if (source instanceof JTree tree) {
           if (tree.getSelectionModel().isSelectionEmpty()) {
             invokeLater(() -> {
               // restore selection later, because nodes are removed before they are inserted
               if (tree.getSelectionModel().isSelectionEmpty()) {
                 // restore a path selection only if nothing is selected now
                 Reference<TreePath> reference = new Reference<>();
+                reference.set(tree.getPathForRow(0)); // select first node if old path removed completely
                 TreeVisitor visitor = new TreeVisitor.ByTreePath<>(path, o -> o) {
                   @NotNull
                   @Override

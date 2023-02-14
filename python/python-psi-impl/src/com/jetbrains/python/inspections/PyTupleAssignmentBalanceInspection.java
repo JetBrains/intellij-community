@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
   @NotNull
@@ -41,14 +38,13 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
-
     @Override
     public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
@@ -86,8 +82,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       else if (assignedValue instanceof PyNumericLiteralExpression || assignedValue instanceof PyNoneLiteralExpression) {
         return 1;
       }
-      else if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      else if (assignedValue instanceof PyCallExpression call) {
         if (call.isCalleeText("dict")) {
           return call.getArguments().length;
         }

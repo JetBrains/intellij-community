@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
@@ -29,6 +16,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MergeCallSequenceToChainIntention extends Intention {
 
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("merge.call.sequence.to.chain.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("merge.call.sequence.to.chain.intention.name");
+  }
+
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
@@ -37,10 +34,9 @@ public class MergeCallSequenceToChainIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    if (!(element instanceof PsiExpressionStatement)) {
+    if (!(element instanceof PsiExpressionStatement statement)) {
       return;
     }
-    final PsiExpressionStatement statement = (PsiExpressionStatement)element;
     final PsiExpressionStatement nextSibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiExpressionStatement.class);
     if (nextSibling == null) {
       return;
@@ -73,8 +69,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
   private static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
-    if (qualifierExpression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifierExpression;
+    if (qualifierExpression instanceof PsiMethodCallExpression methodCallExpression) {
       return getRootMethodCallExpression(methodCallExpression);
     }
     return expression;

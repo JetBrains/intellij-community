@@ -10,9 +10,7 @@ import com.intellij.psi.PsiDirectoryContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class PsiDirectoryFactory {
   public static PsiDirectoryFactory getInstance(Project project) {
     return project.getService(PsiDirectoryFactory.class);
@@ -22,7 +20,7 @@ public abstract class PsiDirectoryFactory {
   public abstract PsiDirectory createDirectory(@NotNull VirtualFile file);
 
   @NotNull
-  public abstract @NlsSafe String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
+  public abstract @NlsSafe String getQualifiedName(@NotNull PsiDirectory directory, boolean presentable);
 
   @Nullable
   public abstract PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory);

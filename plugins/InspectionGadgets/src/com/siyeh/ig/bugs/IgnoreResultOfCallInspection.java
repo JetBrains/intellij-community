@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,72 +15,84 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.CheckBox;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import com.siyeh.ig.ui.UiUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
+
+  private static final CallMatcher KNOWN_ARGUMENT_SIDE_EFFECTS = CallMatcher.anyOf(
+    (CallMatcher.instanceCall( "java.nio.channels.FileChannel","write")));
+
   private static final CallMapper<String> KNOWN_EXCEPTIONAL_SIDE_EFFECTS = new CallMapper<String>()
     .register(CallMatcher.staticCall("java.util.regex.Pattern", "compile"), "java.util.regex.PatternSyntaxException")
     .register(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_SHORT, "parseShort", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "parseByte", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
-                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"), 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
+                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"),
               "java.lang.NoSuchMethodException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
                                        "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
   private static final CallMatcher MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
-        .parameterTypes("T"));
-  private static final Set<String> IGNORE_ANNOTATIONS = Set.of(
-    "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
+        .parameterTypes("T"),
+      //new version of jmock
+      CallMatcher.instanceCall("org.jmock.AbstractExpectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
+        .parameterTypes("T"),
+      CallMatcher.instanceCall("org.jmock.syntax.ReceiverClause", "of").parameterTypes("T"));
+
+  private static final CallMatcher TEST_OR_MOCK_CONTAINER_METHODS =
+    CallMatcher.anyOf(
+      CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThatThrownBy", "catchThrowable", "catchThrowableOfType"),
+      CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertDoesNotThrow", "assertThrows", "assertThrowsExactly"),
+      CallMatcher.staticCall("org.junit.Assert", "assertThrows"),
+      CallMatcher.instanceCall("org.mockito.MockedStatic", "when", "verify")
+    );
+
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
     "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
-  protected final MethodMatcher myMethodMatcher;
+  private final MethodMatcher myMethodMatcher;
   /**
    * @noinspection PublicField
    */
@@ -110,12 +122,17 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
       .add("java.nio.channels.AsynchronousChannelGroup",".*")
+      .add("java.nio.channels.Channel","isOpen")
+      .add("java.nio.channels.FileChannel","open|map|lock|tryLock|write")
+      .add("java.nio.channels.ScatteringByteChannel","read")
+      .add("java.nio.channels.SocketChannel","open|socket|isConnected|isConnectionPending")
       .add("java.util.Arrays", ".*")
       .add("java.util.Collections", "(?!addAll).*")
       .add("java.util.List", "of")
       .add("java.util.Map", "of|ofEntries|entry")
       .add("java.util.Set", "of")
       .add("java.util.UUID",".*")
+      .add("java.util.concurrent.BlockingQueue", "offer|remove")
       .add("java.util.concurrent.CountDownLatch","await|getCount")
       .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
       .add("java.util.concurrent.ForkJoinPool","awaitQuiescence")
@@ -133,18 +150,17 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
-      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    final JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"), this, "m_reportAllNonLibraryCalls");
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      myMethodMatcher.getTable("").prefix("myMethodMatcher"),
+      checkbox("m_reportAllNonLibraryCalls", InspectionGadgetsBundle.message("result.of.method.call.ignored.non.library.option"))
+    );
+  }
+
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController()
+      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -186,8 +202,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
         PsiElement resolve = expression.resolve();
         if (resolve instanceof PsiMethod) {
           visitCalledExpression(expression, (PsiMethod)resolve, null);
@@ -196,7 +212,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (ExpressionUtils.isVoidContext(expression)) {
         final PsiMethod method = expression.resolveMethod();
         if (method == null || method.isConstructor()) {
@@ -214,49 +230,56 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private boolean shouldReport(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
+      if (PsiTypes.voidType().equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
       if (call instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        final PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
         if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
       }
       if (PropertyUtil.isSimpleGetter(method)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
       if (method instanceof PsiCompiledElement) {
-        PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
+        final PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
         if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
-          return !isIgnored(method, null);
+          return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
         }
       }
+      if (isInTestContainer(call)) return false;
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
-
-      if (isKnownExceptionalSideEffectCaught(call)) return false;
-
+      if(isKnownArgumentSideEffect(call)){
+        return false;
+      }
+      if (isKnownExceptionalSideEffectCaught(call)) {
+        return false;
+      }
       if (isPureMethod(method, call)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
-      if (annotation == null) {
-        annotation = getAnnotationByShortNameCheckReturnValue(method);
-      }
-
-      if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
-      return !isIgnored(method, annotation);
+      PsiElement stop;
+      if (!myMethodMatcher.matches(method)) {
+        final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
+        if (annotation == null) return false;
+        stop = (PsiElement)annotation.getOwner();
+      }
+      else {
+        stop = null;
+      }
+      return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 
-    private boolean isIgnored(@NotNull PsiMethod method, @Nullable PsiAnnotation annotation) {
-      final PsiElement owner = annotation == null ? null : (PsiElement)annotation.getOwner();
-      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS) != null;
+    private static PsiAnnotation findCheckReturnValueAnnotation(PsiMethod method) {
+      final PsiAnnotation annotation = MethodUtils.findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
+      return annotation == null ? getAnnotationByShortNameCheckReturnValue(method) : annotation;
     }
 
-    private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
+    private static PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
       for (PsiAnnotation psiAnnotation : method.getAnnotations()) {
         String qualifiedName = psiAnnotation.getQualifiedName();
         if (qualifiedName != null && "CheckReturnValue".equals(StringUtil.getShortName(qualifiedName))) {
@@ -266,7 +289,34 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return null;
     }
 
-    private boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
+    private static boolean isKnownArgumentSideEffect(PsiExpression call) {
+      if (!(call instanceof PsiMethodCallExpression callExpression)) {
+        return false;
+      }
+      if (!KNOWN_ARGUMENT_SIDE_EFFECTS.test(callExpression)) {
+        return false;
+      }
+      PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      if (method == null) {
+        return false;
+      }
+      PsiExpressionList list = callExpression.getArgumentList();
+      for (PsiExpression argument : list.getExpressions()) {
+        if (TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(argument.getType())) {
+          continue;
+        }
+        if (argument instanceof  PsiReferenceExpression referenceExpression &&
+            referenceExpression.resolve() instanceof PsiVariable variable) {
+          List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, method);
+          if (ContainerUtil.exists(references, ref -> ref.getTextOffset() > argument.getTextOffset())) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private static boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
       String exception = null;
       if (call instanceof PsiMethodCallExpression) {
         exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodCallExpression)call);
@@ -279,13 +329,12 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (exceptionClass == null) return false;
       PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(call, PsiTryStatement.class);
       if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), call, true)) return false;
-      return ExceptionUtils.getExceptionTypesHandled(parentTry).stream()
-        .anyMatch(type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
+      return ContainerUtil.exists(ExceptionUtils.getExceptionTypesHandled(parentTry),
+                                  type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
-    private boolean isHardcodedException(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    private static boolean isHardcodedException(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression call)) return false;
       if (STREAM_COLLECT.test(call)) {
         PsiMethodCallExpression collector =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
@@ -305,7 +354,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return false;
     }
 
-    private boolean isPureMethod(PsiMethod method, PsiExpression call) {
+    private static boolean isPureMethod(PsiMethod method, PsiExpression call) {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
       if (!JavaMethodContractUtil.isPure(method) || hasTrivialReturnValue(method)) return false;
@@ -315,7 +364,33 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       return result != null && result.cannotFailByContract((PsiCallExpression)call);
     }
 
-    private boolean hasTrivialReturnValue(PsiMethod method) {
+    private static boolean isInTestContainer(PsiExpression call) {
+      PsiElement psiElement = PsiTreeUtil.getNonStrictParentOfType(call, PsiFunctionalExpression.class, PsiAnonymousClass.class);
+      PsiElement expressionList;
+      if (psiElement instanceof PsiFunctionalExpression expression) {
+        PsiType lambdaType = expression.getFunctionalInterfaceType();
+        if (lambdaType == null || InheritanceUtil.isInheritor(lambdaType, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
+        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(expression);
+        if (skipParenthesizedExprUp == null) return false;
+        expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
+      }
+      else if (psiElement instanceof PsiAnonymousClass psiAnonymousClass) {
+        if (!LambdaUtil.isFunctionalType(psiAnonymousClass.getBaseClassType()) ||
+            InheritanceUtil.isInheritor(psiAnonymousClass, JAVA_UTIL_FUNCTION_SUPPLIER)) return false;
+        if (!(psiAnonymousClass.getParent() instanceof PsiNewExpression psiNewExpression)) return false;
+        PsiElement skipParenthesizedExprUp = PsiUtil.skipParenthesizedExprUp(psiNewExpression);
+        if (skipParenthesizedExprUp == null) return false;
+        expressionList = PsiUtil.skipParenthesizedExprUp(skipParenthesizedExprUp.getParent());
+      }
+      else {
+        return false;
+      }
+      if (!(expressionList instanceof PsiExpressionList psiExpressionList) ||
+          !(psiExpressionList.getParent() instanceof PsiMethodCallExpression methodCallExpression)) return false;
+      return TEST_OR_MOCK_CONTAINER_METHODS.test(methodCallExpression);
+    }
+
+    private static boolean hasTrivialReturnValue(PsiMethod method) {
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
       ContractReturnValue nonFailingReturnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
       return nonFailingReturnValue != null &&
@@ -330,51 +405,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       else if (call instanceof PsiMethodReferenceExpression){
         registerError(ObjectUtils.notNull(((PsiMethodReferenceExpression)call).getReferenceNameElement(), call), aClass);
       }
-    }
-
-    @Nullable
-    private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
-      while (element != null) {
-        if (element == stop) {
-          return null;
-        }
-        if (element instanceof PsiModifierListOwner) {
-          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-          final PsiAnnotation annotation =
-            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
-          if (annotation != null) {
-            return annotation;
-          }
-        }
-
-        if (element instanceof PsiClassOwner) {
-          final PsiClassOwner classOwner = (PsiClassOwner)element;
-          final String packageName = classOwner.getPackageName();
-          final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
-          if (aPackage == null) {
-            return null;
-          }
-          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
-          if(annotation != null) {
-            // Check that annotation actually belongs to the same library/source root
-            // which could be important in case of split-packages
-            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-            VirtualFile currentFile = classOwner.getVirtualFile();
-            if(annotationFile != null && currentFile != null) {
-              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
-              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
-              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
-              if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
-                return null;
-              }
-            }
-          }
-          return annotation;
-        }
-
-        element = element.getContext();
-      }
-      return null;
     }
   }
 }

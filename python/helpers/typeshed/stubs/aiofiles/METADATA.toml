@@ -1,2 +1,1 @@
-version = "0.1"
-requires = ["types-typing-extensions"]
+version = "0.8.*"

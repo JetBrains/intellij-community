@@ -1,0 +1,6 @@
+class Foo
+__dummyTestFun__()
+
+fun __dummyTestFun__() {
+    fun bar() {}
+}

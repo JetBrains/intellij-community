@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-// "Change type arguments to <Serializable & Comparable<? extends Serializable & Comparable<?>>>" "true"
+// "Change type arguments to <Serializable & Comparable<? extends Serializable & Comparable<?>>>" "true-preview"
 class Generic<E> {
   Generic(E arg, E arg1) {
   }

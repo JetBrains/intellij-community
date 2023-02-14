@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -17,8 +17,6 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup implements UpdateInBackground {
+public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
@@ -44,13 +42,18 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return e != null ? getChildren(e.getDataContext()) : EMPTY_ARRAY;
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
-  private AnAction[] getChildren(DataContext dataContext) {
+  @Override
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    return e != null ? getChildren(e.getDataContext(), e.getPlace()) : EMPTY_ARRAY;
+  }
+
+  private AnAction[] getChildren(DataContext dataContext, @Nullable String place) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext); //!!! to rule???
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, place); //!!! to rule???
     if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
@@ -76,7 +79,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
       final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          perform(fromContext, context);
+          perform(fromContext, ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace()));
         }
       };
       anAction.getTemplatePresentation().setText(actionName, false);
@@ -110,26 +113,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   }
 
   @Override
-  public boolean canBePerformed(@NotNull DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && DumbService.isDumb(project)) {
-      return false;
-    }
-
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
-    final RunnerAndConfigurationSettings existing = findExisting(context);
-    if (existing == null) {
-      final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      return fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
-    }
-    return true;
-  }
-
-  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
@@ -145,7 +132,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     perform(context);
   }
 
-  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<ConfigurationFromContext> producers) {
+  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<? extends ConfigurationFromContext> producers) {
     Integer order = dataContext.getData(ExecutorAction.getOrderKey());
     if (order != null && order < producers.size()) {
       return producers.get(order);
@@ -208,6 +195,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     if (!success) {
       recordUpdateTimeout();
       approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
+      event.getPresentation().setPerformGroup(false);
     }
   }
 
@@ -227,7 +215,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   protected void fullUpdate(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, event.getPlace());
     final Presentation presentation = event.getPresentation();
     final RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
@@ -236,6 +224,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
     }
     if (configuration == null){
       presentation.setEnabledAndVisible(false);
+      presentation.setPerformGroup(false);
     }
     else{
       presentation.setEnabledAndVisible(true);
@@ -244,8 +233,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
         RunLineMarkerProvider.markRunnable(vFile, true);
       }
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      if (fromContext.isEmpty()) {
+      if (existing == null && fromContext.isEmpty()) {
         presentation.setEnabledAndVisible(false);
+        presentation.setPerformGroup(false);
         return;
       }
       if ((existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) && !fromContext.isEmpty()) {
@@ -254,7 +244,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
         context.setConfiguration(configurationFromContext.getConfigurationSettings());
       }
       final String name = suggestRunActionName(configuration.getConfiguration());
-      updatePresentation(presentation, existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null ? name : "", context);
+
+      boolean performGroup = existing != null || fromContext.size() <= 1 || dataContext.getData(ExecutorAction.getOrderKey()) != null;
+      updatePresentation(presentation, performGroup ? name : "", context);
+      presentation.setPerformGroup(performGroup);
     }
   }
 

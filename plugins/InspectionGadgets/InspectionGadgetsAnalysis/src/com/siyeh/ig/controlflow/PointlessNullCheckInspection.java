@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.psi.*;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class PointlessNullCheckInspection extends BaseInspection {
+public class PointlessNullCheckInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -51,7 +52,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
   private static class PointlessNullCheckVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
       final IElementType operationTokenType = expression.getOperationTokenType();
       if (operationTokenType.equals(JavaTokenType.ANDAND)) {
@@ -134,9 +135,8 @@ public class PointlessNullCheckInspection extends BaseInspection {
 
     @Nullable
     private static PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
-      if (!(expression instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (!PsiType.BOOLEAN.equals(call.getType())) return null;
+      if (!(expression instanceof PsiMethodCallExpression call)) return null;
+      if (!PsiTypes.booleanType().equals(call.getType())) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();
@@ -174,8 +174,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
 
     @Nullable
     private PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
-      if (!(expression instanceof PsiPolyadicExpression)) return null;
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) return null;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR != tokenType) return null;
       final PsiExpression[] operands = polyadicExpression.getOperands();

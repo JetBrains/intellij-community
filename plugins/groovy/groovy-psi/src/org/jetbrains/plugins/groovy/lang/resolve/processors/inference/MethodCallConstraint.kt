@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypes
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
@@ -24,7 +24,7 @@ class MethodCallConstraint(
 
       if (expectedType != null) {
         val rt = SpreadState.apply(PsiUtil.getSmartReturnType(method), result.spreadState, context.project)
-        if (rt != null && rt != PsiType.VOID) {
+        if (rt != null && rt != PsiTypes.voidType()) {
           nested.registerReturnTypeConstraints(expectedType, rt, context)
           nested.repeatInferencePhases()
         }

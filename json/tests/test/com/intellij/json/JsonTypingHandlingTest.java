@@ -85,9 +85,10 @@ public class JsonTypingHandlingTest extends JsonTestCase {
     doTestQuote("{ \"x\": <caret> \"y\": {\"a\": 5} }", "{ \"x\": \"\", \"y\": {\"a\": 5} }");
   }
   public void testAutoQuotesForPropName() {
-    doTestColon( "{ x<caret>}", "{\n" +
-                                "  \"x\": <caret>\n" +
-                                "}");
+    doTestColon("{ x<caret>}", """
+      {
+        "x": <caret>
+      }""");
   }
   public void testAutoQuotesForPropNameFalse1() {
     doTestColon( "{ \"x\"<caret>}", "{ \"x\": <caret>}");
@@ -96,42 +97,47 @@ public class JsonTypingHandlingTest extends JsonTestCase {
     doTestColon( "{ \"x<caret>\"}", "{ \"x:<caret>\"}");
   }
   public void testAutoQuotesAndWhitespaceFollowingNewline() {
-    doTestColon("{\n" +
-                " \"a\": 5,\n" +
-                " x<caret>\n" +
-                " \"q\": 8\n" +
-                "}",
-                "{\n" +
-                " \"a\": 5,\n" +
-                "  \"x\": <caret>\n" +
-                " \"q\": 8\n" +
-                "}");
+    doTestColon("""
+                  {
+                   "a": 5,
+                   x<caret>
+                   "q": 8
+                  }""",
+                """
+                  {
+                   "a": 5,
+                    "x": <caret>
+                   "q": 8
+                  }""");
   }
 
   public void testAutoWhitespaceErasure() {
     myFixture.configureByText("test.json", "{a<caret>}");
     myFixture.type(":");
     myFixture.type(" ");
-    myFixture.checkResult("{\n" +
-                          "  \"a\": <caret>\n" +
-                          "}");
+    myFixture.checkResult("""
+                            {
+                              "a": <caret>
+                            }""");
   }
 
   public void testPairedSingleQuote() {
     doTypingTest('\'', "{<caret>}", "{'<caret>'}", "json");
   }
   public void testPairedSingleQuote2() {
-    doTypingTest('\'', "{\n" +
-                       "  \"rules\": {\n" +
-                       "    \"at-rule-no-vendor-prefix\": null,\n" +
-                       "    <caret>\n" +
-                       "  }\n" +
-                       "}", "{\n" +
-                            "  \"rules\": {\n" +
-                            "    \"at-rule-no-vendor-prefix\": null,\n" +
-                            "    '<caret>'\n" +
-                            "  }\n" +
-                            "}", "json");
+    doTypingTest('\'', """
+      {
+        "rules": {
+          "at-rule-no-vendor-prefix": null,
+          <caret>
+        }
+      }""", """
+                   {
+                     "rules": {
+                       "at-rule-no-vendor-prefix": null,
+                       '<caret>'
+                     }
+                   }""", "json");
   }
 
   private static void testWithPairQuotes(boolean on, Runnable test) {
@@ -153,13 +159,15 @@ public class JsonTypingHandlingTest extends JsonTestCase {
 
   public void testNoCommaAfterArray() {
     testWithPairQuotes(false, () ->
-      doTypingTest('"', "[\n" +
-                                    "  {\"aaa\": [<caret>]},\n" +
-                                    "  {}\n" +
-                                    "]", "[\n" +
-                                         "  {\"aaa\": [\"<caret>]},\n" +
-                                         "  {}\n" +
-                                         "]", "json"));
+      doTypingTest('"', """
+        [
+          {"aaa": [<caret>]},
+          {}
+        ]""", """
+                     [
+                       {"aaa": ["<caret>]},
+                       {}
+                     ]""", "json"));
   }
 
   public void testAddCommaWithPairedQuotes() {
@@ -167,10 +175,14 @@ public class JsonTypingHandlingTest extends JsonTestCase {
   }
 
   public void testNoCommaIfRBraceAndNoNewline() {
-    doTestEnter("{\n" +
-                "  \"x\": 5<caret>}\n", "{\n" +
-                                 "  \"x\": 5\n" +
-                                 "}\n");
+    doTestEnter("""
+                  {
+                    "x": 5<caret>}
+                  """, """
+                  {
+                    "x": 5
+                  }
+                  """);
   }
 
   public void testMoveColon() {

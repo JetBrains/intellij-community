@@ -163,4 +163,9 @@ public final class PyTypeUtil {
   public static Collector<PyType, ?, PyType> toUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
   }
+
+  public static boolean isDict(@Nullable PyType type) {
+    return type instanceof PyCollectionType && "dict".equals(type.getName()) ||
+           type instanceof PyTypedDictType && ((PyTypedDictType)type).isInferred();
+  }
 }

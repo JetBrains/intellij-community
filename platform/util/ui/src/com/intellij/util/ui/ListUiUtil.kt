@@ -22,9 +22,14 @@ object ListUiUtil {
       else JBColor.namedColor("Table.foreground", default)
     }
 
-    fun secondaryForeground(list: JList<*>, isSelected: Boolean): Color {
+    @Deprecated("Deprecated in favor of more fine-grained method",
+                ReplaceWith("ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())",
+                            "com.intellij.util.ui.ListUiUtil"))
+    fun secondaryForeground(list: JList<*>, isSelected: Boolean): Color = secondaryForeground(isSelected, list.hasFocus())
+
+    fun secondaryForeground(isSelected: Boolean, hasFocus: Boolean): Color {
       return if (isSelected) {
-        foreground(true, list.hasFocus())
+        foreground(true, hasFocus)
       }
       else JBColor.namedColor("Component.infoForeground", UIUtil.getContextHelpForeground())
     }

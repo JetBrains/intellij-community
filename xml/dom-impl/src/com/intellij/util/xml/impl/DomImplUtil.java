@@ -24,9 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
@@ -210,8 +207,7 @@ public final class DomImplUtil {
         }
       }
     }
-    if (type instanceof WildcardType) {
-      final WildcardType wildcardType = (WildcardType)type;
+    if (type instanceof WildcardType wildcardType) {
       for (final Type bound : wildcardType.getUpperBounds()) {
         final Class<?> aClass = getErasure(bound);
         if (aClass != null) {

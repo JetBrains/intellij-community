@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /*
  * Use ProgressManager.executeProcessUnderProgress() to pass modality state if needed
@@ -68,6 +70,9 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType);
 
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FilePath filePath);
+
 
   @NotNull
   public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
@@ -88,6 +93,9 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file);
+
+  @NotNull
+  public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file, @Nullable VirtualFile highlightFile);
 
   @Nullable
   public abstract DocumentContent createDocument(@Nullable Project project, @NotNull VirtualFile file);
@@ -121,6 +129,17 @@ public abstract class DiffContentFactory {
                                               byte @NotNull [] content,
                                               @NotNull FileType fileType,
                                               @NotNull String fileName) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FilePath filePath,
+                                              @Nullable Charset defaultCharset) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              byte @NotNull [] content,
+                                              @NotNull FilePath filePath) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,

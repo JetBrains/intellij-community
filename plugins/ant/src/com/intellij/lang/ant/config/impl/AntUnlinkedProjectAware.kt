@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl
 
-import com.intellij.lang.ant.AntBundle
 import com.intellij.lang.ant.config.AntBuildFile
 import com.intellij.lang.ant.config.AntConfigurationBase
 import com.intellij.lang.ant.config.AntConfigurationListener
@@ -11,6 +10,7 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkLis
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +36,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     val localFileSystem = LocalFileSystem.getInstance()
     val externalProjectDir = localFileSystem.findFileByPath(externalProjectPath)
     if (externalProjectDir == null) {
-      val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(externalProjectPath), false)
+      val shortPath = getPresentablePath(externalProjectPath)
       throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
     val antConfiguration = AntConfigurationBase.getInstance(project)
@@ -44,7 +44,7 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     antBuildFiles.forEach { antConfiguration.addBuildFile(it) }
     if (antBuildFiles.isNotEmpty()) {
       val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD)
-                   ?: ActivateAntToolWindowAction.createToolWindow(project)
+                   ?: ActivateAntToolWindowAction.Manager.createToolWindow(project)
       window.activate(null)
     }
   }
@@ -64,6 +64,4 @@ class AntUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
       }
     })
   }
-
-  override fun getNotificationText(): String = AntBundle.message("add.ant.build.file")
 }

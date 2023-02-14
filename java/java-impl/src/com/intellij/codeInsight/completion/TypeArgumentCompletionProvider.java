@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -24,9 +24,6 @@ import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
-* @author peter
-*/
 class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
@@ -124,9 +121,8 @@ class TypeArgumentCompletionProvider {
     if (parameterList == null) return null;
 
     PsiElement parent = parameterList.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
+    if (!(parent instanceof PsiJavaCodeReferenceElement referenceElement)) return null;
 
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
     final int parameterIndex;
 
     int index = 0;
@@ -188,7 +184,7 @@ class TypeArgumentCompletionProvider {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       myTypeItems.get(0).renderElement(presentation);
       presentation.setItemText(getLookupString());
       if (myTypeItems.size() > 1) {

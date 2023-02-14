@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -22,25 +23,33 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationFragmentedEditor;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
@@ -56,9 +65,6 @@ import java.io.InputStream;
 import java.util.Collections;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
-  static final ExtensionPointName<ExternalSystemRunConfigurationExtension> EP_NAME
-    = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationExtension");
-
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
 
@@ -101,19 +107,43 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   }
 
   @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public ExternalSystemRunConfiguration clone() {
+    ConfigurationFactory configurationFactory = getFactory();
+    if (configurationFactory == null) {
+      return null;
+    }
+
     final Element element = new Element("toClone");
     try {
       writeExternal(element);
-      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      RunConfiguration clone = configurationFactory.createTemplateConfiguration(getProject());
+      ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)clone;
       configuration.setName(getName());
       configuration.readExternal(element);
-      return (ExternalSystemRunConfiguration)configuration;
+      configuration.initializeSettings();
+      return configuration;
     }
     catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  private void initializeSettings() {
+    if (Strings.isEmptyOrSpaces(mySettings.getExternalProjectPath())) {
+      String path = getRootProjectPath();
+      if (path != null) {
+        mySettings.setExternalProjectPath(path);
+      }
+    }
+  }
+
+  private @Nullable String getRootProjectPath() {
+    ProjectSystemId externalSystemId = mySettings.getExternalSystemId();
+    AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(getProject(), externalSystemId);
+    ExternalProjectPojo externalProject = ContainerUtil.getFirstItem(localSettings.getAvailableProjects().keySet());
+    return ObjectUtils.doIfNotNull(externalProject, it -> FileUtil.toCanonicalPath(it.getPath()));
   }
 
   @Override
@@ -125,14 +155,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
       if (debugServerProcess != null) {
-        isDebugServerProcess = Boolean.valueOf(debugServerProcess.getText());
+        isDebugServerProcess = Boolean.parseBoolean(debugServerProcess.getText());
       }
       final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
       if (reattachProcess != null) {
-        isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
+        isReattachDebugProcess = Boolean.parseBoolean(reattachProcess.getText());
       }
     }
-    EP_NAME.forEachExtensionSafe(extension -> extension.readExternal(this, element));
+    ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
   }
 
   @Override
@@ -142,14 +172,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       @Override
       public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         // only these fields due to backward compatibility
-        switch (accessor.getName()) {
-          case "passParentEnvs":
-            return !mySettings.isPassParentEnvs();
-          case "env":
-            return !mySettings.getEnv().isEmpty();
-          default:
-            return true;
-        }
+        return switch (accessor.getName()) {
+          case "passParentEnvs" -> !mySettings.isPassParentEnvs();
+          case "env" -> !mySettings.getEnv().isEmpty();
+          default -> true;
+        };
       }
     }));
 
@@ -160,7 +187,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     reattachProcess.setText(String.valueOf(isReattachDebugProcess));
     element.addContent(reattachProcess);
 
-    EP_NAME.forEachExtensionSafe(extension -> extension.writeExternal(this, element));
+    ExternalSystemRunConfigurationExtensionManager.writeExternal(this, element);
   }
 
   @NotNull
@@ -171,10 +198,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", true)) {
+      return new ExternalSystemRunConfigurationFragmentedEditor(this);
+    }
+
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
                     new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    EP_NAME.forEachExtensionSafe(extension -> extension.appendEditors(this, group));
+    ExternalSystemRunConfigurationExtensionManager.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
@@ -201,9 +232,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (scope == null) {
       VirtualFile file = VfsUtil.findFileByIoFile(new File(mySettings.getExternalProjectPath()), false);
       if (file != null) {
-        Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
+        Module module = ProjectFileIndex.getInstance(getProject()).getModuleForFile(file, false);
         if (module != null) {
-          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
+          scope = ExecutionSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }
@@ -219,8 +250,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (consoleView instanceof ConsoleViewImpl) {
       consoleViewImpl = (ConsoleViewImpl)consoleView;
     }
-    else if (consoleView instanceof DuplexConsoleView) {
-      DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+    else if (consoleView instanceof DuplexConsoleView duplexConsoleView) {
       if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
         consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
       }
@@ -254,6 +284,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           }
         });
       });
+    }
+  }
+
+  @Override
+  public void createAdditionalTabComponents(AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
+    RunProfile runProfile = ExecutionManagerImpl.getDelegatedRunProfile(this);
+    if (runProfile instanceof RunConfigurationBase<?>) {
+      ((RunConfigurationBase<?>)runProfile).createAdditionalTabComponents(manager, startedProcess);
     }
   }
 

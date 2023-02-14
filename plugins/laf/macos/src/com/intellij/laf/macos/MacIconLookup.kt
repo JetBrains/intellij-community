@@ -6,8 +6,11 @@ import com.intellij.util.ui.LafIconLookup
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 
-private class MacDirProvider : DirProvider() {
-  override fun dir(): String = "/icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
+private object MacDirProvider : DirProvider() {
+  override val defaultExtension: String
+    get() = "svg"
+
+  override fun dir() = "icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
 }
 
 object MacIconLookup {
@@ -20,13 +23,12 @@ object MacIconLookup {
               editable: Boolean = false,
               pressed: Boolean = false): Icon {
 
-    return LafIconLookup.findIcon( name,
-      selected = selected,
-      focused = focused,
-      enabled = enabled,
-      editable = editable,
-      pressed = pressed,
-      isThrowErrorIfNotFound = true,
-      dirProvider = MacDirProvider()) ?: AllIcons.Actions.Stub
+    return LafIconLookup.findIcon(name,
+                                  selected = selected,
+                                  focused = focused,
+                                  enabled = enabled,
+                                  editable = editable,
+                                  pressed = pressed,
+                                  dirProvider = MacDirProvider) ?: AllIcons.Actions.Stub
   }
 }

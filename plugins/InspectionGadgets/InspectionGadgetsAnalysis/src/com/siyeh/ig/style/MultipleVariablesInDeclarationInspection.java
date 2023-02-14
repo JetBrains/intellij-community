@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -15,6 +16,8 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class MultipleVariablesInDeclarationInspection extends BaseInspection {
 
@@ -40,11 +43,10 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("multiple.declaration.ignore.for.option"), "ignoreForLoopDeclarations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("multiple.declaration.array.only.option"), "onlyWarnArrayDimensions");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreForLoopDeclarations", InspectionGadgetsBundle.message("multiple.declaration.ignore.for.option")),
+      checkbox("onlyWarnArrayDimensions", InspectionGadgetsBundle.message("multiple.declaration.array.only.option")));
   }
 
   @Override
@@ -62,7 +64,7 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
     MultipleDeclarationVisitor() {}
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
       super.visitDeclarationStatement(statement);
       final PsiElement[] declaredElements = statement.getDeclaredElements();
       if (declaredElements.length < 2) {

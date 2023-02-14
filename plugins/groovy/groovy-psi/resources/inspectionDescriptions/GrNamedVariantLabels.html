@@ -1,7 +1,14 @@
 <html>
 <body>
-<p>
-  Detects unresolved argument labels in calls to methods annotated by @NamedVariant/@NamedParam/@NamedDelegate
-</p>
+Reports unresolved argument labels in calls of methods annotated
+by <code>@NamedVariant</code>/<code>@NamedParam</code>/<code>@NamedDelegate</code>.
+<p><b>Example:</b></p>
+<pre><code>
+  @groovy.transform.NamedVariant
+  def foo(a, b) {}
+
+  // unresolved label 'c'
+  foo(a: 1, b: 2, c: 3)
+</code></pre>
 </body>
 </html>

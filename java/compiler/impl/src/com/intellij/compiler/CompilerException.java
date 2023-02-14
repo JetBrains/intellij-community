@@ -15,7 +15,7 @@
  */
 
 /*
- * @author: Eugene Zhuravlev
+ * @author Eugene Zhuravlev
  */
 package com.intellij.compiler;
 

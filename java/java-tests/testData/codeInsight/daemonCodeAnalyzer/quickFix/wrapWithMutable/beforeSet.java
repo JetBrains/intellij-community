@@ -1,4 +1,4 @@
-// "Wrap 'integers' with 'HashSet'" "true"
+// "Wrap 'integers' with 'HashSet'" "true-preview"
 import java.util.*;
 
 class Test {

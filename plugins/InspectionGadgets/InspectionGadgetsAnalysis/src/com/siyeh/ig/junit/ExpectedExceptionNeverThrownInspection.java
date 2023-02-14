@@ -44,7 +44,7 @@ public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
   private static class ExpectedExceptionNeverThrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "org.junit.Test");
       if (annotation == null) {
@@ -59,14 +59,13 @@ public class ExpectedExceptionNeverThrownInspection extends BaseInspection {
           break;
         }
       }
-      if (!(value instanceof PsiClassObjectAccessExpression)) {
+      if (!(value instanceof PsiClassObjectAccessExpression classObjectAccessExpression)) {
         return;
       }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
         return;
       }
-      final PsiClassObjectAccessExpression classObjectAccessExpression = (PsiClassObjectAccessExpression)value;
       final PsiTypeElement operand = classObjectAccessExpression.getOperand();
       final PsiType type = operand.getType();
       final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);

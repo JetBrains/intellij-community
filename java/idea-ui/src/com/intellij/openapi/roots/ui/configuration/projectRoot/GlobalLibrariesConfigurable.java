@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -45,14 +44,6 @@ public class GlobalLibrariesConfigurable extends BaseLibrariesConfigurable {
   @NonNls
   public String getId() {
     return "global.libraries";
-  }
-
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getGlobalLibrariesConfigurable()}
-   */
-  @Deprecated
-  public static GlobalLibrariesConfigurable getInstance(final Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getGlobalLibrariesConfigurable();
   }
 
   @Override

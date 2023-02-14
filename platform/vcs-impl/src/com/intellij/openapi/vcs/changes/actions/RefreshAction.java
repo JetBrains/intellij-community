@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -15,17 +16,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.changes.actions.VcsActionUsagesCollectorKt.logRefreshActionPerformed;
 
-/**
- * @author yole
- */
 public class RefreshAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     boolean isEnabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setEnabledAndVisible(isEnabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -59,19 +61,21 @@ public class RefreshAction extends AnAction implements DumbAware {
   }
 
   private static void performRefreshAndTrackChanges(Project project,
-                                                    Collection<Change> changesBeforeUpdate,
-                                                    Collection<FilePath> unversionedBefore,
+                                                    Collection<? extends Change> changesBeforeUpdate,
+                                                    Collection<? extends FilePath> unversionedBefore,
                                                     boolean wasUpdatingBefore) {
     if (project.isDisposed()) return;
     ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
 
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
 
-    changeListManager.invokeAfterUpdate(true, () -> {
+    changeListManager.invokeAfterUpdate(false, () -> {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
-      logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
+      VcsStatisticsCollector
+        .logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter,
+                                   wasUpdatingBefore);
     });
   }
 }

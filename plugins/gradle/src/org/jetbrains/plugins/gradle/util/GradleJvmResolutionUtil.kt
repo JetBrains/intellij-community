@@ -11,9 +11,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.Id
-import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
@@ -79,49 +79,6 @@ fun updateGradleJvm(project: Project, externalProjectPath: String) {
   projectSettings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
 }
 
-fun suggestGradleVersion(project: Project): GradleVersion? {
-  val gradleVersion = findGradleVersion(project)
-  if (gradleVersion != null) return gradleVersion
-  val projectJdk = resolveProjectJdk(project) ?: return null
-  if (!ExternalSystemJdkUtil.isValidJdk(projectJdk)) return null
-  val javaVersion = JavaVersion.tryParse(projectJdk.versionString) ?: return null
-  return suggestGradleVersion(javaVersion)
-}
-
-/**
- * @see org.jetbrains.plugins.gradle.util.isSupported
- */
-fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return when {
-    isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
-    javaVersion.feature >= 8 -> GradleVersion.version("6.7")
-    javaVersion.feature == 7 -> GradleVersion.version("4.10.3") // https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes
-    else -> null
-  }
-}
-
-/**
- * @see org.jetbrains.plugins.gradle.util.isSupported
- */
-fun suggestOldestCompatibleGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  return when {
-    javaVersion.feature >= 15 -> GradleVersion.version("6.7")
-    javaVersion.feature >= 14 -> GradleVersion.version("6.3")
-    javaVersion.feature >= 13 -> GradleVersion.version("6.0")
-    javaVersion.feature >= 12 -> GradleVersion.version("5.4.1")
-    javaVersion.feature >= 11 -> GradleVersion.version("4.8")
-    javaVersion.feature >= 7 -> GradleVersion.version("3.0")
-    else -> null
-  }
-}
-
-private fun findGradleVersion(project: Project): GradleVersion? {
-  val settings = GradleSettings.getInstance(project)
-  return settings.linkedProjectsSettings.asSequence()
-    .mapNotNull { it.resolveGradleVersion() }
-    .firstOrNull()
-}
-
 private class GradleJvmResolutionContext(
   val project: Project,
   val externalProjectPath: Path,
@@ -129,7 +86,7 @@ private class GradleJvmResolutionContext(
 )
 
 private fun GradleJvmResolutionContext.canUseGradleJavaHomeJdk(): Boolean {
-  val properties = getGradleProperties(externalProjectPath)
+  val properties = GradlePropertiesFile.getProperties(project, externalProjectPath)
   val javaHome = properties.javaHomeProperty?.value
   val validationStatus = validateGradleJavaHome(gradleVersion, javaHome)
   return validationStatus is Success
@@ -149,18 +106,18 @@ private fun GradleJvmResolutionContext.findGradleJvm(): String? {
 }
 
 private fun GradleJvmResolutionContext.canUseProjectSdk(): Boolean {
-  val projectJdk = resolveProjectJdk(project) ?: return false
-  if (!ExternalSystemJdkUtil.isValidJdk(projectJdk)) return false
-  val versionString = projectJdk.versionString ?: return false
-  return isSupported(gradleVersion, versionString)
+  return project.resolveProjectJdk() != null
 }
 
-private fun resolveProjectJdk(project: Project): Sdk? {
-  val projectRootManager = ProjectRootManager.getInstance(project)
+internal fun Project.resolveProjectJdk(): Sdk? {
+  val projectRootManager = ProjectRootManager.getInstance(this)
   val projectSdk = projectRootManager.projectSdk ?: return null
-  return ExternalSystemJdkUtil.resolveDependentJdk(projectSdk)
+  val resolvedSdk = ExternalSystemJdkUtil.resolveDependentJdk(projectSdk)
+  if (ExternalSystemJdkUtil.isValidJdk(resolvedSdk)) {
+    return resolvedSdk
+  }
+  return null
 }
-
 
 private fun findRegisteredSdk(sdk: Sdk): Sdk? = runReadAction {
   val projectJdkTable = ProjectJdkTable.getInstance()

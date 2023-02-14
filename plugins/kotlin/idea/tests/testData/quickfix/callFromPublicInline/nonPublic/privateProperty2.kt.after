@@ -1,0 +1,10 @@
+// "Make 'bar' private" "true"
+class C {
+    private var foo = false
+
+    private inline fun bar(baz: () -> Unit) {
+        if (foo<caret>) {
+            baz()
+        }
+    }
+}

@@ -10,7 +10,6 @@ import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +23,7 @@ import java.util.function.Function;
  * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
  */
 @SuppressWarnings("HardCodedStringLiteral")
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+@Deprecated(forRemoval = true)
 public class DropDownLink<T> extends LinkLabel<Object> {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private T chosenItem;

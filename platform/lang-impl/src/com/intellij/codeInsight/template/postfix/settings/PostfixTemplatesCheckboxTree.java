@@ -104,8 +104,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     return new CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) return;
-        CheckedTreeNode node = (CheckedTreeNode)value;
+        if (!(value instanceof CheckedTreeNode node)) return;
 
         Color background = UIUtil.getTreeBackground(selected, true);
         PostfixTemplateCheckedTreeNode templateNode = ObjectUtils.tryCast(node, PostfixTemplateCheckedTreeNode.class);

@@ -1,0 +1,2 @@
+version = "2.12.*"
+requires = ["types-docutils", "types-setuptools"]

@@ -78,8 +78,8 @@ public class PropertiesComponent extends JPanel {
       myTextArea.setText(property != null ? property.getValue().toString() : "");
     });
     ActionGroup popupActionGroup = createPopup();
-    PopupHandler.installPopupHandler(myTable, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(scrollPane, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTable, popupActionGroup, "SvnPropertiesPopup");
+    PopupHandler.installPopupMenu(scrollPane, popupActionGroup, "SvnPropertiesPopup");
     myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
@@ -196,6 +196,11 @@ public class PropertiesComponent extends JPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFile != null);
     }
@@ -210,6 +215,11 @@ public class PropertiesComponent extends JPanel {
   private abstract class BasePropertyAction extends DumbAwareAction {
     protected BasePropertyAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
       super(dynamicText, dynamicDescription, icon);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
@@ -347,6 +357,11 @@ public class PropertiesComponent extends JPanel {
         messagePointer("action.Subversion.PropertiesView.FollowSelection.description"),
         AllIcons.General.AutoscrollFromSource
       );
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

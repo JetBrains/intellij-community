@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.runner
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.junit.Test
 
 class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
@@ -21,10 +21,10 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
         @Test public void test7() {}
       }
     """.trimIndent())
-    createProjectSubFile("build.gradle", buildscript {
+    createBuildFile {
       withJUnit()
       withJavaPlugin()
-    })
+    }
     importProject()
 
     execute(":test --tests org.example.TestCase")
@@ -80,5 +80,89 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
           test5
       """.trimIndent())
     assertFalse(performRerunFailedTestsAction())
+  }
+
+  @Test
+  fun `test return failed tests abstract superclass`() {
+    createProjectSubFile("src/test/java/org/example/TestCase.java", """
+      package org.example;
+      import $jUnitTestAnnotationClass;
+      public abstract class TestCase {
+        @Test public void test1() {}
+        @Test public void test2() { throw new RuntimeException(); }
+        @Test public void test3() {}
+        @Test public void test4() { throw new RuntimeException(); }
+        @Test public void test5() { throw new RuntimeException(); }
+        @Test public void test6() {}
+        @Test public void test7() {}
+      }
+    """.trimIndent())
+    createProjectSubFile("src/test/java/org/example/SubTestCase.java", """
+      package org.example;
+      public class SubTestCase extends TestCase {
+      }
+    """.trimIndent())
+    createBuildFile {
+      withJUnit()
+      withJavaPlugin()
+    }
+    importProject()
+
+    execute(":test --tests org.example.SubTestCase")
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+        -[root]
+         -SubTestCase
+          test1
+          test2
+          test3
+          test4
+          test5
+          test6
+          test7
+      """.trimIndent())
+    assertTrue(performRerunFailedTestsAction())
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+        -[root]
+         -SubTestCase
+          test2
+          test4
+          test5
+      """.trimIndent())
+
+    createProjectSubFile("src/test/java/org/example/SubTestCase1.java", """
+      package org.example;
+      import $jUnitTestAnnotationClass;
+      public class SubTestCase1 extends TestCase {
+         @Test public void test8() { throw new RuntimeException(); }
+         @Test public void test9() {}
+      }
+    """.trimIndent())
+    execute(":test --tests org.example.SubTestCase1")
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+         -[root]
+          -SubTestCase1
+           test1
+           test2
+           test3
+           test4
+           test5
+           test6
+           test7
+           test8
+           test9
+       """.trimIndent())
+    assertTrue(performRerunFailedTestsAction())
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+         -[root]
+          -SubTestCase1
+           test2
+           test4
+           test5
+           test8
+       """.trimIndent())
   }
 }

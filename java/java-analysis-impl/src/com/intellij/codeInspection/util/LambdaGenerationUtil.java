@@ -77,17 +77,17 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // do not go down the local/anonymous classes
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       // do not go down the nested lambda expressions
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if(!myCanBeLambdaBody) return;
       super.visitReferenceExpression(expression);
       PsiElement element = expression.resolve();
@@ -106,7 +106,7 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitBreakStatement(PsiBreakStatement statement) {
+    public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
       PsiStatement exitedStatement = statement.findExitedStatement();
       if(exitedStatement == null || !PsiTreeUtil.isAncestor(myRoot, exitedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -115,7 +115,7 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitContinueStatement(PsiContinueStatement statement) {
+    public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
       PsiStatement continuedStatement = statement.findContinuedStatement();
       if(continuedStatement == null || !PsiTreeUtil.isAncestor(myRoot, continuedStatement, false)) {
         myCanBeLambdaBody = false;
@@ -124,7 +124,7 @@ public final class LambdaGenerationUtil {
     }
 
     @Override
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       myCanBeLambdaBody = false;
     }
 

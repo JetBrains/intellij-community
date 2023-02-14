@@ -61,8 +61,7 @@ public final class NewErrorTreeEditor extends AbstractCellEditor implements Tree
   @Override
   public Component getTreeCellEditorComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row) {
     final ErrorTreeElement element = getElement(value);
-    if (element instanceof EditableMessageElement) {
-      EditableMessageElement editableMessageElement = (EditableMessageElement)element;
+    if (element instanceof EditableMessageElement editableMessageElement) {
       final CustomizeColoredTreeCellRenderer leftSelfRenderer = editableMessageElement.getLeftSelfRenderer();
       final TreeCellEditor rightSelfEditor = editableMessageElement.getRightSelfEditor();
       myColoredTreeCellRenderer.setCurrentCallback(leftSelfRenderer);

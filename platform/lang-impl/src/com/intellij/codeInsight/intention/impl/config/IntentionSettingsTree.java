@@ -1,12 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -18,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -51,26 +57,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private void initTree() {
-    myTree = new CheckboxTree(new CheckboxTree.CheckboxTreeCellRenderer(true) {
-      @Override
-      public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) {
-          return;
-        }
-
-        CheckedTreeNode node = (CheckedTreeNode)value;
-        SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-        final String text = getNodeText(node);
-        Color background = UIUtil.getTreeBackground(selected, true);
-        UIUtil.changeBackGround(this, background);
-        SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
-                                   text,
-                                   attributes.getStyle(),
-                                   attributes.getFgColor(),
-                                   background,
-                                   getTextRenderer());
-      }
-    }, new CheckedTreeNode(null));
+    myTree = new CheckboxTree(new IntentionsTreeCellRenderer(), new CheckedTreeNode(null));
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -95,7 +82,9 @@ public abstract class IntentionSettingsTree {
     group.add(actionManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionManager.createCollapseAllAction(treeExpander, myTree));
 
-    myNorthPanel.add(ActionManager.getInstance().createActionToolbar("IntentionSettingsTree", group, true).getComponent(), BorderLayout.WEST);
+    ActionToolbar treeToolbar = ActionManager.getInstance().createActionToolbar("IntentionSettingsTree", group, true);
+    treeToolbar.setTargetComponent(myTree);
+    myNorthPanel.add(treeToolbar.getComponent(), BorderLayout.WEST);
 
     myComponent.add(myNorthPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
@@ -177,8 +166,7 @@ public abstract class IntentionSettingsTree {
 
   private boolean resetCheckMark(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData metaData) {
       Boolean b = myIntentionToCheckStatus.get(metaData);
       boolean enabled = b == Boolean.TRUE;
       root.setChecked(enabled);
@@ -257,8 +245,7 @@ public abstract class IntentionSettingsTree {
 
   private void refreshCheckStatus(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       myIntentionToCheckStatus.put(actionMetaData, root.isChecked());
     }
     else {
@@ -274,8 +261,7 @@ public abstract class IntentionSettingsTree {
 
   private static void apply(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       IntentionManagerSettings.getInstance().setEnabled(actionMetaData, root.isChecked());
     }
     else {
@@ -294,8 +280,7 @@ public abstract class IntentionSettingsTree {
 
   private static boolean isModified(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       boolean enabled = IntentionManagerSettings.getInstance().isEnabled(actionMetaData);
       return enabled != root.isChecked();
     }
@@ -385,5 +370,44 @@ public abstract class IntentionSettingsTree {
 
   public JPanel getToolbarPanel() {
     return myNorthPanel;
+  }
+
+  private class IntentionsTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+    IntentionsTreeCellRenderer() {
+      super(true);
+    }
+
+    @Override
+    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      if (!(value instanceof CheckedTreeNode node)) {
+        return;
+      }
+
+      SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
+                                        ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                        : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+      final String text = getNodeText(node);
+      Color background = UIUtil.getTreeBackground(selected, true);
+      UIUtil.changeBackGround(this, background);
+      SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,
+                                 text,
+                                 attributes.getStyle(),
+                                 attributes.getFgColor(),
+                                 background,
+                                 getTextRenderer());
+    }
+
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext(@NotNull JTree tree, @Nullable Object value, int row) {
+      if (value instanceof CheckedTreeNode node &&
+          node.getUserObject() instanceof IntentionActionMetaData metaData) {
+        List<PropertyBean> result = new ArrayList<>();
+        result.add(new PropertyBean("Intention Class",
+                                    UiInspectorUtil.getClassPresentation(IntentionActionDelegate.unwrap(metaData.getAction()))));
+        result.add(new PropertyBean("Intention description directory", metaData.getDescriptionDirectoryName()));
+        return result;
+      }
+      return Collections.emptyList();
+    }
   }
 }

@@ -13,6 +13,10 @@ internal class DirtBuilder {
   var isEverythingDirty: Boolean = false
     private set
 
+  fun isEmpty(): Boolean {
+    return !isEverythingDirty && scopesByVcs.isEmpty()
+  }
+
   fun markEverythingDirty() {
     isEverythingDirty = true
     scopesByVcs.clear()

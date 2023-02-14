@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -31,24 +31,22 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof PsiExpression)) {
       return;
     }
     final PsiExpression expression = PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression parameterReference)) {
       return;
     }
-    final PsiReferenceExpression parameterReference = (PsiReferenceExpression)expression;
     final PsiElement target = parameterReference.resolve();
-    if (!(target instanceof PsiParameter)) {
+    if (!(target instanceof PsiParameter parameter)) {
       return;
     }
-    final PsiParameter parameter = (PsiParameter)target;
     final PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiLambdaExpression) {
-      RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
+      CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)declarationScope);
     }
     else if (declarationScope instanceof PsiForeachStatement) {
       final PsiStatement body = ((PsiForeachStatement)declarationScope).getBody();
@@ -122,10 +120,9 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
       return null;
     }
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(reference);
-    if (!(parent instanceof PsiAssignmentExpression)) {
+    if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
       return null;
     }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
     final IElementType tokenType = assignmentExpression.getOperationTokenType();
     if (!JavaTokenType.EQ.equals(tokenType)) {
       return null;

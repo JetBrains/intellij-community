@@ -16,7 +16,7 @@ public abstract class Pass<T> implements Consumer<T> {
     pass(t);
   }
 
-  public static <T> @NotNull Pass<T> create(@NotNull Consumer<T> consumer) {
+  public static <T> @NotNull Pass<T> create(@NotNull Consumer<? super T> consumer) {
     return new Pass<T>() {
       @Override
       public void pass(T o) {

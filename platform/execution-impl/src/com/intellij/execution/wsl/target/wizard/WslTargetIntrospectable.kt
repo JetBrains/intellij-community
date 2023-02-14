@@ -4,15 +4,18 @@ package com.intellij.execution.wsl.target.wizard
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.KillableProcessHandler
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.executeInShellAndGetCommandOnlyStdout
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 class WslTargetIntrospectable(val distribution: WSLDistribution, val console: ConsoleView) : LanguageRuntimeType.Introspectable() {
 
@@ -45,10 +48,16 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
       options.isExecuteCommandInLoginShell = true
     }
     val commandLine = GeneralCommandLine(cmd).withRedirectErrorStream(true)
-    distribution.patchCommandLine(commandLine, null, options)
-    val processHandler = KillableProcessHandler(commandLine)
-    console.attachToProcess(processHandler)
-    val output = CapturingProcessRunner(processHandler).runProcess(10_000)
+    val output = if (executeCommandInShell) {
+      distribution.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000,
+                                                         Consumer<ProcessHandler> { console.attachToProcess(it) })
+    }
+    else {
+      distribution.patchCommandLine(commandLine, null, options)
+      val processHandler = KillableProcessHandler(commandLine)
+      console.attachToProcess(processHandler)
+      CapturingProcessRunner(processHandler).runProcess(10_000)
+    }
 
     if (LOG.isDebugEnabled) {
       LOG.debug("Command $cmd finished: " +

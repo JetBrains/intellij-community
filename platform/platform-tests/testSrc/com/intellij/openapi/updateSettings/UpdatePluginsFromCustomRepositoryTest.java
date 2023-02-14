@@ -3,7 +3,7 @@ package com.intellij.openapi.updateSettings;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginDescriptorTestKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
@@ -12,8 +12,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.junit.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,10 +27,11 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     Path base = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "updates/customRepositories", getTestName(true));
     BuildNumber buildNumber = BuildNumber.fromString("IU-142.100");
     for (String name : new String[]{"plugin1.xml", "plugin2.xml"}) {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(base, base, false);
-      PluginManager.loadDescriptorFromFile(descriptor, base.resolve(name), null, Collections.emptySet());
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt
+        .readDescriptorForTest(base.resolve(name), false, Files.readAllBytes(base.resolve(name)),
+                     PluginId.getId("UpdatePluginsFromCustomRepositoryTest"));
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null, null);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 

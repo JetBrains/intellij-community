@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
+
 import java.util.Objects;
 
-/**
- * @author peter
- */
-public class NamedEnumUtil {
+public final class NamedEnumUtil {
   private static final Function<Enum, String> NAMED_SHOW = s -> ((NamedEnum) s).getValue();
   private static final Function<Enum, String> SIMPLE_SHOW = s -> s.name();
 

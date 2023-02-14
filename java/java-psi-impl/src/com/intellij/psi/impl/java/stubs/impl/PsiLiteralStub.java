@@ -24,9 +24,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiLiteralStub extends StubBase<PsiLiteralExpressionImpl> {
   @NotNull private final String myLiteralText;
   private volatile IElementType myLiteralType;

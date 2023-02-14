@@ -8,6 +8,5 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public interface FilesProcessor extends Disposable {
-  @NotNull
-  Collection<VirtualFile> processFiles(@NotNull Collection<VirtualFile> files);
+  void processFiles(@NotNull Collection<VirtualFile> files);
 }

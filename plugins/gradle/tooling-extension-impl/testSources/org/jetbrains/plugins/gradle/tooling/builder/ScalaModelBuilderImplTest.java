@@ -25,6 +25,7 @@ import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -62,6 +63,6 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 
   @Override
   protected Set<Class<?>> getModels() {
-    return ContainerUtil.<Class<?>>set(ScalaModel.class);
+    return Collections.<Class<?>>singleton(ScalaModel.class);
   }
 }

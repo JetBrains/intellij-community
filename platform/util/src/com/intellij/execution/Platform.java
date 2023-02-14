@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 public enum Platform {
@@ -23,5 +24,9 @@ public enum Platform {
 
   public static @NlsSafe @NotNull Platform current() {
     return SystemInfo.isWindows ? WINDOWS : UNIX;
+  }
+
+  public @NotNull String toSystemDependentName(@NotNull String filePath) {
+    return FileUtil.toSystemDependentName(filePath, fileSeparator);
   }
 }

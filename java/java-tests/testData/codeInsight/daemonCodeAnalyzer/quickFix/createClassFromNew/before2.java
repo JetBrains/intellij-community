@@ -1,4 +1,4 @@
-// "Create class 'MyArrayList'" "true"
+// "Create class 'MyArrayList'" "true-preview"
 import java.util.*;
 
 public class Test {

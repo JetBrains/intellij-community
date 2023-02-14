@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,7 +30,7 @@ final class ExcludeRootsCache {
     }
   }
 
-  ExcludeRootsCache(@NotNull MessageBusConnection connection) {
+  ExcludeRootsCache(@NotNull SimpleMessageBusConnection connection) {
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
@@ -43,7 +44,7 @@ final class ExcludeRootsCache {
     });
   }
 
-  final @NotNull List<String> getExcludedUrls() {
+  @NotNull List<String> getExcludedUrls() {
     return ReadAction.compute(() -> {
       CachedUrls cache = myCache;
       long actualModCount = Arrays.stream(ProjectManager.getInstance().getOpenProjects())

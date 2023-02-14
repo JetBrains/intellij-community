@@ -1,16 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.messages;
 
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MessageDialog extends DialogWrapper {
   protected @NlsContexts.DialogMessage @Nullable String myMessage;
@@ -29,7 +23,6 @@ public class MessageDialog extends DialogWrapper {
   protected int myDefaultOptionIndex;
   protected int myFocusedOptionIndex;
   protected Icon myIcon;
-  private MessagesBorderLayout myLayout;
   private @NonNls @Nullable String myHelpId;
 
   public MessageDialog(@Nullable Project project,
@@ -51,7 +44,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent) {
     this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, null);
   }
@@ -64,7 +57,7 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        boolean canBeParent,
                        @Nullable String helpId) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
@@ -97,12 +90,9 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
                        @Nullable String helpId) {
     setTitle(title);
-    if (Messages.isMacSheetEmulation()) {
-      setUndecorated(true);
-    }
     myMessage = message;
     myOptions = options;
     myDefaultOptionIndex = defaultOptionIndex;
@@ -111,18 +101,15 @@ public class MessageDialog extends DialogWrapper {
     myHelpId = helpId;
     setDoNotAskOption(doNotAskOption);
     init();
-    if (Messages.isMacSheetEmulation()) {
-      MacUtil.adjustFocusTraversal(myDisposable);
-    }
   }
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action[] actions = new Action[myOptions.length + 1];
+    List<Action> actions = new ArrayList<>();
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];
       final int exitCode = i;
-      actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
+      Action action = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         @Override
         public void actionPerformed(ActionEvent e) {
           close(exitCode, true);
@@ -130,18 +117,21 @@ public class MessageDialog extends DialogWrapper {
       };
 
       if (i == myDefaultOptionIndex) {
-        actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
+        action.putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
       if (i == myFocusedOptionIndex) {
-        actions[i].putValue(FOCUSED_ACTION, Boolean.TRUE);
+        action.putValue(FOCUSED_ACTION, Boolean.TRUE);
       }
 
-      UIUtil.assignMnemonic(option, actions[i]);
+      UIUtil.assignMnemonic(option, action);
+      actions.add(action);
     }
 
-    actions[myOptions.length] = getHelpAction();
-    return actions;
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
+    }
+    return actions.toArray(new Action[0]);
   }
 
   @Override
@@ -154,87 +144,11 @@ public class MessageDialog extends DialogWrapper {
     return doCreateCenterPanel();
   }
 
-  @NotNull
-  @Override
-  protected LayoutManager createRootLayout() {
-    return Messages.isMacSheetEmulation() ? myLayout = new MessagesBorderLayout() : super.createRootLayout();
-  }
-
-  @Override
-  protected void dispose() {
-    if (Messages.isMacSheetEmulation()) {
-      animate();
-    }
-    else {
-      super.dispose();
-    }
-  }
-
-  @Override
-  public void show() {
-    if (Messages.isMacSheetEmulation()) {
-      setInitialLocationCallback(() -> {
-        JRootPane rootPane = SwingUtilities.getRootPane(getWindow().getParent());
-        if (rootPane == null) {
-          rootPane = SwingUtilities.getRootPane(getWindow().getOwner());
-        }
-
-        Point p = rootPane.getLocationOnScreen();
-        p.x += (rootPane.getWidth() - getWindow().getWidth()) / 2;
-        return p;
-      });
-      animate();
-      getPeer().getWindow().setOpacity(.8f);
-      setAutoAdjustable(false);
-      setSize(getPreferredSize().width, 0);//initial state before animation, zero height
-    }
-    super.show();
-  }
-
-  private void animate() {
-    final int height = getPreferredSize().height;
-    final int frameCount = 10;
-    final boolean toClose = isShowing();
-
-
-    final AtomicInteger i = new AtomicInteger(-1);
-    final Alarm animator = new Alarm(myDisposable);
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        int state = i.addAndGet(1);
-
-        double linearProgress = (double)state / frameCount;
-        if (toClose) {
-          linearProgress = 1 - linearProgress;
-        }
-        myLayout.setPhase((1 - Math.cos(Math.PI * linearProgress)) / 2);
-        Window window = getPeer().getWindow();
-        Rectangle bounds = window.getBounds();
-        bounds.height = (int)(height * myLayout.getPhase());
-
-        window.setBounds(bounds);
-
-        if (state == 0 && !toClose && window.getOwner() instanceof IdeFrame) {
-          WindowManager.getInstance().requestUserAttention((IdeFrame)window.getOwner(), true);
-        }
-
-        if (state < frameCount) {
-          animator.addRequest(this, 10);
-        }
-        else if (toClose) {
-          MessageDialog.super.dispose();
-        }
-      }
-    };
-    animator.addRequest(runnable, 10, ModalityState.stateForComponent(getRootPane()));
-  }
-
   protected JComponent doCreateCenterPanel() {
     JPanel panel = createIconPanel();
     if (myMessage != null) {
       JTextPane messageComponent = createMessageComponent(myMessage);
-      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
+      panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
     }
     return panel;
   }

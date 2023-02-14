@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
 import com.intellij.util.UniqueResultsQuery;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +92,20 @@ public final class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSigna
   }
 
   public static @NotNull Query<MethodSignatureBackedByPsiMethod> search(@NotNull SearchParameters parameters) {
-    return new UniqueResultsQuery<>(SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters), MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
+    return new UniqueResultsQuery<>(SUPER_METHODS_SEARCH_INSTANCE.createQuery(parameters), METHOD_BASED_HASHING_STRATEGY);
   }
+
+  private static final HashingStrategy<MethodSignatureBackedByPsiMethod> METHOD_BASED_HASHING_STRATEGY =
+    new HashingStrategy<MethodSignatureBackedByPsiMethod>() {
+      @Override
+      public int hashCode(@Nullable MethodSignatureBackedByPsiMethod signature) {
+        return signature == null ? 0 : signature.getMethod().hashCode();
+      }
+
+      @Override
+      public boolean equals(@Nullable MethodSignatureBackedByPsiMethod s1, @Nullable MethodSignatureBackedByPsiMethod s2) {
+        return s1 == s2 || (s1 != null && s2 != null && s1.getMethod().equals(s2.getMethod()));
+      }
+    };
+
 }

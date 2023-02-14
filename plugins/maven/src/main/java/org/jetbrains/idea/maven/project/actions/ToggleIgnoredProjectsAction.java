@@ -60,7 +60,7 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     if(projectsManager == null) return false;
     List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
-    if (projects == null || projects.isEmpty()) return false;
+    if (projects.isEmpty()) return false;
 
     int ignoredStatesCount = 0;
     int ignoredCount = 0;

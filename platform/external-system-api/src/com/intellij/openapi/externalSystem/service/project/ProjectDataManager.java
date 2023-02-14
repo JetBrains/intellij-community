@@ -25,21 +25,25 @@ public interface ProjectDataManager {
     return ApplicationManager.getApplication().getService(ProjectDataManager.class);
   }
 
-  void importData(@NotNull Collection<? extends DataNode<?>> nodes,
-                  @NotNull Project project,
-                  @NotNull IdeModifiableModelsProvider modelsProvider,
-                  boolean synchronous);
+  /**
+   * @deprecated
+   * Use {@link #importData(DataNode, Project)} instead.
+   * Service implementation always performs operations synchronously.
+   */
+  @Deprecated
+  default <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project,
+                              boolean synchronous) {
+    importData(node, project);
+  }
 
-  <T> void importData(@NotNull Collection<? extends DataNode<T>> nodes, @NotNull Project project, boolean synchronous);
+  <T> void importData(@NotNull DataNode<T> node,
+                              @NotNull Project project);
 
   <T> void importData(@NotNull DataNode<T> node,
                       @NotNull Project project,
-                      @NotNull IdeModifiableModelsProvider modelsProvider,
-                      boolean synchronous);
+                      @NotNull IdeModifiableModelsProvider modelsProvider);
 
-  <T> void importData(@NotNull DataNode<T> node,
-                      @NotNull Project project,
-                      boolean synchronous);
 
   @Nullable
   List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key);
@@ -53,4 +57,10 @@ public interface ProjectDataManager {
 
   @NotNull
   Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId);
+
+  /**
+   * Returns an instance which can be used to perform massive modifications of the project configurations. {@link IdeModifiableModelsProvider#commit()}
+   * must be manually called on the returned instance for these modifications to take effect.
+   */
+  @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project);
 }

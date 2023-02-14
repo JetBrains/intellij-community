@@ -15,9 +15,6 @@
  */
 package com.intellij.java.codeInsight;
 
-/**
- * @author dsl
- */
 public class GenerateEqualsTest extends GenerateEqualsTestCase {
   public void testNoBaseEquals() {
     doTest(new int[0], new int[0], new int[0], false);

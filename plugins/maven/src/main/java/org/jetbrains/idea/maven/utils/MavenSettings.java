@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerConfigurable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.wizards.archetype.MavenCatalogsConfigurable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -50,6 +51,8 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     if (!project.isDefault()) {
       myChildren.add(new MavenRepositoriesConfigurable(project));
     }
+
+    myChildren.add(new MavenCatalogsConfigurable(project));
   }
 
   @Override

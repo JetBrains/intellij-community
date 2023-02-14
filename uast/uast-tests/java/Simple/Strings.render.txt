@@ -5,6 +5,7 @@ public class Strings {
         var s3: java.lang.String = " world "
         var s4: java.lang.String = s2 + s3
         var s5: java.lang.String = s4 + 2016
+        var s6: java.lang.String = "Hello again " + s1 + " world"
         var empty: java.lang.String = ""
         return s5
     }

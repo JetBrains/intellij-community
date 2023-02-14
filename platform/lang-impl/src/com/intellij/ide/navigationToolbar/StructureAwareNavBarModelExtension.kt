@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.structureView.StructureViewModel
@@ -13,6 +13,7 @@ import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -21,9 +22,7 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-/**
- * @author yole
- */
+
 abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension() {
   protected abstract val language: Language
   private var currentFile: SoftReference<PsiFile>? = null
@@ -31,14 +30,18 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   private var currentFileModCount = -1L
 
   override fun getLeafElement(dataContext: DataContext): PsiElement? {
-    if (UISettings.instance.showMembersInNavigationBar) {
+    if (UISettings.getInstance().showMembersInNavigationBar) {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       val editor = CommonDataKeys.EDITOR.getData(dataContext)
       if (psiFile == null || !psiFile.isValid || editor == null) return null
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
       if (isAcceptableLanguage(psiElement)) {
-        buildStructureViewModel(psiFile, editor)?.let { model ->
-          return (model.currentEditorElement as? PsiElement)?.originalElement
+        try {
+          buildStructureViewModel(psiFile, editor)?.let { model ->
+            return (model.currentEditorElement as? PsiElement)?.originalElement
+          }
+        }
+        catch (ignored: IndexNotReadyException) {
         }
       }
     }
@@ -50,7 +53,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
                                processor: Processor<Any>): Boolean {
-    if (UISettings.instance.showMembersInNavigationBar) {
+    if (UISettings.getInstance().showMembersInNavigationBar) {
       (`object` as? PsiElement)?.let { psiElement ->
         if (isAcceptableLanguage(psiElement)) {
           buildStructureViewModel(psiElement.containingFile)?.let { model ->

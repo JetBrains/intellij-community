@@ -1,0 +1,7 @@
+// WITH_STDLIB
+
+class Chain
+
+fun complicate(chain: Chain) {
+    val vra = chain.also { println(it) }
+}

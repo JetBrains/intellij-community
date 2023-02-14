@@ -39,6 +39,10 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     forEachListener { it.onStart(id, workingDir) }
   }
 
+  override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
+    forEachListener { it.onEnvironmentPrepared(id) }
+  }
+
   override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
     forEachListener { it.onStatusChange(event) }
   }
@@ -92,54 +96,60 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     }
   }
 
+  @Suppress("SuspiciousEqualsCombination")
   private class TaskListenerWrapper(
     val taskId: Any,
     val delegate: ExternalSystemTaskNotificationListener
   ) : ExternalSystemTaskNotificationListener {
     override fun onSuccess(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onSuccess(id)
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: java.lang.Exception) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onFailure(id, e)
     }
 
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onTaskOutput(id, text, stdOut)
     }
 
     override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== event.id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != event.id) return
       delegate.onStatusChange(event)
     }
 
     override fun onCancel(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onCancel(id)
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onEnd(id)
     }
 
     override fun beforeCancel(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.beforeCancel(id)
     }
 
     override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onStart(id, workingDir)
     }
 
     override fun onStart(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId !== id) return
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
       @Suppress("DEPRECATION")
       delegate.onStart(id)
+    }
+
+    override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
+      if (taskId !== ALL_TASKS_KEY && taskId != id) return
+      delegate.onEnvironmentPrepared(id)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -180,8 +190,16 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     @JvmStatic
     @TestOnly
     @ApiStatus.Internal
-    fun assertListenersReleased(taskId: Any? = null) {
+    fun assertListenersReleased() {
+      assertListenersReleased(null, emptyMap())
+    }
+
+    @JvmStatic
+    @TestOnly
+    @ApiStatus.Internal
+    fun assertListenersReleased(taskId: Any? = null, expected: Map<Any, List<ExternalSystemTaskNotificationListener>> = emptyMap()) {
       val listeners = getListeners()
+      if (listeners == expected) return
       if (taskId == null && listeners.isNotEmpty()) {
         throw AssertionError("Leaked listeners: $listeners")
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
@@ -16,21 +16,18 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-246306
+ * Tests IDEA-246306
  * A JS callback should be called on the browser instance which created it.
  *
  * @author tav
  */
 public class IDEA246306Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
   }
 
   @After
@@ -47,12 +44,12 @@ public class IDEA246306Test {
   static class MyBrowser extends JBCefBrowser {
     static final JBCefClient ourClient = JBCefApp.getInstance().createClient();
 
-    final JBCefJSQuery myQuery = JBCefJSQuery.create(this);
+    final JBCefJSQuery myQuery = JBCefJSQuery.create((JBCefBrowserBase)this);
     final CountDownLatch latch = new CountDownLatch(1);
 
     @SuppressWarnings("ObjectToString")
     MyBrowser() {
-      super(ourClient, "chrome:version");
+      super(createBuilder().setClient(ourClient).setUrl("chrome:version"));
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {
@@ -62,17 +59,16 @@ public class IDEA246306Test {
         return null;
       });
 
-      invokeAndWaitForLoad(this, () -> SwingUtilities.invokeLater(() -> {
+      invokeAndWaitForLoad(this, () -> {
         JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
         frame.setSize(640, 480);
         frame.setLocationRelativeTo(null);
         frame.add(getComponent(), BorderLayout.CENTER);
         frame.setVisible(true);
-      }));
+      });
 
-      invokeAndWaitForLatch(latch, () -> SwingUtilities.invokeLater(() -> {
-        getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0);
-      }));
+      invokeAndWaitForLatch(latch,
+        () -> getCefBrowser().executeJavaScript(myQuery.inject("'" + this + "'"), getCefBrowser().getURL(), 0));
     }
   }
 }

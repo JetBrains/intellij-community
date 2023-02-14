@@ -70,7 +70,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContr
  * }
  * </pre>
  *
- * @author peter
  * @see com.intellij.psi.scope.NameHint
  * @see com.intellij.psi.scope.ElementClassHint
  */

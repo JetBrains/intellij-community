@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -9,13 +9,18 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       EXTERNALLY_ADDED_FILES,
       PROJECT_CONFIGURATION_FILES_ADDED,
       MANAGE_IGNORE_FILES,
+      IGNORED_TO_EXCLUDE_NOT_FOUND,
       CHERRY_PICK_ERROR,
       COMMIT_CANCELED,
       COMMIT_FAILED,
       COMMIT_FINISHED,
       COMMIT_FINISHED_WITH_WARNINGS,
+      COMMIT_CHECKS_FAILED,
+      COMMIT_CHECKS_ONLY_FAILED,
+      POST_COMMIT_CHECKS_FAILED,
       COMPARE_FAILED,
       COULD_NOT_COMPARE_WITH_BRANCH,
+      INACTIVE_RANGES_DAMAGED,
       PATCH_APPLY_ABORTED,
       PATCH_ALREADY_APPLIED,
       PATCH_APPLY_CANNOT_FIND_PATCH_FILE,
@@ -26,13 +31,20 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       PATCH_APPLY_SUCCESS,
       PATCH_COPIED_TO_CLIPBOARD,
       PATCH_CREATION_FAILED,
+      PROJECT_PARTIALLY_UPDATED,
+      PROJECT_UPDATE_FINISHED,
       ROOT_ADDED,
       ROOTS_INVALID,
       ROOTS_REGISTERED,
       SHELVE_DELETION_UNDO,
       SHELVE_FAILED,
       SHELVE_SUCCESSFUL,
-      UNCOMMITTED_CHANGES_SAVING_ERROR
+      SHELF_UNDO_DELETE,
+      UNCOMMITTED_CHANGES_SAVING_ERROR,
+      CANNOT_LOAD_ANNOTATIONS,
+      SUGGESTED_PLUGIN_INSTALL_FAILED,
+      OBSOLETE_PLUGIN_UNBUNDLED,
+      ADD_UNVERSIONED_ERROR
     )
   }
 
@@ -46,8 +58,12 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val COMMIT_FAILED = "vcs.commit.failed"
     const val COMMIT_FINISHED = "vcs.commit.finished"
     const val COMMIT_FINISHED_WITH_WARNINGS = "vcs.commit.finished.with.warnings"
+    const val COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
+    const val POST_COMMIT_CHECKS_FAILED = "vcs.commit.checks.failed"
+    const val COMMIT_CHECKS_ONLY_FAILED = "vcs.commit.checks.only.failed"
     const val COMPARE_FAILED = "vcs.compare.failed"
     const val COULD_NOT_COMPARE_WITH_BRANCH = "vcs.could.not.compare.with.branch"
+    const val INACTIVE_RANGES_DAMAGED = "vcs.inactive.ranges.damaged"
     const val PATCH_APPLY_ABORTED = "vcs.patch.apply.aborted"
     const val PATCH_ALREADY_APPLIED = "vcs.patch.already.applied"
     const val PATCH_APPLY_CANNOT_FIND_PATCH_FILE = "vcs.patch.apply.cannot.find.patch.file"
@@ -58,13 +74,20 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val PATCH_APPLY_SUCCESS = "vcs.patch.apply.success.applied"
     const val PATCH_COPIED_TO_CLIPBOARD = "vcs.patch.copied.to.clipboard"
     const val PATCH_CREATION_FAILED = "vcs.patch.creation.failed"
+    const val PROJECT_PARTIALLY_UPDATED = "vcs.project.partially.updated"
+    const val PROJECT_UPDATE_FINISHED = "vcs.project.update.finished"
     const val ROOT_ADDED = "vcs.root.added"
     const val ROOTS_INVALID = "vcs.roots.invalid"
     const val ROOTS_REGISTERED = "vcs.roots.registered"
     const val SHELVE_DELETION_UNDO = "vcs.shelve.deletion.undo"
     const val SHELVE_FAILED = "vcs.shelve.failed"
     const val SHELVE_SUCCESSFUL = "vcs.shelve.successful"
+    const val SHELF_UNDO_DELETE = "vcs.shelf.undo.delete"
     const val UNCOMMITTED_CHANGES_SAVING_ERROR = "vcs.uncommitted.changes.saving.error"
+    const val CANNOT_LOAD_ANNOTATIONS = "vcs.cannot.load.annotations"
+    const val SUGGESTED_PLUGIN_INSTALL_FAILED = "vcs.suggested.plugin.install.failed"
+    const val OBSOLETE_PLUGIN_UNBUNDLED = "vcs.obsolete.plugin.unbundled"
+    const val ADD_UNVERSIONED_ERROR = "vcs.add.unversioned.error"
   }
 }
 

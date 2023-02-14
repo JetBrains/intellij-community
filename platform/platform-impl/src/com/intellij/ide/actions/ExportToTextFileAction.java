@@ -12,23 +12,12 @@ public class ExportToTextFileAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
     if (project == null || exporterToTextFile == null) return;
     if (!exporterToTextFile.canExport()) return;
 
-    export(project, exporterToTextFile);
-  }
-
-  public static void export(Project project, ExporterToTextFile exporter) {
-    final ExportToFileUtil.ExportDialogBase dlg = new ExportToFileUtil.ExportDialogBase(project, exporter);
-
-    if (!dlg.showAndGet()) {
-      return;
-    }
-
-    ExportToFileUtil.exportTextToFile(project, dlg.getFileName(), dlg.getText());
-    exporter.exportedTo(dlg.getFileName());
+    ExportToFileUtil.chooseFileAndExport(project, exporterToTextFile);
   }
 
   protected ExporterToTextFile getExporter(DataContext dataContext) {
@@ -40,7 +29,12 @@ public class ExportToTextFileAction extends DumbAwareAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     ExporterToTextFile exporterToTextFile = getExporter(dataContext);
-    presentation.setEnabled(
-      CommonDataKeys.PROJECT.getData(dataContext) != null && exporterToTextFile != null && exporterToTextFile.canExport());
+    presentation.setEnabledAndVisible(event.getProject() != null &&
+                                      exporterToTextFile != null && exporterToTextFile.canExport());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

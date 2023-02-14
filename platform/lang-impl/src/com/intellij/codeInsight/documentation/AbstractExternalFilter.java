@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -33,7 +33,7 @@ public abstract class AbstractExternalFilter {
 
   private static final Pattern CLASS_DATA_START = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
   private static final Pattern CLASS_DATA_END = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
-  private static final Pattern NON_CLASS_DATA_END = Pattern.compile("<A (NAME|ID)=", Pattern.CASE_INSENSITIVE);
+  private static final Pattern NON_CLASS_DATA_END = Pattern.compile(" (NAME|ID)=", Pattern.CASE_INSENSITIVE);
   private static final Pattern ANNIHILATOR = Pattern.compile("/[^/^.]*/[.][.]/");
   private static final Pattern CHARSET_META = Pattern.compile("<meta[^>]+\\s*charset=\"?([\\w\\-]*)\\s*\">", Pattern.CASE_INSENSITIVE);
 
@@ -101,10 +101,8 @@ public abstract class AbstractExternalFilter {
   @Nullable
   public String getExternalDocInfo(String url) throws Exception {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && app.isDispatchThread() || app.isWriteAccessAllowed()) {
-      LOG.error("May block indefinitely: shouldn't be called from EDT or under write lock");
-      return null;
-    }
+    // May block indefinitely: shouldn't be called from EDT or under write lock
+    app.assertIsNonDispatchThread();
 
     if (url == null || !MyJavadocFetcher.ourFree) {
       return null;
@@ -156,21 +154,21 @@ public abstract class AbstractExternalFilter {
     if (baseUrl != null) {
       data.append("<base href=\"").append(baseUrl).append("\">");
     }
-    data.append("<style type=\"text/css\">" +
-                "  ul.inheritance {\n" +
-                "      margin:0;\n" +
-                "      padding:0;\n" +
-                "  }\n" +
-                "  ul.inheritance li {\n" +
-                "       display:inline;\n" +
-                "       list-style-type:none;\n" +
-                "  }\n" +
-                "  ul.inheritance li ul.inheritance {\n" +
-                "    margin-left:15px;\n" +
-                "    padding-left:15px;\n" +
-                "    padding-top:1px;\n" +
-                "  }\n" +
-                "</style>");
+    data.append("""
+                  <style type="text/css">  ul.inheritance {
+                        margin:0;
+                        padding:0;
+                    }
+                    ul.inheritance li {
+                         display:inline;
+                         list-style-type:none;
+                    }
+                    ul.inheritance li ul.inheritance {
+                      margin-left:15px;
+                      padding-left:15px;
+                      padding-top:1px;
+                    }
+                  </style>""");
 
     String read;
     String contentEncoding = null;
@@ -279,7 +277,7 @@ public abstract class AbstractExternalFilter {
     Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
     if (anchorMatcher.find()) {
       anchorPresent = true;
-      startSection = Pattern.compile("<a (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
+      startSection = Pattern.compile(" (name|id)=\"" + Pattern.quote(StringUtil.escapeXmlEntities(anchorMatcher.group(1))) + "\"",
                                      Pattern.CASE_INSENSITIVE);
       endSection = NON_CLASS_DATA_END;
     }
@@ -383,19 +381,23 @@ public abstract class AbstractExternalFilter {
     }
   }
 
-  private static class MyReader extends InputStreamReader {
+  protected static class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
-    MyReader(ByteArrayInputStream in) {
+    public MyReader(ByteArrayInputStream in) {
       super(in);
       in.reset();
       myInputStream = in;
     }
 
-    MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
+    public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
       in.reset();
       myInputStream = in;
+    }
+
+    public ByteArrayInputStream getInputStream() {
+      return myInputStream;
     }
   }
 

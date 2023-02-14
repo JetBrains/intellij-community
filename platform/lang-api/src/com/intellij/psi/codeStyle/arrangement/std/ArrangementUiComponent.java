@@ -31,8 +31,6 @@ import java.util.Set;
  * Defines a contract for UI component used at standard arrangement settings managing code.
  * <p/>
  * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
- *
- * @author Denis Zhdanov
  */
 public interface ArrangementUiComponent {
 

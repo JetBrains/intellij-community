@@ -1,29 +1,23 @@
-# Rename typing to _typing, as not to conflict with typing imported
-# from _ast below when loaded in an unorthodox way by the Dropbox
-# internal Bazel integration.
-
-# The same unorthodox Bazel integration causes issues with sys, which
-# is imported in both modules. unfortunately we can't just rename sys,
-# since mypy only supports version checks with a sys that is named
-# sys.
 import sys
-import typing as _typing
-from typing import Any, Iterator, Optional, TypeVar, Union, overload
+from _ast import *
+from collections.abc import Iterator
+from typing import Any, TypeVar, overload
 from typing_extensions import Literal
-
-from _ast import *  # type: ignore
 
 if sys.version_info >= (3, 8):
     class Num(Constant):
         value: complex
+
     class Str(Constant):
         value: str
         # Aliases for value, for backwards compatibility
         s: str
+
     class Bytes(Constant):
         value: bytes
         # Aliases for value, for backwards compatibility
         s: bytes
+
     class NameConstant(Constant): ...
     class Ellipsis(Constant): ...
 
@@ -89,6 +83,7 @@ class NodeVisitor:
     def visit_Constant(self, node: Constant) -> Any: ...
     if sys.version_info >= (3, 8):
         def visit_NamedExpr(self, node: NamedExpr) -> Any: ...
+
     def visit_Attribute(self, node: Attribute) -> Any: ...
     def visit_Subscript(self, node: Subscript) -> Any: ...
     def visit_Starred(self, node: Starred) -> Any: ...
@@ -150,7 +145,7 @@ class NodeVisitor:
 class NodeTransformer(NodeVisitor):
     def generic_visit(self, node: AST) -> AST: ...
     # TODO: Override the visit_* methods with better return types.
-    #       The usual return type is Optional[AST], but Iterable[AST]
+    #       The usual return type is AST | None, but Iterable[AST]
     #       is also allowed in some cases -- this needs to be mapped.
 
 _T = TypeVar("_T", bound=AST)
@@ -158,28 +153,87 @@ _T = TypeVar("_T", bound=AST)
 if sys.version_info >= (3, 8):
     @overload
     def parse(
-        source: Union[str, bytes],
-        filename: Union[str, bytes] = ...,
+        source: str | bytes,
+        filename: str | bytes = ...,
         mode: Literal["exec"] = ...,
         *,
         type_comments: bool = ...,
-        feature_version: Union[None, int, _typing.Tuple[int, int]] = ...,
+        feature_version: None | int | tuple[int, int] = ...,
     ) -> Module: ...
     @overload
     def parse(
-        source: Union[str, bytes],
-        filename: Union[str, bytes] = ...,
+        source: str | bytes,
+        filename: str | bytes,
+        mode: Literal["eval"],
+        *,
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> Expression: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        filename: str | bytes,
+        mode: Literal["func_type"],
+        *,
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> FunctionType: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        filename: str | bytes,
+        mode: Literal["single"],
+        *,
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> Interactive: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        *,
+        mode: Literal["eval"],
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> Expression: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        *,
+        mode: Literal["func_type"],
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> FunctionType: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        *,
+        mode: Literal["single"],
+        type_comments: bool = ...,
+        feature_version: None | int | tuple[int, int] = ...,
+    ) -> Interactive: ...
+    @overload
+    def parse(
+        source: str | bytes,
+        filename: str | bytes = ...,
         mode: str = ...,
         *,
         type_comments: bool = ...,
-        feature_version: Union[None, int, _typing.Tuple[int, int]] = ...,
+        feature_version: None | int | tuple[int, int] = ...,
     ) -> AST: ...
 
 else:
     @overload
-    def parse(source: Union[str, bytes], filename: Union[str, bytes] = ..., mode: Literal["exec"] = ...) -> Module: ...
+    def parse(source: str | bytes, filename: str | bytes = ..., mode: Literal["exec"] = ...) -> Module: ...
     @overload
-    def parse(source: Union[str, bytes], filename: Union[str, bytes] = ..., mode: str = ...) -> AST: ...
+    def parse(source: str | bytes, filename: str | bytes, mode: Literal["eval"]) -> Expression: ...
+    @overload
+    def parse(source: str | bytes, filename: str | bytes, mode: Literal["single"]) -> Interactive: ...
+    @overload
+    def parse(source: str | bytes, *, mode: Literal["eval"]) -> Expression: ...
+    @overload
+    def parse(source: str | bytes, *, mode: Literal["single"]) -> Interactive: ...
+    @overload
+    def parse(source: str | bytes, filename: str | bytes = ..., mode: str = ...) -> AST: ...
 
 if sys.version_info >= (3, 9):
     def unparse(ast_obj: AST) -> str: ...
@@ -188,20 +242,23 @@ def copy_location(new_node: _T, old_node: AST) -> _T: ...
 
 if sys.version_info >= (3, 9):
     def dump(
-        node: AST, annotate_fields: bool = ..., include_attributes: bool = ..., *, indent: Union[int, str, None] = ...
+        node: AST, annotate_fields: bool = ..., include_attributes: bool = ..., *, indent: int | str | None = ...
     ) -> str: ...
 
 else:
     def dump(node: AST, annotate_fields: bool = ..., include_attributes: bool = ...) -> str: ...
 
 def fix_missing_locations(node: _T) -> _T: ...
-def get_docstring(node: AST, clean: bool = ...) -> Optional[str]: ...
+def get_docstring(node: AST, clean: bool = ...) -> str | None: ...
 def increment_lineno(node: _T, n: int = ...) -> _T: ...
 def iter_child_nodes(node: AST) -> Iterator[AST]: ...
-def iter_fields(node: AST) -> Iterator[_typing.Tuple[str, Any]]: ...
-def literal_eval(node_or_string: Union[str, AST]) -> Any: ...
+def iter_fields(node: AST) -> Iterator[tuple[str, Any]]: ...
+def literal_eval(node_or_string: str | AST) -> Any: ...
 
 if sys.version_info >= (3, 8):
-    def get_source_segment(source: str, node: AST, *, padded: bool = ...) -> Optional[str]: ...
+    def get_source_segment(source: str, node: AST, *, padded: bool = ...) -> str | None: ...
 
 def walk(node: AST) -> Iterator[AST]: ...
+
+if sys.version_info >= (3, 9):
+    def main() -> None: ...

@@ -8,6 +8,7 @@ import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JList
 
 abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBundle.message("basic.completion.lesson.name")) {
@@ -34,7 +35,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
       task {
         text(LessonsBundle.message("basic.completion.start.typing",
                                    code(item1Completion)))
-        triggerByUiComponentAndHighlight(false, false) { ui: JList<*> ->
+        triggerUI().component { ui: JList<*> ->
           isTheFirstVariant(ui)
         }
         proposeRestore {
@@ -47,9 +48,9 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
           type(item1StartToType)
         }
       }
-      task("EditorChooseLookupItem") {
-        text(LessonsBundle.message("basic.completion.just.press.to.complete", action(it)))
-        trigger(it) {
+      task {
+        text(LessonsBundle.message("basic.completion.just.press.to.complete", action("EditorChooseLookupItem")))
+        stateCheck {
           editor.document.text == result1
         }
         restoreAfterStateBecomeFalse {
@@ -67,8 +68,8 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
       task("CodeCompletion") {
         text(LessonsBundle.message("basic.completion.activate.explicitly", action(it)))
         trigger(it)
-        triggerByListItemAndHighlight { item ->
-          item.toString().contains(item2Completion)
+        triggerAndBorderHighlight().listItem { item ->
+          item.isToStringContains(item2Completion)
         }
         proposeRestore {
           checkExpectedStateOfEditor(sample2) { change ->
@@ -95,5 +96,10 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
     }
 
   private fun isTheFirstVariant(it: JList<*>) =
-    it.model.size >= 1 && it.model.getElementAt(0).toString().contains(item1Completion)
+    it.model.size >= 1 && it.model.getElementAt(0).isToStringContains(item1Completion)
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("basic.completion.help.code.completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html#basic_completion")),
+  )
 }

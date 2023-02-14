@@ -1,18 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -52,9 +52,8 @@ public abstract class EventHandler {
   public void initialSelection(boolean scrollAndFocus) {
   }
 
-  @NotNull
-  public List<ListPluginComponent> getSelection() {
-    return Collections.emptyList();
+  public @NotNull List<? extends ListPluginComponent> getSelection() {
+    return List.of();
   }
 
   public void setSelection(@NotNull ListPluginComponent component) {
@@ -85,27 +84,9 @@ public abstract class EventHandler {
 
   public static final int DELETE_CODE = SystemInfo.isMac ? KeyEvent.VK_BACK_SPACE : KeyEvent.VK_DELETE;
 
-  @Nullable
-  public static ShortcutSet getShortcuts(@NotNull String id) {
+  public static @Nullable ShortcutSet getShortcuts(@NotNull String id) {
     AnAction action = ActionManager.getInstance().getAction(id);
     return action == null ? null : action.getShortcutSet();
-  }
-
-  public static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
-    if (set != null) {
-      for (Shortcut test : set.getShortcuts()) {
-        if (test.isKeyboard() && shortcut.startsWith(test)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  @NotNull
-  protected static ListPluginComponent get(@NotNull ComponentEvent event) {
-    //noinspection ConstantConditions
-    return ComponentUtil.getParentOfType((Class<? extends ListPluginComponent>)ListPluginComponent.class, event.getComponent());
   }
 
   @Nullable

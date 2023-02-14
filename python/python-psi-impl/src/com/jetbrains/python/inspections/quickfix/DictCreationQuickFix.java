@@ -22,8 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.PyDictCreationInspection;
@@ -34,12 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class DictCreationQuickFix implements LocalQuickFix {
-  private final SmartPsiElementPointer<PyAssignmentStatement> myStatementPointer;
-  public DictCreationQuickFix(@NotNull final PyAssignmentStatement statement) {
-    myStatementPointer = SmartPointerManager.createPointer(statement);
-  }
+import static com.jetbrains.python.psi.PyUtil.as;
 
+public class DictCreationQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
@@ -47,19 +42,19 @@ public class DictCreationQuickFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final Map<String, String> statementsMap = Maps.newLinkedHashMap();
-    final PyAssignmentStatement myStatement = myStatementPointer.getElement();
+    final PyAssignmentStatement myStatement = as(descriptor.getPsiElement(), PyAssignmentStatement.class);
     if (myStatement == null) return;
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
-      for (PsiElement expression: assignedValue.getChildren()) {
-        if (expression instanceof PyKeyValueExpression) {
-          PyKeyValueExpression kvExpr = (PyKeyValueExpression)expression;
+      for (PsiElement expression : assignedValue.getChildren()) {
+        if (expression instanceof PyKeyValueExpression kvExpr) {
           final PyExpression value = kvExpr.getValue();
-          if (value != null)
+          if (value != null) {
             statementsMap.put(kvExpr.getKey().getText(), value.getText());
+          }
         }
         else if (expression instanceof PyDoubleStarExpression) {
           statementsMap.put(expression.getText(), null);
@@ -67,13 +62,12 @@ public class DictCreationQuickFix implements LocalQuickFix {
       }
 
       PyStatement statement = PsiTreeUtil.getNextSiblingOfType(myStatement, PyStatement.class);
-      while (statement instanceof PyAssignmentStatement) {
-        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+      while (statement instanceof PyAssignmentStatement assignmentStatement) {
         final PyExpression target = myStatement.getTargets()[0];
         final String targetName = target.getName();
         if (targetName != null) {
           final List<Pair<PyExpression, PyExpression>> targetsToValues =
-                              PyDictCreationInspection.getDictTargets(target, targetName, assignmentStatement);
+            PyDictCreationInspection.getDictTargets(target, targetName, assignmentStatement);
           final PyStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PyStatement.class);
           if (targetsToValues == null || targetsToValues.isEmpty()) break;
           for (Pair<PyExpression, PyExpression> targetToValue : targetsToValues) {
@@ -81,16 +75,20 @@ public class DictCreationQuickFix implements LocalQuickFix {
             final PyExpression indexExpression = subscription.getIndexExpression();
             assert indexExpression != null;
             final String indexText;
-            if (indexExpression instanceof PyTupleExpression)
-              indexText = "("+indexExpression.getText()+")";
-            else
+            if (indexExpression instanceof PyTupleExpression) {
+              indexText = "(" + indexExpression.getText() + ")";
+            }
+            else {
               indexText = indexExpression.getText();
+            }
 
             final String valueText;
-            if (targetToValue.second instanceof PyTupleExpression)
-             valueText = "("+targetToValue.second.getText()+")";
-            else
+            if (targetToValue.second instanceof PyTupleExpression) {
+              valueText = "(" + targetToValue.second.getText() + ")";
+            }
+            else {
               valueText = targetToValue.second.getText();
+            }
 
             statementsMap.put(indexText, valueText);
             statement.delete();
@@ -107,8 +105,8 @@ public class DictCreationQuickFix implements LocalQuickFix {
           statements.add(entry.getKey());
         }
       }
-      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement),
-                                                                    "{" + StringUtil.join(statements, ", ") + "}");
+      final PyExpression expression =
+        elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement), "{" + StringUtil.join(statements, ", ") + "}");
       assignedValue.replace(expression);
     }
   }

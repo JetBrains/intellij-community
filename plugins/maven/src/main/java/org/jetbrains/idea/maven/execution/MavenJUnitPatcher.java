@@ -87,7 +87,8 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     if (domModel == null) {
       return s -> s;
     }
-    Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    var staticProperties = MavenPropertyResolver.collectPropertyMapFromDOM(mavenProject, domModel);
+    Properties modelProperties = mavenProject.getProperties();
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
     return name -> {
@@ -95,9 +96,13 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       if (vmPropertyValue != null) {
         return vmPropertyValue;
       }
-      String staticPropertyValue = staticProperties.getProperty(name);
+      String staticPropertyValue = staticProperties.get(name);
       if (staticPropertyValue != null) {
         return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
+      }
+      String modelPropertyValue = modelProperties.getProperty(name);
+      if (modelPropertyValue != null) {
+        return modelPropertyValue;
       }
       if (name.equals(jaCoCoConfigProperty)) {
         return "";
@@ -280,10 +285,10 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   }
 
   private static boolean isEnabled(String plugin, String s) {
-    return !Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".disable." + s));
+    return !Boolean.parseBoolean(System.getProperty("idea.maven." + plugin + ".disable." + s));
   }
 
   private static boolean isResolved(String plugin, String s) {
-    return !s.contains("${") || Boolean.valueOf(System.getProperty("idea.maven." + plugin + ".allPropertiesAreResolved"));
+    return !s.contains("${") || Boolean.parseBoolean(System.getProperty("idea.maven." + plugin + ".allPropertiesAreResolved"));
   }
 }

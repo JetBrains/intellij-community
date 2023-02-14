@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.core.Spacer;
@@ -25,15 +11,10 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author yole
- */
-public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type ourGridBagLayoutType = Type.getType(GridBagLayout.class);
   private static final Type ourGridBagConstraintsType = Type.getType(GridBagConstraints.class);
   private static final Method ourDefaultConstructor = Method.getMethod("void <init> ()");
-
-  private static final Type myPanelType = Type.getType(JPanel.class);
 
   @Override
   public String mapComponentClass(final String componentClassName) {
@@ -54,18 +35,6 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.invokeVirtual(ourContainerType, ourSetLayoutMethod);
   }
 
-  private void generateFillerPanel(final GeneratorAdapter generator, final int parentLocal, final GridBagConverter.Result result) {
-    int panelLocal = generator.newLocal(myPanelType);
-
-    generator.newInstance(myPanelType);
-    generator.dup();
-    generator.invokeConstructor(myPanelType, ourDefaultConstructor);
-    generator.storeLocal(panelLocal);
-
-    generateConversionResult(generator, result, panelLocal, parentLocal);
-
-  }
-
   @Override
   public void generateComponentLayout(final LwComponent component,
                                       final GeneratorAdapter generator,
@@ -83,15 +52,6 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     GridBagConverter.constraintsToGridBag(component.getConstraints(), gbc);
 
     generateGridBagConstraints(generator, gbc, componentLocal, parentLocal);
-  }
-
-  private static void generateConversionResult(final GeneratorAdapter generator, final GridBagConverter.Result result,
-                                               final int componentLocal, final int parentLocal) {
-    checkSetSize(generator, componentLocal, "setMinimumSize", result.minimumSize);
-    checkSetSize(generator, componentLocal, "setPreferredSize", result.preferredSize);
-    checkSetSize(generator, componentLocal, "setMaximumSize", result.maximumSize);
-
-    generateGridBagConstraints(generator, result.constraints, componentLocal, parentLocal);
   }
 
   private static void generateGridBagConstraints(final GeneratorAdapter generator, GridBagConstraints constraints, final int componentLocal,
@@ -145,15 +105,6 @@ public class GridBagLayoutCodeGenerator extends LayoutCodeGenerator {
     generator.loadLocal(gbcLocal);
 
     generator.invokeVirtual(ourContainerType, ourAddMethod);
-  }
-
-  private static void checkSetSize(final GeneratorAdapter generator, final int componentLocal, final String methodName, final Dimension dimension) {
-    if (dimension != null) {
-      generator.loadLocal(componentLocal);
-      AsmCodeGenerator.pushPropValue(generator, "java.awt.Dimension", dimension);
-      generator.invokeVirtual(Type.getType(Component.class),
-                              new Method(methodName, Type.VOID_TYPE, new Type[] { Type.getType(Dimension.class) }));
-    }
   }
 
   private static void setIntField(final GeneratorAdapter generator, final int local, final String fieldName, final int value) {

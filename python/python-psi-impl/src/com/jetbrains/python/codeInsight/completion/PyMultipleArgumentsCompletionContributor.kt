@@ -4,11 +4,12 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.PlatformIcons
+import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
@@ -20,7 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyCallableParameter
 
-class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
+class PyMultipleArgumentsCompletionContributor: CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().inArgumentList(), MyCompletionProvider)
   }
@@ -32,7 +33,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
 
       val call = PsiTreeUtil.getParentOfType(position, PyCallExpression::class.java) ?: return
       val typeEvalContext = parameters.getTypeEvalContext()
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
       val callableTypes = call.multiResolveCallee(resolveContext)
       if (callableTypes.isEmpty()) return
 
@@ -62,6 +63,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
 
     private fun getArgumentIndex(position: PsiElement): Int? {
       val argumentList = PsiTreeUtil.getParentOfType(position, PyArgumentList::class.java) ?: return null
+      if (argumentList.arguments.isEmpty()) return null
       if (argumentList.arguments.any { it is PyKeywordArgument || it is PyStarArgument }) return null
       if (!PsiTreeUtil.isAncestor(argumentList.arguments.last(), position, false)) return null
       return argumentList.arguments.size - 1
@@ -69,7 +71,7 @@ class PyMultipleArgumentsCompletionContributor: CompletionContributor() {
 
     private fun createParametersLookupElement(variables: List<String>, call: PyCallExpression): LookupElement {
       return LookupElementBuilder.create(variables.joinToString(", "))
-        .withIcon(PlatformIcons.VARIABLE_ICON)
+        .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable))
         .withInsertHandler(PyMultipleArgumentsInsertHandler(call))
         .apply {
           putUserData(MULTIPLE_ARGUMENTS_VARIANT_KEY, true)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,6 +22,7 @@ import com.intellij.util.Range;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import org.jetbrains.annotations.TestOnly;
 public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    XDebugSession session = getSession(e);
+    XDebugSession session = DebuggerUIUtil.getSession(e);
     if (session != null) {
       doStepOutOfBlock(session);
     }
@@ -70,9 +72,14 @@ public class StepOutOfBlockAction extends DebuggerAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    XDebugSession session = getSession(e);
+    XDebugSession session = DebuggerUIUtil.getSession(e);
     e.getPresentation().setEnabledAndVisible(session != null && session.getDebugProcess() instanceof JavaDebugProcess &&
                                              !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static final class BlockFilter implements MethodFilter {

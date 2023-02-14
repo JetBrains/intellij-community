@@ -1,4 +1,4 @@
-// "Move initializer to constructor" "true"
+// "Move initializer to constructor" "true-preview"
 public class X {
     <caret>int i;
 

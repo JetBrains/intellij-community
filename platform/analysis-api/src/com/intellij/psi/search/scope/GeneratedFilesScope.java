@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,7 +17,7 @@ public final class GeneratedFilesScope extends NamedScope {
   public static final GeneratedFilesScope INSTANCE = new GeneratedFilesScope();
 
   public GeneratedFilesScope() {
-    super(ID, AnalysisBundle.messagePointer("generated.files.scope.name"), AllIcons.Modules.GeneratedSourceRoot,
+    super(ID, AnalysisBundle.messagePointer("generated.files.scope.name"), AllIcons.Modules.GeneratedFolder,
           new FilteredPackageSet(ID) {
             @Override
             public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
@@ -25,5 +25,10 @@ public final class GeneratedFilesScope extends NamedScope {
             }
           }
     );
+  }
+
+  @Override
+  public @NotNull String getDefaultColorName() {
+    return "Gray";
   }
 }

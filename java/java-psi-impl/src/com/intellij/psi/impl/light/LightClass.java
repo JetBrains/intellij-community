@@ -21,9 +21,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class LightClass extends AbstractLightClass {
   private final PsiClass myDelegate;
 

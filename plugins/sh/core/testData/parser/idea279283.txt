@@ -1,0 +1,207 @@
+SHELL_SCRIPT
+  PsiComment(shebang)('#!/usr/bin/zsh')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('This echo is highlighted')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('file_path')
+      PsiElement(=)('=')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        PsiElement(STRING_CONTENT)('/path/to/file/sql_dump.sql.bz2')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('re_file_ext')
+      PsiElement(=)('=')
+      STRING
+        PsiElement(RAW_STRING)(''.*\.\(bz2\|gz\|zip\|xz\|sql\)$'')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('file_ext')
+      PsiElement(=)('=')
+      PsiElement($)('$')
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('expr')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              VARIABLE
+                PsiElement(var)('$file_path')
+              PsiElement(CLOSE_QUOTE)('"')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)(':')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              VARIABLE
+                PsiElement(var)('$re_file_ext')
+              PsiElement(CLOSE_QUOTE)('"')
+        PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('bootstrapver')
+      PsiElement(=)('=')
+      PsiElement($)('$')
+      SUBSHELL_COMMAND
+        PsiElement(()('(')
+        COMPOUND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('curl')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('https')
+            SIMPLE_COMMAND_ELEMENT
+              ASSIGNMENT_COMMAND
+                LITERAL
+                  PsiElement(word)('://go.dev/VERSION?m')
+                PsiElement(=)('=')
+                LITERAL
+                  PsiElement(word)('text')
+        PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        VARIABLE
+          PsiElement(var)('$file_ext')
+        PsiElement(CLOSE_QUOTE)('"')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    CASE_COMMAND
+      PsiElement(case)('case')
+      PsiWhiteSpace(' ')
+      STRING
+        PsiElement(OPEN_QUOTE)('"')
+        VARIABLE
+          PsiElement(var)('$file_ext')
+        PsiElement(CLOSE_QUOTE)('"')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      CASE_CLAUSE
+        PsiElement(\n)('\n')
+        PsiWhiteSpace('  ')
+        PATTERN
+          STRING
+            PsiElement(RAW_STRING)(''gz'')
+        PsiWhiteSpace('  ')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('deflatecmd')
+            PsiElement(=)('=')
+            STRING
+              PsiElement(RAW_STRING)(''gunzip --stdout'')
+      PsiWhiteSpace(' ')
+      PsiElement(;;)(';;')
+      CASE_CLAUSE
+        PsiElement(\n)('\n')
+        PsiWhiteSpace('  ')
+        PATTERN
+          STRING
+            PsiElement(RAW_STRING)(''bz2'')
+        PsiWhiteSpace(' ')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('deflatecmd')
+            PsiElement(=)('=')
+            STRING
+              PsiElement(RAW_STRING)(''bzcat'')
+      PsiWhiteSpace(' ')
+      PsiElement(;;)(';;')
+      CASE_CLAUSE
+        PsiElement(\n)('\n')
+        PsiWhiteSpace('  ')
+        PATTERN
+          STRING
+            PsiElement(RAW_STRING)(''xz'')
+        PsiWhiteSpace('  ')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('deflatecmd')
+            PsiElement(=)('=')
+            STRING
+              PsiElement(RAW_STRING)(''xzcat'')
+      PsiWhiteSpace(' ')
+      PsiElement(;;)(';;')
+      CASE_CLAUSE
+        PsiElement(\n)('\n')
+        PsiWhiteSpace('  ')
+        PATTERN
+          STRING
+            PsiElement(RAW_STRING)(''zip'')
+        PsiWhiteSpace(' ')
+        PsiElement())(')')
+        PsiWhiteSpace(' ')
+        COMPOUND_LIST
+          ASSIGNMENT_COMMAND
+            LITERAL
+              PsiElement(word)('deflatecmd')
+            PsiElement(=)('=')
+            STRING
+              PsiElement(RAW_STRING)(''unzip -c'')
+      PsiWhiteSpace(' ')
+      PsiElement(;;)(';;')
+      PsiElement(\n)('\n')
+      PsiElement(esac)('esac')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    FUNCTION_DEFINITION
+      PsiElement(word)('test_function')
+      PsiElement(()('(')
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      BLOCK
+        PsiElement({)('{')
+        COMPOUND_LIST
+          PsiElement(\n)('\n')
+          PsiWhiteSpace('  ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(RAW_STRING)(''Highlighting has stopped (in part)'')
+          PsiElement(\n)('\n')
+        PsiElement(})('}')

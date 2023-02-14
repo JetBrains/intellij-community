@@ -41,16 +41,19 @@ public final class GitConfig {
   private static final Pattern URL_SECTION = Pattern.compile("url \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_INFO_SECTION = Pattern.compile("branch \"(.*)\"", Pattern.CASE_INSENSITIVE);
   private static final Pattern BRANCH_COMMON_PARAMS_SECTION = Pattern.compile("branch", Pattern.CASE_INSENSITIVE);
+  private static final String CORE_SECTION = "core";
 
   @NotNull private final Collection<? extends Remote> myRemotes;
   @NotNull private final Collection<? extends Url> myUrls;
   @NotNull private final Collection<? extends BranchConfig> myTrackedInfos;
+  @NotNull private final Core myCore;
 
 
-  private GitConfig(@NotNull Collection<? extends Remote> remotes, @NotNull Collection<? extends Url> urls, @NotNull Collection<? extends BranchConfig> trackedInfos) {
+  private GitConfig(@NotNull Collection<? extends Remote> remotes, @NotNull Collection<? extends Url> urls, @NotNull Collection<? extends BranchConfig> trackedInfos, @NotNull Core core) {
     myRemotes = remotes;
     myUrls = urls;
     myTrackedInfos = trackedInfos;
+    myCore = core;
   }
 
   /**
@@ -89,13 +92,21 @@ public final class GitConfig {
   }
 
   /**
+   * Return core info
+   */
+  @NotNull
+  Core parseCore() {
+    return myCore;
+  }
+
+  /**
    * Creates an instance of GitConfig by reading information from the specified {@code .git/config} file.
    * <p/>
    * If some section is invalid, it is skipped, and a warning is reported.
    */
   @NotNull
   static GitConfig read(@NotNull File configFile) {
-    GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList());
+    GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList(), new Core(null));
     if (!configFile.exists() || configFile.isDirectory()) {
       LOG.info("No .git/config file at " + configFile.getPath());
       return emptyConfig;
@@ -112,8 +123,9 @@ public final class GitConfig {
 
     Pair<Collection<Remote>, Collection<Url>> remotesAndUrls = parseRemotes(ini);
     Collection<BranchConfig> trackedInfos = parseTrackedInfos(ini);
+    Core core = parseCore(ini);
 
-    return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos);
+    return new GitConfig(remotesAndUrls.getFirst(), remotesAndUrls.getSecond(), trackedInfos, core);
   }
 
   @NotNull
@@ -122,11 +134,10 @@ public final class GitConfig {
     for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
       String sectionName = stringSectionEntry.getKey();
       Profile.Section section = stringSectionEntry.getValue();
-      if (StringUtil.startsWithIgnoreCase(sectionName, "branch")) {
-        BranchConfig branchConfig = parseBranchSection(sectionName, section);
-        if (branchConfig != null) {
-          configs.add(branchConfig);
-        }
+
+      BranchConfig branchConfig = parseBranchSection(sectionName, section);
+      if (branchConfig != null) {
+        configs.add(branchConfig);
       }
     }
     return configs;
@@ -195,7 +206,6 @@ public final class GitConfig {
       LOG.debug(String.format("Common branch option(s) defined .git/config. sectionName: %s%n section: %s", sectionName, section));
       return null;
     }
-    LOG.error(String.format("Invalid branch section format in .git/config. sectionName: %s%n section: %s", sectionName, section));
     return null;
   }
 
@@ -203,9 +213,8 @@ public final class GitConfig {
   private static Pair<Collection<Remote>, Collection<Url>> parseRemotes(@NotNull Ini ini) {
     Collection<Remote> remotes = new ArrayList<>();
     Collection<Url> urls = new ArrayList<>();
-    for (Map.Entry<String, Profile.Section> stringSectionEntry : ini.entrySet()) {
-      String sectionName = stringSectionEntry.getKey();
-      Profile.Section section = stringSectionEntry.getValue();
+    for (String sectionName : ini.keySet()) {
+      Profile.Section section = ini.get(sectionName);
 
       Remote remote = parseRemoteSection(sectionName, section);
       if (remote != null) {
@@ -352,6 +361,17 @@ public final class GitConfig {
     return null;
   }
 
+  @NotNull
+  private static Core parseCore(@NotNull Ini ini) {
+    String hooksPath = null;
+
+    List<Profile.Section> sections = ContainerUtil.notNullize(ini.getAll(CORE_SECTION));
+    for (Profile.Section section : ContainerUtil.reverse(sections)) { // take entry from last section for duplicates
+      if (hooksPath == null) hooksPath = ContainerUtil.getLastItem(section.getAll("hookspath"));
+    }
+    return new Core(hooksPath);
+  }
+
   private static final class Remote {
 
     @NotNull private final String myName;
@@ -447,6 +467,19 @@ public final class GitConfig {
     @Nullable
     private String getRebase() {
       return myRebase;
+    }
+  }
+
+  public static final class Core {
+    @Nullable private final String myHooksPath;
+
+    private Core(@Nullable String hooksPath) {
+      myHooksPath = hooksPath;
+    }
+
+    @Nullable
+    public String getHooksPath() {
+      return myHooksPath;
     }
   }
 }

@@ -36,8 +36,6 @@ import java.util.function.Function;
 
 /**
  * Adds completion variants for Python classes, functions and variables.
- *
- * @author yole
  */
 public class PyClassNameCompletionContributor extends PyExtendedCompletionContributor {
 

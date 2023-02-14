@@ -38,7 +38,6 @@ public class PsiClassNamePatternCondition extends PatternCondition<PsiClass> {
     return namePattern.accepts(aClass.getQualifiedName(), context);
   }
 
-  @SuppressWarnings("unused") //Used in Kotlin
   public ElementPattern<String> getNamePattern() {
     return namePattern;
   }

@@ -40,7 +40,7 @@ public interface IgnoreEntryBase extends PsiElement {
    * Returns current element's syntax.
    *
    * @return current syntax
-   * @see {@link Syntax}
+   * @see Syntax
    */
   @NotNull
   Syntax getSyntax();

@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -30,7 +31,7 @@ class QuickListPanel {
   QuickList item;
 
   QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
-    myActionsModel = new CollectionListModel<>();
+    myActionsModel = new MyCollectionListModel();
     myActionsList = new JBList<>(myActionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
@@ -67,6 +68,10 @@ class QuickListPanel {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
                           myActionsModel.add(QuickList.SEPARATOR_ID);
+                        }
+                        @Override
+                        public @NotNull ActionUpdateThread getActionUpdateThread() {
+                          return ActionUpdateThread.BGT;
                         }
                       })
                       .setButtonComparator(
@@ -128,6 +133,15 @@ class QuickListPanel {
 
   public JPanel getPanel() {
     return myPanel;
+  }
+
+  private static class MyCollectionListModel extends CollectionListModel<String> {
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      String element = getElementAt(oldIndex);
+      remove(oldIndex);
+      add(newIndex, element);
+    }
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {

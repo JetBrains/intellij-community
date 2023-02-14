@@ -1,4 +1,0 @@
-ctypes.wintypes
-pwd.getpwnam
-time.CLOCK_PROF
-time.CLOCK_UPTIME

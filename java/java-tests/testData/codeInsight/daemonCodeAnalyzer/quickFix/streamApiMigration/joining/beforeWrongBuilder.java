@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Collapse loop with stream 'forEach()'" "true-preview"
 class X {
   private void initBuilder() {
     StringBuilder builder = new StringBuilder();

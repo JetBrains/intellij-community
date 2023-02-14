@@ -1,10 +1,9 @@
 <html>
 <body>
-Reports calls to and implementations of the <b>clone()</b> method and uses of <b>java.lang.Cloneable</b>.
-Some coding standards prohibit <b>clone()</b> usage, and recommend using a copy constructor or <b>static</b> factory method.
-Calls to <b>clone()</b> on arrays are ignored, because that is a common, correct, efficient and compact way to copy an array.
-
+Reports implementations of and calls to the <code>clone()</code> method and uses of <code>java.lang.Cloneable</code>.
+<p>Some coding standards prohibit the use of <code>clone()</code> and recommend using a copy constructor or
+  the <code>static</code> factory method instead.</p>
+<p>The inspection ignores calls to <code>clone()</code> on arrays because it's a correct and compact way to copy an array.</p>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

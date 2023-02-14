@@ -1,57 +1,41 @@
-/*
- * Copyright 2011-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
-public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
-
-  private static final Set<IElementType> binaryPromotionOperators = new THashSet<>();
-
-  static {
-    binaryPromotionOperators.add(JavaTokenType.ASTERISK);
-    binaryPromotionOperators.add(JavaTokenType.DIV);
-    binaryPromotionOperators.add(JavaTokenType.PERC);
-    binaryPromotionOperators.add(JavaTokenType.PLUS);
-    binaryPromotionOperators.add(JavaTokenType.MINUS);
-    binaryPromotionOperators.add(JavaTokenType.LT);
-    binaryPromotionOperators.add(JavaTokenType.LE);
-    binaryPromotionOperators.add(JavaTokenType.GT);
-    binaryPromotionOperators.add(JavaTokenType.GE);
-    binaryPromotionOperators.add(JavaTokenType.EQEQ);
-    binaryPromotionOperators.add(JavaTokenType.NE);
-    binaryPromotionOperators.add(JavaTokenType.AND);
-    binaryPromotionOperators.add(JavaTokenType.XOR);
-    binaryPromotionOperators.add(JavaTokenType.OR);
-  }
+/**
+ * @author Bas Leijdekkers
+ */
+public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  private static final TokenSet binaryPromotionOperators = TokenSet.create(
+    JavaTokenType.ASTERISK,
+    JavaTokenType.DIV,
+    JavaTokenType.PERC,
+    JavaTokenType.PLUS,
+    JavaTokenType.MINUS,
+    JavaTokenType.LT,
+    JavaTokenType.LE,
+    JavaTokenType.GT,
+    JavaTokenType.GE,
+    JavaTokenType.EQEQ,
+    JavaTokenType.NE,
+    JavaTokenType.AND,
+    JavaTokenType.XOR,
+    JavaTokenType.OR
+  );
 
   @NotNull
   @Override
@@ -74,13 +58,12 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiTypeCastExpression)) {
+      if (!(parent instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       if (!isUnnecessaryPrimitiveNumericCast(typeCastExpression)) {
         return;
       }
@@ -107,7 +90,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
   private static class UnnecessaryExplicitNumericCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       if (!isUnnecessaryPrimitiveNumericCast(expression)) {
         // equal types is caught by "Redundant type cast" inspection
@@ -115,7 +98,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       }
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement != null) {
-        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression.getOperand());
+        registerError(typeElement, expression.getOperand());
       }
     }
   }
@@ -133,28 +116,40 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     if (!ClassUtils.isPrimitiveNumericType(operandType)) {
       return false;
     }
-    if (castType.equals(operandType)) {
-      // cast to the same type is caught by "Redundant type cast" inspection
-      return false;
-    }
     PsiElement parent = expression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    if (parent instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    if (parent instanceof PsiPrefixExpression prefixExpression) {
+      // JLS 5.6 Numeric Contexts
+      final IElementType tokenType = prefixExpression.getOperationTokenType();
+      if (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType || JavaTokenType.TILDE == tokenType) {
+        if (TypeUtils.isNarrowingConversion(operandType, castType)) {
+          return false;
+        }
+        if (PsiTypes.intType().equals(castType)) {
+          return !PsiTypes.longType().equals(operandType) && !PsiTypes.floatType().equals(operandType) && !PsiTypes.doubleType().equals(operandType);
+        }
+      }
+      return false;
+    }
+    if (castType.equals(operandType)) {
+      // cast to the same type is caught by "Redundant type cast" inspection
+      return false;
+    }
+    if (parent instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (binaryPromotionOperators.contains(tokenType)) {
         if (TypeUtils.isNarrowingConversion(operandType, castType)) {
           return false;
         }
-        if (PsiType.INT.equals(castType)) {
-          if (PsiType.CHAR.equals(operandType) && TypeUtils.getStringType(polyadicExpression).equals(polyadicExpression.getType())) {
+        if (PsiTypes.intType().equals(castType)) {
+          if (PsiTypes.charType().equals(operandType) && TypeUtils.getStringType(polyadicExpression).equals(polyadicExpression.getType())) {
             return false;
           }
-          return !PsiType.LONG.equals(operandType) && !PsiType.FLOAT.equals(operandType) && !PsiType.DOUBLE.equals(operandType);
+          return !PsiTypes.longType().equals(operandType) && !PsiTypes.floatType().equals(operandType) && !PsiTypes.doubleType().equals(operandType);
         }
-        if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {
+        if (PsiTypes.longType().equals(castType) || PsiTypes.floatType().equals(castType) || PsiTypes.doubleType().equals(castType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
           int expressionIndex = -1;
           for (int i = 0; i < operands.length; i++) {
@@ -183,17 +178,15 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
           return true;
         }
-        return !PsiType.LONG.equals(castType) && isLegalWideningConversion(operand, PsiType.INT);
+        return !PsiTypes.longType().equals(castType) && isLegalWideningConversion(operand, PsiTypes.intType());
       }
       return false;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiType lhsType = assignmentExpression.getType();
       if (castType.equals(lhsType) && (isLegalAssignmentConversion(operand, lhsType) || isLegalWideningConversion(operand, lhsType))) return true;
     }
-    else if (parent instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)parent;
+    else if (parent instanceof PsiVariable variable) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null || typeElement.isInferredType()) {
         return false;
@@ -211,44 +204,44 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
   static boolean isLegalWideningConversion(PsiExpression expression, PsiType requiredType) {
     final PsiType operandType = expression.getType();
-    if (PsiType.DOUBLE.equals(requiredType)) {
-      return PsiType.FLOAT.equals(operandType) ||
-             PsiType.LONG.equals(operandType) ||
-             PsiType.INT.equals(operandType) ||
-             PsiType.CHAR.equals(operandType) ||
-             PsiType.SHORT.equals(operandType) ||
-             PsiType.BYTE.equals(operandType);
+    if (PsiTypes.doubleType().equals(requiredType)) {
+      return PsiTypes.floatType().equals(operandType) ||
+             PsiTypes.longType().equals(operandType) ||
+             PsiTypes.intType().equals(operandType) ||
+             PsiTypes.charType().equals(operandType) ||
+             PsiTypes.shortType().equals(operandType) ||
+             PsiTypes.byteType().equals(operandType);
     }
-    else if (PsiType.FLOAT.equals(requiredType)) {
-      return PsiType.LONG.equals(operandType) ||
-             PsiType.INT.equals(operandType) ||
-             PsiType.CHAR.equals(operandType) ||
-             PsiType.SHORT.equals(operandType) ||
-             PsiType.BYTE.equals(operandType);
+    else if (PsiTypes.floatType().equals(requiredType)) {
+      return PsiTypes.longType().equals(operandType) ||
+             PsiTypes.intType().equals(operandType) ||
+             PsiTypes.charType().equals(operandType) ||
+             PsiTypes.shortType().equals(operandType) ||
+             PsiTypes.byteType().equals(operandType);
     }
-    else if (PsiType.LONG.equals(requiredType)) {
-      return PsiType.INT.equals(operandType) ||
-             PsiType.CHAR.equals(operandType) ||
-             PsiType.SHORT.equals(operandType) ||
-             PsiType.BYTE.equals(operandType);
+    else if (PsiTypes.longType().equals(requiredType)) {
+      return PsiTypes.intType().equals(operandType) ||
+             PsiTypes.charType().equals(operandType) ||
+             PsiTypes.shortType().equals(operandType) ||
+             PsiTypes.byteType().equals(operandType);
     }
-    else if (PsiType.INT.equals(requiredType)) {
-      return PsiType.CHAR.equals(operandType) ||
-             PsiType.SHORT.equals(operandType) ||
-             PsiType.BYTE.equals(operandType);
+    else if (PsiTypes.intType().equals(requiredType)) {
+      return PsiTypes.charType().equals(operandType) ||
+             PsiTypes.shortType().equals(operandType) ||
+             PsiTypes.byteType().equals(operandType);
     }
     return false;
   }
 
   static boolean isLegalAssignmentConversion(PsiExpression expression, PsiType assignmentType) {
     // JLS 5.2 Assignment Conversion
-    if (PsiType.SHORT.equals(assignmentType)) {
+    if (PsiTypes.shortType().equals(assignmentType)) {
       return canValueBeContained(expression, Short.MIN_VALUE, Short.MAX_VALUE);
     }
-    else if (PsiType.CHAR.equals(assignmentType)) {
+    else if (PsiTypes.charType().equals(assignmentType)) {
       return canValueBeContained(expression, Character.MIN_VALUE, Character.MAX_VALUE);
     }
-    else if (PsiType.BYTE.equals(assignmentType)) {
+    else if (PsiTypes.byteType().equals(assignmentType)) {
       return canValueBeContained(expression, Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
     return false;
@@ -256,7 +249,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
 
   private static boolean canValueBeContained(PsiExpression expression, int lowerBound, int upperBound) {
     final PsiType expressionType = expression.getType();
-    if (!PsiType.INT.equals(expressionType)) {
+    if (!PsiTypes.intType().equals(expressionType)) {
       return false;
     }
     final Object constant = ExpressionUtils.computeConstantExpression(expression);

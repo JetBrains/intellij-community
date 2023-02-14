@@ -11,9 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class MoreOperationNode extends ZenCodingNode {
   private final ZenCodingNode myLeftOperand;
   private final ZenCodingNode myRightOperand;
@@ -51,8 +48,7 @@ public class MoreOperationNode extends ZenCodingNode {
                                      boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     if (myLeftOperand instanceof MulOperationNode || (myLeftOperand instanceof UnaryMulOperationNode && surroundedText != null)) {
       List<GenerationNode> result = new ArrayList<>();
-      if (myLeftOperand instanceof MulOperationNode) {
-        MulOperationNode mul = (MulOperationNode)myLeftOperand;
+      if (myLeftOperand instanceof MulOperationNode mul) {
         for (int i = 0; i < mul.getRightOperand(); i++) {
           List<GenerationNode> parentNodes = mul.getLeftOperand().expand(i, totalIterations, surroundedText, callback, insertSurroundedTextAtTheEnd,
                                                                          parent);

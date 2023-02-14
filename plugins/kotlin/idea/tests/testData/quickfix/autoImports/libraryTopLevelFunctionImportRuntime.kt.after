@@ -1,0 +1,9 @@
+// "Import function 'measureNanoTime'" "true"
+// WITH_STDLIB
+package some
+
+import kotlin.system.measureNanoTime
+
+fun testFun() {
+  measureNanoTime({})
+}

@@ -18,6 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,13 +27,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleIdeManager;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+
+import java.util.StringJoiner;
 
 public class GradleRunConfiguration extends ExternalSystemRunConfiguration implements SMRunnerConsolePropertiesProvider,
                                                                                       TargetEnvironmentAwareRunProfile {
 
   public static final String DEBUG_FLAG_NAME = "GradleScriptDebugEnabled";
   public static final String DEBUG_ALL_NAME = "DebugAllEnabled";
+  public static final String FORCE_TEST_NAME = "ForceTestExec";
   public static final Key<Boolean> DEBUG_FLAG_KEY = Key.create("DEBUG_GRADLE_SCRIPT");
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
 
@@ -39,6 +45,8 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   public static final Key<String> DEBUGGER_PARAMETERS_KEY = Key.create("DEBUGGER_PARAMETERS");
 
   private boolean isDebugAllEnabled = false;
+
+  private boolean forceTestExecution = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
@@ -54,11 +62,37 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     setDebugServerProcess(scriptDebugEnabled);
   }
 
+  public @NotNull String getRawCommandLine() {
+    StringJoiner commandLine = new StringJoiner(" ");
+    for (String taskName : getSettings().getTaskNames()) {
+      commandLine.add(taskName);
+    }
+    String scriptParameters = getSettings().getScriptParameters();
+    if (StringUtil.isNotEmpty(scriptParameters)) {
+      commandLine.add(scriptParameters);
+    }
+    return commandLine.toString();
+  }
+
+  public void setRawCommandLine(@NotNull String commandLine) {
+    setCommandLine(GradleCommandLine.parse(commandLine));
+  }
+
+  public void setCommandLine(@NotNull GradleCommandLine commandLine) {
+    getSettings().setTaskNames(commandLine.getTasksAndArguments().toList());
+    getSettings().setScriptParameters(commandLine.getScriptParameters().toString());
+  }
+
+  public @NotNull GradleCommandLine getCommandLine() {
+    return GradleCommandLine.parse(getRawCommandLine());
+  }
+
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     putUserData(DEBUG_FLAG_KEY, Boolean.valueOf(isDebugServerProcess()));
     putUserData(DEBUG_ALL_KEY, Boolean.valueOf(isDebugAllEnabled));
+    putUserData(GradleConstants.FORCE_TEST_EXECUTION, forceTestExecution);
     return super.getState(executor, env);
   }
 
@@ -73,11 +107,16 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     super.readExternal(element);
     final Element child = element.getChild(DEBUG_FLAG_NAME);
     if (child != null) {
-      setDebugServerProcess(Boolean.valueOf(child.getText()));
+      setDebugServerProcess(Boolean.parseBoolean(child.getText()));
     }
     final Element debugAll = element.getChild(DEBUG_ALL_NAME);
     if (debugAll != null) {
-      isDebugAllEnabled = Boolean.valueOf(debugAll.getText());
+      isDebugAllEnabled = Boolean.parseBoolean(debugAll.getText());
+    }
+
+    final Element forceTestExec = element.getChild(FORCE_TEST_NAME);
+    if (forceTestExec != null) {
+      forceTestExecution = Boolean.parseBoolean(forceTestExec.getText());
     }
   }
 
@@ -87,16 +126,22 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
     final Element debugAll = new Element(DEBUG_ALL_NAME);
     debugAll.setText(String.valueOf(isDebugAllEnabled));
     element.addContent(debugAll);
+    final Element forceTestExec = new Element(FORCE_TEST_NAME);
+    forceTestExec.setText(String.valueOf(forceTestExecution));
+    element.addContent(forceTestExec);
   }
 
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", true)) {
+      return super.getConfigurationEditor();
+    }
+
     final SettingsEditor<ExternalSystemRunConfiguration> editor = super.getConfigurationEditor();
-    if (editor instanceof SettingsEditorGroup) {
-      final SettingsEditorGroup group = (SettingsEditorGroup)editor;
+    if (editor instanceof SettingsEditorGroup group) {
       //noinspection unchecked
-      group.addEditor(GradleBundle.message("gradle.settings.title.debug"), new GradleDebugSettingsEditor());
+      group.addEditor(GradleBundle.message("gradle.settings.title"), new GradleDebugSettingsEditor());
     }
     return editor;
   }
@@ -133,5 +178,13 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @Override
   public void setDefaultTargetName(@Nullable String targetName) {
     getOptions().setRemoteTarget(targetName);
+  }
+
+  public boolean isForceTestExecution() {
+    return forceTestExecution;
+  }
+
+  public void setForceTestExecution(boolean forceTestExecution) {
+    this.forceTestExecution = forceTestExecution;
   }
 }

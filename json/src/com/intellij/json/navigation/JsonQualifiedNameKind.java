@@ -10,12 +10,9 @@ public enum JsonQualifiedNameKind {
 
   @Override
   public String toString() {
-    switch (this) {
-      case Qualified:
-        return JsonBundle.message("qualified.name.qualified");
-      case JsonPointer:
-        return JsonBundle.message("qualified.name.pointer");
-    }
-    throw new NotImplementedError("Unknown name kind: " + this.name());
+    return switch (this) {
+      case Qualified -> JsonBundle.message("qualified.name.qualified");
+      case JsonPointer -> JsonBundle.message("qualified.name.pointer");
+    };
   }
 }

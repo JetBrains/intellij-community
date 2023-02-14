@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -10,8 +10,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,10 +20,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.PresentableChange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +39,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
+  implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -45,13 +54,55 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   // Abstract
   //
 
+  @Override
+  public ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly) {
+    Project project = getProject();
+    Wrapper change = getCurrentChange();
+    List<? extends Wrapper> changes = ContainerUtil.newArrayList(selectedOnly ? iterateSelectedChanges() : iterateAllChanges());
+    return ListSelection.create(changes, change)
+      .withExplicitSelection(selectedOnly)
+      .map(wrapper -> wrapper.createProducer(project));
+  }
+
+  /**
+   * @deprecated Use {@link #iterateSelectedChanges()}
+   */
   @NotNull
-  public abstract Stream<Wrapper> getSelectedChanges();
+  @Deprecated
+  @ApiStatus.OverrideOnly
+  public Stream<? extends Wrapper> getSelectedChanges() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @deprecated Use {@link #iterateAllChanges()}
+   */
+  @NotNull
+  @Deprecated
+  @ApiStatus.OverrideOnly
+  public Stream<? extends Wrapper> getAllChanges() {
+    throw new UnsupportedOperationException();
+  }
 
   @NotNull
-  public abstract Stream<Wrapper> getAllChanges();
+  public Iterable<? extends Wrapper> iterateSelectedChanges() {
+    return JBIterable.from(getSelectedChanges().collect(Collectors.toList()));
+  }
 
+  @NotNull
+  public Iterable<? extends Wrapper> iterateAllChanges() {
+    return JBIterable.from(getAllChanges().collect(Collectors.toList()));
+  }
+
+  /**
+   * Select change in view (ex: in corresponding JTree).
+   * NB: might do nothing if existing multiple selection contains passed change.
+   */
   protected abstract void selectChange(@NotNull Wrapper change);
+
+  protected boolean showAllChangesForEmptySelection() {
+    return true;
+  }
 
   //
   // Update
@@ -135,7 +186,8 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void refresh(boolean fromModelRefresh) {
     if (isDisposed()) return;
 
-    List<Wrapper> selectedChanges = getSelectedChanges().collect(Collectors.toList());
+    List<? extends Wrapper> selectedChanges = ContainerUtil.newArrayList(iterateSelectedChanges());
+    if (selectedChanges.isEmpty() && showAllChangesForEmptySelection()) selectedChanges = ContainerUtil.newArrayList(iterateAllChanges());
 
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
     if (fromModelRefresh &&
@@ -144,7 +196,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
         getContext().isWindowFocused() &&
         getContext().isFocusedInWindow()) {
       // Do not automatically switch focused viewer
-      if (selectedChanges.size() == 1 && getAllChanges().anyMatch(it -> myCurrentChange.equals(it))) {
+      if (selectedChanges.size() == 1 && ContainerUtil.exists(iterateAllChanges(), it -> myCurrentChange.equals(it))) {
         selectChange(myCurrentChange); // Restore selection if necessary
       }
       return;
@@ -165,7 +217,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Nullable
   @RequiresEdt
-  public String getCurrentChangeName() {
+  public @Nls String getCurrentChangeName() {
     if (myCurrentChange == null) {
       return null;
     }
@@ -184,6 +236,31 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Override
+  protected @Nullable AnAction createGoToChangeAction() {
+    return new MyGoToChangePopupAction();
+  }
+
+  private class MyGoToChangePopupAction extends PresentableGoToChangePopupAction.Default<Wrapper> {
+    @Override
+    protected @NotNull ListSelection<? extends Wrapper> getChanges() {
+      List<? extends Wrapper> allChanges = ContainerUtil.newArrayList(iterateAllChanges());
+      return ListSelection.create(allChanges, getCurrentChange());
+    }
+
+    @Override
+    protected boolean canNavigate() {
+      List<? extends Wrapper> allChanges = toListIfNotMany(iterateAllChanges(), true);
+      return allChanges == null || allChanges.size() > 1;
+    }
+
+    @Override
+    protected void onSelected(@NotNull Wrapper change) {
+      setCurrentChange(change);
+      selectChange(change);
+    }
+  }
+
+  @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
     return strategy != null && strategy.canGoNext();
@@ -197,14 +274,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected void goToNextChange(boolean fromDifferences) {
-    Objects.requireNonNull(getSelectionStrategy(false)).goNext();
-    updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
+    goToNextChangeImpl(fromDifferences, () -> {
+      Objects.requireNonNull(getSelectionStrategy(false)).goNext();
+    });
   }
 
   @Override
   protected void goToPrevChange(boolean fromDifferences) {
-    Objects.requireNonNull(getSelectionStrategy(false)).goPrev();
-    updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
+    goToPrevChangeImpl(fromDifferences, () -> {
+      Objects.requireNonNull(getSelectionStrategy(false)).goPrev();
+    });
   }
 
   @Override
@@ -215,15 +294,22 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   @Nullable
   private PrevNextDifferenceIterable getSelectionStrategy(boolean fromUpdate) {
     if (myCurrentChange == null) return null;
-    List<Wrapper> selectedChanges = toListIfNotMany(getSelectedChanges(), fromUpdate);
+
+    List<? extends Wrapper> selectedChanges = toListIfNotMany(iterateSelectedChanges(), fromUpdate);
     if (selectedChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
-    if (selectedChanges.isEmpty()) return null;
-    if (selectedChanges.size() == 1) {
-      List<Wrapper> allChanges = toListIfNotMany(getAllChanges(), fromUpdate);
-      if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
-      return new ChangesNavigatable(allChanges, selectedChanges.get(0), true);
+    if (selectedChanges.size() > 1) {
+      return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
     }
-    return new ChangesNavigatable(selectedChanges, selectedChanges.get(0), false);
+    if (selectedChanges.isEmpty() && !showAllChangesForEmptySelection()) {
+      return null;
+    }
+
+    List<? extends Wrapper> allChanges = toListIfNotMany(iterateAllChanges(), fromUpdate);
+    if (allChanges == null) return DumbPrevNextDifferenceIterable.INSTANCE;
+    if (allChanges.isEmpty()) return null;
+
+    Wrapper selection = selectedChanges.isEmpty() ? allChanges.get(0) : selectedChanges.get(0);
+    return new ChangesNavigatable(allChanges, selection, true);
   }
 
   private class ChangesNavigatable implements PrevNextDifferenceIterable {
@@ -282,10 +368,10 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  private static <T> List<T> toListIfNotMany(@NotNull Stream<T> stream, boolean fromUpdate) {
-    if (!fromUpdate) return stream.collect(Collectors.toList());
+  public static <T> List<? extends T> toListIfNotMany(@NotNull Iterable<? extends T> iterable, boolean fromUpdate) {
+    if (!fromUpdate) return ContainerUtil.newArrayList(iterable);
 
-    List<T> result = stream.limit(MANY_CHANGES_THRESHOLD + 1).collect(Collectors.toList());
+    List<? extends T> result = JBIterable.from(iterable).take(MANY_CHANGES_THRESHOLD + 1).toList();
     if (result.size() > MANY_CHANGES_THRESHOLD) return null;
     return result;
   }
@@ -314,13 +400,13 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
   }
 
+  public abstract static class Wrapper implements PresentableChange {
 
-  public abstract static class Wrapper {
     @NotNull
     public abstract Object getUserObject();
 
     @Nullable
-    public abstract String getPresentableName();
+    public abstract @Nls String getPresentableName();
 
     @Nullable
     public abstract DiffRequestProducer createProducer(@Nullable Project project);
@@ -340,11 +426,17 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
   }
 
-  protected static class ChangeWrapper extends Wrapper {
+  public static class ChangeWrapper extends Wrapper {
     @NotNull protected final Change change;
+    @Nullable protected final ChangesBrowserNode.Tag nodeTag;
 
     public ChangeWrapper(@NotNull Change change) {
+      this(change, null);
+    }
+
+    public ChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag nodeTag) {
       this.change = change;
+      this.nodeTag = nodeTag;
     }
 
     @NotNull
@@ -353,10 +445,25 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       return change;
     }
 
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return ChangesUtil.getFilePath(change);
+    }
+
+    @Override
+    public @NotNull FileStatus getFileStatus() {
+      return change.getFileStatus();
+    }
+
     @Nullable
     @Override
-    public String getPresentableName() {
-      return ChangesUtil.getFilePath(change).getName();
+    public @Nls String getPresentableName() {
+      return getFilePath().getName();
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return nodeTag;
     }
 
     @Nullable
@@ -383,12 +490,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change) && Objects.equals(wrapper.nodeTag, nodeTag);
     }
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return Objects.hash(change, nodeTag);
     }
   }
 
@@ -399,6 +506,21 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       this.path = path;
     }
 
+    @Override
+    public @NotNull FilePath getFilePath() {
+      return path;
+    }
+
+    @Override
+    public @NotNull FileStatus getFileStatus() {
+      return FileStatus.UNKNOWN;
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
+    }
+
     @NotNull
     @Override
     public Object getUserObject() {
@@ -407,7 +529,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Nullable
     @Override
-    public String getPresentableName() {
+    public @Nls String getPresentableName() {
       return path.getName();
     }
 

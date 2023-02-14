@@ -1,20 +1,7 @@
-/*
- * Copyright 2007-2017 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
@@ -47,23 +36,18 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final String typeText = ((PsiType)infos[0]).getPresentableText();
     final int message = ((Integer)infos[1]).intValue();
-    switch (message) {
-      case 1:
-        return InspectionGadgetsBundle.message("synchronized.on.literal.object.problem.descriptor", typeText);
-      case 2:
-        return InspectionGadgetsBundle.message("synchronized.on.direct.literal.object.problem.descriptor", typeText);
-      case 3:
-        return InspectionGadgetsBundle.message("synchronized.on.possibly.literal.object.problem.descriptor", typeText);
-      default:
-        throw new AssertionError();
-    }
+    return switch (message) {
+      case 1 -> InspectionGadgetsBundle.message("synchronized.on.literal.object.problem.descriptor", typeText);
+      case 2 -> InspectionGadgetsBundle.message("synchronized.on.direct.literal.object.problem.descriptor", typeText);
+      case 3 -> InspectionGadgetsBundle.message("synchronized.on.possibly.literal.object.problem.descriptor", typeText);
+      default -> throw new AssertionError();
+    };
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("synchronized.on.literal.object.warn.on.all.option"),
-                                          this, "warnOnAllPossiblyLiterals");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("warnOnAllPossiblyLiterals", InspectionGadgetsBundle.message("synchronized.on.literal.object.warn.on.all.option")));
   }
 
   @Override
@@ -87,7 +71,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
       if (!LITERAL_TYPES.contains(type.getCanonicalText())) {
           return;
       }
-      if (!(lockExpression instanceof PsiReferenceExpression)) {
+      if (!(lockExpression instanceof PsiReferenceExpression referenceExpression)) {
         if (ExpressionUtils.isLiteral(lockExpression)) {
           registerError(lockExpression, type, Integer.valueOf(2));
         }
@@ -96,15 +80,13 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
         }
         return;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lockExpression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         if (warnOnAllPossiblyLiterals) {
           registerError(lockExpression, type, Integer.valueOf(3));
         }
         return;
       }
-      final PsiVariable variable = (PsiVariable)target;
       final PsiExpression initializer = variable.getInitializer();
       if (!ExpressionUtils.isLiteral(initializer)) {
         if (warnOnAllPossiblyLiterals) {

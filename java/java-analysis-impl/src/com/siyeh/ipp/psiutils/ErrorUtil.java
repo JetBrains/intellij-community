@@ -59,7 +59,7 @@ public final class ErrorUtil {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression literal) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
       if (PsiLiteralUtil.isUnsafeLiteral(literal)) {
         containsErrorElement = true;
         stopWalking();

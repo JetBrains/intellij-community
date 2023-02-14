@@ -5,7 +5,7 @@ public abstract class Test<T> {
                          Test<? super T> sBind,
                          Test<? extends T> eBind) {
     sBind.toProvider(provider);
-    eBind.toProvider<error descr="Cannot resolve method 'toProvider(a.Provider<T>)'">(provider)</error><EOLError descr="';' expected"></EOLError>
+    eBind.toProvider<error descr="Cannot resolve method 'toProvider(Provider<T>)'">(provider)</error><EOLError descr="';' expected"></EOLError>
   }
 
   abstract void toProvider(Provider<? extends T> var1);

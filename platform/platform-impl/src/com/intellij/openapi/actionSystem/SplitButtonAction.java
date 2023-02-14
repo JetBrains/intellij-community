@@ -6,13 +6,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
@@ -34,7 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
@@ -43,11 +41,13 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     setPopup(true);
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {}
-
   public @NotNull ActionGroup getActionGroup() {
     return myActionGroup;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myActionGroup.getActionUpdateThread();
   }
 
   @Override
@@ -60,9 +60,12 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     if (presentation.isVisible()) {
       AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
       if (action != null) {
-        action.update(e);
+        Presentation actionPresentation = e.getUpdateSession().presentation(action);
+        presentation.copyFrom(actionPresentation, splitButton);
         if (splitButton != null) {
+          boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
           splitButton.actionEnabled = presentation.isEnabled();
+          if (shouldRepaint) splitButton.repaint();
         }
         presentation.setEnabledAndVisible(true);
       }
@@ -71,10 +74,9 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
   }
 
-  // Get first enabled action from the group. It there are no enabled actions then returns first or null if no children.
   @Nullable
   private AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
-    UpdateSession session = Utils.getOrCreateUpdateSession(e);
+    UpdateSession session = e.getUpdateSession();
     var children = session.children(myActionGroup);
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
     return firstEnabled != null ? firstEnabled : ContainerUtil.getFirstItem(children);
@@ -208,20 +210,19 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
 
     @Override
-    protected void actionPerformed(AnActionEvent event) {
+    protected void actionPerformed(@NotNull AnActionEvent event) {
       HelpTooltip.hide(this);
 
-      if (mousePressType == MousePressType.Popup) {
-        showGroupInPopupMenu(event, myActionGroup);
+      if (mousePressType == MousePressType.Popup || !selectedActionEnabled()) {
+        showActionGroupPopup(myActionGroup, event);
       }
-      else if (selectedActionEnabled()) {
-        AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
-        ActionUtil.performActionDumbAware(selectedAction, newEvent);
+      else {
+        selectedAction.actionPerformed(event);
       }
     }
 
     @Override
-    protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+    protected void showActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
@@ -256,8 +257,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       myConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
       myConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-          if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+          if (event.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
             selectedAction = action;
             copyPresentation(event.getPresentation());
             repaint();

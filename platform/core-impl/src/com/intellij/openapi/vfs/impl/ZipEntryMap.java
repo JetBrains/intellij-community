@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Conditions;
@@ -160,39 +160,22 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
   private final class EntrySet extends AbstractSet<Entry<String, ArchiveHandler.EntryInfo>> {
     @Override
-    public final int size() {
+    public int size() {
       return ZipEntryMap.this.size();
     }
 
     @Override
-    public final void clear() {
+    public void clear() {
       ZipEntryMap.this.clear();
     }
 
     @Override
-    public final Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
-      Iterator<? extends ArchiveHandler.EntryInfo> iterator = ContainerUtil.iterate(Arrays.asList(entries), Conditions.notNull()).iterator();
-      return new Iterator<Entry<String, ArchiveHandler.EntryInfo>>() {
-        @Override
-        public boolean hasNext() {
-          return iterator.hasNext();
-        }
-
-        @Override
-        public Entry<String, ArchiveHandler.EntryInfo> next() {
-          ArchiveHandler.EntryInfo entry = iterator.next();
-          return new SimpleEntry<>(getRelativePath(entry), entry);
-        }
-
-        @Override
-        public void remove() {
-          iterator.remove();
-        }
-      };
+    public Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
+      return ContainerUtil.map(ContainerUtil.filter(entries, Objects::nonNull), entry -> (Entry<String, ArchiveHandler.EntryInfo>)new SimpleEntry<>(getRelativePath(entry), entry)).iterator();
     }
 
     @Override
-    public final boolean contains(Object o) {
+    public boolean contains(Object o) {
       if (!(o instanceof Map.Entry)) {
         return false;
       }
@@ -203,7 +186,7 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     }
 
     @Override
-    public final boolean remove(Object o) {
+    public boolean remove(Object o) {
       throw new UnsupportedOperationException();
     }
   }

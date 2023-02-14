@@ -13,21 +13,26 @@ public enum LoopDirection {
   ASCENDING,
   DESCENDING;
 
+  /**
+   * @param counter loop counter variable
+   * @param updateStatement statement which changes the counter
+   * @return {@link LoopDirection#ASCENDING} if counter increases in the loop e.g. for (int i = 0; i < 10; i++) {}<br>
+   *         {@link LoopDirection#DESCENDING} if counter decreases in the loop e.g. for (int i = 10; i >= 0; i--) {}<br>
+   *         null if current loop is uncountable
+   */
   @Nullable
   public static LoopDirection evaluateLoopDirection(@NotNull PsiVariable counter, @Nullable PsiStatement updateStatement) {
     PsiExpressionStatement expressionStatement = tryCast(updateStatement, PsiExpressionStatement.class);
     if (expressionStatement == null) return null;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expressionStatement.getExpression());
-    if (expression instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unaryExpression = (PsiUnaryExpression)expression;
+    if (expression instanceof PsiUnaryExpression unaryExpression) {
       IElementType tokenType = unaryExpression.getOperationTokenType();
       if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
       PsiExpression operand = unaryExpression.getOperand();
       if (!ExpressionUtils.isReferenceTo(operand, counter)) return null;
       return tokenType == JavaTokenType.PLUSPLUS ? ASCENDING : DESCENDING;
     }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression assignmentExpression) {
       PsiExpression lhs = assignmentExpression.getLExpression();
       if (!ExpressionUtils.isReferenceTo(lhs, counter)) return null;
       PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());

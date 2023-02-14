@@ -15,9 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-/**
- * @author Vladimir Kondratyev
- */
 final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
   private final JLabel myText = new JLabel("", SwingConstants.CENTER);
 

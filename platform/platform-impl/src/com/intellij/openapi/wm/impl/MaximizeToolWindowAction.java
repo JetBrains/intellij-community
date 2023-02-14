@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.actions.ToolwindowFusEventFields;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -33,11 +34,16 @@ public class MaximizeToolWindowAction extends AnAction implements DumbAware, Fus
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(true);
     Project project = e.getProject();
     if (project == null || project.isDisposed()) {
-      e.getPresentation().setEnabled(false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     ToolWindow toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);

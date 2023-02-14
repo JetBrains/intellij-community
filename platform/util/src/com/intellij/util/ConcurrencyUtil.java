@@ -161,12 +161,11 @@ public final class ConcurrencyUtil {
         thread.join(unit.toMillis(timeout));
       }
       catch (InterruptedException e) {
-        @NonNls StringBuilder trace = new StringBuilder().append("Thread leaked: ").append(thread).append("; ")
-          .append(thread.getState()).append(" (").append(thread.isAlive()).append(")\n--- its stacktrace:\n");
+        @NonNls String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
-          trace.append(" at ").append(stackTraceElement).append("\n");
+          trace += " at "+stackTraceElement+"\n";
         }
-        trace.append("---\n");
+        trace += "---\n";
         @NonNls String message = "Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
                                  "Thread " + thread + " dump:\n" + trace +
                                  "all thread dump:\n" + ThreadDumper.dumpThreadsToString() + "\n/////";
@@ -192,6 +191,21 @@ public final class ConcurrencyUtil {
   public static void getAll(@NotNull Collection<? extends Future<?>> futures) throws ExecutionException, InterruptedException {
     for (Future<?> future : futures) {
       future.get();
+    }
+  }
+  public static void getAll(long timeout, @NotNull TimeUnit timeUnit, @NotNull Collection<? extends @NotNull Future<?>> futures)
+    throws ExecutionException, InterruptedException, TimeoutException {
+    long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
+    for (Future<?> future : futures) {
+      long toWait = deadline - System.nanoTime();
+      if (toWait < 0) {
+        throw new TimeoutException();
+      }
+      try {
+        future.get(toWait, TimeUnit.NANOSECONDS);
+      }
+      catch (CancellationException ignored) {
+      }
     }
   }
 
@@ -249,9 +263,10 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Rethrow exception (wrapped in RuntimeException if necessary) if it's the completion result of the {@code task}
+   * Complete the {@code task} and rethrow exceptions (wrapped in RuntimeException if necessary), if any.
+   * Useful when the result of the Future is otherwise abandoned.
    */
-  public static void manifestExceptionsIn(@NotNull Future<?> task) {
+  public static void manifestExceptionsIn(@NotNull Future<?> task) throws RuntimeException, Error {
     try {
       task.get();
     }

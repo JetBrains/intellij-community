@@ -14,24 +14,26 @@ public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParam
 
   public void testTrailingWhitespace() {
     //noinspection UnnecessaryStringEscape
-    configureFromFileText("TrailingWhitespace.java", "class TextBlockMigration {\n" +
-                                                     "\n" +
-                                                     "  String multipleLiterals() {\n" +
-                                                     "    return \"\"\"<caret> \t\f\n" +
-                                                     "           hello \t\f\n" +
-                                                     "           world \t\f\n" +
-                                                     "           \"\"\";\n" +
-                                                     "  }\n" +
-                                                     "}");
+    configureFromFileText("TrailingWhitespace.java", """
+      class TextBlockMigration {
+
+        String multipleLiterals() {
+          return ""\"<caret> \t\f
+                 hello \t\f
+                 world \t\f
+                 ""\";
+        }
+      }""");
     final IntentionAction action = findActionWithText("Replace with regular string literal");
     invoke(action);
-    checkResultByText("class TextBlockMigration {\n" +
-                      "\n" +
-                      "  String multipleLiterals() {\n" +
-                      "    return \"hello\\n\" +\n" +
-                      "           \"world\\n\";\n" +
-                      "  }\n" +
-                      "}");
+    checkResultByText("""
+                        class TextBlockMigration {
+
+                          String multipleLiterals() {
+                            return "hello\\n" +
+                                   "world\\n";
+                          }
+                        }""");
   }
 
   @Override

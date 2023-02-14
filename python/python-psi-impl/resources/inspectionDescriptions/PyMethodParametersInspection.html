@@ -1,5 +1,30 @@
 <html>
 <body>
-This inspection looks for methods that lack a first parameter (which is usually named <code>self</code> ).
+<p>Reports methods that lack the first parameter that is usually
+  named <code>self</code>.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Movie:
+
+   def show():
+       pass
+</pre>
+<p>When the quick-fix is applied, the code changes to:</p>
+<pre style="font-family: monospace">
+class Movie:
+
+   def show(self):
+       pass
+</pre>
+<p>The inspection also reports naming issues in class methods.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Movie:
+    @classmethod
+    def show(abc):
+        pass
+</pre>
+<p>Since the first parameter of a class method should be <code>cls</code>, the IDE provides a quick-fix
+  to rename it.</p>
 </body>
 </html>

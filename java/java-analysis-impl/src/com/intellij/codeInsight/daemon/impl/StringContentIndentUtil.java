@@ -44,7 +44,7 @@ public final class StringContentIndentUtil {
   public static Map<TextRange, RangeHighlighter> getIndentHighlighters(@NotNull Editor editor) {
     List<RangeHighlighter> highlighters = editor.getUserData(TEXT_BLOCK_HIGHLIGHTERS_IN_EDITOR_KEY);
     if (highlighters == null) return Collections.emptyMap();
-    return highlighters.stream().collect(Collectors.toMap(h -> new TextRange(h.getStartOffset(), h.getEndOffset()), Function.identity()));
+    return highlighters.stream().collect(Collectors.toMap(h -> h.getTextRange(), Function.identity()));
   }
 
   /**

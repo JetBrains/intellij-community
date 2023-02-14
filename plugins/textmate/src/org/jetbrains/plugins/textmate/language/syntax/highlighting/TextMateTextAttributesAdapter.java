@@ -33,16 +33,10 @@ public class TextMateTextAttributesAdapter {
     myBackgroundAlpha = background.second;
 
     switch (attributes.getFontStyle()) {
-      case PLAIN:
-        myTextAttributes.setFontType(Font.PLAIN);
-        break;
-      case ITALIC:
-        myTextAttributes.setFontType(Font.ITALIC);
-        break;
-      case BOLD:
-        myTextAttributes.setFontType(Font.BOLD);
-        break;
-      case UNDERLINE:
+      case PLAIN -> myTextAttributes.setFontType(Font.PLAIN);
+      case ITALIC -> myTextAttributes.setFontType(Font.ITALIC);
+      case BOLD -> myTextAttributes.setFontType(Font.BOLD);
+      case UNDERLINE -> {
         Color foregroundColor = myTextAttributes.getForegroundColor();
         Color effectColor;
         if (foregroundColor != null) {
@@ -54,7 +48,7 @@ public class TextMateTextAttributesAdapter {
         }
         myTextAttributes.setEffectColor(effectColor);
         myTextAttributes.setEffectType(EffectType.LINE_UNDERSCORE);
-        break;
+      }
     }
   }
 

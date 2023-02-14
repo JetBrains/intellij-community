@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -14,6 +15,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,6 +25,9 @@ public class PyImportChooser implements ImportChooser {
 
   @Override
   public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Promises.resolvedPromise(sources.get(0));
+    }
 
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 

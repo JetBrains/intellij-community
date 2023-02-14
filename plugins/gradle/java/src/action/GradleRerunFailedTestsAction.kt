@@ -30,12 +30,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
-import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
-import org.jetbrains.plugins.gradle.util.containsTasks
+import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
 class GradleRerunFailedTestsAction(
   consoleView: GradleTestsExecutionConsole
@@ -58,30 +56,39 @@ class GradleRerunFailedTestsAction(
   }
 
   private fun ExternalSystemTaskExecutionSettings.setupRerunTestConfiguration(project: Project) {
-    val failedTests = getFailedTests(project)
-      .filterIsInstance<GradleSMTestProxy>()
-      .map { getTestLocationInfo(project, it) }
+    val failedTests = getFailedTests(project).filterIsInstance<GradleSMTestProxy>().mapNotNull { getTestLocationInfo(project, it) }
     val findTestSource = { it: TestLocationInfo -> getSourceFile(it.element) }
-    val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod, true) }
-    val getTestsTaskToRun = { source: VirtualFile ->
-      val foundTasksToRun = findAllTestsTaskToRun(source, project)
-      foundTasksToRun
-        .filter { tasks -> containsTasks(tasks) }
-        .ifEmpty { listOfNotNull(foundTasksToRun.firstOrNull()) }
-    }
+    val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod) }
+
+    val tasksToRun = taskNames
+      .takeWhile { !it.startsWith("--") } // gradle filter is out of interest, created from scratch
+      .flatMap { it.split(" ") }
+    val formattedTasksToRun = listOf(tasksToRun)
+    val getTestsTaskToRun = { _: VirtualFile -> formattedTasksToRun }
+
     if (!applyTestConfiguration(externalProjectPath, failedTests, findTestSource, createFiler, getTestsTaskToRun)) {
       LOG.warn("Cannot apply test configuration, uses previous run configuration")
     }
   }
 
-  private fun getTestLocationInfo(project: Project, testProxy: GradleSMTestProxy): TestLocationInfo {
+  private fun getTestLocationInfo(project: Project, testProxy: GradleSMTestProxy): TestLocationInfo? {
     val projectScope = GlobalSearchScope.projectScope(project)
     val location = testProxy.getLocation(project, projectScope)
-    return when (val element = location?.psiElement) {
+    val locationInfo = when (val element = location?.psiElement) {
       is PsiClass -> TestLocationInfo(location, element, element)
-      is PsiMethod -> TestLocationInfo(location, element, element.containingClass, element)
-      else -> TestLocationInfo(location)
+      is PsiMethod -> {
+        val parentLocation = testProxy.parent.getLocation(project, projectScope)
+        when (val parentElement = parentLocation?.psiElement) {
+          is PsiClass -> TestLocationInfo(location, element, parentElement, element)
+          else -> null
+        }
+      }
+      else -> null
     }
+    if (locationInfo == null) {
+      LOG.warn("Undefined test to rerun: ${testProxy.locationUrl}")
+    }
+    return locationInfo
   }
 
   private data class TestLocationInfo(

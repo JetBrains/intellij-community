@@ -78,20 +78,31 @@ class PluginChunkDataSource(
 
   private fun getRange(range: String): MutableList<ByteArray> {
     val result = ArrayList<ByteArray>()
-    HttpRequests.requestWithRange(newPluginUrl, range).productNameAsUserAgent().connect { request ->
-      val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
-      request.inputStream.buffered().use { input ->
-        when {
-          chunkSequences.size > 1  -> {
-            for (sequence in chunkSequences) {
-              parseHttpMultirangeHeaders(input, boundary)
-              parseHttpRangeBody(input, sequence, result)
+    if (range.isEmpty()) {
+      LOG.warn("Empty range: request '$newPluginUrl' range '$range'")
+    }
+    else {
+      HttpRequests
+        .requestWithRange(newPluginUrl, range)
+        .productNameAsUserAgent()
+        .setHeadersViaTuner()
+        .connect { request ->
+          val boundary = request.connection.contentType.removePrefix("multipart/byteranges; boundary=")
+          request.inputStream.buffered().use { input ->
+            when {
+              chunkSequences.size > 1 -> {
+                for (sequence in chunkSequences) {
+                  parseHttpMultirangeHeaders(input, boundary)
+                  parseHttpRangeBody(input, sequence, result)
+                }
+              }
+              chunkSequences.size == 1 -> parseHttpRangeBody(input, chunkSequences[0], result)
+              else -> {
+                LOG.warn("Zero chunks: request '$newPluginUrl' range '$range'")
+              }
             }
           }
-          chunkSequences.size == 1 -> parseHttpRangeBody(input, chunkSequences[0], result)
-          else                     -> LOG.error("Zero chunks", "request '$newPluginUrl'", "range '$range'")
         }
-      }
     }
     return result
   }

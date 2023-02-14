@@ -52,9 +52,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author vlan
- */
 public class PyMoveFileHandler extends MoveFileHandler {
   private static final Key<String> ORIGINAL_FILE_LOCATION = Key.create("PY_ORIGINAL_FILE_LOCATION");
 
@@ -258,7 +255,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
           if (getOriginalLocation(usageFile) != null) {
             // Leave relative imports as they are after #updateRelativeImportsInModule
             final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(usageFile.getProject(), usageFile);
-            final PyResolveContext resolveContext = PyResolveContext.implicitContext().withTypeEvalContext(typeEvalContext);
+            final PyResolveContext resolveContext = PyResolveContext.implicitContext(typeEvalContext);
             if (ContainerUtil.getFirstItem(PyUtil.multiResolveTopPriority(usageElement, resolveContext)) == movedElement) {
               continue;
             }

@@ -5,22 +5,11 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/code")
-public class RegistrationProblemsInspectionCodeTest extends PluginModuleTestCase {
+public class RegistrationProblemsInspectionCodeTest extends RegistrationProblemsInspectionCodeTestBase {
 
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/code";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
-
-    myFixture.addClass("package com.intellij.openapi.components; public interface BaseComponent {}");
-
-    myFixture.enableInspections(new RegistrationProblemsInspection());
   }
 
   public void testComponentAbstractImplementation() {

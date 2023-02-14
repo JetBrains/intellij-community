@@ -103,7 +103,7 @@ public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesP
     changed = breakpoint.getProperties().WATCH_MODIFICATION != myWatchModificationCheckBox.isSelected() || changed;
     breakpoint.getProperties().WATCH_MODIFICATION = myWatchModificationCheckBox.isSelected();
     if (changed) {
-      ((XBreakpointBase)breakpoint).fireBreakpointChanged();
+      ((XBreakpointBase<?, ?, ?>)breakpoint).fireBreakpointChanged();
     }
   }
 }

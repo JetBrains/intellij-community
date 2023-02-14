@@ -11,16 +11,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-/**
- * @author peter
- */
 public abstract class DomManager extends CompositeModificationTracker implements ModificationTracker {
   public static final Key<Module> MOCK_ELEMENT_MODULE = Key.create("MockElementModule");
 
@@ -56,8 +52,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @deprecated use {@link #getFileElement(XmlFile, Class)}
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public abstract <T extends DomElement> DomFileElement<T> getFileElement(XmlFile file, Class<T> aClass, @NonNls String rootTagName);
 
   public abstract void addDomEventListener(DomEventListener listener, Disposable parentDisposable);
@@ -108,17 +103,6 @@ public abstract class DomManager extends CompositeModificationTracker implements
   public abstract <T extends DomElement> T createStableValue(Factory<? extends T> provider);
 
   public abstract <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator);
-
-  /**
-   * Registers a new {@link DomFileDescription} within the manager. The description parameter describes some DOM
-   * parameters and restrictions to the particular XML files, that need DOM support. Should be called on
-   * {@link com.intellij.openapi.components.ProjectComponent} loading.
-   * @param description The description in question
-   * @deprecated Make your file description an extension (see {@link DomFileDescription#EP_NAME})
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void registerFileDescription(DomFileDescription<?> description);
 
   /**
    * @return {@link ConverterManager} instance

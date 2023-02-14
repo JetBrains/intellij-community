@@ -1,0 +1,45 @@
+<html><body>
+Reports cases when non-safe string is passed to a method with parameter marked with annotation <code>org.checkerframework.checker.tainting.qual.Untainted</code>.
+<p>
+  Safe string is:
+<ul>
+  <li>call of method that is marked as <code>@Untainted</code></li>
+  <li>local variable or method parameter that does not call non-safe methods</li>
+  <li>field, local variable or parameter that is marked as <code>@Untainted</code> and does not have non-safe methods calls assigned</li>
+</ul>
+<p>
+Example:
+<pre>
+<code>
+  void doSmth(boolean b) {
+    String s = safe();
+    String s1 = "other";
+    if (b) s1 = s;
+    sink(s);
+  }
+  
+  String sink(@Untainted String s) {}
+</code>
+</pre>
+<p>
+Here we do not have non-safe string assignments to <code>s</code> so warning is not produced. On the other hand:
+<pre>
+<code>
+  void doSmth(boolean b) {
+    String s = safe();
+    String s1 = "other";
+    s1 = foo();
+    if (b) s = s1;
+    sink(s);        // warning here
+  }
+  
+  String foo();
+
+  String sink(@Untainted String s) {}
+</code>
+</pre>
+<p>
+Here we have a warning since <code>s1</code> has an unknown state after <code>foo</code> call result assignment.
+<!-- tooltip end -->
+<p><small>New in 2021.2</small></p>
+</body></html>

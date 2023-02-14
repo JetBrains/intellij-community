@@ -16,20 +16,22 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
-*/
 class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickFix {
   private final String myExistingElementName;
   private final FileReference myFileReference;
@@ -60,8 +62,16 @@ class RenameFileReferenceIntentionAction implements IntentionAction, LocalQuickF
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (isAvailable(project, null, null)) {
-      WriteCommandAction.writeCommandAction(project).run(() -> invoke(project, null, descriptor.getPsiElement().getContainingFile()));
+      invoke(project, null, descriptor.getPsiElement().getContainingFile());
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiElement element = myFileReference.getElement();
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(element, target);
+    return StreamEx.of(copy.getReferences()).select(FileReference.class).collect(MoreCollectors.onlyOne())
+      .map(ref -> new RenameFileReferenceIntentionAction(myExistingElementName, ref)).orElse(null);
   }
 
   @Override

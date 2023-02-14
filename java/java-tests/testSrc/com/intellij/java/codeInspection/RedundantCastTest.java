@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class RedundantCastTest extends LightJavaCodeInsightFixtureTestCase {
@@ -104,4 +105,14 @@ public class RedundantCastTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testInConditionalPreserveResolve() { doTest();}
   public void testArrayAccess() { doTest();}
+
+  public void testPackagePrivate() {
+    myFixture.addClass("package a; public class A {void foo() {}}");
+    myFixture.addClass("package a.b; public class B extends a.A { public void foo(){}}");
+    doTest();
+  }
+
+  public void testSwitchSelectorJava17() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
+
+  public void testSwitchSelectorJava19() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest); }
 }

@@ -45,10 +45,7 @@ import static com.jetbrains.python.psi.types.PyTypeTokenTypes.IDENTIFIER;
 import static com.jetbrains.python.psi.types.PyTypeTokenTypes.PARAMETER;
 import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBase.*;
 
-/**
- * @author vlan
- */
-public class PyTypeParser {
+public final class PyTypeParser {
   private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.emptyMap(), Collections.emptyMap(),
                                                                   Collections.emptyMap());
 
@@ -349,8 +346,7 @@ public class PyTypeParser {
       tokens.add(first);
       tokens.addAll(rest);
 
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
+      if (file instanceof PyFile pyFile) {
         final Map<TextRange, PyType> types = new HashMap<>();
         final Map<PyType, TextRange> fullRanges = new HashMap<>();
         final Map<PyType, PyImportElement> imports = new HashMap<>();
@@ -358,7 +354,7 @@ public class PyTypeParser {
         PyType type = resolveQualifierType(tokens, pyFile, myContext, types, fullRanges, imports);
 
         if (type != null) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myContext);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(myContext);
           final PyExpression expression = myAnchor instanceof PyExpression ? (PyExpression)myAnchor : null;
 
           for (Token<PyElementType> token : tokens) {

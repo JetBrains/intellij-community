@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@
  */
 package com.siyeh.ig.finalization;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,7 +29,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class FinalizeNotProtectedInspection extends BaseInspection {
+import java.util.Objects;
+
+public class FinalizeNotProtectedInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -53,14 +59,10 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodName = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodName.getParent();
-      assert method != null;
-      final PsiModifierList modifiers = method.getModifierList();
-      modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
-      modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-      modifiers.setModifierProperty(PsiModifier.PROTECTED, true);
+      Objects.requireNonNull(method).getModifierList().setModifierProperty(PsiModifier.PROTECTED, true);
     }
   }
 
@@ -77,6 +79,11 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null || aClass.isInterface()) {
         return;
+      }
+      for (PsiMethod superMethod : method.findSuperMethods()) {
+        if (superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+          return;
+        }
       }
       registerMethodError(method);
     }

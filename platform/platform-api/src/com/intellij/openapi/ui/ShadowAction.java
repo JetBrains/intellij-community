@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -40,12 +41,20 @@ public final class ShadowAction {
 
   // force passing parentDisposable to avoid code like new ShadowAction(this, original, c) (without Disposer.register)
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, @NotNull Disposable parentDisposable) {
+    this(action, copyFromAction, ActionManager.getInstance().getId(copyFromAction), component, parentDisposable);
+  }
+
+  public ShadowAction(AnAction action, @NlsSafe String actionId, JComponent component, @NotNull Disposable parentDisposable) {
+    this(action, ActionManager.getInstance().getAction(actionId), actionId, component, parentDisposable);
+  }
+
+  private ShadowAction(AnAction action, AnAction copyFromAction, @NlsSafe String actionId, JComponent component, @NotNull Disposable parentDisposable) {
     myAction = action;
     this.parentDisposable = parentDisposable;
 
     myCopyFromAction = copyFromAction;
     myComponent = new WeakReference<>(component);
-    myActionId = ActionManager.getInstance().getId(myCopyFromAction);
+    myActionId = actionId;
 
     myAction.getTemplatePresentation().copyFrom(copyFromAction.getTemplatePresentation());
 

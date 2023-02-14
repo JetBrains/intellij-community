@@ -1,0 +1,8 @@
+// AFTER-WARNING: Parameter 'a' is never used
+fun foo(a: suspend () -> Unit) {}
+
+suspend fun action() {}
+
+fun usage() {
+    foo { action() <caret> }
+}

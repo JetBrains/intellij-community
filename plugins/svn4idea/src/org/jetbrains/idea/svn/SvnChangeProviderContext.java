@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -166,7 +166,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     if (filePath.isDirectory() && status.isWorkingCopyLocked()) {
       myChangelistBuilder.processLockedFolder(filePath.getVirtualFile());
     }
-    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED) && status.getCopyFromUrl() != null) {
+    if (status.is(StatusType.STATUS_ADDED, StatusType.STATUS_MODIFIED, StatusType.STATUS_REPLACED) && isPossibleMove(filePath, status)) {
       addCopiedFile(filePath, status, status.getCopyFromUrl());
     }
     else if (status.is(StatusType.STATUS_DELETED)) {
@@ -181,6 +181,16 @@ class SvnChangeProviderContext implements StatusReceiver {
         processStatus(filePath, status);
       }
     }
+  }
+
+  private boolean isPossibleMove(@NotNull FilePath filePath, @NotNull Status status) {
+    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
+
+    if (format.isOrGreater(WorkingCopyFormat.ONE_DOT_EIGHT)) {
+      return status.getMovedFrom() != null && status.getCopyFromUrl() != null;
+    }
+
+    return status.getCopyFromUrl() != null;
   }
 
   void processStatus(@NotNull FilePath filePath, @NotNull Status status) {

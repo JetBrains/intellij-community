@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.startup.StartupActionScriptManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isDirectory
 import java.io.IOException
@@ -28,6 +28,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
+import kotlin.io.path.exists
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
@@ -35,9 +36,13 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     e.presentation.isEnabled = true
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
-    val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
 
     val descriptor = object : FileChooserDescriptor(true, true, true, true, false, false) {
       override fun isFileSelectable(file: VirtualFile?): Boolean {
@@ -71,7 +76,8 @@ open class ImportSettingsAction : AnAction(), DumbAware {
   }
 
   protected open fun getExportableComponents(relativePaths: Set<String>): Map<FileSpec, List<ExportableItem>> {
-    return getExportableComponentsMap(true). filterKeys { relativePaths.contains(it.relativePath) }
+    return getExportableComponentsMap(isComputePresentableNames = true, withDeprecated = true)
+      .filterKeys { relativePaths.contains(it.relativePath) }
   }
 
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components

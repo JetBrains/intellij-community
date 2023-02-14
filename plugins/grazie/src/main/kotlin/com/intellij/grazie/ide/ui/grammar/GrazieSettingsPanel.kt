@@ -8,13 +8,14 @@ import com.intellij.grazie.ide.ui.grammar.tabs.rules.GrazieRulesTab
 import com.intellij.grazie.ide.ui.grammar.tabs.scope.GrazieScopeTab
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import javax.swing.JComponent
 
 internal class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
   private val scope = GrazieScopeTab()
-  private val rules = GrazieRulesTab()
+  internal val rules = GrazieRulesTab()
   private val exceptions = GrazieExceptionsTab()
 
   override fun isModified(settings: GrazieConfig): Boolean = rules.isModified(settings.state) ||
@@ -35,12 +36,15 @@ internal class GrazieSettingsPanel : ConfigurableUi<GrazieConfig>, Disposable {
     exceptions.reset(settings.state)
   }
 
-  override fun getComponent(): JComponent = JBTabbedPane().apply {
+  internal val component: JBTabbedPane = JBTabbedPane().apply {
     this.tabComponentInsets = JBUI.insetsTop(8)
     add(msg("grazie.settings.grammar.tabs.scope"), scope.component)
     add(msg("grazie.settings.grammar.tabs.rules"), rules.component)
     add(msg("grazie.settings.grammar.tabs.exceptions"), exceptions.component)
   }
 
+  override fun getComponent(): JComponent = component
+
   override fun dispose() = rules.dispose()
+
 }

@@ -1,13 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -15,14 +19,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.SortedListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -87,9 +98,11 @@ public final class SpecialAnnotationsUtil {
                                                            final SortedListModel<String> listModel,
                                                            final Predicate<? super PsiClass> isApplicable) {
     final JList<String> injectionList = new JBList<>(listModel);
+    injectionList.setBorder(JBUI.Borders.empty());
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(injectionList)
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator
+      .createDecorator(injectionList)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -109,7 +122,10 @@ public final class SpecialAnnotationsUtil {
             listModel.add(selected.getQualifiedName());
           }
         }
-      }).setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class")).disableUpDownActions();
+      })
+      .setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class"))
+      .disableUpDownActions()
+      .setToolbarPosition(ActionToolbarPosition.LEFT);
 
     if (acceptPatterns) {
       toolbarDecorator
@@ -125,24 +141,33 @@ public final class SpecialAnnotationsUtil {
                 listModel.add(selectedPattern);
               }
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
                                  JavaBundle.message("special.annotations.list.annotation.pattern"),
                                  JavaBundle.message("special.annotations.list.remove.pattern"));
     }
+    final var panel = toolbarDecorator.createPanel();
+    final Dimension minimumSize = acceptPatterns ? InspectionOptionsPanel.getMinimumLongListSize() : InspectionOptionsPanel.getMinimumListSize();
+    panel.setMinimumSize(minimumSize);
+    panel.setPreferredSize(minimumSize);
 
-    if (borderTitle == null) {
-      return toolbarDecorator.createPanel();
-    }
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(borderTitle);
-    label.setBorder(JBUI.Borders.emptyBottom(3));
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    return panel;
+    if (borderTitle == null) return panel;
+
+    return UI.PanelFactory
+      .panel(panel)
+      .withLabel(borderTitle)
+      .moveLabelOnTop()
+      .resizeY(true)
+      .createPanel();
   }
 
   public static IntentionAction createAddToSpecialAnnotationsListIntentionAction(final @IntentionName String text,
                                                                                  final @IntentionFamilyName String family,
+                                                                                 final @Nls String listTitle,
                                                                                  final List<String> targetList,
                                                                                  final String qualifiedName) {
     return new IntentionAction() {
@@ -171,6 +196,12 @@ public final class SpecialAnnotationsUtil {
       @Override
       public boolean startInWriteAction() {
         return false;
+      }
+
+      @Override
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+        List<@NlsSafe String> prefixes = StreamEx.of(targetList).append(qualifiedName).sorted().toList();
+        return IntentionPreviewInfo.addListOption(prefixes, qualifiedName, listTitle);
       }
     };
   }

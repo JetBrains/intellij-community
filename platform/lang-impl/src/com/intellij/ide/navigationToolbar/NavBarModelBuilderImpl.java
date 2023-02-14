@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -12,10 +13,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
+ */
+@Deprecated
 public class NavBarModelBuilderImpl extends NavBarModelBuilder {
 
   @Override
-  public void traverseToRoot(@NotNull PsiElement psiElement, @NotNull Set<VirtualFile> roots, @NotNull List<Object> model, @Nullable NavBarModelExtension ownerExtension) {
+  public void traverseToRoot(@NotNull PsiElement psiElement,
+                             @NotNull Set<VirtualFile> roots,
+                             @NotNull List<Object> model,
+                             @Nullable DataContext dataContext,
+                             @Nullable NavBarModelExtension ownerExtension) {
 
     List<NavBarModelExtension> extensions = NavBarModelExtension.EP_NAME.getExtensionList();
 

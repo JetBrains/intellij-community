@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,13 +44,28 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
       if (!isPopupActive()) return false;
 
+      Window sourceWindow = ((WindowEvent)e).getWindow();
+      if (SystemInfo.isLinux && !sourceWindow.isShowing()) {
+        // Ignore focusLost/deactivated events caused by some window closing on Linux.
+        // Normally, in such cases another IDE window is focused, and 'opposite' event property should point to that window.
+        // On Linux however, due to current JDK implementation, 'opposite' property is null in this case,
+        // and the following code mistakenly assumes focus is transferred to another application.
+        return false;
+      }
+
       Window focused = ((WindowEvent)e).getOppositeWindow();
       if (focused == null) {
         focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focused == null) {
+          // Check if any browser is in focus (java focus can be in the process of transfer).
+          JBCefBrowserBase browser = JBCefBrowserBase.getFocusedBrowser();
+          if (browser != null && browser.getComponent() != null) {
+            focused = SwingUtilities.getWindowAncestor(browser.getComponent());
+          }
+        }
       }
 
       Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
-      Window sourceWindow = ((WindowEvent)e).getWindow();
       Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
       boolean shouldCloseAllPopup = false;
@@ -57,8 +73,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         shouldCloseAllPopup = true;
       }
 
-      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame) {
-        IdeFrame ultimateParentWindowForEvent = (IdeFrame)ultimateParentForEventWindow;
+      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame ultimateParentWindowForEvent) {
         if (ultimateParentWindowForEvent.isInFullScreen()
             && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
           shouldCloseAllPopup = true;
@@ -69,9 +84,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         closeAllPopups();
       }
     }
-    else if (e instanceof KeyEvent) {
+    else if (e instanceof KeyEvent keyEvent) {
       // the following is copied from IdeKeyEventDispatcher
-      KeyEvent keyEvent = (KeyEvent)e;
       Object source = keyEvent.getSource();
       if (myIgnoreNextKeyTypedEvent) {
         if (KeyEvent.KEY_TYPED == e.getID()) return true;

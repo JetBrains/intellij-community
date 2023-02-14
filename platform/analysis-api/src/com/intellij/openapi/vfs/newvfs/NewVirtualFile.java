@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,38 +27,32 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   @Override
-  @NotNull
-  public abstract NewVirtualFileSystem getFileSystem();
+  public abstract @NotNull NewVirtualFileSystem getFileSystem();
 
   @Override
   public abstract NewVirtualFile getParent();
 
   @Override
-  @Nullable
-  public abstract NewVirtualFile getCanonicalFile();
+  public abstract @Nullable NewVirtualFile getCanonicalFile();
 
   @Override
-  @Nullable
-  public abstract NewVirtualFile findChild(@NotNull @NonNls final String name);
+  public abstract @Nullable NewVirtualFile findChild(@NotNull @NonNls String name);
 
-  @Nullable
-  public abstract NewVirtualFile refreshAndFindChild(@NotNull String name);
+  public abstract @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name);
 
-  @Nullable
-  public abstract NewVirtualFile findChildIfCached(@NotNull String name);
+  public abstract @Nullable NewVirtualFile findChildIfCached(@NotNull String name);
 
 
-  public abstract void setTimeStamp(final long time) throws IOException;
+  public abstract void setTimeStamp(long time) throws IOException;
 
   @Override
-  @NotNull
-  public abstract CharSequence getNameSequence();
+  public abstract @NotNull CharSequence getNameSequence();
 
   @Override
   public abstract int getId();
 
   @Override
-  public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
   }
 
@@ -71,10 +65,16 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract boolean isDirty();
 
+  @ApiStatus.Experimental
+  public abstract boolean isOffline();
+
+  @ApiStatus.Experimental
+  public abstract void setOffline(boolean offline);
+
   public abstract void markClean();
 
   @Override
-  public void move(final Object requestor, @NotNull final VirtualFile newParent) throws IOException {
+  public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
     if (!exists()) {
       throw new IOException("File to move does not exist: " + getPath());
     }
@@ -87,7 +87,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
       throw new IOException("Destination is not a folder: " + newParent.getPath());
     }
 
-    final VirtualFile child = newParent.findChild(getName());
+    VirtualFile child = newParent.findChild(getName());
     if (child != null) {
       throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
     }
@@ -98,16 +98,14 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
     });
   }
 
-  @NotNull
-  public abstract Collection<VirtualFile> getCachedChildren();
+  public abstract @NotNull Collection<VirtualFile> getCachedChildren();
 
-  /** iterated children will NOT contain NullVirtualFile.INSTANCE */
-  @NotNull
-  public abstract Iterable<VirtualFile> iterInDbChildren();
+  @SuppressWarnings("SpellCheckingInspection")
+  public abstract @NotNull Iterable<VirtualFile> iterInDbChildren();
 
-  @NotNull
   @ApiStatus.Internal
-  public Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
+  @SuppressWarnings("SpellCheckingInspection")
+  public @NotNull Iterable<VirtualFile> iterInDbChildrenWithoutLoadingVfsFromOtherProjects() {
     return iterInDbChildren();
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
@@ -8,8 +9,6 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.util.PairConsumer
 
 /**
  * Checks if there are unresolved conflicts selected to commit.
@@ -24,23 +23,41 @@ private val MERGE_STATUSES = setOf(MERGE, MERGED_WITH_BOTH_CONFLICTS, MERGED_WIT
 private class UnresolvedMergeCheckHandler(
   private val panel: CheckinProjectPanel,
   private val commitContext: CommitContext
-) : CheckinHandler() {
+) : CheckinHandler(), CommitCheck {
 
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
+  override fun isEnabled(): Boolean = true
+
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
+
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val providerResult = UnresolvedMergeCheckProvider.EP_NAME.extensions.asSequence()
-      .mapNotNull { it.checkUnresolvedConflicts(panel, commitContext, executor) }
+      .mapNotNull { it.checkUnresolvedConflicts(panel, commitContext, commitInfo) }
       .firstOrNull()
-    return providerResult ?: performDefaultCheck()
+    if (providerResult != null) return createProblemFor(providerResult)
+
+    val hasUnresolvedConflicts = commitInfo.committedChanges.any { it.fileStatus in MERGE_STATUSES }
+    if (!hasUnresolvedConflicts) return null
+
+    val answer = showYesNoDialog(
+      panel.component,
+      VcsBundle.message("checkin.unresolved.merge.are.you.sure.you.want.to.commit.changes.with.unresolved.conflicts"),
+      VcsBundle.message("checkin.unresolved.merge.unresolved.conflicts"), getWarningIcon()
+    )
+    val result = if (answer != Messages.YES) ReturnResult.CANCEL else ReturnResult.COMMIT
+    return createProblemFor(result)
   }
 
-  private fun performDefaultCheck(): ReturnResult = if (panel.hasUnresolvedConflicts()) askUser() else ReturnResult.COMMIT
-
-  private fun askUser(): ReturnResult {
-    val answer = showYesNoDialog(panel.component, VcsBundle.message(
-      "checkin.unresolved.merge.are.you.sure.you.want.to.commit.changes.with.unresolved.conflicts"),
-                                 VcsBundle.message("checkin.unresolved.merge.unresolved.conflicts"), getWarningIcon())
-    return if (answer != Messages.YES) ReturnResult.CANCEL else ReturnResult.COMMIT
+  private fun createProblemFor(providerResult: ReturnResult): CommitProblem? {
+    if (providerResult == ReturnResult.COMMIT) return null
+    return MergeConflictsCommitProblem(providerResult)
   }
-
-  private fun CheckinProjectPanel.hasUnresolvedConflicts() = selectedChanges.any { it.fileStatus in MERGE_STATUSES }
 }
+
+private class MergeConflictsCommitProblem(val result: CheckinHandler.ReturnResult) : CommitProblem {
+  override val text: String get() = VcsBundle.message("before.checkin.error.unresolved.merge.conflicts")
+
+  override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
+    return result // dialog was already shown
+  }
+}
+

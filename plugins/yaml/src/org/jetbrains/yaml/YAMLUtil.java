@@ -5,13 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +26,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class YAMLUtil {
-  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER =
-    new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
+  @SuppressWarnings("unused") // keep compatibility with external plugins
+  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER = YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
 
   private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
-  private static final Logger LOG = Logger.getInstance(YAMLUtil.class);
-
 
   /**
    * This method return flattened key path (consist of ancestors until document).
@@ -291,7 +290,7 @@ public class YAMLUtil {
           throw e;
         }
         else {
-          LOG.warn(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE);
+          Logger.getInstance(YAMLUtil.class).warn(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE);
         }
       }
     }
@@ -301,13 +300,40 @@ public class YAMLUtil {
     while (currentElement != null) {
       final IElementType type = currentElement.getNode().getElementType();
       if (YAMLElementTypes.EOL_ELEMENTS.contains(type)) {
-        return offset - currentElement.getTextOffset() - 1;
+        return offset - currentElement.getTextOffset() - currentElement.getTextLength();
       }
 
       currentElement = PsiTreeUtil.prevLeaf(currentElement);
     }
     return offset;
   }
+
+  public static boolean psiAreAtTheSameLine(@NotNull PsiElement psi1, @NotNull PsiElement psi2) {
+    PsiElement leaf = firstLeaf(psi1);
+    PsiElement lastLeaf = firstLeaf(psi2);
+    while (leaf != null) {
+      if (PsiUtilCore.getElementType(leaf) == YAMLTokenTypes.EOL) {
+        return false;
+      }
+      if (leaf == lastLeaf) {
+        return true;
+      }
+      leaf = PsiTreeUtil.nextLeaf(leaf);
+    }
+    // It is a kind of magic, normally we should return from the `while` above
+    return false;
+  }
+
+  private static @Nullable PsiElement firstLeaf(PsiElement psi1) {
+    LeafElement leaf = TreeUtil.findFirstLeaf(psi1.getNode());
+    if (leaf != null) {
+      return leaf.getPsi();
+    }
+    else {
+      return null;
+    }
+  }
+
 
   /**
    * Deletes surrounding whitespace contextually. First attempts to delete {@link YAMLTokenTypes#COMMENT}s on the same line and

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -14,17 +15,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentHashMapValueStorage;
@@ -34,94 +39,115 @@ import org.jetbrains.annotations.*;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
+import java.util.zip.ZipException;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 
 @ApiStatus.Internal
 public final class FSRecords {
-
   static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean useContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
-  static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
-  static final boolean useCompressionUtil = SystemProperties.getBooleanProperty("idea.use.lightweight.compression.for.vfs", false);
-  static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
-  static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  static volatile PersistentFSConnection ourConnection;
-  static volatile PersistentFSContentAccessor ourContentAccessor;
-  static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
-  static volatile PersistentFSTreeAccessor ourTreeAccessor;
-  static volatile PersistentFSRecordAccessor ourRecordAccessor;
+  /**
+   * If true, enhance each attribute record with backref to fileId owned this attribute(s).
+   * @deprecated This is likely unfinished work since this backref is never used
+   */
+  @Deprecated
+  static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
+
+  /**
+   * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
+   */
+  static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
+
+  public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
+
+  public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-fast-names-storage", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-streamlined-attributes-storage", false);
+
+  private static volatile PersistentFSConnection ourConnection;
+  private static volatile PersistentFSContentAccessor ourContentAccessor;
+  private static volatile PersistentFSAttributeAccessor ourAttributeAccessor;
+  private static volatile PersistentFSTreeAccessor ourTreeAccessor;
+  private static volatile PersistentFSRecordAccessor ourRecordAccessor;
+  private static volatile int ourCurrentVersion;
+
+  private static final AtomicLong ourNamesIndexModCount = new AtomicLong();
 
   private static int nextMask(int value, int bits, int prevMask) {
-    assert value < (1<<bits) && value >= 0 : value;
+    assert value < (1 << bits) && value >= 0 : value;
     int mask = (prevMask << bits) | value;
     if (mask < 0) throw new IllegalStateException("Too many flags, int mask overflown");
     return mask;
   }
+
   private static int nextMask(boolean value, int prevMask) {
     return nextMask(value ? 1 : 0, 1, prevMask);
   }
-  private static int nextMask(@SuppressWarnings("SameParameterValue") int versionValue, int prevMask) {
-    return nextMask(versionValue, 8, prevMask);
+
+  private static int calculateVersion() {
+    return nextMask(59 + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
+                    8,
+                    nextMask(useContentHashes,
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                    nextMask(bulkAttrReadSupport,
+                    nextMask(inlineAttributes,
+                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                    nextMask(false, // feel free to use
+                    nextMask(useSmallAttrTable,
+                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                    nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION, 0 )))))))))))));
   }
-  static final int VERSION = nextMask(58,  // acceptable range is [0..255]
-                             nextMask(useContentHashes,
-                             nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
-                             nextMask(bulkAttrReadSupport,
-                             nextMask(inlineAttributes,
-                             nextMask(ourStoreRootsSeparately,
-                             nextMask(useCompressionUtil,
-                             nextMask(useSmallAttrTable,
-                             nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                             nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                             nextMask(ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP, 0)))))))))));
 
   private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
-  static final ReentrantReadWriteLock lock;
-  private static final ReentrantReadWriteLock.ReadLock r;
-  private static final ReentrantReadWriteLock.WriteLock w;
-
-  static {
-    lock = new ReentrantReadWriteLock();
-    r = lock.readLock();
-    w = lock.writeLock();
-  }
+  private static final FineGrainedIdLock updateLock = new FineGrainedIdLock();
 
   /**
    * @return nameId > 0
    */
-  static int writeAttributesToRecord(int fileId, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
-    return writeAndHandleErrors(() -> {
-      int nameId = setName(fileId, name);
+  static int writeAttributesToRecord(int fileId,
+                                     int parentId,
+                                     @NotNull FileAttributes attributes,
+                                     @NotNull String name,
+                                     boolean overwriteMissed) {
+    int nameId = getNameId(name);
+    long timestamp = attributes.lastModified;
+    long length = attributes.isDirectory() ? -1L : attributes.length;
+    int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
-      setTimestamp(fileId, attributes.lastModified);
-      setLength(fileId, attributes.isDirectory() ? -1L : attributes.length);
-      setFlags(fileId, PersistentFSImpl.fileAttributesToFlags(attributes));
-      setParent(fileId, parentId);
+    try {
+      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
 
-      return nameId;
-    });
+    InvertedNameIndex.updateFileName(fileId, nameId, NULL_NAME_ID);
+    ourNamesIndexModCount.incrementAndGet();
+
+    return nameId;
   }
 
-  @Contract("_->fail")
-  static void requestVfsRebuild(@NotNull Throwable e) {
-    handleError(e);
-  }
-
-  @NotNull
-  public static String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
+  public static @NotNull String diagnosticsForAlreadyCreatedFile(int fileId, int nameId, @NotNull Object existingData) {
     invalidateCaches();
     int parentId = getParent(fileId);
     String msg = "File already created: fileId=" + fileId +
-                 "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
+                 "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
                  "; parentId=" + parentId +
-                 "; existingData=" + existingData;
+                 "; \nexistingData=" + existingData;
     if (parentId > 0) {
       msg += "; parent.name=" + getName(parentId);
       msg += "; parent.children=" + list(parentId);
@@ -133,164 +159,216 @@ public final class FSRecords {
 
   @ApiStatus.Internal
   public static int getVersion() {
-    return VERSION;
+    return ourCurrentVersion;
   }
 
-  static void connect() {
-    ourConnection = PersistentFSConnector.connect(getCachesDir(), getVersion(), useContentHashes);
-    ourContentAccessor = new PersistentFSContentAccessor(useContentHashes);
-    ourAttributeAccessor = new PersistentFSAttributeAccessor(bulkAttrReadSupport, inlineAttributes);
-    ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourStoreRootsSeparately);
-    ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor);
+  static void connect(@NotNull VfsLog vfsLog) {
+    if (IOUtil.isSharedCachesEnabled()) {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
+    }
     try {
-      ourTreeAccessor.ensureLoaded(ourConnection);
+      ourCurrentVersion = calculateVersion();
+      ourConnection = PersistentFSConnector.connect(getCachesDir(), ourCurrentVersion, useContentHashes, vfsLog.getInterceptors());
+      ourContentAccessor = new PersistentFSContentAccessor(useContentHashes, ourConnection);
+      ourAttributeAccessor = new PersistentFSAttributeAccessor(ourConnection);
+      ourTreeAccessor = new PersistentFSTreeAccessor(ourAttributeAccessor, ourConnection);
+      ourRecordAccessor = new PersistentFSRecordAccessor(ourContentAccessor, ourAttributeAccessor, ourConnection);
+      try {
+        ourTreeAccessor.ensureLoaded();
+      }
+      catch (IOException e) {
+        LOG.error(e);//because we need more details
+        throw handleError(e);
+      }
     }
-    catch (IOException e) {
-      handleError(e);
+    finally {
+      IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
     }
   }
 
-  private static String getCachesDir() {
+  public static @NotNull String getCachesDir() {
     String dir = System.getProperty("caches_dir");
     return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
   }
 
   public static long getCreationTimestamp() {
-    return readAndHandleErrors(() -> ourConnection.getTimestamp());
+    try {
+      return getConnectionOrFail().getTimestamp();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   // todo: Address  / capacity store in records table, size store with payload
   public static int createRecord() {
-    return writeAndHandleErrors(() -> ourRecordAccessor.createRecord(ourConnection));
+    try {
+      return ourRecordAccessor.createRecord();
+    }
+    catch (Exception e) {
+      throw handleError(e);
+    }
+  }
+
+  public static long getNamesIndexModCount() {
+    return ourNamesIndexModCount.get();
   }
 
   static void deleteRecordRecursively(int id) {
-    writeAndHandleErrors(() -> {
-      incModCount(id);
+    ourNamesIndexModCount.incrementAndGet();
+    try {
+      //ourConnection.incModCount(id) -> will be done anyway in .setFlags(FREE_RECORD)
       markAsDeletedRecursively(id);
-    });
+      getConnectionOrFail().markDirty();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  private static void markAsDeletedRecursively(final int id) {
+  private static void markAsDeletedRecursively(int id) throws IOException {
     for (int subRecord : listIds(id)) {
       markAsDeletedRecursively(subRecord);
     }
 
-    ourRecordAccessor.addToFreeRecordsList(id, ourConnection);
+    int nameId = getConnectionOrFail().getRecords().getNameId(id);
+    if (PersistentFS.isDirectory(getFlags(id))) {
+      ourTreeAccessor.deleteDirectoryRecord(id);
+    }
+    ourRecordAccessor.addToFreeRecordsList(id);
+    InvertedNameIndex.updateFileName(id, NULL_NAME_ID, nameId);
   }
 
   @TestOnly
   static int @NotNull [] listRoots() {
-    return readAndHandleErrors(() -> ourTreeAccessor.listRoots(ourConnection));
+    try {
+      return ourTreeAccessor.listRoots();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @TestOnly
   static void force() {
-    writeAndHandleErrors(ourConnection::doForce);
+    try {
+      getConnectionOrFail().doForce();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @TestOnly
   static boolean isDirty() {
-    return readAndHandleErrors(ourConnection::isDirty);
+    return getConnectionOrFail().isDirty();
   }
 
-  @PersistentFS.Attributes
-  static int getFlags(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().doGetFlags(id));
+  static @PersistentFS.Attributes int getFlags(int id) {
+    try {
+      return getConnectionOrFail().getRecords().getFlags(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  @NotNull
+  private static PersistentFSConnection getConnectionOrFail() {
+    PersistentFSConnection connection = ourConnection;
+    if (connection == null) {
+      throw new AlreadyDisposedException("VFS is already disposed");
+    }
+    return connection;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDeleted(int id) {
+    try {
+      return ourRecordAccessor.isDeleted(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static int findRootRecord(@NotNull String rootUrl) {
-    return writeAndHandleErrors(() -> ourTreeAccessor.findOrCreateRootRecord(rootUrl, ourConnection, () -> createRecord()));
+    try {
+      return ourTreeAccessor.findOrCreateRootRecord(rootUrl);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  static void loadRootData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    try {
+      ourTreeAccessor.loadRootData(id, path, fs);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  static void loadDirectoryData(int id, @NotNull String path, @NotNull NewVirtualFileSystem fs) {
+    try {
+      ourTreeAccessor.loadDirectoryData(id, path, fs);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void deleteRootRecord(int fileId) {
-    writeAndHandleErrors(() -> ourTreeAccessor.deleteRootRecord(fileId, ourConnection));
+    try {
+      ourTreeAccessor.deleteRootRecord(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  static int @NotNull [] listIds(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.listIds(fileId, ourConnection));
+  public static int @NotNull [] listIds(int fileId) {
+    try {
+      return ourTreeAccessor.listIds(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static boolean mayHaveChildren(int fileId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.mayHaveChildren(fileId, ourConnection));
+    try {
+      return ourTreeAccessor.mayHaveChildren(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  // returns child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
+  /**
+   * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
+   */
   @NotNull
   static ListResult list(int parentId) {
-    return readAndHandleErrors(() -> ourTreeAccessor.doLoadChildren(parentId, ourConnection));
+    try {
+      return ourTreeAccessor.doLoadChildren(parentId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @NotNull
-  public static List<CharSequence> listNames(int parentId) {
+  public static @NotNull List<CharSequence> listNames(int parentId) {
     return ContainerUtil.map(list(parentId).children, c -> c.getName());
   }
 
   static boolean wereChildrenAccessed(int id) {
-    return readAndHandleErrors(() -> ourTreeAccessor.wereChildrenAccessed(id, ourConnection));
-  }
-
-  static <T> T readAndHandleErrors(@NotNull ThrowableComputable<T, ? extends Exception> action) {
-    // otherwise DbConnection.handleError(e) (requires write lock) could fail
-    if (lock.getReadHoldCount() != 0) {
-      try {
-        return action.compute();
-      }
-      catch (Exception ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-
-    r.lock();
     try {
-      try {
-        return action.compute();
-      }
-      finally {
-        r.unlock();
-      }
+      return ourTreeAccessor.wereChildrenAccessed(id);
     }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  static <T> T writeAndHandleErrors(@NotNull ThrowableComputable<T, ?> action) {
-    w.lock();
-    try {
-      return action.compute();
-    }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-    finally {
-      w.unlock();
-    }
-  }
-
-  static void writeAndHandleErrors(@NotNull ThrowableRunnable<?> action) {
-    w.lock();
-    try {
-      action.run();
-    }
-    catch (Throwable e) {
-      handleError(e);
-      throw new RuntimeException(e);
-    }
-    finally {
-      w.unlock();
-    }
-  }
-
-  static <T extends Exception> void write(@NotNull ThrowableRunnable<T> action) throws T {
-    w.lock();
-    try {
-      action.run();
-    }
-    finally {
-      w.unlock();
+    catch (IOException e) {
+      throw handleError(e);
     }
   }
 
@@ -298,13 +376,16 @@ public final class FSRecords {
   // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
   // If everything is still valid (i.e. no one changed the list in the meantime), commit.
   // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
-  @NotNull
-  static ListResult update(@NotNull VirtualFile parent, int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
-    assert parentId > 0: parentId;
+  static @NotNull ListResult update(@NotNull VirtualFile parent,
+                                    int parentId,
+                                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+    SlowOperations.assertSlowOperationsAreAllowed();
+
+    assert parentId > 0 : parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
 
-    w.lock();
+    updateLock.lock(parentId);
     try {
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
@@ -321,8 +402,10 @@ public final class FSRecords {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + toSave);
         }
+        getConnectionOrFail().markRecordAsModified(parentId);
+        getConnectionOrFail().markDirty();
         updateSymlinksForNewChildren(parent, children, toSave);
-        ourTreeAccessor.doSaveChildren(parentId, toSave, ourConnection);
+        ourTreeAccessor.doSaveChildren(parentId, toSave);
       }
       return toSave;
     }
@@ -331,12 +414,55 @@ public final class FSRecords {
       throw e;
     }
     catch (Throwable e) {
-      handleError(e);
-      ExceptionUtil.rethrow(e);
-      return result;
+      throw handleError(e);
     }
     finally {
-      w.unlock();
+      updateLock.unlock(parentId);
+    }
+  }
+
+  static void moveChildren(int fromParentId, int toParentId) {
+    assert fromParentId > 0 : fromParentId;
+    assert toParentId > 0 : toParentId;
+
+    if (fromParentId == toParentId) return;
+
+    int minId = Math.min(fromParentId, toParentId);
+    int maxId = Math.max(fromParentId, toParentId);
+
+    updateLock.lock(minId);
+    try {
+      updateLock.lock(maxId);
+      try {
+        try {
+          final ListResult children = list(fromParentId);
+
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+          }
+
+          getConnectionOrFail().markRecordAsModified(toParentId);
+          ourTreeAccessor.doSaveChildren(toParentId, children);
+
+          getConnectionOrFail().markRecordAsModified(fromParentId);
+          ourTreeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
+
+          getConnectionOrFail().markDirty();
+        }
+        catch (ProcessCanceledException e) {
+          // NewVirtualFileSystem.list methods can be interrupted now
+          throw e;
+        }
+        catch (Throwable e) {
+          throw handleError(e);
+        }
+      }
+      finally {
+        updateLock.unlock(maxId);
+      }
+    }
+    finally {
+      updateLock.unlock(minId);
     }
   }
 
@@ -368,60 +494,65 @@ public final class FSRecords {
   }
 
   static @Nullable String readSymlinkTarget(int id) {
-    String result = readAndHandleErrors(() -> {
-      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
-        if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
+    try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
+      if (stream != null) {
+        String result = StringUtil.nullize(IOUtil.readUTF(stream));
+        return result == null ? null : FileUtil.toSystemIndependentName(result);
       }
       return null;
-    });
-    return result != null ? FileUtil.toSystemIndependentName(result) : null;
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {
-    writeAndHandleErrors(() -> {
-      ourConnection.markDirty();
+    try {
+      getConnectionOrFail().markDirty();
       try (DataOutputStream stream = writeAttribute(id, ourSymlinkTargetAttr)) {
         IOUtil.writeUTF(stream, StringUtil.notNullize(symlinkTarget));
       }
-    });
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
 
   static int getLocalModCount() {
-    return ourConnection.getLocalModificationCount(); // This is volatile, only modified under Application.runWriteAction() lock.
+    return getConnectionOrFail().getModificationCount() + ourAttributeAccessor.getLocalModificationCount();
   }
 
+  @TestOnly
   static int getPersistentModCount() {
-    return readAndHandleErrors(ourConnection::getPersistentModCount);
-  }
-
-  private static void incModCount(int id) {
-    ourConnection.incModCount(id);
+    return getConnectionOrFail().getPersistentModCount();
   }
 
   public static int getParent(int id) {
-    return readAndHandleErrors(() -> {
-      final int parentId = ourConnection.getRecords().getParent(id);
+    try {
+      int parentId = getConnectionOrFail().getRecords().getParent(id);
       if (parentId == id) {
         LOG.error("Cyclic parent child relations in the database. id = " + id);
         return 0;
       }
 
       return parentId;
-    });
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @Nullable
-  static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
+  static @Nullable VirtualFileSystemEntry findFileById(int id, @NotNull VirtualDirectoryCache idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Exception> {
-      @Nullable private IntList path;
+      private @Nullable IntList path;
       private VirtualFileSystemEntry foundParent;
 
       @Override
-      public Void compute() {
+      public Void compute() throws Exception {
         int currentId = id;
         while (true) {
-          int parentId = ourConnection.getRecords().getParent(currentId);
+          int parentId = getConnectionOrFail().getRecords().getParent(currentId);
           if (parentId == 0) {
             break;
           }
@@ -429,7 +560,7 @@ public final class FSRecords {
             LOG.error("Cyclic parent child relations in the database. id = " + parentId);
             break;
           }
-          foundParent = idToDirCache.get(parentId);
+          foundParent = idToDirCache.getCachedDir(parentId);
           if (foundParent != null) {
             break;
           }
@@ -443,8 +574,7 @@ public final class FSRecords {
         return null;
       }
 
-      @Nullable
-      private VirtualFileSystemEntry findDescendantByIdPath() {
+      private @Nullable VirtualFileSystemEntry findDescendantByIdPath() {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
           for (int i = path.size() - 1; i >= 0; i--) {
@@ -455,14 +585,14 @@ public final class FSRecords {
         return findChild(parent, id);
       }
 
-      @Nullable
-      private VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
+      private @Nullable VirtualFileSystemEntry findChild(VirtualFileSystemEntry parent, int childId) {
         if (!(parent instanceof VirtualDirectoryImpl)) {
           return null;
         }
         VirtualFileSystemEntry child = ((VirtualDirectoryImpl)parent).doFindChildById(childId);
         if (child instanceof VirtualDirectoryImpl) {
-          VirtualFileSystemEntry old = idToDirCache.putIfAbsent(childId, child);
+          LOG.assertTrue(childId == child.getId());
+          VirtualFileSystemEntry old = idToDirCache.cacheDirIfAbsent(child);
           if (old != null) child = old;
         }
         return child;
@@ -470,20 +600,34 @@ public final class FSRecords {
     }
 
     ParentFinder finder = new ParentFinder();
-    readAndHandleErrors(finder);
-    return finder.findDescendantByIdPath();
+    try {
+      finder.compute();
+    }
+    catch (Exception e) {
+      throw handleError(e);
+    }
+    VirtualFileSystemEntry file = finder.findDescendantByIdPath();
+    if (file != null) {
+      LOG.assertTrue(file.getId() == id);
+    }
+    return file;
   }
 
+  /**
+   * @return records (ids) freed in previous session, and not yet re-used in a current session.
+   */
   @ApiStatus.Internal
-  @NotNull
-  public static IntList getRemainFreeRecords() {
-    return readAndHandleErrors(() -> new IntArrayList(ourConnection.getFreeRecords()));
+  public static @NotNull IntList getRemainFreeRecords() {
+    return getConnectionOrFail().getFreeRecords();
   }
 
+  /**
+   * @return records (ids) freed in current session. Returns !empty list only in unit-tests, outside of testing records freeing in
+   * current session are marked by an apt flag, but not collected into free-list
+   */
   @ApiStatus.Internal
-  @NotNull
-  public static IntList getNewFreeRecords() {
-    return readAndHandleErrors(() -> new IntArrayList(ourRecordAccessor.getNewFreeRecords()));
+  public static @NotNull IntList getNewFreeRecords() {
+    return ourRecordAccessor.getNewFreeRecords();
   }
 
   static void setParent(int id, int parentId) {
@@ -492,111 +636,177 @@ public final class FSRecords {
       return;
     }
 
-    writeAndHandleErrors(() -> {
-      incModCount(id);
-      ourConnection.getRecords().setParent(id, parentId);
-    });
+    try {
+      getConnectionOrFail().getRecords().setParent(id, parentId);
+      getConnectionOrFail().markDirty();
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
   }
 
+  public static boolean processAllNames(@NotNull Processor<? super CharSequence> processor) {
+    try {
+      return getConnectionOrFail().getNames().processAllDataObjects(processor);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  public static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+    if (names.isEmpty()) return true;
+    return InvertedNameIndex.processFilesWithNames(names, processor);
+  }
+
+  //TODO RC: this method is used to look up files by name, but this non-strict enumerator this approach
+  //         becomes 'non-strict' also: nameId returned could be the new nameId, never used before, hence
+  //         in any file record, even though name was already registered for some file(s)
   public static int getNameId(@NotNull String name) {
-    return readAndHandleErrors(() -> ourConnection.getNames().enumerate(name));
+    try {
+      return getConnectionOrFail().getNames().enumerate(name);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
   }
 
-  public static String getName(int id) {
+  public static @NotNull String getName(int id) {
     return getNameSequence(id).toString();
   }
 
-  @NotNull
-  static CharSequence getNameSequence(int id) {
-    return readAndHandleErrors(() -> doGetNameSequence(id));
+  static @NotNull CharSequence getNameSequence(int id) {
+    try {
+      int nameId = getConnectionOrFail().getRecords().getNameId(id);
+      return nameId == 0 ? "" : FileNameCache.getVFileName(nameId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @NotNull
-  private static CharSequence doGetNameSequence(int id) throws IOException {
-    int nameId = ourConnection.getRecords().getNameId(id);
-    return nameId == 0 ? "" : FileNameCache.getVFileName(nameId, FSRecords::doGetNameByNameId);
+  public static CharSequence getNameByNameId(int nameId) {
+    try {
+      return doGetNameByNameId(nameId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  public static String getNameByNameId(int nameId) {
-    return readAndHandleErrors(() -> doGetNameByNameId(nameId));
-  }
-
-  private static String doGetNameByNameId(int nameId) throws IOException {
+  private static CharSequence doGetNameByNameId(int nameId) throws IOException {
     assert nameId >= 0 : nameId;
-    return nameId == 0 ? "" : ourConnection.getNames().valueOf(nameId);
+    PersistentFSConnection connection = getConnectionOrFail();
+    return nameId == 0 ? "" : connection.getNames().valueOf(nameId);
   }
 
-  /**
-   * @return nameId
-   */
-  static int setName(int fileId, @NotNull String name) {
-    return writeAndHandleErrors(() -> {
-      incModCount(fileId);
-      int nameId = ourConnection.getNames().enumerate(name);
-      ourConnection.getRecords().setNameId(fileId, nameId);
-      return nameId;
-    });
+  static void setName(int fileId, @NotNull String name, int oldNameId) {
+    try {
+      ourNamesIndexModCount.incrementAndGet();
+      int nameId = getNameId(name);
+      getConnectionOrFail().getRecords().setNameId(fileId, nameId);
+      getConnectionOrFail().markDirty();
+      InvertedNameIndex.updateFileName(fileId, nameId, oldNameId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void setFlags(int id, @PersistentFS.Attributes int flags) {
-    writeAndHandleErrors(() -> {
-      incModCount(id);
-      ourConnection.getRecords().setFlags(id, flags);
-    });
+    try {
+      if (getConnectionOrFail().getRecords().setFlags(id, flags)) {
+        getConnectionOrFail().markDirty();
+      }
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static long getLength(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getLength(id));
+    try {
+      return getConnectionOrFail().getRecords().getLength(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void setLength(int id, long len) {
-    writeAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      if (records.putLength(id, len)) {
-        incModCount(id);
+    try {
+      if (getConnectionOrFail().getRecords().setLength(id, len)) {
+        getConnectionOrFail().markDirty();
       }
-    });
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
+  }
+
+  static void fillRecord(int id, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed)
+    throws IOException {
+    getConnectionOrFail().getRecords().fillRecord(id, timestamp, length, flags, nameId, parentId, overwriteMissed);
+    getConnectionOrFail().markDirty();
   }
 
   static long getTimestamp(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getTimestamp(id));
+    try {
+      return getConnectionOrFail().getRecords().getTimestamp(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void setTimestamp(int id, long value) {
-    writeAndHandleErrors(() -> {
-      PersistentFSRecordsStorage records = ourConnection.getRecords();
-      if (records.putTimeStamp(id, value)) {
-        incModCount(id);
+    try {
+      if (getConnectionOrFail().getRecords().setTimestamp(id, value)) {
+        getConnectionOrFail().markDirty();
       }
-    });
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static int getModCount(int id) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getModCount(id));
+    try {
+      return getConnectionOrFail().getRecords().getModCount(id);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @Nullable
-  static DataInputStream readContent(int fileId) {
-    ThrowableComputable<DataInputStream, IOException> computable = readAndHandleErrors(() -> {
-      return ourContentAccessor.readContent(fileId, ourConnection);
-    });
-    if (computable == null) return null;
+  static @Nullable DataInputStream readContent(int fileId) {
     try {
-      return computable.compute();
+      return ourContentAccessor.readContent(fileId);
     }
     catch (OutOfMemoryError outOfMemoryError) {
       throw outOfMemoryError;
     }
+    catch (ZipException e) {
+      // we use zip to compress content
+      String fileName = getName(fileId);
+      long length = getLength(fileId);
+      IOException diagnosticException =
+        new IOException("Failed to decompress file's content for file. File name = " + fileName + ", length = " + length);
+      diagnosticException.addSuppressed(e);
+      handleError(diagnosticException);
+    }
     catch (Throwable e) {
       handleError(e);
     }
     return null;
   }
 
-  @NotNull
-  static DataInputStream readContentById(int contentId) {
+  static @NotNull DataInputStream readContentById(int contentId) {
     try {
-      return ourContentAccessor.readContentDirectly(contentId, ourConnection);
+      return ourContentAccessor.readContentDirectly(contentId);
     }
     catch (Throwable e) {
       handleError(e);
@@ -604,123 +814,154 @@ public final class FSRecords {
     return null;
   }
 
-  @Nullable
-  public static DataInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
-    return readAndHandleErrors(() -> {
-      try (DataInputStream stream = readAttribute(fileId, att)) {
-        if (stream != null && att.isVersioned()) {
-          try {
-            int actualVersion = DataInputOutputUtil.readINT(stream);
-            if (actualVersion != att.getVersion()) {
-              return null;
-            }
-          }
-          catch (IOException e) {
-            return null;
-          }
-        }
-        return stream;
-      }
-    });
+
+  public static @Nullable AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute attribute) {
+    try {
+      return readAttribute(fileId, attribute);
+    }
+    catch (Throwable e) {
+      throw handleError(e);
+    }
   }
 
   // must be called under r or w lock
-  @Nullable
-  private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
-
-    return ourAttributeAccessor.readAttribute(fileId, attribute, ourConnection);
+  private static @Nullable AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+    return ourAttributeAccessor.readAttribute(fileId, attribute);
   }
 
   static int acquireFileContent(int fileId) {
-    return writeAndHandleErrors(() -> ourContentAccessor.acquireContentRecord(fileId, ourConnection));
+    try {
+      return ourContentAccessor.acquireContentRecord(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static void releaseContent(int contentId) {
-    writeAndHandleErrors(() -> ourContentAccessor.releaseContentRecord(contentId, ourConnection));
+    try {
+      ourContentAccessor.releaseContentRecord(contentId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static int getContentId(int fileId) {
-    return readAndHandleErrors(() -> ourConnection.getRecords().getContentRecordId(fileId));
+    try {
+      return ourConnection.getRecords().getContentRecordId(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @TestOnly
   static byte[] getContentHash(int fileId) {
-    return readAndHandleErrors(() -> ourContentAccessor.getContentHash(fileId, ourConnection));
+    try {
+      return ourContentAccessor.getContentHash(fileId);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @NotNull
-  static DataOutputStream writeContent(int fileId, boolean readOnly) {
-    return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly, ourConnection)) {
+  static @NotNull DataOutputStream writeContent(int fileId, boolean readOnly) {
+    return new DataOutputStream(ourContentAccessor.new ContentOutputStream(fileId, readOnly)) {
       @Override
       public void close() {
-        writeAndHandleErrors(() -> {
+        try {
           super.close();
           if (((PersistentFSContentAccessor.ContentOutputStream)out).isModified()) {
-            incModCount(fileId);
+            getConnectionOrFail().markRecordAsModified(fileId);
           }
-        });
+        }
+        catch (IOException e) {
+          throw handleError(e);
+        }
       }
     };
   }
 
   static void writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean readOnly) {
-    writeAndHandleErrors(() -> {
-      if (ourContentAccessor.writeContent(fileId, bytes, readOnly, ourConnection)) {
-        incModCount(fileId);
-      }
-    });
+    try {
+      ourContentAccessor.writeContent(fileId, bytes, readOnly);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
-    return writeAndHandleErrors(() -> ourContentAccessor.allocateContentRecordAndStore(bytes, ourConnection));
+    try {
+      return ourContentAccessor.allocateContentRecordAndStore(bytes);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
-  @NotNull
-  public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
-    DataOutputStream dataOutputStream = ourAttributeAccessor.writeAttribute(fileId, att, ourConnection);
-    return new DataOutputStream(dataOutputStream) {
-      @Override
-      public void close() {
-        writeAndHandleErrors(() -> super.close());
-      }
-    };
-  }
-
-  public static PersistentFSPaths getPersistentFSPaths() {
-    return new PersistentFSPaths(getCachesDir());
+  public static @NotNull AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+    return ourAttributeAccessor.writeAttribute(fileId, att);
   }
 
   static synchronized void dispose() {
-    writeAndHandleErrors(() -> {
-      try {
-        ourConnection.doForce();
-        ourConnection.closeFiles();
-      }
-      finally {
-        ourConnection = null;
-        ourContentAccessor = null;
-        ourAttributeAccessor = null;
-        ourTreeAccessor = null;
-        ourRecordAccessor = null;
-      }
-    });
+    if (ourConnection != null) {
+      PersistentFSConnector.disconnect(ourConnection);
+
+      ourConnection = null;
+      ourContentAccessor = null;
+      ourAttributeAccessor = null;
+      ourTreeAccessor = null;
+      ourRecordAccessor = null;
+    }
   }
 
   public static void invalidateCaches() {
-    ourConnection.createBrokenMarkerFile(null);
+    getConnectionOrFail().createBrokenMarkerFile(null);
   }
 
   static void checkSanity() {
-    writeAndHandleErrors(() -> {
-      ourRecordAccessor.checkSanity(ourConnection);
-      return null;
-    });
+    try {
+      ourRecordAccessor.checkSanity();
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
+  /**
+   * Method is supposed to be called in a pattern like this:
+   * <pre>
+   * try{
+   *  ...
+   * }
+   * catch(Throwable t){
+   *   throw handeError(e);
+   * }
+   * </pre>
+   * i.e. in a 'throw' statement -- to make clear, it will throw an exception. Method made return
+   * RuntimeException specifically for that purpose: to be used in a 'throw' statement, so compiler
+   * understands it is as a method exit point.
+   */
   @Contract("_->fail")
-  public static void handleError(Throwable e) throws RuntimeException, Error {
+  public static RuntimeException handleError(final Throwable e) throws RuntimeException, Error {
+    if (e instanceof ClosedStorageException) {
+      // no connection means IDE is closing...
+      throw new AlreadyDisposedException("VFS already disposed");
+    }
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
     if (ourConnection != null) {
       ourConnection.handleError(e);
     }
+    // no connection means IDE is closing...
+    throw new ServiceNotReadyException();
+  }
+
+  @TestOnly
+  public static void checkFilenameIndexConsistency() {
+    InvertedNameIndex.checkConsistency();
   }
 }

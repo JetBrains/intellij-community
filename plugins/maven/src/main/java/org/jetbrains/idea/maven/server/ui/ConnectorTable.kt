@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.ui
 
 import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnActionButton
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.util.ui.ListTableModel
@@ -18,9 +20,9 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
 
   val stop = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.stop"), AllIcons.Debugger.KillProcess) {
     override fun actionPerformed(e: AnActionEvent) {
-      MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.ActionID.KillMavenConnector)
-      val connector = tableView.selectedObject ?: return;
-      connector.shutdown(true)
+      MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.KILL_MAVEN_CONNECTOR)
+      val connector = tableView.selectedObject ?: return
+      MavenServerManager.getInstance().shutdownConnector(connector, true)
       this@ConnectorTable.refreshValues()
     }
 
@@ -28,12 +30,16 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
       val connector = tableView.selectedObject
       isEnabled = connector?.state == MavenServerConnector.State.RUNNING
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
   val refresh = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.refresh"), AllIcons.Actions.Refresh) {
     override fun actionPerformed(e: AnActionEvent) {
       this@ConnectorTable.tableView.setModelAndUpdateColumns(createListModel())
       this@ConnectorTable.setModified()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 
   init {
@@ -46,10 +52,10 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
   }
 
   override fun createListModel(): ListTableModel<MavenServerConnector> {
-    val project = TableColumn(MavenConfigurableBundle.message("connector.ui.project")) { it.project.name }
+    val project = TableColumn(MavenConfigurableBundle.message("connector.ui.project")) { it.project?.name?: "!Indexer" }
     val jdk = TableColumn(MavenConfigurableBundle.message("connector.ui.jdk")) { it.jdk.name }
     val vmopts = TableColumn(MavenConfigurableBundle.message("connector.ui.vmOptions")) { it.vmOptions }
-    val dir = TableColumn(MavenConfigurableBundle.message("connector.ui.dir")) { it.multimoduleDirectory }
+    val dir = TableColumn(MavenConfigurableBundle.message("connector.ui.dir")) { it.multimoduleDirectories.joinToString(separator = ",") }
     val maven = TableColumn(
       MavenConfigurableBundle.message("connector.ui.maven")) { "${it.mavenDistribution.version} ${it.mavenDistribution.mavenHome}" }
     val state = TableColumn(
@@ -58,24 +64,25 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
       MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
     val columnInfos = arrayOf<TableColumn>(project, dir, type, maven, state)
     return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().allConnectors.toList(), 3,
-                                                SortOrder.DESCENDING);
+                                                SortOrder.DESCENDING)
   }
 
   override fun createExtraActions(): Array<AnActionButton> {
     return arrayOf(refresh, stop)
   }
 
-  private class TableColumn(name: String, val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
+  private class TableColumn(@NlsContexts.ColumnName name: String,
+                            val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
     name) {
 
-    override fun getDescription(element: MavenServerConnector?): String? = null;
+    override fun getDescription(element: MavenServerConnector?): String? = null
 
     override fun valueOf(item: MavenServerConnector) = supplier(item)
 
   }
 
   override fun createElement(): MavenServerConnector? {
-    return null;
+    return null
   }
 
   override fun isEmpty(element: MavenServerConnector?): Boolean {

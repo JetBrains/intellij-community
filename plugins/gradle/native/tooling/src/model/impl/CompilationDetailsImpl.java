@@ -53,21 +53,21 @@ public class CompilationDetailsImpl implements CompilationDetails {
     compilerExecutable = compilationDetails.getCompilerExecutable();
     compileTask = new DefaultExternalTask(compilationDetails.getCompileTask());
     compileWorkingDir = compilationDetails.getCompileWorkingDir();
-    frameworkSearchPaths = new ArrayList<File>(compilationDetails.getFrameworkSearchPaths());
-    systemHeaderSearchPaths = new ArrayList<File>(compilationDetails.getSystemHeaderSearchPaths());
-    userHeaderSearchPaths = new ArrayList<File>(compilationDetails.getUserHeaderSearchPaths());
-    sources = new LinkedHashSet<SourceFile>(compilationDetails.getSources().size());
+    frameworkSearchPaths = new ArrayList<>(compilationDetails.getFrameworkSearchPaths());
+    systemHeaderSearchPaths = new ArrayList<>(compilationDetails.getSystemHeaderSearchPaths());
+    userHeaderSearchPaths = new ArrayList<>(compilationDetails.getUserHeaderSearchPaths());
+    sources = new LinkedHashSet<>(compilationDetails.getSources().size());
     for (SourceFile source : compilationDetails.getSources()) {
       sources.add(new SourceFileImpl(source));
     }
-    headerDirs = new LinkedHashSet<File>(compilationDetails.getHeaderDirs());
+    headerDirs = new LinkedHashSet<>(compilationDetails.getHeaderDirs());
 
-    macroDefines = new LinkedHashSet<MacroDirective>(compilationDetails.getMacroDefines().size());
+    macroDefines = new LinkedHashSet<>(compilationDetails.getMacroDefines().size());
     for (MacroDirective macroDirective : compilationDetails.getMacroDefines()) {
       macroDefines.add(new MacroDirectiveImpl(macroDirective));
     }
-    macroUndefines = new LinkedHashSet<String>(compilationDetails.getMacroUndefines());
-    additionalArgs = new ArrayList<String>(compilationDetails.getAdditionalArgs());
+    macroUndefines = new LinkedHashSet<>(compilationDetails.getMacroUndefines());
+    additionalArgs = new ArrayList<>(compilationDetails.getAdditionalArgs());
   }
 
   @Override

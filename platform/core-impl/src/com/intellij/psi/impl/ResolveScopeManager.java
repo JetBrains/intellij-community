@@ -8,9 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class ResolveScopeManager {
   @NotNull
   public abstract GlobalSearchScope getResolveScope(@NotNull PsiElement element);

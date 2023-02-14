@@ -3,12 +3,19 @@
 Reports unnecessary cast expressions.
 
 <p>Example:</p>
-<pre>
-  static void foo() {
-        String o = null;
-        Object o2 = (Object) o;
+<pre><code>
+  static Object toObject(String s) {
+    return (Object) s;
   }
-</pre>
+</code></pre>
+<!-- tooltip end -->
+<p>
+  Use the checkbox below to ignore clarifying casts e.g., casts in collection calls where <code>Object</code> is expected:
+<pre><code>
+  static void removeFromList(List&lt;String&gt; l, Object o) {
+    l.remove((String)o);
+  } 
+</code></pre>
+
 </body>
 </html>
-<!-- tooltip end -->

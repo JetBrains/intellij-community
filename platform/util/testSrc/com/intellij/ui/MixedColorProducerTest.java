@@ -1,35 +1,35 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.awt.Color;
+import java.awt.*;
 
 public final class MixedColorProducerTest {
   @Test
   public void checkFirstColorInstance() {
-    Assert.assertSame(Color.BLACK, getBlackWhite(0).produce());
-    Assert.assertSame(Color.WHITE, getWhiteBlack(0).produce());
+    Assert.assertSame(Color.BLACK, getBlackWhite(0).get());
+    Assert.assertSame(Color.WHITE, getWhiteBlack(0).get());
   }
 
   @Test
   public void checkSecondColorInstance() {
-    Assert.assertSame(Color.WHITE, getBlackWhite(1).produce());
-    Assert.assertSame(Color.BLACK, getWhiteBlack(1).produce());
+    Assert.assertSame(Color.WHITE, getBlackWhite(1).get());
+    Assert.assertSame(Color.BLACK, getWhiteBlack(1).get());
   }
 
   @Test
   public void checkCachedColorInstance() {
     MixedColorProducer producer = getTransparentRed(.999);
-    Color color = producer.produce();
+    Color color = producer.get();
     producer.setMixer(.999);
-    Assert.assertEquals(color, producer.produce());
-    Assert.assertSame(color, producer.produce());
+    Assert.assertEquals(color, producer.get());
+    Assert.assertSame(color, producer.get());
     producer.setMixer(.9999);
-    Assert.assertEquals(color, producer.produce());
-    Assert.assertNotSame(color, producer.produce());
+    Assert.assertEquals(color, producer.get());
+    Assert.assertNotSame(color, producer.get());
   }
 
 
@@ -167,6 +167,6 @@ public final class MixedColorProducerTest {
   }
 
   private static void assertColor(@NotNull MixedColorProducer producer, @NotNull Color expected) {
-    Assert.assertEquals(expected, producer.produce());
+    Assert.assertEquals(expected, producer.get());
   }
 }

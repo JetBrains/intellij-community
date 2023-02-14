@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Printer;
@@ -16,6 +16,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent.NodePropertyKey.PRESENTABLE_NAME;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
@@ -225,7 +227,12 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
       // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
       // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-      fireOnTestFinished(testProxy, node.getId());
+      if (testProxy.isSuite()) {
+        fireOnSuiteFinished(testProxy, node.getId());
+      }
+      else {
+        fireOnTestFinished(testProxy, node.getId());
+      }
     }
   }
 
@@ -320,6 +327,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                    + comparisonFailureExpectedText + "\n"
                    + "Actual:\n"
                    + comparisonFailureActualText);
+        testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       }
       long duration = testFailedEvent.getDurationMillis();
       if (duration >= 0) {
@@ -368,6 +376,24 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onTestsCountInSuite(final int count) {
     LOG.debug("onTestsCountInSuite");
     fireOnTestsCountInSuite(count);
+  }
+
+  @Override
+  public void onSetNodeProperty(final @NotNull TestSetNodePropertyEvent event) {
+    LOG.debug("onSetNodeProperty", " ", event);
+    final Node node = findNode(event);
+    if (node == null) {
+      logProblem("Node not found: " + event);
+      return;
+    }
+    final SMTestProxy nodeProxy = node.getProxy();
+    if (event.getPropertyKey() == PRESENTABLE_NAME) {
+      nodeProxy.setPresentableName(event.getPropertyValue());
+    }
+    else {
+      logProblem("Unhandled event: " + event);
+    }
+    myEventPublisher.onSetNodeProperty(nodeProxy, event);
   }
 
   private @Nullable String validateAndGetNodeId(@NotNull TreeNodeEvent treeNodeEvent) {
@@ -501,7 +527,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       Node node = (Node)o;
 
-      return myId == node.myId;
+      return myId.equals(node.myId);
     }
 
     @Override

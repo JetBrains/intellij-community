@@ -44,7 +44,7 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitStatement(PsiStatement statement) {
+  public void visitStatement(@NotNull PsiStatement statement) {
     super.visitStatement(statement);
     if (!previousWasGuardClause) {
       return;
@@ -64,10 +64,9 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static boolean isGuardClause(PsiStatement statement) {
-    if (!(statement instanceof PsiIfStatement)) {
+    if (!(statement instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
     if (ifStatement.getElseBranch() != null) {
       return false;
     }
@@ -75,10 +74,9 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
     if (thenBranch instanceof PsiReturnStatement) {
       return true;
     }
-    if (!(thenBranch instanceof PsiBlockStatement)) {
+    if (!(thenBranch instanceof PsiBlockStatement blockStatement)) {
       return false;
     }
-    final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
     final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
     final PsiStatement containedStatement = ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
     return containedStatement instanceof PsiReturnStatement;
@@ -89,10 +87,10 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
   }
 }

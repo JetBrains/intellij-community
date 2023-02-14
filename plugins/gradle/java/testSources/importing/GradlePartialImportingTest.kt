@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.assertMapsEqual
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
@@ -18,10 +17,13 @@ import org.jetbrains.plugins.gradle.model.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.project.*
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
+import java.util.function.Consumer
 import java.util.function.Predicate
 
 class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
@@ -184,14 +186,11 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
   }
 
   private fun createAndImportTestCompositeProject() {
-    createProjectSubFile(
-      "buildSrc/build.gradle",
-      "apply plugin: 'groovy'\n" +
-      "dependencies {\n" +
-      " compile gradleApi()\n" +
-      " compile localGroovy()\n" +
-      "}"
-    )
+    createBuildFile("buildSrc") {
+      withGroovyPlugin()
+      addImplementationDependency(code("gradleApi()"))
+      addImplementationDependency(code("localGroovy()"))
+    }
     createProjectSubFile(
       "gradle.properties",
       "prop_loaded_1=val1\n" +
@@ -199,14 +198,11 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     )
     createProjectSubFile("includedBuild/settings.gradle", "include 'subProject'")
     createProjectSubDir("includedBuild/subProject")
-    createProjectSubFile(
-      "includedBuild/buildSrc/build.gradle",
-      "apply plugin: 'groovy'\n" +
-      "dependencies {\n" +
-      " compile gradleApi()\n" +
-      " compile localGroovy()\n" +
-      "}"
-    )
+    createBuildFile("includedBuild") {
+      withGroovyPlugin()
+      addImplementationDependency(code("gradleApi()"))
+      addImplementationDependency(code("localGroovy()"))
+    }
     createSettingsFile("includeBuild 'includedBuild'")
     createProjectSubFile(
       "includedBuild/gradle.properties",
@@ -237,18 +233,18 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       if (currentGradleBaseVersion != GradleVersion.version("4.10.3")) {
         assertSyncViewTreeEquals { treeTestPresentation ->
           assertThat(treeTestPresentation).satisfiesAnyOf(
-            {
+            Consumer {
               assertThat(it).isEqualTo("-\n" +
                                        " -failed\n" +
                                        "  Build cancelled")
 
             },
-            {
+            Consumer {
               assertThat(it).isEqualTo("-\n" +
                                        " cancelled")
 
             },
-            {
+            Consumer {
               assertThat(it).startsWith("-\n" +
                                         " -failed\n" +
                                         "  Build cancelled\n" +
@@ -283,11 +279,9 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       "prop_finished_2=val2\n"
     )
 
-    importProject(
-      createBuildScriptBuilder()
-        .withJavaPlugin()
-        .generate()
-    )
+    importProject {
+      withJavaPlugin()
+    }
   }
 
   private fun assertReceivedModels(
@@ -305,7 +299,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     assertThat(modelConsumer.projectLoadedModels)
       .haveExactly(receivedQuantity, Condition(projectLoadedPredicate, "project loaded model for '$projectName' at '$buildPath'"))
     val (_, projectLoadedModel) = modelConsumer.projectLoadedModels.find(projectLoadedPredicate::test)!!
-    assertMapsEqual(expectedProjectLoadedModelsMap, projectLoadedModel.map)
+    assertThat(projectLoadedModel.map).containsExactlyInAnyOrderEntriesOf(expectedProjectLoadedModelsMap)
     if (expectedBuildFinishedModelsMap != null) {
       val buildFinishedPredicate = Predicate<Pair<Project, BuildFinishedModel>> {
         val project = it.first
@@ -315,7 +309,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       assertThat(modelConsumer.buildFinishedModels)
         .haveExactly(receivedQuantity, Condition(buildFinishedPredicate, "build finished model for '$projectName' at '$buildPath'"))
       val (_, buildFinishedModel) = modelConsumer.buildFinishedModels.find(buildFinishedPredicate::test)!!
-      assertMapsEqual(expectedBuildFinishedModelsMap, buildFinishedModel.map)
+      assertThat(buildFinishedModel.map).containsExactlyInAnyOrderEntriesOf(expectedBuildFinishedModelsMap)
     }
     else {
       assertEmpty(modelConsumer.buildFinishedModels)

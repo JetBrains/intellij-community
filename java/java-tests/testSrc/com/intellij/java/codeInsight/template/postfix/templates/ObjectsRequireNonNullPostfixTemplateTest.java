@@ -38,6 +38,10 @@ public class ObjectsRequireNonNullPostfixTemplateTest extends PostfixTemplateTes
     doTest();
   }
 
+  public void testAssignment() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getSuffix() {

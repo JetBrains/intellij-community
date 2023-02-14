@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -51,13 +51,13 @@ public final class StringExpressionHelper {
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
 
             @Override
-            public void visitLambdaExpression(PsiLambdaExpression expression) {}
+            public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
             @Override
-            public void visitReturnStatement(PsiReturnStatement statement) {
+            public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
               PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returns.add(returnValue);
@@ -83,9 +83,8 @@ public final class StringExpressionHelper {
       return constantExpression;
     }
 
-    if (expression instanceof PsiBinaryExpression) {
+    if (expression instanceof PsiBinaryExpression binaryExpression) {
       // a="a"; b="b"  return a+b;
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       return evaluatePolyadicExpressions(expression, visited, binaryExpression.getLOperand(), binaryExpression.getROperand());
     }
     if (expression instanceof PsiPolyadicExpression) {

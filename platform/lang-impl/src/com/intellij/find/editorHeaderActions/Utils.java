@@ -5,9 +5,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.ui.popup.AlignedPopup;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,33 +25,6 @@ import java.util.List;
 
 public final class Utils {
   private Utils() {
-  }
-
-  /**
-   * @deprecated use overloaded method instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
-                                         @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad, (PopupState<JBPopup>)null);
-  }
-
-  /**
-   * @deprecated use overloaded method instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void showCompletionPopup(JComponent toolbarComponent,
-                                         final JList list,
-                                         @NlsContexts.PopupTitle String title,
-                                         final JTextComponent textField,
-                                         @NlsContexts.PopupAdvertisement String ad,
-                                         JBPopupListener listener) {
-    showCompletionPopup(toolbarComponent, list, title, textField, ad);
   }
 
   public static void showCompletionPopup(JComponent toolbarComponent,
@@ -82,12 +54,8 @@ public final class Utils {
     }
 
     if (popupState != null) popupState.prepareToShow(popup);
-    if (toolbarComponent != null) {
-      popup.showUnderneathOf(toolbarComponent);
-    }
-    else {
-      popup.showUnderneathOf(textField);
-    }
+    JComponent parent = toolbarComponent != null ? toolbarComponent : textField;
+    AlignedPopup.showUnderneathWithoutAlignment(popup, parent);
   }
 
   public static void setSmallerFont(final JComponent component) {
@@ -112,6 +80,6 @@ public final class Utils {
   @NotNull
   public static List<Shortcut> shortcutsOf(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    return action == null ? ContainerUtil.emptyList() : ContainerUtil.immutableList(action.getShortcutSet().getShortcuts());
+    return action == null ? ContainerUtil.emptyList() : List.of(action.getShortcutSet().getShortcuts());
   }
 }

@@ -14,7 +14,7 @@ open class ReadMeCreator {
   private val closeProject = ActionsBundle.message("action.CloseProject.text").dropMnemonic()
   private val iftAccess = LearnBundle.message("action.ShowLearnPanel.text").dropMnemonic()
 
-  private  val bugTracker = "https://youtrack.jetbrains.com/issues/IFT"
+  private val bugTracker = "https://youtrack.jetbrains.com/issues/IFT"
 
   protected open val welcomeHeader: String = LessonsBundle.message("readme.welcome.header")
   protected open val iftDescription: String = LessonsBundle.message("readme.ift.description", LessonUtil.productName)

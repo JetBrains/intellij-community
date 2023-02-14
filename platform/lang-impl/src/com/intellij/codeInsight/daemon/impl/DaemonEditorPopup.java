@@ -31,15 +31,15 @@ public class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;
 
-  DaemonEditorPopup(@NotNull final Project project, @NotNull final Editor editor) {
+  DaemonEditorPopup(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
     myEditor = editor;
   }
 
   @Override
-  public void invokePopup(final Component comp, final int x, final int y) {
+  public void invokePopup(Component comp, int x, int y) {
     if (ApplicationManager.getApplication() == null) return;
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (file == null) return;
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -60,6 +60,11 @@ public class DaemonEditorPopup extends PopupHandler {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
           return UISettings.getInstance().getShowEditorToolTip();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
         }
 
         @Override
@@ -88,6 +93,11 @@ public class DaemonEditorPopup extends PopupHandler {
                     }
 
                     @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
+                    }
+
+                    @Override
                     public void setSelected(@NotNull AnActionEvent e, boolean state) {
                       DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(state);
                     }
@@ -102,6 +112,11 @@ public class DaemonEditorPopup extends PopupHandler {
                     @Override
                     public boolean isSelected(@NotNull AnActionEvent e) {
                       return !DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
+                    }
+
+                    @Override
+                    public @NotNull ActionUpdateThread getActionUpdateThread() {
+                      return ActionUpdateThread.BGT;
                     }
 
                     @Override

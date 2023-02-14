@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomUtil;
@@ -25,6 +26,10 @@ import org.jetbrains.idea.maven.model.MavenId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.ide.plugins.PluginManagerCore.getPlugin;
+import static com.intellij.openapi.extensions.PluginId.getId;
+import static java.util.Optional.ofNullable;
 
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
@@ -102,5 +107,11 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
   @Override
   protected boolean startInWriteAction() {
     return false;
+  }
+
+  @Override
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return super.isValidForFile(project, editor, file)
+           && ofNullable(getPlugin(getId("com.jetbrains.packagesearch.intellij-plugin"))).map(p -> !p.isEnabled()).orElse(true);
   }
 }

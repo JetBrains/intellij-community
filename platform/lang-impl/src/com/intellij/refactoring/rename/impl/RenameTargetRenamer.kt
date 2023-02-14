@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.openapi.editor.Editor
@@ -13,14 +13,19 @@ class RenameTargetRenamer(
   private val target: RenameTarget
 ) : Renamer {
 
-  override fun getPresentableText(): String = target.presentation.presentableText
+  override fun getPresentableText(): String = target.presentation().presentableText
 
-  override fun performRename() {
-    if (editor != null &&
-        editor.settings.isVariableInplaceRenameEnabled &&
-        inplaceRename(project, editor, target)) {
-      return
-    }
-    showDialogAndRename(project, target)
+  override fun performRename(): Unit = startRename(project, editor, target)
+}
+
+/**
+ * TODO candidate for a public API
+ */
+internal fun startRename(project: Project, editor: Editor?, target: RenameTarget) {
+  if (editor != null &&
+      editor.settings.isVariableInplaceRenameEnabled &&
+      inplaceRename(project, editor, target)) {
+    return
   }
+  showDialogAndRename(project, target)
 }

@@ -4,23 +4,23 @@ Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socke
 Limit.java:6
 Stream.of(1, 2, 3)
 .limit(1)
-.count()
+.toArray()
 limit
     before: 1
     after: 2
-count
+toArray
     before: 2
-    after: nothing
+    after: 3
 mappings for limit
   direct:
     1 -> 2
   reverse:
     1 <- 2
-mappings for count
+mappings for toArray
   direct:
-    2 -> nothing
+    2 -> 3
   reverse:
-    empty
+    2 <- 3
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -20,18 +20,16 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
-/**
- * @author Sergey Evdokimov
- */
-public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<GrReferenceElement> {
+public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<GrReferenceElement<?>> {
   @Override
-  public void registerFixes(@NotNull GrReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
+  public void registerFixes(@NotNull GrReferenceElement<?> ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new GroovyFindJarFix(ref));
   }
 
   @NotNull
   @Override
-  public Class<GrReferenceElement> getReferenceClass() {
-    return GrReferenceElement.class;
+  public Class<GrReferenceElement<?>> getReferenceClass() {
+    //noinspection unchecked
+    return (Class<GrReferenceElement<?>>)(Class<?>)GrReferenceElement.class;
   }
 }

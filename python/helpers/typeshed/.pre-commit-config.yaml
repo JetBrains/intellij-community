@@ -1,0 +1,32 @@
+repos:
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.0.4 # must match requirements-tests.txt
+    hooks:
+      - id: pycln
+        args: [--all, stubs, stdlib, tests, scripts]
+  - repo: https://github.com/psf/black
+    rev: 22.6.0 # must match requirements-tests.txt
+    hooks:
+      - id: black
+        language_version: python3.9
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1  # must match requirements-tests.txt
+    hooks:
+      - id: isort
+        name: isort (python)
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1  # must match requirements-tests.txt
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          # must match requirements-tests.txt
+          - 'flake8-bugbear==21.11.29'
+          - 'flake8-pyi==22.7.0'
+
+ci:
+    autofix_commit_msg: '[pre-commit.ci] auto fixes from pre-commit.com hooks'
+    autofix_prs: true
+    autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+    autoupdate_schedule: weekly
+    skip: [flake8]
+    submodules: false

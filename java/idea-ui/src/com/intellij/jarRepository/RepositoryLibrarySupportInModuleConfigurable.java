@@ -40,7 +40,7 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
     RepositoryLibraryProperties defaultProperties = libraryDescription.createDefaultProperties();
     this.model = new RepositoryLibraryPropertiesModel(defaultProperties.getVersion(), false, false, defaultProperties.isIncludeTransitiveDependencies(),
                                                       defaultProperties.getExcludedDependencies());
-    editor = new RepositoryLibraryPropertiesEditor(project, model, libraryDescription);
+    editor = new RepositoryLibraryPropertiesEditor(project, model, libraryDescription, false);
   }
 
   @Nullable
@@ -54,6 +54,6 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
                          @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider) {
     final RepositoryLibrarySupport librarySupport = new RepositoryLibrarySupport(module.getProject(), libraryDescription, model);
-    librarySupport.addSupport(module, rootModel, modifiableModelsProvider);
+    librarySupport.addSupport(module, rootModel, modifiableModelsProvider, null);
   }
 }

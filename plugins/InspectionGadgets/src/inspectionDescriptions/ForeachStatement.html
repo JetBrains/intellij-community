@@ -1,9 +1,24 @@
 <html>
 <body>
-Reports the Java 5 <b>for</b> statement syntax.
-Such <b>for</b> statements are not supported under Java 1.4 and older.
+Reports enhanced <code>for</code> statements.
+<p>Example:</p>
+<pre><code>
+  for (int x: Arrays.asList(1, 2, 3)) {
+    System.out.println(x);
+  }
+</code></pre>
+<p>After the quick-fix is applied: </p>
+<pre><code>
+  for (Iterator&lt;Integer&gt; iterator = Arrays.asList(1, 2, 3).iterator(); iterator.hasNext(); ) {
+    final int x = iterator.next();
+    System.out.println(x);
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
+  <i>Enhanced</i> <code>for</code> <i>statement</i> appeared in Java 5.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 
 </body>
 </html>

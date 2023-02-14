@@ -1,0 +1,37 @@
+<html>
+<body>
+Reports string templates that are used as arguments to <b>SLF4J</b> and <b>Log4j 2</b> logging methods.
+The method <code>org.apache.logging.log4j.Logger.log()</code> and its overloads are supported only for <b>all log levels</b> option.
+String templates are evaluated at runtime even when the logging message is not logged; this can negatively impact performance.
+It is recommended to use a parameterized log message instead, which will not be evaluated when logging is disabled.
+<p><b>Example (for Kotlin):</b></p>
+<pre><code>
+      val variable1 = getVariable()
+      logger.info("variable1: $variable1")
+</code></pre>
+<p><b>After the quick-fix is applied (for Kotlin):</b></p>
+<pre><code>
+      val variable1 = getVariable()
+      logger.info("variable1: {}", variable1)
+</code></pre>
+<p>
+  Note that the suggested replacement might not be equivalent to the original code, for example,
+  when string templates contain method calls or assignment expressions.
+</p>
+<!-- tooltip end -->
+<ul>
+  <li>
+    Use the <b>Warn on</b> list to ignore certain higher logging levels. Higher logging levels may be always enabled, and the arguments will always be evaluated.
+  </li>
+  <li>
+    Use the <b>Do not warn when only expressions with primitive types, their wrappers or String are included</b> option to ignore
+    string templates, which contain only expressions with primitive types, their wrappers or String.
+    For example, it could be useful to prevent loading lazy collections.
+    Note that, creating string even only with expressions with primitive types,
+    their wrappers or String at runtime can negatively impact performance.
+  </li>
+</ul>
+
+<p><small>New in 2023.1</small></p>
+</body>
+</html>

@@ -1,11 +1,28 @@
 <html>
 <body>
-Reports any implementations of <b>equals()</b> which access
-non-<b>final</b> variables. Such access may result in <b>equals()</b>
-returning different results at different points in an object's lifecycle, which may in turn cause problems when
-using the standard Collections classes.
+Reports implementations of <code>equals()</code> that access
+non-<code>final</code> variables. Such access may result in <code>equals()</code>
+returning different results at different points in the object's lifecycle, which may in turn cause problems when
+using the standard collections classes.
+<p><b>Example:</b></p>
+<pre><code>
+  public class Person {
+    private String lastName;
+
+    @Override
+    public boolean equals(Object obj) {
+      ...
+      Person other = (Person) obj;
+      if (lastName == null) {
+        if (!lastName.equals(other.lastName)) {
+        return false;
+      ...
+      }
+    }
+  }
+  </code>
+</pre>
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

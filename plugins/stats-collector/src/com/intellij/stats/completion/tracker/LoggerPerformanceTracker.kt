@@ -2,11 +2,11 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.completion.ml.performance.CompletionPerformanceTracker
+import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
 
 class LoggerPerformanceTracker(
   private val delegate: CompletionActionsListener,
-  private val tracker: CompletionPerformanceTracker)
+  private val tracker: MLCompletionPerformanceTracker)
   : CompletionActionsListener {
   override fun beforeDownPressed() = measureAndLog("beforeDownPressed") {
     delegate.beforeDownPressed()

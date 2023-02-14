@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ilyas
- */
 public final class GroovyPropertyUtils {
   private static final Logger LOG = Logger.getInstance(GroovyPropertyUtils.class);
 
@@ -201,7 +198,7 @@ public final class GroovyPropertyUtils {
     if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {
       return false;
     }
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
+    if (PsiTypes.voidType().equals(method.getReturnType())) return false;
     if (propertyName == null) return true;
 
     final String byGetter = getPropertyNameByGetter(method);
@@ -310,6 +307,10 @@ public final class GroovyPropertyUtils {
 
   public static String getGetterNameNonBoolean(@NotNull String name) {
     return getAccessorName(GET_PREFIX, name);
+  }
+
+  public static String getGetterNameForRecordField(@NotNull String name) {
+    return name;
   }
 
   public static String getGetterNameBoolean(@NotNull String name) {
@@ -510,7 +511,7 @@ public final class GroovyPropertyUtils {
 
     final PsiClass containingClass = field.getContainingClass();
     try {
-      GrMethod setMethod = factory.createMethod(setName, PsiType.VOID);
+      GrMethod setMethod = factory.createMethod(setName, PsiTypes.voidType());
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       final PsiType type = field instanceof GrField ? ((GrField)field).getDeclaredType() : field.getType();
       GrParameter param = factory.createParameter(parameterName, type);
@@ -562,6 +563,6 @@ public final class GroovyPropertyUtils {
   }
 
   private static boolean isBooleanOrBoxed(PsiType type) {
-    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
+    return PsiTypes.booleanType().equals(type) || PsiTypes.booleanType().equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }

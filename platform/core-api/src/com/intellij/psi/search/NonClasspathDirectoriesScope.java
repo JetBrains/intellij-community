@@ -28,18 +28,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   private final Set<VirtualFile> myRoots;
 
-  public NonClasspathDirectoriesScope(@NotNull Collection<VirtualFile> roots) {
+  public NonClasspathDirectoriesScope(@NotNull Collection<? extends VirtualFile> roots) {
     myRoots = new HashSet<>(roots);
   }
 
   @NotNull
-  public static GlobalSearchScope compose(@NotNull List<VirtualFile> roots) {
+  public static GlobalSearchScope compose(@NotNull List<? extends VirtualFile> roots) {
     if (roots.isEmpty()) {
       return EMPTY_SCOPE;
     }

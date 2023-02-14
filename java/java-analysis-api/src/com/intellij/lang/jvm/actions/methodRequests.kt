@@ -3,7 +3,6 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmMethod
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.project.Project
@@ -40,10 +39,18 @@ private class SimpleConstructorRequest(
   override fun getExpectedParameters() = expectedParameters
 }
 
-fun methodRequest(project: Project, methodName: String, modifier: JvmModifier, returnType: JvmType): CreateMethodRequest {
+private class SimpleTypeRequest(private val fqn: String?, private val annotations: List<AnnotationRequest>): ChangeTypeRequest {
+  override fun isValid(): Boolean = true
+  
+  override fun getQualifiedName(): String? = fqn
+
+  override fun getAnnotations(): List<AnnotationRequest> = annotations
+}
+
+fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
   return SimpleMethodRequest(
     methodName = methodName,
-    modifiers = listOf(modifier),
+    modifiers = modifiers,
     returnType = listOf(expectedType(returnType)),
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
@@ -55,6 +62,9 @@ fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }
+
+fun typeRequest(fqn: String?, annotations: List<AnnotationRequest>): ChangeTypeRequest = 
+  SimpleTypeRequest(fqn, annotations)
 
 fun setMethodParametersRequest(parameters: Iterable<Map.Entry<String, JvmType>>): ChangeParametersRequest =
   SimpleChangeParametersRequest(parameters.map { expectedParameter(it.value, it.key) })

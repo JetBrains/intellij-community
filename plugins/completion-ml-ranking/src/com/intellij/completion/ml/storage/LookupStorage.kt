@@ -4,10 +4,10 @@ package com.intellij.completion.ml.storage
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.performance.CompletionPerformanceTracker
+import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
+import com.intellij.completion.ml.personalization.session.LookupSessionFactorsStorage
 import com.intellij.completion.ml.sorting.RankingModelWrapper
 import com.intellij.lang.Language
-import com.intellij.completion.ml.personalization.session.LookupSessionFactorsStorage
 
 interface LookupStorage {
   companion object {
@@ -22,7 +22,7 @@ interface LookupStorage {
   val sessionFactors: LookupSessionFactorsStorage
   val userFactors: Map<String, String>
   val contextFactors: Map<String, String>
-  val performanceTracker: CompletionPerformanceTracker
+  val performanceTracker: MLCompletionPerformanceTracker
   fun mlUsed(): Boolean
   fun contextProvidersResult(): ContextFeatures
   fun shouldReRank(): Boolean

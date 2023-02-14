@@ -1,14 +1,14 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class a {
     void g() throws Exception {
     }
 
-    // initializer
+   // initializer
     {
         try {
-            // comment before
+           // comment before
             <caret>g();
-            // comment after
+           // comment after
         }
     }
 }

@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports comparisons where the <code>compare</code> method is superfluous.
+Reports comparisons in which the <code>compare</code> method is superfluous.
 <p>Example:</p>
-<pre>
+<pre><code>
   boolean result = Integer.compare(a, b) == 0;
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   boolean result = a == b;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2018.2</small></p>
 </body>

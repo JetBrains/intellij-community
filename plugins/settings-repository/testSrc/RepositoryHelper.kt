@@ -3,11 +3,11 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.isFile
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()

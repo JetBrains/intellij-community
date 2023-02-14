@@ -16,7 +16,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -25,14 +24,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PyQualifiedNameCompletionMatcher {
+public final class PyQualifiedNameCompletionMatcher {
   private static final Logger LOG = Logger.getInstance(PyQualifiedNameCompletionMatcher.class);
 
   private PyQualifiedNameCompletionMatcher() {
   }
 
   public static void processMatchingExportedNames(@NotNull QualifiedName qualifiedNamePattern,
-                                                  @Nullable QualifiedName originallyTypedAlias,
                                                   @NotNull PsiFile currentFile,
                                                   @NotNull GlobalSearchScope scope,
                                                   @NotNull Processor<? super ExportedName> processor) {
@@ -46,8 +44,6 @@ public class PyQualifiedNameCompletionMatcher {
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
     IndexLookupStats stats = new IndexLookupStats();
     try {
-      IdFilter idFilter = IdFilter.getProjectIdFilter(project, true);
-
       List<String> matchingAttributeNames = new ArrayList<>();
       stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
         ProgressManager.checkCanceled();
@@ -56,11 +52,11 @@ public class PyQualifiedNameCompletionMatcher {
         stats.matchingKeys++;
         matchingAttributeNames.add(attributeName);
         return true;
-      }, moduleMatchingScope, idFilter);
+      }, moduleMatchingScope);
 
       for (String attributeName : matchingAttributeNames) {
         stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
-                                  attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
+                                  attributeName, project, moduleMatchingScope, null, PyElement.class, element -> {
             ProgressManager.checkCanceled();
             VirtualFile vFile = element.getContainingFile().getVirtualFile();
             QualifiedName moduleQualifiedName = findQualifiedNameInClosestRoot(vFile, project);
@@ -78,7 +74,7 @@ public class PyQualifiedNameCompletionMatcher {
             }
             QualifiedName attributeQualifiedName = importPath.append(attributeName);
             if (alreadySuggestedAttributes.add(attributeQualifiedName)) {
-              if (!processor.process(new ExportedName(attributeQualifiedName, originallyTypedAlias, element))) {
+              if (!processor.process(new ExportedName(attributeQualifiedName, element))) {
                 return false;
               }
             }
@@ -127,12 +123,10 @@ public class PyQualifiedNameCompletionMatcher {
 
   public static final class ExportedName {
     private final QualifiedName myQualifiedName;
-    private final QualifiedName myOriginallyTypedQName;
     private final PyElement myElement;
 
-    private ExportedName(@NotNull QualifiedName qualifiedName, @Nullable QualifiedName originallyTypedQName, @NotNull PyElement element) {
+    private ExportedName(@NotNull QualifiedName qualifiedName, @NotNull PyElement element) {
       myQualifiedName = qualifiedName;
-      myOriginallyTypedQName = originallyTypedQName;
       myElement = element;
     }
 
@@ -141,21 +135,9 @@ public class PyQualifiedNameCompletionMatcher {
       return myQualifiedName;
     }
 
-    @Nullable
-    public QualifiedName getOriginallyTypedQName() {
-      return myOriginallyTypedQName;
-    }
-
     @NotNull
     public PyElement getElement() {
       return myElement;
-    }
-
-    @NotNull
-    public QualifiedName getQualifiedNameWithUserTypedAlias() {
-      return myOriginallyTypedQName != null
-             ? myOriginallyTypedQName.removeLastComponent().append(myQualifiedName.getLastComponent())
-             : myQualifiedName;
     }
   }
 
@@ -190,7 +172,7 @@ public class PyQualifiedNameCompletionMatcher {
 
     private boolean qualifierMatches(@NotNull QualifiedName qualifier) {
       String firstComponent = Objects.requireNonNullElse(qualifier.getFirstComponent(), "");
-      if (!myQualifierFirstComponentMatcher.prefixMatches(firstComponent)) return false;
+      if (!myQualifierFirstComponentMatcher.isStartMatch(firstComponent)) return false;
       String remainder = qualifier.getComponentCount() == 0 ? "" : qualifier.removeHead(1).toString();
       if (!myQualifierRemainderMatcher.prefixMatches(remainder)) return false;
       return true;

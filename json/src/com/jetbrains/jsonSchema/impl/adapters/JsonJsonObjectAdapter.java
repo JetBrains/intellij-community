@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author Irina.Chernushina on 2/20/2017.
- */
 public class JsonJsonObjectAdapter implements JsonObjectValueAdapter {
   @NotNull private final JsonObject myValue;
 

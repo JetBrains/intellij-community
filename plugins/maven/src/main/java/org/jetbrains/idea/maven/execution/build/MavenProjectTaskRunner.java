@@ -36,9 +36,6 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
-/**
- * @author ibessonov
- */
 public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
@@ -71,10 +68,8 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       return isMavenModule(module);
     }
 
-    if (projectTask instanceof ProjectModelBuildTask) {
-      ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
-      if (buildTask.getBuildableElement() instanceof Artifact) {
-        Artifact artifact = (Artifact)buildTask.getBuildableElement();
+    if (projectTask instanceof ProjectModelBuildTask buildTask) {
+      if (buildTask.getBuildableElement() instanceof Artifact artifact) {
         MavenArtifactProperties properties = null;
         for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
           if (provider instanceof MavenArtifactPropertiesProvider) {
@@ -102,11 +97,10 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
       }
     }
 
-    if (projectTask instanceof ExecuteRunConfigurationTask) {
-      ExecuteRunConfigurationTask task = (ExecuteRunConfigurationTask)projectTask;
+    if (projectTask instanceof ExecuteRunConfigurationTask task) {
       RunProfile runProfile = task.getRunProfile();
       if (runProfile instanceof ModuleBasedConfiguration) {
-        RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
+        RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isMavenModule(module.getModule())) {
           return false;
         }

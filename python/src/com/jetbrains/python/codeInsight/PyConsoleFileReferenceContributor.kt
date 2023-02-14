@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  *
  * References are soft: used only for code completion and ignored during code inspection.
  *
- * @author vlan
  */
 class PyConsoleFileReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {

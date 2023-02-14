@@ -42,6 +42,7 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,9 +53,10 @@ import java.util.List;
  * Describes step of compilation process which copies resources files from source and resource roots of a Java module.
  */
 public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDescriptor> {
+  @NotNull
   private final ResourcesTargetType myTargetType;
 
-  public ResourcesTarget(@NotNull JpsModule module, ResourcesTargetType targetType) {
+  public ResourcesTarget(@NotNull JpsModule module, @NotNull ResourcesTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
   }
@@ -91,12 +93,13 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     List<ResourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
-
+    FileFilter filterForExcludedPatterns = index.getModuleFileFilterHonorExclusionPatterns(myModule);
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
       if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
         final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
         final File rootFile = sourceRoot.getFile();
-        roots.add(new FilteredResourceRootDescriptor(rootFile, this, packagePrefix, computeRootExcludes(rootFile, index)));
+        roots.add(new FilteredResourceRootDescriptor(rootFile, this, packagePrefix, computeRootExcludes(rootFile, index),
+                                                     filterForExcludedPatterns));
       }
     }
 
@@ -105,7 +108,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
       if (!isExcludedFromCompilation(excludedRootProviders, root)) {
         File rootFile = root.getFile();
         String relativeOutputPath = root.getProperties().getRelativeOutputPath();
-        roots.add(new ResourceRootDescriptor(rootFile, this, relativeOutputPath.replace('/', '.'), computeRootExcludes(rootFile, index)));
+        roots.add(new ResourceRootDescriptor(rootFile, this, relativeOutputPath.replace('/', '.'), computeRootExcludes(rootFile, index), filterForExcludedPatterns));
       }
     }
     

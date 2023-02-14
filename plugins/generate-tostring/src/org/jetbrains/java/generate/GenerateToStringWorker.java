@@ -142,16 +142,11 @@ public class GenerateToStringWorker {
   }
 
   private static InsertNewMethodStrategy getStrategy(InsertWhere option) {
-    switch (option) {
-      case AFTER_EQUALS_AND_HASHCODE:
-        return InsertAfterEqualsHashCodeStrategy.getInstance();
-      case AT_CARET:
-        return InsertAtCaretStrategy.getInstance();
-      case AT_THE_END_OF_A_CLASS:
-        return InsertLastStrategy.getInstance();
-    }
-
-    return InsertLastStrategy.getInstance();
+    return switch (option) {
+      case AFTER_EQUALS_AND_HASHCODE -> InsertAfterEqualsHashCodeStrategy.getInstance();
+      case AT_CARET -> InsertAtCaretStrategy.getInstance();
+      case AT_THE_END_OF_A_CLASS -> InsertLastStrategy.getInstance();
+    };
   }
 
   /**
@@ -208,8 +203,7 @@ public class GenerateToStringWorker {
    */
   private void afterCreateToStringMethod(PsiMethod method, Map<String, String> params, TemplateResource template) {
     PsiFile containingFile = clazz.getContainingFile();
-    if (containingFile instanceof PsiJavaFile) {
-      final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    if (containingFile instanceof PsiJavaFile javaFile) {
       if (params.get("autoImportPackages") != null) {
         // keep this for old user templates
         autoImportPackages(javaFile, params.get("autoImportPackages"));

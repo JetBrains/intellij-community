@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -91,6 +90,9 @@ public abstract class CommandProcessor {
    */
   public abstract void runUndoTransparentAction(@NotNull Runnable action);
 
+  @ApiStatus.Internal
+  public abstract AutoCloseable withUndoTransparentAction();
+
   /**
    * @see #runUndoTransparentAction(Runnable)
    */
@@ -103,24 +105,15 @@ public abstract class CommandProcessor {
   public abstract void addAffectedFiles(@Nullable Project project, VirtualFile @NotNull ... files);
 
   /**
+   * Global commands will be merged during {@code action} execution
+   */
+  @ApiStatus.Experimental
+  public abstract void allowMergeGlobalCommands(@NotNull Runnable action);
+
+  /**
    * @deprecated use {@link CommandListener#TOPIC}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public abstract void addCommandListener(@NotNull CommandListener listener);
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void addCommandListener(@NotNull CommandListener listener, @NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(CommandListener.TOPIC, listener);
-  }
-
-  /**
-   * @deprecated use {@link CommandListener#TOPIC}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract void removeCommandListener(@NotNull CommandListener listener);
 }

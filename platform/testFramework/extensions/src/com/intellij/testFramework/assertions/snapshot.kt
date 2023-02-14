@@ -74,7 +74,7 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
       throw e
     }
 
-    println("Write a new snapshot ${snapshotFile.fileName}")
+    println("Write a new snapshot: ${snapshotFile.fileName}")
     snapshotFile.write(actualContent)
     return
   }
@@ -84,14 +84,14 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
   }
 
   if (updateIfMismatch) {
-    System.out.println("UPDATED snapshot ${snapshotFile.fileName}")
-    snapshotFile.write(StringBuilder(actualContent))
+    println("UPDATED snapshot ${snapshotFile.fileName}")
+    snapshotFile.write(actualContent)
   }
   else {
     val firstMismatch = StringUtil.commonPrefixLength(actualContent, expected)
 
     @Suppress("SpellCheckingInspection")
-    val message = "Received value does not match stored snapshot ${snapshotFile.fileName} at ${firstMismatch}.\n" +
+    val message = "Received value does not match stored snapshot '${snapshotFile.fileName}' at ${firstMismatch}.\n" +
                   "Expected: '${expected.contextAround(firstMismatch, 10)}'\n" +
                   "Actual  : '${actualContent.contextAround(firstMismatch, 10)}'\n" +
                   "Inspect your code changes or run with `-Dtest.update.snapshots` to update"

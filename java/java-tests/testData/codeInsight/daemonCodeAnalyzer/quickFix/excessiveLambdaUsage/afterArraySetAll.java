@@ -1,4 +1,4 @@
-// "Use 'fill' method without lambda" "true"
+// "Use 'fill' method without lambda" "true-preview"
 import java.util.Arrays;
 
 class Test {

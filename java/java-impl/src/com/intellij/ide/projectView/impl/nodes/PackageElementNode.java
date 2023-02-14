@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -18,7 +18,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +131,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);
 
-    presentation.setIcon(PlatformIcons.PACKAGE_ICON);
+    presentation.setIcon(IconManager.getInstance().getPlatformIcon(PlatformIcons.Package));
 
     if (myProject != null) CompoundProjectViewNodeDecorator.get(myProject).decorate(this, presentation);
   }
@@ -170,21 +171,18 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     if (super.canRepresent(element)) return true;
     final PackageElement value = getValue();
     if (value == null) return true;
-    if (element instanceof PackageElement) {
-      final PackageElement packageElement = (PackageElement)element;
+    if (element instanceof PackageElement packageElement) {
       final String otherPackage = packageElement.getPackage().getQualifiedName();
       final String aPackage = value.getPackage().getQualifiedName();
       if (otherPackage.equals(aPackage)) {
         return true;
       }
     }
-    if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
+    if (element instanceof PsiDirectory directory) {
       return isPackageUnderDirectory(value, directory.getVirtualFile());
     }
-    if (element instanceof VirtualFile) {
-      VirtualFile file = (VirtualFile)element;
-      if (file.isDirectory()) return isPackageUnderDirectory(value, file);
+    if (element instanceof VirtualFile file) {
+      return file.isDirectory() && isPackageUnderDirectory(value, file);
     }
     return false;
   }

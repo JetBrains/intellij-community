@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.emojipicker.action;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -50,7 +51,7 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
       return new Context(input, p -> p.showInBestPositionFor(editor));
     }
 
-    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof EmojiSearchField) {
       // Easy way to block recursive pickers
       return null;
@@ -64,9 +65,8 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
       );
     }
 
-    if (component instanceof JTextComponent) {
+    if (component instanceof JTextComponent field) {
       if (findOnly) return Context.FOUND;
-      JTextComponent field = (JTextComponent)component;
       Document doc = field.getDocument();
       return new Context(
         s -> {
@@ -82,6 +82,11 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
     }
 
     return null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

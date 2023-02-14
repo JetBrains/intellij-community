@@ -19,6 +19,29 @@ public class RedundantMethodOverride extends S {
   void n(int i) {
     super.n(10);
   }
+
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>(List<String> list) {
+    for (String s : list) {
+      System.out.println(s);
+    }
+  }
+
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    try {
+    } catch (RuntimeException f) {
+      System.out.println(f);
+    }
+  }
+
+  @Override
+  void <warning descr="Method 'y()' is identical to its super method">y</warning>() {
+    label1:
+    while(true) {
+      if (true) break label1;
+    }
+  }
 }
 class S {
 
@@ -36,6 +59,26 @@ class S {
 
   void n(int i) {
     System.out.println(i);
+  }
+
+  void x(List<String> list) {
+    for (String t : list) {
+      System.out.println(t);
+    }
+  }
+
+  void x() {
+    try {
+    } catch (RuntimeException e) {
+      System.out.println(e);
+    }
+  }
+
+  void y() {
+    label:
+    while(true) {
+      if (true) break label;
+    }
   }
 }
 class A {
@@ -65,12 +108,46 @@ class CC extends A {
   }
 }
 class SuperCall {
+  /**
+   * some old comment
+   */
   void some() {
   }
 }
 class S2 extends SuperCall {
+  /**
+   * some old comment
+   */
   @Override
   void <warning descr="Method 'some()' only delegates to its super method">some</warning>() {
+    super.some();
+  }
+}
+
+class S3 extends SuperCall {
+  /**
+   * some new comment
+   */
+  @Override
+  void some() {
+    super.some();
+  }
+}
+class S4 extends SuperCall {
+  @Override
+  void some() {
+    super.some(); //new comment
+  }
+}
+class S5 extends SuperCall {
+  @Override
+  void some(/* new comment */) {
+    super.some();
+  }
+}
+class S6 extends SuperCall {
+  @Override
+  void /* new comment */ some() {
     super.some();
   }
 }
@@ -233,6 +310,23 @@ class ABCD extends P {
         k++;
         x(k, l);
       }
+    };
+    int z1 = 1;
+    z1++;
+  }
+
+}
+
+class ABCD2 extends P {
+  void f(boolean b, int i) {
+    String s = "" + (s = "");
+    new Object() {
+      {}
+
+      void x(int k, /**/ final  int l) {
+        k++;
+        x(k, l);
+      }
       // glucose & glutamine
     };
     int z1 = 1;
@@ -273,7 +367,7 @@ class X5 {
       void a() {
         System.out.println(1);
       }
-      void b() {
+      void b() {  // whitespace difference
         System.out.println(2);
       }
     };
@@ -419,5 +513,33 @@ class RedundantSuperBug2 {
 
   public static void main(String[] args) {
     new Sub().foo();
+  }
+}
+class X11 {
+  void x(boolean b) {
+    while (true) {
+      System.out.println();
+      if (b) break;
+    }
+  }
+}
+class X12 extends X11 {
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>(boolean b) {
+    label:
+    while (true) {
+      System.out.println();
+      if  (b) break label;
+    }
+  }
+}
+class X13 extends X11 {
+  @Override
+  void x(boolean b) {
+    label:
+    while (true) {
+      System.out.println("diff");
+      if  (b) break label;
+    }
   }
 }

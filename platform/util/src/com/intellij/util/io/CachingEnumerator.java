@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * @author peter
- */
 public final class CachingEnumerator<Data> implements DataEnumerator<Data> {
   private static final int STRIPE_POWER = 4;
   private static final int STRIPE_COUNT = 1 << STRIPE_POWER;

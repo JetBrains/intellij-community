@@ -38,12 +38,13 @@ public class MergeCallback {
 
   @NotNull
   public static <T extends MergeRequest> T register(@NotNull T request, @Nullable Consumer<? super MergeResult> callback) {
-    return register(request, new MergeCallback() {
+    MergeCallback mergeCallback = callback == null ? null : new MergeCallback() {
       @Override
       public void applyResult(@NotNull MergeResult result) {
-        if (callback != null) callback.consume(result);
+        callback.consume(result);
       }
-    });
+    };
+    return register(request, mergeCallback);
   }
 
   @NotNull
@@ -52,13 +53,17 @@ public class MergeCallback {
     return callback != null ? callback : EMPTY;
   }
 
-  // original request lifecycle is ended, MergeCallback is transferred from original to target
+  /**
+   * Transfer MergeCallback from original to target.
+   * <p>
+   * After this call lifecycle of the original request is finished, and it can be discarded.
+   * Target request shall be handled like usual, via {@link MergeRequest#applyResult(MergeResult)} call.
+   */
+  @SuppressWarnings("unused") // Used in Rider
   public static void retarget(@NotNull MergeRequest original, @NotNull MergeRequest target) {
-    original.resultRetargeted();
-
     MergeCallback callback = original.getUserData(KEY);
     original.putUserData(KEY, null);
-    target.putUserData(KEY, callback);
+    register(target, callback);
   }
 
   public interface Listener extends EventListener {

@@ -27,8 +27,8 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
       return
     }
 
-    if (!parent.version.exists() &&
-        !isConsumerPomResolutionApplicable(domFileElement.file.project)) {
+    val project = domFileElement.file.project
+    if (!parent.version.exists() && !isConsumerPomResolutionApplicable(project)) {
       val version = getParentVersion(domFileElement.file, model)
       listOf(
         holder.createProblem(
@@ -42,8 +42,8 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
   }
 
   private fun getParentVersion(currentFile: XmlFile, model: MavenDomProjectModel): String {
-    val xmlFileParent = currentFile.parent?.parent?.findFile("pom.xml") as? XmlFile ?: return "";
-    val parentModel = MavenDomUtil.getMavenDomModel(xmlFileParent, MavenDomProjectModel::class.java) ?: return "";
+    val xmlFileParent = currentFile.parent?.parent?.findFile("pom.xml") as? XmlFile ?: return ""
+    val parentModel = MavenDomUtil.getMavenDomModel(xmlFileParent, MavenDomProjectModel::class.java) ?: return ""
     val parentElement = model.mavenParent
     if (parentModel.artifactId.value == parentElement.artifactId.value && parentModel.groupId.value == parentElement.groupId.value) {
       return parentModel.version.value ?: ""

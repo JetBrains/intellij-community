@@ -4,6 +4,7 @@ package com.intellij.testFramework.fixtures
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.codeInsight.intention.impl.QuickEditHandler
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -16,9 +17,9 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.junit.Assert
+import org.junit.Assert.*
 import java.util.*
-import kotlin.collections.HashSet
-import kotlin.test.fail
 
 class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 
@@ -63,25 +64,25 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
+    runReadAction {
+      val expected = expectedInjections.toCollection(LinkedList())
+      val foundInjections = getAllInjections().toCollection(LinkedList())
 
-    val expected = expectedInjections.toCollection(LinkedList())
-    val foundInjections = getAllInjections().toCollection(LinkedList())
-
-    while (expected.isNotEmpty()) {
-      val (text, injectedLanguage) = expected.pop()
-      val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                   ?: fail(
-                     "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
-      foundInjections.remove(found)
+      while (expected.isNotEmpty()) {
+        val (text, injectedLanguage) = expected.pop()
+        val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
+                     ?: Assert.fail(
+                       "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
+        foundInjections.remove(found)
+      }
     }
-
   }
 
   fun openInFragmentEditor(): EditorTestFixture {
     val quickEditHandler = QuickEditAction().invokeImpl(javaFixture.project, topLevelEditor, topLevelFile)
     return openInFragmentEditor(quickEditHandler)
   }
-  
+
   fun openInFragmentEditor(quickEditHandler: QuickEditHandler): EditorTestFixture {
     val injectedFile = quickEditHandler.newFile
     val project = javaFixture.project
@@ -91,7 +92,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     val fragmentEditor = FileEditorManagerEx.getInstanceEx(project).openTextEditor(
       OpenFileDescriptor(project, injectedFile.virtualFile, unEscapedOffset), true
     )
-    return EditorTestFixture(project, fragmentEditor, injectedFile.virtualFile)
+    return EditorTestFixture(project, fragmentEditor!!, injectedFile.virtualFile)
   }
 
   val topLevelFile: PsiFile
@@ -109,3 +110,53 @@ data class InjectionAssertionData(val text: String, val injectedLanguage: String
 }
 
 fun injectionForHost(text: String) = InjectionAssertionData(text)
+
+fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragmentTexts: String) {
+  runReadAction {
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+    val doc = editor.document
+
+    for (text in fragmentTexts) {
+      val index = doc.text.indexOf(text)
+      if (index < 0) fail("No such text in document: $text")
+
+      val pos = index + text.length / 2
+      val injectedElement = injectedLanguageManager.findInjectedElementAt(file, pos)
+
+      if (langId != null) {
+        assertNotNull("There should be injected element at $pos with text '$text'", injectedElement)
+        assertEquals("Injected Language don't match", langId, injectedElement!!.language.id)
+      }
+      else {
+        assertNull("There should be no injected element at $pos with text '$text'", injectedElement)
+      }
+    }
+  }
+}
+
+fun CodeInsightTestFixture.assertInjectedReference(referenceClass: Class<*>, vararg referenceTexts: String) {
+  runReadAction {
+    val provider = file.viewProvider
+    val documentText = editor.document.text
+
+    for (refText in referenceTexts) {
+      val pos = documentText.indexOf(refText) + refText.length / 2
+
+      val element = provider.findElementAt(pos)
+      assertNotNull("There should be element at $pos", element)
+
+      val host = element as? PsiLanguageInjectionHost ?: element!!.parent as? PsiLanguageInjectionHost
+      assertNotNull("There should be injection host at $pos", host)
+
+      val references = host!!.references
+      assertTrue("There should be references in element", references.isNotEmpty())
+
+      val reference = references.find { referenceClass.isInstance(it) }
+      assertNotNull("There should be reference of type ${referenceClass} in element", reference)
+    }
+  }
+}
+
+inline fun <reified T> CodeInsightTestFixture.assertInjectedReference(vararg fragmentTexts: String) {
+  this.assertInjectedReference(T::class.java, *fragmentTexts)
+}

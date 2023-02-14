@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.common
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -38,9 +38,19 @@ class CommonLocationFeatures : ContextFeatureProvider {
       "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix))
     )
 
+    result["is_completion_performance_mode"] = MLFeatureValue.binary(false)
+
     if (DumbService.isDumb(lookup.project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }
+
+    val projectInfo = CurrentProjectInfo.getInstance(lookup.project)
+    if (projectInfo.isIdeaProject) {
+      result["is_idea_project"] = MLFeatureValue.binary(true)
+    }
+    result["modules_count"] = MLFeatureValue.Companion.numerical(projectInfo.modulesCount.roundDown())
+    result["libraries_count"] = MLFeatureValue.Companion.numerical(projectInfo.librariesCount.roundDown())
+    result["files_count"] = MLFeatureValue.Companion.numerical(projectInfo.filesCount.roundDown())
 
     val caseSensitive = CaseSensitivity.fromSettings(CodeInsightSettings.getInstance())
     if (caseSensitive != CaseSensitivity.NONE) {
@@ -60,10 +70,12 @@ class CommonLocationFeatures : ContextFeatureProvider {
 
   private fun putContextSimilarityScorers(line: String, position: PsiElement, environment: CompletionEnvironment) {
     environment.putUserData(ContextSimilarityUtil.LINE_SIMILARITY_SCORER_KEY,
-                            ContextSimilarityUtil.createLineSimilarityScoringFunction(line))
+                            ContextSimilarityUtil.createLineSimilarityScorer(line))
     environment.putUserData(ContextSimilarityUtil.PARENT_SIMILARITY_SCORER_KEY,
-                            ContextSimilarityUtil.createParentSimilarityScoringFunction(position))
+                            ContextSimilarityUtil.createParentSimilarityScorer(position))
   }
+
+  private fun Int.roundDown(base: Int = 10): Int = generateSequence(1) { it * base }.first { it * base > this }
 
   private fun MutableMap<String, MLFeatureValue>.addPsiParents(position: PsiElement, numParents: Int) {
     // First parent is always referenceExpression

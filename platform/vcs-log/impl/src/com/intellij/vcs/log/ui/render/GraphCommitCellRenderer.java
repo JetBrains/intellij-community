@@ -1,17 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableCellState;
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -38,13 +39,12 @@ import java.util.Objects;
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
-  private static final int VERTICAL_PADDING = JBUIScale.scale(7);
 
-  @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogGraphTable myGraphTable;
+  private final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogGraphTable myGraphTable;
 
-  @NotNull private final MyComponent myComponent;
-  @NotNull private final MyComponent myTemplateComponent;
+  private final @NotNull MyComponent myComponent;
+  private final @NotNull MyComponent myTemplateComponent;
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
@@ -68,8 +68,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myComponent;
   }
 
-  @Nullable
-  private JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
+  private @Nullable JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
@@ -140,9 +139,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setLeftAligned(leftAligned);
   }
 
-  @NotNull
   @Override
-  public GraphCommitCellController getCellController() {
+  public @NotNull GraphCommitCellController getCellController() {
     return new GraphCommitCellController(myLogData, myGraphTable, myComponent.myPainter) {
 
       @Override
@@ -150,27 +148,26 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         return GraphCommitCellRenderer.this.getTooltipXCoordinate(row);
       }
 
-      @Nullable
       @Override
-      protected JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
+      protected @Nullable JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
         return GraphCommitCellRenderer.this.getTooltip(value, point, row);
       }
     };
   }
 
   public static Font getLabelFont() {
-    return UIUtil.getLabelFont();
+    return StartupUiUtil.getLabelFont();
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
     private static final int DISPLAYED_MESSAGE_PART = 80;
-    @NotNull private final VcsLogGraphTable myGraphTable;
-    @NotNull private final GraphCellPainter myPainter;
-    @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final LabelPainter myReferencePainter;
+    private final @NotNull VcsLogGraphTable myGraphTable;
+    private final @NotNull GraphCellPainter myPainter;
+    private final @NotNull IssueLinkRenderer myIssueLinkRenderer;
+    private final @NotNull VcsLogLabelPainter myReferencePainter;
 
-    @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
-    @NotNull private Font myFont;
+    protected @NotNull GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
+    private @NotNull Font myFont;
     private int myHeight;
     private AffineTransform myAffineTransform;
 
@@ -181,9 +178,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache);
+      myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
-      setCellState(new BorderlessTableCellState());
+      setCellState(new VcsLogTableCellState());
 
       myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
@@ -191,9 +188,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myHeight = calculateHeight();
     }
 
-    @NotNull
     @Override
-    public Dimension getPreferredSize() {
+    public @NotNull Dimension getPreferredSize() {
       Dimension preferredSize = super.getPreferredSize();
       int referencesSize = myReferencePainter.isLeftAligned() ? 0 : myReferencePainter.getSize().width;
       return new Dimension(preferredSize.width + referencesSize, getPreferredHeight());
@@ -237,11 +233,19 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
-      Color baseForeground = Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
+      Color labelForeground;
+      if (ExperimentalUI.isNewUI()) {
+        labelForeground = JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR);
+      }
+      else {
+        labelForeground = isSelected
+                          ? Objects.requireNonNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground())
+                          : CurrentBranchComponent.TEXT_COLOR;
+      }
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
-        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
 
         int referencesWidth = myReferencePainter.getSize().width;
@@ -252,7 +256,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphImage.getWidth());
         appendText(cell, style, isSelected);
-        myReferencePainter.customizePainter(refs, getBackground(), baseForeground, isSelected,
+        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }
@@ -276,7 +280,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+      int rowContentHeight = calculateRowContentHeight();
+      return ExperimentalUI.isNewUI() ?
+             Math.max(rowContentHeight, JBUI.CurrentTheme.VersionControl.Log.rowHeight()) :
+             rowContentHeight;
+    }
+
+    private int calculateRowContentHeight() {
+      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
     }
 
     public int getPreferredHeight() {
@@ -290,8 +301,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       return myHeight;
     }
 
-    @NotNull
-    private GraphImage getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
+    private @NotNull GraphImage getGraphImage(@NotNull Collection<? extends PrintElement> printElements) {
       double maxIndex = getMaxGraphElementIndex(printElements);
       BufferedImage image = UIUtil.createImage(myGraphTable.getGraphicsConfiguration(),
                                                (int)(PaintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 2)),
@@ -311,6 +321,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private double getMaxGraphElementIndex(@NotNull Collection<? extends PrintElement> printElements) {
+      if (printElements.isEmpty()) return 0;
+
       double maxIndex = 0;
       for (PrintElement printElement : printElements) {
         maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());
@@ -325,8 +337,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       return maxIndex;
     }
 
-    @NotNull
-    public LabelPainter getReferencePainter() {
+    public @NotNull VcsLogLabelPainter getReferencePainter() {
       return myReferencePainter;
     }
 
@@ -338,7 +349,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private static class GraphImage {
     private final int myWidth;
-    @NotNull private final Image myImage;
+    private final @NotNull Image myImage;
 
     GraphImage(@NotNull Image image, int width) {
       myImage = image;
@@ -360,10 +371,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
   }
 
-  public static class BorderlessTableCellState extends TableCellState {
+  public static class VcsLogTableCellState extends TableCellState {
     @Override
     protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
       return null;
+    }
+
+    @Override
+    protected @NotNull Color getSelectionForeground(JTable table, boolean isSelected) {
+      if (!isSelected) return super.getSelectionForeground(table, isSelected);
+      return VcsLogGraphTable.getSelectionForeground(RenderingUtil.isFocused(table));
     }
   }
 }

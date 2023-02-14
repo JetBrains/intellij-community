@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -36,10 +37,18 @@ public abstract class CoverageViewExtension {
     myCoverageViewManager = CoverageViewManager.getInstance(myProject);
   }
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForNode(@NotNull AbstractTreeNode<?> node);
 
+  /**
+   * @deprecated This method is not used in CoverageView.
+   */
   @Nullable
+  @Deprecated
   public abstract @Nls String getSummaryForRootNode(@NotNull AbstractTreeNode<?> childNode);
 
   @Nullable
@@ -89,11 +98,19 @@ public abstract class CoverageViewExtension {
 
   /**
    * @return extra actions which will be added to {@link CoverageView} toolbar menu
-   * directly after all еру default actions (Flatten Packages, Generate Coverage Report)
+   * directly after all the default actions (Flatten Packages, Generate Coverage Report)
    */
   @ApiStatus.Experimental
   @NotNull
   public List<AnAction> createExtraToolbarActions() {
     return Collections.emptyList();
+  }
+
+  public String getElementsName() {
+    return CoverageBundle.message("coverage.files");
+  }
+
+  public String getElementsCapitalisedName() {
+    return CoverageBundle.message("coverage.files.capitalised");
   }
 }

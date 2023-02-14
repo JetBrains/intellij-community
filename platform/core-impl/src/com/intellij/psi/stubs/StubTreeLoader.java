@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class StubTreeLoader {
 
   public static StubTreeLoader getInstance() {
@@ -34,10 +32,10 @@ public abstract class StubTreeLoader {
   }
 
   @Nullable
-  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
   @Nullable
-  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
   @Nullable
   public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
@@ -55,11 +53,14 @@ public abstract class StubTreeLoader {
     return null;
   }
 
+  protected boolean isTooLarge(@NotNull VirtualFile file) {
+    return false;
+  }
+
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree stubTree,
+  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
                                                      @NotNull PsiFileWithStubSupport psiFile,
                                                      @Nullable Throwable cause) {
-
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
@@ -68,13 +69,7 @@ public abstract class StubTreeLoader {
       IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
       boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
-      boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
-
       @NonNls String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
-
-      if (canBePrebuilt) {
-        msg += "This stub can have pre-built origin\n";
-      }
 
       if (upToDate) {
         msg += "INDEXED VERSION IS THE CURRENT ONE";
@@ -89,12 +84,8 @@ public abstract class StubTreeLoader {
         String text = psiFile.getText();
         PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
         if (fromText.getLanguage().equals(psiFile.getLanguage())) {
-          boolean consistent = DebugUtil.psiToString(psiFile, true).equals(DebugUtil.psiToString(fromText, true));
-          if (consistent) {
-            msg += "\n tree consistent";
-          } else {
-            msg += "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
-          }
+          boolean consistent = DebugUtil.psiToString(psiFile, false).equals(DebugUtil.psiToString(fromText, false));
+          msg += consistent ? "\n tree consistent" : "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
         }
       }
 
@@ -136,8 +127,6 @@ public abstract class StubTreeLoader {
     });
   }
 
-  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
-
   private static RuntimeExceptionWithAttachments handleUpToDateMismatch(@NotNull String message, Attachment[] attachments, @Nullable Throwable cause) {
     return new UpToDateStubIndexMismatch(message, cause, attachments);
   }
@@ -146,17 +135,17 @@ public abstract class StubTreeLoader {
     return new ManyProjectsStubIndexMismatch(message, cause, attachments);
   }
 
-  private static Attachment @NotNull [] createAttachments(@Nullable ObjectStubTree stubTree,
+  private static Attachment @NotNull [] createAttachments(@Nullable ObjectStubTree<?> stubTree,
                                                           @NotNull PsiFileWithStubSupport psiFile,
-                                                          VirtualFile file,
+                                                          @NotNull VirtualFile file,
                                                           @Nullable StubTree stubTreeFromIndex) {
     List<Attachment> attachments = new ArrayList<>();
     attachments.add(new Attachment(file.getPath() + "_file.txt", psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText()));
     if (stubTree != null) {
-      attachments.add(new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()));
+      attachments.add(new Attachment("stubTree.txt", ((PsiFileStubImpl<?>)stubTree.getRoot()).printTree()));
     }
     if (stubTreeFromIndex != null) {
-      attachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree()));
+      attachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl<?>)stubTreeFromIndex.getRoot()).printTree()));
     }
     return attachments.toArray(Attachment.EMPTY_ARRAY);
   }
@@ -170,7 +159,9 @@ public abstract class StubTreeLoader {
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
            "], files = [" + StringUtil.join(provider.getAllFiles(), fileClassName, ", ") +
-           "], roots = [" + StringUtil.join(roots, stubRootToString, ", ") + "]";
+           "], roots = [" + StringUtil.join(roots, stubRootToString, ", ") +
+           "], indexingInfo = " + getInstance().getIndexingStampInfo(provider.getVirtualFile()) +
+           ", isTooLarge = " + getInstance().isTooLarge(provider.getVirtualFile());
   }
 }
 

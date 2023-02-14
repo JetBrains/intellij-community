@@ -3,32 +3,31 @@ package com.intellij.serialization
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.util.SmartList
 import java.lang.reflect.Constructor
 
-// not fully initialized object may be passed (only created instance without properties) if object has PropertyMapping annotation
+// not fully initialized object may be passed (only created instance without properties) if an object has PropertyMapping annotation
 typealias BeanConstructed = (instance: Any) -> Any
 
-class NonDefaultConstructorInfo(val names: List<String>, val constructor: Constructor<*>)
+class NonDefaultConstructorInfo(@JvmField val names: List<String>, @JvmField val constructor: Constructor<*>)
 
 typealias PropertyMappingProvider = (beanClass: Class<*>) -> NonDefaultConstructorInfo?
 
-data class ReadConfiguration(val allowAnySubTypes: Boolean = false,
-                             // loadClass for now doesn't support map or collection as host object
-                             val loadClass: ((name: String, hostObject: Any) -> Class<*>?)? = null,
-                             val beanConstructed: BeanConstructed? = null,
-                             val resolvePropertyMapping: PropertyMappingProvider? = null)
+data class ReadConfiguration(@JvmField val allowAnySubTypes: Boolean = false,
+                             // loadClass for now doesn't support a map or collection as a host object
+                             @JvmField val loadClass: ((name: String, hostObject: Any) -> Class<*>?)? = null,
+                             @JvmField val beanConstructed: BeanConstructed? = null,
+                             @JvmField val resolvePropertyMapping: PropertyMappingProvider? = null)
 
-data class WriteConfiguration(val binary: Boolean = true,
-                              val filter: SerializationFilter? = null,
-                              val orderMapEntriesByKeys: Boolean = false,
-                              val allowAnySubTypes: Boolean = false)
+data class WriteConfiguration(@JvmField val binary: Boolean = true,
+                              @JvmField val filter: SerializationFilter? = null,
+                              @JvmField val orderMapEntriesByKeys: Boolean = false,
+                              @JvmField val allowAnySubTypes: Boolean = false)
 
-internal data class WriteContext(val writer: ValueWriter,
-                                 val filter: SerializationFilter,
-                                 val objectIdWriter: ObjectIdWriter?,
-                                 val configuration: WriteConfiguration,
-                                 val bindingProducer: BindingProducer)
+internal data class WriteContext(@JvmField val writer: ValueWriter,
+                                 @JvmField val filter: SerializationFilter,
+                                 @JvmField val objectIdWriter: ObjectIdWriter?,
+                                 @JvmField val configuration: WriteConfiguration,
+                                 @JvmField val bindingProducer: BindingProducer)
 
 internal interface ReadContext {
   val reader: ValueReader
@@ -38,18 +37,21 @@ internal interface ReadContext {
   val configuration: ReadConfiguration
 
   /**
-   * Each call will reset previously allocated result. For sub readers it is not a problem, because you must use [createSubContext] for this case.
+   * Each call will reset a previously allocated result.
+   * For sub readers it is not a problem, because you must use [createSubContext] for this case.
    */
   fun allocateByteArrayOutputStream(): BufferExposingByteArrayOutputStream
 
   fun createSubContext(reader: ValueReader): ReadContext
 
+  fun checkCancelled()
+
   val errors: ReadErrors
 }
 
-data class ReadErrors(
-  val unknownFields: MutableList<ReadError> = SmartList(),
-  val fields: MutableList<ReadError> = SmartList()
+internal data class ReadErrors(
+  @JvmField val unknownFields: MutableList<ReadError> = ArrayList(),
+  @JvmField val fields: MutableList<ReadError> = ArrayList()
 ) {
   fun report(logger: Logger) {
     if (unknownFields.isNotEmpty()) {
@@ -61,4 +63,4 @@ data class ReadErrors(
   }
 }
 
-data class ReadError(val message: String, val cause: Exception? = null)
+internal data class ReadError(@JvmField val message: String, @JvmField val cause: Exception? = null)

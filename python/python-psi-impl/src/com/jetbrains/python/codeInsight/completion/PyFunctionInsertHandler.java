@@ -26,12 +26,11 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElement> {
   public static PyFunctionInsertHandler INSTANCE = new PyFunctionInsertHandler();
 
@@ -56,9 +55,15 @@ public class PyFunctionInsertHandler extends ParenthesesInsertHandler<LookupElem
   public static boolean hasParams(@NotNull InsertionContext context, @NotNull PyFunction function) {
     final PsiElement element = context.getFile().findElementAt(context.getStartOffset());
     PyReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PyReferenceExpression.class);
-    int implicitArgsCount = refExpr != null
-                            ? PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function, PyResolveContext.defaultContext())
-                            : 0;
+    final int implicitArgsCount;
+    if (refExpr != null) {
+      final var typeEvalContext = TypeEvalContext.codeInsightFallback(refExpr.getProject());
+      final var resolveContext = PyResolveContext.defaultContext(typeEvalContext);
+      implicitArgsCount = PyCallExpressionHelper.getImplicitArgumentCount(refExpr, function, resolveContext);
+    }
+    else {
+      implicitArgsCount = 0;
+    }
     return function.getParameterList().getParameters().length > implicitArgsCount;
   }
 

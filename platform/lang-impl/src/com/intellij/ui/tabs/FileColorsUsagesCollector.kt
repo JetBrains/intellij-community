@@ -2,13 +2,21 @@
 package com.intellij.ui.tabs
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newBooleanMetric
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.ui.FileColorManager
 
 class FileColorsUsagesCollector : ProjectUsagesCollector() {
-  override fun getGroupId() = "appearance.file.colors"
+  private val GROUP = EventLogGroup("appearance.file.colors", 2)
+
+  private val FILE_COLORS: EventId1<Boolean> = GROUP.registerEvent("file.colors", EventFields.Enabled)
+  private val EDITOR_TABS: EventId1<Boolean> = GROUP.registerEvent("editor.tabs", EventFields.Enabled)
+  private val PROJECT_VIEW: EventId1<Boolean> = GROUP.registerEvent("project.view", EventFields.Enabled)
+
+  override fun getGroup() = GROUP
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = mutableSetOf<MetricEvent>()
@@ -16,9 +24,9 @@ class FileColorsUsagesCollector : ProjectUsagesCollector() {
     val enabledFileColors = manager.isEnabled
     val useInEditorTabs = enabledFileColors && manager.isEnabledForTabs
     val useInProjectView = enabledFileColors && manager.isEnabledForProjectView
-    if (!enabledFileColors) set.add(newBooleanMetric("file.colors", false))
-    if (!useInEditorTabs) set.add(newBooleanMetric("editor.tabs", false))
-    if (!useInProjectView) set.add(newBooleanMetric("project.view", false))
+    if (!enabledFileColors) set.add(FILE_COLORS.metric(false))
+    if (!useInEditorTabs) set.add(EDITOR_TABS.metric(false))
+    if (!useInProjectView) set.add(PROJECT_VIEW.metric(false))
     return set
   }
 }

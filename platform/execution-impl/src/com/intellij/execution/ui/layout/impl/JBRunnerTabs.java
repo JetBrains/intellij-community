@@ -4,6 +4,7 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SideBorder;
@@ -14,12 +15,12 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -101,6 +102,25 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     }
   }
 
+  /**
+   * @return scaled preferred runner tab label height aligned with toolbars
+   */
+  public static int getTabLabelPreferredHeight() {
+    return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + getActionButtonIndent() + getActionToolbarIndent() + getThinBorderThickness();
+  }
+
+  private static int getActionButtonIndent() {
+    return 2 * JBUI.scale(1);
+  }
+
+  private static int getActionToolbarIndent() {
+    return 2 * JBUI.scale(2);
+  }
+
+  private static int getThinBorderThickness() {
+    return 1;
+  }
+
   @NotNull
   @Override
   protected TabLabel createTabLabel(@NotNull TabInfo info) {
@@ -114,11 +134,16 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
           wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
         }
       }
+
+      @Override
+      protected int getPreferredHeight() {
+        return getTabLabelPreferredHeight();
+      }
     };
 
   }
 
-  class JBRunnerTabsBorder extends JBTabsBorder {
+  public class JBRunnerTabsBorder extends JBTabsBorder {
     private int mySideMask = SideBorder.LEFT;
 
     JBRunnerTabsBorder(@NotNull JBTabsImpl tabs) {
@@ -140,20 +165,12 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
       }
 
-      if (JBTabsImpl.NEW_TABS) {
-        if (getLastLayoutPass() == null || getLastLayoutPass().getExtraBorderLines() == null) return;
-        List<LayoutPassInfo.LineCoordinates> borderLines = getLastLayoutPass().getExtraBorderLines();
-        for (LayoutPassInfo.LineCoordinates borderLine : borderLines) {
-          getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), borderLine.from(), borderLine.to());
-        }
-      } else {
-        getTabPainter()
-          .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
-                           new Point(x + width, y + myHeaderFitSize.height));
-      }
+      getTabPainter()
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + myHeaderFitSize.height),
+                         new Point(x + width, y + myHeaderFitSize.height));
     }
 
-    void setSideMask(@SideBorder.SideMask int mask) {
+    public void setSideMask(@SideBorder.SideMask int mask) {
       mySideMask = mask;
     }
   }

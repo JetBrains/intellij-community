@@ -1,4 +1,5 @@
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from markdown.extensions import Extension
 from markdown.inlinepatterns import InlineProcessor
@@ -8,8 +9,8 @@ from markdown.treeprocessors import Treeprocessor
 
 FN_BACKLINK_TEXT: Any
 NBSP_PLACEHOLDER: Any
-DEF_RE: Pattern
-TABBED_RE: Pattern
+DEF_RE: Pattern[str]
+TABBED_RE: Pattern[str]
 RE_REF_ID: Any
 
 class FootnoteExtension(Extension):

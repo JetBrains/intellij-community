@@ -1,0 +1,6 @@
+<idea-plugin package="com.intellij.workspaceModel.codegen">
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+    <plugin id="org.jetbrains.kotlin"/>
+  </dependencies>
+</idea-plugin>

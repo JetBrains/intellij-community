@@ -12,7 +12,7 @@ import java.awt.*;
  * @author tav
  */
 public class HwFacadeNonOpaquePanel extends NonOpaquePanel {
-  private final HwFacadeHelper myHwFacadeHelper = new HwFacadeHelper(this);
+  private final HwFacadeHelper myHwFacadeHelper = HwFacadeHelper.create(this);
 
   @Override
   public void addNotify() {

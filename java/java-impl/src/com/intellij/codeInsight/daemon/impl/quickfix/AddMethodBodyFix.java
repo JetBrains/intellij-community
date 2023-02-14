@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -15,6 +15,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
   private final PsiMethod myMethod;
@@ -50,22 +53,29 @@ public final class AddMethodBodyFix implements IntentionActionWithFixAllOption {
            BaseIntentionAction.canModify(myMethod);
   }
 
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myMethod;
-  }
-
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiUtil.setModifierProperty(myMethod, PsiModifier.ABSTRACT, false);
+    if (Objects.requireNonNull(myMethod.getContainingClass()).isInterface() &&
+        !myMethod.hasModifierProperty(PsiModifier.STATIC) &&
+        !myMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+        !myMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+      PsiUtil.setModifierProperty(myMethod, PsiModifier.DEFAULT, true);
+    }
     CreateFromUsageUtils.setupMethodBody(myMethod);
-    CreateFromUsageUtils.setupEditor(myMethod, editor);
+    if (myMethod.getContainingFile() == file) {
+      CreateFromUsageUtils.setupEditor(myMethod, editor);
+    }
   }
 
   @Override
   public boolean startInWriteAction() {
     return true;
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myMethod.getContainingFile();
   }
 
   @Override

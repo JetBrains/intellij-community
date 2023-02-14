@@ -1,16 +1,18 @@
 <html>
 <body>
-Reports statements which use a <b>GString</b> object as a key to map.
-In general <b>GString</b> objects are mutable and probably should not be used as keys.
-<p>
-Also, a <b>GString</b> entry cannot be accessed with a <b>java.lang.String</b> object with same value. Example:
-<br>
+Reports statements which use a <code>groovy.lang.GString</code> object as a key to map.
+In general <code>GString</code> objects are mutable and probably should not be used as keys.
+Also, a <code>GString</code> entry cannot be accessed with a <code>java.lang.String</code> object with same value.
+<p><b>Example:</b></p>
 <pre>
-    def map = [:]
-    <b>def</b> key = 'foo'
-    map &lt&lt ["${key}": 'bar']
-    <b>assert </b> map[key] == <b>null</b>
+<code>
+def map = [:]
+def key = 'foo'
+map &lt&lt ["${key}": 'bar']
+assert map[key] == null // confusing 'true' result of comparison
+</code>
 </pre>
-<small>New in 2017.1</small>
+<!-- tooltip end -->
+<p><small>New in 2017.1</small></p>
 </body>
 </html>

@@ -10,8 +10,6 @@ import org.cef.callback.CefMenuModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * @author tav
  */
@@ -28,18 +26,22 @@ public class JCEFHtmlPanel extends JBCefBrowser {
     this(ourCefClient, url);
   }
 
-  public JCEFHtmlPanel(JBCefClient client, String url) {
-    super(client, null); // should no pass url to ctor
-    myUrl = Objects.requireNonNullElse(url, "about:blank");
-    if (client != ourCefClient) {
-      Disposer.register(this, client);
-    }
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable String url) {
+    this(isOffScreenRendering, ourCefClient, url);
+  }
+
+  public JCEFHtmlPanel(@Nullable JBCefClient client, @Nullable String url) {
+    this(true, client, url); // should no pass url to ctor
+  }
+
+  public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable JBCefClient client, @Nullable String url) {
+    super(JBCefBrowser.createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url));
+    myUrl = getCefBrowser().getURL();
   }
 
   @Override
   protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
-    boolean isInternal = ApplicationManager.getApplication().isInternal();
-    return new DefaultCefContextMenuHandler(isInternal) {
+    return new DefaultCefContextMenuHandler() {
       @Override
       public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
         model.clear();

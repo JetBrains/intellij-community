@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.ui.SimpleListCellRenderer;
 
 import javax.swing.*;
@@ -29,8 +30,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ArtifactConfigurable extends ArtifactConfigurableBase {
-  private boolean myIsInUpdateName;
-
   public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
     super(originalArtifact, artifactsStructureContext, updateTree, true);
   }
@@ -38,20 +37,13 @@ public class ArtifactConfigurable extends ArtifactConfigurableBase {
   @Override
   public void setDisplayName(String name) {
     final String oldName = getArtifact().getName();
-    if (name != null && !name.equals(oldName) && !myIsInUpdateName) {
-      myArtifactsStructureContext.getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
-      getEditor().updateOutputPath(oldName, name);
-    }
-  }
-
-  @Override
-  public void updateName() {
-    myIsInUpdateName = true;
-    try {
-      super.updateName();
-    }
-    finally {
-      myIsInUpdateName = false;
+    if (name != null && !name.equals(oldName) && !isUpdatingNameFieldFromDisplayName()) {
+      ModifiableArtifactModel modifiableArtifactModel = myArtifactsStructureContext.getOrCreateModifiableArtifactModel();
+      // Modify artifact name only in case no other artifacts have the same name because names should be unique between the artifacts
+      if (modifiableArtifactModel.findArtifact(name) == null) {
+        modifiableArtifactModel.getOrCreateModifiableArtifact(myOriginalArtifact).setName(name);
+        getEditor().updateOutputPath(oldName, name);
+      }
     }
   }
 

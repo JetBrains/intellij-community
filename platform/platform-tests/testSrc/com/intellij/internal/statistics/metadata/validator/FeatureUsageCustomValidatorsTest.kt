@@ -1,18 +1,22 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.validator
 
+import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
+import com.intellij.featureStatistics.ProductivityFeaturesProvider
+import com.intellij.featureStatistics.ProductivityFeaturesTest
 import com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.registerExtension
 import junit.framework.TestCase
 import org.junit.Test
 
-class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
+class FeatureUsageCustomValidatorsTest : ProductivityFeaturesTest() {
 
   private fun doValidateEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
@@ -31,6 +35,14 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
 
   private fun doTest(expected: ValidationResultType, validator: CustomValidationRule, data: String, context: EventContext) {
     TestCase.assertEquals(expected, validator.validate(data, context))
+  }
+
+  override fun setUp() {
+    super.setUp()
+    ApplicationManager.getApplication().registerExtension(
+      ProductivityFeaturesProvider.EP_NAME, TestProductivityFeatureProvider(),
+      testRootDisposable
+    )
   }
 
   @Test
@@ -121,5 +133,12 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
   fun `test reject unknown productivity feature`() {
     val validator = FeatureUsageTrackerImpl.ProductivityUtilValidator()
     doRejectEventId(validator, "unknown.feature.id", FeatureUsageData())
+  }
+
+  private class TestProductivityFeatureProvider : ProductivityFeaturesProvider() {
+    override fun getFeatureDescriptors(): Array<FeatureDescriptor> {
+      val descriptor = FeatureDescriptor("features.welcome", null, "TestTip", "test", 0, 0, null, 0, this)
+      return arrayOf(descriptor)
+    }
   }
 }

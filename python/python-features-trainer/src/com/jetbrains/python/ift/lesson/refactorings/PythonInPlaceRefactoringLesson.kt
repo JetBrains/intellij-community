@@ -7,6 +7,7 @@ import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -47,9 +48,9 @@ class PythonInPlaceRefactoringLesson
     task("ShowIntentionActions") {
       text(
         PythonLessonsBundle.message("python.in.place.refactoring.invoke.intentions",
-                              icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { ui -> // no highlighting
-        ui.toString().contains("'s'")
+                                    icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
+      triggerAndBorderHighlight().listItem { ui -> // no highlighting
+        ui.isToStringContains("'s'")
       }
       proposeRestore {
         checkFirstChange()
@@ -110,8 +111,8 @@ class PythonInPlaceRefactoringLesson
                                        icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
       val updateUsagesText = RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
                                                        RefactoringBundle.message("suggested.refactoring.usages"))
-      triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(updateUsagesText)
+      triggerAndBorderHighlight().listItem { item ->
+        item.isToStringContains(updateUsagesText)
       }
       proposeRestore {
         checkSecondChange()
@@ -124,7 +125,7 @@ class PythonInPlaceRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.update.callers", action("EditorChooseLookupItem")))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JPanel -> // no highlighting
+      triggerUI().component { ui: JPanel -> // no highlighting
         ui.javaClass.name.contains("ChangeSignaturePopup")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
@@ -133,7 +134,7 @@ class PythonInPlaceRefactoringLesson
 
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.signature.preview", LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JLabel -> // no highlighting
+      triggerUI().component { ui: JLabel -> // no highlighting
         ui.text == RefactoringBundle.message("suggested.refactoring.parameter.values.label.text")
       }
       restoreAfterStateBecomeFalse(restoreId = showIntentionsTaskId) {
@@ -170,4 +171,11 @@ class PythonInPlaceRefactoringLesson
     }
     return result.toString()
   }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.rename.link"),
+         LessonUtil.getHelpLink("rename-refactorings.html#inplace_rename")),
+    Pair(PythonLessonsBundle.message("python.in.place.refactoring.help.signature.link"),
+         LessonUtil.getHelpLink("pycharm", "change-signature.html#inplace_change_signature_python")),
+  )
 }

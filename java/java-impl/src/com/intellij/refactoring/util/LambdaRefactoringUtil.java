@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,7 +20,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
+import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -28,10 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
@@ -97,8 +97,7 @@ public final class LambdaRefactoringUtil {
     final PsiSubstitutor psiSubstitutor = LambdaUtil.getSubstitutor(interfaceMethod, functionalInterfaceResolveResult);
     final MethodSignature signature = interfaceMethod.getSignature(psiSubstitutor);
     final boolean isReceiver;
-    if (resolve instanceof PsiMethod){
-      final PsiMethod method = (PsiMethod)resolve;
+    if (resolve instanceof PsiMethod method){
       isReceiver = PsiMethodReferenceUtil.isResolvedBySecondSearch(referenceExpression, signature,
                                                                    method.isVarArgs(),
                                                                    method.hasModifierProperty(PsiModifier.STATIC),
@@ -163,7 +162,7 @@ public final class LambdaRefactoringUtil {
     if (resolveElement instanceof PsiMember) {
       buf.append("{");
 
-      if (!PsiType.VOID.equals(interfaceMethod.getReturnType())) {
+      if (!PsiTypes.voidType().equals(interfaceMethod.getReturnType())) {
         buf.append("return ");
       }
       final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(referenceExpression);
@@ -179,8 +178,7 @@ public final class LambdaRefactoringUtil {
         if (!(referenceNameElement instanceof PsiKeyword)) {
           if (qualifier instanceof PsiTypeElement) {
             final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
-            LOG.assertTrue(referenceElement != null);
-            if (!PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
+            if (referenceElement != null && !PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
               buf.append(referenceElement.getReferenceName()).append(".");
             }
           }
@@ -209,7 +207,7 @@ public final class LambdaRefactoringUtil {
             }
           }
         } else {
-          buf.append(((PsiMember)resolveElement).getName());
+          buf.append(getMemberQualifier((PsiMember)resolveElement));
 
           final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
@@ -224,7 +222,7 @@ public final class LambdaRefactoringUtil {
         }
       }
 
-      if (!onArrayRef || isReceiver) {
+      if (!onArrayRef || !(referenceNameElement instanceof PsiKeyword) || isReceiver) {
         //param list
         buf.append("(");
         boolean first = true;
@@ -245,16 +243,23 @@ public final class LambdaRefactoringUtil {
     return buf.toString();
   }
 
-  private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
-    if (qualifier instanceof PsiReferenceExpression) {
-      PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
-      if (reference.resolve() instanceof PsiClass &&
-          reference.getQualifier() == null &&
-          PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
-        return true;
-      }
+  private static @NotNull String getMemberQualifier(PsiMember member) {
+    String qualifiedName = null;
+    if (member instanceof PsiClass) {
+      qualifiedName = ((PsiClass)member).getQualifiedName();
     }
-    return qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
+    if (qualifiedName == null) {
+      qualifiedName = Objects.requireNonNull(member.getName());
+    }
+    return qualifiedName;
+  }
+
+  private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
+    if (qualifier instanceof PsiReferenceExpression reference && reference.resolve() instanceof PsiClass &&
+        reference.getQualifier() == null && PsiTreeUtil.isContextAncestor(containingClass, qualifier, false)) {
+      return true;
+    }
+    return qualifier instanceof PsiThisExpression thisExpression && thisExpression.getQualifier() == null;
   }
 
   private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,
@@ -276,6 +281,7 @@ public final class LambdaRefactoringUtil {
           PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
           PsiClass funcClass = funcResult.getElement();
           PsiSubstitutor funcSubstitutor = funcResult.getSubstitutor();
+          PsiSubstitutor recapture = new RecaptureTypeMapper().recapture(funcSubstitutor);
           PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
 
           PsiClassType lambdaCopyType = (PsiClassType)lambdaCopy.getFunctionalInterfaceType();
@@ -284,7 +290,7 @@ public final class LambdaRefactoringUtil {
           PsiClass lambdaCopyClass = lambdaCopyResult.getElement();
           PsiSubstitutor lambdaCopySubstitutor = lambdaCopyResult.getSubstitutor();
           return lambdaExpression.getManager().areElementsEquivalent(funcClass, lambdaCopyClass)
-                 && new RecaptureTypeMapper().recapture(funcSubstitutor).equals(lambdaCopySubstitutor);
+                 && recapture.equals(lambdaCopySubstitutor);
         }
       }
     }
@@ -332,7 +338,10 @@ public final class LambdaRefactoringUtil {
                                        JavaRefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
             //ensure introduced before lambda
             qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
-            new IntroduceVariableHandler().invoke(qualifierExpression.getProject(), editor, qualifierExpression);
+            RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+            JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
+            assert handler != null;
+            handler.invoke(qualifierExpression.getProject(), editor, qualifierExpression);
           }
         }
       }

@@ -44,9 +44,11 @@ public final class GradleContainerUtil {
   public static Set<File> unmodifiableFileSet(@Nullable Collection<String> paths) {
     if (paths == null) return null;
     if (paths.isEmpty()) return Collections.emptySet();
-    LinkedHashSet<File> files = new LinkedHashSet<File>(paths.size());
+    LinkedHashSet<File> files = new LinkedHashSet<>(paths.size());
     for (String path : paths) {
-      files.add(new File(path));
+      if (path != null) {
+        files.add(new File(path));
+      }
     }
     return Collections.unmodifiableSet(files);
   }
@@ -55,9 +57,11 @@ public final class GradleContainerUtil {
   public static Set<String> unmodifiablePathSet(@Nullable Collection<File> files) {
     if (files == null) return null;
     if (files.isEmpty()) return Collections.emptySet();
-    LinkedHashSet<String> paths = new LinkedHashSet<String>(files.size());
+    LinkedHashSet<String> paths = new LinkedHashSet<>(files.size());
     for (File file : files) {
-      paths.add(file.getPath());
+      if (file != null) {
+        paths.add(file.getPath());
+      }
     }
     return Collections.unmodifiableSet(paths);
   }

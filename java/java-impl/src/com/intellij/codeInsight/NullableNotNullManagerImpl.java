@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -49,7 +50,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public String myDefaultNotNull = NOT_NULL;
   public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
   public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
-  private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+  private List<String> myInstrumentedNotNulls = List.of(NOT_NULL);
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   public NullableNotNullManagerImpl(Project project) {
@@ -244,7 +245,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
     Element instrumented = state.getChild(INSTRUMENTED_NOT_NULLS_TAG);
     if (instrumented == null) {
-      myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+      myInstrumentedNotNulls = List.of(NOT_NULL);
     }
     else {
       myInstrumentedNotNulls = ContainerUtil.mapNotNull(instrumented.getChildren("option"), o -> o.getAttributeValue("value"));
@@ -269,7 +270,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          return super.contains(file) && file.getFileType() != JavaFileType.INSTANCE;
+          return super.contains(file) && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE);
         }
       };
       PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);
@@ -288,11 +289,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
     for (PsiAnnotation annotation : annotations) {
       PsiElement context = annotation.getContext();
-      if (context instanceof PsiModifierList && context.getContext() instanceof PsiClass) {
-        PsiClass ownerClass = (PsiClass)context.getContext();
-        if (ownerClass.isAnnotationType() && Jsr305Support.isNullabilityNickName(ownerClass)) {
-          result.add(ownerClass);
-        }
+      if (context instanceof PsiModifierList && context.getContext() instanceof PsiClass ownerClass &&
+          ownerClass.isAnnotationType() && Jsr305Support.isNullabilityNickName(ownerClass)) {
+        result.add(ownerClass);
       }
     }
     return result;
@@ -381,7 +380,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       for (PsiClass aClass : getAllNullabilityNickNames()) {
         String qName = aClass.getQualifiedName();
         if (qName != null) {
-          result.put(qName, Jsr305Support.getNickNamedNullability(aClass));
+          result.putIfAbsent(qName, Jsr305Support.getNickNamedNullability(aClass));
         }
       }
       NullabilityAnnotationDataHolder holder = new NullabilityAnnotationDataHolder() {
@@ -397,6 +396,17 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       };
       return CachedValueProvider.Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  @Override
+  protected @NotNull Nullability correctNullability(@NotNull Nullability nullability, @NotNull PsiAnnotation annotation) {
+    if (nullability == Nullability.NOT_NULL && annotation.hasQualifiedName(Jsr305Support.JAVAX_ANNOTATION_NONNULL)) {
+      Nullability correctedNullability = Jsr305Support.extractNullityFromWhenValue(annotation);
+      if (correctedNullability != null) {
+        return correctedNullability;
+      }
+    }
+    return nullability;
   }
 
   @Override

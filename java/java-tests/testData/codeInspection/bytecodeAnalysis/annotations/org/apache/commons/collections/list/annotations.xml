@@ -396,7 +396,6 @@
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -480,7 +479,6 @@
     </item>
     <item name='org.apache.commons.collections.list.GrowthList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -501,7 +499,6 @@
     </item>
     <item name='org.apache.commons.collections.list.LazyList java.util.List decorate(java.util.List, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -661,7 +658,6 @@
     </item>
     <item name='org.apache.commons.collections.list.SynchronizedList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -693,7 +689,6 @@
     </item>
     <item name='org.apache.commons.collections.list.TransformedList java.util.List decorate(java.util.List, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

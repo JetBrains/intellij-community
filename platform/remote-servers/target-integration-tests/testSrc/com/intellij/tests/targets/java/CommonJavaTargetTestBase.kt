@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.debugger.DebuggerManager
@@ -21,16 +21,13 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.target.RunTargetsEnabled
 import com.intellij.execution.testframework.SearchForTestsTask
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -65,7 +62,6 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
 
   override fun initOutputChecker(): OutputChecker = OutputChecker({ testAppPath }, { appOutputPath })
 
-  private var defaultTargetsEnabled: Boolean? = null
   private var defaultForceCompilationInTests: Boolean? = null
 
   enum class ExecutionMode { RUN, DEBUG }
@@ -86,8 +82,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
   public override fun setUp() {
     super.setUp()
 
-    defaultTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets")
-    Experiments.getInstance().setFeatureEnabled("run.targets", true)
+    RunTargetsEnabled.forceEnable(testRootDisposable)
 
     (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.let {
       defaultForceCompilationInTests = it.forceCompilationInTests
@@ -97,12 +92,12 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
 
   public override fun tearDown() {
     try {
-      defaultTargetsEnabled?.let {
-        Experiments.getInstance().setFeatureEnabled("run.targets", it)
-      }
       defaultForceCompilationInTests?.let {
         (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.forceCompilationInTests = it
       }
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
       super.tearDown()
@@ -146,7 +141,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
                                             expectedTestsResultExported: String) {
     runWithConnectInUnitTestMode {
       runBlocking {
-        val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
           ExecutionEnvironmentBuilder(project, getExecutor()).runProfile(runConfiguration).build()
         }
 
@@ -168,7 +163,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           runContentDescriptor = CompletableDeferred<RunContentDescriptor>()
             .also { deferred ->
               executionEnvironment.setCallback { deferred.complete(it) }
-              withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+              withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
                 executionEnvironment.runner.execute(executionEnvironment)
               }
             }
@@ -199,7 +194,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           }
         }
 
-        val transformerFactory = TransformerFactory.newInstance() as SAXTransformerFactory
+        val transformerFactory = TransformerFactory.newDefaultInstance() as SAXTransformerFactory
         val handler: TransformerHandler = transformerFactory.newTransformerHandler()
         handler.transformer.setOutputProperty(OutputKeys.INDENT, "yes")
         handler.transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4")
@@ -219,17 +214,11 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         for (child in testrun.getChildren("suite")) {
           child.removeAttribute("duration")
           for (testChild in child.getChildren("test")) {
-            testChild.removeAttribute("duration")
-
-            // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
-            // let's mask that; AppMainV2 won't be used in production, only when running from sources
-            testChild.getChildren("output").forEach {
-              val content = it.getContent(0)
-              assertEquals(writer.toString(), Content.CType.Text, content.cType)
-              val contentText = content.value
-              it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
-            }
+            purifyTestNode(testChild, writer)
           }
+        }
+        for (testChild in testrun.getChildren("test")) {
+          purifyTestNode(testChild, writer)
         }
 
         val expectedText = when (executionMode) {
@@ -239,17 +228,33 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
           else -> {
             val element = JDOMUtil.load(expectedTestsResultExported)
             element.getChildren("suite").forEach { suite ->
-              suite.getChildren("test").forEach { testElement ->
-                removeContentsPartially(testElement) {
-                  it?.text?.contains("Debugger:") ?: false
-                }
-              }
+              suite.getChildren("test").forEach(::removeDebuggerOutput)
             }
+            element.getChildren("test").forEach(::removeDebuggerOutput)
             JDOMUtil.write(element)
           }
         }
         assertEquals(output, expectedText, JDOMUtil.write(testrun))
       }
+    }
+  }
+
+  private fun purifyTestNode(testNode: Element, writer: StringWriter) {
+    testNode.removeAttribute("duration")
+
+    // Stacktrace for LocalJavaTargetTest differs here due to usage of AppMainV2 in ProcessProxyFactoryImpl;
+    // let's mask that; AppMainV2 won't be used in production, only when running from sources
+    testNode.getChildren("output").forEach {
+      val content = it.getContent(0)
+      assertEquals(writer.toString(), Content.CType.Text, content.cType)
+      val contentText = content.value
+      it.setContent(Text(contentText.substring(0, contentText.length.coerceAtMost(600))))
+    }
+  }
+
+  private fun removeDebuggerOutput(testElement: Element) {
+    removeContentsPartially(testElement) {
+      it?.text?.contains("Debugger:") ?: false
     }
   }
 
@@ -261,7 +266,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean = true
 
         override fun <T : RunConfigurationBase<*>?> updateJavaParameters(
-          configuration: T,
+          configuration: T & Any,
           params: JavaParameters,
           runnerSettings: RunnerSettings?
         ) {
@@ -314,8 +319,15 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
    *                    folders in it
    */
   protected fun initializeSampleModule(module: Module, contentRoot: VirtualFile) {
-    val libraryDescriptor = JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0")
-    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    val libraryDescriptors = listOf(
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-engine", "5.3.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-engine", "1.7.0"),
+      JpsMavenRepositoryLibraryDescriptor("org.junit.platform", "junit-platform-launcher", "1.7.0"),
+    )
+    libraryDescriptors.forEach { libraryDescriptor ->
+      AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
+    }
 
     ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
       val contentEntry = model.addContentEntry(contentRoot)

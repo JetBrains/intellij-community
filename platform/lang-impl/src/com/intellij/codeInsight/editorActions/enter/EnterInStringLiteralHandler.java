@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -30,11 +30,11 @@ import org.jetbrains.annotations.Nullable;
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
-                                @NotNull final Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
+                                final @NotNull Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;
-    
+
     int caretOffset = caretOffsetRef.get().intValue();
     final JavaLikeQuoteHandler quoteHandler = getJavaLikeQuoteHandler(editor, file);
     if (!isInStringLiteral(editor, quoteHandler, caretOffset)) {
@@ -48,7 +48,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
       if (quoteHandler.canBeConcatenated(psiAtOffset)) {
         ASTNode token = psiAtOffset.getNode();
         CharSequence text = document.getText();
-        
+
         TextRange range = token.getTextRange();
         final char literalStart = token.getText().charAt(0);
         final StringLiteralLexer lexer = new StringLiteralLexer(literalStart, token.getElementType());
@@ -89,8 +89,8 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
   @Nullable
   protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(@NotNull Editor editor, @NotNull PsiElement psiAtOffset) {
     final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
-    return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler 
-           ? (JavaLikeQuoteHandler)fileTypeQuoteHandler 
+    return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler
+           ? (JavaLikeQuoteHandler)fileTypeQuoteHandler
            : null;
   }
 

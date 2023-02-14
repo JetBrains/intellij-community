@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -19,6 +19,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +81,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testDeepDeleteFieldAndAssignedParameter() throws Exception {
     doSingleFileTest();
   }
@@ -130,6 +131,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testDeleteMethodWithPropertyUsage() {
+    doTest("Foo");
+  }
+
+  public void testDeleteClassWithPropertyUsage() {
     doTest("Foo");
   }
 
@@ -262,7 +267,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testInterfaceAsTypeParameterBound() throws Exception {
-    doSingleFileTest();   
+    doSingleFileTest();
   }
 
   public void testNestedTypeParameterBounds() throws Exception {
@@ -335,7 +340,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testTypeParameterWithinMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
-  
+
   public void testTypeParameterNoMethodHierarchy() throws Exception {
     doSingleFileTest();
   }
@@ -352,6 +357,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
       assertEquals("class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
+  public void testConflictInInheritor() throws Exception {
+    try {
+      doSingleFileTest();
+      fail("Side effect was ignored");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("Method foo() is already defined in the class <b><code>B</code></b>", message);
     }
   }
 
@@ -416,13 +432,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testSealedParent() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_17, getTestRootDisposable());
     doSingleFileTest();
   }
 
   public void testSealedGrandParent() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
-    doTest("Parent");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest("Parent"));
+  }
+
+  public void testRecordImplementsInterface() throws Exception {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
+    doSingleFileTest();
   }
 
   public void testNonAccessibleGrandParent() {

@@ -38,7 +38,7 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   private final DocumentWindow myDocument;
   private final MarkupModelEx myHostModel;
 
-  public MarkupModelWindow(MarkupModelEx editorMarkupModel, final DocumentWindow document) {
+  public MarkupModelWindow(@NotNull MarkupModelEx editorMarkupModel, @NotNull DocumentWindow document) {
     myDocument = document;
     myHostModel = editorMarkupModel;
   }

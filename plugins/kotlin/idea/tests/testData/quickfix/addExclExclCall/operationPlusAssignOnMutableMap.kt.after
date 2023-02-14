@@ -1,0 +1,8 @@
+// "Add non-null asserted (!!) call" "true"
+// WITH_STDLIB
+fun test(map: MutableMap<Int, Int>) {
+    map[3] = map[3]!! + 5
+}
+
+/* IGNORE_FIR */
+

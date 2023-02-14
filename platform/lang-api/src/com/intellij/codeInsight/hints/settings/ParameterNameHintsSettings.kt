@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.getAttributeBooleanValue
 import org.jdom.Element
 
 private object XmlTagHelper {
@@ -42,7 +42,7 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
   }
 }
 
-@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))])
+@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))], category = SettingsCategory.CODE)
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
@@ -54,14 +54,14 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     setAddedPatterns(language, patternsBefore + pattern)
   }
 
-  fun getBlackListDiff(language: Language): Diff {
+  fun getExcludeListDiff(language: Language): Diff {
     val added = getAddedPatterns(language)
     val removed = getRemovedPatterns(language)
 
     return Diff(added, removed)
   }
 
-  fun setBlackListDiff(language: Language, diff: Diff) {
+  fun setExcludeListDiff(language: Language, diff: Diff) {
     setAddedPatterns(language, diff.added)
     setRemovedPatterns(language, diff.removed)
   }

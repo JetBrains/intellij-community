@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -61,9 +60,7 @@ public class GroupSettingsBuilder<T> implements CompositeSettingsBuilder<T> {
     JTabbedPane tabs = new JBTabbedPane();
     for (int i = 0; i < editors.size(); i++) {
       Pair<@TabTitle String, SettingsEditor<T>> pair = editors.get(i);
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(pair.getSecond().getComponent(), BorderLayout.CENTER);
-      tabs.add(pair.getFirst(), panel);
+      tabs.add(pair.getFirst(), pair.getSecond().getComponent());
     }
 
     tabs.putClientProperty("JTabbedPane.hasFullBorder", Boolean.TRUE);

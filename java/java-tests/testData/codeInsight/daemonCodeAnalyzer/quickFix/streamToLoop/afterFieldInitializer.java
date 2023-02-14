@@ -9,8 +9,8 @@ public class Main {
     static {
         List<String> list = new ArrayList<>();
         for (String s : Arrays.asList("foo", "bar", "baz")) {
-            String toUpperCase = s.toUpperCase();
-            list.add(toUpperCase);
+            String upperCase = s.toUpperCase();
+            list.add(upperCase);
         }
         STR = list;
     }

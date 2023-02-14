@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE.txt file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -20,12 +18,11 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
   }
 
   public void testLessSimple() {
-    doTest("interface /*Interface 'F' may be annotated with @FunctionalInterface*/F/**/  {" +
-           "    boolean equals(Object o);" +
-           "    static void f00() {}\n" +
-           "    default void g() {}\n" +
-           "    void f();\n" +
-           "}");
+    doTest("""
+             interface /*Interface 'F' may be annotated with @FunctionalInterface*/F/**/  {    boolean equals(Object o);    static void f00() {}
+                 default void g() {}
+                 void f();
+             }""");
   }
 
   public void testNotFunctional() {
@@ -40,10 +37,24 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
            "}");
   }
 
+  public void testSealed() {
+    doTest("""
+             sealed interface Fooy {
+                 String foo();
+             }
+
+             final class X implements Fooy {
+                 @Override
+                 public String foo() {
+                     return null;
+                 }
+             }""");
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_17;
   }
 
   public void testAnnotationType() {

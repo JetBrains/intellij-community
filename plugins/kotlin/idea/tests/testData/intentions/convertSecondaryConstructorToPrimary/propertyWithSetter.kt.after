@@ -1,0 +1,12 @@
+// AFTER-WARNING: Parameter 's' is never used
+fun log(s: String) {
+}
+
+class A(x: String) {
+    var x: String = x
+        set(value) {
+            log(value)
+            field = value
+        }
+
+}

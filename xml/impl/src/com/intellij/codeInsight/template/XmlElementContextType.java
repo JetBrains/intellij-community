@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlElementContextType extends TemplateContextType {
 
   public XmlElementContextType() {
-    super("XML_TAG", XmlBundle.message("xml.tag"), XmlContextType.class);
+    super(XmlBundle.message("xml.tag"));
   }
 
   @Override

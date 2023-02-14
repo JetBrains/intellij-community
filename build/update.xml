@@ -2,40 +2,25 @@
 <project name="IntelliJ IDEA CE developer's update" default="layout">
   <dirname property="build" file="${ant.file}"/>
   <property name="project.home" value="${build}/../"/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
+
+  <!-- do not build by default -->
+  <property name="intellij.build.local.plugins.repository" value="" />
 
   <macrodef name="run">
-    <attribute name="script"/>
-    <attribute name="target" default="default"/>
     <attribute name="deploy"/>
     <attribute name="distOutputRelativePath" default="dist"/>
 
     <sequential>
-      <java classname="org.apache.tools.ant.Main" dir="${project.home}" fork="true" failonerror="true">
-        <jvmarg line="-Xmx512m"/>
-        <jvmarg line="&quot;-Dintellij.build.output.root=@{deploy}&quot;"/>
-        <jvmarg line="&quot;-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}&quot;"/>
-        <jvmarg line="&quot;-DdistOutputRelativePath=@{distOutputRelativePath}&quot;"/>
-        <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
-        <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
-        <classpath>
-          <fileset dir="${project.home}/lib/ant/lib" includes="*.jar"/>
-        </classpath>
-        <arg value="-f"/>
-        <arg value="${project.home}/build/gant.xml"/>
-      </java>
+      <exec failonerror="true" executable="${basedir}/updateFromSources.cmd">
+        <arg value="-Dintellij.build.output.root=@{deploy}"/>
+        <arg value="-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}"/>
+        <arg value="-DdistOutputRelativePath=@{distOutputRelativePath}"/>
+        <arg value="-DdevIdeaHome=${project.home}"/>
+      </exec>
     </sequential>
   </macrodef>
 
   <target name="layout">
-    <run script="${project.home}/build/scripts/idea_community.gant"
-         target="update-from-sources"
-         deploy="${project.home}/out/deploy"/>
-  </target>
-
-  <target name="build-intellij-core">
-    <run script="${project.home}/build/scripts/idea_community.gant"
-         target="build-intellij-core"
-         deploy="${project.home}/out/deploy"/>
+    <run deploy="${project.home}/out/deploy"/>
   </target>
 </project>

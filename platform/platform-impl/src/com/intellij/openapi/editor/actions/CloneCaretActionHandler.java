@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -53,9 +54,6 @@ public class CloneCaretActionHandler extends EditorActionHandler {
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret targetCaret, DataContext dataContext) {
-    if (ModifierKeyDoubleClickHandler.getInstance().isRunningAction() && !isRepeatedActionInvocation()) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.add.carets.using.double.ctrl");
-    }
     if (targetCaret != null) {
       if (!EditorUtil.checkMaxCarets(editor)) {
         targetCaret.clone(myCloneAbove);
@@ -120,6 +118,10 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   private boolean isRepeatedActionInvocation() {
     if (myRepeatedInvocation) return true;
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
+    return isSuitableLastAction(lastActionId);
+  }
+
+  protected boolean isSuitableLastAction(String lastActionId){
     return OUR_ACTIONS.contains(lastActionId);
   }
 }

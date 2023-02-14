@@ -9,4 +9,8 @@ public enum E {
      E(final String presentableText) {
        PRESENTABLE_TEXT = presentableText;
      }
+
+     void usageInside() {
+       Object o = values();
+     }
 }

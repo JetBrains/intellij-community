@@ -1,0 +1,4 @@
+// FIR_IDENTICAL
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>s<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>?) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>s<!><!HIGHLIGHTING("textAttributesKey='KOTLIN_EXCLEXCL'")!>!!<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>length<!>
+}

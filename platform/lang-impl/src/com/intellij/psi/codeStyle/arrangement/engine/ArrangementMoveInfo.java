@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.codeStyle.arrangement.engine;
 
-/**
- * @author Denis Zhdanov
- */
 public class ArrangementMoveInfo {
 
   private final int myOldStart;

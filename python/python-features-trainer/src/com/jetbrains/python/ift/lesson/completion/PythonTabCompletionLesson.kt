@@ -5,6 +5,7 @@ import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.course.KLesson
+import training.util.isToStringContains
 import javax.swing.JList
 
 class PythonTabCompletionLesson
@@ -24,7 +25,7 @@ class PythonTabCompletionLesson
 
   private val sample = createFromTemplate(template, "current")
 
-  private val isTotalItem = { item: Any -> item.toString().contains("total") }
+  private val isTotalItem = { item: Any -> item.isToStringContains("total") }
 
   override val lessonContent: LessonContext.() -> Unit
     get() {
@@ -32,8 +33,8 @@ class PythonTabCompletionLesson
         prepareSample(sample)
         task("CodeCompletion") {
           text(PythonLessonsBundle.message("python.tab.completion.start.completion",
-                                     code("current"), code("total"), action(it)))
-          triggerByListItemAndHighlight(checkList = { ui -> isTotalItem(ui) })
+                                           code("current"), code("total"), action(it)))
+          triggerAndBorderHighlight().listItem { ui -> isTotalItem(ui) }
           proposeRestoreMe()
           test { actions(it) }
         }
@@ -56,8 +57,8 @@ class PythonTabCompletionLesson
         task {
           val result = LessonUtil.insertIntoSample(template, "total")
           text(PythonLessonsBundle.message("python.tab.completion.use.tab.completion",
-                                     action("EditorEnter"), code("total"), code("current"),
-                                     action("EditorTab")))
+                                           action("EditorEnter"), code("total"), code("current"),
+                                           action("EditorTab")))
 
           trigger("EditorChooseLookupItemReplace") {
             editor.document.text == result
@@ -83,4 +84,5 @@ class PythonTabCompletionLesson
       checkExpectedStateOfEditor(sample)
     }
   }
+
 }

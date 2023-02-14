@@ -41,7 +41,7 @@ public class OnOutputEvent extends AbstractTestEvent {
     TestOperationDescriptor testDescriptor = testEvent.getDescriptor();
 
     final String testId = testEvent.getEventId();
-    final String description = ((ExternalSystemMessageEvent)testEvent).getDescription();
+    final String description = ((ExternalSystemMessageEvent<?>)testEvent).getDescription();
 
     if (description == null) {
       doProcess(testId, "", ProcessOutputTypes.STDERR);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -58,14 +58,21 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
       introduceVariableInline(env, project, editor, expression);
     }
     else {
-      introduceVariableNoInline(env, project, editor, expression);
+      Disposable disposable = Disposer.newDisposable();
+      try {
+        UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
+        introduceVariableNoInline(env, project, editor, expression);
+      }
+      finally {
+         Disposer.dispose(disposable);
+      }
     }
   }
 
   private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
     var handler = new InplaceIntroduceVariableTest.MyIntroduceVariableHandler();
     Disposable disposable = Disposer.newDisposable();
-    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d",
                                  expression.getText(), expression.getTextRange().getStartOffset()));
     try {
       UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
@@ -87,7 +94,11 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
 
 
   private static void introduceVariableNoInline(@NotNull Environment env, Project project, Editor editor, PsiExpression expression) {
-    String varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    String varName;
+    do {
+      varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    }
+    while (!PsiNameHelper.getInstance(project).isIdentifier(varName));
     boolean replaceAll = env.generateValue(Generator.booleans(), null);
     boolean declareFinal = env.generateValue(Generator.booleans(), null);
     boolean declareVar = env.generateValue(Generator.booleans(), null);
@@ -97,7 +108,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
                                   "declareVar", declareVar,
                                   "replaceLValues", replaceLValues)
       .filterValues(x -> x).keys().joining(" | ");
-    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d",
                                  flags, expression.getText(), expression.getTextRange().getStartOffset()));
     IntroduceVariableBase handler = new MockIntroduceVariableHandler(varName, replaceAll, declareFinal, declareVar, replaceLValues);
     try {

@@ -1,17 +1,62 @@
 import sys
-from _typeshed import ReadableBuffer
-from typing import AbstractSet, Optional
+from _typeshed import ReadableBuffer, Self
+from collections.abc import Callable, Set as AbstractSet
+from typing import Protocol
+from typing_extensions import final
 
-class _Hash(object):
-    digest_size: int
-    block_size: int
+if sys.version_info >= (3, 11):
+    __all__ = (
+        "md5",
+        "sha1",
+        "sha224",
+        "sha256",
+        "sha384",
+        "sha512",
+        "blake2b",
+        "blake2s",
+        "sha3_224",
+        "sha3_256",
+        "sha3_384",
+        "sha3_512",
+        "shake_128",
+        "shake_256",
+        "new",
+        "algorithms_guaranteed",
+        "algorithms_available",
+        "pbkdf2_hmac",
+        "file_digest",
+    )
+else:
+    __all__ = (
+        "md5",
+        "sha1",
+        "sha224",
+        "sha256",
+        "sha384",
+        "sha512",
+        "blake2b",
+        "blake2s",
+        "sha3_224",
+        "sha3_256",
+        "sha3_384",
+        "sha3_512",
+        "shake_128",
+        "shake_256",
+        "new",
+        "algorithms_guaranteed",
+        "algorithms_available",
+        "pbkdf2_hmac",
+    )
 
-    # [Python documentation note] Changed in version 3.4: The name attribute has
-    # been present in CPython since its inception, but until Python 3.4 was not
-    # formally specified, so may not exist on some platforms
-    name: str
+class _Hash:
+    @property
+    def digest_size(self) -> int: ...
+    @property
+    def block_size(self) -> int: ...
+    @property
+    def name(self) -> str: ...
     def __init__(self, data: ReadableBuffer = ...) -> None: ...
-    def copy(self) -> _Hash: ...
+    def copy(self: Self) -> Self: ...
     def digest(self) -> bytes: ...
     def hexdigest(self) -> str: ...
     def update(self, __data: ReadableBuffer) -> None: ...
@@ -47,10 +92,10 @@ algorithms_guaranteed: AbstractSet[str]
 algorithms_available: AbstractSet[str]
 
 def pbkdf2_hmac(
-    hash_name: str, password: ReadableBuffer, salt: ReadableBuffer, iterations: int, dklen: Optional[int] = ...
+    hash_name: str, password: ReadableBuffer, salt: ReadableBuffer, iterations: int, dklen: int | None = ...
 ) -> bytes: ...
 
-class _VarLenHash(object):
+class _VarLenHash:
     digest_size: int
     block_size: int
     name: str
@@ -70,14 +115,14 @@ shake_256 = _VarLenHash
 def scrypt(
     password: ReadableBuffer,
     *,
-    salt: Optional[ReadableBuffer] = ...,
-    n: Optional[int] = ...,
-    r: Optional[int] = ...,
-    p: Optional[int] = ...,
+    salt: ReadableBuffer | None = ...,
+    n: int | None = ...,
+    r: int | None = ...,
+    p: int | None = ...,
     maxmem: int = ...,
     dklen: int = ...,
 ) -> bytes: ...
-
+@final
 class _BlakeHash(_Hash):
     MAX_DIGEST_SIZE: int
     MAX_KEY_SIZE: int
@@ -122,3 +167,15 @@ class _BlakeHash(_Hash):
 
 blake2b = _BlakeHash
 blake2s = _BlakeHash
+
+if sys.version_info >= (3, 11):
+    class _BytesIOLike(Protocol):
+        def getbuffer(self) -> ReadableBuffer: ...
+
+    class _FileDigestFileObj(Protocol):
+        def readinto(self, __buf: bytearray) -> int: ...
+        def readable(self) -> bool: ...
+
+    def file_digest(
+        __fileobj: _BytesIOLike | _FileDigestFileObj, __digest: str | Callable[[], _Hash], *, _bufsize: int = ...
+    ) -> _Hash: ...

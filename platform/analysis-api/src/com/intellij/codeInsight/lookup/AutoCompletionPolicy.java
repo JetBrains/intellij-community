@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * Use this only in simple cases, use {@link com.intellij.codeInsight.completion.CompletionContributor#handleAutoCompletionPossibility(com.intellij.codeInsight.completion.AutoCompletionContext)}
  * for finer tuning.
- *
- * @author peter
  */
 public enum AutoCompletionPolicy {
   /**

@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesL
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
 
@@ -29,8 +30,8 @@ class MavenGeneralSettingsWatcher private constructor(
 
   private fun fireSettingsChange() {
     embeddersManager.reset()
-    MavenDistributionsCache.getInstance(manager.project).cleanCaches();
-    watcher.scheduleUpdateAll(true, true)
+    MavenDistributionsCache.getInstance(manager.project).cleanCaches()
+    watcher.scheduleUpdateAll(MavenImportSpec.IMPLICIT_IMPORT)
   }
 
   private fun fireSettingsXmlChange() {
@@ -40,7 +41,9 @@ class MavenGeneralSettingsWatcher private constructor(
 
   init {
     generalSettings.addListener(::fireSettingsChange, parentDisposable)
-    val filesProvider = ReadAsyncSupplier.readAction(::settingsFiles, backgroundExecutor, this)
+    val filesProvider = ReadAsyncSupplier.Builder(::settingsFiles)
+      .coalesceBy(this)
+      .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
       override fun apply() = fireSettingsXmlChange()
     }, parentDisposable)

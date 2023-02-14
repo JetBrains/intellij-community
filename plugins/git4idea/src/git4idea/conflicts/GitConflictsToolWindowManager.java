@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.conflicts;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
@@ -46,7 +46,7 @@ public final class GitConflictsToolWindowManager implements Disposable {
     if (hasConflicts && myContent == null) {
       GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
       GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
-      myContent = ContentFactory.SERVICE.getInstance().createContent(panel.getComponent(), GitBundle.message("tab.title.conflicts"), false);
+      myContent = ContentFactory.getInstance().createContent(panel.getComponent(), GitBundle.message("tab.title.conflicts"), false);
       myContent.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
                             ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);
       myContent.setCloseable(false);

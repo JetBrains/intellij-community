@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.IProperty;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -16,9 +17,12 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -56,6 +60,27 @@ public final class DGMMemberContributor {
       }
     }
 
+    if (!resolvesToMacro(processor, state, place, project)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean resolvesToMacro(PsiScopeProcessor processor, ResolveState state, @NotNull PsiElement place, Project project) {
+    GroovyMacroRegistryService macroService = project.getService(GroovyMacroRegistryService.class);
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint == null ? null : nameHint.getName(state);
+    if (name == null) {
+      return true;
+    }
+
+    Collection<PsiMethod> macros = macroService.getAllKnownMacros(place);
+    for (PsiMethod macro : macros) {
+      if (!processor.execute(GdkMethodUtil.createMacroMethod(macro), state)) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -91,8 +116,8 @@ public final class DGMMemberContributor {
 
   private static void doCollectExtensions(@NotNull Project project,
                                           @NotNull GlobalSearchScope resolveScope,
-                                          @NotNull List<String> instanceClasses,
-                                          @NotNull List<String> staticClasses,
+                                          @NotNull List<? super String> instanceClasses,
+                                          @NotNull List<? super String> staticClasses,
                                           @NlsSafe @NotNull String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
     if (aPackage == null) return;
@@ -110,7 +135,7 @@ public final class DGMMemberContributor {
     }
   }
 
-  private static void collectClasses(@NotNull IProperty pr, @NotNull List<String> classes) {
+  private static void collectClasses(@NotNull IProperty pr, @NotNull List<? super String> classes) {
     String value = pr.getUnescapedValue();
     if (value == null) return;
     value = value.trim();

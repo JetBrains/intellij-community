@@ -20,6 +20,8 @@ import org.junit.runners.Suite;
   ConvertToThreadLocalIntentionTest.class,
   ConvertToThreadLocalIntention6Test.class,
   GuavaInspectionTest.class,
+  GuavaInspectionTest.class,
+  GuavaInspectionTest.class,
 })
 public class AllTypeMigrationTestSuite {
 }

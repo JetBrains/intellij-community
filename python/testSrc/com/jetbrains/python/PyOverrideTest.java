@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
@@ -23,9 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
+
 public class PyOverrideTest extends PyTestCase {
 
   @Override
@@ -122,6 +118,15 @@ public class PyOverrideTest extends PyTestCase {
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }
 
+  // PY-4418
+  public void testProperty() {
+    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    PyFunction toImplement = getTopLevelClass(0).getMethods()[0];
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
+                                            Collections.singletonList(new PyMethodMember(toImplement)), false);
+    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+  }
+
   // PY-11127
   public void testOverriddenMethodRaisesNotImplementedError() {
     doTest();
@@ -194,10 +199,7 @@ public class PyOverrideTest extends PyTestCase {
       final String importFilePath = String.format("override/%s_import.py", testName);
       final String resultFilePath = String.format("override/%s_after.py", testName);
 
-      List<PyFile> pyFiles = Arrays.stream(
-          myFixture.configureByFiles(initialFilePath, importFilePath))
-        .map(PyFile.class::cast)
-        .collect(Collectors.toList());
+      List<PyFile> pyFiles = ContainerUtil.map(myFixture.configureByFiles(initialFilePath, importFilePath), PyFile.class::cast);
 
       PyFunction toOverride = pyFiles.get(1).getTopLevelClasses().get(orderOfClassToOverride).getMethods()[0];
       PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),

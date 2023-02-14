@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeOverrider;
@@ -25,7 +26,7 @@ public class LightEditFileTypeOverrider implements FileTypeOverrider {
   }
 
   static void markUnknownFileTypeAsPlainText(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.UNKNOWN) {
+    if (FileTypeRegistry.getInstance().isFileOfType(file, FileTypes.UNKNOWN)) {
       file.putUserData(KEY, Boolean.TRUE);
       FileContentUtilCore.reparseFiles(file);
     }

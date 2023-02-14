@@ -1,6 +1,9 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -27,12 +30,30 @@ public final class PythonTemplateRunner {
   }
 
   public static void runTemplateInSelectedEditor(@NotNull Project project, PsiElement anchor, @NotNull TemplateBuilder builder) {
-    final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, anchor.getContainingFile().getVirtualFile());
+    VirtualFile virtualFile = anchor.getContainingFile().getVirtualFile();
+    if (virtualFile == null) return;
+    final FileEditor editor = PythonUiService.getInstance().getSelectedEditor(project, virtualFile);
     if (editor instanceof TextEditor) {
       builder.run(((TextEditor)editor).getEditor(), false);
     }
     else {
       builder.runNonInteractively(false);
+    }
+  }
+
+  public static void runInlineTemplate(@NotNull Project project,
+                                       PsiElement element,
+                                       TemplateBuilderImpl builder, int offset) {
+    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    if (virtualFile == null) {
+      return;
+    }
+    Editor editor = PythonUiService.getInstance().openTextEditor(project, virtualFile, offset);
+    if (editor != null) {
+      Template template = builder.buildInlineTemplate();
+      TemplateManager.getInstance(project).startTemplate(editor, template);
+    } else {
+      builder.runNonInteractively(true);
     }
   }
 }

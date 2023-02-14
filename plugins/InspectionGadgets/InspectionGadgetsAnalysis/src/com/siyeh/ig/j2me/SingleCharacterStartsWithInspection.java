@@ -56,7 +56,7 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression = (PsiReferenceExpression)element.getParent();
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)methodExpression.getParent();
@@ -138,10 +138,9 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
       if (!TypeUtils.isJavaLangString(type)) {
         return false;
       }
-      if (!(arg instanceof PsiLiteralExpression)) {
+      if (!(arg instanceof PsiLiteralExpression literal)) {
         return false;
       }
-      final PsiLiteralExpression literal = (PsiLiteralExpression)arg;
       final String value = (String)literal.getValue();
       return value != null && value.length() == 1;
     }

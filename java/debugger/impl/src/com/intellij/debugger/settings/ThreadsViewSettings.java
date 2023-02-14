@@ -3,12 +3,13 @@ package com.intellij.debugger.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(name = "ThreadsViewSettings", storages = @Storage("debugger.xml"))
+@State(name = "ThreadsViewSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
 public final class ThreadsViewSettings implements PersistentStateComponent<ThreadsViewSettings> {
   public boolean SHOW_THREAD_GROUPS = false;
   public boolean SHOW_LINE_NUMBER = true;

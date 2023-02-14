@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Objects;
 
-/**
- * @author peter
- */
 public class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
   static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 
@@ -84,7 +81,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
 
   private static int getPriority(LookupElement element) {
     PsiMethod method = Objects.requireNonNull(getItemMethod(element));
-    return (PsiType.VOID.equals(method.getReturnType()) ? 0 : 1) +
+    return (PsiTypes.voidType().equals(method.getReturnType()) ? 0 : 1) +
            (method.getParameterList().isEmpty() ? 0 : 2);
   }
 
@@ -92,5 +89,14 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
   private static PsiMethod getItemMethod(LookupElement item) {
     Object o = item.getPsiElement();
     return o instanceof PsiMethod ? (PsiMethod)o : null;
+  }
+
+  /**
+   * Mark item to forcefully disallow merge with another item that refers to the same PsiMethod.
+   *
+   * @param item to mark
+   */
+  public static void disallowMerge(LookupElement item) {
+    item.putUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR, true);
   }
 }

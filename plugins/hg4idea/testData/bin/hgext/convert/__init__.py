@@ -1,22 +1,97 @@
 # convert.py Foreign SCM converter
 #
-# Copyright 2005-2007 Matt Mackall <mpm@selenic.com>
+# Copyright 2005-2007 Olivia Mackall <olivia@selenic.com>
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
 '''import revisions from foreign VCS repositories into Mercurial'''
 
-import convcmd
-import cvsps
-import subversion
-from mercurial import commands, templatekw
-from mercurial.i18n import _
+from __future__ import absolute_import
 
-testedwith = 'internal'
+from mercurial.i18n import _
+from mercurial import registrar
+
+from . import (
+    convcmd,
+    cvsps,
+    subversion,
+)
+
+cmdtable = {}
+command = registrar.command(cmdtable)
+# Note for extension authors: ONLY specify testedwith = 'ships-with-hg-core' for
+# extensions which SHIP WITH MERCURIAL. Non-mainline extensions should
+# be specifying the version(s) of Mercurial they are tested with, or
+# leave the attribute unspecified.
+testedwith = b'ships-with-hg-core'
 
 # Commands definition was moved elsewhere to ease demandload job.
 
+
+@command(
+    b'convert',
+    [
+        (
+            b'',
+            b'authors',
+            b'',
+            _(
+                b'username mapping filename (DEPRECATED) (use --authormap instead)'
+            ),
+            _(b'FILE'),
+        ),
+        (b's', b'source-type', b'', _(b'source repository type'), _(b'TYPE')),
+        (
+            b'd',
+            b'dest-type',
+            b'',
+            _(b'destination repository type'),
+            _(b'TYPE'),
+        ),
+        (b'r', b'rev', [], _(b'import up to source revision REV'), _(b'REV')),
+        (
+            b'A',
+            b'authormap',
+            b'',
+            _(b'remap usernames using this file'),
+            _(b'FILE'),
+        ),
+        (
+            b'',
+            b'filemap',
+            b'',
+            _(b'remap file names using contents of file'),
+            _(b'FILE'),
+        ),
+        (
+            b'',
+            b'full',
+            None,
+            _(b'apply filemap changes by converting all files again'),
+        ),
+        (
+            b'',
+            b'splicemap',
+            b'',
+            _(b'splice synthesized history into place'),
+            _(b'FILE'),
+        ),
+        (
+            b'',
+            b'branchmap',
+            b'',
+            _(b'change branch names while converting'),
+            _(b'FILE'),
+        ),
+        (b'', b'branchsort', None, _(b'try to sort changesets by branches')),
+        (b'', b'datesort', None, _(b'try to sort changesets by date')),
+        (b'', b'sourcesort', None, _(b'preserve source changesets order')),
+        (b'', b'closesort', None, _(b'try to reorder closed revisions')),
+    ],
+    _(b'hg convert [OPTION]... SOURCE [DEST [REVMAP]]'),
+    norepo=True,
+)
 def convert(ui, src, dest=None, revmapfile=None, **opts):
     """convert a foreign SCM repository to a Mercurial one.
 
@@ -101,12 +176,21 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
     longest matching path applies, so line order does not matter.
 
     The ``include`` directive causes a file, or all files under a
-    directory, to be included in the destination repository, and the
-    exclusion of all other files and directories not explicitly
-    included. The ``exclude`` directive causes files or directories to
+    directory, to be included in the destination repository. The default
+    if there are no ``include`` statements is to include everything.
+    If there are any ``include`` statements, nothing else is included.
+    The ``exclude`` directive causes files or directories to
     be omitted. The ``rename`` directive renames a file or directory if
     it is converted. To rename from a subdirectory into the root of
     the repository, use ``.`` as the path to rename to.
+
+    ``--full`` will make sure the converted changesets contain exactly
+    the right files with the right content. It will make a full
+    conversion of all files, not just the ones that have
+    changed. Files that already are correct will not be changed. This
+    can be used to apply filemap changes when converting
+    incrementally. This is currently only supported for Mercurial and
+    Subversion.
 
     The splicemap is a file that allows insertion of synthetic
     history, letting you specify the parents of a revision. This is
@@ -137,8 +221,8 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
 
     where "original_branch_name" is the name of the branch in the
     source repository, and "new_branch_name" is the name of the branch
-    is the destination repository. No whitespace is allowed in the
-    branch names. This can be used to (for instance) move code in one
+    is the destination repository. No whitespace is allowed in the new
+    branch name. This can be used to (for instance) move code in one
     repository from "default" to a named branch.
 
     Mercurial Source
@@ -155,8 +239,18 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
         (forces target IDs to change). It takes a boolean argument and
         defaults to False.
 
-    :convert.hg.startrev: convert start revision and its descendants.
-        It takes a hg revision identifier and defaults to 0.
+    :convert.hg.startrev: specify the initial Mercurial revision.
+        The default is 0.
+
+    :convert.hg.revs: revset specifying the source revisions to convert.
+
+    Bazaar Source
+    #############
+
+    The following options can be used with ``--config``:
+
+    :convert.bzr.saverev: whether to store the original Bazaar commit ID in
+        the metadata of the destination commit. The default is True.
 
     CVS Source
     ##########
@@ -181,6 +275,12 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
         a single changeset. When very large files were checked in as
         part of a changeset then the default may not be long enough.
         The default is 60.
+
+    :convert.cvsps.logencoding: Specify encoding name to be used for
+        transcoding CVS log messages. Multiple encoding names can be
+        specified as a list (see :hg:`help config.Syntax`), but only
+        the first acceptable encoding in the list is used per CVS log
+        entries. This transcoding is executed before cvslog hook below.
 
     :convert.cvsps.mergeto: Specify a regular expression to which
         commit log messages are matched. If a match occurs, then the
@@ -250,6 +350,82 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
     :convert.svn.startrev: specify start Subversion revision number.
         The default is 0.
 
+    Git Source
+    ##########
+
+    The Git importer converts commits from all reachable branches (refs
+    in refs/heads) and remotes (refs in refs/remotes) to Mercurial.
+    Branches are converted to bookmarks with the same name, with the
+    leading 'refs/heads' stripped. Git submodules are converted to Git
+    subrepos in Mercurial.
+
+    The following options can be set with ``--config``:
+
+    :convert.git.similarity: specify how similar files modified in a
+        commit must be to be imported as renames or copies, as a
+        percentage between ``0`` (disabled) and ``100`` (files must be
+        identical). For example, ``90`` means that a delete/add pair will
+        be imported as a rename if more than 90% of the file hasn't
+        changed. The default is ``50``.
+
+    :convert.git.findcopiesharder: while detecting copies, look at all
+        files in the working copy instead of just changed ones. This
+        is very expensive for large projects, and is only effective when
+        ``convert.git.similarity`` is greater than 0. The default is False.
+
+    :convert.git.renamelimit: perform rename and copy detection up to this
+        many changed files in a commit. Increasing this will make rename
+        and copy detection more accurate but will significantly slow down
+        computation on large projects. The option is only relevant if
+        ``convert.git.similarity`` is greater than 0. The default is
+        ``400``.
+
+    :convert.git.committeractions: list of actions to take when processing
+        author and committer values.
+
+        Git commits have separate author (who wrote the commit) and committer
+        (who applied the commit) fields. Not all destinations support separate
+        author and committer fields (including Mercurial). This config option
+        controls what to do with these author and committer fields during
+        conversion.
+
+        A value of ``messagedifferent`` will append a ``committer: ...``
+        line to the commit message if the Git committer is different from the
+        author. The prefix of that line can be specified using the syntax
+        ``messagedifferent=<prefix>``. e.g. ``messagedifferent=git-committer:``.
+        When a prefix is specified, a space will always be inserted between the
+        prefix and the value.
+
+        ``messagealways`` behaves like ``messagedifferent`` except it will
+        always result in a ``committer: ...`` line being appended to the commit
+        message. This value is mutually exclusive with ``messagedifferent``.
+
+        ``dropcommitter`` will remove references to the committer. Only
+        references to the author will remain. Actions that add references
+        to the committer will have no effect when this is set.
+
+        ``replaceauthor`` will replace the value of the author field with
+        the committer. Other actions that add references to the committer
+        will still take effect when this is set.
+
+        The default is ``messagedifferent``.
+
+    :convert.git.extrakeys: list of extra keys from commit metadata to copy to
+        the destination. Some Git repositories store extra metadata in commits.
+        By default, this non-default metadata will be lost during conversion.
+        Setting this config option can retain that metadata. Some built-in
+        keys such as ``parent`` and ``branch`` are not allowed to be copied.
+
+    :convert.git.remoteprefix: remote refs are converted as bookmarks with
+        ``convert.git.remoteprefix`` as a prefix followed by a /. The default
+        is 'remote'.
+
+    :convert.git.saverev: whether to store the original Git commit ID in the
+        metadata of the destination commit. The default is True.
+
+    :convert.git.skipsubmodules: does not convert root level .gitmodules files
+        or files with 160000 mode indicating a submodule. Default is False.
+
     Perforce Source
     ###############
 
@@ -260,14 +436,34 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
     usually should specify a target directory, because otherwise the
     target may be named ``...-hg``.
 
-    It is possible to limit the amount of source history to be
-    converted by specifying an initial Perforce revision:
+    The following options can be set with ``--config``:
+
+    :convert.p4.encoding: specify the encoding to use when decoding standard
+        output of the Perforce command line tool. The default is default system
+        encoding.
 
     :convert.p4.startrev: specify initial Perforce revision (a
         Perforce changelist number).
 
     Mercurial Destination
     #####################
+
+    The Mercurial destination will recognize Mercurial subrepositories in the
+    destination directory, and update the .hgsubstate file automatically if the
+    destination subrepositories contain the <dest>/<sub>/.hg/shamap file.
+    Converting a repository with subrepositories requires converting a single
+    repository at a time, from the bottom up.
+
+    .. container:: verbose
+
+       An example showing how to convert a repository with subrepositories::
+
+         # so convert knows the type when it sees a non empty destination
+         $ hg init converted
+
+         $ hg convert orig/sub1 converted/sub1
+         $ hg convert orig/sub2 converted/sub2
+         $ hg convert orig converted
 
     The following options are supported:
 
@@ -279,14 +475,84 @@ def convert(ui, src, dest=None, revmapfile=None, **opts):
 
     :convert.hg.usebranchnames: preserve branch names. The default is
         True.
+
+    :convert.hg.sourcename: records the given string as a 'convert_source' extra
+        value on each commit made in the target repository. The default is None.
+
+    :convert.hg.preserve-hash: only works with mercurial sources. Make convert
+        prevent performance improvement to the list of modified files in commits
+        when such an improvement would cause the hash of a commit to change.
+        The default is False.
+
+    All Destinations
+    ################
+
+    All destination types accept the following options:
+
+    :convert.skiptags: does not convert tags from the source repo to the target
+        repo. The default is False.
+
+    Subversion Destination
+    ######################
+
+    Original commit dates are not preserved by default.
+
+    :convert.svn.dangerous-set-commit-dates: preserve original commit dates,
+        forcefully setting ``svn:date`` revision properties. This option is
+        DANGEROUS and may break some subversion functionality for the resulting
+        repository (e.g. filtering revisions with date ranges in ``svn log``),
+        as original commit dates are not guaranteed to be monotonically
+        increasing.
+
+    For commit dates setting to work destination repository must have
+    ``pre-revprop-change`` hook configured to allow setting of ``svn:date``
+    revision properties. See Subversion documentation for more details.
     """
     return convcmd.convert(ui, src, dest, revmapfile, **opts)
 
+
+@command(b'debugsvnlog', [], b'hg debugsvnlog', norepo=True)
 def debugsvnlog(ui, **opts):
     return subversion.debugsvnlog(ui, **opts)
 
+
+@command(
+    b'debugcvsps',
+    [
+        # Main options shared with cvsps-2.1
+        (
+            b'b',
+            b'branches',
+            [],
+            _(b'only return changes on specified branches'),
+        ),
+        (b'p', b'prefix', b'', _(b'prefix to remove from file names')),
+        (
+            b'r',
+            b'revisions',
+            [],
+            _(b'only return changes after or between specified tags'),
+        ),
+        (b'u', b'update-cache', None, _(b"update cvs log cache")),
+        (b'x', b'new-cache', None, _(b"create new cvs log cache")),
+        (b'z', b'fuzz', 60, _(b'set commit time fuzz in seconds')),
+        (b'', b'root', b'', _(b'specify cvsroot')),
+        # Options specific to builtin cvsps
+        (b'', b'parents', b'', _(b'show parent changesets')),
+        (
+            b'',
+            b'ancestors',
+            b'',
+            _(b'show current changeset in ancestor branches'),
+        ),
+        # Options that are ignored for compatibility with cvsps-2.1
+        (b'A', b'cvs-direct', None, _(b'ignored for compatibility')),
+    ],
+    _(b'hg debugcvsps [OPTION]... [PATH]...'),
+    norepo=True,
+)
 def debugcvsps(ui, *args, **opts):
-    '''create changeset information from CVS
+    """create changeset information from CVS
 
     This command is intended as a debugging tool for the CVS to
     Mercurial converter, and can be used as a direct replacement for
@@ -295,89 +561,43 @@ def debugcvsps(ui, *args, **opts):
     Hg debugcvsps reads the CVS rlog for current directory (or any
     named directory) in the CVS repository, and converts the log to a
     series of changesets based on matching commit log entries and
-    dates.'''
+    dates."""
     return cvsps.debugcvsps(ui, *args, **opts)
 
-commands.norepo += " convert debugsvnlog debugcvsps"
 
-cmdtable = {
-    "convert":
-        (convert,
-         [('', 'authors', '',
-           _('username mapping filename (DEPRECATED, use --authormap instead)'),
-           _('FILE')),
-          ('s', 'source-type', '',
-           _('source repository type'), _('TYPE')),
-          ('d', 'dest-type', '',
-           _('destination repository type'), _('TYPE')),
-          ('r', 'rev', '',
-           _('import up to target revision REV'), _('REV')),
-          ('A', 'authormap', '',
-           _('remap usernames using this file'), _('FILE')),
-          ('', 'filemap', '',
-           _('remap file names using contents of file'), _('FILE')),
-          ('', 'splicemap', '',
-           _('splice synthesized history into place'), _('FILE')),
-          ('', 'branchmap', '',
-           _('change branch names while converting'), _('FILE')),
-          ('', 'branchsort', None, _('try to sort changesets by branches')),
-          ('', 'datesort', None, _('try to sort changesets by date')),
-          ('', 'sourcesort', None, _('preserve source changesets order')),
-          ('', 'closesort', None, _('try to reorder closed revisions'))],
-         _('hg convert [OPTION]... SOURCE [DEST [REVMAP]]')),
-    "debugsvnlog":
-        (debugsvnlog,
-         [],
-         'hg debugsvnlog'),
-    "debugcvsps":
-        (debugcvsps,
-         [
-          # Main options shared with cvsps-2.1
-          ('b', 'branches', [], _('only return changes on specified branches')),
-          ('p', 'prefix', '', _('prefix to remove from file names')),
-          ('r', 'revisions', [],
-           _('only return changes after or between specified tags')),
-          ('u', 'update-cache', None, _("update cvs log cache")),
-          ('x', 'new-cache', None, _("create new cvs log cache")),
-          ('z', 'fuzz', 60, _('set commit time fuzz in seconds')),
-          ('', 'root', '', _('specify cvsroot')),
-          # Options specific to builtin cvsps
-          ('', 'parents', '', _('show parent changesets')),
-          ('', 'ancestors', '',
-           _('show current changeset in ancestor branches')),
-          # Options that are ignored for compatibility with cvsps-2.1
-          ('A', 'cvs-direct', None, _('ignored for compatibility')),
-         ],
-         _('hg debugcvsps [OPTION]... [PATH]...')),
-}
-
-def kwconverted(ctx, name):
-    rev = ctx.extra().get('convert_revision', '')
-    if rev.startswith('svn:'):
-        if name == 'svnrev':
-            return str(subversion.revsplit(rev)[2])
-        elif name == 'svnpath':
+def kwconverted(context, mapping, name):
+    ctx = context.resource(mapping, b'ctx')
+    rev = ctx.extra().get(b'convert_revision', b'')
+    if rev.startswith(b'svn:'):
+        if name == b'svnrev':
+            return b"%d" % subversion.revsplit(rev)[2]
+        elif name == b'svnpath':
             return subversion.revsplit(rev)[1]
-        elif name == 'svnuuid':
+        elif name == b'svnuuid':
             return subversion.revsplit(rev)[0]
     return rev
 
-def kwsvnrev(repo, ctx, **args):
-    """:svnrev: String. Converted subversion revision number."""
-    return kwconverted(ctx, 'svnrev')
 
-def kwsvnpath(repo, ctx, **args):
-    """:svnpath: String. Converted subversion revision project path."""
-    return kwconverted(ctx, 'svnpath')
+templatekeyword = registrar.templatekeyword()
 
-def kwsvnuuid(repo, ctx, **args):
-    """:svnuuid: String. Converted subversion revision repository identifier."""
-    return kwconverted(ctx, 'svnuuid')
 
-def extsetup(ui):
-    templatekw.keywords['svnrev'] = kwsvnrev
-    templatekw.keywords['svnpath'] = kwsvnpath
-    templatekw.keywords['svnuuid'] = kwsvnuuid
+@templatekeyword(b'svnrev', requires={b'ctx'})
+def kwsvnrev(context, mapping):
+    """String. Converted subversion revision number."""
+    return kwconverted(context, mapping, b'svnrev')
+
+
+@templatekeyword(b'svnpath', requires={b'ctx'})
+def kwsvnpath(context, mapping):
+    """String. Converted subversion revision project path."""
+    return kwconverted(context, mapping, b'svnpath')
+
+
+@templatekeyword(b'svnuuid', requires={b'ctx'})
+def kwsvnuuid(context, mapping):
+    """String. Converted subversion revision repository identifier."""
+    return kwconverted(context, mapping, b'svnuuid')
+
 
 # tell hggettext to extract docstrings from these functions:
 i18nfunctions = [kwsvnrev, kwsvnpath, kwsvnuuid]

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Deprecated
 public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   public static class ThemeInfo {
     public final @NonNls String name;
@@ -54,7 +55,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
         else {
           selector = "Linux";
         }
-        icon = IconLoader.getIcon("/lafs/" + selector + previewFileName + ".png");
+        icon = IconLoader.getIcon("lafs/" + selector + previewFileName + ".png", CustomizeUIThemeStepPanel.class.getClassLoader());
       }
       return icon;
     }

@@ -24,18 +24,16 @@ class CreateAssertPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiExpressionStatement)) {
+    if (!(element instanceof PsiExpressionStatement statement)) {
       return false;
     }
-    final PsiExpressionStatement statement =
-      (PsiExpressionStatement)element;
     final PsiExpression expression = statement.getExpression();
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionStatement)) {
       return false;
     }
     final PsiType type = expression.getType();
-    if (!PsiType.BOOLEAN.equals(type)) {
+    if (!PsiTypes.booleanType().equals(type)) {
       return false;
     }
     PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);

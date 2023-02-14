@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -17,9 +17,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author yole
- */
 public class SvnDeleteTest extends SvnTestCase {
   // IDEADEV-16066
   @Test
@@ -43,7 +40,7 @@ public class SvnDeleteTest extends SvnTestCase {
     assertEquals(2, changesManually.size());
 
     refreshChanges();
-    final List<LocalChangeList> lists = changeListManager.getChangeListsCopy();
+    final List<LocalChangeList> lists = changeListManager.getChangeLists();
     assertEquals(1, lists.size());
     final Collection<Change> changes = lists.get(0).getChanges();
     assertEquals(2, changes.size());

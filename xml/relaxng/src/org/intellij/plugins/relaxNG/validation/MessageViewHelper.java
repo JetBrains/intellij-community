@@ -115,8 +115,8 @@ public final class MessageViewHelper {
   private void openMessageViewImpl() {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
-      MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-      Content content = ContentFactory.SERVICE.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
+      MessageView messageView = MessageView.getInstance(myProject);
+      Content content = ContentFactory.getInstance().createContent(myErrorsView.getComponent(), myContentName, true);
       content.putUserData(myKey, myErrorsView);
       messageView.getContentManager().addContent(content);
       messageView.getContentManager().setSelectedContent(content);

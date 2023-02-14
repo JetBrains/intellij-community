@@ -1,29 +1,41 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
+import com.intellij.openapi.externalSystem.model.task.TaskData
+import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.testFramework.TestActionEvent
+import com.intellij.testIntegration.TestRunLineMarkerProvider
+import com.intellij.util.LocalTimeCounter
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
-import org.jetbrains.plugins.gradle.importing.buildscript
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.findChildByType
+import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.function.Consumer
 
 abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
 
-  protected fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
+  fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
     assertTrue(elements.isNotEmpty())
     return object : ConfigurationContext(elements[0]) {
       override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
@@ -31,7 +43,20 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     }
   }
 
-  protected fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
+  private fun getGutterTestRunActionsByLocation(element: PsiNameIdentifierOwner) = runReadActionAndWait {
+    val identifier = element.identifyingElement!!
+    val info = TestRunLineMarkerProvider().getInfo(identifier)!!
+    val runAction = info.actions.first() as ExecutorAction
+    val context = getContextByLocation(element)
+    runAction.getChildren(TestActionEvent.createTestEvent(context.dataContext))
+  }
+
+  protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {
+    val actions = getGutterTestRunActionsByLocation(element)
+    assertEquals(expectedSize, actions.size)
+  }
+
+  fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
     val fromContexts = context.configurationsFromContext
     val fromContext = fromContexts?.firstOrNull()
     assertNotNull("Gradle configuration from context not found", fromContext)
@@ -63,28 +88,61 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val configurationFromContext = getConfigurationFromContext(context)
     val producer = configurationFromContext.configurationProducer as P
     producer.setTestTasksChooser(testTasksFilter)
-    val configuration = configurationFromContext.configuration as ExternalSystemRunConfiguration
-    assertTrue(producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
+    val configuration = configurationFromContext.configuration as GradleRunConfiguration
+    assertTrue("Configuration created from context must force test re-execution", configuration.isForceTestExecution)
+    assertTrue("Configuration can be setup by producer from his context",
+      producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
     if (producer !is PatternGradleConfigurationProducer) {
-      assertTrue(producer.isConfigurationFromContext(configuration, context))
+      assertTrue("Producer have to identify configuration that was created by him",
+        producer.isConfigurationFromContext(configuration, context))
     }
     producer.onFirstRun(configurationFromContext, context, Runnable {})
-    assertEquals(expectedSettings, configuration.settings.toString().trim())
+    assertEquals(expectedSettings, configuration.settings.toString())
   }
 
-  protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
+  protected fun assertConfigurationForTask(expectedSettings: String, taskName: String, element: PsiElement) = runReadActionAndWait {
+    val taskData = TaskData(GradleConstants.SYSTEM_ID, taskName, projectPath, null)
+    val taskInfo = ExternalSystemActionUtil.buildTaskInfo(taskData)
+    val taskLocation = ExternalSystemTaskLocation(myProject, element, taskInfo)
+    val context = ConfigurationContext.createEmptyContextForLocation(taskLocation)
+    val configurationFromContext = getConfigurationFromContext(context)
+    assertInstanceOf(configurationFromContext.configurationProducer, AbstractExternalSystemRunConfigurationProducer::class.java)
+    val runConfiguration = configurationFromContext.configuration as GradleRunConfiguration
+    assertEquals(expectedSettings, runConfiguration.settings.toString())
+  }
+
+  fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {
     testTasksChooser = object : TestTasksChooser() {
-      override fun chooseTestTasks(project: Project,
-                                   context: DataContext,
-                                   testTasks: Map<TestName, Map<SourcePath, TasksToRun>>,
-                                   consumer: Consumer<List<Map<SourcePath, TestTasks>>>) {
-        consumer.accept(testTasks.filterKeys(testTasksFilter).values.toList())
+      override fun <T> chooseTestTasks(project: Project,
+                                       context: DataContext,
+                                       testTasks: Map<TestName, T>,
+                                       consumer: (List<T>) -> Unit) {
+        consumer(testTasks.filterKeys(testTasksFilter).values.toList())
       }
     }
   }
 
-  protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): ExternalSystemRunConfiguration {
-    return configurationFactory.createTemplateConfiguration(myProject) as ExternalSystemRunConfiguration
+  protected fun GradleTestRunConfigurationProducer.createTemplateConfiguration(): GradleRunConfiguration {
+    return configurationFactory.createTemplateConfiguration(myProject) as GradleRunConfiguration
+  }
+
+  protected fun createAndAddRunConfiguration(commandLine: String, vmOptions: String? = null): GradleRunConfiguration {
+    val runManager = RunManager.getInstance(myProject)
+
+    val name = "configuration (${LocalTimeCounter.currentTime()})"
+    val configuration = runManager.createConfiguration(name, GradleExternalTaskConfigurationType::class.java)
+
+    val runConfiguration = configuration.configuration as GradleRunConfiguration
+    runConfiguration.settings.externalProjectPath = projectPath
+    runConfiguration.rawCommandLine = commandLine
+    if (vmOptions != null) {
+      runConfiguration.settings.vmOptions = vmOptions
+    }
+
+    runManager.addConfiguration(configuration)
+    runManager.selectedConfiguration = configuration
+
+    return runConfiguration
   }
 
   protected fun generateAndImportTemplateProject(): ProjectData {
@@ -95,6 +153,17 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
+      }
+    """.trimIndent())
+    val testCaseWithMainFile = createProjectSubFile("src/test/java/org/example/TestCaseWithMain.java", """
+      package org.example;
+      import org.junit.Test;
+      import org.example.AbstractTestCase;
+      public class TestCaseWithMain extends AbstractTestCase {
+        @Test public void test1() {}
+        @Test public void test2() {}
+        @Test public void test3() {}
+        public static void main(String[] args) {}
       }
     """.trimIndent())
     val packageTestCaseFile = createProjectSubFile("src/test/java/pkg/TestCase.java", """
@@ -151,23 +220,24 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test3() {}
       }
     """.trimIndent())
-    createProjectSubFile("settings.gradle", groovy {
-      code("rootProject.name = 'project'")
-      call("include", "'module'", "'my module'")
-    })
-    createProjectSubFile("build.gradle", buildscript {
+    createSettingsFile {
+      setProjectName("project")
+      include("module")
+      include("my module")
+    }
+    createBuildFile {
       withJavaPlugin()
       withIdeaPlugin()
       withJUnit4()
       withGroovyPlugin()
       withPrefix {
-        block("sourceSets") {
+        call("sourceSets") {
           code("automation.java.srcDirs += 'automation'")
           code("automation.runtimeClasspath += sourceSets.test.runtimeClasspath")
           code("automation.compileClasspath += sourceSets.test.compileClasspath")
         }
       }
-      addImplementationDependency("project(path: ':', configuration: 'tests')", sourceSet = "automation")
+      addImplementationDependency(project(":", "tests"), "automation")
       withTask("autoTest", "Test") {
         code("classpath = sourceSets.automation.runtimeClasspath")
         code("testClassesDirs = sourceSets.automation.output.classesDirs")
@@ -177,77 +247,71 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         code("testClassesDirs = sourceSets.automation.output.classesDirs")
       }
       withTask("testJar", "Jar") {
-        call("dependsOn", "testClasses")
-        code("baseName = \"test-${'$'}{project.archivesBaseName}\"")
-        call("from", "sourceSets.test.output")
+        code("dependsOn testClasses")
+        if (gradleVersion.baseVersion < GradleVersion.version("8.0")) {
+          assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        } else {
+          assign("archiveBaseName", "test-${'$'}{project.archivesBaseName}")
+        }
+        code("from sourceSets.test.output")
       }
       withPostfix {
-        block("configurations") {
+        call("configurations") {
           code("tests")
         }
-        block("artifacts") {
-          call("tests", "testJar")
+        call("artifacts") {
+          code("tests testJar")
         }
-        block("idea.module") {
+        call("idea.module") {
           code("testSourceDirs += file('automation')")
         }
       }
-    })
-    createProjectSubFile("module/build.gradle", buildscript {
+    }
+    createBuildFile("module") {
       withJavaPlugin()
       withJUnit4()
-      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
-    })
-    createProjectSubFile("my module/build.gradle", buildscript {
+      addTestImplementationDependency(project(":", "tests"))
+    }
+    createBuildFile("my module") {
       withJavaPlugin()
       withJUnit4()
       withGroovyPlugin()
-      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
-    })
+      addTestImplementationDependency(project(":", "tests"))
+    }
     importProject()
     assertModulesContains("project", "project.module", "project.my_module")
-    val automationTestCase = extractJavaClassData(automationTestCaseFile)
-    val testCase = extractJavaClassData(testCaseFile)
-    val abstractTestCase = extractJavaClassData(abstractTestCaseFile)
-    val moduleTestCase = extractJavaClassData(moduleTestCaseFile)
-    val packageTestCase = extractJavaClassData(packageTestCaseFile)
-    val groovyTestCase = extractGroovyClassData(groovyTestCaseFile)
-    val myModuleTestCase = extractGroovyClassData(myModuleTestCaseFile)
+    val automationTestCase = extractClassData(automationTestCaseFile)
+    val testCase = extractClassData(testCaseFile)
+    val testCaseWithMain = extractClassData(testCaseWithMainFile)
+    val abstractTestCase = extractClassData(abstractTestCaseFile)
+    val moduleTestCase = extractClassData(moduleTestCaseFile)
+    val packageTestCase = extractClassData(packageTestCaseFile)
+    val groovyTestCase = extractClassData(groovyTestCaseFile)
+    val myModuleTestCase = extractClassData(myModuleTestCaseFile)
     val projectDir = findPsiDirectory(".")
     val moduleDir = findPsiDirectory("module")
     val myModuleDir = findPsiDirectory("my module")
     return ProjectData(
-      ModuleData("project", projectDir, testCase, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
+      ModuleData("project", projectDir, testCase, testCaseWithMain, packageTestCase, automationTestCase, abstractTestCase, groovyTestCase),
       ModuleData("module", moduleDir, moduleTestCase),
       ModuleData("my module", myModuleDir, myModuleTestCase)
     )
   }
 
-  private fun findPsiDirectory(relativePath: String) = runReadActionAndWait {
+  protected fun findPsiDirectory(relativePath: String) = runReadActionAndWait {
     val virtualFile = VfsUtil.findFileByIoFile(File(projectPath, relativePath), false)!!
     val psiManager = PsiManager.getInstance(myProject)
     psiManager.findDirectory(virtualFile)!!
   }
 
-  private fun extractJavaClassData(file: VirtualFile) = runReadActionAndWait {
+  protected open fun extractClassData(file: VirtualFile) = runReadActionAndWait {
     val psiManager = PsiManager.getInstance(myProject)
     val psiFile = psiManager.findFile(file)!!
     val psiClass = psiFile.findChildByType<PsiClass>()
-    val psiMethods = psiClass.findChildrenByType<PsiMethod>()
+    val psiMethods = psiClass.methods
     val methods = psiMethods.map { MethodData(it.name, it) }
     ClassData(psiClass.qualifiedName!!, psiClass, methods)
   }
-
-  private fun extractGroovyClassData(file: VirtualFile) = runReadActionAndWait {
-    val psiManager = PsiManager.getInstance(myProject)
-    val psiFile = psiManager.findFile(file)!!
-    val psiClass = psiFile.findChildByType<PsiClass>()
-    val classBody = psiClass.findChildByElementType("CLASS_BODY")
-    val psiMethods = classBody.findChildrenByType<PsiMethod>()
-    val methods = psiMethods.map { MethodData(it.name, it) }
-    ClassData(psiClass.qualifiedName!!, psiClass, methods)
-  }
-
 
   protected open class Mapping<D>(val data: Map<String, D>) {
     operator fun get(key: String): D = data.getValue(key)
@@ -255,19 +319,19 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected class ProjectData(
     vararg modules: ModuleData
-  ) : Mapping<ModuleData>(modules.map { it.name to it }.toMap())
+  ) : Mapping<ModuleData>(modules.associateBy { it.name })
 
   protected class ModuleData(
     val name: String,
     val root: PsiDirectory,
     vararg classes: ClassData
-  ) : Mapping<ClassData>(classes.map { it.name to it }.toMap())
+  ) : Mapping<ClassData>(classes.associateBy { it.name })
 
   protected class ClassData(
     val name: String,
     val element: PsiClass,
     methods: List<MethodData>
-  ) : Mapping<MethodData>(methods.map { it.name to it }.toMap())
+  ) : Mapping<MethodData>(methods.associateBy { it.name })
 
   protected class MethodData(
     val name: String,

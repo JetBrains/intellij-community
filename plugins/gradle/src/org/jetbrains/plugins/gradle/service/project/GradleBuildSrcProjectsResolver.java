@@ -6,6 +6,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -117,7 +120,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     Stream<Build> builds = new ToolingModelsProviderImpl(myResolverContext.getModels()).builds();
     builds.forEach(build -> {
-      String buildPath = build.getBuildIdentifier().getRootDir().getPath();
+      String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
       Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes = buildClasspathNodesMap.getModifiable(Paths.get(buildPath));
 
       GradleExecutionSettings buildSrcProjectSettings;
@@ -134,10 +137,12 @@ public final class GradleBuildSrcProjectsResolver {
           buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(myMainBuildExecutionSettings.getRemoteProcessIdleTtlInMs());
           buildSrcProjectSettings.setVerboseProcessing(myMainBuildExecutionSettings.isVerboseProcessing());
           buildSrcProjectSettings.setWrapperPropertyFile(myMainBuildExecutionSettings.getWrapperPropertyFile());
+          buildSrcProjectSettings.setDelegatedBuild(myMainBuildExecutionSettings.isDelegatedBuild());
           buildSrcProjectSettings.withArguments(myMainBuildExecutionSettings.getArguments())
             .withEnvironmentVariables(myMainBuildExecutionSettings.getEnv())
             .passParentEnvs(myMainBuildExecutionSettings.isPassParentEnvs())
             .withVmOptions(jvmOptions);
+          reuseTargetEnvironmentConfigurationProvider(buildSrcProjectSettings, myMainBuildExecutionSettings);
         }
         else {
           buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
@@ -166,6 +171,14 @@ public final class GradleBuildSrcProjectsResolver {
     });
   }
 
+  private static void reuseTargetEnvironmentConfigurationProvider(@NotNull GradleExecutionSettings buildSrcProjectSettings,
+                                                                  @NotNull GradleExecutionSettings mainBuildExecutionSettings) {
+    TargetEnvironmentConfigurationProvider targetEnvironmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(mainBuildExecutionSettings);
+    ExternalSystemExecutionAware.Companion
+      .setEnvironmentConfigurationProvider(buildSrcProjectSettings, targetEnvironmentConfigurationProvider);
+  }
+
   private void includeRootBuildIncludedBuildsIfNeeded(@NotNull GradleExecutionSettings buildSrcProjectSettings,
                                                       @Nullable CompositeBuildData compositeBuildData,
                                                       @NotNull String mainBuildPath) {
@@ -180,11 +193,27 @@ public final class GradleBuildSrcProjectsResolver {
     // due to limitation caused by specific ordering requirement:  "include order is important if an included build provides a plugin which should be discovered very very early".
     // It can be improved in the future Gradle releases.
     if (gradleBaseVersion.compareTo(GradleVersion.version("6.7")) < 0) return;
-    for (BuildParticipant buildParticipant : compositeBuildData.getCompositeParticipants()) {
-      if (!FileUtil.pathsEqual(mainBuildPath, buildParticipant.getRootPath())) {
+    // since 7.2 including builds that transitively include current buildSrc will produce errors: https://github.com/gradle/gradle/issues/20898
+    for (BuildParticipant buildParticipant : excludeTransitiveParentsOf(mainBuildPath, compositeBuildData.getCompositeParticipants())) {
         buildSrcProjectSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getRootPath());
-      }
     }
+  }
+
+  @NotNull
+  private static Collection<BuildParticipant> excludeTransitiveParentsOf(@NotNull String path, @NotNull List<BuildParticipant> participants) {
+    Map<String, BuildParticipant> rootPathParticipantMap = new LinkedHashMap<>();
+
+    for (BuildParticipant participant : participants) {
+      rootPathParticipantMap.put(participant.getRootPath(), participant);
+    }
+
+    String currentPath = path;
+    while (currentPath != null) {
+      BuildParticipant removed = rootPathParticipantMap.remove(currentPath);
+      currentPath = removed != null ? removed.getParentRootPath() : null;
+    }
+
+    return rootPathParticipantMap.values();
   }
 
   @Nullable
@@ -217,7 +246,7 @@ public final class GradleBuildSrcProjectsResolver {
     if (buildSrcResolverCtx.isPreviewMode()) {
       ModuleData buildSrcModuleData =
         new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), BUILD_SRC_NAME, projectPath, projectPath);
-      buildSrcModuleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+      GradleModuleDataKt.setBuildSrcModule(buildSrcModuleData);
       resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }
@@ -227,7 +256,7 @@ public final class GradleBuildSrcProjectsResolver {
 
     if (buildSrcProjectDataNode == null) return;
     for (DataNode<LibraryData> libraryDataNode : getChildren(buildSrcProjectDataNode, ProjectKeys.LIBRARY)) {
-      resultProjectDataNode.createChild(ProjectKeys.LIBRARY, libraryDataNode.getData());
+      GradleProjectResolverUtil.linkProjectLibrary(resultProjectDataNode, libraryDataNode.getData());
     }
 
     Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
@@ -253,7 +282,7 @@ public final class GradleBuildSrcProjectsResolver {
 
       DataNode<ModuleData> includedModule = includedModulesPaths.get(moduleData.getLinkedExternalProjectPath());
       if (includedModule == null) {
-        moduleData.setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+        GradleModuleDataKt.setBuildSrcModule(moduleData);
         resultProjectDataNode.addChild(moduleNode);
         String[] moduleGroup = getModuleGroup(resultProjectDataNode, buildName, buildSrcResolverCtx, moduleData);
         if (moduleGroup != null) {
@@ -268,7 +297,7 @@ public final class GradleBuildSrcProjectsResolver {
         }
       }
       else {
-        includedModule.getData().setProperty(BUILD_SRC_MODULE_PROPERTY, "true");
+        GradleModuleDataKt.setBuildSrcModule(includedModule.getData());
       }
     }
     if (buildSrcModuleNode != null) {
@@ -285,8 +314,7 @@ public final class GradleBuildSrcProjectsResolver {
             addSourcePaths(buildSrcRuntimeSourcesPaths, depModuleNode);
           }
         }
-        else if (childData instanceof LibraryDependencyData) {
-          LibraryDependencyData dependencyData = (LibraryDependencyData)childData;
+        else if (childData instanceof LibraryDependencyData dependencyData) {
           // exclude generated gradle-api jar the gradle api classes/sources handled separately by BuildClasspathModuleGradleDataService
           if (dependencyData.getExternalName().startsWith("gradle-api-")) {
             continue;

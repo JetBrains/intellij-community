@@ -33,8 +33,8 @@ import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
 
-final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
-                                                                                                                              "arrayFilter") {
+final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
+                                                                                                                                            "arrayFilter") {
   init {
     if (thisType != null) {
       myExpressionEditor.setDocumentProcessor({ d ->

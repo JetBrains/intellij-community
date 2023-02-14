@@ -9,196 +9,215 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 public class UnwrapSwitchStatementTest extends UnwrapTestCase {
 
   public void testSimple() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1:\n" +
-                    "        b = <caret>false;\n" +
-                    "        break;\n" +
-                    "    default:\n" +
-                    "        b = true;\n" +
-                    "        break;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1:
+                              b = <caret>false;
+                              break;
+                          default:
+                              b = true;
+                              break;
+                      }""",
 
                     "boolean b;\n" +
                     "b = false;");
   }
 
   public void testNoBreak() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1:\n" +
-                    "        b = false;\n" +
-                    "        break;\n" +
-                    "    default:\n" +
-                    "        b = <caret>true;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1:
+                              b = false;
+                              break;
+                          default:
+                              b = <caret>true;
+                      }""",
 
                     "boolean b;\n" +
                     "b = true;");
   }
 
   public void testLabeledBreak() {
-    assertUnwrapped("outer: for (int z = 0; z < 10; z++) {\n" +
-                    "    boolean b;\n" +
-                    "    switch (0) {\n" +
-                    "        case 1:\n" +
-                    "<caret>            b = false;\n" +
-                    "            break outer;\n" +
-                    "        default:\n" +
-                    "            b = true;\n" +
-                    "            break;\n" +
-                    "    }\n" +
-                    "}",
+    assertUnwrapped("""
+                      outer: for (int z = 0; z < 10; z++) {
+                          boolean b;
+                          switch (0) {
+                              case 1:
+                      <caret>            b = false;
+                                  break outer;
+                              default:
+                                  b = true;
+                                  break;
+                          }
+                      }""",
 
-                    "outer: for (int z = 0; z < 10; z++) {\n" +
-                    "    boolean b;\n" +
-                    "    b = false;\n" +
-                    "    break outer;\n" +
-                    "}\n");
+                    """
+                      outer: for (int z = 0; z < 10; z++) {
+                          boolean b;
+                          b = false;
+                          break outer;
+                      }
+                      """);
   }
 
   public void testFallThrough() {
-    assertUnwrapped("switch (0) {\n" +
-                    "    <caret>case 1:\n" +
-                    "        System.out.println(1);\n" +
-                    "    default:\n" +
-                    "        System.out.println(2);\n" +
-                    "        break;\n" +
-                    "}",
+    assertUnwrapped("""
+                      switch (0) {
+                          <caret>case 1:
+                              System.out.println(1);
+                          default:
+                              System.out.println(2);
+                              break;
+                      }""",
 
                     "System.out.println(1);\n" +
                     "System.out.println(2);");
   }
 
   public void testEmptySwitch() {
-    assertUnwrapped("switch (1) {\n" +
-                    "    case 1:<caret>\n" +
-                    "}",
+    assertUnwrapped("""
+                      switch (1) {
+                          case 1:<caret>
+                      }""",
 
                     "");
   }
 
   public  void testThrowStatement() {
-    assertUnwrapped("switch (0) {\n" +
-                    "    case 1: {\n" +
-                    "        System.out.println();\n" +
-                    "        break;\n" +
-                    "    }\n" +
-                    "    case 2: <caret>throw null;\n" +
-                    "    default:\n" +
-                    "        System.out.println();\n" +
-                    "        return;\n" +
-                    "}",
+    assertUnwrapped("""
+                      switch (0) {
+                          case 1: {
+                              System.out.println();
+                              break;
+                          }
+                          case 2: <caret>throw null;
+                          default:
+                              System.out.println();
+                              return;
+                      }""",
 
                     "throw null;");
   }
 
   public void testRuleBasedBlock() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1 -> {\n" +
-                    "        <caret>System.out.println();\n" +
-                    "        b = false;\n" +
-                    "    }\n" +
-                    "    case 2 -> throw null;\n" +
-                    "    default -> b = true;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1 -> {
+                              <caret>System.out.println();
+                              b = false;
+                          }
+                          case 2 -> throw null;
+                          default -> b = true;
+                      }""",
 
-                    "boolean b;\n" +
-                    "System.out.println();\n" +
-                    "b = false;");
+                    """
+                      boolean b;
+                      System.out.println();
+                      b = false;""");
   }
 
   public void testRuleBasedExpression() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1 -> {\n" +
-                    "        System.out.println();\n" +
-                    "        b = false;\n" +
-                    "    }\n" +
-                    "    case 2 -> throw null;\n" +
-                    "    default<caret> -> b = true;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1 -> {
+                              System.out.println();
+                              b = false;
+                          }
+                          case 2 -> throw null;
+                          default<caret> -> b = true;
+                      }""",
 
                     "boolean b;\n" +
                     "b = true;");
   }
 
   public void testRuleBasedThrowStatement() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1 -> {\n" +
-                    "        System.out.println();\n" +
-                    "        b = false;\n" +
-                    "    }\n" +
-                    "    case 2 -> <caret>throw null;\n" +
-                    "    default -> b = true;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1 -> {
+                              System.out.println();
+                              b = false;
+                          }
+                          case 2 -> <caret>throw null;
+                          default -> b = true;
+                      }""",
 
                     "boolean b;\n" +
                     "throw null;");
   }
 
   public void testCommentBracesBreak() {
-    assertUnwrapped("boolean b;\n" +
-                    "switch (0) {\n" +
-                    "    case 1: {\n" +
-                    "        System.out.println();\n" +
-                    "        b = false;<caret>\n" +
-                    "        if (b) break;\n" +
-                    "    }\n" +
-                    "    default:\n" +
-                    "        b = true;\n" +
-                    "        //asdf\n" +
-                    "        b = true;\n" +
-                    "        break;\n" +
-                    "}",
+    assertUnwrapped("""
+                      boolean b;
+                      switch (0) {
+                          case 1: {
+                              System.out.println();
+                              b = false;<caret>
+                              if (b) break;
+                          }
+                          default:
+                              b = true;
+                              //asdf
+                              b = true;
+                              break;
+                      }""",
 
-                    "boolean b;\n" +
-                    "System.out.println();\n" +
-                    "b = false;\n" +
-                    "if (b) {\n" +
-                    "}\n" +
-                    "b = true;//asdf\n" +
-                    "b = true;",
+                    """
+                      boolean b;
+                      System.out.println();
+                      b = false;
+                      if (b) {
+                      }
+                      b = true;//asdf
+                      b = true;""",
                     1);
   }
 
   public void testNestedSwitch() {
-    assertUnwrapped("switch (0) {\n" +
-                    "    case 1:\n" +
-                    "        switch (1) {\n" +
-                    "            case 2:\n" +
-                    "                System.out.println(1);\n" +
-                    "                break;\n" +
-                    "        }\n" +
-                    "        System.out.println(2);<caret>\n" +
-                    "        break;\n" +
-                    "    default:\n" +
-                    "        System.out.println(3);\n" +
-                    "}",
+    assertUnwrapped("""
+                      switch (0) {
+                          case 1:
+                              switch (1) {
+                                  case 2:
+                                      System.out.println(1);
+                                      break;
+                              }
+                              System.out.println(2);<caret>
+                              break;
+                          default:
+                              System.out.println(3);
+                      }""",
 
-                    "switch (1) {\n" +
-                    "    case 2:\n" +
-                    "        System.out.println(1);\n" +
-                    "        break;\n" +
-                    "}\n" +
-                    "System.out.println(2);");
+                    """
+                      switch (1) {
+                          case 2:
+                              System.out.println(1);
+                              break;
+                      }
+                      System.out.println(2);""");
   }
 
   public void testNestedWhileWithBreak() {
-    assertUnwrapped("switch (0) {\n" +
-                    "    case 1:\n" +
-                    "        while (true) {\n" +
-                    "            break;\n" +
-                    "        }\n" +
-                    "        System.out.println(1);<caret>\n" +
-                    "        break;\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      switch (0) {
+                          case 1:
+                              while (true) {
+                                  break;
+                              }
+                              System.out.println(1);<caret>
+                              break;
+                      }
+                      """,
 
-                    "while (true) {\n" +
-                    "    break;\n" +
-                    "}\n" +
-                    "System.out.println(1);");
+                    """
+                      while (true) {
+                          break;
+                      }
+                      System.out.println(1);""");
   }
 }

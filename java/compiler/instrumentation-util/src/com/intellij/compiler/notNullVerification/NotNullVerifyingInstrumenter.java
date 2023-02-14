@@ -9,9 +9,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-/**
- * @author ven
- */
 public final class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
@@ -28,7 +25,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
   private NotNullVerifyingInstrumenter(ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
-    Set<String> annoSet = new HashSet<String>();
+    Set<String> annoSet = new HashSet<>();
     for (String annotation : notNullAnnotations) {
       annoSet.add('L' + annotation.replace('.', '/') + ';');
     }
@@ -52,8 +49,8 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
   private static class MethodInfo {
     final NotNullState nullability = new NotNullState();
-    final Map<Integer, String> paramNames = new HashMap<Integer, String>();
-    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<Integer, NotNullState>();
+    final Map<Integer, String> paramNames = new HashMap<>();
+    final Map<Integer, NotNullState> paramNullability = new LinkedHashMap<>();
     boolean isStable;
     int paramAnnotationOffset;
 
@@ -69,7 +66,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
 
   private static final class MethodData {
     private String myClassName;
-    private final Map<String, MethodInfo> myMethodInfos = new HashMap<String, MethodInfo>();
+    private final Map<String, MethodInfo> myMethodInfos = new HashMap<>();
 
     static String key(String methodName, String desc) {
       return methodName + desc;
@@ -115,7 +112,7 @@ public final class NotNullVerifyingInstrumenter extends ClassVisitor implements 
         final Type[] args = Type.getArgumentTypes(desc);
         final boolean methodCanHaveNullability = isReferenceType(Type.getReturnType(desc));
 
-        final Map<Integer, Integer> paramSlots = new LinkedHashMap<Integer, Integer>(); // map: localVariableSlot -> methodParameterIndex
+        final Map<Integer, Integer> paramSlots = new LinkedHashMap<>(); // map: localVariableSlot -> methodParameterIndex
         int slotIndex = isStatic(access) ? 0 : 1;
         for (int paramIndex = 0; paramIndex < args.length; paramIndex++) {
           Type arg = args[paramIndex];

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -8,12 +8,14 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,12 +25,9 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,12 +36,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
+public class SimplifyBooleanExpressionFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
 
   private final boolean mySubExpressionValue;
@@ -80,14 +76,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
       // code like "if (foo || alwaysFalseWithSideEffects) {}"
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
-        if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
-            && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
-            && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
-          return true;
-        }
-      }
+      return parent instanceof PsiPolyadicExpression polyadic && polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
+             && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
+             && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement;
     }
     return false;
   }
@@ -128,7 +119,14 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) {
       return false;
     }
-
+    PsiConditionalExpression parentConditionalExpr = ObjectUtils.tryCast(parent, PsiConditionalExpression.class);
+    if (parentConditionalExpr != null && NullabilityProblemKind.fromContext(parentConditionalExpr, Collections.emptyMap()) != null) {
+      PsiExpression exprToCheck = mySubExpressionValue ? parentConditionalExpr.getThenExpression()
+                                                       : parentConditionalExpr.getElseExpression();
+      if (exprToCheck != null && TypeConversionUtil.isNullType(exprToCheck.getType())) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -142,7 +140,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @Nullable Editor editor,
+                     @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     if (!isAvailable()) return;
     PsiExpression subExpression = getSubExpression();
     if (subExpression == null) return;
@@ -153,7 +152,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
         return;
       }
-      PsiStatement anchor = ObjectUtils.tryCast(RefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
+      PsiStatement anchor = ObjectUtils.tryCast(CommonJavaRefactoringUtil.getParentStatement(subExpression, false), PsiStatement.class);
       if (anchor == null) {
         LOG.error("anchor is null", new Attachment("subExpression.txt", subExpression.getText()));
         return;
@@ -183,8 +182,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       // Prevent extracting while condition to internal 'if'
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      if (parent instanceof PsiWhileStatement) {
-        PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+      if (parent instanceof PsiWhileStatement whileStatement) {
         if (whileStatement.getCondition() != null) {
           PsiStatement replacement =
             factory.createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
@@ -192,13 +190,11 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
           subExpression = Objects.requireNonNull(ifStatement.getCondition());
         }
       }
-      else if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-        if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
-          PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
-          if (expression != null) {
-            return expression;
-          }
+      else if (parent instanceof PsiPolyadicExpression polyadicExpression &&
+               JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+        PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
+        if (expression != null) {
+          return expression;
         }
       }
     }
@@ -214,7 +210,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (ifStatement == null) return null;
     PsiExpression lastOperand = ArrayUtil.getLastElement(orChain.getOperands());
     if (!PsiTreeUtil.isAncestor(lastOperand, subExpression, false)) return null;
-    orChain.replace(SplitConditionUtil.getLOperands(orChain, orChain.getTokenBeforeOperand(lastOperand)));
+    orChain.replace(SplitConditionUtil.getLOperands(orChain, Objects.requireNonNull(orChain.getTokenBeforeOperand(lastOperand))));
     ControlFlowUtils.ensureElseBranch(ifStatement);
     PsiBlockStatement elseBranch = (PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch());
     PsiCodeBlock codeBlock = elseBranch.getCodeBlock();
@@ -225,7 +221,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiLiteralExpression) || !PsiTypes.booleanType().equals(expression.getType())) return false;
 
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
@@ -284,8 +280,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (parent instanceof PsiCodeBlock && blockAlwaysReturns(statement)) {
       removeFollowingStatements(orig, (PsiCodeBlock)parent);
     }
-    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement) {
-      PsiIfStatement ifStmt = (PsiIfStatement)parent;
+    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement ifStmt) {
       if (ifStmt.getElseBranch() == orig && blockAlwaysReturns(ifStmt.getThenBranch()) && blockAlwaysReturns(statement)) {
         removeFollowingStatements(ifStmt, (PsiCodeBlock)grandParent);
       }
@@ -318,7 +313,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static boolean isConflictingLocalVariable(PsiCodeBlock parent, PsiElement declaration) {
     if (!(declaration instanceof PsiLocalVariable)) return false;
     String name = ((PsiLocalVariable)declaration).getName();
-    return PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
+    return PsiResolveHelper.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
   }
 
   private static PsiBlockStatement wrapWithCodeBlock(PsiStatement replacement) {
@@ -382,7 +377,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -409,7 +404,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
+    if (!(expression instanceof PsiConditionalExpression) && !PsiTypes.booleanType().equals(expression.getType())) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression &&
         !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {
@@ -427,7 +422,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -476,7 +471,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
 
     @Override
-    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
       PsiExpression[] operands = expression.getOperands();
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
@@ -584,7 +579,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       Boolean condition = getConstBoolean(expression.getCondition());
       if (condition == null) return;
       if (!markAndCheckCreateResult()) {
@@ -608,7 +603,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       PsiExpression operand = expression.getOperand();
       Boolean constBoolean = getConstBoolean(operand);
       if (constBoolean == null) return;
@@ -623,7 +618,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       PsiExpression subExpr = expression.getExpression();
       Boolean constBoolean = getConstBoolean(subExpr);
       if (constBoolean == null) return;
@@ -634,7 +629,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 

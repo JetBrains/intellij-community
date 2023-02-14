@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType;
@@ -53,7 +53,7 @@ public final class EventLogSystemLogger {
                                   boolean external,
                                   @NotNull List<String> successfullySentFiles,
                                   @NotNull List<Integer> errors) {
-    EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
+    EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
     final FeatureUsageData data = new FeatureUsageData().
       addData("total", total).
       addData("send", succeed + failed).
@@ -79,17 +79,22 @@ public final class EventLogSystemLogger {
     logEvent(recorderId, "external.send.finished", data);
   }
 
-  public static void logCreatingExternalSendCommand(@NotNull String recorderId) {
-    logEvent(recorderId, "external.send.command.creation.started");
+  public static void logCreatingExternalSendCommand(@NotNull List<String> recorders) {
+    for (String recorderId : recorders) {
+      logEvent(recorderId, "external.send.command.creation.started");
+    }
   }
 
-  public static void logFinishedCreatingExternalSendCommand(@NotNull String recorderId, @Nullable EventLogUploadErrorType errorType) {
+  public static void logFinishedCreatingExternalSendCommand(@NotNull List<String> recorders, @Nullable EventLogUploadErrorType errorType) {
     boolean succeed = errorType == null;
     FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed);
     if (!succeed) {
       data.addData("error", errorType.name());
     }
-    logEvent(recorderId, "external.send.command.creation.finished", data);
+
+    for (String recorderId : recorders) {
+      logEvent(recorderId, "external.send.command.creation.finished", data);
+    }
   }
 
   public static void logSystemError(@NotNull String recorderId, @NotNull String eventId, @NotNull String errorClass, long time) {

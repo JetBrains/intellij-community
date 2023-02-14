@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
@@ -35,7 +35,8 @@ public enum PatternResolveState {
     PatternResolveState state = WHEN_TRUE;
     for (PsiElement prev = pattern, current = prev.getParent(); prev != parent; prev = current, current = current.getParent()) {
       if (current instanceof PsiInstanceOfExpression || current instanceof PsiParenthesizedExpression ||
-          current instanceof PsiPolyadicExpression &&
+          current instanceof PsiDeconstructionList || current instanceof PsiDeconstructionPattern ||
+          current instanceof PsiParenthesizedPattern || current instanceof PsiPolyadicExpression &&
           (((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.ANDAND ||
            ((PsiPolyadicExpression)current).getOperationTokenType() == JavaTokenType.OROR)) {
         continue;

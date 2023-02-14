@@ -1,68 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @see VfsUtilCore#visitChildrenRecursively
+ * @see VfsUtilCore#iterateChildrenRecursively
+ * @see VfsUtilCore#processFilesRecursively
  */
 public abstract class VirtualFileVisitor<T> {
-  public static class Option {
-    private Option() { }
-
-    private static final class LimitOption extends Option {
-      private final int limit;
-
-      private LimitOption(int limit) {
-        this.limit = limit;
-      }
-    }
-  }
-
-  public static final Option NO_FOLLOW_SYMLINKS = new Option();
-  public static final Option SKIP_ROOT = new Option();
-  public static final Option ONE_LEVEL_DEEP = limit(1);
-
-  @NotNull
-  public static Option limit(int maxDepth) {
-    return new Option.LimitOption(maxDepth);
-  }
-
-
-  public static final class Result {
-    public final boolean skipChildren;
-    public final VirtualFile skipToParent;
-
-    private Result(boolean skipChildren, @Nullable VirtualFile skipToParent) {
-      this.skipChildren = skipChildren;
-      this.skipToParent = skipToParent;
-    }
-
-    @NonNls
-    @Override
-    public String toString() {
-      return "(" + (skipChildren ? "skip," + skipToParent : "continue") + ")";
-    }
-  }
-
-  public static final Result CONTINUE = new Result(false, null);
-  public static final Result SKIP_CHILDREN = new Result(true, null);
-
-  public static Result skipTo(@NotNull VirtualFile parentToSkipTo) {
-    return new Result(true, parentToSkipTo);
-  }
-
-
-  protected static class VisitorException extends RuntimeException {
-    public VisitorException(@NotNull Throwable cause) {
-      super(cause);
-    }
-  }
-
-
   private boolean myFollowSymLinks = true;
   private boolean mySkipRoot;
   private int myDepthLimit = -1;
@@ -85,6 +35,53 @@ public abstract class VirtualFileVisitor<T> {
     }
   }
 
+  public static class Option {
+    private Option() { }
+
+    private static final class LimitOption extends Option {
+      private final int limit;
+
+      private LimitOption(int limit) {
+        this.limit = limit;
+      }
+    }
+  }
+
+  public static final Option NO_FOLLOW_SYMLINKS = new Option();
+  public static final Option SKIP_ROOT = new Option();
+  public static final Option ONE_LEVEL_DEEP = limit(1);
+
+  public static @NotNull Option limit(int maxDepth) {
+    return new Option.LimitOption(maxDepth);
+  }
+
+  public static final class Result {
+    public final boolean skipChildren;
+    public final VirtualFile skipToParent;
+
+    private Result(boolean skipChildren, @Nullable VirtualFile skipToParent) {
+      this.skipChildren = skipChildren;
+      this.skipToParent = skipToParent;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + (skipChildren ? "skip," + skipToParent : "continue") + ")";
+    }
+  }
+
+  public static final Result CONTINUE = new Result(false, null);
+  public static final Result SKIP_CHILDREN = new Result(true, null);
+
+  public static Result skipTo(@NotNull VirtualFile parentToSkipTo) {
+    return new Result(true, parentToSkipTo);
+  }
+
+  protected static class VisitorException extends RuntimeException {
+    public VisitorException(@NotNull Throwable cause) {
+      super(cause);
+    }
+  }
 
   /**
    * Simple visiting method.
@@ -105,13 +102,12 @@ public abstract class VirtualFileVisitor<T> {
    *         {@linkplain #SKIP_CHILDREN} to skip to file's next sibling,<br/>
    *         result of {@linkplain #skipTo(VirtualFile)} to skip to given file's next sibling.
    */
-  @NotNull
-  public Result visitFileEx(@NotNull VirtualFile file) {
+  public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
     return visitFile(file) ? CONTINUE : SKIP_CHILDREN;
   }
 
   /**
-   * This method is only called if visiting wasn't interrupted (by returning skip-requesting result
+   * This method is only called if visiting wasn't interrupted (by returning a skip-requesting result
    * from {@linkplain #visitFile(VirtualFile)} or {@linkplain #visitFileEx(VirtualFile)} methods).
    *
    * @param file a file whose children were successfully visited.
@@ -119,21 +115,20 @@ public abstract class VirtualFileVisitor<T> {
   public void afterChildrenVisited(@NotNull VirtualFile file) { }
 
   /**
-   * By default, visitor uses ({@linkplain VirtualFile#getChildren()}) to iterate over file's children.
+   * By default, a visitor uses ({@linkplain VirtualFile#getChildren()}) to iterate over file's children.
    * You can override this method to implement another mechanism.
    *
    * @param file a virtual file to get children from.
    * @return children iterable, or null to use {@linkplain VirtualFile#getChildren()}.
    */
-  @Nullable
-  public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+  public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
     return null;
   }
 
   /**
    * Stores the {@code value} to this visitor. The stored value can be retrieved later by calling the {@link #getCurrentValue()}.
    * The visitor maintains the stack of stored values. I.e:
-   * This value is held here only during the visiting the current file and all its children. As soon as the visitor finished with
+   * This value is held here only during visiting the current file and all its children. As soon as the visitor finished with
    * the current file and all its subtree and returns to the level up, the value is cleared
    * and the {@link #getCurrentValue()} returns the previous value, which was stored here before this method call.
    */
@@ -148,7 +143,6 @@ public abstract class VirtualFileVisitor<T> {
     return myValue;
   }
 
-
   final boolean allowVisitFile(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {
     return myLevel > 0 || !mySkipRoot;
   }
@@ -162,7 +156,7 @@ public abstract class VirtualFileVisitor<T> {
       return false;
     }
 
-    // ignore invalid or recursive link or the link with circular path (e.g. "/.../link1/.../link1") - to avoid visiting files twice
+    // ignoring invalid and recursive symbolic links - to avoid visiting files twice
     return !file.isRecursiveOrCircularSymlink();
   }
 

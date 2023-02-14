@@ -13,10 +13,12 @@ public final class AnnotatedMembersSearch {
 
   private AnnotatedMembersSearch() {}
 
+  @NotNull
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return AnnotatedElementsSearch.searchPsiMembers(annotationClass, scope);
   }
 
+  @NotNull
   public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }

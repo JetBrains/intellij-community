@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
-import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenBuildToolLogTestUtils.failOnWarns
+import org.junit.Test
 
 class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
 
+  @Test
   fun testSuccessfullBuildWithTwoSubmodules() {
     failOnWarns {
       assertSameLines("" +
@@ -32,7 +33,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  fun testArchetypeRun() {
+  @Test fun testArchetypeRun() {
     failOnWarns {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
         .withSkippedOutput()
@@ -40,7 +41,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  fun testdependencyInSinleMojoFailed() {
+  @Test fun testdependencyInSinleMojoFailed() {
     failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
                       "  resources\n" +
@@ -61,7 +62,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  fun testSuccessfullBuildWithOutputTwoSubmodules() {
+  @Test fun testSuccessfullBuildWithOutputTwoSubmodules() {
     failOnWarns {
       assertSameLines("test:project:pom:1\n" +
                       "  [INFO]\n" +
@@ -194,5 +195,50 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
+  @Test fun `test parse build log with -q failed`() {
+    failOnWarns {
+      assertSameLines("error:Maven Run\n" +
+                      " org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
+                      " org.example:child1:jar:1.0-SNAPSHOT\n" +
+                      "  resources\n" +
+                      "  compile",
+        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-quiet-failed.log"))
+          .withSkippedOutput()
+          .runAndFormatToString())
+    }
+  }
 
+  @Test fun `test parse build log with -q`() {
+    failOnWarns {
+      assertSameLines("org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
+                      " org.example:child1:jar:1.0-SNAPSHOT\n" +
+                      "  resources\n" +
+                      "  compile\n" +
+                      "  testResources\n" +
+                      "  testCompile\n" +
+                      "  test\n" +
+                      "  jar",
+        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-quiet-success.log"))
+          .withSkippedOutput()
+          .runAndFormatToString())
+    }
+  }
+
+  @Test fun `test parse build log no goal failed`() {
+    failOnWarns {
+      assertSameLines("error:",
+        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-goal-failed.log"))
+          .withSkippedOutput()
+          .runAndFormatToString())
+    }
+  }
+
+  @Test fun `test parse build log no pom failed`() {
+    failOnWarns {
+      assertSameLines("error:",
+        testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-pom-failed.log"))
+          .withSkippedOutput()
+          .runAndFormatToString())
+    }
+  }
 }

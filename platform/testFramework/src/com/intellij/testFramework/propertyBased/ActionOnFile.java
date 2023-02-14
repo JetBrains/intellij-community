@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
 
-/**
- * @author peter
- */
 public abstract class ActionOnFile implements MadTestingAction {
   private final Project myProject;
   private final VirtualFile myVirtualFile;

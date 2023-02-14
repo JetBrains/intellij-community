@@ -1,0 +1,4 @@
+// AFTER-WARNING: Variable 'foo' is never used
+fun test() {
+    lateinit var foo: String
+}

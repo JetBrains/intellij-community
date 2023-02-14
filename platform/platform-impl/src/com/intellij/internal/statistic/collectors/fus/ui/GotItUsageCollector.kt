@@ -92,24 +92,21 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("got.it.tooltip", 1)
+    private val GROUP = EventLogGroup("got.it.tooltip", 2)
 
     internal val showEvent = GROUP.registerEvent("show",
-                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
                                                  EventFields.Int("count"))
 
     internal val closeEvent = GROUP.registerEvent("close",
-                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItTooltip.PROPERTY_PREFIX),
+                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
                                                   EventFields.Enum<CloseType>("type"))
   }
 }
 
 class GotItIDValidator : CustomValidationRule() {
+  override fun getRuleId(): String = GotItTooltip.PROPERTY_PREFIX
+
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (GotItUsageCollector.instance.toPrefix(data) == data) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
-
-
-  override fun acceptRuleId(ruleId: String?): Boolean {
-    return GotItTooltip.PROPERTY_PREFIX == ruleId
-  }
 }

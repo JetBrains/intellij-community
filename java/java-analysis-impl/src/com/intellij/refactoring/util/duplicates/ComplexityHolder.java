@@ -5,17 +5,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 
 import java.util.List;
 
-/**
- * @author Pavel.Dolgov
- */
 class ComplexityHolder {
   static final int MAX_ACCEPTABLE = 12;
   static final int TOO_COMPLEX = 100;
 
-  private final ObjectIntHashMap<PsiExpression> myCache = new ObjectIntHashMap<>();
+  private final ObjectIntMap<PsiExpression> myCache = new ObjectIntHashMap<>();
   private final List<PsiElement> myScope;
 
   ComplexityHolder(List<PsiElement> scope) {myScope = scope;}
@@ -25,6 +23,7 @@ class ComplexityHolder {
   }
 
   private int getComplexity(PsiExpression expression) {
+    if (expression == null) return TOO_COMPLEX;
     int complexity = myCache.get(expression);
     if (complexity < 0) {
       complexity = computeComplexity(expression);

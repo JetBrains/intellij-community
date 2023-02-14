@@ -163,7 +163,7 @@ public final class TreeUtil {
   public static ASTNode findCommonParent(ASTNode one, ASTNode two) {
     // optimization
     if (one == two) return one;
-    final Set<ASTNode> parents = new HashSet<>(20);
+    Set<ASTNode> parents = new HashSet<>(20);
     while (one != null) {
       parents.add(one);
       one = one.getTreeParent();
@@ -198,10 +198,10 @@ public final class TreeUtil {
     return Couple.of(one, two);
   }
 
-  public static void clearCaches(@NotNull final TreeElement tree) {
+  public static void clearCaches(@NotNull TreeElement tree) {
     tree.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
-      protected void visitNode(final TreeElement element) {
+      protected void visitNode(TreeElement element) {
         element.clearCaches();
         super.visitNode(element);
       }
@@ -209,12 +209,12 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode nextLeaf(@NotNull final ASTNode node) {
+  public static ASTNode nextLeaf(@NotNull ASTNode node) {
     return nextLeaf((TreeElement)node, null);
   }
 
   @Nullable
-  public static LeafElement nextLeaf(@NotNull final LeafElement node) {
+  public static LeafElement nextLeaf(@NotNull LeafElement node) {
     return nextLeaf(node, null);
   }
 
@@ -242,7 +242,7 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static ASTNode prevLeaf(final ASTNode node) {
+  public static ASTNode prevLeaf(ASTNode node) {
     return prevLeaf((TreeElement)node, null);
   }
 
@@ -297,9 +297,9 @@ public final class TreeUtil {
 
   @Nullable
   private static TreeElement findFirstLeafOrType(@NotNull TreeElement element,
-                                                 final IElementType searchedType,
-                                                 final CommonParentState commonParent,
-                                                 final boolean expandChameleons) {
+                                                 IElementType searchedType,
+                                                 CommonParentState commonParent,
+                                                 boolean expandChameleons) {
     final class MyVisitor extends RecursiveTreeElementWalkingVisitor {
       private TreeElement result;
 

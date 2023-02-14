@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.runAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.util.WaitFor
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
@@ -20,7 +20,8 @@ class GitCommitTemplateTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    waitForTemplateTrackerReady()
+    // backgroundPostStartupActivity are not started in unit tests
+    project.service<GitCommitTemplateTracker>().start()
   }
 
   override fun tearDown() {
@@ -155,6 +156,22 @@ class GitCommitTemplateTest : GitPlatformTest() {
     assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
   }
 
+  fun `test commit template with empty or blank content`() {
+    val repository = createRepository(projectPath)
+
+    setupCommitTemplate(repository, "template.txt", "", true)
+    assertCommitTemplateNotExists(repository)
+
+    setupCommitTemplate(repository, "template2.txt", "  ", true)
+    assertCommitTemplateNotExists(repository)
+
+    setupCommitTemplate(repository, "template3.txt",
+                        """
+                          
+                        """.trimIndent(), true)
+    assertCommitTemplateNotExists(repository)
+  }
+
   private fun setupCommitTemplate(repository: GitRepository,
                                   templateFileName: String,
                                   templateContent: String,
@@ -176,26 +193,21 @@ class GitCommitTemplateTest : GitPlatformTest() {
     return commitTemplate
   }
 
-  private fun assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String) {
+  private fun assertCommitTemplate(repository: GitRepository, expectedTemplateContent: String?) {
     val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
     assertTrue("Commit template doesn't exist for $repository", commitTemplateTracker.exists(repository))
     assertEquals("Commit template content doesn't match $repository", expectedTemplateContent,
                  commitTemplateTracker.getTemplateContent(repository))
   }
 
+  private fun assertCommitTemplateNotExists(repository: GitRepository) {
+    val commitTemplateTracker = project.service<GitCommitTemplateTracker>()
+    assertTrue("Commit template exist for $repository", !commitTemplateTracker.exists(repository))
+    assertEquals("Commit template content doesn't match $repository", null, commitTemplateTracker.getTemplateContent(repository))
+  }
+
   private fun File.refresh() {
     LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-  }
-
-  private fun waitForTemplateTrackerReady() {
-    object : WaitFor() {
-      override fun condition(): Boolean = project.service<GitCommitTemplateTracker>().isStarted()
-      override fun assertCompleted(message: String?) {
-        if (!condition()) {
-          fail(message)
-        }
-      }
-    }.assertCompleted("Failed to wait ${this::class.simpleName}")
   }
 }

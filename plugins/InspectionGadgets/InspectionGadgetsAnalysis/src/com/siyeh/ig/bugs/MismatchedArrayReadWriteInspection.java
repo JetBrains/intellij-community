@@ -119,13 +119,11 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (expression == null) {
         return false;
       }
-      if (expression instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+      if (expression instanceof PsiNewExpression newExpression) {
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
         return mayBeAccessedElsewhere(arrayInitializer);
       }
-      else if (expression instanceof PsiArrayInitializerExpression) {
-        final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
+      else if (expression instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
         for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
           if (mayBeAccessedElsewhere(initializer)) {
             return true;
@@ -139,17 +137,14 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       else if (expression instanceof PsiArrayAccessExpression) {
         return true;
       }
-      else if (expression instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+      else if (expression instanceof PsiTypeCastExpression typeCastExpression) {
         return mayBeAccessedElsewhere(typeCastExpression.getOperand());
       }
-      else if (expression instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+      else if (expression instanceof PsiConditionalExpression conditionalExpression) {
         return mayBeAccessedElsewhere(conditionalExpression.getThenExpression()) ||
                mayBeAccessedElsewhere(conditionalExpression.getElseExpression());
       }
-      else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      else if (expression instanceof PsiMethodCallExpression methodCallExpression) {
         final PsiMethod method = methodCallExpression.resolveMethod();
         if (method == null) {
           return true;
@@ -179,13 +174,11 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (initializer == null) {
         return true;
       }
-      if (initializer instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+      if (initializer instanceof PsiNewExpression newExpression) {
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
         return arrayInitializer == null || isZeroSizeArrayExpression(arrayInitializer);
       }
-      if (initializer instanceof PsiArrayInitializerExpression) {
-        final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
+      if (initializer instanceof PsiArrayInitializerExpression arrayInitializerExpression) {
         final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
         return initializers.length == 0;
       }
@@ -204,7 +197,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       }
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (myWritten && myRead) {
           return;
         }
@@ -212,8 +205,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
         if (!expression.isReferenceTo(myVariable)) return;
         if (PsiUtil.isAccessedForWriting(expression)) {
           final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-          if (parent instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+          if (parent instanceof PsiAssignmentExpression assignmentExpression) {
             final PsiExpression rhs = assignmentExpression.getRExpression();
             if (mayBeAccessedElsewhere(rhs)) {
               myWritten = true;
@@ -231,8 +223,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
         }
         myIsReferenced = true;
         PsiElement parent = getParent(expression);
-        if (parent instanceof PsiArrayAccessExpression) {
-          PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+        if (parent instanceof PsiArrayAccessExpression arrayAccessExpression) {
           parent = getParent(parent);
           while (parent instanceof PsiArrayAccessExpression &&
                  ((PsiArrayAccessExpression)parent).getArrayExpression() == arrayAccessExpression) {
@@ -256,25 +247,21 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             myRead = true;
           }
         }
-        else if (parent instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+        else if (parent instanceof PsiReferenceExpression referenceExpression) {
           final String name = referenceExpression.getReferenceName();
           if ("clone".equals(name) && referenceExpression.getParent() instanceof PsiMethodCallExpression) {
             myRead = true;
           }
         }
-        else if (parent instanceof PsiForeachStatement) {
-          final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
+        else if (parent instanceof PsiForeachStatement foreachStatement) {
           final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
           if (PsiTreeUtil.isAncestor(iteratedValue, expression, false)) {
             myRead = true;
           }
         }
-        else if (parent instanceof PsiExpressionList) {
-          final PsiExpressionList expressionList = (PsiExpressionList)parent;
+        else if (parent instanceof PsiExpressionList expressionList) {
           parent = parent.getParent();
-          if (parent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent;
+          if (parent instanceof PsiMethodCallExpression methodCallExpression) {
             final PsiMethod method = methodCallExpression.resolveMethod();
             if (method != null) {
               final PsiClass aClass = method.getContainingClass();

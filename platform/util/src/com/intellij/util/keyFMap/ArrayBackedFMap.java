@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-class ArrayBackedFMap implements KeyFMap {
+final class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   // Invariant: keys are always sorted, never mutated inplace
   private final int[] keys;
@@ -110,12 +110,12 @@ class ArrayBackedFMap implements KeyFMap {
   }
 
   @Override
-  public @NotNull Key @NotNull [] getKeys() {
+  public @NotNull Key<?> @NotNull [] getKeys() {
     return getKeysByIndices(keys);
   }
 
-  static @NotNull Key @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
-    Key[] result = new Key[indexes.length];
+  static @NotNull Key<?> @NotNull [] getKeysByIndices(int @NotNull [] indexes) {
+    Key<?>[] result = new Key[indexes.length];
 
     int o = 0;
     for (int index : indexes) {

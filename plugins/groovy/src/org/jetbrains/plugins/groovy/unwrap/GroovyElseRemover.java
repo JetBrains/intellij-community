@@ -30,7 +30,7 @@ public class GroovyElseRemover extends GroovyElseUnwrapperBase {
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return ((GrIfStatement)e.getParent()).getElseBranch();
   }

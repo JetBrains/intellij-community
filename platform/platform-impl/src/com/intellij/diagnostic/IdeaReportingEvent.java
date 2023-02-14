@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-public class IdeaReportingEvent extends IdeaLoggingEvent {
+public final class IdeaReportingEvent extends IdeaLoggingEvent {
   private final TextBasedThrowable myThrowable;
   private final IdeaPluginDescriptor myPlugin;
 

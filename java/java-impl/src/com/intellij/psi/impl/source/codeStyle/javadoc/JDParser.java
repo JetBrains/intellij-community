@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,7 +10,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.TodoPattern;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +39,12 @@ public class JDParser {
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
 
+  private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
   private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
   private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
   private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
   private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+  private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
   private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
@@ -258,7 +264,7 @@ public class JDParser {
    * @param markers    if this parameter is not null then it will be filled with Boolean values:
    *                   true if the corresponding line in returned list is inside &lt;pre&gt; tag,
    *                   false if it is outside
-   * @return array of strings (lines)
+   * @return list of strings (lines)
    */
   @Nullable
   private List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
@@ -273,13 +279,22 @@ public class JDParser {
     int curPos = 0;
     int firstLineToKeepIndents = -1;
     int minIndentWhitespaces = Integer.MAX_VALUE;
+    boolean isInMultilineTodo = false;
+    boolean isInSnippet = false;
+    int snippetBraceBalance = 0;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
       curPos += token.length();
 
-      if (containsTagToKeepIndentsAfter(getLineWithoutAsterisk(token)) && firstLineToKeepIndents < 0) {
-        firstLineToKeepIndents = list.size();
+      String lineWithoutAsterisk = getLineWithoutAsterisk(token);
+      if (!isInMultilineTodo) {
+        if (isMultilineTodoStart(lineWithoutAsterisk)) {
+          isInMultilineTodo = true;
+        }
+        else if (containsTagToKeepIndentsAfter(lineWithoutAsterisk) && firstLineToKeepIndents < 0) {
+          firstLineToKeepIndents = list.size();
+        }
       }
 
       if (firstLineToKeepIndents >= 0) {
@@ -289,26 +304,32 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          if (markers != null) markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo);
         }
         first = false;
       }
       else {
         first = true;
-        if (p2nl) {
-          if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
-            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-            markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
-            continue;
-          }
+        if (isInMultilineTodo && StringUtil.isEmpty(lineWithoutAsterisk)) {
+          isInMultilineTodo = false;
         }
-        if (preCount == 0 && firstLineToKeepIndents < 0) token = token.trim();
+        if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
+          list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0);
+          continue;
+        }
+        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) token = token.trim();
 
         list.add(token);
 
         if (markers != null) {
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(token)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(token);
+          }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 
@@ -330,14 +351,7 @@ public class JDParser {
 
   private static boolean containsTagToKeepIndentsAfter(@NotNull String line) {
     String tag = getStartTag(line);
-    if (tag != null) {
-      for (String keepIndentsTag : TAGS_TO_KEEP_INDENTS_AFTER) {
-        if (keepIndentsTag.equals(tag)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return tag != null && ArrayUtil.contains(tag, TAGS_TO_KEEP_INDENTS_AFTER);
   }
 
   private static String getStartTag(@NotNull String line) {
@@ -355,19 +369,30 @@ public class JDParser {
     return null;
   }
 
+  private static boolean isMultilineTodoStart(@NotNull String line) {
+    if (TodoConfiguration.getInstance().isMultiLine()) {
+      for (TodoPattern todoPattern : TodoConfiguration.getInstance().getTodoPatterns()) {
+        Pattern p = todoPattern.getPattern();
+        if (p != null && p.matcher(line.trim()).matches()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static int getIndentWhitespaces(@NotNull String line) {
     int indentWhitespaces = 0;
     for (int i = 0; i < line.length(); i++) {
       char c = line.charAt(i);
       switch (c) {
-        case ' ':
-        case '\t':
-          indentWhitespaces++;
-          break;
-        case '\n':
+        case ' ', '\t' -> indentWhitespaces++;
+        case '\n' -> {
           return Integer.MAX_VALUE;
-        default:
+        }
+        default -> {
           return indentWhitespaces;
+        }
       }
     }
     return Integer.MAX_VALUE;
@@ -414,9 +439,9 @@ public class JDParser {
    *
    * @param s     the specified string
    * @param width width of the wrapped text
-   * @return array of strings (lines)
+   * @return list of strings (lines)
    */
-  @Nullable
+  @Contract("null, _ -> null")
   private List<String> toArrayWrapping(@Nullable String s, int width) {
     List<String> list = new ArrayList<>();
     List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
@@ -442,15 +467,7 @@ public class JDParser {
         else {
           // wrap paragraph
 
-          int wrapPos = Math.min(seq.length() - 1, width);
-          wrapPos = seq.lastIndexOf(' ', wrapPos);
-
-          // either the only word is too long or it looks better to wrap
-          // after the border
-          if (wrapPos <= 2 * width / 3) {
-            wrapPos = Math.min(seq.length() - 1, width);
-            wrapPos = seq.indexOf(' ', wrapPos);
-          }
+          int wrapPos = computeWrapPosition(seq, width);
 
           // wrap now
           if (wrapPos >= seq.length() - 1 || wrapPos < 0) {
@@ -469,6 +486,66 @@ public class JDParser {
     return list;
   }
 
+
+  /**
+   * Chooses the point within the string at which to wrap the line. Wrapping is always done at a
+   * space character with a preference to not splitting inline JavaDoc tags in the process. The
+   * position returned is the greatest position, less than or equal to the given width, which does
+   * not fall within an inline tag.
+   *
+   * <p>If no such position exists it can be for one of two reasons,
+   * <ol>
+   *   <li>The line begins with a long inline tag which exceeds the right margin.</li>
+   *   <li>The line begins with a long unbroken string (e.g. a URL) which exceeds the right margin.</li>
+   * </ol>
+   * </p>
+   *
+   * If the first case we ignore the preference to not split tags and do so regardless. In the
+   * second case we allow the line to run over the margin and split at the first available position.
+   */
+  private static int computeWrapPosition(String line, int width) {
+    if (line.length() < width) {
+      return line.length();
+    }
+
+    int preferredBreakPoint = -1;
+    int backupBreakPoint = -1;
+    int tagBraceBalance = 0;
+
+    for (int i = 0; i < line.length() && (i <= width || backupBreakPoint < 0); i++) {
+      char c = line.charAt(i);
+      if (tagBraceBalance > 0) {
+        if (c == '{') {
+          tagBraceBalance++;
+        }
+        else if (c == '}') {
+          tagBraceBalance--;
+        }
+      }
+      else if (c == '@' && i > 0 && line.charAt(i - 1) == '{') {
+        // We're now inside of an inline tag. Start keeping track of the balance
+        // of opening and closing braces to determine when we've left the tag.
+        tagBraceBalance++;
+      }
+      else if (c == ' ') {
+        preferredBreakPoint = i;
+      }
+
+      // We'll use this position in a pitch if we can't break somewhere not inside a tag.
+      if (c == ' ') {
+        backupBreakPoint = i;
+      }
+    }
+
+    if (preferredBreakPoint > 0) {
+      return preferredBreakPoint;
+    }
+    if (backupBreakPoint > 0) {
+      return backupBreakPoint;
+    }
+    return line.length();
+  }
+
   /**
    * Processes given string and produces on its basis set of pairs like {@code '(string; flag)'} where {@code 'string'}
    * is interested line and {@code 'flag'} indicates if it is wrapped to {@code <pre>} tag.
@@ -476,7 +553,7 @@ public class JDParser {
    * @param s   string to process
    * @return    processing result
    */
-  @Nullable
+  @Contract("null -> null")
   private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s) {
     if (s == null) return null;
     s = s.trim();
@@ -634,6 +711,32 @@ public class JDParser {
     return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
+  private static int getLineSnippetTagBraceBalance(@NotNull String line) {
+    int balance = 0;
+    for (int i = 0; i < line.length(); i++) {
+      var ch = line.charAt(i);
+      if (ch == '}') {
+        balance--;
+      } else if (ch == '{') {
+        balance++;
+      }
+    }
+    return balance;
+  }
+
+  private static boolean lineHasUnclosedSnippetTag(@NotNull String line) {
+    var matcher = SNIPPET_START_PATTERN.matcher(line);
+    var hasResult = false;
+    var lastEnd = -1;
+    do {
+      hasResult = matcher.find();
+      if (hasResult) {
+        lastEnd = matcher.end();
+      }
+    } while (hasResult);
+    return lastEnd == line.length();
+  }
+
   private static boolean lineHasClosingPreTag(@NotNull String line) {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
   }
@@ -717,12 +820,13 @@ public class JDParser {
       sb.append('\n');
     }
     else {
+      int snippetBraceBalance = 0;
       boolean insidePreTag = false;
       for (int i = 0; i < list.size(); i++) {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
           sb.append(P_START_TAG);
         }
         else {
@@ -734,6 +838,12 @@ public class JDParser {
           }
           else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
+          }
+
+          if (snippetBraceBalance == 0) {
+            if (lineHasUnclosedSnippetTag(line)) snippetBraceBalance = 1;
+          } else {
+            snippetBraceBalance += getLineSnippetTagBraceBalance(line);
           }
         }
         sb.append('\n');
@@ -753,19 +863,7 @@ public class JDParser {
     return false;
   }
 
-  private static class CommentInfo {
-    public final PsiDocComment docComment;
-    public final PsiElement commentOwner;
-    public final String commentHeader;
-    public final String comment;
-    public final String commentFooter;
-
-    CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment, String commentFooter) {
-      this.docComment = docComment;
-      this.commentOwner = commentOwner;
-      this.commentHeader = commentHeader;
-      this.comment = comment;
-      this.commentFooter = commentFooter;
-    }
+  private record CommentInfo(PsiDocComment docComment, PsiElement commentOwner, String commentHeader, String comment,
+                             String commentFooter) {
   }
 }

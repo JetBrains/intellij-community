@@ -2,7 +2,6 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.net.InetAddress;
@@ -48,8 +47,7 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #getApplicationHostName()} or {@link #getDebuggerHostName()} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public String getHostName() {
     return myApplicationHostName;
   }
@@ -57,8 +55,7 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #getApplicationAddress()} or {@link #getDebuggerAddress()} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public String getAddress() {
     return myApplicationAddress;
   }
@@ -66,8 +63,7 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #setApplicationHostName(String)} or {@link #setDebuggerHostName(String)} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public void setHostName(String hostName) {
     myApplicationHostName = hostName;
     myDebuggerHostName = hostName;
@@ -76,8 +72,7 @@ public class RemoteConnection {
   /**
    * @deprecated use {@link #setApplicationAddress(String)} or {@link #setDebuggerAddress(String)} instead depending on your needs
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  @Deprecated(forRemoval = true)
   public void setAddress(String address) {
     myApplicationAddress = address;
     myDebuggerAddress = address;

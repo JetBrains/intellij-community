@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -36,9 +22,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * @author yole
- */
+
 public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JPanel myPanel;
@@ -91,7 +75,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return HighlighterFactory.createHighlighter(new PyHighlighter(LanguageLevel.PYTHON26), scheme);
   }
 
@@ -112,7 +96,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings pySettings = getCustomSettings(settings);
     for (DictAlignment alignment : DictAlignment.values()) {
       if (pySettings.DICT_ALIGNMENT == alignment.asInt()) {
@@ -127,7 +111,7 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     final PyCodeStyleSettings customSettings = getCustomSettings(settings);
     customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
     customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
@@ -176,24 +160,25 @@ public class PyOtherCodeStylePanel extends CodeStyleAbstractPanel {
     return myUseContinuationIndentForCollectionsAndComprehensions.isSelected();
   }
 
-  public static final String PREVIEW = "x = max(\n" +
-                                       "    1,\n" +
-                                       "    2,\n" +
-                                       "    3)\n" +
-                                       "\n" +
-                                       "def foo_decl(\n" +
-                                       "    a,\n" +
-                                       "    b,\n" +
-                                       "    c):\n" +
-                                       "    pass\n" +
-                                       "\n" +
-                                       "{\n" +
-                                       "    \"green\": 42,\n" +
-                                       "    \"eggs and ham\": -0.0e0\n" +
-                                       "}\n" +
-                                       "\n" +
-                                       "odds = [\n" +
-                                       "    num for num in range(42)\n" +
-                                       "    if num % 2 != 0 \n" +
-                                       "]";
+  public static final String PREVIEW = """
+    x = max(
+        1,
+        2,
+        3)
+
+    def foo_decl(
+        a,
+        b,
+        c):
+        pass
+
+    {
+        "green": 42,
+        "eggs and ham": -0.0e0
+    }
+
+    odds = [
+        num for num in range(42)
+        if num % 2 != 0\s
+    ]""";
 }

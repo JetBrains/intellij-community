@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 
-@ApiStatus.Experimental
 public interface ServiceViewDescriptor {
   @NotNull
   ItemPresentation getPresentation();
@@ -33,7 +32,7 @@ public interface ServiceViewDescriptor {
   }
 
   @NotNull
-  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options) {
+  default ItemPresentation getCustomPresentation(@NotNull ServiceViewOptions options, @NotNull ServiceViewItemState state) {
     return getPresentation();
   }
 

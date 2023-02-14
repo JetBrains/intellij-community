@@ -20,10 +20,34 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Dennis.Ushakov
+ * Implement this provider if you want to add a configuration section to the root panel at Settings|Editor|Code Style. Create and return
+ * the configuration component to be added at the bottom of the root "Code Style" panel in {@link #createComponent()} method. Declare the
+ * extension in {@code plugin.xml} as follows:
+ * <pre><code>
+ * &lt;generalCodeStyleOptionsProvider instance="com.company.MyProvider"/&gt;
+ * </code></pre>
  */
 public interface GeneralCodeStyleOptionsProvider extends UnnamedConfigurable {
+  /**
+   * Apply the currently set UI options to the given code style settings.
+   *
+   * @param settings The settings to apply the UI options to.
+   */
   void apply(@NotNull CodeStyleSettings settings);
+
+  /**
+   * Check if the currently set UI options differ from the ones in the given code style settings.
+   *
+   * @param settings The settings to compare with.
+   *
+   * @return True if the settings do not match, false if the UI options are the same as in {@code settings}.
+   */
   boolean isModified(@NotNull CodeStyleSettings settings);
+
+  /**
+   * Update the UI controls from the given code style settings.
+   *
+   * @param settings The settings to take the updated values from.
+   */
   void reset(@NotNull CodeStyleSettings settings);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.welcome
 
 import com.intellij.execution.RunManager
@@ -55,7 +55,8 @@ import java.util.concurrent.Callable
 import javax.swing.JPanel
 
 internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
-  override fun isEdtRequired() = false
+  override val isEdtRequired: Boolean
+    get() = false
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {
@@ -126,6 +127,8 @@ private object PyWelcome {
   }
 
   private fun firstUserFile(project: Project, baseDir: VirtualFile, module: Module?): VirtualFile? {
+    if (module != null && module.isDisposed || module == null && project.isDisposed) return null
+
     val sdkBinary = (module?.pythonSdk ?: project.pythonSdk)?.homeDirectory
     val innerSdk = sdkBinary != null && VfsUtil.isAncestor(baseDir, sdkBinary, true)
 
@@ -183,6 +186,7 @@ private object PyWelcome {
     val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
     if (toolWindow == null) {
       val listener = ProjectViewListener(project, baseDir, module, file)
+      Disposer.register(PythonPluginDisposable.getInstance(project), listener)
       // collected listener will release the connection
       project.messageBus.connect(listener).subscribe(ToolWindowManagerListener.TOPIC, listener)
     }

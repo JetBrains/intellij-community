@@ -45,8 +45,7 @@ public class PythonPatterns extends PlatformPatterns {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<>(PyStringLiteralExpression.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        if (o instanceof PyStringLiteralExpression) {
-          final PyStringLiteralExpression expr = (PyStringLiteralExpression)o;
+        if (o instanceof PyStringLiteralExpression expr) {
           if (!DocStringUtil.isDocStringExpression(expr) && expr.getTextLength() < STRING_LITERAL_LIMIT) {
             final String value = expr.getStringValue();
             return pattern.matcher(value).find();
@@ -110,11 +109,9 @@ public class PythonPatterns extends PlatformPatterns {
     final PyCallExpression call = (PyCallExpression)((PyExpression)expression).getParent().getParent();
 
     // TODO is it better or worse to allow implicits here?
-    final PyResolveContext context = PyResolveContext
-      .defaultContext()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
+    final var context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
 
-    return call.multiResolveCalleeFunction(context);
+    return call.multiResolveCalleeFunction(PyResolveContext.defaultContext(context));
   }
 
   private static boolean isCallArgument(@Nullable Object expression, @Nullable String functionName, int index) {

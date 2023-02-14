@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -14,7 +15,6 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +22,11 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.UriUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -33,20 +36,46 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
+/**
+ * Provides 3 streams of output named system, stdout and stderr,
+ * which are independent of Java's {@link System#out} and {@link System#err}
+ * but analogous to them.
+ * <p>
+ * This output can be validated against prerecorded output in <tt>{@link #myAppPath}/outs</tt>.
+ * The output files are named <i>testName[.platform][.jdkX].out</i>,
+ * where <i>platform</i> is either {@code unx} or {@code win}
+ * and <i>jdkX</i> tries all Java versions from the current SDK version down to 7.
+ * The output files contain the messages from the system, stdout and stderr streams,
+ * in this order, without any separators.
+ * <p>
+ * Call {@link #init(String)} to provide the test name,
+ * then write output using {@link #print(String, Key)} and {@link #println(String, Key)}
+ * and finally validate using {@link #checkValid(Sdk)}.
+ * <p>
+ * The output is filtered and normalized to make it platform-independent.
+ * To add custom normalization, override {@link #replaceAdditionalInOutput(String)}.
+ */
 public class OutputChecker {
-  public static final Key[] OUTPUT_ORDER = {ProcessOutputTypes.SYSTEM, ProcessOutputTypes.STDOUT, ProcessOutputTypes.STDERR};
+  public static final ProcessOutputType[] OUTPUT_ORDER = {
+    ProcessOutputType.SYSTEM,
+    ProcessOutputType.STDOUT,
+    ProcessOutputType.STDERR
+  };
 
   private static final String JDK_HOME_STR = "!JDK_HOME!";
   //ERROR: JDWP Unable to get JNI 1.2 environment, jvm->GetEnv() return code = -2
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_1 =
-    Pattern.compile("ERROR:\\s+JDWP\\s+Unable\\s+to\\s+get\\s+JNI\\s+1\\.2\\s+environment,\\s+jvm->GetEnv\\(\\)\\s+return\\s+code\\s+=\\s+-2\n");
+    Pattern.compile(
+      "ERROR:\\s+JDWP\\s+Unable\\s+to\\s+get\\s+JNI\\s+1\\.2\\s+environment,\\s+jvm->GetEnv\\(\\)\\s+return\\s+code\\s+=\\s+-2\n");
   //JDWP exit error AGENT_ERROR_NO_JNI_ENV(183):  [../../../src/share/back/util.c:820]
   private static final Pattern JDI_BUG_OUTPUT_PATTERN_2 =
     Pattern.compile("JDWP\\s+exit\\s+error\\s+AGENT_ERROR_NO_JNI_ENV.*]\n");
 
-  private static final String[] IGNORED_PATTERNS_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
+  /** If a string containing one of the listed strings is written to {@link ProcessOutputType#STDERR}, the whole string is ignored. */
+  private static final String[] IGNORED_IN_STDERR = {"Picked up _JAVA_OPTIONS:", "Picked up JAVA_TOOL_OPTIONS:"};
 
   private final Producer<String> myAppPath;
   private final Producer<String> myOutputPath;
@@ -85,7 +114,7 @@ public class OutputChecker {
   public void print(String s, Key outputType) {
     synchronized (this) {
       if (myBuffers != null) {
-        if (outputType == ProcessOutputTypes.STDERR && Arrays.stream(IGNORED_PATTERNS_IN_STDERR).anyMatch(s::contains)) {
+        if (outputType == ProcessOutputType.STDERR && ContainerUtil.exists(IGNORED_IN_STDERR, s::contains)) {
           return;
         }
         myBuffers.computeIfAbsent(outputType, k -> new StringBuffer()).append(s);
@@ -101,21 +130,20 @@ public class OutputChecker {
     checkValid(jdk, false);
   }
 
-  private File getOutFile(File outs, Sdk jdk, @Nullable File current, String prefix) {
+  private File getOutFile(File outsDir, Sdk jdk, @Nullable File current, String prefix) {
     String name = myTestName + prefix;
-    File res = new File(outs, name + ".out");
+    File res = new File(outsDir, name + ".out");
     if (current == null || res.exists()) {
       current = res;
     }
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
-    int feature = version.getMaxLanguageLevel().toJavaVersion().feature;
-    do {
-      File outFile = new File(outs, name + ".jdk" + feature + ".out");
+    for (int feature = version.getMaxLanguageLevel().toJavaVersion().feature; feature > 6; feature--) {
+      File outFile = new File(outsDir, name + ".jdk" + feature + ".out");
       if (outFile.exists()) {
         current = outFile;
         break;
       }
-    } while (--feature > 6);
+    }
     return current;
   }
 
@@ -127,16 +155,16 @@ public class OutputChecker {
 
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
-    File outs = new File(myAppPath.produce() + File.separator + "outs");
-    assert outs.exists() || outs.mkdirs() : outs;
+    File outsDir = new File(myAppPath.produce(), "outs");
+    assert outsDir.exists() || outsDir.mkdirs() : outsDir;
 
-    File outFile = getOutFile(outs, jdk, null, "");
+    File outFile = getOutFile(outsDir, jdk, null, "");
     if (!outFile.exists()) {
       if (SystemInfo.isWindows) {
-        outFile = getOutFile(outs, jdk, outFile, ".win");
+        outFile = getOutFile(outsDir, jdk, outFile, ".win");
       }
       else if (SystemInfo.isUnix) {
-        outFile = getOutFile(outs, jdk, outFile, ".unx");
+        outFile = getOutFile(outsDir, jdk, outFile, ".unx");
       }
     }
 
@@ -164,13 +192,9 @@ public class OutputChecker {
           System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
         }
 
-        assertEquals(originalText, actual);
+        throw new FileComparisonFailure(null, expected, actual, outFile.getPath());
       }
     }
-  }
-
-  public boolean contains(String str) {
-    return buildOutputString().contains(str);
   }
 
   private synchronized String buildOutputString() {
@@ -178,7 +202,7 @@ public class OutputChecker {
     for (Key key : OUTPUT_ORDER) {
       StringBuffer buffer = myBuffers.get(key);
       if (buffer != null) {
-        result.append(buffer.toString());
+        result.append(buffer);
       }
     }
     return result.toString();
@@ -189,11 +213,11 @@ public class OutputChecker {
 
     if (application == null) return buffer;
 
-    return application.runReadAction((ThrowableComputable<String, Exception>)() -> {
+    return ReadAction.compute(() -> {
       String result = buffer;
 
-      result = StringUtil.replace(result, "\r\n", "\n");
-      result = StringUtil.replace(result, "\r", "\n");
+      result = result.replace("\r\n", "\n");
+      result = result.replace('\r', '\n');
       result = replaceAdditionalInOutput(result);
       result = replacePath(result, myAppPath.produce(), "!APP_PATH!");
       result = replacePath(result, myOutputPath.produce(), "!OUTPUT_PATH!");
@@ -211,7 +235,7 @@ public class OutputChecker {
       if (!StringUtil.isEmpty(HOST_NAME)) {
         result = StringUtil.replace(result, HOST_NAME, "!HOST_NAME!", true);
       }
-      result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
+      result = result.replace("127.0.0.1", "!HOST_NAME!");
 
       VirtualFile homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
       assertNotNull(homeDirectory);
@@ -219,14 +243,14 @@ public class OutputChecker {
 
       File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
       if (productionFile.isDirectory()) {
-        result = replacePath(result, StringUtil.trimTrailing(productionFile.getParentFile().toURI().toString(), '/'), "!PRODUCTION_PATH!");
+        result = replacePath(result, UriUtil.trimTrailingSlashes(productionFile.getParentFile().toURI().toString()), "!PRODUCTION_PATH!");
       }
 
       result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
-      result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
+      result = result.replace("Process finished with exit code 255", "Process finished with exit code -1");
 
       result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
-      result = result.replaceAll(" -agentpath:[^\\s]*memory_agent([\\w^\\s]*)?\\.[^\\s]+", "");
+      result = result.replaceAll(" -agentpath:\\S*memory_agent([\\w^\\s]*)?\\.\\S+", "");
       result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
       result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
       result = result.replaceAll("address: '.*?'", "address: '!HOST_NAME!:PORT_NAME!'");
@@ -235,11 +259,11 @@ public class OutputChecker {
       result = result.replaceAll("\"(!APP_PATH!.*?)\"", "$1");
       result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
       result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
-      result = result.replaceAll("-Dfile.encoding=[\\w\\d-]*", "-Dfile.encoding=!FILE_ENCODING!");
+      result = result.replaceAll("-Dfile.encoding=[\\w-]*", "-Dfile.encoding=!FILE_ENCODING!");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);
-      result = result.replaceAll("!JDK_HOME!\\\\bin\\\\java.exe", "!JDK_HOME!\\\\bin\\\\java");
+      result = result.replace("!JDK_HOME!\\bin\\java.exe", "!JDK_HOME!\\bin\\java");
 
       result = stripQuotesAroundClasspath(result);
 
@@ -268,7 +292,7 @@ public class OutputChecker {
         }
 
         String sortedPath = StringUtil.join(classpathRes, ";");
-        result = StringUtil.replace(result, " " + classPath + " ", " " + sortedPath + " ");
+        result = result.replace(" " + classPath + " ", " " + sortedPath + " ");
       }
 
       result = JDI_BUG_OUTPUT_PATTERN_1.matcher(result).replaceAll("");
@@ -314,7 +338,10 @@ public class OutputChecker {
       if (cpIdx == -1) break;
       int spaceIdx = result.indexOf(" ", cpIdx + cp.length());
       if (spaceIdx == -1) break;
-      result = result.substring(0, cpIdx) + cp + StringUtil.unquoteString(result.substring(cpIdx + cp.length(), spaceIdx)) + result.substring(spaceIdx);
+      result = result.substring(0, cpIdx) +
+               cp +
+               StringUtil.unquoteString(result.substring(cpIdx + cp.length(), spaceIdx)) +
+               result.substring(spaceIdx);
       cpIdx += cp.length();
     }
     return result;

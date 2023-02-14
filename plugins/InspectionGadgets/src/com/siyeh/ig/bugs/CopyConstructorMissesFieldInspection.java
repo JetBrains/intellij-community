@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -52,7 +52,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
   private static class CopyConstructorMissesFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       if (!MethodUtils.isCopyConstructor(method)) {
         return;
       }
@@ -63,8 +63,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(),
                                                          f -> !f.hasModifierProperty(PsiModifier.STATIC) &&
                                                               !f.hasModifierProperty(PsiModifier.TRANSIENT) &&
-                                                              (!f.hasModifierProperty(PsiModifier.FINAL) ||
-                                                               f.getInitializer() == null));
+                                                              (!f.hasModifierProperty(PsiModifier.FINAL) || f.getInitializer() == null));
       if (fields.isEmpty()) return;
       final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(0));
       final List<PsiField> assignedFields = new SmartList<>();
@@ -112,6 +111,12 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
           }
           ContainerUtil.addIfNotNull(assignedFields, resolveFieldOfGetter(argument, parameter));
         }
+        if (methods != null) {
+          final PsiMethod constructor = methodCallExpression.resolveMethod();
+          if (constructor != null) {
+            methods.add(constructor);
+          }
+        }
       }
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
@@ -128,9 +133,8 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
             methods.add(method);
           }
         }
-        else if (qualifier instanceof PsiReferenceExpression) {
+        else if (qualifier instanceof PsiReferenceExpression referenceExpression) {
           // consider field assigned if method is called on it.
-          final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
           final PsiElement target = referenceExpression.resolve();
           if (target instanceof PsiField) {
             assignedFields.add((PsiField)target);
@@ -141,10 +145,9 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
     }
 
     private static PsiVariable resolveVariable(PsiExpression expression, @Nullable PsiParameter requiredQualifier) {
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
       final PsiElement target = referenceExpression.resolve();
       if (requiredQualifier == null) {
@@ -159,10 +162,9 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
     }
 
     private static PsiField resolveFieldOfGetter(PsiExpression expression, @NotNull PsiParameter requiredQualifier) {
-      if (!(expression instanceof PsiMethodCallExpression)) {
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
         return null;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
       if (!ExpressionUtils.isReferenceTo(qualifier, requiredQualifier)) {
         return null;

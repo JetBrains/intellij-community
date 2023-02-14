@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.DefaultPluginDescriptor;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -22,17 +24,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * The base class for all programming language support implementations.
- * Specific language implementations should inherit from this class
- * and its registered instance wrapped with {@link LanguageFileType} via {@code com.intellij.fileType} extension point.
+ * A language represents a programming language such as Java,
+ * a document format such as HTML or Markdown,
+ * or other structured data formats such as HTTP cookies or regular expressions.
+ * <p>
+ * An implementation for a specific language should inherit from this class
+ * and wrap its registered instance with {@link LanguageFileType}
+ * via the {@code com.intellij.fileType} extension point.
+ * <p>
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@link com.intellij.lang.StdLanguages}.<p/>
  * <p>
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
-  private static final Logger LOG = Logger.getInstance(Language.class);
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
   private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
@@ -41,7 +46,6 @@ public abstract class Language extends UserDataHolderBase {
   private final String myID;
   private final String[] myMimeTypes;
   private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Map<String, Language> testDisplayNames = new ConcurrentHashMap<>();
 
   public static final Language ANY = new Language("") {
     @Override
@@ -77,12 +81,12 @@ public abstract class Language extends UserDataHolderBase {
     myMimeTypes = mimeTypes.length == 0 ? ArrayUtilRt.EMPTY_STRING_ARRAY : mimeTypes;
 
     Class<? extends Language> langClass = getClass();
-    Language prev = ourRegisteredLanguages.put(langClass, this);
+    Language prev = ourRegisteredLanguages.putIfAbsent(langClass, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
 
-    prev = ourRegisteredIDs.put(ID, this);
+    prev = ourRegisteredIDs.putIfAbsent(ID, this);
     if (prev != null) {
       throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }
@@ -101,50 +105,54 @@ public abstract class Language extends UserDataHolderBase {
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
     }
-
-    if (ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Language dup = testDisplayNames.put(getDisplayName(), this);
-        if (dup != null) {
-          LOG.error(dup + " ("+dup.getClass()+") and " + this +" ("+getClass()+") both have identical .getDisplayName(): "+getDisplayName());
-        }
-      });
-    }
   }
 
   /**
    * @return collection of all languages registered so far.
    */
   public static @NotNull Collection<Language> getRegisteredLanguages() {
-    final Collection<Language> languages = ourRegisteredLanguages.values();
+    Collection<Language> languages = ourRegisteredLanguages.values();
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
   @ApiStatus.Internal
-  public static void unregisterLanguages(@NotNull ClassLoader classLoader) {
-    List<Class<? extends Language>> classes = new ArrayList<>(ourRegisteredLanguages.keySet());
-    for (Class<? extends Language> clazz : classes) {
+  public static void unregisterAllLanguagesIn(@NotNull ClassLoader classLoader, @NotNull PluginDescriptor pluginDescriptor) {
+    for (Map.Entry<Class<? extends Language>, Language> e : new ArrayList<>(ourRegisteredLanguages.entrySet())) {
+      Class<? extends Language> clazz = e.getKey();
+      Language language = e.getValue();
       if (clazz.getClassLoader() == classLoader) {
-        unregisterLanguage(ourRegisteredLanguages.get(clazz));
+        language.unregisterLanguage(pluginDescriptor);
       }
     }
-    IElementType.unregisterElementTypes(classLoader);
+    IElementType.unregisterElementTypes(classLoader, pluginDescriptor);
   }
 
+  /**
+   * @deprecated do not use
+   */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static void unregisterLanguage(@NotNull Language language) {
-    IElementType.unregisterElementTypes(language);
+    PluginException.reportDeprecatedUsage("this method", "");
+    language.unregisterLanguage(new DefaultPluginDescriptor("unknown"));
+  }
+
+  @ApiStatus.Internal
+  public void unregisterLanguage(@NotNull PluginDescriptor pluginDescriptor) {
+    IElementType.unregisterElementTypes(this, pluginDescriptor);
     ReferenceProvidersRegistry referenceProvidersRegistry = ApplicationManager.getApplication().getServiceIfCreated(ReferenceProvidersRegistry.class);
     if (referenceProvidersRegistry != null) {
-      referenceProvidersRegistry.unloadProvidersFor(language);
+      referenceProvidersRegistry.unloadProvidersFor(this);
     }
-    ourRegisteredLanguages.remove(language.getClass());
-    ourRegisteredIDs.remove(language.getID());
-    for (String mimeType : language.getMimeTypes()) {
+    ourRegisteredLanguages.remove(getClass());
+    ourRegisteredIDs.remove(getID());
+    for (String mimeType : getMimeTypes()) {
       ourRegisteredMimeTypes.remove(mimeType);
     }
-    final Language baseLanguage = language.getBaseLanguage();
+    Language baseLanguage = getBaseLanguage();
     if (baseLanguage != null) {
-      baseLanguage.unregisterDialect(language);
+      baseLanguage.unregisterDialect(this);
     }
   }
 
@@ -158,8 +166,8 @@ public abstract class Language extends UserDataHolderBase {
    * @return instance of the {@code klass} language registered if any.
    */
   public static <T extends Language> T findInstance(@NotNull Class<T> klass) {
-    @SuppressWarnings("unchecked") T t = (T)ourRegisteredLanguages.get(klass);
-    return t;
+    //noinspection unchecked
+    return (T)ourRegisteredLanguages.get(klass);
   }
 
   /**
@@ -201,17 +209,17 @@ public abstract class Language extends UserDataHolderBase {
 
   @ApiStatus.Internal
   public @Nullable LanguageFileType findMyFileType(FileType @NotNull [] types) {
-    for (final FileType fileType : types) {
+    for (FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        LanguageFileType languageFileType = (LanguageFileType)fileType;
         if (languageFileType.getLanguage() == this && !languageFileType.isSecondary()) {
           return languageFileType;
         }
       }
     }
-    for (final FileType fileType : types) {
+    for (FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
-        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        LanguageFileType languageFileType = (LanguageFileType)fileType;
         if (isKindOf(languageFileType.getLanguage()) && !languageFileType.isSecondary()) {
           return languageFileType;
         }

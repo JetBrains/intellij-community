@@ -37,7 +37,6 @@ import javax.swing.event.DocumentEvent
 /**
  * The UI panel for adding the pipenv interpreter for the project.
  *
- * @author vlan
  */
 class PyAddPipEnvPanel(private val project: Project?,
                        private val module: Module?,

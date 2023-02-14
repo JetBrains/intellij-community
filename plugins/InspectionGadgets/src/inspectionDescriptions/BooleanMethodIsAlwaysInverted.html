@@ -1,37 +1,38 @@
 <html>
 <body>
-Reports methods with a <code>boolean</code> return type, which are only used in a negated context.
-Due to performance reasons some methods might not be reported during in-editor highlighting.
+Reports methods with a <code>boolean</code> return type that are always negated when called.
+<p>A quick-fix is provided to invert and optionally rename the method.
+  For performance reasons, not all problematic methods may be highlighted in the editor.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   class C {
-    boolean alwaysInverted() {
+    boolean alwaysTrue() {
       return true;
     }
 
     void f() {
-      if (!alwaysInverted()) {
+      if (!alwaysTrue()) {
         return;
       }
     }
-    boolean member = !alwaysInverted();
+    boolean member = !alwaysTrue();
   }
-</pre>
-<p>After the quick-fix is applied (the function name can be changed), the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class C {
-    boolean notInvertedAnymore() {
+    boolean alwaysFalse() {
       return false;
     }
 
     void f() {
-      if (notInvertedAnymore()) {
+      if (alwaysFalse()) {
         return;
       }
     }
-    boolean member = notInvertedAnymore();
+    boolean member = alwaysFalse();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

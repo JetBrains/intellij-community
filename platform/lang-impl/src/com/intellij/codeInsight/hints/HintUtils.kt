@@ -1,25 +1,38 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.text.StringUtil
-import java.util.*
-import java.util.stream.Collectors
 
+internal object HintUtils {
+  fun getLanguagesWithNewInlayHints(): Set<Language> {
+    val languages = HashSet<Language>()
+    InlayHintsProviderFactory.EP.extensionList.flatMapTo(languages) { it.getProvidersInfo().map { info -> info.language } }
+    return languages
+  }
 
-fun getHintProviders(): List<Pair<Language, InlayParameterHintsProvider>> {
-  val name = ExtensionPointName<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
-  val languages = name.extensionList.map { it.language }
-  return languages
-    .mapNotNull { Language.findLanguageByID(it) }
-    .map { it to InlayParameterHintsExtension.forLanguage(it) }
+  fun getHintProvidersForLanguage(language: Language): List<ProviderWithSettings<out Any>> {
+    val config = InlayHintsSettings.instance()
+    return InlayHintsProviderFactory.EP.extensionList
+      .flatMap { it.getProvidersInfoForLanguage(language) }
+      .filter { it.isLanguageSupported(language) }
+      .map { it.withSettings(language, config) }
+  }
 }
 
+fun getHintProviders(): List<Pair<Language, InlayParameterHintsProvider>> {
+  return doGetHintProviderLanguages().toList().map { it to InlayParameterHintsExtension.forLanguage(it) }.toList()
+}
+
+private fun doGetHintProviderLanguages(): Sequence<Language> {
+  return ExtensionPointName<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
+    .extensionList.asSequence()
+    .mapNotNull { Language.findLanguageByID(it.language) }
+}
 
 fun getExcludeListInvalidLineNumbers(text: String): List<Int> {
   val rules = StringUtil.split(text, "\n", true, false)
@@ -39,20 +52,17 @@ fun getLanguageForSettingKey(language: Language): Language {
   while (languageForSettings != null && !supportedLanguages.contains(languageForSettings)) {
     languageForSettings = languageForSettings.baseLanguage
   }
-  if (languageForSettings == null) languageForSettings = language
-  return languageForSettings
+  return languageForSettings ?: language
 }
 
 fun getBaseLanguagesWithProviders(): List<Language> {
-  return getHintProviders()
-    .stream()
-    .map { (first) -> first }
-    .sorted(Comparator.comparing<Language, String> { l -> l.displayName })
-    .collect(Collectors.toList())
+  return doGetHintProviderLanguages()
+    .sortedBy { l -> l.displayName }
+    .toList()
 }
 
 fun isParameterHintsEnabledForLanguage(language: Language): Boolean {
-  if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return false
+  @Suppress("DEPRECATION")
   if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
   return ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
 }

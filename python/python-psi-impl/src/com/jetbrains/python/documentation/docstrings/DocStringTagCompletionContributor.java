@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation.docstrings;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -27,10 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author yole
- */
-public class DocStringTagCompletionContributor extends CompletionContributor {
+
+public class DocStringTagCompletionContributor extends CompletionContributor implements DumbAware {
   public static final PsiElementPattern.Capture<PyStringLiteralExpression> DOCSTRING_PATTERN = psiElement(PyStringLiteralExpression.class)
     .withParent(psiElement(PyExpressionStatement.class).inside(PyDocStringOwner.class));
 

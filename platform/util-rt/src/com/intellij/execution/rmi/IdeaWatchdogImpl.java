@@ -16,6 +16,11 @@ final class IdeaWatchdogImpl implements IdeaWatchdog {
   }
 
   @Override
+  public void dieNow(int exitCode) {
+    System.exit(exitCode);
+  }
+
+  @Override
   public boolean isAlive() {
     return !dead && System.currentTimeMillis() - lastTimePinged < WAIT_TIMEOUT;
   }

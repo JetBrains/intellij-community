@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public final class TypeUtils {
   private static final String[] EQUAL_CONTRACT_CLASSES = {CommonClassNames.JAVA_UTIL_LIST,
@@ -38,13 +38,13 @@ public final class TypeUtils {
   private static final Map<PsiType, Integer> typePrecisions = new HashMap<>(7);
 
   static {
-    typePrecisions.put(PsiType.BYTE, 1);
-    typePrecisions.put(PsiType.CHAR, 2);
-    typePrecisions.put(PsiType.SHORT, 2);
-    typePrecisions.put(PsiType.INT, 3);
-    typePrecisions.put(PsiType.LONG, 4);
-    typePrecisions.put(PsiType.FLOAT, 5);
-    typePrecisions.put(PsiType.DOUBLE, 6);
+    typePrecisions.put(PsiTypes.byteType(), 1);
+    typePrecisions.put(PsiTypes.charType(), 2);
+    typePrecisions.put(PsiTypes.shortType(), 2);
+    typePrecisions.put(PsiTypes.intType(), 3);
+    typePrecisions.put(PsiTypes.longType(), 4);
+    typePrecisions.put(PsiTypes.floatType(), 5);
+    typePrecisions.put(PsiTypes.doubleType(), 6);
   }
 
   private TypeUtils() {}
@@ -135,16 +135,15 @@ public final class TypeUtils {
     if (expression == null) {
       return null;
     }
-    final PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if (type == null) {
       return null;
     }
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (aClass == null) {
-      return null;
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
     }
     for (String typeName : typeNames) {
-      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+      if (InheritanceUtil.isInheritor(type, typeName)) {
         return typeName;
       }
     }
@@ -155,12 +154,15 @@ public final class TypeUtils {
     if (expression == null) {
       return false;
     }
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-    if (aClass == null) {
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
+    if (type == null) {
       return false;
     }
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    }
     for (String typeName : typeNames) {
-      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+      if (InheritanceUtil.isInheritor(type, typeName)) {
         return true;
       }
     }
@@ -171,12 +173,12 @@ public final class TypeUtils {
     if (variable == null) {
       return false;
     }
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
-    if (aClass == null) {
-      return false;
+    PsiType type = variable.getType();
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
     }
     for (String typeName : typeNames) {
-      if (InheritanceUtil.isInheritor(aClass, typeName)) {
+      if (InheritanceUtil.isInheritor(type, typeName)) {
         return true;
       }
     }
@@ -188,7 +190,7 @@ public final class TypeUtils {
       return false;
     }
     final PsiType type = expression.getType();
-    return type != null && (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type));
+    return type != null && (PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type));
   }
 
   public static boolean areConvertible(PsiType type1, PsiType type2) {
@@ -199,9 +201,7 @@ public final class TypeUtils {
     final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(type2);
     if (comparedTypeErasure == null || comparisonTypeErasure == null ||
         TypeConversionUtil.areTypesConvertible(comparedTypeErasure, comparisonTypeErasure)) {
-      if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
-        final PsiClassType classType1 = (PsiClassType)type1;
-        final PsiClassType classType2 = (PsiClassType)type2;
+      if (type1 instanceof PsiClassType classType1 && type2 instanceof PsiClassType classType2) {
         final PsiType[] parameters1 = classType1.getParameters();
         final PsiType[] parameters2 = classType2.getParameters();
         if (parameters1.length != parameters2.length) {
@@ -232,23 +232,24 @@ public final class TypeUtils {
     }
     if (type.equalsToText("java.lang.Byte") || type.equalsToText("java.lang.Short") ||
         type.equalsToText("java.lang.Character") || type.equalsToText("java.lang.Integer") ||
-        type.equals(PsiType.BYTE) || type.equals(PsiType.SHORT) || type.equals(PsiType.CHAR)) {
-      return PsiType.INT;
+        type.equals(PsiTypes.byteType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.charType())) {
+      return PsiTypes.intType();
     }
     else if (type.equalsToText("java.lang.Long")) {
-      return PsiType.LONG;
+      return PsiTypes.longType();
     }
     else if (type.equalsToText("java.lang.Float")) {
-      return PsiType.FLOAT;
+      return PsiTypes.floatType();
     }
     else if (type.equalsToText("java.lang.Double")) {
-      return PsiType.DOUBLE;
+      return PsiTypes.doubleType();
     }
     return type;
   }
 
+  @Nullable
   @Contract("null -> null")
-  public static String resolvedClassName(PsiType type) {
+  public static String resolvedClassName(@Nullable PsiType type) {
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass == null ? null : aClass.getQualifiedName();
   }
@@ -263,7 +264,7 @@ public final class TypeUtils {
    * @return true if instances of given types may be equal
    */
   public static boolean mayBeEqualByContract(PsiType type1, PsiType type2) {
-    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSubtypesOf(type1, type2, className));
+    return ContainerUtil.or(EQUAL_CONTRACT_CLASSES, className -> areConvertibleSubtypesOf(type1, type2, className));
   }
 
   private static boolean areConvertibleSubtypesOf(PsiType type1, PsiType type2, String className) {
@@ -302,28 +303,28 @@ public final class TypeUtils {
    */
   @NonNls
   public static String getDefaultValue(PsiType type) {
-    if (PsiType.INT.equals(type)) {
+    if (PsiTypes.intType().equals(type)) {
       return "0";
     }
-    else if (PsiType.LONG.equals(type)) {
+    else if (PsiTypes.longType().equals(type)) {
       return "0L";
     }
-    else if (PsiType.DOUBLE.equals(type)) {
+    else if (PsiTypes.doubleType().equals(type)) {
       return "0.0";
     }
-    else if (PsiType.FLOAT.equals(type)) {
+    else if (PsiTypes.floatType().equals(type)) {
       return "0.0F";
     }
-    else if (PsiType.SHORT.equals(type)) {
+    else if (PsiTypes.shortType().equals(type)) {
       return "(short)0";
     }
-    else if (PsiType.BYTE.equals(type)) {
+    else if (PsiTypes.byteType().equals(type)) {
       return "(byte)0";
     }
-    else if (PsiType.BOOLEAN.equals(type)) {
+    else if (PsiTypes.booleanType().equals(type)) {
       return PsiKeyword.FALSE;
     }
-    else if (PsiType.CHAR.equals(type)) {
+    else if (PsiTypes.charType().equals(type)) {
       return "'\0'";
     }
     return PsiKeyword.NULL;

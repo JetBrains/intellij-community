@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -33,15 +19,15 @@ import com.sun.jdi.ThreadReference;
 
 import javax.swing.*;
 
-public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDescriptor{
+public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDescriptor {
   private final ThreadReferenceProxyImpl myThread;
   private String myName = null;
-  private boolean myIsExpandable   = true;
-  private boolean myIsSuspended    = false;
+  private boolean myIsExpandable = true;
+  private boolean myIsSuspended = false;
   private boolean myIsCurrent;
   private boolean myIsFrozen;
 
-  private boolean            myIsAtBreakpoint;
+  private boolean myIsAtBreakpoint;
   private SuspendContextImpl mySuspendContext;
 
   public ThreadDescriptorImpl(ThreadReferenceProxyImpl thread) {
@@ -60,9 +46,8 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     try {
       myName = thread.name();
       ThreadGroupReferenceProxyImpl gr = getThreadReference().threadGroupProxy();
-      final String grname = (gr != null)? gr.name() : null;
+      final String grname = (gr != null) ? gr.name() : null;
       final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
-      //noinspection HardCodedStringLiteral
       if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
         return JavaDebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
       }
@@ -94,20 +79,20 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
   @Override
   public void setContext(EvaluationContextImpl context) {
     final ThreadReferenceProxyImpl thread = getThreadReference();
-    final SuspendManager suspendManager = context != null? context.getDebugProcess().getSuspendManager() : null;
-    final SuspendContextImpl suspendContext = context != null? context.getSuspendContext() : null;
+    final SuspendManager suspendManager = context != null ? context.getDebugProcess().getSuspendManager() : null;
+    final SuspendContextImpl suspendContext = context != null ? context.getSuspendContext() : null;
 
     try {
-      myIsSuspended = suspendManager != null? suspendManager.isSuspended(thread) : thread.isSuspended();
+      myIsSuspended = suspendManager != null ? suspendManager.isSuspended(thread) : thread.isSuspended();
     }
     catch (ObjectCollectedException e) {
       myIsSuspended = false;
     }
-    myIsExpandable   = calcExpandable(myIsSuspended);
+    myIsExpandable = calcExpandable(myIsSuspended);
     mySuspendContext = suspendManager != null ? SuspendManagerUtil.findContextByThread(suspendManager, thread) : suspendContext;
     myIsAtBreakpoint = thread.isAtBreakpoint();
-    myIsCurrent      = suspendContext != null? suspendContext.getThread() == thread : false;
-    myIsFrozen       = suspendManager != null? suspendManager.isFrozen(thread) : myIsSuspended;
+    myIsCurrent = suspendContext != null ? suspendContext.getThread() == thread : false;
+    myIsFrozen = suspendManager != null ? suspendManager.isFrozen(thread) : myIsSuspended;
   }
 
   private boolean calcExpandable(final boolean isSuspended) {
@@ -130,7 +115,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     catch (EvaluateException e) {
       //LOG.assertTrue(false);
       // if we pause during evaluation of this method the exception is thrown
-      //  private static void longMethod(){
+      //  private static void longMethod() {
       //    try {
       //      Thread.sleep(100000);
       //    } catch (InterruptedException e) {

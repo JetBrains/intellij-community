@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
+import com.intellij.application.options.CodeCompletionConfigurable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.CompletionMlRankingIcons
 import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
@@ -23,9 +24,9 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
+import com.intellij.ui.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
-import icons.CompletionMlRankingIcons
 import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
@@ -42,7 +43,8 @@ class ItemsDecoratorInitializer : LookupTracker() {
     private val HAS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.HAS_RELEVANT_KEY")
     private val IS_RELEVANT_KEY = Key.create<Boolean>("ItemsDecoratorInitializer.IS_RELEVANT_KEY")
 
-    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.RelevantProposal))
+    private val EMPTY_ICON = prepareIcon(IconManager.getInstance().createEmptyIcon(
+      CompletionMlRankingIcons.RelevantProposal))
     private val RELEVANT_ICON = prepareIcon(CompletionMlRankingIcons.RelevantProposal)
     private val DOWN_ICON = prepareIcon(CompletionMlRankingIcons.ProposalDown)
     private val UP_ICON = prepareIcon(CompletionMlRankingIcons.ProposalUp)
@@ -131,6 +133,10 @@ class ItemsDecoratorInitializer : LookupTracker() {
 
     override fun getDelegate(): Icon? = baseIcon
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
+
+    override fun replaceBy(replacer: IconReplacer): LeftDecoratedIcon {
+      return LeftDecoratedIcon(replacer.replaceIcon(leftIcon), replacer.replaceIcon(baseIcon))
+    }
   }
 
   private class StarOpinionNotification : Notification(
@@ -172,7 +178,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     init {
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
           notification.expire()
         }
       })

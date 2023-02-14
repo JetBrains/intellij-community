@@ -2,15 +2,20 @@
 package com.intellij.find.actions
 
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.ex.util.EditorUtil
 
 class FindSelectionInPathAction : FindInPathAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     val editor = e.getData(CommonDataKeys.EDITOR)
-    if (project == null || LightEdit.owns(project) || editor == null || !editor.selectionModel.hasSelection()) {
-      e.presentation.isEnabledAndVisible = false
-    }
+    e.presentation.isEnabledAndVisible = project != null && !LightEdit.owns(project) && editor != null &&
+                                         editor.selectionModel.hasSelection() &&
+                                         !EditorUtil.contextMenuInvokedOutsideOfSelection(e)
   }
 }

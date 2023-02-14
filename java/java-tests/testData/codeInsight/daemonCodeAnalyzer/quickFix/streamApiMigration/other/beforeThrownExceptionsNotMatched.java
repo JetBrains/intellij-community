@@ -1,4 +1,4 @@
-// "Replace with forEach" "false"
+// "Collapse loop with stream 'forEach()'" "false"
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;

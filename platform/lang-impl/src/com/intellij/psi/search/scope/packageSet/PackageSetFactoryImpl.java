@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -38,7 +38,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
       @Override
       public void extensionRemoved(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
-        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+        ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
           for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
             boolean changed = false;

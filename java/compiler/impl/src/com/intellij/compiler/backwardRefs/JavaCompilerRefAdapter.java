@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -13,7 +12,8 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
@@ -36,40 +36,32 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @Override
   public CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException {
     if (mayBeVisibleOutsideOwnerFile(element)) {
-      if (element instanceof PsiField) {
-        final PsiField field = (PsiField)element;
+      if (element instanceof PsiField field) {
         final PsiClass aClass = field.getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         final String name = field.getName();
         if (jvmOwnerName == null) return null;
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerFieldRef(ownerId, nameId);
       }
-      else if (element instanceof PsiMethod) {
-        final PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      else if (element instanceof PsiMethod method) {
+        final PsiClass aClass = method.getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         if (jvmOwnerName == null) return null;
-        final PsiMethod method = (PsiMethod)element;
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
         final int ownerId = names.tryEnumerate(jvmOwnerName);
-        if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
-        if (nameId == 0) return null;
         return new CompilerRef.JavaCompilerMethodRef(ownerId, nameId, parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
           final int nameId = names.tryEnumerate(jvmClassName);
-          if (nameId != 0) {
-            return new CompilerRef.JavaCompilerClassRef(nameId);
-          }
+          return new CompilerRef.JavaCompilerClassRef(nameId);
         }
       }
     }
@@ -94,9 +86,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       if (qName == null) return true;
       try {
         final int nameId = names.tryEnumerate(qName);
-        if (nameId != 0) {
-          overridden.add(baseRef.override(nameId));
-        }
+        overridden.add(baseRef.override(nameId));
       }
       catch (IOException e) {
         exception[0] = e;
@@ -104,7 +94,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       }
       return true;
     };
-    ClassInheritorsSearch.search(baseClass, LibraryScopeCache.getInstance(baseClass.getProject()).getLibrariesOnlyScope(), true).forEach(processor);
+    ClassInheritorsSearch.search(baseClass, libraryScope, true).forEach(processor);
     if (exception[0] != null) {
       throw exception[0];
     }
@@ -133,7 +123,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @Override
   public PsiFunctionalExpression @NotNull [] findFunExpressionsInFile(SearchId @NotNull [] funExpressions,
                                                                       @NotNull PsiFileWithStubSupport file) {
-    TIntHashSet requiredIndices = new TIntHashSet(funExpressions.length);
+    IntSet requiredIndices = new IntOpenHashSet(funExpressions.length);
     for (SearchId funExpr : funExpressions) {
       requiredIndices.add(funExpr.getId());
     }
@@ -147,10 +137,9 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
 
   @Override
   public PsiElement @NotNull [] getInstantiableConstructors(@NotNull PsiElement aClass) {
-    if (!(aClass instanceof PsiClass)) {
+    if (!(aClass instanceof PsiClass theClass)) {
       throw new IllegalArgumentException("parameter should be an instance of PsiClass: " + aClass);
     }
-    PsiClass theClass = (PsiClass)aClass;
     if (theClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return PsiElement.EMPTY_ARRAY;
     }

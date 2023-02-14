@@ -13,9 +13,9 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +29,7 @@ public final class FormatterUtil {
   /**
    * @deprecated Use {@link #getReformatBeforeCommitCommandName()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = "Reformat Code Before Commit";
 
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.newHashSet(
@@ -49,10 +48,7 @@ public final class FormatterUtil {
   public static boolean isOneOf(@Nullable ASTNode node, IElementType @NotNull ... types) {
     if (node == null) return false;
     IElementType elementType = node.getElementType();
-    for (IElementType each : types) {
-      if (elementType == each) return true;
-    }
-    return false;
+    return ArrayUtil.contains(elementType, types);
   }
 
   @Nullable
@@ -80,10 +76,8 @@ public final class FormatterUtil {
       return null;
     }
 
-    for (IElementType type : typesToIgnore) {
-      if (each.getElementType() == type) {
-        return getNextOrPrevious(each, isNext, typesToIgnore);
-      }
+    if (ArrayUtil.contains(each.getElementType(), typesToIgnore)) {
+      return getNextOrPrevious(each, isNext, typesToIgnore);
     }
 
     return each;
@@ -103,10 +97,8 @@ public final class FormatterUtil {
       lastChild = lastChild.getLastChildNode();
     }
 
-    for (IElementType type : typesToIgnore) {
-      if (result.getElementType() == type) {
-        return getPreviousLeaf(result, typesToIgnore);
-      }
+    if (ArrayUtil.contains(result.getElementType(), typesToIgnore)) {
+      return getPreviousLeaf(result, typesToIgnore);
     }
     return result;
   }

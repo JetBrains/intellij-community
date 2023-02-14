@@ -53,7 +53,7 @@ public interface ApiUsageProcessor {
   /**
    * Process overriding of a super class' method.
    *
-   * @param method           method that overrides the parent's method. {@code method.uastAnchor.sourcePsi} can be be used to highlight name declaration.
+   * @param method           method that overrides the parent's method. {@code method.uastAnchor.sourcePsi} can be used to highlight name declaration.
    * @param overriddenMethod super class' method being overridden
    */
   default void processMethodOverriding(@NotNull UMethod method, @NotNull PsiMethod overriddenMethod) {}

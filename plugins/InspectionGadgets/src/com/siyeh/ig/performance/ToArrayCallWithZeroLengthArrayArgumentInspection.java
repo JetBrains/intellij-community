@@ -1,28 +1,13 @@
-/*
- * Copyright 2007-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +16,8 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.dropdown;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
   private static final CallMatcher COLLECTION_TO_ARRAY =
@@ -53,14 +39,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     abstract @Nls String getMessage();
 
     boolean isEmptyPreferred(PsiExpression expression) {
-      switch (this) {
-        case ALWAYS:
-          return true;
-        case NEVER:
-          return false;
-        default:
-          return PsiUtil.isLanguageLevel7OrHigher(expression);
-      }
+      return switch (this) {
+        case ALWAYS -> true;
+        case NEVER -> false;
+        default -> PsiUtil.isLanguageLevel7OrHigher(expression);
+      };
     }
   }
 
@@ -68,22 +51,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   @SuppressWarnings("PublicField")
   public PreferEmptyArray myMode = DEFAULT_MODE;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 5, true, false));
-    panel.add(new JLabel(InspectionGadgetsBundle.message("prefer.empty.array.options.title")));
-
-    ButtonGroup group = new ButtonGroup();
-    for (PreferEmptyArray mode : PreferEmptyArray.values()) {
-      JRadioButton radioButton = new JRadioButton(mode.getMessage(), mode == myMode);
-      radioButton.setBorder(JBUI.Borders.emptyLeft(20));
-      radioButton.addActionListener(e -> myMode = mode);
-      panel.add(radioButton);
-      group.add(radioButton);
-    }
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(dropdown("myMode", InspectionGadgetsBundle.message("prefer.empty.array.options.title"),
+                         PreferEmptyArray.class, PreferEmptyArray::getMessage));
   }
 
   @Override
@@ -106,7 +77,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!COLLECTION_TO_ARRAY.test(call)) return;
         final PsiExpression argument = call.getArgumentList().getExpressions()[0];
         final PsiType type = argument.getType();
@@ -166,12 +137,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) return;
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) return;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

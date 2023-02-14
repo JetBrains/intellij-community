@@ -2,7 +2,11 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
-import com.intellij.ui.*
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import java.awt.Component
 import javax.swing.JList
 
@@ -61,20 +65,22 @@ class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
   }
 
   companion object {
+    private const val SEPARATOR: @NlsSafe String = " ";
+
     fun SimpleColoredComponent.presetRuntime(value: RuntimeChooserItemWithFixedLocation) {
       value.version?.let {
         append(it, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
-        append(" ")
+        append(SEPARATOR)
       }
 
       value.displayName?.let {
         append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        append(" ")
+        append(SEPARATOR)
       }
 
       if (value.version == null && value.displayName == null) {
         append(LangBundle.message("dialog.item.choose.ide.runtime.unknown"))
-        append(" ")
+        append(SEPARATOR)
       }
     }
 
@@ -90,16 +96,16 @@ class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
       val item = value.item
 
       append(item.jdkVersion, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
-      append(" ")
+      append(SEPARATOR)
 
       item.product.vendor.let {
         append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        append(" ")
+        append(SEPARATOR)
       }
 
       item.product.product?.let {
         append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-        append(" ")
+        append(SEPARATOR)
       }
 
       item.product.flavour?.let {

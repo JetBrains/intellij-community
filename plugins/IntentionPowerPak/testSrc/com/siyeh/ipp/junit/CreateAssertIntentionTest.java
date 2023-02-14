@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
 import com.siyeh.IntentionPowerPackBundle;
@@ -47,18 +47,20 @@ public class CreateAssertIntentionTest extends IPPTestCase {
                        "}");
 
     myFixture.addClass("package org.junit.jupiter.api;" +
+                       "import org.junit.platform.commons.annotation.Testable;" +
+                       "@Testable\n" +
                        "public @interface Test {}");
     myFixture.addClass("package org.junit.platform.commons.annotation;" +
                        "public @interface Testable {}");
-    myFixture.addClass("package org.junit.jupiter.api;\n" +
-                       "public final class Assertions {\n" +
-                       "    public static void assertArrayEquals(Object[] expected, Object[] actual) {}\n" +
-                       "    public static void assertArrayEquals(Object[] expected, Object[] actual, String message) {}\n" +
-                       "    public static void assertEquals(Object expected, Object actual) {}\n" +
-                       "    public static void assertTrue(boolean expected) {}\n" +
-                       "    public static void assertEquals(Object expected, Object actual, String message) {}\n" +
-                       "    public static void assertTrue(Object expected, String message) {}\n" +
-                       "    public static void fail(String message) {}" +
-                       "}");
+    myFixture.addClass("""
+                         package org.junit.jupiter.api;
+                         public final class Assertions {
+                             public static void assertArrayEquals(Object[] expected, Object[] actual) {}
+                             public static void assertArrayEquals(Object[] expected, Object[] actual, String message) {}
+                             public static void assertEquals(Object expected, Object actual) {}
+                             public static void assertTrue(boolean expected) {}
+                             public static void assertEquals(Object expected, Object actual, String message) {}
+                             public static void assertTrue(Object expected, String message) {}
+                             public static void fail(String message) {}}""");
   }
 }

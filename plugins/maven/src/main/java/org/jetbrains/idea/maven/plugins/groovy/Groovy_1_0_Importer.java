@@ -15,10 +15,9 @@
  */
 package org.jetbrains.idea.maven.plugins.groovy;
 
-import org.jetbrains.idea.maven.importing.GroovyImporter;
+public class Groovy_1_0_Importer extends MigratedGroovyImporter {
 
-public class Groovy_1_0_Importer extends GroovyImporter {
   public Groovy_1_0_Importer() {
-    super("org.codehaus.groovy.maven", "gmaven-plugin");
+    super(GroovyPluginConfigurator.KnownPlugins.GROOVY_1_0);
   }
 }

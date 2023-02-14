@@ -10,6 +10,7 @@ import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -63,25 +64,13 @@ public class NotificationMessageElement extends NavigatableMessageElement {
 
       @NotNull
       private Icon getIcon(@NotNull ErrorTreeElementKind kind) {
-        Icon icon = ICON_16;
-        switch (kind) {
-          case INFO:
-            icon = AllIcons.General.Information;
-            break;
-          case ERROR:
-            icon = AllIcons.General.Error;
-            break;
-          case WARNING:
-            icon = AllIcons.General.Warning;
-            break;
-          case NOTE:
-            icon = AllIcons.General.Tip;
-            break;
-          case GENERIC:
-            icon = ICON_16;
-            break;
-        }
-        return icon;
+        return switch (kind) {
+          case INFO -> AllIcons.General.Information;
+          case ERROR -> AllIcons.General.Error;
+          case WARNING -> AllIcons.General.Warning;
+          case NOTE -> AllIcons.General.Tip;
+          case GENERIC -> ICON_16;
+        };
       }
     };
 
@@ -104,7 +93,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     String message = StringUtil.join(this.getText(), "<br>");
     myEditorPane.setEditable(false);
     myEditorPane.setOpaque(false);
-    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myEditorPane.setEditorKit(HTMLEditorKitBuilder.simple());
     myEditorPane.setHighlighter(null);
 
     final StyleSheet styleSheet = ((HTMLDocument)myEditorPane.getDocument()).getStyleSheet();

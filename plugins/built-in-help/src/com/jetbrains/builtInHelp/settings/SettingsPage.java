@@ -143,7 +143,7 @@ public class SettingsPage implements Configurable {
         }
       }
 
-      openWebSite.setSelected(Boolean.valueOf(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
+      openWebSite.setSelected(Boolean.parseBoolean(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
       baseUrl.setText(Utils.getStoredValue(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
       modified = false;
     }

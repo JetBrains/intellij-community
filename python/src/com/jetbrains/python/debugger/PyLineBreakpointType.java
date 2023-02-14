@@ -81,6 +81,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
            (ScratchUtil.isScratch(file) && LanguageUtil.getLanguageForPsi(project, file) == getFileLanguage());
   }
 
+  @NotNull
   protected FileType getFileType() {
     return PythonFileType.INSTANCE;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -12,11 +12,8 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class RemoteStateState implements RemoteState {
-  private final Project    myProject;
+  private final Project myProject;
   private final RemoteConnection myConnection;
   private final boolean myAutoRestart;
 
@@ -42,5 +39,4 @@ public class RemoteStateState implements RemoteState {
   public RemoteConnection getRemoteConnection() {
     return myConnection;
   }
-
 }

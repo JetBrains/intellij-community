@@ -1,36 +1,24 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.JUnitBundle;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class JUnit4Framework extends JavaTestFramework {
+public class JUnit4Framework extends JUnitTestFramework {
   @Override
   @NotNull
   public String getName() {
     return "JUnit4";
-  }
-
-  @NotNull
-  @Override
-  public Icon getIcon() {
-    return AllIcons.RunConfigurations.Junit;
   }
 
   @Override
@@ -137,22 +125,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
     final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, JUnitUtil.IGNORE_ANNOTATION, 0);
-  }
-
-  @Override
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
-  }
-
-  @Override
-  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
-    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
-  }
-
-  @Override
-  public boolean isMyConfigurationType(ConfigurationType type) {
-    return type instanceof JUnitConfigurationType;
+    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.Ignore", 0);
   }
 
   @Override

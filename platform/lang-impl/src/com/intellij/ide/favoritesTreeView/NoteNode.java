@@ -17,12 +17,8 @@ package com.intellij.ide.favoritesTreeView;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
+@Deprecated(forRemoval = true)
 public class NoteNode {
-  private PercentDone myPercentDone = PercentDone._0;
-  private Set<Flag> myFlags;
-  private Set<Concept> myConcepts;
 
   @NotNull
   private String myText;
@@ -31,30 +27,6 @@ public class NoteNode {
   public NoteNode(@NotNull String text, boolean readonly) {
     myText = text;
     myReadonly = readonly;
-  }
-
-  public PercentDone getPercentDone() {
-    return myPercentDone;
-  }
-
-  public void setPercentDone(PercentDone percentDone) {
-    myPercentDone = percentDone;
-  }
-
-  public Set<Flag> getFlags() {
-    return myFlags;
-  }
-
-  public void setFlags(Set<Flag> flags) {
-    myFlags = flags;
-  }
-
-  public Set<Concept> getConcepts() {
-    return myConcepts;
-  }
-
-  public void setConcepts(Set<Concept> concepts) {
-    myConcepts = concepts;
   }
 
   @NotNull

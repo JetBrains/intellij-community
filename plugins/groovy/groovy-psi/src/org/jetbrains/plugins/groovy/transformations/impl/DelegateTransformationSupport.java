@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -110,9 +110,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (!(element instanceof PsiMethod)) return true;
+      if (!(element instanceof PsiMethod method)) return true;
 
-      PsiMethod method = (PsiMethod)element;
       if (!myIgnoreCondition.value(method)) return true;
 
       PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
@@ -123,7 +122,7 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     }
 
     @NotNull
-    protected PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    private PsiMethod createDelegationMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
       final LightMethodBuilder builder = new LightMethodBuilder(myContext.getManager(), GroovyLanguage.INSTANCE, method.getName());
       builder.setMethodReturnType(substitutor.substitute(method.getReturnType()));
       builder.setContainingClass(myContext.getCodeClass());

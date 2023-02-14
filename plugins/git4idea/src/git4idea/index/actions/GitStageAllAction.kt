@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import git4idea.index.GitStageTracker
@@ -10,6 +11,10 @@ import git4idea.index.ui.fileStatusNodes
 import git4idea.index.ui.hasMatchingRoots
 
 abstract class GitStageAllActionBase(vararg val kinds: NodeKind) : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null || !isStagingAreaAvailable(project)) {

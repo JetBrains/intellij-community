@@ -25,8 +25,6 @@ import java.lang.annotation.Target;
 /**
  * Annotates DOM attribute children getters, that should return {@link GenericAttributeValue}.
  * The getters may be annotated with {@link Convert} annotation.
- *
- * @author peter
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
-/**
- * @author: db
- */
 public interface LoggerWrapper<T> {
   boolean isDebugEnabled();
   void debug(String comment, T t);

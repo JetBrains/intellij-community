@@ -34,12 +34,12 @@ import java.util.Comparator;
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final Comparator<Integer> ordering = myDirection.ordering;
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final int startOffset = file.getTextRange().getStartOffset();
-    final int endOffset = file.getTextRange().getEndOffset();
-    final Ref<Integer> first = new Ref<>();
-    final Ref<Integer> next = new Ref<>();
+    Comparator<Integer> ordering = myDirection.ordering;
+    int caretOffset = editor.getCaretModel().getOffset();
+    int startOffset = file.getTextRange().getStartOffset();
+    int endOffset = file.getTextRange().getEndOffset();
+    Ref<Integer> first = new Ref<>();
+    Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(((MarkupModelEx)editor.getMarkupModel()), project, null, startOffset, endOffset, info -> {
       if (HighlightInfoType.ELEMENT_UNDER_CARET_READ.equals(info.type) || HighlightInfoType.ELEMENT_UNDER_CARET_WRITE.equals(info.type)) {
         if (ordering.compare(info.startOffset, caretOffset) > 0 && ordering.compare(info.endOffset, caretOffset) > 0) {

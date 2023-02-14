@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.ml.local.models</id>
   <name>Machine Learning Local Models</name>
   <vendor>JetBrains</vendor>
@@ -26,6 +26,7 @@
                  description="Show notification with suggestion to train local ML models"/>
 
     <projectService serviceImplementation="com.intellij.ml.local.models.LocalModelsManager"/>
-    <projectIndexingHistoryListener implementation="com.intellij.ml.local.actions.IndexingFinishedListener"/>
   </extensions>
+
+  <depends optional="true" config-file="intellij.ml.models.local.java.xml">com.intellij.modules.java</depends>
 </idea-plugin>

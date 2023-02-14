@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author ven
- */
 public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityAction {
   private final boolean myCreateGetter;
   private final boolean myCreateSetter;

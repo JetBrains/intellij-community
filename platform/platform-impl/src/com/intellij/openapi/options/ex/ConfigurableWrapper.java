@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable
@@ -76,10 +77,17 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
            (configurable instanceof ConfigurableWrapper && ((ConfigurableWrapper)configurable).myEp.nonDefaultProject);
   }
 
+  @Override
+  public void focusOn(@Nls @NotNull String label) {
+    Configurable unwrapped = cast(Configurable.class, this);
+    if (unwrapped != null && unwrapped != this) {
+      unwrapped.focusOn(label);
+    }
+  }
+
   @Nullable
-  public static <T> T cast(@NotNull Class<T> type, UnnamedConfigurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+  public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {
@@ -229,10 +237,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return myEp;
   }
 
+  @Override
   public String getParentId() {
     return myEp.parentId;
   }
 
+  @Override
   public ConfigurableWrapper addChild(Configurable configurable) {
     return new CompositeWrapper(myEp, configurable);
   }
@@ -258,6 +268,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
            : configurable != null
              ? configurable.getClass()
              : getClass();
+  }
+
+  private @Nls @Nullable String markerText = null;
+
+  @Override
+  public @Nls @Nullable String getMarkerText() {
+    return markerText;
+  }
+
+  @Override
+  public void setMarkerText(@Nls @Nullable String text) {
+    markerText = text;
   }
 
   private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {

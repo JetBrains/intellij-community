@@ -2,6 +2,7 @@
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
@@ -11,11 +12,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
@@ -62,13 +64,15 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     }
     else {
       dialogPanel = panel {
-        buttonGroup(::useCredentialHelper) {
+        buttonsGroup {
+          lateinit var rbCredentials: JBRadioButton
           row {
-            radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
-            row {
-              buildCredentialsPanel()
-            }
+            rbCredentials = radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
+              .component
           }
+          indent{
+            buildCredentialsPanel()
+          }.enabledIf(rbCredentials.selected)
           row {
             radioButton(GitBundle.message("login.dialog.select.login.way.use.helper"), true).also {
               it.component.addActionListener {
@@ -76,16 +80,16 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
               }
             }
           }
-        }
+        }.bind(::useCredentialHelper)
       }
     }
     return dialogPanel
   }
 
-  private fun RowBuilder.buildCredentialsPanel() {
-    row(GitBundle.message("login.dialog.username.label")) { usernameField(growX) }
-    row(GitBundle.message("login.dialog.password.label")) { passwordField(growX) }
-    row { rememberCheckbox() }
+  private fun Panel.buildCredentialsPanel() {
+    row(GitBundle.message("login.dialog.username.label")) { cell(usernameField).align(AlignX.FILL) }
+    row(GitBundle.message("login.dialog.password.label")) { cell(passwordField).align(AlignX.FILL) }
+    row("") { cell(rememberCheckbox) }
   }
 
   override fun doOKAction() {
@@ -178,5 +182,9 @@ class TestGitHttpLoginDialogAction : AnAction() {
         Messages.showMessageDialog(e.project, "Regular login", "Git login test", null)
       }
     }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

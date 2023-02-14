@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class SuppressibleSpellcheckingStrategy extends SpellcheckingStrategy {
   /**
-   * @see com.intellij.codeInspection.CustomSuppressableInspectionTool#isSuppressedFor(com.intellij.psi.PsiElement)
+   * @see com.intellij.codeInspection.CustomSuppressableInspectionTool#isSuppressedFor(PsiElement)
    */
   public abstract boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name);
 
   /**
-   * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(com.intellij.psi.PsiElement)
+   * @see com.intellij.codeInspection.BatchSuppressableTool#getBatchSuppressActions(PsiElement)
    */
   public abstract SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name);
 }

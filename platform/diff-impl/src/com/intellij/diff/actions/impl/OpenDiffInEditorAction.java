@@ -5,6 +5,7 @@ import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.editor.SimpleDiffVirtualFile;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -19,6 +20,11 @@ public class OpenDiffInEditorAction extends DumbAwareAction {
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
 
     e.getPresentation().setEnabledAndVisible(project != null && request != null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

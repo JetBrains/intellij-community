@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -31,7 +31,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 import java.util.List;
 
 /**
- * Base class for java line-connected exceptions (line, method, field)
+ * Base class for java line-connected breakpoints (line, method, field)
+ *
  * @author egor
  */
 public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>
@@ -79,11 +80,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     }
 
     if (!JavaClassFileType.INSTANCE.equals(psiFile.getFileType()) && !DebuggerUtils.isBreakpointAware(psiFile)) {
-      return false;
-    }
-
-    // workaround for KT-23886, remove after it is fixed
-    if ("kt".equals(psiFile.getFileType().getDefaultExtension())) {
       return false;
     }
 

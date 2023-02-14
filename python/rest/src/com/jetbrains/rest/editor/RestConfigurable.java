@@ -56,10 +56,6 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
   }
 
   @Override
-  public void reset() {
-  }
-
-  @Override
   public boolean isModified() {
     return !RestSettings.getInstance().getCurrentPanel().equals(myComboBox.getSelectedItem());
   }

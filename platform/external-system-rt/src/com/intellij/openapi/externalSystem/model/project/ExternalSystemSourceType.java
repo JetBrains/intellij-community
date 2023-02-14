@@ -4,8 +4,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Enumerates module source types.
- * 
- * @author Denis Zhdanov
  */
 public enum ExternalSystemSourceType implements IExternalSystemSourceType {
 

@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -20,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection {
+public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -42,23 +46,27 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Boolean isEmpty = (Boolean)infos[0];
-    return new ArraysAsListWithOneArgumentFix(isEmpty.booleanValue());
+    final boolean isEmpty = (Boolean)infos[0];
+    final boolean suggestListOf = (Boolean)infos[1];
+    return new ArraysAsListWithOneArgumentFix(isEmpty, suggestListOf);
   }
 
   private static final class ArraysAsListWithOneArgumentFix extends InspectionGadgetsFix {
 
     private final boolean myEmpty;
+    private final boolean mySuggestListOf;
 
-    private ArraysAsListWithOneArgumentFix(boolean isEmpty) {
+    private ArraysAsListWithOneArgumentFix(boolean isEmpty, boolean suggestListOf) {
       myEmpty = isEmpty;
+      mySuggestListOf = suggestListOf;
     }
 
     @NotNull
     @Override
     public String getName() {
-      final @NonNls String s = myEmpty ? "Collections.emptyList()" : "Collections.singletonList()";
-      return CommonQuickFixBundle.message("fix.replace.with.x", s);
+      if (mySuggestListOf) return CommonQuickFixBundle.message("fix.replace.with.x", "List.of()");
+      final @NonNls String call = myEmpty ? "Collections.emptyList()" : "Collections.singletonList()";
+      return CommonQuickFixBundle.message("fix.replace.with.x", call);
     }
 
     @NotNull
@@ -68,24 +76,37 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
+      if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
-      CommentTracker commentTracker = new CommentTracker();
+      final CommentTracker commentTracker = new CommentTracker();
       final String parameterText = parameterList != null ? commentTracker.text(parameterList) : "";
       if (myEmpty) {
-        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
-                                                                             "emptyList()", commentTracker);
+        if (mySuggestListOf) {
+          PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.List." + parameterText + "of()",
+                                                         commentTracker);
+        }
+        else {
+          PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText + "emptyList()",
+                                                         commentTracker);
+        }
       }
       else {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-        PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
-                                                                             "singletonList" + commentTracker.text(argumentList), commentTracker);
+        if (mySuggestListOf) {
+          PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
+                                                         "java.util.List." + parameterText + "of" + commentTracker.text(argumentList),
+                                                         commentTracker);
+        }
+        else {
+          PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
+                                                         "java.util.Collections." + parameterText + "singletonList" + commentTracker.text(argumentList),
+                                                         commentTracker);
+        }
       }
     }
   }
@@ -98,7 +119,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
   private static class ArrayAsListWithOneArgumentVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final @NonNls String methodName = methodExpression.getReferenceName();
@@ -109,6 +130,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length > 1) return;
 
+      boolean suggestListOf = PsiUtil.isLanguageLevel9OrHigher(expression);
       boolean empty = false;
       if (arguments.length == 0) {
         empty = true;
@@ -120,6 +142,10 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
             return;
           }
           empty = true;
+        }
+        if (suggestListOf && NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
+          // Avoid suggesting List.of with potentially nullable argument
+          suggestListOf = false;
         }
       }
       final PsiMethod method = expression.resolveMethod();
@@ -134,7 +160,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       if (!"java.util.Arrays".equals(className)) {
         return;
       }
-      registerMethodCallError(expression, empty);
+      registerMethodCallError(expression, empty, suggestListOf);
     }
   }
 }

@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,10 @@ import java.util.Collection;
 public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  protected void execute(@NotNull final Project project, @NotNull Collection<HgRepository> repos, @Nullable HgRepository selectedRepo) {
+  protected void execute(@NotNull final Project project,
+                         @NotNull Collection<HgRepository> repos,
+                         @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
     final HgPullDialog dialog = new HgPullDialog(project, repos, selectedRepo);
     if (dialog.showAndGet()) {
       final String source = dialog.getSource();

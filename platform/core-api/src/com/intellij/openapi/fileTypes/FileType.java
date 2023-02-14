@@ -45,7 +45,7 @@ public interface FileType extends Scheme {
   /**
    * Returns the icon used for showing files of the type, or {@code null} if no icon should be shown.
    */
-  @Nullable Icon getIcon();
+  Icon getIcon();
 
   /**
    * Returns {@code true} if files of the specified type contain binary data, {@code false} if the file is plain text.

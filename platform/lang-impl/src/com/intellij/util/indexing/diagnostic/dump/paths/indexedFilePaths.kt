@@ -14,9 +14,9 @@ import com.intellij.util.indexing.SubstitutedFileType
 
 object IndexedFilePaths {
 
-  const val TOO_LARGE_FILE = "<TOO LARGE>"
+  private const val TOO_LARGE_FILE = "<TOO LARGE>"
 
-  const val FAILED_TO_LOAD = "<FAILED TO LOAD: %s>"
+  private const val FAILED_TO_LOAD = "<FAILED TO LOAD: %s>"
 
   fun createIndexedFilePath(fileOrDir: VirtualFile, project: Project): IndexedFilePath {
     val fileId = FileBasedIndex.getFileId(fileOrDir)

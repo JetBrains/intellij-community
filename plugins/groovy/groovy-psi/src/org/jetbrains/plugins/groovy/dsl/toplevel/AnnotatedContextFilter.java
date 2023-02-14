@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class AnnotatedContextFilter implements ContextFilter {
 
   private final String myAnnoQName;

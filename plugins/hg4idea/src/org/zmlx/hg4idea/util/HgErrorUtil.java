@@ -155,7 +155,7 @@ public final class HgErrorUtil {
     new HgCommandResultNotifier(project).notifyError(notificationDisplayId, null, title, e.getMessage());
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
     HgUtil.markDirectoryDirty(project, repository);
   }

@@ -32,9 +32,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
-  private final AnAction[] myActions;  
+  private final AnAction[] myActions;
 
-  public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
+  public DirDiffToolbarActions(DirDiffTableModel model) {
     super(DiffBundle.message("directory.diff.actions"), false);
     final List<AnAction> actions = new ArrayList<>(Arrays.asList(
       new RefreshDirDiffAction(model),
@@ -58,11 +58,13 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
 
     actions.add(Separator.getInstance());
     actions.add(ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_TOOLBAR));
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
+  }
 
-    for (AnAction action : actions) {
+  public void setUp(DirDiffTableModel model, JComponent panel) {
+    for (AnAction action : myActions) {
       setUp(model, panel, action);
     }
-    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static void setUp(DirDiffTableModel model, JComponent panel, AnAction action) {

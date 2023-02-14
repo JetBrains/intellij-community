@@ -12,12 +12,9 @@ class LombokAnnotationSupport implements AnnotationPackageSupport {
   @NotNull
   @Override
   public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return Collections.singletonList("lombok.NonNull");
-      case NULLABLE:
-      default:
-        return Collections.emptyList();
+    if (nullability == Nullability.NOT_NULL) {
+      return Collections.singletonList("lombok.NonNull");
     }
+    return Collections.emptyList();
   }
 }

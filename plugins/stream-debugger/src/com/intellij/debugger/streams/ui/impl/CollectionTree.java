@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -84,7 +84,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
         final XDebuggerTreeListener listener = this;
         if (node instanceof XValueContainerNode) {
-          final XValueContainer container = ((XValueContainerNode)node).getValueContainer();
+          final XValueContainer container = ((XValueContainerNode<?>)node).getValueContainer();
           if (container instanceof JavaValue) {
             final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
             evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {

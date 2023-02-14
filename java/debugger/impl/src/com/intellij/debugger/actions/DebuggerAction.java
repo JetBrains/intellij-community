@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerAction
@@ -9,10 +9,14 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.DebuggerTreePanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,19 +44,19 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   @Nullable
-  public static DebuggerTree getTree(DataContext dataContext){
+  public static DebuggerTree getTree(DataContext dataContext) {
     return DebuggerTree.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
-  public static DebuggerTreePanel getPanel(DataContext dataContext){
+  public static DebuggerTreePanel getPanel(DataContext dataContext) {
     return DebuggerTreePanel.DATA_KEY.getData(dataContext);
   }
 
   @Nullable
   public static DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
 
     if (tree.getSelectionCount() != 1) {
       return null;
@@ -70,7 +74,7 @@ public abstract class DebuggerAction extends AnAction {
 
   public static DebuggerTreeNodeImpl @Nullable [] getSelectedNodes(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
-    if(tree == null) return null;
+    if (tree == null) return null;
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length == 0) {
       return Holder.EMPTY_TREE_NODE_ARRAY;
@@ -79,7 +83,7 @@ public abstract class DebuggerAction extends AnAction {
     for (TreePath path : paths) {
       Object component = path.getLastPathComponent();
       if (component instanceof DebuggerTreeNodeImpl) {
-        nodes.add((DebuggerTreeNodeImpl) component);
+        nodes.add((DebuggerTreeNodeImpl)component);
       }
     }
     return nodes.toArray(new DebuggerTreeNodeImpl[0]);
@@ -88,19 +92,13 @@ public abstract class DebuggerAction extends AnAction {
   @NotNull
   public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
     DebuggerTreePanel panel = getPanel(dataContext);
-    if(panel != null) {
+    if (panel != null) {
       return panel.getContext();
-    } else {
+    }
+    else {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null ? (DebuggerManagerEx.getInstanceEx(project)).getContext() : DebuggerContextImpl.EMPTY_CONTEXT;
     }
-  }
-
-  public static boolean isContextView(AnActionEvent e) {
-    return DebuggerActions.EVALUATION_DIALOG_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.FRAME_PANEL_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.WATCH_PANEL_POPUP.equals(e.getPlace()) ||
-           DebuggerActions.INSPECT_PANEL_POPUP.equals(e.getPlace());
   }
 
   public static Disposable installEditAction(final JTree tree, String actionName) {
@@ -121,24 +119,8 @@ public abstract class DebuggerAction extends AnAction {
     return disposable;
   }
 
-  public static boolean isFirstStart(final AnActionEvent event) {
-    //noinspection HardCodedStringLiteral
-    String key = "initalized";
-    if(event.getPresentation().getClientProperty(key) != null) return false;
-
-    event.getPresentation().putClientProperty(key, key);
-    return true;
-  }
-
-  public static void enableAction(final AnActionEvent event, final boolean enable) {
-    SwingUtilities.invokeLater(() -> {
-      event.getPresentation().setEnabled(enable);
-      event.getPresentation().setVisible(true);
-    });
-  }
-
   public static void refreshViews(final AnActionEvent e) {
-    refreshViews(getSession(e));
+    refreshViews(DebuggerUIUtil.getSession(e));
   }
 
   public static void refreshViews(@Nullable XDebugSession session) {
@@ -152,19 +134,59 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static boolean isInJavaSession(AnActionEvent e) {
-    XDebugSession session = getSession(e);
+    XDebugSession session = DebuggerUIUtil.getSession(e);
     return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
   }
 
-  @Nullable
-  public static XDebugSession getSession(AnActionEvent e) {
-    XDebugSession session = e.getData(XDebugSession.DATA_KEY);
-    if (session == null) {
-      Project project = e.getProject();
-      if (project != null) {
-        session = XDebuggerManager.getInstance(project).getCurrentSession();
+  static JavaStackFrame getStackFrame(AnActionEvent e) {
+    StackFrameDescriptorImpl descriptor = getSelectedStackFrameDescriptor(e);
+    if (descriptor != null) {
+      return new JavaStackFrame(descriptor, false);
+    }
+    return getSelectedStackFrame(e);
+  }
+
+  static StackFrameProxyImpl getStackFrameProxy(AnActionEvent e) {
+    DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
+    if (node != null) {
+      NodeDescriptorImpl descriptor = node.getDescriptor();
+      if (descriptor instanceof StackFrameDescriptorImpl) {
+        return ((StackFrameDescriptorImpl)descriptor).getFrameProxy();
       }
     }
-    return session;
+    else {
+      JavaStackFrame stackFrame = getSelectedStackFrame(e);
+      if (stackFrame != null) {
+        return stackFrame.getStackFrameProxy();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
+    DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
+    if (selectedNode != null) {
+      NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
+      if (descriptor instanceof StackFrameDescriptorImpl) {
+        return (StackFrameDescriptorImpl)descriptor;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static JavaStackFrame getSelectedStackFrame(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      XDebugSession session = DebuggerUIUtil.getSession(e);
+      if (session != null) {
+        XStackFrame frame = session.getCurrentStackFrame();
+        if (frame instanceof JavaStackFrame) {
+          return ((JavaStackFrame)frame);
+        }
+      }
+    }
+    return null;
   }
 }

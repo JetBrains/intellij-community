@@ -19,9 +19,6 @@ package com.intellij.ide.highlighter.custom.tokens;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 
-/**
- * @author dsl
- */
 public class QuotedStringParser extends PrefixedTokenParser {
   private static final Logger LOG = Logger.getInstance(QuotedStringParser.class);
   private final char myQuote;

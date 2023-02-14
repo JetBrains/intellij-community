@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -24,12 +24,13 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -48,7 +49,7 @@ import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
-class ServiceTreeView extends ServiceView {
+final class ServiceTreeView extends ServiceView {
   private static final String ADD_SERVICE_ACTION_ID = "ServiceView.AddService";
 
   private final ServiceViewTree myTree;
@@ -103,7 +104,7 @@ class ServiceTreeView extends ServiceView {
       state.treeState.applyTo(myTree, myTreeModel.getRoot());
     }
     else {
-      Set<ServiceViewItem> roots = new THashSet<>(model.getVisibleRoots());
+      Set<ServiceViewItem> roots = new HashSet<>(model.getVisibleRoots());
       List<TreePath> adjusted = adjustPaths(state.expandedPaths, roots, myTreeModel.getRoot());
       if (!adjusted.isEmpty()) {
         TreeUtil.promiseExpand(myTree, new PathExpandVisitor(adjusted));
@@ -146,10 +147,20 @@ class ServiceTreeView extends ServiceView {
 
   @Override
   Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doSelect(service, contributorClass, false);
+  }
+
+  private Promise<Void> selectSafe(@NotNull Object service, @NotNull Class<?> contributorClass) {
+    return doSelect(service, contributorClass, true);
+  }
+
+  private Promise<Void> doSelect(@NotNull Object service, @NotNull Class<?> contributorClass, boolean safe) {
     ServiceViewItem selectedItem = myLastSelection;
     if (selectedItem == null || !selectedItem.getValue().equals(service)) {
       AsyncPromise<Void> result = new AsyncPromise<>();
-      myTreeModel.findPath(service, contributorClass)
+      Promise<TreePath> pathPromise =
+        safe ? myTreeModel.findPathSafe(service, contributorClass) : myTreeModel.findPath(service, contributorClass);
+      pathPromise
         .onError(result::setError)
         .onSuccess(path -> {
           TreeUtil.promiseSelect(myTree, new PathSelectionVisitor(path))
@@ -264,13 +275,13 @@ class ServiceTreeView extends ServiceView {
   private void updateLastSelection() {
     ServiceViewItem lastSelection = myLastSelection;
     WeakReference<ServiceViewItem> itemRef =
-      new WeakReference<>(lastSelection == null ? null : getModel().findItem(lastSelection));
+      new WeakReference<>(lastSelection == null ? null : getModel().findItemSafe(lastSelection));
     AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       List<ServiceViewItem> selected = getSelectedItems();
       if (selected.isEmpty()) {
         ServiceViewItem item = ContainerUtil.getFirstItem(getModel().getRoots());
         if (item != null) {
-          select(item.getValue(), item.getRootContributor().getClass());
+          selectSafe(item.getValue(), item.getRootContributor().getClass());
           return;
         }
       }
@@ -303,7 +314,7 @@ class ServiceTreeView extends ServiceView {
         ServiceViewItem viewItem = itemRef.get();
         if (viewItem == null) return;
 
-        ServiceViewItem updatedItem = getModel().findItem(viewItem);
+        ServiceViewItem updatedItem = getModel().findItemSafe(viewItem);
         if (updatedItem != null) {
           WeakReference<ServiceViewItem> updatedRef = new WeakReference<>(updatedItem);
           AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
@@ -339,7 +350,7 @@ class ServiceTreeView extends ServiceView {
         List<Promise<TreePath>> pathPromises =
           ContainerUtil.mapNotNull(selectedPaths, path -> {
             ServiceViewItem item = ObjectUtils.tryCast(path.getLastPathComponent(), ServiceViewItem.class);
-            return item == null ? null : myTreeModel.findPath(item.getValue(), item.getRootContributor().getClass());
+            return item == null ? null : myTreeModel.findPathSafe(item.getValue(), item.getRootContributor().getClass());
           });
         Promises.collectResults(pathPromises, true).onProcessed(paths -> {
           if (paths != null && !paths.isEmpty()) {
@@ -406,28 +417,26 @@ class ServiceTreeView extends ServiceView {
   }
 
   @Override
-  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath) {
+  List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass) {
     Queue<Object> values = new LinkedList<>(valueSubPath);
     Object visibleRoot = values.poll();
     if (visibleRoot == null) return Collections.emptyList();
 
-    int count = myTree.getRowCount();
-    for (int i = 0; i < count; i++) {
-      TreePath path = myTree.getPathForRow(i);
-      Object node = path.getLastPathComponent();
-      if (!(node instanceof ServiceViewItem)) continue;
+    List<? extends ServiceViewItem> roots = getModel().getVisibleRoots();
+    ServiceViewItem item = JBTreeTraverser.from((Function<ServiceViewItem, List<ServiceViewItem>>)node ->
+      contributorClass.isInstance(node.getRootContributor()) ? new ArrayList<>(getModel().getChildren(node)) : null)
+      .withRoots(roots)
+      .traverse(ServiceModel.ONLY_LOADED_BFS)
+      .filter(node -> node.getValue().equals(visibleRoot))
+      .first();
+    if (item == null) return Collections.emptyList();
 
-      ServiceViewItem item = (ServiceViewItem)node;
-      if (!visibleRoot.equals(item.getValue())) continue;
-
-      while (!values.isEmpty()) {
-        Object value = values.poll();
-        item = ContainerUtil.find(getModel().getChildren(item), child -> value.equals(child.getValue()));
-        if (item == null) return Collections.emptyList();
-      }
-      return ContainerUtil.map(getModel().getChildren(item), ServiceViewItem::getValue);
+    while (!values.isEmpty()) {
+      Object value = values.poll();
+      item = ContainerUtil.find(getModel().getChildren(item), child -> value.equals(child.getValue()));
+      if (item == null) return Collections.emptyList();
     }
-    return Collections.emptyList();
+    return ContainerUtil.map(getModel().getChildren(item), ServiceViewItem::getValue);
   }
 
   private void cancelSelectionUpdate() {
@@ -491,17 +500,11 @@ class ServiceTreeView extends ServiceView {
   private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
-      if (e.type == ServiceEventListener.EventType.SYNC_RESET) {
-        TreeModel model = myTree.getModel();
-        if (model instanceof Disposable) {
-          Disposer.dispose((Disposable)model);
-        }
-        myTree.setModel(null);
-        AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
-        myTree.setModel(asyncTreeModel);
-        myNavBarPanel.hidePopup();
-        myNavBarPanel.getModel().updateModel((Object)null);
-        myNavBarPanel.getUpdateQueue().rebuildUi();
+      if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          resetTreeModel();
+          updateNavBar();
+        });
         updateLastSelection();
       }
       else {
@@ -521,6 +524,24 @@ class ServiceTreeView extends ServiceView {
     public void structureChanged() {
       selectFirstItemIfNeeded();
       updateSelectionPaths();
+    }
+
+    private void resetTreeModel() {
+      TreeModel model = myTree.getModel();
+      if (model instanceof Disposable) {
+        Disposer.dispose((Disposable)model);
+      }
+      myTree.setModel(null);
+      AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
+      myTree.setModel(asyncTreeModel);
+    }
+
+    private void updateNavBar() {
+      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+      });
     }
   }
 

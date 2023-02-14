@@ -18,3 +18,8 @@ class StaticOnly(object):
 class OldClass():
     def foo(self):
         pass
+
+
+class ExtractMe:
+    def __add__(self, other):
+    __radd__ = __add__

@@ -90,10 +90,6 @@ public class PyCondaManagementService extends PyPackageManagementService {
     }
   }
 
-  @Override
-  public boolean canManageRepositories() {
-    return true;
-  }
 
   @Override
   public void fetchAllRepositories(@NotNull CatchingConsumer<? super List<String>, ? super Exception> consumer) {
@@ -161,7 +157,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @Override
-  public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
+  public void fetchPackageVersions(String packageName, CatchingConsumer<? super List<String>, ? super Exception> consumer) {
     if (useConda()) {
       myExecutorService.execute(() -> {
         try {
@@ -178,7 +174,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
     final String packageName = pkg.getName();
     if (useConda()) {
       myExecutorService.execute(() -> {

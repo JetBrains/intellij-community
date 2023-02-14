@@ -86,6 +86,20 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // PY-49466
+  fun testMethodRenameToStartingWithKeywordName() {
+    doNoIntentionTest(
+      """
+        def test<caret>(): pass
+      """.trimIndent(),
+      {
+        repeat("test".length, this::performBackspace)
+        myFixture.type("def")
+      },
+      intention = changeSignatureIntention()
+    )
+  }
+
   // PY-42285
   fun testImportedVariableRename() {
     doRenameImportedTest(
@@ -286,7 +300,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testAddPositionalOnlyParameterWithDefaultValueAtTheBeginning() {
-    _suggestedChangeSignatureNewParameterValuesForTests = null
+    _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
 
     doChangeSignatureTest(
       """
@@ -332,7 +346,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testRemoveDefaultValueNothingSpecifiedInstead() {
-    _suggestedChangeSignatureNewParameterValuesForTests = null
+    _suggestedChangeSignatureNewParameterValuesForTests = { SuggestedRefactoringExecution.NewParameterValue.None }
 
     doChangeSignatureTest(
       """

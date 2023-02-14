@@ -44,6 +44,11 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
   }
 
   @Override
+  public boolean isAnnotationValid(@NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
+    return revisionNumber instanceof HgRevisionNumber;
+  }
+
+  @Override
   @NotNull
   public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);

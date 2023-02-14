@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.core;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class AbstractLayout implements LayoutManager2 {
   /**
    * Default value of HGAP property

@@ -2,7 +2,6 @@
 package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
@@ -12,8 +11,7 @@ import javax.swing.tree.TreePath;
 /**
  * @deprecated use {@link TreeUtil#promiseVisit(JTree, TreeVisitor)} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated(forRemoval = true)
 public interface Searchable {
   /**
    * Starts searching by the specified object.

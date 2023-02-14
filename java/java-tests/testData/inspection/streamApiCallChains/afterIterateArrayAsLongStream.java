@@ -1,4 +1,4 @@
-// "Replace 'IntStream.range().mapToLong()' with 'Arrays.stream(intArr)'" "true"
+// "Replace 'IntStream.range().mapToLong()' with 'Arrays.stream(intArr)'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.Arrays;

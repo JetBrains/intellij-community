@@ -15,8 +15,6 @@ public abstract class RunAnythingMatchedRunConfigurationProvider extends RunAnyt
   /**
    * Actual run configuration creation by {@code commandLine}
    *
-   * @param dataContext
-   * @param pattern
    * @return created run configuration
    */
   @NotNull

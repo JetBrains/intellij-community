@@ -22,9 +22,6 @@ import java.util.Set;
  * It contains all necessary decorators. Decorators are:
  * - special borders to show component bounds and cell bounds inside grids
  * - special component which marks selected rectangle
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 class PassiveDecorationLayer extends JComponent{
   @NotNull private final GuiEditor myEditor;

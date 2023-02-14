@@ -402,16 +402,6 @@
       "deprecated": true
     },
     {
-      "key": "DragAndDrop.areaBackground",
-      "description": "Drag and drop area background"
-    },
-    {
-      "key": "DragAndDrop.areaBorderColor"
-    },
-    {
-      "key": "DragAndDrop.areaForeground"
-    },
-    {
       "key": "EditorPane.background"
     },
     {
@@ -534,7 +524,7 @@
     },
     {
       "key": "List.selectionBackground",
-      "description": "Also used for ActionMenuItem (used in context and main menus)"
+      "description": "Also used for ActionMenuItem (used in context and main menus) as default"
     },
     {
       "key": "List.selectionForeground"
@@ -575,8 +565,7 @@
     },
     {
       "key": "Menu.selectionBackground",
-      "deprecated": true,
-      "description": "List.selectionBackground is used instead"
+      "description": "Menu item with a submenu, the main menu bar on Windows/Linux"
     },
     {
       "key": "Menu.selectionForeground",
@@ -738,7 +727,7 @@
     },
     {
       "key": "PopupMenu.borderInsets",
-      "description": "Inner insets along the context or the main menu's borders. Default is \"1,1,1,1\" on Windows/Linux, \"4,0,4,0\" on Mac"
+      "description": "Inner insets along the context menu's borders. Default is \"1,1,1,1\" on Windows/Linux, \"4,0,4,0\" on Mac"
     },
     {
       "key": "PopupMenu.borderWidth",
@@ -784,10 +773,12 @@
       "key": "ProgressBar.progressColor"
     },
     {
-      "key": "ProgressBar.selectionBackground"
+      "key": "ProgressBar.selectionBackground",
+      "description": "The 'selectionBackground' is the color of the text when it is painted over an unfilled area of the progress bar."
     },
     {
-      "key": "ProgressBar.selectionForeground"
+      "key": "ProgressBar.selectionForeground",
+      "description": "The 'selectionForeground' is the color of the text when it is painted over a filled area of the progress bar."
     },
     {
       "key": "ProgressBar.trackColor"
@@ -1032,7 +1023,8 @@
     {
       "key": "StatusBar.hoverBackground",
       "since": "2019.2",
-      "description": "Appears under widgets in status bar"
+      "description": "Appears under widgets in status bar. Use StatusBar.Widget.hoverBackground instead",
+      "deprecated": true
     },
     {
       "key": "StatusBar.bottomColor",
@@ -1311,6 +1303,9 @@
     },
     {
       "key": "Toolbar.Floating.background"
+    },
+    {
+      "key": "Toolbar.Floating.borderColor"
     },
     {
       "key": "ToolBar.background"

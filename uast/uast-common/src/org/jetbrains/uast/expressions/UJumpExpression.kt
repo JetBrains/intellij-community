@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 /**
@@ -13,6 +13,5 @@ interface UJumpExpression : UExpression {
   /**
    * The wrapping element (operator body, function declaration) from where the control flow will get out after execution of this jump expression
    */
-  @JvmDefault
   val jumpTarget: UElement? get() = null
 }

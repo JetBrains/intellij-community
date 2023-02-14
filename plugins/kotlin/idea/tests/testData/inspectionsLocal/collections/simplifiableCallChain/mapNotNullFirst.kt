@@ -1,0 +1,7 @@
+// API_VERSION: 1.5
+// WITH_STDLIB
+data class User(val id: Long, val name: String?)
+
+fun test(users: List<User>) {
+    users.<caret>mapNotNull { it.name }.first()
+}

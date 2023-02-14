@@ -6,10 +6,7 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +30,11 @@ import java.util.Optional;
 
 public class I18nizeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(I18nizeAction.class);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -90,6 +92,15 @@ public class I18nizeAction extends AnAction {
   @Nullable
   public static UInjectionHost getEnclosingStringLiteral(final PsiFile psiFile, final Editor editor) {
     PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    return getEnclosingStringLiteral(psiElement);
+  }
+
+  /**
+   * @param psiElement element to search from
+   * @return UAST element representing an enclosing string literal
+   */
+  @Nullable
+  public static UInjectionHost getEnclosingStringLiteral(PsiElement psiElement) {
     while (psiElement != null) {
       UInjectionHost uastStringLiteral = UastContextKt.toUElement(psiElement, UInjectionHost.class);
       if (uastStringLiteral != null && uastStringLiteral.isString()) {

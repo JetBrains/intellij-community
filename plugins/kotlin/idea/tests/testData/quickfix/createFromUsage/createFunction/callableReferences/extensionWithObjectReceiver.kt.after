@@ -1,0 +1,8 @@
+// "Create extension function 'Foo.bar'" "true"
+object Foo
+
+val f: (String) -> Int = Foo::bar
+
+private fun Foo.bar(s: String): Int {
+    TODO("Not yet implemented")
+}

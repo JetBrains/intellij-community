@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class NegatedEqualityExpressionInspection extends BaseInspection {
+public class NegatedEqualityExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -41,21 +40,19 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiPrefixExpression)) {
+      if (!(parent instanceof PsiPrefixExpression prefixExpression)) {
         return;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       if (!JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(prefixExpression.getOperand());
-      if (!(operand instanceof PsiBinaryExpression)) {
+      if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       CommentTracker commentTracker = new CommentTracker();
       StringBuilder text = new StringBuilder(commentTracker.text(binaryExpression.getLOperand()));
@@ -85,16 +82,15 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
   private static class NegatedEqualsVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) {
         return;
       }
       final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-      if (!(operand instanceof PsiBinaryExpression)) {
+      if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (JavaTokenType.EQEQ.equals(tokenType)) {
         registerError(expression.getOperationSign(), "==");

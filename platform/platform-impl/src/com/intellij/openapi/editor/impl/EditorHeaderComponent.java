@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ import java.awt.*;
 public class EditorHeaderComponent extends JPanel implements UISettingsListener {
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
+    setBorder(new CustomLineBorder(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 1, 0));
   }
 
   @Override

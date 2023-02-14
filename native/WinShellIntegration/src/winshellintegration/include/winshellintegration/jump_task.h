@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
  * intellij::ui::win::JumpTask and intellij::ui::win::JumpTask::BuildSession classes implementation.
@@ -89,9 +89,9 @@ namespace intellij::ui::win
         BuildSession& operator=(BuildSession&&) = delete;
 
     public: // modifiers of optional parameters
-        /// Sets the arguments passed to the application on startup.
+        /// Sets the arguments passed to the application on startup. Pass std::nullopt to empty the value.
         /// @returns *this
-        BuildSession& setApplicationArguments(WideString allArgs) noexcept;
+        BuildSession& setApplicationArguments(std::optional<WideString> allArgs) noexcept;
         /// Conditionally sets the arguments passed to the application on startup.
         ///
         /// @param[in] condition - if true then this invokes setApplicationArguments({std::forward<Ts>(allArgs)...});
@@ -106,9 +106,9 @@ namespace intellij::ui::win
             return *this;
         }
 
-        /// Sets the working directory of the application on startup.
+        /// Sets the working directory of the application on startup. Pass std::nullopt to empty the value.
         /// @returns *this
-        BuildSession& setApplicationWorkingDirectory(std::filesystem::path wdPath) noexcept;
+        BuildSession& setApplicationWorkingDirectory(std::optional<std::filesystem::path> wdPath) noexcept;
         /// Conditionally sets the working directory of the application on startup.
         ///
         /// @param[in] condition - if true then this invokes setApplicationWorkingDirectory({std::forward<Ts>(allArgs)...});
@@ -123,9 +123,9 @@ namespace intellij::ui::win
             return *this;
         }
 
-        /// Sets the text displayed in the tooltip for the tasks in the Jump List.
+        /// Sets the text displayed in the tooltip for the tasks in the Jump List. Pass std::nullopt to empty the value.
         /// @returns *this
-        BuildSession& setDescription(WideString description) noexcept;
+        BuildSession& setDescription(std::optional<WideString> description) noexcept;
         /// Conditionally sets the text displayed in the tooltip for the tasks in the Jump List.
         ///
         /// @param[in] condition - if true then this invokes setDescription({std::forward<Ts>(allArgs)...});

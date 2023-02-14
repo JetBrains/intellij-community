@@ -1,0 +1,8 @@
+// FIR_IDENTICAL
+import java.util.stream.Stream
+
+abstract class A : List<String> {
+    override fun stream(): Stream<String> {
+        return super.stream()
+    }
+}

@@ -4,6 +4,7 @@ package com.intellij.execution.services;
 import com.intellij.execution.services.ServiceEventListener.ServiceEvent;
 import com.intellij.execution.services.ServiceModel.ContributorNode;
 import com.intellij.execution.services.ServiceModel.ServiceGroupNode;
+import com.intellij.execution.services.ServiceModel.ServiceNode;
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceModelFilter.ServiceViewFilter;
 import com.intellij.execution.services.ServiceViewState.ServiceState;
@@ -90,12 +91,12 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   }
 
   @Nullable
-  protected ServiceViewItem findItem(@NotNull ServiceViewItem item) {
+  protected ServiceViewItem findItemSafe(@NotNull ServiceViewItem item) {
     ServiceViewItem updatedItem = findItem(item, myModel.getRoots());
     if (updatedItem != null) {
       return updatedItem;
     }
-    return myModel.findItem(item.getValue(), item.getRootContributor().getClass());
+    return myModel.findItemSafe(item.getValue(), item.getRootContributor().getClass());
   }
 
   void addModelListener(@NotNull ServiceViewModelListener listener) {
@@ -200,12 +201,21 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
         AtomicReference<ServiceGroupNode> ref = new AtomicReference<>((ServiceGroupNode)item);
         return new GroupModel(model, modelFilter, ref, parentFilter);
       }
-      else if (item.getChildren().isEmpty()) {
+      else if (isSingleService(item)) {
         AtomicReference<ServiceViewItem> ref = new AtomicReference<>(item);
         return new SingeServiceModel(model, modelFilter, ref, parentFilter);
       }
     }
     return new ServiceListModel(model, modelFilter, items, parentFilter);
+  }
+
+  private static boolean isSingleService(ServiceViewItem item) {
+    if (item instanceof ServiceNode node) {
+      if (!node.isChildrenInitialized() || !node.isLoaded()) {
+        return false;
+      }
+    }
+    return item.getChildren().isEmpty();
   }
 
   @Nullable
@@ -472,7 +482,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
       ServiceViewItem service = myServiceRef.get();
       if (service == null || !e.contributorClass.isInstance(service.getRootContributor())) return;
 
-      myServiceRef.set(findItem(service));
+      myServiceRef.set(findItemSafe(service));
       notifyListeners(e);
     }
 
@@ -519,7 +529,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
         ServiceViewItem node = myRoots.get(i);
         if (!e.contributorClass.isInstance(node.getRootContributor())) continue;
 
-        ServiceViewItem updatedNode = findItem(node);
+        ServiceViewItem updatedNode = findItemSafe(node);
         if (updatedNode != null) {
           //noinspection SuspiciousListRemoveInLoop
           myRoots.remove(i);

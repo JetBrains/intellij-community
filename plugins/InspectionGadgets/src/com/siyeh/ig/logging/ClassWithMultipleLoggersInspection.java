@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,28 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.JavaLoggingUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
@@ -46,16 +52,18 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(loggerNames, InspectionGadgetsBundle.message("logger.class.name"),
-                                              InspectionGadgetsBundle.message("choose.logger.class"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("loggerNames", InspectionGadgetsBundle.message("logger.class.name"),
+                 new JavaClassValidator()
+                          .withTitle(InspectionGadgetsBundle.message("choose.logger.class")))
+    );
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "multiple.loggers.problem.descriptor");
+    return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
   }
 
   @Override
@@ -75,18 +83,11 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     return new ClassWithMultipleLoggersVisitor();
   }
 
-  private class ClassWithMultipleLoggersVisitor
-    extends BaseInspectionVisitor {
+  private class ClassWithMultipleLoggersVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
-        return;
-      }
       if (aClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (aClass.getContainingClass() != null) {
         return;
       }
       int numLoggers = 0;
@@ -102,9 +103,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     }
 
     private boolean isLogger(PsiVariable variable) {
-      final PsiType type = variable.getType();
-      final String text = type.getCanonicalText();
-      return loggerNames.contains(text);
+      return loggerNames.contains(variable.getType().getCanonicalText());
     }
   }
 }

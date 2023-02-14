@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Allows to create references to PSI elements that can survive a reparse and return the corresponding
+ * Allows creating references to PSI elements that can survive a reparse and return the corresponding
  * element in the PSI tree after the reparse.
  */
 public abstract class SmartPointerManager {
@@ -61,7 +61,7 @@ public abstract class SmartPointerManager {
    * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.ScheduledForRemoval
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);

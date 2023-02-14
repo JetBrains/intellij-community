@@ -14,9 +14,9 @@ import java.util.Collections;
 import java.util.List;
 
 public final class VcsConsoleLine {
-  private final List<Pair<String, ConsoleViewContentType>> myChunks;
+  private final @NotNull List<? extends Pair<String, ConsoleViewContentType>> myChunks;
 
-  private VcsConsoleLine(@NotNull List<Pair<String, ConsoleViewContentType>> chunks) {
+  private VcsConsoleLine(@NotNull List<? extends Pair<String, ConsoleViewContentType>> chunks) {
     myChunks = chunks;
   }
 
@@ -35,7 +35,7 @@ public final class VcsConsoleLine {
   }
 
   @Nullable
-  public static VcsConsoleLine create(@NotNull List<Pair<@Nls String, ConsoleViewContentType>> lineChunks) {
+  public static VcsConsoleLine create(@NotNull List<? extends Pair<@Nls String, ConsoleViewContentType>> lineChunks) {
     List<Pair<String, ConsoleViewContentType>> chunks = ContainerUtil.filter(lineChunks, it -> !StringUtil.isEmptyOrSpaces(it.first));
     if (chunks.isEmpty()) return null;
     return new VcsConsoleLine(chunks);

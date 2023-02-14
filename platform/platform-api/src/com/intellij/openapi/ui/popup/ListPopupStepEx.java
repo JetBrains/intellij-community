@@ -11,10 +11,21 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 
 public interface ListPopupStepEx<T> extends ListPopupStep<T> {
-  PopupStep<?> onChosen(T selectedValue, boolean finalChoice, @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers);
+
+  default @Nullable PopupStep<?> onChosen(T selectedValue, boolean finalChoice, @Nullable InputEvent inputEvent) {
+    return onChosen(selectedValue, finalChoice, inputEvent == null ? 0 : inputEvent.getModifiers());
+  }
+
+  /** @deprecated Override {@link #onChosen(Object, boolean, InputEvent)} instead */
+  @Deprecated(forRemoval = true)
+  default @Nullable PopupStep<?> onChosen(T selectedValue,
+                                          boolean finalChoice,
+                                          @MagicConstant(flagsFromClass = InputEvent.class) int eventModifiers) {
+    return onChosen(selectedValue, finalChoice);
+  }
 
   @NlsContexts.Tooltip @Nullable String getTooltipTextFor(T value);
-  
+
   void setEmptyText(@NotNull StatusText emptyText);
 
   default @Nls @Nullable String getValueFor(T t) { return null; }

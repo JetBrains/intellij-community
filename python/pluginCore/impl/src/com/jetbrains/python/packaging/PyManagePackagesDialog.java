@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.project.Project;
@@ -22,9 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyManagePackagesDialog extends DialogWrapper {
   private final JPanel myMainPanel;
 
@@ -37,7 +35,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
-    PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel();
+    PackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel();
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     packagesPanel.updatePackages(PyPackageManagers.getInstance().getManagementService(project, sdk));

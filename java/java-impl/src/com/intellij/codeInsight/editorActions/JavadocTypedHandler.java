@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -35,8 +21,6 @@ import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
 
 /**
  * Advises typing in javadoc if necessary.
- * 
- * @author Denis Zhdanov
  */
 public class JavadocTypedHandler extends TypedHandlerDelegate {
 
@@ -133,19 +117,23 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     for (int i = endOffset - 1; i >= 0; i--) {
       char c = text.charAt(i);
       switch (c) {
-        case '\n': return null;
-        case CLOSE_TAG_SYMBOL: return null;
-        case START_TAG_SYMBOL:
+        case '\n' -> {
+          return null;
+        }
+        case CLOSE_TAG_SYMBOL -> {
+          return null;
+        }
+        case START_TAG_SYMBOL -> {
           if (text.charAt(i + 1) == SLASH) {
             // Handle situation like <tag></tag>[offset].
             return null;
           }
           return text.subSequence(i + 1, endOffset).toString();
-        
+        }
+
         // There is a possible case that opening tag has attributes, e.g. <a href='bla-bla-bla'>[offset]. We want to extract
         // only tag name then.
-        case ' ':
-        case '\t': endOffset = i;
+        case ' ', '\t' -> endOffset = i;
       }
     }
     return null;
@@ -175,12 +163,9 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
     if (element instanceof PsiDocParamRef) {
       element = element.getParent();
     }
-    
-    if (element instanceof PsiDocTag) {
-      PsiDocTag tag = (PsiDocTag)element;
-      if ("param".equals(tag.getName()) && isTypeParamBracketClosedAfterParamTag(tag, offset)) {
-        return false; 
-      }
+
+    if (element instanceof PsiDocTag tag && "param".equals(tag.getName()) && isTypeParamBracketClosedAfterParamTag(tag, offset)) {
+      return false;
     }
 
     // The contents of inline tags is not HTML, so the paired tag completion isn't appropriate there.

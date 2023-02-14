@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,11 @@ public class TypeExpression extends Expression {
   @Override
   public Result calculateResult(ExpressionContext context) {
     final Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    Editor editor = context.getEditor();
+    if (editor != null) {
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+    }
     if (myItems.isEmpty()) return null;
 
     final PsiType type = myItems.iterator().next().getType();
@@ -57,7 +62,11 @@ public class TypeExpression extends Expression {
   @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     if (myItems.size() <= 1) return null;
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+    Editor editor = context.getEditor();
+    if (editor != null) {
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+    }
 
     List<LookupElement> result = new ArrayList<>(myItems.size());
     for (final SmartTypePointer item : myItems) {

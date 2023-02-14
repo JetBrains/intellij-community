@@ -19,14 +19,15 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,10 +131,8 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     final PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
     for(PsiMethod candidate: methods) {
       final PsiMethod[] superMethods = candidate.findSuperMethods(false);
-      for(PsiMethod superMethod: superMethods) {
-        if (superMethod.equals(method)) {
-          return candidate;
-        }
+      if (ArrayUtil.contains(method, superMethods)) {
+        return candidate;
       }
     }
     return null;
@@ -155,7 +154,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (EditorActivityManager.getInstance().isVisible(editor)) {
+    if (UIUtil.isShowing(editor.getContentComponent())) {
       invokeHandler(project, editor, method);
     }
   }

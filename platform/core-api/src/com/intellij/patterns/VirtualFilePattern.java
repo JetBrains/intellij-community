@@ -3,6 +3,7 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,12 +39,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
         final String extension = virtualFile.getExtension();
-        for (String alternative : alternatives) {
-          if (alternative.equals(extension)) {
-            return true;
-          }
-        }
-        return false;
+        return ArrayUtil.contains(extension, alternatives);
       }
     });
   }

@@ -1,14 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.idea.Main;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
-import org.apache.log4j.spi.ThrowableInformation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -17,47 +13,63 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.stream.Stream;
 
-public class DialogAppender extends AppenderSkeleton {
+public final class DialogAppender extends Handler {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
+
+  private static volatile boolean ourDelay;
 
   private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
 
+  //TODO android update checker accesses project jdk, fix it and remove
+  public static void delayPublishingForcibly() {
+    ourDelay = true;
+  }
+
+  public static void stopForceDelaying() {
+    ourDelay = false;
+  }
+
   @Override
-  protected synchronized void append(@NotNull LoggingEvent event) {
-    if (!event.getLevel().isGreaterOrEqual(Level.ERROR) || Main.isCommandLine()) {
+  public void publish(LogRecord event) {
+    if (event.getLevel().intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
       return;  // the dialog appender doesn't deal with non-critical errors and is meaningless when there is no frame to show an error icon
     }
 
     IdeaLoggingEvent ideaEvent;
-    Object messageObject = event.getMessage();
-    if (messageObject instanceof IdeaLoggingEvent) {
-      ideaEvent = (IdeaLoggingEvent)messageObject;
+    Object[] parameters = event.getParameters();
+    if (parameters != null && parameters.length > 0 && parameters[0] instanceof IdeaLoggingEvent) {
+      ideaEvent = (IdeaLoggingEvent)parameters[0];
     }
     else {
-      ThrowableInformation info = event.getThrowableInformation();
-      if (info == null || info.getThrowable() == null) return;
-      ideaEvent = extractLoggingEvent(messageObject, info.getThrowable());
+      Throwable thrown = event.getThrown();
+      if (thrown == null) return;
+      ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
     }
 
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      IdeaLoggingEvent queued;
-      while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
-      queueAppend(ideaEvent);
-    }
-    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
-      myEarlyEvents.add(ideaEvent);
+    synchronized (this) {
+      if (LoadingState.COMPONENTS_LOADED.isOccurred() && !ourDelay) {
+        IdeaLoggingEvent queued;
+        while ((queued = myEarlyEvents.poll()) != null) queueAppend(queued);
+        queueAppend(ideaEvent);
+      }
+      else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+        myEarlyEvents.add(ideaEvent);
+      }
     }
   }
 
   private void queueAppend(IdeaLoggingEvent event) {
     if (myPendingAppendCounts.incrementAndGet() > MAX_ASYNC_LOGGING_EVENTS) {
-      // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
+      // stop adding requests to the queue, or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
     }
     else {
@@ -97,13 +109,7 @@ public class DialogAppender extends AppenderSkeleton {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
-    Throwable rootCause = ExceptionUtil.getRootCause(throwable);
-    if (rootCause instanceof LogEventException) {
-      return ((LogEventException)rootCause).getLogMessage();
-    }
-
     String message = null;
     List<ExceptionWithAttachments> withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments.class);
     if (!withAttachments.isEmpty() && withAttachments.get(0) instanceof RuntimeExceptionWithAttachments) {
@@ -128,8 +134,7 @@ public class DialogAppender extends AppenderSkeleton {
   }
 
   @Override
-  public boolean requiresLayout() {
-    return false;
+  public void flush() {
   }
 
   @Override

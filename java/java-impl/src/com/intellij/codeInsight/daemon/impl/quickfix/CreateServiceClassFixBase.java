@@ -28,9 +28,6 @@ import java.util.Objects;
 
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox;
 
-/**
- * @author Pavel.Dolgov
- */
 public abstract class CreateServiceClassFixBase implements IntentionAction {
   public static final Key<PsiDirectory> SERVICE_ROOT_DIR = Key.create("SERVICE_ROOT_DIR");
   public static final Key<CreateClassKind> SERVICE_CLASS_KIND = Key.create("SERVICE_CLASS_KIND");

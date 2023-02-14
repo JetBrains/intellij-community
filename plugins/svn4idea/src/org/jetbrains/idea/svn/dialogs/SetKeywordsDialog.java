@@ -17,12 +17,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SetKeywordsDialog extends DialogWrapper {
-  private static final List<@NlsSafe String> KNOWN_KEYWORDS =
-    newArrayList("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
+  private static final List<String> KNOWN_KEYWORDS = List.of("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
 
   private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<@NlsSafe String, @NlsSafe String>immutableMapBuilder()
     .put("URL", "HeadURL")

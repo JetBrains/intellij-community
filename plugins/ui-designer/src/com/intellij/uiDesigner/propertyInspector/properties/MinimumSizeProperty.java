@@ -7,10 +7,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class MinimumSizeProperty extends AbstractDimensionProperty<RadComponent> {
   public static MinimumSizeProperty getInstance(Project project) {
     return project.getService(MinimumSizeProperty.class);

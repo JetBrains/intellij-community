@@ -10,4 +10,5 @@ object GdslFileType : LanguageFileType(GroovyLanguage, true) {
   override fun getName(): String = "gdsl"
   override fun getDescription(): String = GroovyBundle.message("filetype.gdsl.description")
   override fun getDefaultExtension(): String = "gdsl"
+  override fun getDisplayName(): String = GroovyBundle.message("filetype.gdsl.display.name")
 }

@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
@@ -14,12 +17,12 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +37,9 @@ import java.util.List;
 
 import static com.intellij.util.ui.FocusUtil.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class ThreeComponentsSplitter extends JPanel implements Disposable {
   private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
+  private boolean isLookAndFeelUpdated = false;
   private int myDividerWidth;
   /**
    *                        /------/
@@ -180,7 +181,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
       //Step 3 : Return the component, but find the first focusable component first
 
-      return findFocusableComponentIn((JComponent)component, null);
+      return findFocusableComponentIn(component, null);
     }
   }
 
@@ -191,26 +192,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     this(false, parentDisposable);
   }
 
-  /**
-   * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ThreeComponentsSplitter() {
-    this(false, false, null, true);
-  }
-
   public ThreeComponentsSplitter(boolean vertical, @NotNull Disposable parentDisposable) {
     this(vertical, false, parentDisposable);
-  }
-
-  /**
-   * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ThreeComponentsSplitter(boolean vertical) {
-    this(vertical, false, null, true);
   }
 
   public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers, @NotNull Disposable parentDisposable) {
@@ -220,29 +203,29 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   /**
    * @deprecated Use {@link #ThreeComponentsSplitter(Disposable)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers) {
     this(vertical, onePixelDividers, null, true);
   }
 
-  private ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers, @Nullable Disposable parentDisposable, @SuppressWarnings("unused") boolean __) {
+  private ThreeComponentsSplitter(boolean vertical, boolean onePixelDividers, @Nullable Disposable parentDisposable, boolean __) {
     myVerticalSplit = vertical;
     myShowDividerControls = false;
-    myFirstDivider = new Divider(true, onePixelDividers, parentDisposable == null ? this : parentDisposable);
-    myLastDivider = new Divider(false, onePixelDividers, parentDisposable == null ? this : parentDisposable);
-
+    Disposable disposable = ObjectUtils.notNull(parentDisposable, this);
+    myFirstDivider = new Divider(true, onePixelDividers, disposable);
+    myLastDivider = new Divider(false, onePixelDividers, disposable);
     myDividerWidth = onePixelDividers ? 1 : 7;
-    if (onePixelDividers) {
-      Color bg = UIUtil.CONTRAST_BORDER_COLOR;
-      myFirstDivider.setBackground(bg);
-      myLastDivider.setBackground(bg);
-    }
+
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC,
+                                                                source -> isLookAndFeelUpdated = true);
+    }
   }
 
   public void setShowDividerControls(boolean showDividerControls) {
@@ -543,7 +526,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private void doAddComponent(@Nullable JComponent component) {
     if (component != null) {
-      updateComponentTreeUI(component);
+      if (isLookAndFeelUpdated) {
+        updateComponentTreeUI(component);
+        isLookAndFeelUpdated = false;
+      }
       add(component);
       component.invalidate();
     }
@@ -682,6 +668,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           releaseGlassPane();
         }
       }));
+    }
+
+    @Override
+    public Color getBackground() {
+      return myIsOnePixel ? UIUtil.CONTRAST_BORDER_COLOR : super.getBackground();
     }
 
     private boolean isInside(Point p) {
@@ -910,26 +901,25 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         return;
       }
       switch (e.getID()) {
-        case MouseEvent.MOUSE_ENTERED:
-          setCursor(getResizeCursor());
-          break;
-        case MouseEvent.MOUSE_EXITED:
+        case MouseEvent.MOUSE_ENTERED -> setCursor(getResizeCursor());
+        case MouseEvent.MOUSE_EXITED -> {
           if (!myDragging) {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           }
-          break;
-        case MouseEvent.MOUSE_PRESSED:
+        }
+        case MouseEvent.MOUSE_PRESSED -> {
           if (isInside(e.getPoint())) {
             myWasPressedOnMe = true;
             if (myGlassPane != null) {
               myGlassPane.setCursor(getResizeCursor(), myListener);
             }
             e.consume();
-          } else {
+          }
+          else {
             myWasPressedOnMe = false;
           }
-          break;
-        case MouseEvent.MOUSE_RELEASED:
+        }
+        case MouseEvent.MOUSE_RELEASED -> {
           if (myWasPressedOnMe) {
             e.consume();
           }
@@ -942,12 +932,12 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           myWasPressedOnMe = false;
           myDragging = false;
           myPoint = null;
-          break;
-        case MouseEvent.MOUSE_CLICKED:
+        }
+        case MouseEvent.MOUSE_CLICKED -> {
           if (e.getClickCount() == 2) {
             center();
           }
-          break;
+        }
       }
     }
     private Cursor getResizeCursor() {

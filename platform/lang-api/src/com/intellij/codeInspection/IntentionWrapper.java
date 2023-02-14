@@ -1,17 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,13 +20,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, IntentionActionDelegate {
+public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, CustomizableIntentionActionDelegate {
   private final IntentionAction myAction;
-  private final VirtualFile myVirtualFile;
 
+  /**
+   * @param action action to wrap
+   * @param file PsiFile to apply the action to (unused)
+   * @deprecated use {@link IntentionWrapper#IntentionWrapper(IntentionAction)}
+   */
+  @Deprecated
   public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
-    myVirtualFile = file.getVirtualFile();
+  }
+
+  /**
+   * @param action action to wrap
+   */
+  public IntentionWrapper(@NotNull IntentionAction action) {
+    myAction = action;
   }
 
   @NotNull
@@ -76,9 +86,10 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiFile file = PsiManager.getInstance(project).findFile(myVirtualFile);
+    PsiElement element = descriptor.getPsiElement();
+    PsiFile file = element == null ? null : element.getContainingFile();
     if (file != null) {
-      FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(myVirtualFile);
+      FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
       myAction.invoke(project, editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null, file);
     }
   }
@@ -99,7 +110,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   public static LocalQuickFix wrapToQuickFix(@Nullable IntentionAction action, @NotNull PsiFile file) {
     if (action == null) return null;
     if (action instanceof LocalQuickFix) return (LocalQuickFix)action;
-    return new IntentionWrapper(action, file);
+    return new IntentionWrapper(action);
   }
 
   public static LocalQuickFix @NotNull [] wrapToQuickFixes(IntentionAction @NotNull [] actions, @NotNull PsiFile file) {
@@ -119,5 +130,12 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
       fixes.add(wrapToQuickFix(action, file));
     }
     return fixes;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
+                                                       @NotNull Editor editor,
+                                                       @NotNull PsiFile file) {
+    return myAction.generatePreview(project, editor, file);
   }
 }

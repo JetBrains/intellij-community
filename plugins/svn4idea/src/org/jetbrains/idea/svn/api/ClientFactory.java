@@ -32,9 +32,6 @@ import org.jetbrains.idea.svn.upgrade.UpgradeClient;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class ClientFactory {
 
   @NotNull

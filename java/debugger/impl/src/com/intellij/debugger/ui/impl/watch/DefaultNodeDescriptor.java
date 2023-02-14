@@ -24,8 +24,9 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.diagnostic.Logger;
 
 
-public final class DefaultNodeDescriptor extends NodeDescriptorImpl{
+public final class DefaultNodeDescriptor extends NodeDescriptorImpl {
   private static final Logger LOG = Logger.getInstance(DefaultNodeDescriptor.class);
+
   public boolean equals(Object obj) {
     return obj instanceof DefaultNodeDescriptor;
   }

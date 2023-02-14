@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
@@ -27,8 +27,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection {
 
@@ -58,11 +60,9 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("loop.variable.not.updated.inside.loop.option.nonlocal"),
-      this, "ignorePossibleNonLocalChanges");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignorePossibleNonLocalChanges", InspectionGadgetsBundle.message("loop.variable.not.updated.inside.loop.option.nonlocal")));
   }
 
   @Override
@@ -74,19 +74,19 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
       check(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       check(statement);
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       super.visitForStatement(statement);
       check(statement);
     }
@@ -135,9 +135,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
       if (PsiUtil.isConstantExpression(condition) || ExpressionUtils.isNullLiteral(condition)) {
         return true;
       }
-      if (condition instanceof PsiInstanceOfExpression) {
-        final PsiInstanceOfExpression instanceOfExpression =
-          (PsiInstanceOfExpression)condition;
+      if (condition instanceof PsiInstanceOfExpression instanceOfExpression) {
         final PsiExpression operand = instanceOfExpression.getOperand();
         return isConditionNotUpdated(operand, context, notUpdated);
       }
@@ -147,11 +145,10 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
           ((PsiParenthesizedExpression)condition).getExpression();
         return isConditionNotUpdated(expression, context, notUpdated);
       }
-      else if (condition instanceof PsiPolyadicExpression) {
+      else if (condition instanceof PsiPolyadicExpression polyadicExpression) {
         // while (value != x) { ... }
         // while (value != (x + y)) { ... }
         // while (b1 && b2) { ... }
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
         for (PsiExpression operand : polyadicExpression.getOperands()) {
           if (!isConditionNotUpdated(operand, context, notUpdated)) {
             return false;
@@ -159,12 +156,9 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
         }
         return true;
       }
-      else if (condition instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression =
-          (PsiReferenceExpression)condition;
+      else if (condition instanceof PsiReferenceExpression referenceExpression) {
         final PsiElement element = referenceExpression.resolve();
-        if (element instanceof PsiField) {
-          final PsiField field = (PsiField)element;
+        if (element instanceof PsiField field) {
           final PsiType type = field.getType();
           if (field.hasModifierProperty(PsiModifier.FINAL) &&
               type.getArrayDimensions() == 0) {
@@ -195,14 +189,13 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
           }
         }
       }
-      else if (condition instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+      else if (condition instanceof PsiPrefixExpression prefixExpression) {
         if (!PsiUtil.isIncrementDecrementOperation(prefixExpression)) {
           final PsiExpression operand = prefixExpression.getOperand();
           return isConditionNotUpdated(operand, context, notUpdated);
         }
       }
-      else if (condition instanceof PsiArrayAccessExpression) {
+      else if (condition instanceof PsiArrayAccessExpression accessExpression) {
         // Actually the contents of the array could change nevertheless
         // if it is accessed through a different reference like this:
         //   int[] local_ints = new int[]{1, 2};
@@ -210,14 +203,11 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
         //   while (local_ints[0] > 0) { other_ints[0]--; }
         //
         // Keep this check?
-        final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression)condition;
         final PsiExpression indexExpression = accessExpression.getIndexExpression();
         return isConditionNotUpdated(indexExpression, context, notUpdated)
                && isConditionNotUpdated(accessExpression.getArrayExpression(), context, notUpdated);
       }
-      else if (condition instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditionalExpression =
-          (PsiConditionalExpression)condition;
+      else if (condition instanceof PsiConditionalExpression conditionalExpression) {
         final PsiExpression thenExpression =
           conditionalExpression.getThenExpression();
         final PsiExpression elseExpression =

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.logger
 
 import com.intellij.application.subscribe
@@ -8,6 +8,9 @@ import com.intellij.internal.statistic.utils.EventRateThrottleResult
 import com.intellij.internal.statistic.utils.EventsIdentityWindowThrottle
 import com.intellij.internal.statistic.utils.EventsRateWindowThrottle
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 
 internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
                                                 recorderId: String,
@@ -26,11 +29,12 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
   private val ourGroupThrottle: EventsIdentityWindowThrottle
 
   init {
-    val threshold = getOrDefault(configOptionsService.getThreshold(recorderId), 24000)
+    val configOptions = configOptionsService.getOptions(recorderId)
+    val threshold = getOrDefault(configOptions.threshold, 24000)
     ourThrottle = EventsRateWindowThrottle(threshold, 60L * 60 * 1000, System.currentTimeMillis())
 
-    val groupThreshold = getOrDefault(configOptionsService.getGroupThreshold(recorderId), 12000)
-    val groupAlertThreshold = getOrDefault(configOptionsService.getGroupAlertThreshold(recorderId), 6000)
+    val groupThreshold = getOrDefault(configOptions.groupThreshold, 12000)
+    val groupAlertThreshold = getOrDefault(configOptions.groupAlertThreshold, 6000)
     ourGroupThrottle = EventsIdentityWindowThrottle(groupThreshold, groupAlertThreshold, 60L * 60 * 1000)
 
     EventLogConfigOptionsService.TOPIC.subscribe(this, object : EventLogThresholdConfigOptionsListener(recorderId) {
@@ -85,7 +89,7 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
   }
 
   private fun copyEvent(eventId: String, groupId: String, groupVersion: String, logEvent: LogEvent) = LogEvent(
-    logEvent.session, logEvent.build, logEvent.bucket, logEvent.time, groupId, groupVersion, logEvent.recorderVersion,
+    logEvent.session, logEvent.build, logEvent.bucket, logEvent.time, LogEventGroup(groupId, groupVersion), logEvent.recorderVersion,
     LogEventAction(eventId, logEvent.event.state)
   )
 

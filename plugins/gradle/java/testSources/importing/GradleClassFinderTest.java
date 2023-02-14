@@ -48,12 +48,14 @@ public class GradleClassFinderTest extends GradleImportingTestCase {
     // app module files
     createProjectSubFile("app/src/main/groovy/App.groovy", "class App {}");
     // buildSrc module files
-    createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", "package org.buildsrc;\n" +
-                                                                                       "import groovy.util.AntBuilder;\n" +
-                                                                                       "public class BuildSrcClass {}");
-    importProject("subprojects {\n" +
-                  "    apply plugin: 'groovy'\n" +
-                  "}");
+    createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", """
+      package org.buildsrc;
+      import groovy.util.AntBuilder;
+      public class BuildSrcClass {}""");
+    importProject("""
+                    subprojects {
+                        apply plugin: 'groovy'
+                    }""");
     assertModules("multiproject",
                   "multiproject.app", "multiproject.app.main", "multiproject.app.test",
                   "multiproject.buildSrc", "multiproject.buildSrc.main", "multiproject.buildSrc.test");

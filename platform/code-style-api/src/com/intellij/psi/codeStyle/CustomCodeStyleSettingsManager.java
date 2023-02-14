@@ -14,6 +14,7 @@ class CustomCodeStyleSettingsManager {
 
 
   private final Map<String, CustomCodeStyleSettings> myCustomSettings = new HashMap<>();
+  @NotNull
   private final CodeStyleSettings myRootSettings;
   private final Map<String, Element> myUnknownCustomElements = new HashMap<>();
 
@@ -186,7 +187,8 @@ class CustomCodeStyleSettingsManager {
   void writeExternal(@NotNull Element element, @NotNull CodeStyleSettings defaultSettings) {
     List<String> tags = new ArrayList<>();
     Element tempRoot = new Element("temp");
-    for (CustomCodeStyleSettings settings : getAllSettings()) {
+    Collection<CustomCodeStyleSettings> allSettings = getAllSettings();
+    for (CustomCodeStyleSettings settings : allSettings) {
       tags.addAll(settings.getKnownTagNames());
       settings.writeExternal(tempRoot, defaultSettings.getCustomSettings(settings.getClass()));
     }

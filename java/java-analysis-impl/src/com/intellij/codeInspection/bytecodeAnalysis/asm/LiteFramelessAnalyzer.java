@@ -8,8 +8,6 @@ import java.util.List;
 /**
  * Specialized lite version of {@link FramelessAnalyzer}.
  * No processing of Subroutines. May be used for methods without JSR/RET instructions.
- *
- * @author lambdamix
  */
 public class LiteFramelessAnalyzer extends FramelessAnalyzer {
   public LiteFramelessAnalyzer(EdgeCreator creator) {super(creator);}

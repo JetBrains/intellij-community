@@ -98,9 +98,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     if (!depsGraph.isEmpty()) {
       final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
       for (DataNode<?> dataNode : depsGraph) {
-        if (!(dataNode.getData() instanceof ProjectDependencies)) continue;
+        if (!(dataNode.getData() instanceof ProjectDependencies projectDependencies)) continue;
 
-        ProjectDependencies projectDependencies = (ProjectDependencies)dataNode.getData();
         for (ComponentDependencies componentDependencies : projectDependencies.getComponentsDependencies()) {
           depNode.add(new DependencyScopeExternalSystemNode(externalProjectsView, componentDependencies.getCompileDependenciesGraph()));
           depNode.add(new DependencyScopeExternalSystemNode(externalProjectsView, componentDependencies.getRuntimeDependenciesGraph()));
@@ -117,8 +116,8 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     final Collection<DataNode<?>> libDeps = dataNodes.get(ProjectKeys.LIBRARY_DEPENDENCY);
 
     if (!moduleDeps.isEmpty() || !libDeps.isEmpty()) {
-      final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
-      boolean addDepNode = false;
+      //noinspection rawtypes
+      List<ExternalSystemNode<? extends DependencyData>> depNodeChildren = new ArrayList<>();
 
       for (DataNode<?> dataNode : moduleDeps) {
         if (!(dataNode.getData() instanceof ModuleDependencyData)) continue;
@@ -129,8 +128,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           result.add(moduleDependencyDataExternalSystemNode);
         }
         else {
-          depNode.add(moduleDependencyDataExternalSystemNode);
-          addDepNode = true;
+          depNodeChildren.add(moduleDependencyDataExternalSystemNode);
         }
       }
 
@@ -148,15 +146,16 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           libraryDependencyDataExternalSystemNode.setErrorLevel(ExternalProjectsStructure.ErrorLevel.NONE);
         }
         if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleData) {
-          depNode.add(libraryDependencyDataExternalSystemNode);
-          addDepNode = true;
+          depNodeChildren.add(libraryDependencyDataExternalSystemNode);
         }
         else {
           result.add(libraryDependencyDataExternalSystemNode);
         }
       }
 
-      if (addDepNode) {
+      if (!depNodeChildren.isEmpty()) {
+        final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
+        depNode.addAll(depNodeChildren);
         result.add(depNode);
       }
     }
@@ -240,12 +239,17 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     }
 
     @Override
+    public @Nullable DependencyNode getDependencyNode() {
+      return myDependenciesGraph;
+    }
+
+    @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.PpLibFolder);
       String description = myDependenciesGraph.getDescription();
       if (description != null) {
-        setNameAndTooltip(getName(), description, (String)null);
+        setNameAndTooltip(presentation, getName(), description, (String)null);
       }
     }
 
@@ -273,7 +277,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
       for (DependencyNode dependencyNode : node.getDependencies()) {
         ExternalProjectsStructure.ErrorLevel eachLevel = getErrorLevelRecursively(dependencyNode);
-        if (result.compareTo(eachLevel) > 0) result = eachLevel;
+        if (result.compareTo(eachLevel) < 0) result = eachLevel;
         if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
       }
       return result;
@@ -322,6 +326,17 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       return myName;
     }
 
+    @Nullable
+    @Override
+    protected String getMenuId() {
+      return "ExternalSystemView.DependencyMenu";
+    }
+
+    @Override
+    public @NotNull DependencyNode getDependencyNode() {
+      return ObjectUtils.chooseNotNull(myReferencedNode, myDependencyNode);
+    }
+
     @Override
     protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
@@ -340,7 +355,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           tooltip = null;
         }
       }
-      setNameAndTooltip(getName(), tooltip, (String)null);
+      setNameAndTooltip(presentation, getName(), tooltip, (String)null);
     }
 
     @NotNull
@@ -439,8 +454,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
     @NotNull
     private static String getDependencySimpleName(@NotNull ExternalSystemNode<?> node) {
       Object thatData = node.getData();
-      if (thatData instanceof LibraryDependencyData) {
-        LibraryDependencyData dependencyData = (LibraryDependencyData)thatData;
+      if (thatData instanceof LibraryDependencyData dependencyData) {
         String externalName = dependencyData.getExternalName();
         if (StringUtil.isEmpty(externalName)) {
           Set<String> paths = dependencyData.getTarget().getPaths(LibraryPathType.BINARY);
@@ -496,7 +510,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
 
       final ModuleDependencyData data = getData();
       if (data != null) {
-        setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
+        setNameAndTooltip(presentation, getName(), null, data.getScope().getDisplayName());
       }
     }
 
@@ -525,7 +539,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
 
       final LibraryDependencyData data = getData();
       if (data != null) {
-        setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
+        setNameAndTooltip(presentation, getName(), null, data.getScope().getDisplayName());
       }
     }
   }
@@ -533,8 +547,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
   @NotNull
   private static String getNodeDisplayName(@NotNull DataNode<?> node) {
     Object data = node.getData();
-    if (data instanceof LibraryDependencyData) {
-      LibraryDependencyData libraryDependencyData = (LibraryDependencyData)data;
+    if (data instanceof LibraryDependencyData libraryDependencyData) {
       String externalName = libraryDependencyData.getExternalName();
       if (StringUtil.isEmpty(externalName)) {
         Set<String> paths = libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY);

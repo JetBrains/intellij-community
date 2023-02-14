@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * A service managing write-safe contexts, ensuring that no one will be able to perform an unexpected model change using
@@ -44,17 +46,14 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  *
  * @see ModalityState
- * @author peter
  */
 public abstract class TransactionGuard {
-  private static volatile TransactionGuard ourInstance = CachedSingletonsRegistry.markCachedField(TransactionGuard.class);
+  private static final Supplier<TransactionGuard> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(TransactionGuard.class);
+  });
 
   public static TransactionGuard getInstance() {
-    TransactionGuard instance = ourInstance;
-    if (instance == null) {
-      ourInstance = instance = ApplicationManager.getApplication().getService(TransactionGuard.class);
-    }
-    return instance;
+    return ourInstance.get();
   }
 
   /**
@@ -87,7 +86,7 @@ public abstract class TransactionGuard {
    * @param state modality to check
    * @return {@code true} if a given modality is write-safe, {@code false} otherwise
    */
-  public abstract boolean isWriteSafeModality(ModalityState state);
+  public abstract boolean isWriteSafeModality(@NotNull ModalityState state);
 
   /**
    * @deprecated Replace with {@link Application#invokeLater} and take care that the default or explicitly passed modality state is write-safe.

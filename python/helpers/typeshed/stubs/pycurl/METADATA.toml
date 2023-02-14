@@ -1,0 +1,4 @@
+version = "7.45.*"
+
+[tool.stubtest]
+apt_dependencies = ["libcurl4-openssl-dev"]

@@ -23,10 +23,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,10 +34,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
   private static final Logger LOG = Logger.getInstance(VirtualFileGist.class);
   private static final int ourInternalVersion = 2;
@@ -56,36 +54,60 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
 
   @Override
   public Data getFileData(@Nullable Project project, @NotNull VirtualFile file) {
+    return getOrCalculateAndCache(project, file, myCalculator).get();
+  }
+
+  @Override
+  public @Nullable Supplier<Data> getUpToDateOrNull(@Nullable Project project, @NotNull VirtualFile file) {
+    return getOrCalculateAndCache(project, file, null);
+  }
+
+  @Contract("_, _, !null -> !null")
+  private @Nullable Supplier<Data> getOrCalculateAndCache(@Nullable Project project, @NotNull VirtualFile file, @Nullable GistCalculator<Data> calculator) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ProgressManager.checkCanceled();
 
-    if (!(file instanceof VirtualFileWithId)) return myCalculator.calcData(project, file);
+    if (!(file instanceof VirtualFileWithId)) {
+      if (calculator != null) {
+        Data value = calculator.calcData(project, file);
+        return () -> value;
+      }
+      else {
+        return null;
+      }
+    }
 
-    int stamp = PersistentFS.getInstance().getModificationCount(file) + ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
+    int stamp = GistManagerImpl.getGistStamp(file);
 
-    try (DataInputStream stream = getFileAttribute(project).readAttribute(file)) {
+    try (DataInputStream stream = getFileAttribute(project).readFileAttribute(file)) {
       if (stream != null && DataInputOutputUtil.readINT(stream) == stamp) {
-        return stream.readBoolean() ? myExternalizer.read(stream) : null;
+        Data value = stream.readBoolean() ? myExternalizer.read(stream) : null;
+        return () -> value;
       }
     }
     catch (IOException e) {
       LOG.error(e);
     }
 
-    Data result = myCalculator.calcData(project, file);
-    cacheResult(stamp, result, project, file);
-    return result;
+    if (calculator != null) {
+      Data value = calculator.calcData(project, file);
+      cacheResult(stamp, value, project, file);
+      return () -> value;
+    }
+    else {
+      return null;
+    }
   }
 
   private void cacheResult(int modCount, @Nullable Data result, Project project, VirtualFile file) {
-    try (DataOutputStream out = getFileAttribute(project).writeAttribute(file)) {
+    try (DataOutputStream out = getFileAttribute(project).writeFileAttribute(file)) {
       DataInputOutputUtil.writeINT(out, modCount);
       out.writeBoolean(result != null);
       if (result != null) {
         myExternalizer.save(out, result);
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.error(e);
     }
   }
@@ -98,6 +120,5 @@ class VirtualFileGistImpl<Data> implements VirtualFileGist<Data> {
       return ourAttributes.get(Pair.create(myId + (project == null ? "###noProject###" : project.getLocationHash()), myVersion + ourInternalVersion));
     }
   }
-
 }
 

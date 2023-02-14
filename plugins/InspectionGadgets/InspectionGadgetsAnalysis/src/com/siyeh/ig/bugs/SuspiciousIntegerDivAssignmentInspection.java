@@ -4,6 +4,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -36,12 +39,10 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("suspicious.integer.div.assignment.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(JavaAnalysisBundle.message("inspection.suspicious.integer.div.assignment.option"), "myReportPossiblyExactDivision");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myReportPossiblyExactDivision", JavaAnalysisBundle.message("inspection.suspicious.integer.div.assignment.option")));
   }
 
   @Nullable
@@ -58,7 +59,7 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
   private static class SuspiciousIntegerDivAssignmentFix extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiAssignmentExpression expression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiAssignmentExpression.class);
       if (expression == null) {
         return;

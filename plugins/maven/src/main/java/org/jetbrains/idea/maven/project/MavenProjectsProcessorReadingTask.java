@@ -18,9 +18,12 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessorTask {
@@ -57,14 +60,29 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-    if (myFilesToUpdate == null) {
-      myTree.updateAll(myForce, mySettings, indicator);
-    }
-    else {
-      myTree.delete(myFilesToDelete, mySettings, indicator);
-      myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
-    }
+    try {
+      if (myFilesToUpdate == null) {
+        checkOrInstallMavenWrapper(project);
+        myTree.updateAll(myForce, mySettings, indicator);
+      }
+      else {
+        myTree.delete(myFilesToDelete, mySettings, indicator);
+        myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
+      }
 
-    if (myOnCompletion != null) myOnCompletion.run();
+      mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
+    }
+    finally {
+      if (myOnCompletion != null) myOnCompletion.run();
+    }
+  }
+
+  private void checkOrInstallMavenWrapper(Project project) {
+    if (myFilesToUpdate == null && myTree.getExistingManagedFiles().size() == 1) {
+      Path baseDir = MavenUtil.getBaseDir(myTree.getExistingManagedFiles().get(0));
+      if (MavenUtil.isWrapper(mySettings)) {
+        MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString());
+      }
+    }
   }
 }

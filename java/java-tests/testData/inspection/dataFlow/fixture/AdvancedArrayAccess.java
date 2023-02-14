@@ -230,4 +230,17 @@ class AdvancedArrayAccess {
     System.out.println(array[0]); // <-- Value 'array[0]' was reported as always 'null'
   }
 
+  private static final int[] ARR_FIRST = {<error descr="Illegal forward reference">ARR_SECOND</error>[0], 1};
+  private static final int[] ARR_SECOND = {ARR_FIRST[0], 1};
+
+  void testSelfReference() {
+    int[] arr = {<error descr="Variable 'arr' might not have been initialized">arr</error>[0], 1};
+
+    if (arr[0] == 0) {}
+    if (<warning descr="Condition 'arr[1] == 1' is always 'true'">arr[1] == 1</warning>) {}
+
+    if (ARR_FIRST[0] == 0) {}
+    if (<warning descr="Condition 'ARR_FIRST[1] == 1' is always 'true'">ARR_FIRST[1] == 1</warning>) {}
+  }
+
 }

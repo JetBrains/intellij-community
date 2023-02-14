@@ -25,14 +25,15 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testIntParameter() {
-    myFixture.configureByText("a.java", "import lombok.experimental.var;\n" +
-      "abstract class Test {\n" +
-      "    private void test() {\n" +
-      "       int[] myArray = new int[] {1, 2, 3, 4, 5};\n" +
-      "       for(var my<caret>Var: myArray) {" +
-      "       }\n" +
-      "    } \n" +
-      "}\n");
+    myFixture.configureByText("a.java", """
+      import lombok.experimental.var;
+      abstract class Test {
+          private void test() {
+             int[] myArray = new int[] {1, 2, 3, 4, 5};
+             for(var my<caret>Var: myArray) {       }
+          }\s
+      }
+      """);
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertTrue(elementAtCaret instanceof PsiIdentifier);
     final PsiElement localParameter = elementAtCaret.getParent();
@@ -64,9 +65,11 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
 
   public void testGenericMethod168() {
     configureClass("forClass(Integer.class)",
-      "public static <T> java.util.List<T> forClass(Class<T> clazz) {\n" +
-        "            return new java.util.ArrayList<T>();\n" +
-        "        }\n");
+                   """
+                     public static <T> java.util.List<T> forClass(Class<T> clazz) {
+                                 return new java.util.ArrayList<T>();
+                             }
+                     """);
     verifyLocalVariableType("java.util.List<java.lang.Integer>");
   }
 

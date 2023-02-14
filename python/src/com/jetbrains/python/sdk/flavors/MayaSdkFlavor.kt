@@ -5,7 +5,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
-class MayaSdkFlavor private constructor() : CPythonSdkFlavor() {
+class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
+  override fun getFlavorDataClass(): Class<PyFlavorData.Empty>  = PyFlavorData.Empty::class.java
 
   override fun isValidSdkHome(path: String): Boolean {
     val file = File(path)

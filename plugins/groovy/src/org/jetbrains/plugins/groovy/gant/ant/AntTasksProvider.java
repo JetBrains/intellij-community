@@ -29,9 +29,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Future;
 
-/**
- * @author ilyas, peter
- */
 public final class AntTasksProvider {
   private static final Logger LOG = Logger.getInstance(AntTasksProvider.class);
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
@@ -146,7 +143,8 @@ public final class AntTasksProvider {
 
     @NotNull
     Map<String, Class<?>> getAntObjects() {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      Map<String, Class<?>> result = ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      return result == null ? Collections.emptyMap() : result;
     }
   }
 }

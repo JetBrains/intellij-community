@@ -1,4 +1,4 @@
-// "Import static constant..." "true"
+// "Import static constant..." "true-preview"
 package foo;
 
 public class X {

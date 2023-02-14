@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,8 +53,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown()) {
-      myIndents = Collections.emptyList();
+    if (!myEditor.getSettings().isIndentGuidesShown() || !HighlightingFeature.TEXT_BLOCKS.isAvailable(myFile)) {
       return;
     }
     Document document = myEditor.getDocument();
@@ -94,28 +94,10 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     StringContentIndentUtil.updateTimestamp(myEditor);
   }
 
-  private static final class StringContentIndent {
-
-    private final int column;
-    private final int startOffset;
-    // inclusive
-    private final int endOffset;
-
-    @Contract(pure = true)
-    private StringContentIndent(int column, int startOffset, int endOffset) {
-      this.column = column;
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-    }
-
-    @Override
-    public String toString() {
-      return "StringContentIndent{" +
-             "column=" + column +
-             ", startOffset=" + startOffset +
-             ", endOffset=" + endOffset +
-             '}';
-    }
+  /**
+   * @param endOffset inclusive
+   */
+  private record StringContentIndent(int column, int startOffset, int endOffset) {
   }
 
   private static class StringContentIndentRenderer implements CustomHighlighterRenderer {
@@ -160,7 +142,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       TextBlockModel model = TextBlockModel.create(expression);
       if (model == null) return;
       TextRange contentRange = getContentRange(model.myRange);

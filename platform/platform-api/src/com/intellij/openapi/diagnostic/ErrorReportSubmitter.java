@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +70,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param additionalInfo  additional information provided by a user.
    * @param parentComponent UI component to use as a parent in any UI activity from a submitter.
    * @param consumer        a callback to be called after sending is finished (or failed).
-   * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
+   * @return {@code true} if reporting was started (must invoke {@code consumer} callback with result), {@code false} if a report can't be sent at the moment.
    */
   public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,
@@ -90,8 +89,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated do not override; implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
     throw new UnsupportedOperationException("'" + getClass().getName() + "' doesn't implement exception submitter API");

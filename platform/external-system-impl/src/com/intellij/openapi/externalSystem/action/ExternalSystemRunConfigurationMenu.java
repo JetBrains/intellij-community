@@ -7,10 +7,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Constraints;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
@@ -38,11 +35,10 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     Project project = e.getProject();
 
     List<ExternalSystemNode> selectedNodes = e.getData(ExternalSystemDataKeys.SELECTED_NODES);
-    if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode)) {
+    if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode runConfigurationNode)) {
       return;
     }
 
-    RunConfigurationNode runConfigurationNode = (RunConfigurationNode)selectedNodes.get(0);
     final RunnerAndConfigurationSettings settings = runConfigurationNode.getSettings();
 
     if (settings == null || project == null) return;
@@ -68,6 +64,11 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     }
 
     super.update(e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static class ExecuteExternalSystemRunConfigurationAction extends AnAction {
@@ -102,6 +103,11 @@ public final class ExternalSystemRunConfigurationMenu extends DefaultActionGroup
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

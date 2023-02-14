@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -30,14 +30,12 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
   @Override
   public PsiTypeElement getCheckType() {
-    PsiPattern pattern = getPattern();
-    if (!(pattern instanceof PsiTypeTestPattern)) return null;
-    return ((PsiTypeTestPattern)pattern).getCheckType();
+    return (PsiTypeElement)findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
 
   @Override
   public PsiType getType() {
-    return PsiType.BOOLEAN;
+    return PsiTypes.booleanType();
   }
 
   @Override
@@ -52,6 +50,9 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
       case ChildRole.INSTANCEOF_KEYWORD:
         return findChildByType(INSTANCEOF_KEYWORD);
+
+      case ChildRole.TYPE:
+        return findChildByType(TYPE);
     }
   }
 
@@ -59,7 +60,10 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
   public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == INSTANCEOF_KEYWORD) {
+    if (i == TYPE) {
+      return ChildRole.TYPE;
+    }
+    else if (i == INSTANCEOF_KEYWORD) {
       return ChildRole.INSTANCEOF_KEYWORD;
     }
     if (EXPRESSION_BIT_SET.contains(child.getElementType())) {
@@ -70,8 +74,8 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
 
   @Nullable
   @Override
-  public PsiPattern getPattern() {
-    return PsiTreeUtil.getChildOfType(this, PsiPattern.class);
+  public PsiPrimaryPattern getPattern() {
+    return PsiTreeUtil.getChildOfType(this, PsiPrimaryPattern.class);
   }
 
   @Override

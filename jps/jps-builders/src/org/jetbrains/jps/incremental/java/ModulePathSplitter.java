@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 26-Sep-19
  */
 public final class ModulePathSplitter {
   private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(FileCollectionFactory.createCanonicalFileMap());
@@ -85,6 +84,10 @@ public final class ModulePathSplitter {
   }
 
   public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
+    return splitPath(chunkModuleInfo, chunkOutputs, path, Collections.emptySet());
+  }
+
+  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Collection<String> addReads) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());
@@ -93,6 +96,7 @@ public final class ModulePathSplitter {
     final List<File> classpath = new ArrayList<>();
 
     final Set<String> allRequired = collectRequired(chunkModuleInfo, Iterators.filter(path, file -> !chunkOutputs.contains(file)));
+    allRequired.addAll(addReads);
     for (File file : path) {
       if (chunkOutputs.contains(file)) {
         mpBuilder.add(null, file);

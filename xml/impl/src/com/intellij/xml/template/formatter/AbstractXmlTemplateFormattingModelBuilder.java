@@ -48,8 +48,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     final PsiFile psiFile = formattingContext.getContainingFile();
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     PsiElement element = formattingContext.getPsiElement();
-    if (psiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-      final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)psiFile.getViewProvider();
+    if (psiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider viewProvider) {
       if (isTemplateFile(psiFile)) {
         Language templateDataLanguage = viewProvider.getTemplateDataLanguage();
         if (templateDataLanguage != psiFile.getLanguage()) {
@@ -274,8 +273,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       rangeStart = Math.min(currRange.getStartOffset(), rangeStart);
       rangeEnd = Math.max(currRange.getEndOffset(), rangeEnd);
       boolean isMarkupBlock = true;
-      if (block instanceof AnotherLanguageBlockWrapper) {
-        AnotherLanguageBlockWrapper wrapper = (AnotherLanguageBlockWrapper)block;
+      if (block instanceof AnotherLanguageBlockWrapper wrapper) {
         PsiElement otherLangElement = wrapper.getNode().getPsi();
         if (isOuterLanguageElement(otherLangElement)) {
           isMarkupBlock = false;
@@ -305,7 +303,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   }
 
 
-  private List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
+  protected List<Block> buildTemplateLanguageBlocksInside(@NotNull PsiFile templateFile,
                                                         @NotNull TextRange range,
                                                         CodeStyleSettings settings,
                                                         XmlFormattingPolicy xmlFormattingPolicy,

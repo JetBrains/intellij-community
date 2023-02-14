@@ -113,24 +113,24 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
   public M getCombinedModel(@Nullable S s) {
     if (s == null) return null;
     final List<M> models = getAllModels(s);
-    switch (models.size()) {
-      case 0:
-        return null;
-      case 1:
-        return models.get(0);
-    }
-    final Set<XmlFile> configFiles = new LinkedHashSet<>();
-    final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<>(models.size());
-    for (M model: models) {
-      final Set<XmlFile> files = model.getConfigFiles();
-      for (XmlFile file: files) {
-        ContainerUtil.addIfNotNull(list, getDomRoot(file));
+    return switch (models.size()) {
+      case 0 -> null;
+      case 1 -> models.get(0);
+      default -> {
+        final Set<XmlFile> configFiles = new LinkedHashSet<>();
+        final LinkedHashSet<DomFileElement<T>> list = new LinkedHashSet<>(models.size());
+        for (M model: models) {
+          final Set<XmlFile> files = model.getConfigFiles();
+          for (XmlFile file: files) {
+            ContainerUtil.addIfNotNull(list, getDomRoot(file));
+          }
+          configFiles.addAll(files);
+        }
+        final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
+        final M firstModel = models.get(0);
+        yield createCombinedModel(configFiles, mergedModel, firstModel, s);
       }
-      configFiles.addAll(files);
-    }
-    final DomFileElement<T> mergedModel = getModelMerger().mergeModels(DomFileElement.class, list);
-    final M firstModel = models.get(0);
-    return createCombinedModel(configFiles, mergedModel, firstModel, s);
+    };
   }
 
   protected Project getProject() {

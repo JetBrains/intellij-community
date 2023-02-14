@@ -1,0 +1,1 @@
+void f(int i, char c, int i1, String s, int i2, Object o) {}

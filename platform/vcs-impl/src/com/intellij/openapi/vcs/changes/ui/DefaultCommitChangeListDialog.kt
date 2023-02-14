@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.EventDispatcher
@@ -31,10 +32,9 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
   init {
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
 
-    val branchComponent = CurrentBranchComponent(browser.viewer).apply {
-      Disposer.register(this@DefaultCommitChangeListDialog, this)
-      pathsProvider = { getDisplayedPaths() }
-    }
+    val branchComponent = CurrentBranchComponent(browser.viewer, pathsProvider = { getDisplayedPaths() })
+    Disposer.register(this, branchComponent)
+
     addBorder(branchComponent, emptyRight(16))
     browserBottomPanel.add(branchComponent)
 
@@ -50,10 +50,12 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
       }
     }
 
-    browser.setSelectedListChangeListener { changeListEventDispatcher.multicaster.changeListChanged() }
+    browser.setSelectedListChangeListener(changeListEventDispatcher.multicaster)
 
     addChangeListListener(object : SingleChangeListCommitWorkflowUi.ChangeListListener {
-      override fun changeListChanged() = this@DefaultCommitChangeListDialog.changeListChanged()
+      override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
+        this@DefaultCommitChangeListDialog.changeListChanged()
+      }
     }, this)
   }
 
@@ -73,7 +75,7 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
     changeListEventDispatcher.addListener(listener, parent)
 
   private fun changeListChanged() {
-    commitMessageComponent.setChangeList(getChangeList())
+    commitMessageComponent.setChangesSupplier(ChangeListChangesSupplier(getChangeList()))
     updateWarning()
   }
 }

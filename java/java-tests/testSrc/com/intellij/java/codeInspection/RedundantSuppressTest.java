@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
@@ -20,6 +20,7 @@ import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.inheritance.RefusedBequestInspection;
+import com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,9 +39,10 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
                                              new LocalInspectionToolWrapper(new I18nInspection()),
                                              new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
                                              new LocalInspectionToolWrapper(new UnnecessaryLocalVariableInspection()),
+                                             new LocalInspectionToolWrapper(new UnnecessaryUnicodeEscapeInspection()),
                                              new LocalInspectionToolWrapper(new RefusedBequestInspection()),
                                              new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
-                                             new GlobalInspectionToolWrapper(new DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection()),
+                                             new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true)),
                                              new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()));
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {

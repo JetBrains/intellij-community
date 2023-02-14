@@ -62,10 +62,11 @@ public class XmlHighlighterTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testRecoveryInXHTML() {
-    configure("<html:form action=\"/arquivo/associar\">\n" +
-              "  <html:hidden property=\"idAcao\"/>\n" +
-              "  ","<html:hidden property=\"possuiMensagem\"/>\n" +
-                     "</html:form>", XHtmlFileType.INSTANCE);
+    configure("""
+                <html:form action="/arquivo/associar">
+                  <html:hidden property="idAcao"/>
+                  """, "<html:hidden property=\"possuiMensagem\"/>\n" +
+                       "</html:form>", XHtmlFileType.INSTANCE);
 
     runTest(() -> doc.insertString(offset, "\n"));
   }

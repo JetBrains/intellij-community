@@ -21,10 +21,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public abstract class QuickFix {
   public static final QuickFix[] EMPTY_ARRAY = {};
 

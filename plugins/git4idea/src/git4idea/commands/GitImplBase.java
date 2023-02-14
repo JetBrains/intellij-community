@@ -1,10 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
-import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
-import static com.intellij.openapi.util.text.StringUtil.trimLeading;
-import static git4idea.commands.GitCommand.LockingPolicy.READ;
-
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
@@ -16,12 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,30 +24,31 @@ import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand.LockingPolicy;
-import git4idea.config.GitConfigUtil;
-import git4idea.config.GitExecutable;
-import git4idea.config.GitExecutableManager;
-import git4idea.config.GitExecutableProblemsNotifier;
-import git4idea.config.GitExecutableValidator;
-import git4idea.config.GitNotInstalledException;
-import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVersion;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.config.*;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
 import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.regex.Pattern;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+
+import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimLeading;
+import static git4idea.commands.GitCommand.LockingPolicy.READ;
+import static git4idea.commands.GitCommand.LockingPolicy.READ_OPTIONAL_LOCKING;
 
 /**
  * Basic functionality for git handler execution.
@@ -204,7 +196,7 @@ public abstract class GitImplBase implements Git {
     GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
     handler.addLineListener(resultListener);
 
-    try (AccessToken ignored = lock(handler)) {
+    try (AccessToken ignored = lock(handler, canSuppressOptionalLocks)) {
       writeOutputToConsole(handler);
       handler.runInCurrentThread();
     }
@@ -363,31 +355,47 @@ public abstract class GitImplBase implements Git {
 
     Project project = handler.project();
     if (project != null && !project.isDefault()) {
-      GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
-
       String workingDir = stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory());
-      vcsConsoleWriter.showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
+      GitVcsConsoleWriter.getInstance(project).showCommandLine(String.format("[%s] %s", workingDir, handler.printableCommandLine()));
 
-      handler.addLineListener(new GitLineHandlerListener() {
-        private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+      handler.addLineListener(new GitCommandOutputLogger(project, handler));
+    }
+  }
 
-        @Override
-        public void onLineAvailable(String line, Key outputType) {
-          if (StringUtil.isEmptyOrSpaces(line)) return;
-          if (outputType == ProcessOutputTypes.SYSTEM) return;
-          if (outputType == ProcessOutputTypes.STDOUT && handler.isStdoutSuppressed()) return;
-          if (outputType == ProcessOutputTypes.STDERR && handler.isStderrSuppressed()) return;
+  private static class GitCommandOutputLogger implements GitLineHandlerListener {
+    private final @NotNull GitLineHandler myHandler;
 
-          List<Pair<String, Key>> lineChunks = new ArrayList<>();
-          myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
-          vcsConsoleWriter.showMessage(lineChunks);
-        }
-      });
+    private final GitVcsConsoleWriter myVcsConsoleWriter;
+    private final AnsiEscapeDecoder myAnsiEscapeDecoder;
+
+    GitCommandOutputLogger(@NotNull Project project, @NotNull GitLineHandler handler) {
+      myHandler = handler;
+      myVcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
+      myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      try {
+        if (StringUtil.isEmptyOrSpaces(line)) return;
+        if (outputType == ProcessOutputTypes.SYSTEM) return;
+        if (outputType == ProcessOutputTypes.STDOUT && myHandler.isStdoutSuppressed()) return;
+        if (outputType == ProcessOutputTypes.STDERR && myHandler.isStderrSuppressed()) return;
+
+        List<Pair<String, Key>> lineChunks = new ArrayList<>();
+        myAnsiEscapeDecoder.escapeText(line, outputType, (text, key) -> lineChunks.add(Pair.create(text, key)));
+        myVcsConsoleWriter.showMessage(lineChunks);
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Logging error for " + myHandler, e);
+      }
     }
   }
 
   @NotNull
-  private static AccessToken lock(@NotNull GitLineHandler handler) {
+  private static AccessToken lock(@NotNull GitLineHandler handler, boolean canSuppressOptionalLocks) {
     Project project = handler.project();
     LockingPolicy lockingPolicy = handler.getCommand().lockingPolicy();
 
@@ -396,11 +404,15 @@ public abstract class GitImplBase implements Git {
     }
 
     ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
-    executionLock.writeLock().lock();
+    Lock lock = lockingPolicy == READ_OPTIONAL_LOCKING && canSuppressOptionalLocks
+                ? executionLock.readLock()
+                : executionLock.writeLock();
+
+    lock.lock();
     return new AccessToken() {
       @Override
       public void finish() {
-        executionLock.writeLock().unlock();
+        lock.unlock();
       }
     };
   }

@@ -4,19 +4,15 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsPrefixedFluentTest {
 
-  private static final AccessorsInfo DEFAULT_ACCESSORS = AccessorsInfo.build(true, false, false, "m", "");
+  private static final AccessorsInfo ACCESSORS = AccessorsInfo.build(true, false, false, false,
+                                                                     CapitalizationStrategy.defaultValue(), "m", "");
 
-  private String makeResults(String fieldName, boolean isBoolean) {
-    String lombokResult = LombokHandlerUtil.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
-    String result = LombokUtils.toGetterName(DEFAULT_ACCESSORS, fieldName, isBoolean);
-
-    assertThat(result, is(lombokResult));
-    return result;
+  private static String makeResults(String fieldName, boolean isBoolean) {
+    return LombokUtils.toGetterName(ACCESSORS, fieldName, isBoolean);
   }
 
   @Test

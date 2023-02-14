@@ -79,30 +79,20 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
   }
 
   public void testInsideAnonymous() {
-    doTest("import java.util.*;" +
-           "class A<T> {{" +
-           "Iterator<T> i = new Iterator<>() {" +
-           "  Enumeration<T> myEnumeration;" +
-           "  public boolean hasNext() {" +
-           "    return myEnumeration.hasMoreElements();" +
-           "  }" +
-           "  public T next() {" +
-           "    if (this.hasNext()) {\n" +
-           "      return null;\n" +
-           "    }\n" +
-           "    throw new NoSuchElementException();" +
-           "  }" +
-           "  public void remove() {}" +
-           "};" +
-           "}}");
+    doTest("""
+             import java.util.*;class A<T> {{Iterator<T> i = new Iterator<>() {  Enumeration<T> myEnumeration;  public boolean hasNext() {    return myEnumeration.hasMoreElements();  }  public T next() {    if (this.hasNext()) {
+                   return null;
+                 }
+                 throw new NoSuchElementException();  }  public void remove() {}};}}""");
   }
 
   public void testAbstractMethod() {
-    doTest("import java.util.Iterator;\n" +
-           "interface MyIterator extends Iterator<String> {\n" +
-           "    @Override\n" +
-           "    String next();\n" +
-           "}");
+    doTest("""
+             import java.util.Iterator;
+             interface MyIterator extends Iterator<String> {
+                 @Override
+                 String next();
+             }""");
   }
 
   @Nullable

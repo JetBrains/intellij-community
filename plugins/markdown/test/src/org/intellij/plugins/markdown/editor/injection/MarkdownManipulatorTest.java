@@ -5,161 +5,189 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 
 public class  MarkdownManipulatorTest extends BasePlatformTestCase {
   public void testSimpleCodeFence() {
-    doTest("```text\n" +
-           "Runti<caret>me\n" +
-           "```",
+    doTest("""
+             ```text
+             Runti<caret>me
+             ```""",
            "singleton_class",
-           "```text\n" +
-           "singleton_class\n" +
-           "```");
+           """
+             ```text
+             singleton_class
+             ```""");
   }
 
   public void testSimpleCodeFenceNewLineBefore() {
-    doTest("```text\n" +
-           "Runti<caret>me\n" +
-           "```",
+    doTest("""
+             ```text
+             Runti<caret>me
+             ```""",
            "\nRuntime",
-           "```text\n" +
-           "\n" +
-           "Runtime\n" +
-           "```");
+           """
+             ```text
+
+             Runtime
+             ```""");
   }
 
   public void testSimpleCodeFenceNewLineAfter() {
-    doTest("```text\n" +
-           "Runt<caret>ime\n" +
-           "```",
+    doTest("""
+             ```text
+             Runt<caret>ime
+             ```""",
            "Runtime\n",
-           "```text\n" +
-           "Runtime\n" +
-           "\n" +
-           "```");
+           """
+             ```text
+             Runtime
+
+             ```""");
   }
 
   public void testCodeFenceInList() {
-    doTest("* ```text\n" +
-           "  <caret>singleton_class\n" +
-           "  ```",
+    doTest("""
+             * ```text
+               <caret>singleton_class
+               ```""",
            "singleton",
-           "```text\n" +
-           "  singleton\n" +
-           "  ```");
+           """
+             ```text
+               singleton
+               ```""");
   }
 
   public void testCodeFenceInListNewLineBefore() {
-    doTest("* ```text\n" +
-           "  <caret>singleton_class\n" +
-           "  ```",
+    doTest("""
+             * ```text
+               <caret>singleton_class
+               ```""",
            "\nsingleton_class",
-           "```text\n" +
-           "  \n" +
-           "  singleton_class\n" +
-           "  ```");
+           """
+             ```text
+              \s
+               singleton_class
+               ```""");
   }
 
   public void testCodeFenceInListNewLineAfter() {
-    doTest("* ```text\n" +
-           "  <caret>singleton_class\n" +
-           "  ```",
+    doTest("""
+             * ```text
+               <caret>singleton_class
+               ```""",
            "singleton_class\n",
-           "```text\n" +
-           "  singleton_class\n" +
-           "  \n" +
-           "  ```");
+           """
+             ```text
+               singleton_class
+              \s
+               ```""");
   }
 
   public void testCodeFenceInNestedList() {
     doTest(
-      "* A\n" +
-           "  * ```text\n" +
-           "    <caret>setup\n" +
-           "    ```\n" +
-           "  * C\n" +
-           "*D",
+      """
+        * A
+          * ```text
+            <caret>setup
+            ```
+          * C
+        *D""",
            "singleton_class\n",
-           "```text\n" +
-           "    singleton_class\n" +
-           "    \n" +
-           "    ```");
+      """
+        ```text
+            singleton_class
+           \s
+            ```""");
   }
 
   public void testCodeFenceInQuotes() {
-    doTest(">```text\n" +
-           "><caret>setup\n" +
-           ">```",
+    doTest("""
+             >```text
+             ><caret>setup
+             >```""",
            "singleton_class\n",
-           "```text\n" +
-           ">singleton_class\n" +
-           ">\n" +
-           ">```");
+           """
+             ```text
+             >singleton_class
+             >
+             >```""");
   }
 
   public void testInQuotesInListComplex() {
-    doTest("* C\n" +
-           "  * B \n" +
-           "    >  * A \n" +
-           "    >    \n" +
-           "    >  * D  \n" +
-           "  -  >  -    > ```text\n" +
-           "     >       > <caret>$LAST_MATCH_INFO\n" +
-           "     >       > ```\n",
+    doTest("""
+             * C
+               * B\s
+                 >  * A\s
+                 >   \s
+                 >  * D \s
+               -  >  -    > ```text
+                  >       > <caret>$LAST_MATCH_INFO
+                  >       > ```
+             """,
            "singleton_class",
-           "```text\n" +
-           "     >       > singleton_class\n" +
-           "     >       > ```");
+           """
+             ```text
+                  >       > singleton_class
+                  >       > ```""");
   }
 
   public void testInQuotesInListNewLineBefore() {
-    doTest("* C\n" +
-           "  * B \n" +
-           "    >  * A \n" +
-           "    >    \n" +
-           "    >  * D  \n" +
-           "  -  >  -    > ```text\n" +
-           "     >       > <caret>$LAST_MATCH_INFO\n" +
-           "     >       > ```\n",
+    doTest("""
+             * C
+               * B\s
+                 >  * A\s
+                 >   \s
+                 >  * D \s
+               -  >  -    > ```text
+                  >       > <caret>$LAST_MATCH_INFO
+                  >       > ```
+             """,
            "\nsingleton_class",
-           "```text\n" +
-           "     >       > \n" +
-           "     >       > singleton_class\n" +
-           "     >       > ```");
+           """
+             ```text
+                  >       >\s
+                  >       > singleton_class
+                  >       > ```""");
   }
 
   public void testInQuotesInListNewLineAfter() {
-    doTest("* C\n" +
-           "  * B \n" +
-           "    >  * A \n" +
-           "    >    \n" +
-           "    >  * D  \n" +
-           "  -  >  -    > ```text\n" +
-           "     >       > <caret>$LAST_MATCH_INFO\n" +
-           "     >       > ```\n",
+    doTest("""
+             * C
+               * B\s
+                 >  * A\s
+                 >   \s
+                 >  * D \s
+               -  >  -    > ```text
+                  >       > <caret>$LAST_MATCH_INFO
+                  >       > ```
+             """,
            "singleton_class\n",
-           "```text\n" +
-           "     >       > singleton_class\n" +
-           "     >       > \n" +
-           "     >       > ```");
+           """
+             ```text
+                  >       > singleton_class
+                  >       >\s
+                  >       > ```""");
   }
 
   public void testThreeBackticksCodeFence() {
-    doTest("```text\n" +
-           "Runti<caret>me\n" +
-           "```",
+    doTest("""
+             ```text
+             Runti<caret>me
+             ```""",
            "```singleton_class",
            "```singleton_class");
   }
 
   public void testThreeTildaCodeFence() {
-    doTest("```text\n" +
-           "Runti<caret>me\n" +
-           "```",
+    doTest("""
+             ```text
+             Runti<caret>me
+             ```""",
            "~~~singleton_class",
            "~~~singleton_class");
   }
@@ -170,12 +198,12 @@ public class  MarkdownManipulatorTest extends BasePlatformTestCase {
     int offset = myFixture.getCaretOffset();
 
     PsiElement element = myFixture.getFile().findElementAt(offset);
-    MarkdownCodeFenceImpl codeFence = (MarkdownCodeFenceImpl)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
-
-    final MarkdownCodeFenceImpl.Manipulator manipulator = new MarkdownCodeFenceImpl.Manipulator();
-    MarkdownCodeFenceImpl newCodeFence =
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFenceImpl>)() -> manipulator
-        .handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent));
+    MarkdownCodeFence codeFence = (MarkdownCodeFence)InjectedLanguageManager.getInstance(getProject()).getInjectionHost(element);
+    assertNotNull("Failed to find fence element", codeFence);
+    final var manipulator = ElementManipulators.getNotNullManipulator(codeFence);
+    final var newCodeFence = WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Computable<MarkdownCodeFence>)() -> {
+      return manipulator.handleContentChange(codeFence, TextRange.from(element.getTextOffset(), element.getTextLength()), newContent);
+    });
 
     assertEquals(expectedText, newCodeFence != null ? newCodeFence.getText() : codeFence.getText());
   }

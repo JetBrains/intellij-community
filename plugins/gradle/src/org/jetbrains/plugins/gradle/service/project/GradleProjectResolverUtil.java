@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
@@ -24,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -40,6 +40,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionWorkspace;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
@@ -64,8 +65,9 @@ public final class GradleProjectResolverUtil {
   public static DataNode<ModuleData> createMainModule(@NotNull ProjectResolverContext resolverCtx,
                                                       @NotNull IdeaModule gradleModule,
                                                       @NotNull DataNode<ProjectData> projectDataNode) {
+    GradleProject gradleProject = gradleModule.getGradleProject();
     final String moduleName = resolverCtx.isUseQualifiedModuleNames()
-                              ? gradleModule.getGradleProject().getName()
+                              ? gradleProject.getName()
                               : gradleModule.getName();
 
     if (moduleName == null) {
@@ -76,7 +78,8 @@ public final class GradleProjectResolverUtil {
     final String mainModuleConfigPath = getModuleConfigPath(resolverCtx, gradleModule, projectData.getLinkedExternalProjectPath());
     final String ideProjectPath = resolverCtx.getIdeProjectPath();
     final String relativePath;
-    if (FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false)) {
+    boolean isUnderProjectRoot = FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false);
+    if (isUnderProjectRoot) {
       relativePath = FileUtil.getRelativePath(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, '/');
     }
     else {
@@ -88,7 +91,7 @@ public final class GradleProjectResolverUtil {
       : ideProjectPath + '/' + (relativePath == null || relativePath.equals(".") ? "" : relativePath);
     if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format(
-        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), mainModuleConfigPath
+        "Creating module data ('%s') with the external config path: '%s'", gradleProject.getPath(), mainModuleConfigPath
       ));
     }
 
@@ -112,7 +115,48 @@ public final class GradleProjectResolverUtil {
       }
     }
 
+    File rootDir = gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir();
+    String rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(rootDir.getPath());
+    boolean isComposite = !resolverCtx.getModels().getIncludedBuilds().isEmpty();
+    boolean isIncludedBuildTaskRunningSupported = isComposite && isIncludedBuildTaskRunningSupported(projectDataNode, resolverCtx);
+    File mainBuildRootDir = resolverCtx.getModels().getMainBuild().getBuildIdentifier().getRootDir();
+    String mainBuildRootPath = ExternalSystemApiUtil.toCanonicalPath(mainBuildRootDir.getPath());
+    boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
+
+    boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
+    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + getRootProject(gradleProject).getName() : "";
+    GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
+
+    String directoryToRunTask;
+    if (compositeBuildGradlePath.isEmpty()) {
+      directoryToRunTask = isUnderProjectRoot ? mainModuleConfigPath : rootProjectPath;
+    }
+    else {
+      directoryToRunTask = mainBuildRootPath;
+    }
+    GradleModuleDataKt.setDirectoryToRunTask(moduleData, directoryToRunTask);
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  @NotNull
+  private static GradleProject getRootProject(@NotNull GradleProject project) {
+    GradleProject result = project;
+    while (result.getParent() != null) {
+      result = result.getParent();
+    }
+    return result;
+  }
+
+  private static final Key<Boolean> IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED = Key.create("is included build task running supported");
+  private static boolean isIncludedBuildTaskRunningSupported(@NotNull DataNode<ProjectData> project,
+                                                             @NotNull ProjectResolverContext resolverCtx) {
+    Boolean isSupported = IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.get(project);
+    if (isSupported == null) {
+      String gradleVersion = resolverCtx.getProjectGradleVersion();
+      isSupported = gradleVersion != null && GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("6.8")) >= 0;
+      IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED.set(project, isSupported);
+    }
+    return isSupported;
   }
 
   public static String getDefaultModuleTypeId() {
@@ -185,7 +229,7 @@ public final class GradleProjectResolverUtil {
     String compositePrefix = "";
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
     if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
-      compositePrefix = build.getName();
+      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, build.getBuildIdentifier());
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
@@ -201,12 +245,36 @@ public final class GradleProjectResolverUtil {
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
 
     if (!isRootPath && ideaProject != resolverCtx.getModels().getModel(IdeaProject.class)) {
-      compositePrefix = ideaProject.getName();
+      BuildIdentifier buildId = gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
+      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, buildId);
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
 
     return compositePrefix + getModuleId(gradlePath, gradleModule.getName());
+  }
+
+  @NotNull
+  private static String buildCompositePrefixFromBuildNames(@NotNull ProjectResolverContext resolverCtx, BuildIdentifier buildId) {
+    String compositePrefix;
+    List<String> list = Stream.iterate(
+        findIncludedBuild(resolverCtx, buildId),
+        Objects::nonNull,
+        b -> findIncludedBuild(resolverCtx, b.getParentBuildIdentifier())
+      )
+      .map(Build::getName)
+      .collect(Collectors.toList());
+    Collections.reverse(list);
+    compositePrefix = StringUtil.join(list, ".");
+    return compositePrefix;
+  }
+
+  @Nullable
+  private static Build findIncludedBuild(@NotNull ProjectResolverContext resolverCtx, @Nullable BuildIdentifier buildId) {
+    if (buildId == null) {
+      return null;
+    }
+    return ContainerUtil.find(resolverCtx.getModels().getIncludedBuilds(), b -> FileUtil.filesEqual(b.getBuildIdentifier().getRootDir(), buildId.getRootDir()));
   }
 
   @NotNull
@@ -268,9 +336,13 @@ public final class GradleProjectResolverUtil {
 
     final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
     boolean trimSourceSet = GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType);
-    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
-    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
+    List<String> pathParts = StringUtil.split(externalProjectId, ":");
+    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(1, pathParts.size());
+    }
+    if (trimSourceSet && !pathParts.isEmpty()) {
+      pathParts = pathParts.subList(0, pathParts.size() - 1);
+    }
     String join = StringUtil.join(pathParts, ":");
     return join.isEmpty() ? ":" : ":" + join;
   }
@@ -501,7 +573,7 @@ public final class GradleProjectResolverUtil {
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
     Map<ExternalDependencyId, ExternalDependency> dependencyMap = new HashMap<>();
 
-    Queue<ExternalDependency> queue = new LinkedList<>(dependencies);
+    Queue<ExternalDependency> queue = new ArrayDeque<>(dependencies);
     while (!queue.isEmpty()) {
       final ExternalDependency dependency = queue.remove();
       DefaultExternalDependencyId key = new DefaultExternalDependencyId(dependency.getId());
@@ -591,9 +663,7 @@ public final class GradleProjectResolverUtil {
       assert ownerModule != null;
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
-      if (mergedDependency instanceof ExternalProjectDependency) {
-
-        final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
+      if (mergedDependency instanceof ExternalProjectDependency projectDependency) {
 
         Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
         if (resolverCtx.getSettings() != null) {
@@ -694,7 +764,7 @@ public final class GradleProjectResolverUtil {
         }
 
         LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
-        if (StringUtil.isEmpty(libraryName) || !linkProjectLibrary(resolverCtx, ideProject, library)) {
+        if (StringUtil.isEmpty(libraryName) || !linkProjectLibrary(ideProject, library)) {
           level = LibraryLevel.MODULE;
         }
 
@@ -753,10 +823,11 @@ public final class GradleProjectResolverUtil {
         final String failureMessage = ((UnresolvedExternalDependency)mergedDependency).getFailureMessage();
 
         boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
-        BuildIssue buildIssue = new UnresolvedDependencySyncIssue(libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork);
+        BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
+          libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork, ownerModule.getId());
         resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
 
-        LibraryLevel level = linkProjectLibrary(resolverCtx, ideProject, library) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
+        LibraryLevel level = linkProjectLibrary(ideProject, library) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder() + classpathOrderShift);
@@ -783,27 +854,41 @@ public final class GradleProjectResolverUtil {
     return infos.stream().noneMatch((info) -> info.myModuleData.equals(data));
   }
 
+  private static final Key<Map<String, DataNode<LibraryData>>> LIBRARIES_BY_NAME_CACHE =
+    Key.create("GradleProjectResolverUtil.FOUND_LIBRARIES");
+
   /**
-   * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(ProjectResolverContext, DataNode, LibraryData)}
+   * @deprecated use {@link GradleProjectResolverUtil#linkProjectLibrary(DataNode, LibraryData)} instead
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static boolean linkProjectLibrary(@Nullable DataNode<ProjectData> ideProject, @NotNull final LibraryData library) {
-    return linkProjectLibrary(null, ideProject, library);
-  }
-
   public static boolean linkProjectLibrary(/*@NotNull*/ ProjectResolverContext context,
                                                         @Nullable DataNode<ProjectData> ideProject,
                                                         @NotNull final LibraryData library) {
+    return linkProjectLibrary(ideProject, library);
+  }
+
+  public static boolean linkProjectLibrary(
+    @Nullable DataNode<ProjectData> ideProject,
+    @NotNull final LibraryData library) {
     if (ideProject == null) return false;
 
-    String libraryName = library.getExternalName();
-    DataNode<LibraryData> libraryData = ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY,
-                                                                   node -> libraryName.equals(node.getData().getExternalName()));
-    if (libraryData == null) {
-      ideProject.createChild(ProjectKeys.LIBRARY, library);
-      return true;
+    Map<String, DataNode<LibraryData>> cache = ideProject.getUserData(LIBRARIES_BY_NAME_CACHE);
+    if (cache == null) {
+      cache = new HashMap<>();
+      ideProject.putUserData(LIBRARIES_BY_NAME_CACHE, cache);
     }
+
+    String libraryName = library.getExternalName();
+
+    DataNode<LibraryData> libraryData = cache.computeIfAbsent(libraryName, (String name) -> {
+      DataNode<LibraryData> newValueToCache =
+        ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, node -> libraryName.equals(node.getData().getExternalName()));
+      if (newValueToCache == null) {
+        newValueToCache = ideProject.createChild(ProjectKeys.LIBRARY, library);
+      }
+      return newValueToCache;
+    });
+
     return libraryData.getData().equals(library);
   }
 
@@ -828,7 +913,7 @@ public final class GradleProjectResolverUtil {
 
   @ApiStatus.Internal
   public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
-    return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
+    return GradleProjectResolverExtension.EP_NAME.getExtensionList().stream().map(extension -> {
       try {
         Constructor<? extends GradleProjectResolverExtension> constructor = extension.getClass().getDeclaredConstructor();
         constructor.setAccessible(true);
@@ -843,32 +928,6 @@ public final class GradleProjectResolverUtil {
       }
       return null;
     }).sorted(ExternalSystemApiUtil.ORDER_AWARE_COMPARATOR);
-  }
-
-  @Nullable
-  public static DataNode<TaskData> findTask(@Nullable final DataNode<ProjectData> projectNode,
-                                            @NotNull final String modulePath,
-                                            @NotNull final String taskPath) {
-    DataNode<ModuleData> moduleNode;
-    final String taskName;
-    if (StringUtil.startsWith(taskPath, ":")) {
-      final int i = taskPath.lastIndexOf(':');
-      moduleNode = i == 0 ? null : findModuleById(projectNode, taskPath.substring(0, i));
-      if (moduleNode == null) {
-        moduleNode = findModule(projectNode, modulePath);
-      }
-      taskName = (i + 1) <= taskPath.length() ? taskPath.substring(i + 1) : taskPath;
-    }
-    else {
-      moduleNode = findModule(projectNode, modulePath);
-      taskName = taskPath;
-    }
-    if (moduleNode == null) return null;
-
-    return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, node -> {
-      String name = node.getData().getName();
-      return name.equals(taskName) || name.equals(taskPath);
-    });
   }
 
   static class ProjectDependencyInfo {

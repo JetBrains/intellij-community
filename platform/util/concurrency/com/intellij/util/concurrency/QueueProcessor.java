@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
@@ -164,6 +165,7 @@ public final class QueueProcessor<T> {
   }
 
   public void waitFor() {
+    assertCorrectThread();
     synchronized (myQueue) {
       while (isProcessing) {
         try {
@@ -177,6 +179,7 @@ public final class QueueProcessor<T> {
   }
 
   boolean waitFor(long timeoutMS) {
+    assertCorrectThread();
     synchronized (myQueue) {
       long start = System.currentTimeMillis();
 
@@ -194,6 +197,12 @@ public final class QueueProcessor<T> {
       }
 
       return true;
+    }
+  }
+
+  private void assertCorrectThread() {
+    if (myThreadToUse == ThreadToUse.AWT) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
   }
 
@@ -215,7 +224,7 @@ public final class QueueProcessor<T> {
     };
     Application application = ApplicationManager.getApplication();
     switch (myThreadToUse) {
-      case AWT:
+      case AWT -> {
         ModalityState state = pair.getSecond();
         if (state == null) {
           application.invokeLater(runnable);
@@ -223,15 +232,15 @@ public final class QueueProcessor<T> {
         else {
           application.invokeLater(runnable, state);
         }
-        break;
-      case POOLED:
+      }
+      case POOLED -> {
         if (application == null) {
           SwingUtilities.invokeLater(runnable);
         }
         else {
-          application.executeOnPooledThread(runnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(runnable);
         }
-        break;
+      }
     }
   }
 
@@ -250,8 +259,10 @@ public final class QueueProcessor<T> {
         LOG.error(e);
       }
       catch (Throwable e2) {
-        //noinspection CallToPrintStackTrace
-        e2.printStackTrace();
+        if (!ApplicationManager.getApplication().isUnitTestMode() || DefaultLogger.shouldDumpExceptionToStderr()) {
+          //noinspection CallToPrintStackTrace
+          e2.printStackTrace();
+        }
       }
     }
   }

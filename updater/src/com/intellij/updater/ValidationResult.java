@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.util.Arrays;
@@ -37,13 +37,19 @@ public class ValidationResult implements Comparable<ValidationResult> {
   public final String path;
   public final Action action;
   public final String message;
+  public final String details;
   public final List<Option> options;
 
   public ValidationResult(Kind kind, String path, Action action, String message, Option... options) {
+    this(kind, path, action, message, "", options);
+  }
+
+  public ValidationResult(Kind kind, String path, Action action, String message, String details, Option... options) {
     this.kind = kind;
     this.path = path;
     this.action = action;
     this.message = message;
+    this.details = details;
     this.options = Arrays.asList(options);
   }
 

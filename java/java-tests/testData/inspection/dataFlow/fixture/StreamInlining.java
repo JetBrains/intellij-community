@@ -133,7 +133,7 @@ public class StreamInlining {
 
   String blockLambda(List<String> list) {
     return list == null ? "" : list.stream().map(s -> {
-      return s.equals("abc") ? null : s;
+      return s.equals("abc") ? <warning descr="Function may return null, but it's not allowed here">null</warning> : s;
     }).findFirst().orElse("");
   }
 
@@ -297,16 +297,17 @@ public class StreamInlining {
     if (<warning descr="Condition 'count6 < 0' is always 'false'">count6 < 0</warning>) {}
     if (count6 > 4) {}
     
-    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!<warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning></warning>).count();
-    if (<warning descr="Condition 'count7 == 0' is always 'false'">count7 == 0</warning>) {}
-    if (<warning descr="Condition 'count7 == 1 || count7 == 2' is always 'true'">count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true' when reached">count7 == 2</warning></warning>) {}
+    long count7 = Stream.of("foo", "bar").filter(x -> <warning descr="Condition '!x.isEmpty()' is always 'true'">!x.isEmpty()</warning>).count();
+    if (<warning descr="Condition 'count7 == 0 || count7 == 1 || count7 == 2' is always 'true'">count7 == 0 || count7 == 1 || <warning descr="Condition 'count7 == 2' is always 'true'">count7 == 2</warning></warning>) {}
     long count8 = <warning descr="Result of 'Stream.of(\"foo\", \"bar\").filter(x -> x.isEmpty()).count()' is always '0'">Stream.of("foo", "bar").filter(x -> <warning descr="Result of 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).count()</warning>;
     if (<warning descr="Condition 'count8 == 0' is always 'true'">count8 == 0</warning>) {}
     long count9 = list.stream().map(String::trim).count();
     if (count9 == 0) {}
     if (list.isEmpty()) return;
     long count10 = list.stream().map(String::trim).count();
-    if (<warning descr="Condition 'count10 == 0' is always 'false'">count10 == 0</warning>) {}
+    if (count10 == 0) {}
+    long count = <warning descr="Result of 'Stream.<String>of().filter(String::isEmpty).count()' is always '0'">Stream.<String>of().filter(String::isEmpty).count()</warning>;
+    if (<warning descr="Condition 'count == 0' is always 'true'">count == 0</warning>) { }
   }
 
   void testFlatMapUnresolvedSymbol() {

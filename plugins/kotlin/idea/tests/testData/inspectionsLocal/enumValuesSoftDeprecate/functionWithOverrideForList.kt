@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
+// WITH_STDLIB
+enum class EnumClass
+
+fun funWithOverride(arg: Array<*>) {}
+fun funWithOverride(arg: List<*>) {}
+
+fun foo() {
+    funWithOverride(EnumClass.values<caret>())
+}

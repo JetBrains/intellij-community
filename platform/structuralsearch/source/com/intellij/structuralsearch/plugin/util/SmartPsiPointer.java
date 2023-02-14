@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.util;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,9 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Reference to element have been matched
+ * @deprecated Use {@link SmartPsiElementPointer} directly
  */
+@Deprecated
 public class SmartPsiPointer {
-  @NotNull 
+  @NotNull
   private final SmartPsiElementPointer<?> pointer;
 
   public SmartPsiPointer(@NotNull PsiElement element) {
@@ -36,10 +39,9 @@ public class SmartPsiPointer {
   }
 
   public boolean equals(Object o) {
-    if (!(o instanceof SmartPsiPointer)) {
+    if (!(o instanceof SmartPsiPointer ref)) {
       return false;
     }
-    final SmartPsiPointer ref = (SmartPsiPointer)o;
     return ref.pointer.equals(pointer);
   }
 

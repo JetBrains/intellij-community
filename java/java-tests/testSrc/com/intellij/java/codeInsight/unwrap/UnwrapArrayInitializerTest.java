@@ -5,19 +5,24 @@ import com.intellij.codeInsight.unwrap.UnwrapTestCase;
 
 public class UnwrapArrayInitializerTest extends UnwrapTestCase {
   public void testUnwrap() {
-    assertUnwrapped("{\n" +
-                    "  int[] arr = new int[]{<caret>1};\n" +
-                    "}\n",
+    assertUnwrapped("""
+                      {
+                        int[] arr = new int[]{<caret>1};
+                      }
+                      """,
 
-                    "{\n" +
-                    "  int[] arr = {<caret>1};\n" +
-                    "}\n");
+                    """
+                      {
+                        int[] arr = {<caret>1};
+                      }
+                      """);
   }
 
   public void testNotAvailable() {
-    assertOptions("{\n" +
-                  "  int[] arr;\n" +
-                  "  arr = new int[]{<caret>1}" +
-                  "}\n", "Unwrap braces");
+    assertOptions("""
+                    {
+                      int[] arr;
+                      arr = new int[]{<caret>1}}
+                    """, "Unwrap braces");
   }
 }

@@ -55,7 +55,6 @@ import static org.junit.Assert.*;
  * An environment test environment must have a 'skeletons' tag in order to be compatible with this test case. No specific packages are
  * required currently. Both Python 2 and Python 3 are OK. All platforms are OK. At least one Python 2.6+ environment is required.
  *
- * @author vlan
  */
 public class PythonSkeletonsTest extends PyEnvTestCase {
   public static final ImmutableSet<String> TAGS = ImmutableSet.of("skeletons");

@@ -1,6 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.unresolvedReferenceQuickFixProvider
-      implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.KotlinPackageSearchQuickFixProvider"/>
-  </extensions>
-</idea-plugin>

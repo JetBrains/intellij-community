@@ -50,7 +50,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
   fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>? = null) {
     message.retain()
     forEachClient(object : Consumer<Client> {
-      private var first: Boolean = false
+      private var first: Boolean = true
 
       override fun accept(client: Client) {
         try {
@@ -96,7 +96,7 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
     }
   }
 
-  fun findClient(predicate: Predicate<Client>): Client? {
+  fun findClient(predicate: Predicate<in Client>): Client? {
     synchronized (clients) {
       return clients.firstOrNull { predicate.test(it) }
     }

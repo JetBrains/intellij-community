@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import icons.XpathIcons;
+import org.jetbrains.annotations.NotNull;
 
 public class NamespaceLookup extends AbstractLookup {
   public NamespaceLookup(String name) {
@@ -24,7 +25,7 @@ public class NamespaceLookup extends AbstractLookup {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
     presentation.setIcon(XpathIcons.Namespace);
   }

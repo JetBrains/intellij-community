@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -9,14 +9,9 @@ import com.intellij.codeInsight.template.JavaCodeContextType
 import com.intellij.codeInsight.template.JavaStringContextType
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateActionContext
-import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction
 import com.intellij.codeInsight.template.impl.*
-import com.intellij.codeInsight.template.macro.BaseCompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.CompleteSmartMacro
-import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
-import com.intellij.codeInsight.template.macro.VariableOfTypeMacro
+import com.intellij.codeInsight.template.macro.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.psi.PsiDocumentManager
@@ -25,15 +20,12 @@ import groovy.transform.CompileStatic
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 
-/**
- * @author peter
- */
 @CompileStatic
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
+    return JAVA_LATEST_WITH_LATEST_JDK
   }
 
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
@@ -166,6 +158,27 @@ class Outer {
     checkResult()
   }
 
+  void testElseIf() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+    checkResult()
+  }
+
+  void testElseIf2() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+    checkResult()
+  }
+
+  void testElseIf3() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
+    checkResult()
+  }
+
   void testIter() throws Throwable {
     configure()
     startTemplate("iter", "Java")
@@ -195,10 +208,17 @@ class Outer {
     checkResult()
   }
 
+  void testThrInSwitch() {
+    configure()
+    startTemplate("thr", "Java")
+    stripTrailingSpaces()
+    checkResult()
+  }
+
   private void stripTrailingSpaces() {
     DocumentImpl document = (DocumentImpl)getEditor().getDocument()
     document.setStripTrailingSpacesEnabled(true)
-   document.stripTrailingSpaces(getProject())
+    document.stripTrailingSpaces(getProject())
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
   }
 
@@ -218,6 +238,13 @@ class Outer {
   void testSoutp() {
     configure()
     startTemplate("soutp", "Java")
+    checkResult()
+  }
+
+  void testItm() {
+    configure()
+    startTemplate("itm", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
   
@@ -280,7 +307,7 @@ class Outer {
 
   void testJavaStringContext() {
     TemplateImpl template = (TemplateImpl)templateManager.createTemplate("a", "b")
-    template.templateContext.setEnabled(TemplateContextType.EP_NAME.findExtension(JavaStringContextType), true)
+    template.templateContext.setEnabled(TemplateContextTypes.getByClass(JavaStringContextType.class), true)
     assert !isApplicable('class Foo {{ <caret> }}', template)
     assert !isApplicable('class Foo {{ <caret>1 }}', template)
     assert isApplicable('class Foo {{ "<caret>" }}', template)
@@ -340,6 +367,22 @@ class Foo {
 
     startTemplate(template)
     assert myFixture.editor.document.text.contains('List<Map.Entry<String, Integer>> result;')
+  }
+
+  void "test method name in annotation"() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <caret>
+  void foo() {}
+}
+'''
+
+    Template template = templateManager.createTemplate("result", "user", '@SuppressWarnings("$T$")')
+    template.addVariable('T', new MacroCallNode(new MethodNameMacro()), new EmptyNode(), false)
+    template.toReformat = true
+
+    startTemplate(template)
+    assert myFixture.editor.document.text.contains('@SuppressWarnings("foo")')
   }
 
 
@@ -468,7 +511,7 @@ class Foo {
 '''
   }
 
-  void "test ritar template in expression lambda"() {
+  void "test itar template in expression lambda"() {
     myFixture.configureByText 'a.java', '''class Foo {
   void test(int[] arr) {
     Runnable r = () -> itar<caret>
@@ -552,10 +595,10 @@ class A {
   void "test save as live template for annotation values"() {
     myFixture.addClass("package foo; public @interface Anno { String value(); }")
     myFixture.configureByText "a.java", 'import foo.*; <selection>@Anno("")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno("")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno("")'
 
     myFixture.configureByText "b.java", 'import foo.*; <selection>@Anno(value="")</selection> class T {}'
-    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file) == '@foo.Anno(value="")'
+    assert SaveAsTemplateAction.suggestTemplateText(myFixture.editor, myFixture.file, myFixture.project) == '@foo.Anno(value="")'
   }
 
   void "test reformat with virtual space"() {

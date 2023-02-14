@@ -1,20 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
-import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -25,14 +25,13 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
+import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.ui.components.fields.IntegerField;
-import com.intellij.ui.components.fields.valueEditors.ValueEditor;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -43,11 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 
@@ -58,32 +55,16 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   @PsiModifier.ModifierConstant
   public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
   public int minimalUsageCount = 1;
+  public boolean ignoreWhenRefactoringIsComplicated = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    JPanel panel = new InspectionOptionsPanel();
-    LabeledComponent<VisibilityModifierChooser> component = LabeledComponent.create(new VisibilityModifierChooser(() -> true,
-                                                                                                                  highestModifier,
-                                                                                                                  (newModifier) -> highestModifier = newModifier),
-                                                                                    JavaBundle
-                                                                                      .message("label.minimal.reported.method.visibility"),
-                                                                                    BorderLayout.WEST);
-    panel.add(component);
-
-    IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
-    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<>() {
-      @Override
-      public void valueChanged(@NotNull Integer newValue) {
-        minimalUsageCount = newValue;
-      }
-    });
-    minimalUsageCountEditor.setValue(minimalUsageCount);
-    minimalUsageCountEditor.setColumns(4);
-    panel.add(LabeledComponent.create(minimalUsageCountEditor, JavaBundle.message("label.minimal.reported.method.usage.count"), BorderLayout.WEST));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreWhenRefactoringIsComplicated", JavaBundle.message("label.ignore.complicated.fix")),
+      JavaInspectionControls.visibilityChooser("highestModifier", JavaBundle.message("label.maximal.reported.method.visibility")),
+      number("minimalUsageCount", JavaBundle.message("label.minimal.reported.method.usage.count"), 1, 100)
+    );
   }
-
 
   protected LocalQuickFix createFix(String paramName, String value) {
     return new InlineParameterValueFix(paramName, value);
@@ -96,12 +77,13 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     List<ProblemDescriptor> problems = null;
-    if (refEntity instanceof RefMethod) {
-      final RefMethod refMethod = (RefMethod)refEntity;
+    if (refEntity instanceof final RefMethod refMethod) {
 
       if (refMethod.hasSuperMethods() ||
           VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
-          refMethod.isEntry()) return null;
+          refMethod.isEntry()) {
+        return null;
+      }
 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
@@ -112,7 +94,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (problems == null) problems = new ArrayList<>(1);
           UParameter parameter = refParameter.getUastElement();
           if (parameter == null) continue;
-          problems.add(registerProblem(manager, parameter, value, refParameter.isUsedForWriting()));
+          Boolean isFixAvailable = isFixAvailable(parameter, value, refParameter.isUsedForWriting());
+          if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return null;
+          ContainerUtil.addIfNotNull(problems, registerProblem(manager, parameter, value, Boolean.TRUE.equals(isFixAvailable)));
         }
       }
     }
@@ -121,13 +105,14 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(@NotNull RefManager manager, @NotNull GlobalJavaInspectionContext globalContext,
+                                                @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull RefMethod refMethod) {
+              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
                 @Override
                 public boolean process(PsiReference psiReference) {
@@ -158,7 +143,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
   @Override
   @Nullable
-  public QuickFix getQuickFix(final String hint) {
+  public LocalQuickFix getQuickFix(String hint) {
     if (hint == null) return null;
     final int spaceIdx = hint.indexOf(' ');
     if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
@@ -169,7 +154,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
   @Override
   @Nullable
-  public String getHint(@NotNull final QuickFix fix) {
+  public String getHint(@NotNull QuickFix fix) {
     return fix.toString();
   }
 
@@ -179,23 +164,21 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     return new LocalSameParameterValueInspection(this);
   }
 
-  private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
-                                            UParameter parameter,
-                                            Object value,
-                                            boolean usedForWriting) {
+  private @Nullable ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
+                                                      @NotNull UParameter parameter,
+                                                      Object value,
+                                                      boolean suggestFix) {
     final String name = parameter.getName();
+    if (name == null || name.isEmpty()) return null;
     String shortName;
     String stringPresentation;
-    boolean accessible = true;
 
-    PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
     if (value instanceof PsiType) {
       stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
       shortName = ((PsiType)value).getPresentableText() + ".class";
     }
     else {
       if (value instanceof PsiField) {
-        accessible = javaParameter != null && PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter);
         stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value,
                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME,
                                                           PsiSubstitutor.EMPTY);
@@ -204,22 +187,28 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                  PsiSubstitutor.EMPTY);
       }
       else if (value instanceof Character) {
-        stringPresentation = shortName =  "'" + value + "'";
+        stringPresentation = shortName = "'" + value + "'";
       }
       else {
-        stringPresentation = shortName =  String.valueOf(value);
+        stringPresentation = shortName = String.valueOf(value);
       }
     }
-    boolean suggestFix = false;
-    if (javaParameter != null) {
-      suggestFix = !javaParameter.isVarArgs() && !usedForWriting && accessible ;
-    }
-    return manager.createProblemDescriptor(ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter),
+    PsiElement anchor = ObjectUtils.notNull(UDeclarationKt.getAnchorPsi(parameter), parameter);
+    if (!anchor.isPhysical()) return null;
+    return manager.createProblemDescriptor(anchor,
                                            JavaBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     name,
-                                                                     StringUtil.unquoteString(shortName)),
-                                           suggestFix ? createFix(name, stringPresentation.startsWith("\"\"") ? stringPresentation : StringUtil.escapeLineBreak(stringPresentation)) : null,
+                                                              StringUtil.unquoteString(shortName)),
+                                           suggestFix ? createFix(name, stringPresentation.startsWith("\"\"")
+                                                                        ? stringPresentation
+                                                                        : StringUtil.escapeLineBreak(stringPresentation)) : null,
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+  }
+
+  private static @Nullable Boolean isFixAvailable(UParameter parameter, Object value, boolean usedForWriting) {
+    if (usedForWriting) return false;
+    PsiParameter javaParameter = ObjectUtils.tryCast(parameter.getSourcePsi(), PsiParameter.class);
+    if (javaParameter == null) return null;
+    return !(value instanceof PsiField) || PsiUtil.isMemberAccessibleAt((PsiMember)value, javaParameter);
   }
 
   public static final class InlineParameterValueFix implements LocalQuickFix {
@@ -239,8 +228,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     @Override
     @NotNull
     public String getName() {
-      return JavaBundle
-        .message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
+      return JavaBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
@@ -250,33 +238,44 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method == null) return;
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-      if (parameter == null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (PsiParameter psiParameter : parameters) {
-          if (Comparing.strEqual(psiParameter.getName(), myParameterName)) {
-            parameter = psiParameter;
-            break;
-          }
-        }
-      }
+      PsiParameter parameter = findParameter(method, element);
       if (parameter == null) return;
-
-
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getElementFactory(project)
-                                   .createExpressionFromText(myValue, parameter);
+        defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {
         return;
       }
-      final PsiParameter parameterToInline = parameter;
-      inlineSameParameterValue(method, parameterToInline, defToInline);
+      inlineSameParameterValue(method, parameter, defToInline);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiElement element = previewDescriptor.getPsiElement();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (method == null) return IntentionPreviewInfo.EMPTY;
+      final PsiParameter parameter = findParameterByName(method);
+      if (parameter == null) return IntentionPreviewInfo.EMPTY;
+      Collection<PsiReference> references = ReferencesSearch.search(parameter).findAll();
+      final PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
+      references.forEach((ref) -> ref.getElement().replace(defToInline));
+      parameter.delete();
+      return IntentionPreviewInfo.DIFF;
+    }
+
+    private @Nullable PsiParameter findParameter(PsiMethod method, PsiElement descriptorElement) {
+      PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptorElement, PsiParameter.class, false);
+      if (parameter == null) parameter = findParameterByName(method);
+      return parameter;
+    }
+
+    private @Nullable PsiParameter findParameterByName(PsiMethod method) {
+      return ContainerUtil.find(method.getParameterList().getParameters(), (param) -> Comparing.strEqual(param.getName(), myParameterName));
     }
 
     @Override
@@ -284,7 +283,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       return false;
     }
 
-    public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
+    public static void inlineSameParameterValue(PsiMethod method, PsiParameter parameter, PsiExpression defToInline) {
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       Collection<PsiMethod> methods = new ArrayList<>();
       methods.add(method);
@@ -300,7 +299,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
       for (PsiMethod psiMethod : methods) {
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
-        JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        RefactoringConflictsUtil.getInstance().analyzeMethodConflictsAfterParameterDelete(psiMethod, psiParameter, conflicts);
         final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
         for (PsiReference reference : refsToInline) {
           PsiElement referenceElement = reference.getElement();
@@ -321,12 +320,12 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             int idx = 0;
             for (PsiReference reference : refsToInline) {
               if (reference instanceof PsiJavaCodeReferenceElement) {
-                exprs[idx++] = InlineUtil.inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference);
+                exprs[idx++] = CommonJavaInlineUtil.getInstance().inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference, null);
               }
             }
 
-            for (final PsiExpression expr : exprs) {
-              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+            for (PsiExpression expr : exprs) {
+              if (expr != null) CommonJavaRefactoringUtil.tryToInlineArrayCreationForVarargs(expr);
             }
           }
           catch (IncorrectOperationException e) {
@@ -338,7 +337,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       removeParameter(method, parameter);
     }
 
-    public static void removeParameter(final PsiMethod method, final PsiParameter parameter) {
+    public static void removeParameter(PsiMethod method, PsiParameter parameter) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final List<ParameterInfoImpl> psiParameters = new ArrayList<>();
       int paramIdx = 0;
@@ -350,8 +349,11 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         paramIdx++;
       }
 
-      new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfoImpl[0])).run();
+      ParameterInfoImpl @NotNull [] parameterInfo = psiParameters.toArray(new ParameterInfoImpl[0]);
+      var processor = JavaRefactoringFactory.getInstance(method.getProject())
+        .createChangeSignatureProcessor(method, false, null, method.getName(), method.getReturnType(), parameterInfo, null, null, null,
+                                        null);
+      processor.run();
     }
 
     public String getParamName() {
@@ -359,7 +361,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
   }
 
-  private final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
+  private static final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameParameterValueInspection myGlobal;
     private final Object VALUE_VARARGS = ObjectUtils.sentinel("VALUE_VARARGS");
 
@@ -394,7 +396,10 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         @Override
         public boolean visitMethod(@NotNull UMethod method) {
           PsiMethod javaMethod = method.getJavaPsi();
-          if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList()), highestModifier) < 0) return true;
+          if (method.isConstructor() || 
+              VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList()), myGlobal.highestModifier) < 0) {
+            return true;
+          }
 
           if (javaMethod.hasModifierProperty(PsiModifier.NATIVE)) return true;
 
@@ -432,10 +437,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                 return false;
               }
               UElement parent = uElement.getUastParent();
-              if (!(parent instanceof UCallExpression)) {
+              if (!(parent instanceof UCallExpression methodCall)) {
                 return false;
               }
-              UCallExpression methodCall = (UCallExpression) parent;
               List<UExpression> arguments = methodCall.getValueArguments();
               int argumentSize = arguments.size();
               if (argumentSize < paramValues.length) return false;
@@ -444,12 +448,13 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
               boolean needFurtherProcess = false;
               for (int i = 0; i < paramValues.length; i++) {
                 Object value = paramValues[i];
+                
                 int argumentIndex = i + varargCount;
                 if (argumentIndex >= argumentSize) {
                   break;
                 }
 
-                final Object currentArg = getArgValue(arguments.get(argumentIndex), method.getPsi());
+                final Object currentArg = RefParameterImpl.getAccessibleExpressionValue(arguments.get(i), () -> method.getPsi());
                 if (value == VALUE_VARARGS) {
                   varargCount = argumentSize - paramValues.length;
                   needFurtherProcess = true;
@@ -469,11 +474,18 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
               return needFurtherProcess;
             })) {
-            if (minimalUsageCount != 0 && usageCount[0] < minimalUsageCount) return true;
+            if (myGlobal.minimalUsageCount != 0 && usageCount[0] < myGlobal.minimalUsageCount) return true;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
               if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST && value != VALUE_VARARGS) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters.get(i), value, false));
+                final UParameter parameter = parameters.get(i);
+                Boolean isFixAvailable = isFixAvailable(parameter, value, false);
+                if (Boolean.FALSE.equals(isFixAvailable) && myGlobal.ignoreWhenRefactoringIsComplicated) return true;
+                ProblemDescriptor descriptor = 
+                  myGlobal.registerProblem(holder.getManager(), parameter, value, Boolean.TRUE.equals(isFixAvailable));
+                if (descriptor != null) {
+                  holder.registerProblem(descriptor);
+                }
               }
             }
           }
@@ -481,13 +493,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         }
       }, new Class[]{UMethod.class});
     }
-
+    
     private boolean isReceiver(UMethod method, UParameter param) {
       return Objects.equals(param.getName(), "$receiver") || Objects.equals(param.getName(), "$this$" + method.getName());
-    }
-
-    private Object getArgValue(UExpression arg, PsiMethod method) {
-      return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
 }

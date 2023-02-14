@@ -59,12 +59,12 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object @NotNull [] getChildElements(@NotNull Object element) {
-    return ((AbstractTreeNode)element).getChildren().toArray();
+    return ((AbstractTreeNode<?>)element).getChildren().toArray();
   }
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    return ((AbstractTreeNode)element).getParent();
+    return ((AbstractTreeNode<?>)element).getParent();
   }
 
   @NotNull
@@ -83,10 +83,10 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   @Override
   public boolean isAlwaysLeaf(@NotNull Object element) {
-    return ((AbstractTreeNode)element).isAlwaysLeaf();
+    return ((AbstractTreeNode<?>)element).isAlwaysLeaf();
   }
 
   public void rebuildTree() {
-    ((CachingChildrenTreeNode)getRootElement()).rebuildChildren();
+    ((CachingChildrenTreeNode<?>)getRootElement()).rebuildChildren();
   }
 }

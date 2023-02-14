@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
+public class IfStatementMissingBreakInLoopInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -48,7 +49,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
   private static class IfStatementMissingBreakInLoopVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       PsiStatement body = statement.getBody();
       if (body == null) return;
       PsiParameter parameter = statement.getIterationParameter();
@@ -60,7 +61,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
       PsiStatement body = statement.getBody();
       if (body == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
@@ -75,12 +76,12 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
     }
 
     @Override
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
       visitLoopStatement(statement);
     }
 
     @Override
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       visitLoopStatement(statement);
     }
 
@@ -109,8 +110,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
         if (statement instanceof PsiDeclarationStatement) {
           collectVariables((PsiDeclarationStatement)statement, loopBody, nonFinalVariables, declaredVariables);
         }
-        else if (statement instanceof PsiIfStatement) {
-          PsiIfStatement ifStatement = (PsiIfStatement)statement;
+        else if (statement instanceof PsiIfStatement ifStatement) {
           PsiExpression condition = ifStatement.getCondition();
           if (condition == null || mayHaveOutsideOfLoopSideEffects(condition, declaredVariables)) {
             return;
@@ -146,8 +146,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
     private static PsiAssignmentExpression getAssignment(@NotNull PsiStatement statement) {
       if (!(statement instanceof PsiExpressionStatement)) return null;
       PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-      if (!(expression instanceof PsiAssignmentExpression)) return null;
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if (!(expression instanceof PsiAssignmentExpression assignment)) return null;
       if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) return null;
       return assignment;
     }
@@ -185,8 +184,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
       Set<PsiVariable> usedVariables = VariableAccessUtils.collectUsedVariables(declaration);
       boolean hasNonFinalVariables = haveCommonElements(usedVariables, nonFinalVariables);
       for (PsiElement element : declaration.getDeclaredElements()) {
-        if (!(element instanceof PsiVariable)) continue;
-        PsiVariable variable = (PsiVariable)element;
+        if (!(element instanceof PsiVariable variable)) continue;
         declaredVariables.add(variable);
         if (hasNonFinalVariables || !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
           nonFinalVariables.add(variable);
@@ -251,7 +249,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
   private static class IfStatementMissingBreakInLoopFix extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiIfStatement ifStatement = tryCast(descriptor.getPsiElement().getParent(), PsiIfStatement.class);
       if (ifStatement == null || ifStatement.getElseBranch() != null) return;
       PsiStatement thenBranch = ifStatement.getThenBranch();

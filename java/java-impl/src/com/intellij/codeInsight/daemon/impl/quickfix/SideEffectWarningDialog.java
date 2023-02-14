@@ -22,9 +22,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Alexey Kudravtsev
- */
 public class SideEffectWarningDialog extends DialogWrapper {
   private final PsiVariable myVariable;
   private final @NlsSafe String myBeforeText;

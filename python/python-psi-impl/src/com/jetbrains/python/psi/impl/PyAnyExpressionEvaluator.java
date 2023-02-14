@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Evaluator tht supports expression of any type (it evaluates any expression, concatenating several expressions to list etc)
+ * Evaluator that supports expression of any type (it evaluates any expression, concatenating several expressions to list, etc.).
  */
 public class PyAnyExpressionEvaluator extends PyEvaluator {
   private final boolean myEvalSequence;

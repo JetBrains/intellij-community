@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a Java code fragment the contents of which is a reference to a Java type.
  *
- * @author dsl
  * @see JavaCodeFragmentFactory#createTypeCodeFragment(String, PsiElement, boolean)
  */
 public interface PsiTypeCodeFragment extends JavaCodeFragment {

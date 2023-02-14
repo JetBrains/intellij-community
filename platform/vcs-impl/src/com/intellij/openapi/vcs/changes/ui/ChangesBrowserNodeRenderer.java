@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,11 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     myProject = project;
     myHighlightProblems = highlightProblems;
     myIssueLinkRenderer = project != null ? new IssueLinkRenderer(project, this) : null;
+  }
+
+  @Nullable
+  public Project getProject() {
+    return myProject;
   }
 
   public boolean isShowFlatten() {
@@ -104,7 +110,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
       setIcon(icon);
       return;
     }
-    setIcon(filePath.getFileType().getIcon());
+    setIcon(VcsUtil.getIcon(myProject, filePath));
   }
 
   public void setBackgroundInsets(@Nullable JBInsets backgroundInsets) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -36,12 +36,12 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
 
-  public boolean isDynamicGroup() {
+  boolean isDynamicGroup() {
     return myEP == null ? getTool() instanceof DynamicGroupTool : myEP.dynamicGroup;
   }
 
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return myEP == null ? getTool().getID() : myEP.id == null ? myEP.getShortName() : myEP.id;
   }
 

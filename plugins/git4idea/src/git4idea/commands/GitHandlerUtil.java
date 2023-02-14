@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,7 +24,7 @@ public final class GitHandlerUtil {
   private GitHandlerUtil() {
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static int doSynchronously(@NotNull GitLineHandler handler,
                                     @NotNull @NlsContexts.ProgressTitle String operationTitle,
                                     @NotNull @Nls String operationName) {
@@ -38,7 +38,7 @@ public final class GitHandlerUtil {
     return handler.getExitCode();
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void runInCurrentThread(@NotNull GitHandler handler,
                                         @Nullable ProgressIndicator indicator,
                                         boolean setIndeterminateFlag,
@@ -59,7 +59,7 @@ public final class GitHandlerUtil {
     handler.runInCurrentThread(postStartAction);
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class GitLineHandlerListenerProgress implements GitLineHandlerListener {
     @NotNull protected final GitHandler myHandler;
     @NotNull protected final @Nls String myOperationName;
@@ -111,7 +111,7 @@ public final class GitHandlerUtil {
     }
   }
 
-  protected static boolean isErrorLine(@NotNull String text) {
+  static boolean isErrorLine(@NotNull String text) {
     for (String prefix : GitImplBase.ERROR_INDICATORS) {
       if (text.startsWith(prefix)) {
         return true;

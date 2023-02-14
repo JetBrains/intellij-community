@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/**
- * @author peter
- */
 public class MockModule extends MockComponentManager implements Module {
   private final Project myProject;
   private String myName = "MockModule";
@@ -43,6 +40,16 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   public GlobalSearchScope getModuleRuntimeScope(final boolean includeTests) {
     return new MockGlobalSearchScope();
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleProductionSourceScope() {
+    throw new UnsupportedOperationException("Method getModuleProductionSourceScope is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
+  public @NotNull GlobalSearchScope getModuleTestSourceScope() {
+    throw new UnsupportedOperationException("Method getModuleTestSourceScope is not yet implemented in " + getClass().getName());
   }
 
   @NotNull

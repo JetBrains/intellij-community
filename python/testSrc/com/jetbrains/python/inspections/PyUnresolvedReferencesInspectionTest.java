@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,9 +20,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   @Override
@@ -512,7 +511,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testBuiltinListGetItem() {
     doTest();
   }
-  
+
   // PY-13395
   public void testPropertyNotListedInSlots() {
     doTest();
@@ -718,51 +717,55 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-20197
   public void testClassLevelImportUsedInsideMethod() {
-    doTestByText("class DateParser:\n" +
-                 "    from datetime import datetime\n" +
-                 "    def __init__(self):\n" +
-                 "        self.value = self.datetime(2016, 1, 1)");
+    doTestByText("""
+                   class DateParser:
+                       from datetime import datetime
+                       def __init__(self):
+                           self.value = self.datetime(2016, 1, 1)""");
   }
 
   // PY-19599
   public void testDefinedInParameterDefaultAndBody() {
-    doTestByText("def f(p=(x for x in [])):\n" +
-                 "    x = 1\n" +
-                 "    return x");
+    doTestByText("""
+                   def f(p=(x for x in [])):
+                       x = 1
+                       return x""");
   }
 
   // PY-20530
   public void testSelfInAnnotationAndTypeComment() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTestByText("class A:\n" +
-                         "    def f1(self) -> <error descr=\"Unresolved reference 'self'\">self</error>.B:\n" +
-                         "        pass\n" +
-                         "\n" +
-                         "    def f2(self):\n" +
-                         "        # type: () -> <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
-                         "        pass\n" +
-                         "\n" +
-                         "    def f3(self):\n" +
-                         "        v3: self.B\n" +
-                         "        v4 = None  # type: self.B\n" +
-                         "\n" +
-                         "    v1: <error descr=\"Unresolved reference 'self'\">self</error>.B\n" +
-                         "    v2 = None  # type: <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
-                         "\n" +
-                         "    class B:\n" +
-                         "        pass")
+      () -> doTestByText("""
+                           class A:
+                               def f1(self) -> <error descr="Unresolved reference 'self'">self</error>.B:
+                                   pass
+
+                               def f2(self):
+                                   # type: () -> <warning descr="Unresolved reference 'self'">self</warning>.B
+                                   pass
+
+                               def f3(self):
+                                   v3: self.B
+                                   v4 = None  # type: self.B
+
+                               v1: <error descr="Unresolved reference 'self'">self</error>.B
+                               v2 = None  # type: <warning descr="Unresolved reference 'self'">self</warning>.B
+
+                               class B:
+                                   pass""")
     );
   }
 
   // PY-30383
   public void testLambdaMember() {
-    doTestByText("class SomeClass:\n" +
-                 "    def __init__(self):\n" +
-                 "        self.one = lambda x: True\n" +
-                 "        \n" +
-                 "    def some_method(self):\n" +
-                 "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
+    doTestByText("""
+                   class SomeClass:
+                       def __init__(self):
+                           self.one = lambda x: True
+                          \s
+                       def some_method(self):
+                           self.one.<warning descr="Cannot find reference 'abc' in 'function'">abc</warning>""");
   }
 
   public void testNamedTupleFunction() {
@@ -777,14 +780,20 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-29929
   public void testAttrsSpecialAttribute() {
-    doTestByText("import attr\n" +
-                 "\n" +
-                 "@attr.s\n" +
-                 "class C:\n" +
-                 "    a = attr.ib()\n" +
-                 "\n" +
-                 "print(C.__attrs_attrs__)\n" +
-                 "print(C(1).__attrs_attrs__)");
+    runWithAdditionalClassEntryInSdkRoots(
+      "packages",
+      () -> doTestByText(
+        """
+          import attr
+
+          @attr.s
+          class C:
+              a = attr.ib()
+
+          print(C.__attrs_attrs__)
+          print(C(1).__attrs_attrs__)"""
+      )
+    );
   }
 
   // PY-32927
@@ -796,14 +805,15 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testAttributeDefinedInOverloadedDunderInit() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doTestByText("from typing import overload\n" +
-                         "class Example:\n" +
-                         "    @overload\n" +
-                         "    def __init__(self, **kwargs): ...\n" +
-                         "    def __init__(self, *args, **kwargs):\n" +
-                         "        self.__data = None\n" +
-                         "    def test(self):\n" +
-                         "        return self.__data")
+      () -> doTestByText("""
+                           from typing import overload
+                           class Example:
+                               @overload
+                               def __init__(self, **kwargs): ...
+                               def __init__(self, *args, **kwargs):
+                                   self.__data = None
+                               def test(self):
+                                   return self.__data""")
     );
   }
 
@@ -811,31 +821,33 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testTypedDict() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
-      () -> doTestByText("from typing import TypedDict\n" +
-                         "class X(TypedDict):\n" +
-                         "    x: str\n" +
-                         "x = X(x='str')\n" +
-                         "x.clear()\n" +
-                         "x['x'] = 'rts'\n" +
-                         "x.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
-                         "x.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()\n" +
-                         "x1: X = {'x1': 'str'}\n" +
-                         "x1['x1'] = 'rts'\n" +
-                         "x1.clear()\n" +
-                         "x1.<warning descr=\"Unresolved attribute reference 'clea' for class 'X'\">clea</warning>()\n" +
-                         "x1.<warning descr=\"Unresolved attribute reference 'x' for class 'X'\">x</warning>()")
+      () -> doTestByText("""
+                           from typing import TypedDict
+                           class X(TypedDict):
+                               x: str
+                           x = X(x='str')
+                           x.clear()
+                           x['x'] = 'rts'
+                           x.<warning descr="Unresolved attribute reference 'clea' for class 'X'">clea</warning>()
+                           x.<warning descr="Unresolved attribute reference 'x' for class 'X'">x</warning>()
+                           x1: X = {'x1': 'str'}
+                           x1['x1'] = 'rts'
+                           x1.clear()
+                           x1.<warning descr="Unresolved attribute reference 'clea' for class 'X'">clea</warning>()
+                           x1.<warning descr="Unresolved attribute reference 'x' for class 'X'">x</warning>()""")
     );
   }
 
   // PY-31517
   public void testNameDefinedAndUsedInsideDocstring() {
-    doTestByText("\"\"\"\n" +
-                 ">>> def foo(bar):\n" +
-                 "...     print(bar)\n" +
-                 "\n" +
-                 ">>> foo(\"Hello\")\n" +
-                 "Hello\n" +
-                 "\"\"\"");
+    doTestByText("""
+                   ""\"
+                   >>> def foo(bar):
+                   ...     print(bar)
+
+                   >>> foo("Hello")
+                   Hello
+                   ""\"""");
   }
 
   // PY-37755 PY-2700
@@ -867,6 +879,24 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-44918
   public void testResolvePathImportToUserFile() {
     doMultiFileTest("resolvePathImportToUserFile.py");
+  }
+
+  // PY-48166
+  public void testDisabledNumpyPyiStubs() {
+    doMultiFileTest();
+  }
+
+  // PY-48166
+  public void testEnabledNumpyPyiStubs() {
+    if (!Registry.is("enable.numpy.pyi.stubs", false)) {
+      Registry.get("enable.numpy.pyi.stubs").setValue(true, getTestRootDisposable());
+    }
+    doMultiFileTest();
+  }
+
+  // PY-48012
+  public void testUnresolvedKeywordPattern() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
   }
 
   @NotNull

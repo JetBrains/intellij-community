@@ -106,9 +106,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
       String filePath = event.getPath();
-      if (filePath == null) {
-        continue;
-      }
       if (myRepositoryFiles.isbranchHeadsFile(filePath)) {
         branchHeadsChanged = true;
       }

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class EditorCoreUtil {
   public static boolean isTrueSmoothScrollingEnabled() {
@@ -104,16 +105,12 @@ public final class EditorCoreUtil {
     return newCaretOffset;
   }
 
-  public static EditorHighlighter createEmptyHighlighter(@NotNull Project project, @NotNull Document document) {
+  public static EditorHighlighter createEmptyHighlighter(@Nullable Project project, @NotNull Document document) {
     EditorHighlighter highlighter = new EmptyEditorHighlighter(new TextAttributes()) {
       @Override
       public @NotNull HighlighterIterator createIterator(int startOffset) {
         setText(document.getImmutableCharSequence());
         return super.createIterator(startOffset);
-      }
-
-      @Override
-      public void setAttributes(TextAttributes attributes) {
       }
 
       @Override
@@ -149,5 +146,9 @@ public final class EditorCoreUtil {
       }
     }
     return result;
+  }
+
+  public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
+    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
 }

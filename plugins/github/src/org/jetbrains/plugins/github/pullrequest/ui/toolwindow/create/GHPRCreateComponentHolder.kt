@@ -1,51 +1,60 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
+import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
+import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain.Producer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.Processor
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.changes.GitChangeUtils
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
+import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.*
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesTreeFactory
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCommitsBrowserComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
+import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -56,14 +65,14 @@ import javax.swing.text.PlainDocument
 internal class GHPRCreateComponentHolder(private val actionManager: ActionManager,
                                          private val project: Project,
                                          private val settings: GithubPullRequestsProjectUISettings,
-                                         private val repositoriesManager: GHProjectRepositoriesManager,
+                                         private val repositoriesManager: GHHostedRepositoriesManager,
                                          private val dataContext: GHPRDataContext,
-                                         private val viewController: GHPRToolWindowTabComponentController,
+                                         private val viewController: GHPRToolWindowRepositoryContentController,
                                          disposable: Disposable) {
 
   private val repositoryDataService = dataContext.repositoryDataService
 
-  private val directionModel = GHPRCreateDirectionModelImpl(repositoryDataService.repositoryMapping)
+  private val directionModel = GHPRMergeDirectionModelImpl(repositoryDataService.repositoryMapping, repositoriesManager)
   private val titleDocument = PlainDocument()
   private val descriptionDocument = DisableableDocument()
   private val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
@@ -73,7 +82,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private val changesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
   private val commitsLoadingModel = GHIOExecutorLoadingModel<List<VcsCommitMetadata>>(disposable)
   private val commitChangesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
-  private val filesCountModel = createCountModel(changesLoadingModel)
+  private val filesCountFlow = changesLoadingModel.getResultFlow().map { it?.size }
+  private val commitsCountFlow = commitsLoadingModel.getResultFlow().map { it?.size }
   private val commitsCountModel = createCountModel(commitsLoadingModel)
 
   private val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(disposable)
@@ -84,7 +94,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       checkLoadChanges(true)
       commitSelectionModel.value = null
     }
-    commitSelectionModel.addAndInvokeValueChangedListener {
+    commitSelectionModel.addAndInvokeListener {
       checkLoadSelectedCommitChanges(true)
     }
     project.messageBus.connect(disposable).subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
@@ -114,7 +124,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       return
     }
 
-    val repository = headRepo.gitRemote.repository
+    val repository = headRepo.remote.repository
     changesLoadingModel.load(EmptyProgressIndicator()) {
       GitChangeUtils.getThreeDotDiff(repository, baseBranch.name, headBranch.name)
     }
@@ -138,7 +148,8 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
   private fun checkUpdateHead() {
     val headRepo = directionModel.headRepo
-    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo, headRepo.gitRemote.repository.currentBranch)
+    if (headRepo != null && !directionModel.headSetByUser) directionModel.setHead(headRepo,
+                                                                                  headRepo.remote.repository.currentBranch)
   }
 
   private val changesLoadingErrorHandler = GHRetryLoadingErrorHandler {
@@ -156,14 +167,14 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   val component by lazy {
-    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
+    val infoComponent = GHPRCreateInfoComponentFactory(project, settings, dataContext, viewController)
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 
-    GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+    GHPRViewTabsFactory(project, uiDisposable)
       .create(infoComponent, diffController,
-              createFilesComponent(), filesCountModel,
-              createCommitsComponent(), commitsCountModel).apply {
+              createFilesComponent(), filesCountFlow, null,
+              createCommitsComponent(), commitsCountFlow).apply {
         setDataProvider { dataId ->
           if (DiffRequestChainProducer.DATA_KEY.`is`(dataId)) diffRequestProducer
           else null
@@ -185,7 +196,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
+    val toolbar = CodeReviewChangesTreeFactory.createTreeToolbar(actionManager, "Github.PullRequest.Changes.Toolbar", changesLoadingPanel)
     return panel.addToTop(toolbar).addToCenter(changesLoadingPanel)
   }
 
@@ -200,9 +211,11 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                                     GithubBundle.message("cannot.load.commits"),
                                                     commitsLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
-        GHPRCommitsBrowserComponentFactory(project).create(model) { commit ->
-          commitSelectionModel.value = commit
-        }
+        CommitsBrowserComponentBuilder(project, model)
+          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
+          .setEmptyCommitListText(GithubBundle.message("pull.request.does.not.contain.commits"))
+          .onCommitSelected { commitSelectionModel.value = it }
+          .create()
       }
 
     val changesLoadingPanel = GHLoadingPanelFactory(commitChangesLoadingModel,
@@ -216,7 +229,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
       }.apply {
         border = IdeBorderFactory.createBorder(SideBorder.TOP)
       }
-    val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
+    val toolbar = CodeReviewChangesTreeFactory.createTreeToolbar(actionManager, "Github.PullRequest.Changes.Toolbar", changesLoadingPanel)
     val changesBrowser = BorderLayoutPanel().andTransparent()
       .addToTop(toolbar)
       .addToCenter(changesLoadingPanel)
@@ -230,25 +243,20 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   private fun createChangesTree(parentPanel: JPanel,
                                 model: SingleValueModel<Collection<Change>>,
                                 emptyTextText: String): JComponent {
-    val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
-      it.doubleClickHandler = Processor { e ->
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-      it.enterKeyHandler = Processor {
-        viewController.openNewPullRequestDiff(true)
-        true
-      }
-    }
+    val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
 
-    DataManager.registerDataProvider(parentPanel) {
-      if (tree.isShowing) tree.getData(it) else null
+    val diffPreviewHolder = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, null, dataContext.filesManager)
+
+    DataManager.registerDataProvider(parentPanel) { dataId ->
+      when {
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewHolder.activePreview
+        tree.isShowing -> tree.getData(dataId)
+        else -> null
+      }
     }
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
 
-  @Suppress("DuplicatedCode")
   private fun createCountModel(loadingModel: GHSimpleLoadingModel<out Collection<*>>): SingleValueModel<Int?> {
     val model = SingleValueModel<Int?>(null)
     val loadingListener = object : GHLoadingModel.StateChangeListener {
@@ -285,9 +293,9 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     directionModel.preFill()
   }
 
-  private fun GHPRCreateDirectionModel.preFill() {
+  private fun GHPRMergeDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
-    val currentRemote = repositoryDataService.repositoryMapping.gitRemote
+    val currentRemote = repositoryDataService.repositoryMapping.remote
     val currentRepo = currentRemote.repository
 
     val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
@@ -310,10 +318,10 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     val headRepo = repos.find { it.repository == recentHead } ?: when {
       repos.size == 1 -> repos.single()
       baseIsFork -> baseRepo
-      else -> repos.find { it.gitRemote.remote.name == "origin" }
+      else -> repos.find { it.remote.remote.name == "origin" }
     }
 
-    val headBranch = headRepo?.gitRemote?.repository?.currentBranch
+    val headBranch = headRepo?.remote?.repository?.currentBranch
     setHead(headRepo, headBranch)
     headSetByUser = false
   }
@@ -338,26 +346,29 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
-    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
-      val producers = changes.map {
-        val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-        if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
-          val baseBranchName = directionModel.baseBranch?.name ?: "Base"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(baseBranchName, it.beforeRevision?.file, it.afterRevision?.file)
+    val changeProducerFactory = ChangeDiffRequestProducerFactory { project, change ->
+      val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()
 
-          val headBranchName = directionModel.headBranch?.name ?: "Head"
-          requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
-            VcsDiffUtil.getRevisionTitle(headBranchName, it.afterRevision?.file, null)
-        }
-        else {
-          VcsDiffUtil.putFilePathsIntoChangeContext(it, requestDataKeys)
-        }
+      if (diffController.activeTree == GHPRDiffController.ActiveTree.FILES) {
+        val baseBranchName = directionModel.baseBranch?.name ?: "Base"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(baseBranchName, change.beforeRevision?.file, change.afterRevision?.file)
 
-        ChangeDiffRequestProducer.create(project, it, requestDataKeys)
+        val headBranchName = directionModel.headBranch?.name ?: "Head"
+        requestDataKeys[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] =
+          VcsDiffUtil.getRevisionTitle(headBranchName, change.afterRevision?.file, null)
       }
-      return ChangeDiffRequestChain(producers.list, producers.selectedIndex)
+      else {
+        VcsDiffUtil.putFilePathsIntoChangeContext(change, requestDataKeys)
+      }
+
+      ChangeDiffRequestProducer.create(project, change, requestDataKeys)
+    }
+
+    override fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain {
+      val producers = changes.map { change -> changeProducerFactory.create(project, change) as? Producer }
+      return ChangeDiffRequestChain(producers)
     }
   }
 }

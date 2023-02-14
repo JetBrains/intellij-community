@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -12,9 +13,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-/**
- * @author lambdamix
- */
 public final class OriginsAnalysis {
   private static final SourceInterpreter ourInterpreter = new SourceInterpreter(Opcodes.API_VERSION) {
     @Override
@@ -55,12 +53,10 @@ public final class OriginsAnalysis {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof InsnLocation)) return false;
-      InsnLocation insnLocation = (InsnLocation)o;
-      if (local != insnLocation.local) return false;
-      if (insnIndex != insnLocation.insnIndex) return false;
-      if (slot != insnLocation.slot) return false;
-      return true;
+      return o instanceof InsnLocation insnLocation &&
+             local == insnLocation.local &&
+             insnIndex == insnLocation.insnIndex &&
+             slot == insnLocation.slot;
     }
 
     @Override
@@ -76,19 +72,18 @@ public final class OriginsAnalysis {
    * @param instructions method instructions
    * @param graph        method control flow graph
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
-   * @throws AnalyzerException
    */
   public static boolean @NotNull [] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
     throws AnalyzerException {
-    TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
+    IntArrayList[] backTransitions = new IntArrayList[instructions.size()];
     for (int i = 0; i < backTransitions.length; i++) {
-      backTransitions[i] = new TIntArrayList();
+      backTransitions[i] = new IntArrayList();
     }
     LinkedList<InsnLocation> queue = new LinkedList<>();
     HashSet<InsnLocation> queued = new HashSet<>();
     for (int from = 0; from < instructions.size(); from++) {
       for (int to : graph.transitions[from]) {
-        TIntArrayList froms = backTransitions[to];
+        IntList froms = backTransitions[to];
         froms.add(from);
         int opcode = instructions.get(to).getOpcode();
         if (opcode >= Opcodes.IRETURN && opcode <= Opcodes.ARETURN) {
@@ -115,9 +110,9 @@ public final class OriginsAnalysis {
         }
       }
       else {
-        TIntArrayList froms = backTransitions[insnIndex];
+        IntList froms = backTransitions[insnIndex];
         for (int i = 0; i < froms.size(); i++) {
-          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getQuick(i), preLocation.slot);
+          InsnLocation preILoc = new InsnLocation(preLocation.local, froms.getInt(i), preLocation.slot);
           if (queued.add(preILoc)) {
             queue.push(preILoc);
           }
@@ -133,7 +128,6 @@ public final class OriginsAnalysis {
    * @param location location of an interesting value *after* execution of an instruction
    * @param insn     an executed instruction
    * @return location of an interesting value *before* execution of an instruction (in the past) or null if it is not traceable
-   * @throws AnalyzerException
    */
   @Nullable
   private static Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
@@ -149,15 +143,13 @@ public final class OriginsAnalysis {
     preFrame.execute(insn, ourInterpreter);
     if (location.local) {
       SourceValue preVal = preFrame.getLocal(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
     }
     else {
       SourceValue preVal = preFrame.getStack(location.slot);
-      if (preVal instanceof PreValue) {
-        PreValue val = (PreValue)preVal;
+      if (preVal instanceof PreValue val) {
         return new Location(val.local, val.slot);
       }
     }

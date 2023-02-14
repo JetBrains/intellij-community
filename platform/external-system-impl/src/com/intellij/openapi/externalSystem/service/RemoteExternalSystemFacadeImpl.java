@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
-  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
+  private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MINUTES.toMillis(3);
 
   private final AtomicInteger myCallsInProgressNumber = new AtomicInteger();
   private Future<?> myShutdownFuture = CompletableFuture.completedFuture(null);

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +52,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public boolean isSnapshot() {
-    for (int value : myComponents) {
-      if (value == SNAPSHOT_VALUE) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.indexOf(myComponents, SNAPSHOT_VALUE) != -1;
   }
 
   @Contract(pure = true)
@@ -116,9 +112,11 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@Nullable String version) {
-    if (version == null) return null;
+    if (version == null) {
+      return null;
+    }
     version = version.trim();
-    return version.isEmpty() ? null : fromString(version, null, null);
+    return fromString(version, null, null);
   }
 
   public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
@@ -126,6 +124,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+    if (version.isEmpty()) return null;
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;

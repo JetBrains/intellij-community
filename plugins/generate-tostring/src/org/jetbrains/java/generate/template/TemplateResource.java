@@ -223,6 +223,7 @@ public final class TemplateResource implements Serializable {
   /**
    * Class fqn to detect applicability
    */
+  @NlsSafe
   public String getClassName() {
     return className;
   }
@@ -243,9 +244,7 @@ public final class TemplateResource implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TemplateResource)) return false;
-
-    TemplateResource that = (TemplateResource)o;
+    if (!(o instanceof TemplateResource that)) return false;
 
     return fileName.equals(that.fileName) && template.equals(that.template);
   }

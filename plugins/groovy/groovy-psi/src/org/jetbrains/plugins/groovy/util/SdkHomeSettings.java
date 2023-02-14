@@ -16,9 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class SdkHomeSettings implements PersistentStateComponentWithModificationTracker<SdkHomeBean> {
   private final PsiManager myManager;
   private SdkHomeBean mySdkHome = null;

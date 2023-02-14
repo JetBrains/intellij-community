@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
@@ -30,13 +30,11 @@ public final class History {
     if (isNavigatingNow()) return;
 
     final Place place = query();
-    if (place != null) {
-      pushPlace(query());
-    }
+    pushPlace(place);
   }
 
   public void pushPlace(@NotNull Place place) {
-    while (myCurrentPos > 0 && myHistory.size() > 0 && myCurrentPos < myHistory.size() - 1) {
+    while (myCurrentPos >= 0 && myCurrentPos < myHistory.size() - 1) {
       myHistory.remove(myHistory.size() - 1);
     }
 
@@ -77,8 +75,18 @@ public final class History {
   }
 
   public void back() {
-    assert canGoBack();
-    goThere(myCurrentPos - 1);
+    int next = findValid(myCurrentPos, -1);
+    assert next != -1;
+    goThere(next);
+  }
+
+  private int findValid(int start, int increment) {
+    for (int idx = start + increment; idx >= 0 && idx < myHistory.size(); idx += increment) {
+      if (myRoot.isValid(myHistory.get(idx))) {
+        return idx;
+      }
+    }
+    return -1;
   }
 
   private void goThere(final int nextPos) {
@@ -104,16 +112,17 @@ public final class History {
   }
 
   public boolean canGoBack() {
-    return myHistory.size() > 1 && myCurrentPos > 0;
+    return findValid(myCurrentPos, -1) != -1;
   }
 
   public void forward() {
-    assert canGoForward();
-    goThere(myCurrentPos + 1);
+    int next = findValid(myCurrentPos, 1);
+    assert next != -1;
+    goThere(next);
   }
 
   public boolean canGoForward() {
-    return myHistory.size() > 1 && myCurrentPos < myHistory.size() - 1;
+    return findValid(myCurrentPos, 1) != -1;
   }
 
   public void clear() {

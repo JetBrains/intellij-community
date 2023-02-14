@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
  *   FileEditorState state2 = fileEditor.getState(FileEditorStateLevel.UNDO);
  * }</pre>
  * are expected to be 'equal'.
- *
- * @author Vladimir Kondratyev
  */
 @FunctionalInterface
 public interface FileEditorState {

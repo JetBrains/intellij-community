@@ -22,9 +22,6 @@ import static com.jetbrains.python.packaging.requirement.PyRequirementRelation.*
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-/**
- * @author vlan
- */
 public class PyRequirementTest extends PyTestCase {
 
   // ARCHIVE URL
@@ -2374,15 +2371,16 @@ public class PyRequirementTest extends PyTestCase {
   public void testOptions() {
     assertEmpty(
       PyRequirementParser.fromText(
-        "-i URL\n" +
-        "--index-url URL\n" +
-        "--extra-index-url URL\n" +
-        "--no-index\n" +
-        "-f URL\n" +
-        "--find-links URL\n" +
-        "--no-binary SMTH\n" +
-        "--only-binary SMTH\n" +
-        "--require-hashes"
+        """
+          -i URL
+          --index-url URL
+          --extra-index-url URL
+          --no-index
+          -f URL
+          --find-links URL
+          --no-binary SMTH
+          --only-binary SMTH
+          --require-hashes"""
       )
     );
   }

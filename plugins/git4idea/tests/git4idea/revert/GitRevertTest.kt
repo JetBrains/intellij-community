@@ -15,6 +15,7 @@
  */
 package git4idea.revert
 
+import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -149,9 +150,14 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commitToRevert)
 
-    assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
+    val notification = assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
       ${commitToRevert.id.toShortString()} ${commitToRevert.subject}
-      There are unresolved conflicts in the working tree. <a href='resolve'>Resolve them.<a/>""")
+      There are unresolved conflicts in the working tree.""")
+    assertEquals(2, notification.actions.size)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text"),
+                 notification.actions[0].templateText)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text", "Revert"),
+                 notification.actions[1].templateText)
   }
 
   fun `test revert with conflicts resolve in chain`() {
@@ -223,7 +229,12 @@ class GitRevertTest : GitSingleRepoTest() {
     `revert without auto-commit`(commit)
 
     val comment = commitMessageForRevert(commit)
-    val list = changeListManager.assertChangeListExists(comment)
+    val list = if (VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
+      changeListManager.assertChangeListExists(comment)
+    }
+    else {
+      changeListManager.defaultChangeList
+    }
     val data = list.data
     assertNull("There should be no author information in the changelist: $data", data)
   }

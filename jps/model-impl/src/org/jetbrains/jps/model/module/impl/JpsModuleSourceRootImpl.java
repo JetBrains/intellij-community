@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +11,11 @@ import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Set;
 
-public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsTypedModuleSourceRoot<P> {
+public final class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsTypedModuleSourceRoot<P> {
   private final JpsModuleSourceRootType<P> myRootType;
   private final String myUrl;
 
@@ -53,25 +41,22 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
     return null;
   }
 
-  @Nullable
   @Override
-  public <P extends JpsElement> P getProperties(@NotNull Set<? extends JpsModuleSourceRootType<P>> types) {
+  public @Nullable <P extends JpsElement> P getProperties(@NotNull Set<? extends JpsModuleSourceRootType<P>> types) {
     if (types.contains(myRootType)) {
       return (P)getProperties();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type) {
+  public @Nullable <P extends JpsElement> JpsTypedModuleSourceRoot<P> asTyped(@NotNull JpsModuleSourceRootType<P> type) {
     //noinspection unchecked
     return myRootType.equals(type) ? (JpsTypedModuleSourceRoot<P>)this : null;
   }
 
-  @NotNull
   @Override
-  public JpsTypedModuleSourceRoot<?> asTyped() {
+  public @NotNull JpsTypedModuleSourceRoot<?> asTyped() {
     return this;
   }
 
@@ -80,33 +65,33 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
     return myRootType;
   }
 
-  @NotNull
   @Override
-  public P getProperties() {
+  public @NotNull P getProperties() {
     return myContainer.getChild(myRootType.getPropertiesRole());
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceRootType<P> getRootType() {
+  public @NotNull JpsModuleSourceRootType<P> getRootType() {
     return myRootType;
   }
 
   @Override
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return myUrl;
   }
 
-  @NotNull
   @Override
-  public File getFile() {
+  public @NotNull File getFile() {
     return JpsPathUtil.urlToFile(myUrl);
   }
 
-  @NotNull
   @Override
-  public JpsModuleSourceRootImpl<P> createCopy() {
+  public @NotNull Path getPath() {
+    return Paths.get(JpsPathUtil.urlToPath(myUrl));
+  }
+
+  @Override
+  public @NotNull JpsModuleSourceRootImpl<P> createCopy() {
     return new JpsModuleSourceRootImpl<>(this);
   }
 }

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
-import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -13,21 +12,18 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_FILE_EXTENSIONS
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.setupGradleJvm
 import org.jetbrains.plugins.gradle.util.updateGradleJvm
 import org.jetbrains.plugins.gradle.util.validateJavaHome
-import java.nio.file.Path
 
 internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   override val systemId = SYSTEM_ID
@@ -36,32 +32,35 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && BUILD_FILE_EXTENSIONS.any { file.name.endsWith(it) }
   }
 
-  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
-    val gradleProjectSettings = createLinkSettings(projectDirectory, project)
+  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    LOG.debug("Link Gradle project '$projectFile' to existing project ${project.name}")
 
-    attachGradleProjectAndRefresh(gradleProjectSettings, project)
+    val projectPath = getProjectDirectory(projectFile).toNioPath()
 
-    validateJavaHome(project, projectDirectory, gradleProjectSettings.resolveGradleVersion())
-  }
+    if (confirmLinkingUntrustedProject(project, systemId, projectPath)) {
+      val settings = createLinkSettings(projectPath, project)
 
-  private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {
-    val externalProjectPath = settings.externalProjectPath
-    ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
-    if (Registry.`is`("external.system.auto.import.disabled")) return
-    ExternalSystemUtil.refreshProject(
-      externalProjectPath,
-      ImportSpecBuilder(project, SYSTEM_ID)
-        .usePreviewMode()
-        .use(MODAL_SYNC)
-    )
+      validateJavaHome(project, projectPath, settings.resolveGradleVersion())
 
-    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-      ExternalSystemUtil.ensureToolWindowInitialized(project, SYSTEM_ID)
-      ExternalSystemUtil.refreshProject(
-        externalProjectPath,
-        ImportSpecBuilder(project, SYSTEM_ID)
-          .callback(createFinalImportCallback(project, externalProjectPath))
-      )
+      val externalProjectPath = settings.externalProjectPath
+      ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
+
+      if (!Registry.`is`("external.system.auto.import.disabled")) {
+        ExternalSystemUtil.refreshProject(
+          externalProjectPath,
+          ImportSpecBuilder(project, SYSTEM_ID)
+            .usePreviewMode()
+            .use(MODAL_SYNC)
+        )
+
+        ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
+          ExternalSystemUtil.refreshProject(
+            externalProjectPath,
+            ImportSpecBuilder(project, SYSTEM_ID)
+              .callback(createFinalImportCallback(project, externalProjectPath))
+          )
+        }
+      }
     }
   }
 
@@ -95,6 +94,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   private fun importData(project: Project, externalProject: DataNode<ProjectData>) {
-    ProjectDataManager.getInstance().importData(externalProject, project, false)
+    ProjectDataManager.getInstance().importData(externalProject, project)
   }
 }

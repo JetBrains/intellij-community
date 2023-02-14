@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
@@ -59,7 +60,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
         if (document != null) {
-          DocumentUtil.executeInBulk(document, true, converter);
+          DocumentUtil.executeInBulk(document, converter);
         }
         return postFormatProcessorHelper.getResultTextRange();
       }
@@ -86,16 +87,11 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myOriginalRange = postFormatProcessorHelper.getResultTextRange();
       myDocumentManager = PsiDocumentManager.getInstance(project);
       myDocument = file.getViewProvider().getDocument();
-      switch (style) {
-        case Single:
-          myNewQuote = "'";
-          break;
-        case Double:
-          myNewQuote = "\"";
-          break;
-        default:
-          myNewQuote = String.valueOf(0);
-      }
+      myNewQuote = switch (style) {
+        case Single -> "'";
+        case Double -> "\"";
+        default -> String.valueOf(0);
+      };
     }
 
     public Document getDocument() {
@@ -103,7 +99,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     @Override
-    public void visitXmlAttributeValue(XmlAttributeValue value) {
+    public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
       //use original range to check because while we are modifying document, element ranges returned from getTextRange() are not updated.
       if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();
@@ -169,7 +165,8 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
-      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(element.getContainingFile()).getCommonSettings(HTMLLanguage.INSTANCE);
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(settings);
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
       new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }

@@ -8,11 +8,12 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -159,10 +160,10 @@ public class ConfigurationsTest {
     final MapDataContext dataContext = new MapDataContext();
 
     dataContext.put(CommonDataKeys.PROJECT, project);
-    dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(psiClass));
+    dataContext.put(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(psiClass));
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
 
-    final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext));
+    final ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN));
     assert fromContext != null;
     final RunnerAndConfigurationSettings config = fromContext.getConfigurationSettings();
     final RunConfiguration runConfiguration = config.getConfiguration();

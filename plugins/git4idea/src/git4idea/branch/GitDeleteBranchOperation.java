@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +20,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitSharedSettings;
@@ -114,12 +114,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
           markSuccessful(repository);
         }
         else {
-          fatalError(getErrorTitle(), forceDeleteResult.getErrorOutputAsHtmlString());
+          fatalError(getErrorTitle(), forceDeleteResult);
           fatalErrorHappened = true;
         }
       }
       else {
-        fatalError(getErrorTitle(), result.getErrorOutputAsJoinedString());
+        fatalError(getErrorTitle(), result);
         fatalErrorHappened = true;
       }
     }
@@ -137,8 +137,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null,
-                                                                         "git.branch.deleted");
+    Notification notification = STANDARD_NOTIFICATION.createNotification(message.toString(), NotificationType.INFORMATION);
+    notification.setDisplayId(GitNotificationIdsHolder.BRANCH_DELETED);
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> {
       notification.expire();
       restoreInBackground(notification);
@@ -220,7 +220,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @Override
   @NotNull
-  public String getSuccessMessage() {
+  protected String getSuccessMessage() {
     return GitBundle.message("delete.branch.operation.deleted.branch", formatBranchName(myBranchName));
   }
 
@@ -384,16 +384,19 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @Nls
   static String getRestore() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.restore");
   }
 
   @NotNull
+  @Nls
   static String getViewCommits() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.view.commits");
   }
 
   @NotNull
+  @Nls
   static String getDeleteTrackedBranch() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.delete.tracked.branch");
   }

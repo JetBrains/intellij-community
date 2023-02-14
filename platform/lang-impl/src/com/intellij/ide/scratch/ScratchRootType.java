@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -57,20 +42,23 @@ public final class ScratchRootType extends RootType {
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     Icon icon = ObjectUtils.notNull(super.substituteIcon(project, file), AllIcons.FileTypes.Text);
-    return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
+    return new ScratchFileTypeIcon(icon);
   }
 
   @Nullable
-  public VirtualFile createScratchFile(Project project, final String fileName, final Language language, final String text) {
+  public VirtualFile createScratchFile(@Nullable Project project,
+                                       @NotNull String fileName,
+                                       @Nullable Language language,
+                                       @NotNull String text) {
     return createScratchFile(project, fileName, language, text, ScratchFileService.Option.create_new_always);
   }
 
   @Nullable
-  public VirtualFile createScratchFile(Project project,
-                                       final String fileName,
-                                       final Language language,
-                                       final String text,
-                                       final ScratchFileService.Option option) {
+  public VirtualFile createScratchFile(@Nullable Project project,
+                                       @NotNull String fileName,
+                                       @Nullable Language language,
+                                       @NotNull String text,
+                                       @NotNull ScratchFileService.Option option) {
     try {
       return
         WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
@@ -81,8 +69,10 @@ public final class ScratchRootType extends RootType {
           // save text should go before any other manipulations that load document,
           // otherwise undo will be broken
           VfsUtil.saveText(file, text);
-          Language fileLanguage = LanguageUtil.getFileLanguage(file);
-          fileService.getScratchesMapping().setMapping(file, language == fileLanguage ? null : language);
+          if (language != null) {
+            Language fileLanguage = LanguageUtil.getFileLanguage(file);
+            fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
+          }
           return file;
         });
     }

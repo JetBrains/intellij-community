@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.web.WebConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.web.WebResourceImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
 
 /**
  * @author Vladislav.Soroka
@@ -28,6 +29,7 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
   private static final String WEB_APP_DIR_PROPERTY = "webAppDir"
   private static final String WEB_APP_DIR_NAME_PROPERTY = "webAppDirName"
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
+  private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
 
 
   @Override
@@ -51,8 +53,11 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
 
     project.tasks.each { Task task ->
       if (task instanceof War) {
+
         final WarModelImpl warModel =
-          new WarModelImpl((task as War).archiveName, webAppDirName, webAppDir)
+          is6OrBetter ? new WarModelImpl(task.getArchiveFileName().get(), webAppDirName, webAppDir) :
+          new WarModelImpl(reflectiveCall(task, "getArchiveName", String), webAppDirName, webAppDir)
+
 
         final List<WebConfiguration.WebResource> webResources = []
         final War warTask = task as War
@@ -85,7 +90,8 @@ class WarModelBuilderImpl extends AbstractModelBuilderService {
         }
 
         warModel.webResources = webResources
-        warModel.archivePath = warTask.archivePath
+        warModel.archivePath = is6OrBetter ? warTask.archiveFile.get().asFile
+                                           : warTask.archivePath
 
         Manifest manifest = warTask.manifest
         if (manifest != null) {

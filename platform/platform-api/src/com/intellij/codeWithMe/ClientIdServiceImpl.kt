@@ -17,5 +17,6 @@ open class ClientIdServiceImpl : ClientIdService {
 
   override fun isValid(clientId: ClientId?) = true
 
+  @Suppress("OverridingDeprecatedMember")
   override fun toDisposable(clientId: ClientId?) = ApplicationManager.getApplication() ?: Disposer.newDisposable()
 }

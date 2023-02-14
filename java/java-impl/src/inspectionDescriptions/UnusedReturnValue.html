@@ -2,14 +2,17 @@
 <body>
 Reports methods whose return values are never used when called.
 The return type of such methods can be made <code>void</code>.
-Quick-fix updates method signature and removes <code>return</code> statements from inside the method.
+<p>Methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.
+  The quick-fix updates the method signature and removes <code>return</code> statements from inside the method.</p>
 <p><b>Example:</b></p>
-<pre>
-  protected String myToUpperCase(String s) { // reported if visibility setting is 'Protected' or higher
+<pre><code>
+  // reported if visibility setting is Protected or Public
+  protected String myToUpperCase(String s) {
     return s.toUpperCase();
   }
 
-  public String setStr(String str) {  // simple setter, reporting depends on setting
+  // simple setter, reporting depends on setting
+  public String setStr(String str) {
     myStr = str;
     return myStr;
   }
@@ -18,11 +21,12 @@ Quick-fix updates method signature and removes <code>return</code> statements fr
     setStr("value");          // return value is unused
     myToUpperCase("result");  // return value is unused
   }
-</pre>
-<p>After the quickfix is applied to both methods the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied to both methods:</p>
+<pre><code>
     protected void myToUpperCase(String s) {
-      // 'return' removed completely as 's.toUpperCase()' has no side effect
+      // 'return' removed completely
+      // as 's.toUpperCase()' has no side effect
     }
 
     public void setStr(String str) {
@@ -30,13 +34,13 @@ Quick-fix updates method signature and removes <code>return</code> statements fr
       // 'return' removed
     }
   ...
-</pre>
+</code></pre>
 <p>
-  <b>NOTE:</b> Some methods might not be reported during in-editor highlighting, due to performance reasons.
-  To see all results, please run the inspection using Analyze | Inspect Code... or Analyze | Run Inspection by Name...
+  <b>NOTE:</b> Some methods might not be reported during in-editor highlighting due to performance reasons.
+  To see all results, run the inspection using <b>Code | Inspect Code</b> or <b>Code | Analyze Code | Run Inspection by Name</b>>
 </p>
 <!-- tooltip end -->
-<p>Use the checkbox below to ignore unused return values from simple setter calls.</p>
-<p>Use second option to control the maximum visibility of methods to be reported.</p>
+<p>Use the <b>Ignore simple setters</b> option to ignore unused return values from simple setter calls.</p>
+<p>Use the <b>Maximal reported method visibility</b> option to control the maximum visibility of methods to be reported.</p>
 </body>
 </html>

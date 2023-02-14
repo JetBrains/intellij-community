@@ -1,8 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter;
 
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Indent;
+import com.intellij.formatting.Wrap;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 /**
@@ -16,23 +21,27 @@ public class FormattingContext {
   private final boolean myForbidWrapping;
   private final boolean myForbidNewLineInSpacing;
 
+  private final GroovyBlockProducer myGroovyBlockProducer;
+
   public FormattingContext(@NotNull CommonCodeStyleSettings settings,
                            @NotNull AlignmentProvider provider,
                            @NotNull GroovyCodeStyleSettings groovySettings,
                            boolean forbidWrapping,
-                           boolean forbidNewLineInSpacing) {
+                           boolean forbidNewLineInSpacing,
+                           @NotNull GroovyBlockProducer producer) {
     mySettings = settings;
     myAlignmentProvider = provider;
     myGroovySettings = groovySettings;
     this.myForbidWrapping = forbidWrapping;
     this.myForbidNewLineInSpacing = forbidNewLineInSpacing;
+    myGroovyBlockProducer = producer;
   }
 
   public FormattingContext(@NotNull CommonCodeStyleSettings settings,
                            @NotNull AlignmentProvider provider,
                            @NotNull GroovyCodeStyleSettings groovySettings,
                            boolean forbidWrapping) {
-    this(settings, provider, groovySettings, forbidWrapping, false);
+    this(settings, provider, groovySettings, forbidWrapping, false, GroovyBlockProducer.DEFAULT);
   }
 
   public CommonCodeStyleSettings getSettings() {
@@ -53,7 +62,8 @@ public class FormattingContext {
       myAlignmentProvider,
       myGroovySettings,
       myForbidWrapping || forbidWrapping,
-      myForbidNewLineInSpacing || forbidNewLineInSpacing
+      myForbidNewLineInSpacing || forbidNewLineInSpacing,
+      myGroovyBlockProducer
     );
   }
 
@@ -63,5 +73,11 @@ public class FormattingContext {
 
   public boolean isForbidNewLineInSpacing() {
     return myForbidNewLineInSpacing;
+  }
+
+  public Block createBlock(@NotNull final ASTNode node,
+                           @NotNull final Indent indent,
+                           @Nullable final Wrap wrap) {
+    return myGroovyBlockProducer.generateBlock(node, indent, wrap, this);
   }
 }

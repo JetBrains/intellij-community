@@ -1,0 +1,49 @@
+package com.intellij.xdebugger.impl.ui.attach.dialog.statistics
+
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
+import com.intellij.xdebugger.impl.ui.attach.dialog.AttachViewType
+
+internal class AttachDialogStatisticsCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+
+  companion object {
+    private val GROUP = EventLogGroup("debugger.attach.dialog", 2)
+
+    private val IS_MAIN_ACTION_EVENT_FIELD = EventFields.Boolean("isMainAction")
+    private val VIEW_TYPE_EVENT_FIELD = EventFields.Enum("viewType", AttachViewType::class.java)
+    private val DEBUGGERS_FILTER_SET_EVENT_FIELD = EventFields.Boolean("debuggersFilterSet")
+    private val SEARCH_FIELD_USED_EVENT_FIELD = EventFields.Boolean("searchFieldUsed")
+    private val DEBUGGER_NAME_EVENT_FIELD = EventFields.Class("selectedDebugger")
+
+    private val HOST_SWITCHED = GROUP.registerEvent("host.switched", EventFields.Enum("hostType", AttachDialogHostType::class.java))
+    private val VIEW_SWITCHED = GROUP.registerEvent("view.switched", VIEW_TYPE_EVENT_FIELD)
+    private val SEARCH_FIELD_USED = GROUP.registerEvent("search.filter.used")
+    private val DEBUGGERS_FILTER_SET = GROUP.registerEvent("debuggers.filter.set")
+    private val ATTACH_BUTTON_PRESSED = GROUP.registerVarargEvent("attach.button.pressed",
+                                                                  DEBUGGER_NAME_EVENT_FIELD,
+                                                                  IS_MAIN_ACTION_EVENT_FIELD,
+                                                                  VIEW_TYPE_EVENT_FIELD,
+                                                                  DEBUGGERS_FILTER_SET_EVENT_FIELD,
+                                                                  SEARCH_FIELD_USED_EVENT_FIELD)
+
+    fun hostSwitched(view: AttachToProcessView) = HOST_SWITCHED.log(view.getHostType())
+    fun viewSwitched(viewType: AttachViewType) = VIEW_SWITCHED.log(viewType)
+    fun searchFieldUsed() = SEARCH_FIELD_USED.log()
+    fun debuggersFilterSet() = DEBUGGERS_FILTER_SET.log()
+    fun attachButtonPressed(
+      debuggerClass: Class<*>,
+      isMainAction: Boolean,
+      selectedViewType: AttachViewType,
+      debuggersFilterSet: Boolean,
+      searchFieldIsUsed: Boolean) = ATTACH_BUTTON_PRESSED.log(
+      DEBUGGER_NAME_EVENT_FIELD.with(debuggerClass),
+      IS_MAIN_ACTION_EVENT_FIELD.with(isMainAction),
+      VIEW_TYPE_EVENT_FIELD.with(selectedViewType),
+      DEBUGGERS_FILTER_SET_EVENT_FIELD.with(debuggersFilterSet),
+      SEARCH_FIELD_USED_EVENT_FIELD.with(searchFieldIsUsed))
+  }
+}

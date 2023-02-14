@@ -35,7 +35,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean, saveMapping: Boolean = true): String? {
     val mappings = getMappingsForElement(identifierOrNamedElement)
-    if (mappings == null || mappings.isEmpty()) return null
+    if (mappings.isNullOrEmpty()) return null
     val sourceEntry = mappings[0]
     val generatedName: String?
     try {
@@ -45,7 +45,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       LOG.warn("Cannot get generated name: source entry (${sourceEntry.generatedLine},  ${sourceEntry.generatedColumn}). Transpiled File: " + transpiledFile?.path)
       return null
     }
-    if (generatedName == null || generatedName.isEmpty()) {
+    if (generatedName.isNullOrEmpty()) {
       return null
     }
 

@@ -6,10 +6,14 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,7 +47,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(this::createScopeByFile, ContainerUtil::createConcurrentWeakKeySoftValueMap);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(key -> ReadAction.compute(() -> createScopeByFile(key)), ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -199,7 +203,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
       List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
+      if (entries.isEmpty() && (projectFileIndex.isInLibrary(notNullVFile) || myAdditionalIndexableFileSet.isInSet(notNullVFile))) {
         return allScope;
       }
 
@@ -211,17 +215,6 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     return isTest
            ? GlobalSearchScope.moduleTestsWithDependentsScope(module)
            : GlobalSearchScope.moduleWithDependentsScope(module);
-  }
-
-  private boolean isFromAdditionalLibraries(@NotNull VirtualFile file) {
-    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-        if (library.contains(file)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Override

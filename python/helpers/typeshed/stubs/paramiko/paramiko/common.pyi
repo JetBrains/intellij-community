@@ -1,5 +1,5 @@
-import sys
-from typing import Any, Dict, Protocol, Text, Union
+from typing import Protocol
+from typing_extensions import TypeAlias
 
 MSG_DISCONNECT: int
 MSG_IGNORE: int
@@ -74,7 +74,7 @@ cMSG_CHANNEL_REQUEST: bytes
 cMSG_CHANNEL_SUCCESS: bytes
 cMSG_CHANNEL_FAILURE: bytes
 
-MSG_NAMES: Dict[int, str]
+MSG_NAMES: dict[int, str]
 
 AUTH_SUCCESSFUL: int
 AUTH_PARTIALLY_SUCCESSFUL: int
@@ -86,7 +86,7 @@ OPEN_FAILED_CONNECT_FAILED: int
 OPEN_FAILED_UNKNOWN_CHANNEL_TYPE: int
 OPEN_FAILED_RESOURCE_SHORTAGE: int
 
-CONNECTION_FAILED_CODE: Dict[int, str]
+CONNECTION_FAILED_CODE: dict[int, str]
 
 DISCONNECT_SERVICE_NOT_AVAILABLE: int
 DISCONNECT_AUTH_CANCELLED_BY_USER: int
@@ -99,17 +99,13 @@ max_byte: bytes
 cr_byte: bytes
 linefeed_byte: bytes
 crlf: bytes
-if sys.version_info < (3, 0):
-    cr_byte_value: bytes
-    linefeed_byte_value: bytes
-else:
-    cr_byte_value: int
-    linefeed_byte_value: int
+cr_byte_value: int
+linefeed_byte_value: int
 
 class _SupportsAsBytes(Protocol):
     def asbytes(self) -> bytes: ...
 
-_LikeBytes = Union[bytes, Text, _SupportsAsBytes]
+_LikeBytes: TypeAlias = bytes | str | _SupportsAsBytes
 
 def asbytes(s: _LikeBytes) -> bytes: ...
 

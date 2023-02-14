@@ -18,8 +18,6 @@ package com.intellij.uiDesigner.lw;
 import java.util.HashMap;
 
 /**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 
 public interface PropertiesProvider {

@@ -1,4 +1,4 @@
-// "Replace with forEach" "true"
+// "Collapse loop with stream 'forEach()'" "true-preview"
 
 import java.util.Collection;
 

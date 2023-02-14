@@ -71,7 +71,7 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
   }
 
   public static void computeTagNames(@NotNull Reader reader, @NotNull Consumer<String> consumer) {
-    try {
+    try (reader) {
       NanoXmlUtil.parse(reader, new NanoXmlBuilder() {
         private boolean elementStarted;
 
@@ -89,12 +89,7 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
         }
       });
     }
-    finally {
-      try {
-        reader.close();
-      }
-      catch (IOException ignore) {
-      }
+    catch (IOException ignore) {
     }
   }
 }

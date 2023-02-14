@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
@@ -11,92 +10,106 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings("NotNullFieldNotInitialized")
 public class FeatureDescriptor {
   @NotNull private String myId;
-  @NotNull private String myDisplayName;
-  @Nullable private String myGroupId;
-  @Nullable private String myTipFileName;
+  @Nullable private String myDisplayName;
+  @Nullable private final String myGroupId;
+  @Nullable private String myTipId;
   @Nullable private Set<String> myDependencies;
-  private int myDaysBeforeFirstShowUp;
-  private int myDaysBetweenSuccessiveShowUps;
-  private int myMinUsageCount;
+  private int myDaysBeforeFirstShowUp = 1;
+  private int myDaysBetweenSuccessiveShowUps = 3;
+  private int myMinUsageCount = 1;
+  private int myUtilityScore = 3;  // should be from 1 to 5, required for tips sorting in Tips of the Day
   private boolean myNeedToBeShownInGuide = true;
-  private final List<LogEventDetector> myLogEventDetectors = new ArrayList<>();
+  private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
+  private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
 
   private int myUsageCount;
   private long myLastTimeShown;
   private long myLastTimeUsed;
   private int myShownCount;
-  private ProductivityFeaturesProvider myProvider;
-  private static final Logger LOG = Logger.getInstance(FeatureDescriptor.class);
+  @Nullable private final ProductivityFeaturesProvider myProvider;
+
   @NonNls private static final String ATTRIBUTE_COUNT = "count";
   @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
   @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
   @NonNls private static final String ATTRIBUTE_ID = "id";
-  @NonNls private static final String ATTRIBUTE_TIP_FILE = "tip-file";
-  @NonNls private static final String ATTRIBUTE_DETECTOR_TYPE = "type";
+  @NonNls private static final String ATTRIBUTE_TIP_ID = "tip-id";
   @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
   @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
   @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
   @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
+  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
-  @NonNls private static final String ELEMENT_EVENT_DETECTOR = "event-detector";
+  @NonNls private static final String ELEMENT_TRACK_ACTION = "track-action";
+  @NonNls private static final String ELEMENT_TRACK_INTENTION = "track-intention";
 
-  FeatureDescriptor(@NotNull GroupDescriptor group, @NotNull Element featureElement) {
+  FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
     myGroupId = group.getId();
+    myProvider = provider;
     readExternal(featureElement);
-  }
-
-  FeatureDescriptor(@NonNls @NotNull String id, @NonNls @Nullable String tipFileName, @NotNull String displayName) {
-    myId = id;
-    myTipFileName = tipFileName;
-    myDisplayName = displayName;
   }
 
   public FeatureDescriptor(@NonNls @NotNull String id,
                            @NonNls @Nullable String groupId,
-                           @NonNls @Nullable String tipFileName,
+                           @NonNls @Nullable String tipId,
                            @NotNull String displayName,
                            int daysBeforeFirstShowUp,
                            int daysBetweenSuccessiveShowUps,
                            @Nullable Set<String> dependencies,
                            int minUsageCount,
-                           ProductivityFeaturesProvider provider) {
+                           @Nullable ProductivityFeaturesProvider provider) {
+    this(id, groupId, tipId, displayName, daysBeforeFirstShowUp, daysBetweenSuccessiveShowUps, dependencies, minUsageCount, 3, provider);
+  }
+
+  public FeatureDescriptor(@NonNls @NotNull String id,
+                           @NonNls @Nullable String groupId,
+                           @NonNls @Nullable String tipId,
+                           @NotNull String displayName,
+                           int daysBeforeFirstShowUp,
+                           int daysBetweenSuccessiveShowUps,
+                           @Nullable Set<String> dependencies,
+                           int minUsageCount,
+                           int utilityScore,
+                           @Nullable ProductivityFeaturesProvider provider) {
     myId = id;
     myGroupId = groupId;
-    myTipFileName = tipFileName;
+    myTipId = tipId;
     myDisplayName = displayName;
     myDaysBeforeFirstShowUp = daysBeforeFirstShowUp;
     myDaysBetweenSuccessiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
+    myUtilityScore = utilityScore;
     myProvider = provider;
   }
 
   private void readExternal(Element element) {
     myId = Objects.requireNonNull(element.getAttributeValue(ATTRIBUTE_ID));
-    myTipFileName = element.getAttributeValue(ATTRIBUTE_TIP_FILE);
-    myDisplayName = FeatureStatisticsBundle.message(myId);
+    myTipId = element.getAttributeValue(ATTRIBUTE_TIP_ID);
     String needToBeShownInGuide = element.getAttributeValue(ATTRIBUTE_SHOW_IN_GUIDE);
     if (needToBeShownInGuide != null) {
       myNeedToBeShownInGuide = Boolean.parseBoolean(needToBeShownInGuide);
     }
-    myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), 1);
-    myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), 3);
-    String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
-    myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
-    List<Element> eventDetectors = element.getChildren(ELEMENT_EVENT_DETECTOR);
-    for (Element eventDetectorElement : eventDetectors) {
-      @NonNls String detectorTypeStr = eventDetectorElement.getAttributeValue(ATTRIBUTE_DETECTOR_TYPE);
-      @NonNls String eventDataId = eventDetectorElement.getAttributeValue(ATTRIBUTE_ID);
-      if (detectorTypeStr != null && eventDataId != null) {
-        try {
-          LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase());
-          myLogEventDetectors.add(LogEventDetector.create(detectorType, myId, eventDataId));
-        } catch (Throwable t) {
-          LOG.error(String.format("Error on reading event-detector with event data id %s for feature %s", eventDataId, myId), t);
-        }
+    myDaysBeforeFirstShowUp = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_FIRST_SHOW), myDaysBeforeFirstShowUp);
+    myDaysBetweenSuccessiveShowUps = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW), myDaysBetweenSuccessiveShowUps);
+    myMinUsageCount = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT), myMinUsageCount);
+    myUtilityScore = StringUtil.parseInt(element.getAttributeValue(ATTRIBUTE_UTILITY_SCORE), myUtilityScore);
+    List<Element> actionEvents = element.getChildren(ELEMENT_TRACK_ACTION);
+    for (Element actionElement : actionEvents) {
+      @NonNls String actionId = actionElement.getAttributeValue(ATTRIBUTE_ID);
+      if (actionId != null) {
+        myActionEvents.add(FeatureUsageEvent.createActionEvent(myId, actionId));
+      }
+    }
+    List<Element> intentionEvents = element.getChildren(ELEMENT_TRACK_INTENTION);
+    for (Element intentionElement : intentionEvents) {
+      @NonNls String intentionClassName = intentionElement.getAttributeValue(ATTRIBUTE_CLASS_NAME);
+      if (intentionClassName != null) {
+        myIntentionEvents.add(FeatureUsageEvent.createIntentionEvent(myId, intentionClassName));
       }
     }
     List<Element> dependencies = element.getChildren(ELEMENT_DEPENDENCY);
@@ -117,16 +130,31 @@ public class FeatureDescriptor {
     return myGroupId;
   }
 
+  /**
+   * @deprecated Use {@code getTipId()} instead
+   */
+  @Deprecated
   public @Nullable String getTipFileName() {
-    return myTipFileName;
+    return myTipId;
   }
 
-  public List<LogEventDetector> getLogEventDetectors() {
-    return myLogEventDetectors;
+  public @Nullable String getTipId() {
+    return myTipId;
+  }
+
+  public List<FeatureUsageEvent.Action> getActionEvents() {
+    return myActionEvents;
+  }
+
+  public List<FeatureUsageEvent.Intention> getIntentionEvents() {
+    return myIntentionEvents;
   }
 
   @NotNull
   public String getDisplayName() {
+    if (myDisplayName == null) {
+      myDisplayName = FeatureStatisticsBundle.message(myId);
+    }
     return myDisplayName;
   }
 
@@ -154,6 +182,11 @@ public class FeatureDescriptor {
     return myUsageCount < myMinUsageCount;
   }
 
+  public void adjustUsageInfo(int newUsageCount, long newLastTimeUsed) {
+    myUsageCount = Math.max(myUsageCount, newUsageCount);
+    myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
+  }
+
   public String toString() {
 
     return "id = [" +
@@ -175,8 +208,8 @@ public class FeatureDescriptor {
     return myDaysBetweenSuccessiveShowUps;
   }
 
-  public int getMinUsageCount() {
-    return myMinUsageCount;
+  public int getUtilityScore() {
+    return myUtilityScore;
   }
 
   public long getLastTimeShown() {

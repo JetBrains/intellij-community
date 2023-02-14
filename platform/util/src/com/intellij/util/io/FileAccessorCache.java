@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
@@ -19,7 +19,7 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
   public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
     myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
-      protected final void onDropFromCache(K key, @NotNull Handle<T> value) {
+      protected void onDropFromCache(K key, @NotNull Handle<T> value) {
         value.release();
       }
     };
@@ -131,11 +131,11 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
       myOwner = owner;
     }
 
-    public final void allocate() {
+    public void allocate() {
       myRefCount.incrementAndGet();
     }
 
-    public final void release() {
+    public void release() {
       if (myRefCount.decrementAndGet() == 0) {
         synchronized (myOwner.myCacheLock) {
           myOwner.myElementsToBeDisposed.add(myResource);
@@ -143,17 +143,17 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
       }
     }
 
-    public final int getRefCount() {
+    public int getRefCount() {
       return myRefCount.get();
     }
 
     @Override
-    public final void close() {
+    public void close() {
       release();
     }
 
     @Override
-    public final @NotNull T get() {
+    public @NotNull T get() {
       return myResource;
     }
   }

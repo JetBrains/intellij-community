@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * @author ilyas
- */
 public class GrExpressionCategory implements PsiEnhancerCategory{
 
   public static Collection<GrExpression> getArguments(GrCallExpression call) {
@@ -41,8 +38,7 @@ public class GrExpressionCategory implements PsiEnhancerCategory{
   @Nullable
   public static PsiClass getClassType(GrExpression expr) {
     final PsiType type = expr.getType();
-    if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
+    if (type instanceof PsiClassType classType) {
       return classType.resolve();
     } else {
       final String text = type.getPresentableText();

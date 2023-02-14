@@ -3,6 +3,7 @@ package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "TaskSettings", storages = @Storage("tasks.xml"))
+@State(name = "TaskSettings", storages = @Storage("tasks.xml"), category = SettingsCategory.TOOLS)
 public class TaskSettings implements PersistentStateComponent<TaskSettings> {
   public boolean ALWAYS_DISPLAY_COMBO = false;
   public int CONNECTION_TIMEOUT = 5000;

@@ -1,4 +1,4 @@
-// "Remove '@return' tag" "true"
+// "Remove '@return' tag" "true-preview"
 
 class Foo {
   /**

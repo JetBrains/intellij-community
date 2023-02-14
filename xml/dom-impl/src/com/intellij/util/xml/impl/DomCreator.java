@@ -2,11 +2,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,10 +20,12 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IdempotenceChecker;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.EvaluatedXmlNameImpl;
+import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -35,6 +34,7 @@ import com.intellij.util.xml.stubs.DomStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.IncludedXmlTag;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,19 +45,14 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 final class DomCreator {
 
   @Nullable
   static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
     PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
-    if (!(candidate instanceof XmlTag)) {
+    if (!(candidate instanceof XmlTag parentTag)) {
       return createRootHandler(tag);
     }
-
-    XmlTag parentTag = (XmlTag)candidate;
 
     DomInvocationHandler parent = getParentDom(parentTag);
     if (parent == null) return null;
@@ -105,8 +100,7 @@ final class DomCreator {
       if (current == null) {
         break;
       }
-      if (current instanceof XmlTag) {
-        final XmlTag xmlTag = (XmlTag)current;
+      if (current instanceof XmlTag xmlTag) {
         if (localName.equals(xmlTag.getLocalName()) && namespace.equals(xmlTag.getNamespace())) {
           index++;
           if (index >= totalCount) {
@@ -129,10 +123,10 @@ final class DomCreator {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
-        .of(findSubTagsWithoutIncludes(parentTag, tag.getName(), tag.getNamespace()))
+        .of(findSubTagsWithoutIncludes(parentTag, tag.getLocalName(), tag.getNamespace()))
         .filter(t -> !(t instanceof IncludedXmlTag))
         .indexOf(t -> t == tag);
-      ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+      ElementStub stub = parentStub.getElementStub(tag.getName(), index);
       if (stub != null) {
         XmlName name = description.getXmlName();
         EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
@@ -200,7 +194,7 @@ final class DomCreator {
     FileStub stub = null;
     DomFileMetaData meta = DomApplicationComponent.getInstance().findMeta(description);
     if (meta != null && meta.hasStubs() && file instanceof VirtualFileWithId && !isFileParsed(xmlFile)) {
-      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
+      if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null && !XmlUtil.isStubBuilding()) {
         ObjectStubTree<?> stubTree = StubTreeLoader.getInstance().readFromVFile(xmlFile.getProject(), file);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();
@@ -219,7 +213,7 @@ final class DomCreator {
   }
 
   @Nullable
-  private static DomFileDescription<?> findFileDescription(XmlFile file) {
+  static DomFileDescription<?> findFileDescription(XmlFile file) {
     DomFileDescription<?> mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
@@ -234,11 +228,7 @@ final class DomCreator {
       return element == null ? null : element.getFileDescription();
     }
 
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    Condition<DomFileDescription<?>> condition = d -> d.isMyFile(file, module);
-    String rootTagLocalName = DomService.getInstance().getXmlFileHeader(file).getRootTagLocalName();
-    DomFileDescription<?> description = ContainerUtil.find(domManager.getFileDescriptions(rootTagLocalName), condition);
-    return description != null ? description : ContainerUtil.find(domManager.getAcceptingOtherRootTagNameDescriptions(), condition);
+    return DomApplicationComponent.getInstance().findDescription(file);
   }
 
   @Nullable

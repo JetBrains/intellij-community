@@ -3,9 +3,11 @@ package training.learn.lesson.general
 
 import training.dsl.LessonContext
 import training.dsl.LessonSample
+import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.isToStringContains
 
 abstract class CompletionWithTabLesson(private val proposal: String) :
   KLesson("Completion with tab", LessonsBundle.message("completion.with.tab.lesson.name")) {
@@ -18,8 +20,8 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
 
       task("CodeCompletion") {
         text(LessonsBundle.message("completion.with.tab.begin.completion", action(it), code(proposal)))
-        triggerByListItemAndHighlight { item -> item.toString().contains(proposal) }
-        restoreIfModifiedOrMoved()
+        triggerAndBorderHighlight().listItem { item -> item.isToStringContains(proposal) }
+        restoreIfModifiedOrMoved(sample)
         test { actions(it) }
       }
 
@@ -28,4 +30,9 @@ abstract class CompletionWithTabLesson(private val proposal: String) :
         LessonsBundle.message("completion.with.tab.finish.with.tab", code(proposal), action("EditorTab"))
       }
     }
+
+  override val helpLinks: Map<String, String> get() = mapOf(
+    Pair(LessonsBundle.message("help.code.completion"),
+         LessonUtil.getHelpLink("auto-completing-code.html")),
+  )
 }

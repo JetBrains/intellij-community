@@ -1,0 +1,3 @@
+package ${context.group}.common
+
+expect fun getPlatformName(): String

@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -27,7 +28,6 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,11 +40,8 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   private final Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
-  private final TemplateManagerListener myEventPublisher;
-
   public TemplateManagerImpl(@NotNull Project project) {
     myProject = project;
-    myEventPublisher = project.getMessageBus().syncPublisher(TEMPLATE_STARTED_TOPIC);
     EditorFactoryListener myEditorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -62,13 +59,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
-
-    TemplateContextType.EP_NAME.addChangeListener(
-      () -> {
-        for (TemplateContextType type : getAllContextTypes()) {
-          type.clearCachedBaseContextType();
-        }
-      }, this);
   }
 
   @Override
@@ -105,8 +95,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
-    TemplateState state = new TemplateState(myProject, topLevelEditor, topLevelEditor.getDocument(), new InteractiveTemplateStateProcessor()
-    );
+    TemplateStateProcessor processor =
+      editor instanceof IntentionPreviewEditor ? new NonInteractiveTemplateStateProcessor() : new InteractiveTemplateStateProcessor();
+    TemplateState state = new TemplateState(myProject, topLevelEditor, topLevelEditor.getDocument(), processor);
     Disposer.register(this, state);
     TemplateManagerUtilBase.setTemplateState(topLevelEditor, state);
     return state;
@@ -162,16 +153,16 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
     Runnable r = () -> {
       if (selectionString != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.deleteSelectedText(editor));
+        templateState.performWrite(() -> EditorModificationUtilEx.deleteSelectedText(editor));
       }
       else {
         editor.getSelectionModel().removeSelection();
       }
-      templateState
-        .start(substituteTemplate((TemplateImpl)template, editor), processor, predefinedVarValues);
-      myEventPublisher.templateStarted(templateState);
+      TemplateImpl substitutedTemplate = substituteTemplate((TemplateImpl)template, editor);
+
+      templateState.start(substitutedTemplate, processor, predefinedVarValues);
     };
-    if (inSeparateCommand) {
+    if (inSeparateCommand && templateState.requiresWriteAction()) {
       CommandProcessor.getInstance().executeCommand(myProject, r, AnalysisBundle.message("insert.code.template.command"), null);
     }
     else {
@@ -449,7 +440,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(substituteTemplate(template, editor), processor, predefinedVarValues);
-      myEventPublisher.templateStarted(templateState);
     }, AnalysisBundle.message("insert.code.template.command"), null);
   }
 
@@ -525,8 +515,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   /**
    * @deprecated use {@link #isApplicable(TemplateImpl, TemplateActionContext)}
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, TemplateActionContext.expanding(file, offset));
   }
@@ -542,15 +531,6 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     }
     return false;
-  }
-
-  /**
-   * @deprecated use {@link #listApplicableTemplates(TemplateActionContext)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static List<TemplateImpl> listApplicableTemplates(PsiFile file, int offset, boolean selectionOnly) {
-    return listApplicableTemplates(TemplateActionContext.create(file, null, offset, offset, selectionOnly));
   }
 
   public static List<TemplateImpl> listApplicableTemplates(@NotNull TemplateActionContext templateActionContext) {

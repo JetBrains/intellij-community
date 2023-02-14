@@ -17,6 +17,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -25,6 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +35,11 @@ import java.util.Set;
 public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
   public QualifyThisArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     super(expression, psiClass);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new QualifyThisArgumentFix(PsiTreeUtil.findSameElementInCopy(myExpression, target), myPsiClass);
   }
 
   @Override
@@ -44,7 +52,7 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
     return RefactoringChangeUtil.createThisExpression(manager, myPsiClass);
   }
 
-  public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
+  public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, @NotNull HighlightInfo.Builder builder, final TextRange fixRange) {
     if (candidates.length == 0) return;
 
     final Set<PsiClass> containingClasses = new HashSet<>();
@@ -84,7 +92,8 @@ public class QualifyThisArgumentFix extends QualifyThisOrSuperArgumentFix{
           if (!TypeConversionUtil.isAssignable(parameterType, exprType)) {
             final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
             if (psiClass != null && containingClasses.contains(psiClass)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new QualifyThisArgumentFix(expression, psiClass));
+              IntentionAction action = new QualifyThisArgumentFix(expression, psiClass);
+              builder.registerFix(action, null, null, fixRange, null);
             }
           }
         }

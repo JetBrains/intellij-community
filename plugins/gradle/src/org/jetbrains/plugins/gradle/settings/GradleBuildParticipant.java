@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 
@@ -23,9 +23,9 @@ public final class GradleBuildParticipant implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final String myProjectPath;
-  private final Map<File, ModuleData> moduleArtifactMap = new THashMap<>(new TObjectHashingStrategy<>() {
+  private final Map<File, ModuleData> moduleArtifactMap = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
     @Override
-    public int computeHashCode(File file) {
+    public int hashCode(File file) {
       return ExternalSystemUtil.fileHashCode(file);
     }
 

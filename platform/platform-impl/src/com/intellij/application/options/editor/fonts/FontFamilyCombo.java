@@ -1,22 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AbstractFontCombo;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.GroupedComboBoxRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -26,14 +26,58 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
   public static final int ITEM_WIDTH = 230;
 
-  private final Dimension myItemSize;
+  private Dimension myItemSize;
   private final boolean myIsPrimary;
 
   protected FontFamilyCombo(boolean isPrimary) {
     super(new MyModel(!isPrimary));
     setSwingPopup(false);
     myIsPrimary = isPrimary;
-    setRenderer(new MyListCellRenderer());
+    setRenderer(new GroupedComboBoxRenderer<>(this) {
+      @Override
+      public void customize(@NotNull SimpleColoredComponent item, MyFontItem value, int index) {
+        if (value != null) {
+          if (value instanceof MyWarningItem) {
+            item.append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+            return;
+          }
+          SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+          if (index > -1 && value.myFont != null) {
+            if (value.myFontCanDisplayName) {
+              item.setFont(value.myFont);
+            }
+            else if (myIsPrimary) {
+              attributes = SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
+            }
+          } else {
+            item.setFont(JBUI.Fonts.label());
+          }
+          item.append(value.getFamilyName(), attributes);
+        }
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator separatorFor(MyFontItem value) {
+        if (getModel() instanceof MyModel m) {
+          if (!m.myItems.isEmpty() && ContainerUtil.find(m.myItems, item -> item.myIsMonospaced) == value)
+            return new ListSeparator(ApplicationBundle.message("settings.editor.font.monospaced"));
+          if (!m.myItems.isEmpty() && ContainerUtil.find(m.myItems, item -> !item.myIsMonospaced && !(item instanceof MyNoFontItem)) == value)
+            return new ListSeparator(ApplicationBundle.message("settings.editor.font.proportional"));
+        }
+        return null;
+      }
+    });
+    updateItemSize();
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    updateItemSize();
+  }
+
+  private void updateItemSize() {
     FontMetrics fontMetrics = getFontMetrics(getFont());
     myItemSize = new Dimension(JBUI.scale(ITEM_WIDTH), fontMetrics.getHeight());
   }
@@ -105,23 +149,8 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
   }
 
   private static class MyWarningItem extends MyFontItem {
-    final static MyWarningItem INSTANCE = new MyWarningItem();
-
-    private MyWarningItem() {
-      super(ApplicationBundle.message("settings.editor.font.missing.custom.font"), false);
-    }
-  }
-
-  private static class MySeparatorItem extends MyFontItem {
-    private boolean isUpdating = true;
-
-    private MySeparatorItem(@NotNull String title, boolean isMonospaced) {
-      super(title, isMonospaced);
-    }
-
-    @Override
-    public boolean isSelectable() {
-      return false;
+    private MyWarningItem(@NotNull String missingName) {
+      super(ApplicationBundle.message("settings.editor.font.missing.custom.font", missingName), false);
     }
   }
 
@@ -148,8 +177,6 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     private final List<MyFontItem> myItems = new ArrayList<>();
     private final @Nullable MyNoFontItem myNoFontItem;
     private @Nullable MyFontItem mySelectedItem;
-    private final MySeparatorItem myMonospacedSeparatorItem;
-    private final MySeparatorItem myProportionalSeparatorItem;
 
     private MyModel(boolean withNoneItem) {
       myMonospacedFamilies.addAll(Arrays.asList(KNOWN_MONOSPACED_FAMILIES));
@@ -163,12 +190,6 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       FontFamilyService.getAvailableFamilies().forEach(
         name -> myItems.add(new MyFontItem(name, myMonospacedFamilies.contains(name)))
       );
-      myMonospacedSeparatorItem = new MySeparatorItem(
-        ApplicationBundle.message("settings.editor.font.monospaced"), true);
-      myItems.add(myMonospacedSeparatorItem);
-      myProportionalSeparatorItem = new MySeparatorItem(
-        ApplicationBundle.message("settings.editor.font.proportional"), false);
-      myItems.add(myProportionalSeparatorItem);
       Collections.sort(myItems, new MyFontItemComparator());
       retrieveFontInfo();
     }
@@ -180,9 +201,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       }
       else if (anItem instanceof String) {
         mySelectedItem = ContainerUtil.find(myItems, item -> item.isSelectable() && item.myFamilyName.equals(anItem));
-      }
-      else if (anItem instanceof MySeparatorItem) {
-        return;
+        if (mySelectedItem == null) {
+          mySelectedItem = new MyWarningItem((String)anItem);
+        }
       }
       else if (anItem instanceof MyFontItem) {
         mySelectedItem = (MyFontItem)anItem;
@@ -192,7 +213,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
     @Override
     public @Nullable MyFontItem getSelectedItem() {
-      return mySelectedItem == null && myNoFontItem == null ? MyWarningItem.INSTANCE : mySelectedItem;
+      return mySelectedItem;
     }
 
     @Override
@@ -211,7 +232,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
           if (FontFamilyService.isMonospaced(item.myFamilyName)) {
             myMonospacedFamilies.add(item.myFamilyName);
           }
-          item.myFont = JBUI.Fonts.create(item.myFamilyName, JBUI.Fonts.label().getSize());
+          item.myFont = JBUI.Fonts.create(item.myFamilyName, FontPreferences.DEFAULT_FONT_SIZE);
           item.myFontCanDisplayName = item.myFont.canDisplayUpTo(item.myFamilyName) == -1;
         }
         updateMonospacedInfo();
@@ -224,8 +245,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
           for (MyFontItem item : myItems) {
             item.myIsMonospaced = myMonospacedFamilies.contains(item.myFamilyName);
           }
-          myMonospacedSeparatorItem.isUpdating = false;
-          myProportionalSeparatorItem.isUpdating = false;
+          if (myNoFontItem == null) { // Primary font
+            myItems.removeIf(item -> !item.myFontCanDisplayName);
+          }
           Collections.sort(myItems, new MyFontItemComparator());
           fireContentsChanged(this, -1, -1);
         }, ModalityState.any());
@@ -240,8 +262,6 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       if (item2 instanceof MyNoFontItem) return 1;
       if (item1.myIsMonospaced && !item2.myIsMonospaced) return -1;
       if (!item1.myIsMonospaced && item2.myIsMonospaced) return 1;
-      if (item1 instanceof MySeparatorItem) return -1;
-      if (item2 instanceof MySeparatorItem) return 1;
       return item1.myFamilyName.compareTo(item2.myFamilyName);
     }
 
@@ -249,83 +269,5 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     public boolean equals(Object obj) {
       return false;
     }
-  }
-
-  private class MyListCellRenderer extends ColoredListCellRenderer<MyFontItem> {
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends MyFontItem> list,
-                                                  MyFontItem value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof MySeparatorItem) {
-        return new MyTitledSeparator(value.getFamilyName(), !value.myIsMonospaced, ((MySeparatorItem)value).isUpdating);
-      }
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-    }
-
-    @Override
-    public @NotNull Dimension getPreferredSize() {
-      return myItemSize;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends MyFontItem> list,
-                                         MyFontItem value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        if (value instanceof MyWarningItem) {
-          append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
-          return;
-        }
-        SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-        if (value.myFont != null) {
-          if (value.myFontCanDisplayName) {
-            setFont(value.myFont);
-          }
-          else if (myIsPrimary) {
-            attributes = SimpleTextAttributes.EXCLUDED_ATTRIBUTES;
-          }
-        }
-        append(value.getFamilyName(), attributes);
-      }
-    }
-  }
-
-  private static class MyTitledSeparator extends JPanel {
-    private final JLabel myLabel;
-
-    @Override
-    public AccessibleContext getAccessibleContext() {
-      return myLabel.getAccessibleContext();
-    }
-
-    MyTitledSeparator(@NlsContexts.Separator @NotNull String titleText, boolean withTopLine, boolean isUpdating) {
-      setBackground(JBColor.background());
-      setLayout(new GridBagLayout());
-      GridBagConstraints c = new GridBagConstraints();
-      c.weightx = 1.0;
-      c.gridx = 0;
-      c.gridy = 0;
-      c.insets = JBUI.emptyInsets();
-      if (withTopLine) {
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.gridwidth = 2;
-        add(new JSeparator(), c);
-        c.gridy ++;
-      }
-      myLabel = new JLabel(titleText);
-      myLabel.setForeground(JBColor.gray);
-      myLabel.setFont(JBUI.Fonts.smallFont());
-      c.gridwidth = 1;
-      c.fill = GridBagConstraints.NONE;
-      c.anchor = GridBagConstraints.LINE_START;
-      add(myLabel, c);
-      if (isUpdating) {
-        c.gridx = 1;
-        JLabel updatingLabel = new JLabel(ApplicationBundle.message("settings.editor.font.updating"));
-        updatingLabel.setForeground(JBColor.gray);
-        updatingLabel.setFont(JBUI.Fonts.miniFont());
-        add(updatingLabel, c);
-      }
-    }
-
   }
 }

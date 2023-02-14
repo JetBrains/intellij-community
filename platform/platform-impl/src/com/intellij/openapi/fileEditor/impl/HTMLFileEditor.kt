@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
@@ -22,10 +22,14 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
+import com.intellij.util.namedChildScope
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
+import org.cef.browser.CefMessageRouter
+import org.cef.callback.CefQueryCallback
 import org.cef.handler.*
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
@@ -33,12 +37,14 @@ import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
-internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, url: String) : UserDataHolderBase(), FileEditor {
+internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, request: HTMLEditorProvider.Request) : UserDataHolderBase(), FileEditor {
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-  private val contentPanel = JCEFHtmlPanel(null)
-  private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val contentPanel = JCEFHtmlPanel(true, null, null)
+  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
+  @Suppress("DEPRECATION")
+  private val htmlTabScope = project.coroutineScope.namedChildScope("HTMLFileEditor[${file.name}]")
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {
@@ -82,19 +88,36 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     contentPanel.jbCefClient.addRequestHandler(object : CefRequestHandlerAdapter() {
       override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest, userGesture: Boolean, isRedirect: Boolean): Boolean =
-        if (userGesture) { navigating.set(true); BrowserUtil.browse(request.url); true }
+        if (userGesture) { navigating.set(true); browse(request.url); true }
         else false
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
       override fun onBeforePopup(browser: CefBrowser, frame: CefFrame, targetUrl: String, targetFrameName: String?): Boolean {
-        BrowserUtil.browse(targetUrl)
+        browse(targetUrl)
         return true
       }
     }, contentPanel.cefBrowser)
 
+    val queryHandler = request.queryHandler
+    if (queryHandler != null) {
+      val config = CefMessageRouter.CefMessageRouterConfig(HTMLEditorProvider.JS_FUNCTION_NAME, "${HTMLEditorProvider.JS_FUNCTION_NAME}Cancel")
+      val jsRouter = CefMessageRouter.create(config)
+      jsRouter.addHandler(object : CefMessageRouterHandlerAdapter() {
+        override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
+          htmlTabScope.launch {
+            runCatching { queryHandler.query(id, request ?: "") }
+              .onSuccess { callback.success(it) }
+              .onFailure { callback.failure(-1, "${it.javaClass}: ${it.message}") }
+          }
+          return true
+        }
+      }, true)
+      contentPanel.jbCefClient.cefClient.addMessageRouter(jsRouter)
+    }
+
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
-      override fun onStatusMessage(browser: CefBrowser, @NlsSafe text: String) =
+      override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) =
         StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
 
@@ -105,17 +128,18 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     multiPanel.select(CONTENT_KEY, true)
 
-    if (url.isNotEmpty()) {
-      if (file.content.isEmpty()) {
-        file.setContent(this, EditorBundle.message("message.html.editor.timeout"), false)
-      }
-      alarm.addRequest({ contentPanel.loadHTML(file.content.toString()) }, Registry.intValue("html.editor.timeout", 10000))
-      contentPanel.loadURL(url)
+    if (request.url != null) {
+      val timeoutText = request.timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
+      alarm.addRequest({ contentPanel.loadHTML(timeoutText) }, Registry.intValue("html.editor.timeout", URL_LOADING_TIMEOUT_MS))
+      contentPanel.loadURL(request.url)
     }
     else {
-      contentPanel.loadHTML(file.content.toString())
+      contentPanel.loadHTML(request.html!!)
     }
   }
+
+  private fun browse(url: String) =
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url))
 
   override fun getComponent(): JComponent = multiPanel
   override fun getPreferredFocusedComponent(): JComponent = multiPanel
@@ -125,13 +149,12 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun getCurrentLocation(): FileEditorLocation? = null
-  override fun dispose() { }
-
+  override fun dispose() { htmlTabScope.cancel() }
   override fun getFile(): VirtualFile = file
 
   private companion object {
     private const val LOADING_KEY = 1
     private const val CONTENT_KEY = 0
+    private const val URL_LOADING_TIMEOUT_MS = 10000
   }
 }

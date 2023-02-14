@@ -1,0 +1,10 @@
+{
+    "mainFile": "Main.kt",
+    "usages": [
+        "JavaReadGetter.java",
+        "JavaSetter.java",
+        "Usage.kt",
+        "Write.kt",
+        "fromFun.kt"
+    ]
+}

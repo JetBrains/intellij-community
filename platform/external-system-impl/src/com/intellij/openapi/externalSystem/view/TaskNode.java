@@ -67,7 +67,7 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
       hint = shortcutHint + ", " + activatorHint;
     }
 
-    setNameAndTooltip(getName(), myTaskData.getDescription(), hint);
+    setNameAndTooltip(presentation, getName(), myTaskData.getDescription(), hint);
   }
 
   @Override

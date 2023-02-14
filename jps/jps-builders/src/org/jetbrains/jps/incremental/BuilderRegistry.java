@@ -3,10 +3,10 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectLongHashMap;
+import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -24,7 +24,7 @@ public final class BuilderRegistry {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<>();
-  private final TObjectLongHashMap<BuildTargetType<?>> myExpectedBuildTime = new TObjectLongHashMap<>();
+  private final Object2LongMap<BuildTargetType<?>> myExpectedBuildTime = new Object2LongOpenHashMap<>();
   private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<>();
   private final FileFilter myModuleBuilderFileFilter;
 
@@ -37,7 +37,7 @@ public final class BuilderRegistry {
       myModuleLevelBuilders.put(category, new ArrayList<>());
     }
 
-    Set<String> compilableFileExtensions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> compilableFileExtensions = CollectionFactory.createFilePathSet();
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       myTargetBuilders.addAll(service.createBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
@@ -73,9 +73,8 @@ public final class BuilderRegistry {
     for (TargetBuilder<?, ?> targetBuilder : myTargetBuilders) {
       long buildTime = targetBuilder.getExpectedBuildTime();
       for (BuildTargetType<?> type : targetBuilder.getTargetTypes()) {
-        if (!myExpectedBuildTime.adjustValue(type, buildTime)) {
-          myExpectedBuildTime.put(type, buildTime);
-        }
+        long total = myExpectedBuildTime.getLong(type);
+        myExpectedBuildTime.put(type, total + buildTime);
       }
     }
   }
@@ -121,11 +120,7 @@ public final class BuilderRegistry {
    * @see Builder#getExpectedBuildTime()
    */
   public long getExpectedBuildTimeForTarget(BuildTargetType<?> targetType) {
-    long time = myExpectedBuildTime.get(targetType);
-    if (time == -1) {
-      //it may happen that there is no builders registered for a given type, so it won't be built at all.
-      return 0;
-    }
-    return time;
+    //it may happen that there is no builders registered for a given type, so it won't be built at all.
+    return myExpectedBuildTime.getLong(targetType);
   }
 }

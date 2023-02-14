@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ide.actions.SettingsEntryPointAction
@@ -14,13 +14,8 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 
-class JdkSettingsActionRegistryState: BaseState() {
-  val knownActions by list<String>()
-}
-
 @Service(Service.Level.APP)
-@State(name = "jdk-update-state", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
-class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsActionRegistryState>(JdkSettingsActionRegistryState()), Disposable {
+class JdkUpdaterNotifications : Disposable {
   private val lock = ReentrantLock()
   private val pendingNotifications = HashMap<Sdk, JdkUpdateNotification>()
   private var pendingActionsCopy = listOf<JdkUpdateNotification.JdkUpdateSuggestionAction>()
@@ -30,28 +25,13 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
 
   private fun scheduleUpdate() {
     alarm.queue(object: Update(this) {
-      override fun run() = lock.withLock {
-        //we would not like it to overflow
-        if (state.knownActions.size > 300) {
-          val tail = state.knownActions.toList().takeLast(30).toHashSet()
-          state.knownActions.clear()
-          state.knownActions.addAll(tail)
-          state.intIncrementModificationCount()
-        }
-
-        val ids = pendingNotifications.values.map { it.persistentId }.toSortedSet()
-        val iconState = if (!state.knownActions.containsAll(ids)) {
-          state.knownActions.addAll(ids)
-          state.intIncrementModificationCount()
-
-          SettingsEntryPointAction.IconState.ApplicationUpdate
-        } else {
-          SettingsEntryPointAction.IconState.Current
+      override fun run() {
+        pendingActionsCopy = lock.withLock {
+          pendingNotifications.values.sortedBy { it.persistentId }.map { it.updateAction }
         }
 
         invokeLater {
-          pendingActionsCopy = pendingNotifications.values.sortedBy { it.persistentId }.map { it.updateAction }
-          SettingsEntryPointAction.updateState(iconState)
+          SettingsEntryPointAction.updateState()
         }
       }
     })
@@ -64,7 +44,7 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
     scheduleUpdate()
   }
 
-  fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem): JdkUpdateNotification? {
+  fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem, showVendorVersion: Boolean = false): JdkUpdateNotification? {
     val newNotification = lock.withLock {
       val newNotification = JdkUpdateNotification(
         jdk = jdk,
@@ -75,7 +55,8 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
             pendingNotifications.remove(jdk, it)
           }
           scheduleUpdate()
-        }
+        },
+        showVendorVersion = showVendorVersion,
       )
 
       val currentNotification = pendingNotifications[jdk]

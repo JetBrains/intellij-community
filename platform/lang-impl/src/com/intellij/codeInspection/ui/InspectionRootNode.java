@@ -16,6 +16,8 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInspection.InspectionsBundle;
+
 public class InspectionRootNode extends InspectionTreeNode {
   protected InspectionRootNode(InspectionTreeModel model) {
     super(null);
@@ -23,6 +25,16 @@ public class InspectionRootNode extends InspectionTreeNode {
 
   @Override
   public String getPresentableText() {
-    return "InspectionViewTree";
+    return InspectionsBundle.message("inspection.results");
+  }
+
+  @Override
+  protected boolean doesNeedInternProblemLevels() {
+    return true;
+  }
+
+  @Override
+  public boolean appearsBold() {
+    return true;
   }
 }

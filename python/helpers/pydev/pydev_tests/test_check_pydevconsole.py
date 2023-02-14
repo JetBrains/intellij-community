@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
         client_thread = ClientThread(client_port)
         client_thread.requested_input = False
         client_thread.notified_finished = 0
-        client_thread.setDaemon(True)
+        client_thread.daemon = True
         client_thread.start()
         return client_thread
 
@@ -69,8 +69,8 @@ class Test(unittest.TestCase):
 
     def test_server(self):
         # Just making sure that the singleton is created in this thread.
-        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-        get_pydev_frontend(get_localhost(), 0)
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
+        get_pydev_ipython_frontend(get_localhost(), 0)
 
         client_port, server_port = self.get_free_addresses()
         class ServerThread(threading.Thread):
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
                 print('Starting server with:', pydev_localhost.get_localhost(), self.server_port, self.client_port)
                 pydevconsole.start_server(pydev_localhost.get_localhost(), self.server_port, self.client_port)
         server_thread = ServerThread(client_port, server_port)
-        server_thread.setDaemon(True)
+        server_thread.daemon = True
         server_thread.start()
 
         client_thread = self.start_client_thread(client_port) #@UnusedVariable

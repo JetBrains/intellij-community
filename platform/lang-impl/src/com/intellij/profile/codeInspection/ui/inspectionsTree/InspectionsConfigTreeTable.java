@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
@@ -140,7 +139,6 @@ public final class InspectionsConfigTreeTable extends TreeTable {
 
     registerKeyboardAction(__ -> {
       model.swapInspectionEnableState();
-      updateUI();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
@@ -221,16 +219,13 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }
 
     @Override
-    public Class getColumnClass(final int column) {
-      switch (column) {
-        case TREE_COLUMN:
-          return TreeTableModel.class;
-        case SEVERITIES_COLUMN:
-          return Icon.class;
-        case IS_ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      throw new IllegalArgumentException();
+    public Class<?> getColumnClass(final int column) {
+      return switch (column) {
+        case TREE_COLUMN -> TreeTableModel.class;
+        case SEVERITIES_COLUMN -> Icon.class;
+        case IS_ENABLED_COLUMN -> Boolean.class;
+        default -> throw new IllegalArgumentException("Unexpected value: " + column);
+      };
     }
 
     @Nullable
@@ -374,7 +369,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       if (myPrimarySeverity == null) {
         myPrimarySeverity = severity;
       }
-      else if (!Comparing.equal(severity, myPrimarySeverity)) {
+      else if (!severity.equals(myPrimarySeverity)) {
         myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
       }
       myOccurrences.put(toolName, severity);
@@ -463,12 +458,9 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           continue;
         }
         final HighlightSeverity currentSeverity = currentSeverityAndOccurrences.getPrimarySeverity();
-        if (currentSeverity == ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY ||
-            currentSeverityAndOccurrences.getOccurrencesSize() == allInspectionsCount ||
-            myDefaultScopeName.equals(currentScope)) {
-          result.put(currentScope, currentSeverity);
-        }
-        else {
+        if (currentSeverity != ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY &&
+            currentSeverityAndOccurrences.getOccurrencesSize() != allInspectionsCount &&
+            !myDefaultScopeName.equals(currentScope)) {
           Set<String> toolsToCheck = new HashSet<>(allScopes.keySet());
           toolsToCheck.removeAll(currentSeverityAndOccurrences.getOccurrences().keySet());
           boolean doContinue = false;
@@ -486,8 +478,8 @@ public final class InspectionsConfigTreeTable extends TreeTable {
           if (doContinue) {
             continue;
           }
-          result.put(currentScope, currentSeverity);
         }
+        result.put(currentScope, currentSeverity);
       }
 
       return result;

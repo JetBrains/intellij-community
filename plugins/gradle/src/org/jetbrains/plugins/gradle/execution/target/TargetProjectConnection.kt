@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.util.UserDataHolderBase
 import org.gradle.tooling.*
-import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 import org.jetbrains.annotations.ApiStatus
@@ -17,7 +16,7 @@ internal class TargetProjectConnection(val environmentConfigurationProvider: Tar
                                        val taskId: ExternalSystemTaskId?,
                                        val taskListener: ExternalSystemTaskNotificationListener?,
                                        val distribution: TargetGradleDistribution,
-                                       val parameters: ConnectionParameters,
+                                       val parameters: TargetConnectionParameters,
                                        private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection, UserDataHolderBase() {
   override fun close() {
     connectionCloseListener?.connectionClosed(this)
@@ -61,7 +60,7 @@ internal class TargetProjectConnection(val environmentConfigurationProvider: Tar
   }
 
   override fun notifyDaemonsAboutChangedPaths(p0: MutableList<Path>?) {
-    TODO("Not yet implemented")
+  // TODO: implement passing information about recent file changes to a Gradle daemon
   }
 
   fun disconnect() {

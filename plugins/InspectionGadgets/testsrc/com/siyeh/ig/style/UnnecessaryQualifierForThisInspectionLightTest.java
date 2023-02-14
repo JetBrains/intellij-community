@@ -23,15 +23,16 @@ import org.jetbrains.annotations.Nullable;
 public class UnnecessaryQualifierForThisInspectionLightTest extends LightJavaInspectionTestCase {
 
   public void testFinalWithoutInnerClass() {
-    doTest("class Base {\n" +
-           "    void foo() {\n" +
-           "    }\n" +
-           "}\n" +
-           "class Impl extends Base {\n" +
-           "    void foo() {\n" +
-           "        /*Qualifier 'Impl' on 'super' is unnecessary in this context*/Impl/**/.super.foo();\n" +
-           "    }\n" +
-           "}");
+    doTest("""
+             class Base {
+                 void foo() {
+                 }
+             }
+             class Impl extends Base {
+                 void foo() {
+                     /*Qualifier 'Impl' on 'super' is unnecessary in this context*/Impl/**/.super.foo();
+                 }
+             }""");
   }
 
   @Nullable

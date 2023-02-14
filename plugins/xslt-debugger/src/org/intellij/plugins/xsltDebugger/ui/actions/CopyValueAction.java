@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xsltDebugger.ui.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -44,8 +45,7 @@ public class CopyValueAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DefaultMutableTreeNode node = e.getData(SELECTED_NODE);
-    if (node instanceof GeneratedStructureModel.StructureNode) {
-      final GeneratedStructureModel.StructureNode structureNode = (GeneratedStructureModel.StructureNode)node;
+    if (node instanceof GeneratedStructureModel.StructureNode structureNode) {
       final OutputEventQueue.NodeEvent event = structureNode.getUserObject();
       setClipboardData(event.getValue());
     }
@@ -57,11 +57,15 @@ public class CopyValueAction extends AnAction {
 
   protected static boolean isEnabled(AnActionEvent e) {
     final DefaultMutableTreeNode node = e.getData(SELECTED_NODE);
-    if (node instanceof GeneratedStructureModel.StructureNode) {
-      final GeneratedStructureModel.StructureNode structureNode = (GeneratedStructureModel.StructureNode)node;
+    if (node instanceof GeneratedStructureModel.StructureNode structureNode) {
       final OutputEventQueue.NodeEvent event = structureNode.getUserObject();
       return event != null && event.getValue() != null;
     }
     return false;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

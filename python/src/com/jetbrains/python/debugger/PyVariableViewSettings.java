@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -31,17 +16,15 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyVariableViewSettings {
+public final class PyVariableViewSettings {
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
-    private final @ActionText String myText;
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
-      super("", PyBundle.message("debugger.simplified.view.description"), null);
+      super(PyBundle.message("debugger.simplified.view.text"), PyBundle.message("debugger.simplified.view.description"), null);
       mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
       myProcess = debugProcess;
-      myText = PyBundle.message("debugger.simplified.view.text");
     }
 
     @Override
@@ -49,7 +32,11 @@ public class PyVariableViewSettings {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -142,7 +129,6 @@ public class PyVariableViewSettings {
   }
 
   public static class PolicyAction extends ToggleAction {
-    @NotNull private final @ActionText String myText;
     @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
     @NotNull private final VariablesPolicyGroup myActionGroup;
     private volatile boolean isEnabled;
@@ -151,8 +137,7 @@ public class PyVariableViewSettings {
                         @NotNull @Nls String description,
                         @NotNull PyDebugValue.ValuesPolicy policy,
                         @NotNull VariablesPolicyGroup actionGroup) {
-      super("", description, null);
-      myText = text;
+      super(text, description, null);
       myPolicy = policy;
       myActionGroup = actionGroup;
       isEnabled = PyDebuggerSettings.getInstance().getValuesPolicy() == policy;
@@ -164,7 +149,11 @@ public class PyVariableViewSettings {
       myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
-      presentation.setText(myText);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @NotNull

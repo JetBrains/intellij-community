@@ -1,4 +1,4 @@
-// "Extract side effects" "true"
+// "Extract side effects" "true-preview"
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
@@ -60,7 +59,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
 
   @Override
   public void componentsInitialized() {
-    if (!SystemProperties.getBooleanProperty("enable.jit.suppressor", false)) {
+    if (!Boolean.getBoolean("enable.jit.suppressor")) {
       return;
     }
 

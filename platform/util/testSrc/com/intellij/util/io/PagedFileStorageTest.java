@@ -18,13 +18,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
 import static org.junit.Assert.*;
 
 public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
-  private final StorageLockContext lock = new StorageLockContext(true);
+  private final StorageLockContext lock = new StorageLockContext();
   private Path f;
   private PagedFileStorage s;
 
@@ -32,7 +33,7 @@ public class PagedFileStorageTest {
   public void setUp() throws IOException {
     withLock(lock, () -> {
       f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock, PagedFileStorage.BUFFER_SIZE, false, false);
+      s = new PagedFileStorage(f, lock, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 
@@ -65,7 +66,7 @@ public class PagedFileStorageTest {
       s.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
-        assertEquals(0, s.get(i));
+        assertEquals(0, s.get(i, true));
       }
     });
   }
@@ -109,14 +110,14 @@ public class PagedFileStorageTest {
   public void testResizeableMappedFile2() throws IOException {
     withLock(lock, () -> {
       int initialSize = 4096;
-      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, PagedFileStorage.MB, false);
+      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, IOUtil.MiB, false);
       byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
       assertTrue(bytes.length > initialSize);
 
       file.put(0, bytes, 0, bytes.length);
       int written_bytes = (int)file.length();
       byte[] newBytes = new byte[written_bytes];
-      file.get(0, newBytes, 0, written_bytes);
+      file.get(0, newBytes, 0, written_bytes, true);
       assertArrayEquals(bytes, newBytes);
 
       file.close();

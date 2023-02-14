@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public class MarkdownPsiElementFactoryTest extends BasePlatformTestCase {
   }
 
   private void doTest(@Nullable String language, @NotNull String text, @NotNull String expectedText) {
-    MarkdownCodeFenceImpl codeFence = MarkdownPsiElementFactory.createCodeFence(myFixture.getProject(), language, text);
+    MarkdownCodeFence codeFence = MarkdownPsiElementFactory.createCodeFence(myFixture.getProject(), language, text);
 
     assertNotNull(codeFence);
     assertEquals(codeFence.getText(), expectedText);

@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author oleg
- * @date 11/17/10
  */
 public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final Language myLanguage;
@@ -118,7 +115,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     @NotNull final PsiFile file,
     @NotNull final Editor editor,
     @NotNull final Ref<Integer> caretOffset,
-    @NotNull final Ref<Integer> caretAdvance,
+    final @NotNull Ref<Integer> caretAdvance,
     @NotNull final DataContext dataContext,
     final EditorActionHandler originalHandler)
   {

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.*;
 import com.intellij.lang.jvm.types.*;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ public final class JvmMainMethodUtil {
   }
 
   private static boolean canBeMainClass(@NotNull JvmClass clazz) {
-    if (clazz.getName() == null) return false; // anonymous classes
+    if (clazz.getQualifiedName() == null) return false; // anonymous and local classes
     final JvmClassKind kind = clazz.getClassKind();
     if (kind == JvmClassKind.ANNOTATION) return false;
     return clazz.getContainingClass() == null || clazz.hasModifier(JvmModifier.STATIC);
@@ -39,7 +38,12 @@ public final class JvmMainMethodUtil {
 
   @Nullable
   private static JvmMethod findMainMethodInHierarchy(@NotNull JvmClass clazz) {
-    return JvmHierarchyUtil.traverseSupers(clazz, JvmMainMethodUtil::findMainMethodInClass);
+    return JvmHierarchyUtil.traverseSupers(clazz, superClazz -> {
+      if (superClazz.getClassKind() == JvmClassKind.INTERFACE) {
+        return null;
+      }
+      return findMainMethodInClass(superClazz);
+    });
   }
 
   @Nullable

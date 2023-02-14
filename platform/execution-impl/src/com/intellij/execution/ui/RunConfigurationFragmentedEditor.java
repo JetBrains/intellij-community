@@ -16,6 +16,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.GotItComponentBuilder;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,8 +57,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments(mySettings)) {
-      fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
+    for (SettingsEditor<Settings> editor: myExtensionsManager.createFragments(mySettings)) {
+      if (editor instanceof SettingsEditorFragment<?, ?>) {
+        fragments.add((SettingsEditorFragment<Settings, ?>) editor);
+      }
     }
     addRunnerSettingsEditors(fragments);
 //    dump fragment ids for FUS
@@ -170,15 +173,17 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       JComponent component = fragment.getEditorComponent();
       if (component == null) continue;
-      component.addFocusListener(new FocusListener() {
+      FocusListener listener = new FocusListener() {
         @Override
-        public void focusGained(FocusEvent e) {}
+        public void focusGained(FocusEvent e) { }
 
         @Override
         public void focusLost(FocusEvent e) {
           checkGotIt(fragment);
         }
-      });
+      };
+      component.addFocusListener(listener);
+      Disposer.register(fragment, () -> component.removeFocusListener(listener));
     }
   }
 
@@ -192,7 +197,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
         String text = fragment.getName().replace("\u001B", "");
         new GotItTooltip("fragment.hidden." + fragment.getId(), ExecutionBundle.message("gotIt.popup.message", text), fragment).
           withHeader(ExecutionBundle.message("gotIt.popup.title")).
-          show(component, (c) -> new Point(GotItTooltip.ARROW_SHIFT, c.getHeight()));
+          show(component, (c, b) -> new Point(GotItComponentBuilder.getArrowShift(), c.getHeight()));
       }
     }
   }

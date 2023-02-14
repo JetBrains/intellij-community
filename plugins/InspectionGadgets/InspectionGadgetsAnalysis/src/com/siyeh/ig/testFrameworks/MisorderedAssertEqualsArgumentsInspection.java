@@ -51,7 +51,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = methodNameIdentifier.getParent();
       if (parent == null) {
@@ -89,7 +89,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     while (!expressions.isEmpty()) {
       expressions.remove(expressions.size() - 1).accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
           if (!expectedArgument.get().booleanValue()) {
             return;
           }
@@ -98,14 +98,12 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
           if (target instanceof PsiEnumConstant || target instanceof PsiClass) {
             return;
           }
-          else if (target instanceof PsiField) {
-            final PsiField field = (PsiField)target;
+          else if (target instanceof PsiField field) {
             if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
               return;
             }
           }
-          else if (target instanceof PsiParameter) {
-            final PsiParameter parameter = (PsiParameter)target;
+          else if (target instanceof PsiParameter parameter) {
             if ("expected".equals(parameter.getName())) {
               return;
             }
@@ -123,7 +121,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
               expectedArgument.set(Boolean.FALSE);
               return;
             }
-            if (PsiUtil.isConstantExpression(definition) || PsiType.NULL.equals(definition.getType())) {
+            if (PsiUtil.isConstantExpression(definition) || PsiTypes.nullType().equals(definition.getType())) {
               return;
             }
             final PsiElement[] refs = DefUseUtil.getRefs(block, variable, definition);

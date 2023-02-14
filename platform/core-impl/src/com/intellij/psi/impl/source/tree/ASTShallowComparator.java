@@ -7,8 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.ShallowNodeComparator;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTNode> {
   private final ProgressIndicator myIndicator;
@@ -19,7 +20,7 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
 
   @NotNull
   @Override
-  public ThreeState deepEqual(@NotNull final ASTNode oldNode, @NotNull final ASTNode newNode) {
+  public ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     return textMatches(oldNode, newNode);
   }
 
@@ -50,8 +51,8 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
     }
 
     if (oldNode instanceof PsiErrorElement && newNode instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = (PsiErrorElement)oldNode;
-      final PsiErrorElement e2 = (PsiErrorElement)newNode;
+      PsiErrorElement e1 = (PsiErrorElement)oldNode;
+      PsiErrorElement e2 = (PsiErrorElement)newNode;
       if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return ThreeState.NO;
     }
 
@@ -59,8 +60,8 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   // have to perform tree walking by hand here to be able to interrupt ourselves
-  private boolean compareTreeToText(@NotNull TreeElement root, @NotNull final String text) {
-    final int[] curOffset = {0};
+  private boolean compareTreeToText(@NotNull TreeElement root, @NotNull String text) {
+    int[] curOffset = {0};
     root.acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       public void visitLeaf(LeafElement leaf) {
@@ -89,19 +90,19 @@ public class ASTShallowComparator implements ShallowNodeComparator<ASTNode, ASTN
   }
 
   @Override
-  public boolean typesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
+  public boolean typesEqual(@NotNull ASTNode n1, @NotNull ASTNode n2) {
     return n1.getElementType() == n2.getElementType();
   }
 
   @Override
-  public boolean hashCodesEqual(@NotNull final ASTNode n1, @NotNull final ASTNode n2) {
+  public boolean hashCodesEqual(@NotNull ASTNode n1, @NotNull ASTNode n2) {
     if (n1 instanceof LeafElement && n2 instanceof LeafElement) {
       return textMatches(n1, n2) == ThreeState.YES;
     }
 
     if (n1 instanceof PsiErrorElement && n2 instanceof PsiErrorElement) {
-      final PsiErrorElement e1 = (PsiErrorElement)n1;
-      final PsiErrorElement e2 = (PsiErrorElement)n2;
+      PsiErrorElement e1 = (PsiErrorElement)n1;
+      PsiErrorElement e2 = (PsiErrorElement)n2;
       if (!Objects.equals(e1.getErrorDescription(), e2.getErrorDescription())) return false;
     }
 

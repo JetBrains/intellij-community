@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.*;
 import org.jetbrains.annotations.NotNull;
@@ -60,19 +61,20 @@ public final class ArtifactPointerManagerImpl extends ArtifactPointerManager {
 
   @Override
   public ArtifactPointer createPointer(@NotNull String name) {
-    if (myArtifactManager != null) {
-      final Artifact artifact = myArtifactManager.findArtifact(name);
-      if (artifact != null) {
-        return createPointer(artifact);
+    return ReadAction.compute(() -> {
+      if (myArtifactManager != null) {
+        final Artifact artifact = myArtifactManager.findArtifact(name);
+        if (artifact != null) {
+          return createPointer(artifact);
+        }
       }
-    }
-
-    ArtifactPointerImpl pointer = myUnresolvedPointers.get(name);
-    if (pointer == null) {
-      pointer = new ArtifactPointerImpl(name);
-      myUnresolvedPointers.put(name, pointer);
-    }
-    return pointer;
+      ArtifactPointerImpl pointer = myUnresolvedPointers.get(name);
+      if (pointer == null) {
+        pointer = new ArtifactPointerImpl(name);
+        myUnresolvedPointers.put(name, pointer);
+      }
+      return pointer;
+    });
   }
 
   @Override

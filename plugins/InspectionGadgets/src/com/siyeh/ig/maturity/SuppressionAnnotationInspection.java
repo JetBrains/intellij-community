@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,27 +34,24 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SuppressionAnnotationInspection extends BaseInspection {
   public List<String> myAllowedSuppressions = new ArrayList<>();
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(JavaBundle.message("column.name.ignore.suppressions"), myAllowedSuppressions);
-    final JComponent panel = form.getContentPanel();
-    panel.setPreferredSize(JBUI.size(150, 100));
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(OptPane.stringList("myAllowedSuppressions", JavaBundle.message("ignored.suppressions")));
   }
 
   @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final boolean suppressionIdPresent = ((Boolean)infos[1]).booleanValue();
-    if (infos[0] instanceof PsiAnnotation) {
-      final PsiAnnotation annotation = (PsiAnnotation)infos[0];
+    if (infos[0] instanceof PsiAnnotation annotation) {
       return suppressionIdPresent
              ? new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null)), new AllowSuppressionsFix()}
              : new InspectionGadgetsFix[]{new DelegatingFix(new RemoveAnnotationQuickFix(annotation, null))};
@@ -89,7 +87,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private static class RemoveSuppressCommentFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement != null) {
         psiElement.delete();
@@ -105,7 +103,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private class AllowSuppressionsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       final Iterable<String> ids;
       if (psiElement instanceof PsiAnnotation) {
@@ -124,6 +122,11 @@ public class SuppressionAnnotationInspection extends BaseInspection {
         }
       }
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(HtmlChunk.text(InspectionGadgetsBundle.message("allow.suppressions.preview.text")));
     }
 
     @Override
@@ -176,7 +179,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
       if (reference == null) {

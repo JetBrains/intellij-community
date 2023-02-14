@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -104,7 +105,7 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   @TestOnly
   public void markDirtyAndRefreshVirtualFileDeepInsideJarForTest(@NotNull VirtualFile file) {
     // clear caches in ArchiveHandler so that refresh will actually refresh something
-    getHandler(file).dispose();
+    getHandler(file).clearCaches();
     VfsUtil.markDirtyAndRefresh(false, true, true, file);
   }
 
@@ -138,8 +139,8 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @Override
-  public long getEntryCrc(@NotNull VirtualFile file) throws IOException {
+  public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
     ArchiveHandler handler = getHandler(file);
-    return ((ZipHandlerBase)handler).getEntryCrc(getRelativePath(file));
+    return ((ZipHandlerBase)handler).getArchiveCrcHashes();
   }
 }

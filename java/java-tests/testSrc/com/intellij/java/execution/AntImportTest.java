@@ -55,16 +55,18 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
   }
 
   public void testAntFormatTest() throws Exception {
-    String fileText = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
-                      "<testsuites>\n" +
-                      "  <testsuite errors=\"0\" failures=\"0\" hostname=\"ignore\" id=\"1\" name=\"MyTest\" package=\"a\" skipped=\"0\" tests=\"3\" time=\"0.062\" timestamp=\"2016-10-10T19:25:11\">\n" +
-                      "      <testcase classname=\"a.MyTest\" name=\"testA1\" time=\"0.002\" />\n" +
-                      "      <testcase classname=\"a.MyTest\" name=\"testA2\" time=\"0.0\" />\n" +
-                      "      <testcase classname=\"a.MyTest\" name=\"testA3\" time=\"0.0\" />\n" +
-                      "      <system-out><![CDATA[]]></system-out>\n" +
-                      "      <system-err><![CDATA[]]></system-err>\n" +
-                      "  </testsuite>\n" +
-                      "</testsuites>\n";
+    String fileText = """
+      <?xml version="1.0" encoding="UTF-8" ?>
+      <testsuites>
+        <testsuite errors="0" failures="0" hostname="ignore" id="1" name="MyTest" package="a" skipped="0" tests="3" time="0.062" timestamp="2016-10-10T19:25:11">
+            <testcase classname="a.MyTest" name="testA1" time="0.002" />
+            <testcase classname="a.MyTest" name="testA2" time="0.0" />
+            <testcase classname="a.MyTest" name="testA3" time="0.0" />
+            <system-out><![CDATA[]]></system-out>
+            <system-err><![CDATA[]]></system-err>
+        </testsuite>
+      </testsuites>
+      """;
 
     ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(fileText), myEventsProcessor);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation
 
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -10,7 +10,7 @@ import javax.swing.Icon
 /**
  * Represents presentation in target popup as follows:
  * ```
- * | $icon $presentable_text (in $container_text) spacer $location_text $location_icon |
+ * | $icon$ $presentableText$ $containerText$ spacer $locationText$ $locationIcon$ |
  * ```
  * Elements before spacer are aligned to the left, right text and right icon are aligned to the right.
  */
@@ -23,6 +23,15 @@ interface TargetPresentation {
     @JvmStatic
     fun builder(@Nls presentableText: String): TargetPresentationBuilder {
       return SymbolNavigationService.getInstance().presentationBuilder(presentableText)
+    }
+
+    /**
+     * @return a builder instance initialized from existing [presentation]
+     */
+    @JvmStatic
+    fun builder(presentation: TargetPresentation): TargetPresentationBuilder {
+      // the only implementation is also a builder
+      return presentation as TargetPresentationBuilder
     }
   }
 
@@ -37,6 +46,9 @@ interface TargetPresentation {
    */
   val presentableTextAttributes: TextAttributes?
 
+  /**
+   * Presentable text of a container, e.g. containing class name for a method, or a parent directory name for a file
+   */
   val containerText: @Nls String?
 
   /**
@@ -44,7 +56,13 @@ interface TargetPresentation {
    */
   val containerTextAttributes: TextAttributes?
 
+  /**
+   * Presentable text of a location, e.g. a containing module, or a library, or an SDK
+   */
   val locationText: @Nls String?
 
+  /**
+   * Icon of a location, e.g. a containing module, or a library, or an SDK
+   */
   val locationIcon: Icon?
 }

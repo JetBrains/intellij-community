@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.impl.FindPopupPanel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -55,7 +56,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
       final ComboBox<?> source = (ComboBox<?>)e.getSource();
       if (directory == null) {
 
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", "error");
         final Balloon balloon = JBPopupFactory.getInstance()
           .createHtmlTextBalloonBuilder(SSRBundle.message("popup.content.directory"), AllIcons.General.BalloonError, MessageType.ERROR.getPopupBackground(), null)
@@ -64,7 +64,6 @@ public class DirectoryComboBoxWithButtons extends JPanel {
         source.requestFocus();
       }
       else {
-        //noinspection HardCodedStringLiteral
         source.putClientProperty("JComponent.outline", null);
       }
       if (myCallback != null && directory != null) {
@@ -122,7 +121,10 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
   }
 
-  public void setDirectory(@NotNull VirtualFile directory) {
+  public void setDirectory(@Nullable VirtualFile directory) {
+    if (directory == null) {
+      return;
+    }
     final String url = directory.getPresentableUrl();
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     comboBox.getEditor().setItem(url);
@@ -160,6 +162,11 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myRecursive;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

@@ -19,8 +19,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.IconManager;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PlatformIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
@@ -39,7 +39,7 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
 
     @Override
     public Icon getIcon(int i) {
-        return PlatformIcons.PARAMETER_ICON;
+        return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
     }
 
     @Override

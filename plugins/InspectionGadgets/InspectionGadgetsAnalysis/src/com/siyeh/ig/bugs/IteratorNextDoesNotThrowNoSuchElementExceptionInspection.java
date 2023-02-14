@@ -85,7 +85,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends Ba
     private boolean noSuchElementExceptionThrown;
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (noSuchElementExceptionThrown) {
         return;
       }

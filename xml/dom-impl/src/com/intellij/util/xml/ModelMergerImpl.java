@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
@@ -22,9 +23,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author peter
- */
 public final class ModelMergerImpl implements ModelMerger {
   private final List<Pair<InvocationStrategy, Class<?>>> myInvocationStrategies = new ArrayList<>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<>();
@@ -72,7 +70,7 @@ public final class ModelMergerImpl implements ModelMerger {
 
         final Type type = DomReflectionUtil.extractCollectionElementType(method.getGenericReturnType());
         assert type != null : "No generic return type in method " + method;
-        return getMergedImplementations(method.getMethod(), args, ReflectionUtil.getRawType(type), implementations,
+        return getMergedImplementations(method.getMethod(), args, ClassUtil.getRawType(type), implementations,
                                         isIntersectionMethod(method));
       }
     });
@@ -198,12 +196,12 @@ public final class ModelMergerImpl implements ModelMerger {
   }
 
   @Override
-  public final <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
+  public <T> void addInvocationStrategy(Class<T> aClass, InvocationStrategy<T> strategy) {
     myInvocationStrategies.add(Pair.create(strategy, aClass));
   }
 
   @Override
-  public final <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
+  public <T> void addMergingStrategy(Class<T> aClass, MergingStrategy<T> strategy) {
     myMergingStrategies.add(strategy);
     myMergingStrategyClasses.add(aClass);
   }
@@ -297,11 +295,11 @@ public final class ModelMergerImpl implements ModelMerger {
     final Method method = getPrimaryKeyMethod(implementation.getClass());
     if (method != null) {
       final Object o = DomReflectionUtil.invokeMethod(method, implementation);
-      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue)o).getValue() : o;
+      return ReflectionUtil.isAssignable(GenericValue.class, method.getReturnType()) ? ((GenericValue<?>)o).getValue() : o;
     }
     else {
       if (implementation instanceof GenericValue) {
-        return singleValuedInvocation? Boolean.TRUE : ((GenericValue)implementation).getValue();
+        return singleValuedInvocation? Boolean.TRUE : ((GenericValue<?>)implementation).getValue();
       }
       else {
         return null;
@@ -385,7 +383,7 @@ public final class ModelMergerImpl implements ModelMerger {
     return results;
   }
 
-  protected final Object mergeImplementations(final Class returnType, final List<Object> implementations) {
+  private Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
       if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);

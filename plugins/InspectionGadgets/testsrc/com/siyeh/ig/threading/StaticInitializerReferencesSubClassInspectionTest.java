@@ -18,9 +18,6 @@ package com.siyeh.ig.threading;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-/**
- * @author peter
- */
 public class StaticInitializerReferencesSubClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {

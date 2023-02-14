@@ -45,7 +45,7 @@ public class ThreadDeathRethrownInspection extends BaseInspection {
   private static class ThreadDeathRethrownVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitCatchSection(PsiCatchSection section) {
+    public void visitCatchSection(@NotNull PsiCatchSection section) {
       super.visitCatchSection(section);
       final PsiParameter parameter = section.getParameter();
       if (parameter == null) {
@@ -67,16 +67,14 @@ public class ThreadDeathRethrownInspection extends BaseInspection {
     }
 
     private static boolean hasJavaLangThreadDeathType(PsiType type) {
-      if (type instanceof PsiDisjunctionType) {
-        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+      if (type instanceof PsiDisjunctionType disjunctionType) {
         for (PsiType disjunction : disjunctionType.getDisjunctions()) {
           if (hasJavaLangThreadDeathType(disjunction)) {
             return true;
           }
         }
       }
-      else if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      else if (type instanceof PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (InheritanceUtil.isInheritor(aClass, "java.lang.ThreadDeath")) {
           return true;

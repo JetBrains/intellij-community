@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.util.ThreeState
@@ -65,6 +65,7 @@ open class PromiseDebuggerEvaluator(protected val context: VariableContext) : XD
     }
     catch (e: Throwable) {
       LOG.error(e)
+      @Suppress("HardCodedStringLiteral")
       callback.errorOccurred(e.toString())
       return
     }

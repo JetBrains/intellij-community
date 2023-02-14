@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots.libraries
 
 import com.intellij.openapi.Disposable
@@ -114,13 +114,13 @@ class LibraryPropertiesTest : ModuleRootManagerTestCase() {
         Disposer.dispose(libraryTypeDisposable)
       }
     })
-    LibraryType.EP_NAME.getPoint().registerExtension(MockLibraryType(), libraryTypeDisposable)
+    LibraryType.EP_NAME.point.registerExtension(MockLibraryType(), libraryTypeDisposable)
   }
 
 }
 
 private class MockLibraryProperties(var data: String = "default") : LibraryProperties<MockLibraryProperties>() {
-  override fun getState(): MockLibraryProperties? = this
+  override fun getState(): MockLibraryProperties = this
 
   override fun loadState(state: MockLibraryProperties) {
     XmlSerializerUtil.copyBean(state, this)

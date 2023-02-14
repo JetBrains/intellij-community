@@ -1,4 +1,4 @@
-// "Change variable 'i' type to 'a.i.ii<String>'" "true"
+// "Change variable 'i' type to 'a.i.ii<String>'" "true-preview"
 class a
 {
   class i {

@@ -24,9 +24,6 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author dsl
- */
 
 public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameModuleHandler.class);

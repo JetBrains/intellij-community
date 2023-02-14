@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 
-/**
- * @author peter
- */
 public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private @PropertyKey(resourceBundle = "messages.JavaAnalysisBundle") String myKey = "suppress.inspection.member";
   private final boolean myForClass;
@@ -85,7 +82,7 @@ public class SuppressForMemberFix extends AbstractBatchSuppressByNoInspectionCom
   }
 
   @Override
-  protected boolean replaceSuppressionComments(PsiElement container) {
+  protected boolean replaceSuppressionComments(@NotNull PsiElement container) {
     return false;
   }
 

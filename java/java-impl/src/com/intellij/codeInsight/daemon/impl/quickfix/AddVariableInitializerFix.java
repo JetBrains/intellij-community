@@ -32,7 +32,7 @@ import java.util.Objects;
 
 public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   implements IntentionActionWithFixAllOption {
-  private static final Logger LOG = Logger.getInstance(AddReturnFix.class);
+  private static final Logger LOG = Logger.getInstance(AddVariableInitializerFix.class);
 
   public AddVariableInitializerFix(@NotNull PsiVariable variable) {
     super(variable);
@@ -83,8 +83,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
     LOG.assertTrue(suggestedInitializers[0] instanceof ExpressionLookupItem);
     final PsiExpression initializer = (PsiExpression)suggestedInitializers[0].getObject();
     variable.setInitializer(initializer);
-    if (!file.isPhysical()) return;
-    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
+    Document document = Objects.requireNonNull(file.getViewProvider().getDocument());
     PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(document);
     runAssignmentTemplate(Collections.singletonList(variable.getInitializer()), suggestedInitializers, editor);
   }

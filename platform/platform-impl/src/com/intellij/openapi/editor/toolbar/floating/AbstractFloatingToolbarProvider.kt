@@ -6,26 +6,28 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
 abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
 
   override val actionGroup by lazy { resolveActionGroup(actionGroupId) }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Use register method with data context instead this")
   open fun register(component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
+    @Suppress("DEPRECATION")
     register(component, parentDisposable)
   }
 
   companion object {
-    private val LOG = Logger.getInstance("#com.intellij.openapi.editor.toolbar.floating")
-
-    fun resolveActionGroup(actionGroupId: String): ActionGroup {
+    private fun resolveActionGroup(actionGroupId: String): ActionGroup {
       val actionManager = ActionManager.getInstance()
       val action = actionManager.getAction(actionGroupId)
       if (action is ActionGroup) return action
-      LOG.warn("Cannot initialize action group using (${action::class.java})")
+      logger<FloatingToolbarProvider>().warn("Cannot initialize action group using (${action::class.java})")
       val defaultActionGroup = DefaultActionGroup()
       actionManager.registerAction(actionGroupId, defaultActionGroup)
       return defaultActionGroup

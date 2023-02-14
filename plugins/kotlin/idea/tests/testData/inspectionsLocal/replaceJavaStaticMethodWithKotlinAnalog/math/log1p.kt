@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(x: Double) {
+    Math.<caret>log1p(x)
+}

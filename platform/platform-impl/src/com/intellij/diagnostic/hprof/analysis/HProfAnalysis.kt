@@ -21,11 +21,9 @@ import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
-import com.intellij.diagnostic.hprof.util.FileBackedIntList
-import com.intellij.diagnostic.hprof.util.FileBackedUByteList
+import com.intellij.diagnostic.hprof.util.*
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.sectionHeader
 import com.intellij.diagnostic.hprof.util.HeapReportUtils.toShortStringAsCount
-import com.intellij.diagnostic.hprof.util.PartialProgressIndicator
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.NonNls
@@ -34,9 +32,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
+class HProfAnalysis(private val hprofFileChannel: FileChannel,
                     private val tempFilenameSupplier: TempFilenameSupplier,
-                    private val analysisCallback: (AnalysisContext, ProgressIndicator) -> String) {
+                    private val analysisCallback: (AnalysisContext, ListProvider, ProgressIndicator) -> String) {
 
   interface TempFilenameSupplier {
     fun getTempFilePath(type: String): Path
@@ -61,7 +59,6 @@ internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
   private fun openTempEmptyFileChannel(@NonNls type: String): FileChannel {
     val tempPath = tempFilenameSupplier.getTempFilePath(type)
-
     val tempChannel = FileChannel.open(tempPath,
                                        StandardOpenOption.READ,
                                        StandardOpenOption.WRITE,
@@ -71,6 +68,12 @@ internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
     tempFiles.add(TempFile(type, tempPath, tempChannel))
     return tempChannel
+  }
+
+  private val fileBackedListProvider = object: ListProvider {
+    override fun createUByteList(name: String, size: Long) = FileBackedUByteList.createEmpty(openTempEmptyFileChannel(name), size)
+    override fun createUShortList(name: String, size: Long) = FileBackedUShortList.createEmpty(openTempEmptyFileChannel(name), size)
+    override fun createIntList(name: String, size: Long) = FileBackedIntList.createEmpty(openTempEmptyFileChannel(name), size)
   }
 
   fun analyze(progress: ProgressIndicator): String {
@@ -129,10 +132,10 @@ internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
       prepareFilesStopwatch.stop()
 
-      val parentList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("parents"), navigator.instanceCount + 1)
-      val sizesList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("sizes"), navigator.instanceCount + 1)
-      val visitedList = FileBackedIntList.createEmpty(openTempEmptyFileChannel("visited"), navigator.instanceCount + 1)
-      val refIndexList = FileBackedUByteList.createEmpty(openTempEmptyFileChannel("refIndex"), navigator.instanceCount + 1)
+      val parentList = fileBackedListProvider.createIntList("parents", navigator.instanceCount + 1)
+      val sizesList = fileBackedListProvider.createIntList("sizes", navigator.instanceCount + 1)
+      val visitedList = fileBackedListProvider.createIntList("visited", navigator.instanceCount + 1)
+      val refIndexList = fileBackedListProvider.createUByteList("refIndex", navigator.instanceCount + 1)
 
       analysisStopwatch.start()
 
@@ -150,7 +153,7 @@ internal class HProfAnalysis(private val hprofFileChannel: FileChannel,
         histogram
       )
 
-      val analysisReport = analysisCallback(analysisContext, PartialProgressIndicator(progress, 0.4, 0.4))
+      val analysisReport = analysisCallback(analysisContext, fileBackedListProvider, PartialProgressIndicator(progress, 0.4, 0.4))
       if (analysisReport.isNotBlank()) {
         result.appendln(analysisReport)
       }

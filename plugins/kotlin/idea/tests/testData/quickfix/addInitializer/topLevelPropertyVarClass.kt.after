@@ -1,0 +1,4 @@
+// "Add initializer" "true"
+// WITH_STDLIB
+class A
+var label: A = TODO()

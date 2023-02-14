@@ -54,7 +54,7 @@ public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock 
   }
 
   @Override
-  protected XmlTagBlock createTagBlock(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
+  protected XmlTagBlock createTagBlock(@NotNull ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
     return myBuilder.createXmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
   }
 
@@ -75,7 +75,8 @@ public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock 
   protected List<Block> buildChildren() {
     try {
       List<Block> childBlocks = patchTopLevelChildBlocks(buildChildrenNoMerge());
-      return myBuilder.mergeWithTemplateBlocks(childBlocks, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy, getChildDefaultIndent());
+      return myBuilder.mergeWithTemplateBlocks(childBlocks, myXmlFormattingPolicy.getSettings(), myXmlFormattingPolicy,
+                                               getChildDefaultIndent());
     }
     catch (FragmentedTemplateException fte) {
       return EMPTY_BLOCK_LIST;

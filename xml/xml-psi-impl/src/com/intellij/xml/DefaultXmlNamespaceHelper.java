@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   private static final Logger LOG = Logger.getInstance(DefaultXmlNamespaceHelper.class);
 
@@ -151,10 +149,9 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   @Override
   @NotNull
   public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
-    if (!(element instanceof XmlTag)) {
+    if (!(element instanceof XmlTag tag)) {
       return Collections.emptySet();
     }
-    final XmlTag tag = (XmlTag)element;
     final String name = tag.getLocalName();
     final Set<String> byTagName = getNamespacesByTagName(name, file);
     if (!byTagName.isEmpty()) {

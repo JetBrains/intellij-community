@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -23,11 +9,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
-/**
- * @author yole
- * @noinspection HardCodedStringLiteral
- */
-public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
+public final class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Method myInitConstraintsMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension)");
   private static final Method myInitConstraintsIndentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
   private static final Method myInitConstraintsIndentParentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int,boolean)");
@@ -35,7 +17,7 @@ public class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Type myGridLayoutManagerType = Type.getType(GridLayoutManager.class);
   private static final Type myGridConstraintsType = Type.getType(GridConstraints.class);
 
-  public static GridLayoutCodeGenerator INSTANCE = new GridLayoutCodeGenerator();
+  public static final GridLayoutCodeGenerator INSTANCE = new GridLayoutCodeGenerator();
 
   @Override
   public void generateContainerLayout(final LwContainer lwContainer, final GeneratorAdapter generator, final int componentLocal) {

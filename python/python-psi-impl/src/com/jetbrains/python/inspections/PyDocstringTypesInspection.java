@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.debugger.PySignature;
@@ -24,24 +22,21 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyDocstringTypesInspection extends PyInspection {
+import static com.jetbrains.python.psi.PyUtil.as;
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
+public class PyDocstringTypesInspection extends PyInspection {
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -75,11 +70,11 @@ public class PyDocstringTypesInspection extends PyInspection {
           String dynamicType = signature.getArgTypeQualifiedName(param);
           if (dynamicType != null) {
             @NlsSafe String dynamicTypeShortName = getShortestImportableName(function, dynamicType);
-            if (!match(function, dynamicType, type.getValue())) {
+            if (dynamicTypeShortName != null && !match(function, dynamicType, type.getValue())) {
               registerProblem(node, PyPsiBundle.message("INSP.docstring.types.dynamically.inferred.type.does.not.match.specified.type",
                                                         dynamicTypeShortName, type),
                               ProblemHighlightType.WEAK_WARNING, null, type.getTextRange(),
-                              new ChangeTypeQuickFix(param, type, dynamicTypeShortName, node)
+                              new ChangeTypeQuickFix(param, type, dynamicTypeShortName)
               );
             }
           }
@@ -128,15 +123,14 @@ public class PyDocstringTypesInspection extends PyInspection {
 
   private static final class ChangeTypeQuickFix implements LocalQuickFix {
     private final String myParamName;
+    @SafeFieldForPreview
     private final Substring myTypeSubstring;
     private final String myNewType;
-    private final SmartPsiElementPointer<PyStringLiteralExpression> myStringLiteralExpression;
 
-    private ChangeTypeQuickFix(String name, Substring substring, String type, PyStringLiteralExpression expression) {
+    private ChangeTypeQuickFix(@NotNull String name, @NotNull Substring substring, @NotNull String type) {
       myParamName = name;
       myTypeSubstring = substring;
       myNewType = type;
-      myStringLiteralExpression = SmartPointerManager.createPointer(expression);
     }
 
     @NotNull
@@ -157,7 +151,7 @@ public class PyDocstringTypesInspection extends PyInspection {
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      final PyStringLiteralExpression stringLiteralExpression = myStringLiteralExpression.getElement();
+      final PyStringLiteralExpression stringLiteralExpression = as(descriptor.getPsiElement(), PyStringLiteralExpression.class);
       if (stringLiteralExpression != null) {
         stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
       }

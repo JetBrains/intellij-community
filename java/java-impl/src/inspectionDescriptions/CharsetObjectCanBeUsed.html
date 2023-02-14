@@ -1,22 +1,23 @@
 <html>
 <body>
-Reports methods and constructors where constant charset <code>String</code> literal is used e.g. <code>"UTF-8"</code> which can be replaced with
-a predefined <code>StandardCharsets.UTF_8</code> code. This may work faster, because charset lookup becomes
-unnecessary. Also catching <code>UnsupportedEncodingException</code> may become unnecessary as well. In this case the catch block will
-be removed automatically.
+Reports methods and constructors in which constant charset <code>String</code> literal (for example, <code>"UTF-8"</code>) can be replaced with
+the predefined <code>StandardCharsets.UTF_8</code> code.
+<p>The code after the fix may work faster, because the charset lookup becomes unnecessary.
+  Also, catching <code>UnsupportedEncodingException</code> may become unnecessary as well. In this case,
+  the catch block will be removed automatically.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   try {
     byte[] bytes = "str".getBytes("UTF-8");
   } catch (UnsupportedEncodingException e) {
   }
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After quick-fix is applied:</p>
+<pre><code>
   byte[] bytes = "str".getBytes(StandardCharsets.UTF_8);
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection is available since Java 7 only.</p>
+<p>The inspection is available in Java 7 and later.</p>
 <p><small>New in 2018.2</small></p>
 </body>
 </html>

@@ -40,7 +40,7 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   public void visitLeaf(LeafElement leaf) {
     String leafText = leaf instanceof ForeignLeafPsiElement ? "" : leaf.getText();
     catLeafs.append(leafText);
-    final TextRange leafRange = leaf.getTextRange();
+    TextRange leafRange = leaf.getTextRange();
 
     StringBuilder leafEncodedText = constructTextFromHostPSI(leafRange.getStartOffset(), leafRange.getEndOffset());
 

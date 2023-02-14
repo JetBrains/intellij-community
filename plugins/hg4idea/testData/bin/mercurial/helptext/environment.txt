@@ -1,0 +1,124 @@
+HG
+    Path to the 'hg' executable, automatically passed when running
+    hooks, extensions or external tools. If unset or empty, this is
+    the hg executable's name if it's frozen, or an executable named
+    'hg' (with %PATHEXT% [defaulting to COM/EXE/BAT/CMD] extensions on
+    Windows) is searched.
+
+HGEDITOR
+    This is the name of the editor to run when committing. See EDITOR.
+
+    (deprecated, see :hg:`help config.ui.editor`)
+
+HGENCODING
+    This overrides the default locale setting detected by Mercurial.
+    This setting is used to convert data including usernames,
+    changeset descriptions, tag names, and branches. This setting can
+    be overridden with the --encoding command-line option.
+
+HGENCODINGMODE
+    This sets Mercurial's behavior for handling unknown characters
+    while transcoding user input. The default is "strict", which
+    causes Mercurial to abort if it can't map a character. Other
+    settings include "replace", which replaces unknown characters, and
+    "ignore", which drops them. This setting can be overridden with
+    the --encodingmode command-line option.
+
+HGENCODINGAMBIGUOUS
+    This sets Mercurial's behavior for handling characters with
+    "ambiguous" widths like accented Latin characters with East Asian
+    fonts. By default, Mercurial assumes ambiguous characters are
+    narrow, set this variable to "wide" if such characters cause
+    formatting problems.
+
+HGMERGE
+    An executable to use for resolving merge conflicts. The program
+    will be executed with three arguments: local file, remote file,
+    ancestor file.
+
+    (deprecated, see :hg:`help config.ui.merge`)
+
+HGRCPATH
+    A list of files or directories to search for configuration
+    files. Item separator is ":" on Unix, ";" on Windows. If HGRCPATH
+    is not set, platform default search path is used. If empty, only
+    the .hg/hgrc from the current repository is read.
+
+    For each element in HGRCPATH:
+
+    - if it's a directory, all files ending with .rc are added
+    - otherwise, the file itself will be added
+
+HGRCSKIPREPO
+    When set, the .hg/hgrc from repositories are not read.
+
+HGPLAIN
+    When set, this disables any configuration settings that might
+    change Mercurial's default output. This includes encoding,
+    defaults, verbose mode, debug mode, quiet mode, tracebacks, and
+    localization. This can be useful when scripting against Mercurial
+    in the face of existing user configuration.
+
+    In addition to the features disabled by ``HGPLAIN=``, the following
+    values can be specified to adjust behavior:
+
+    ``+strictflags``
+        Restrict parsing of command line flags.
+
+    Equivalent options set via command line flags or environment
+    variables are not overridden.
+
+    See :hg:`help scripting` for details.
+
+HGPLAINEXCEPT
+    This is a comma-separated list of features to preserve when
+    HGPLAIN is enabled. Currently the following values are supported:
+
+    ``alias``
+        Don't remove aliases.
+    ``color``
+        Don't disable colored output.
+    ``i18n``
+        Preserve internationalization.
+    ``revsetalias``
+        Don't remove revset aliases.
+    ``templatealias``
+        Don't remove template aliases.
+    ``progress``
+        Don't hide progress output.
+
+    Setting HGPLAINEXCEPT to anything (even an empty string) will
+    enable plain mode.
+
+HGUSER
+    This is the string used as the author of a commit. If not set,
+    available values will be considered in this order:
+
+    - HGUSER (deprecated)
+    - configuration files from the HGRCPATH
+    - EMAIL
+    - interactive prompt
+    - LOGNAME (with ``@hostname`` appended)
+
+    (deprecated, see :hg:`help config.ui.username`)
+
+EMAIL
+    May be used as the author of a commit; see HGUSER.
+
+LOGNAME
+    May be used as the author of a commit; see HGUSER.
+
+VISUAL
+    This is the name of the editor to use when committing. See EDITOR.
+
+EDITOR
+    Sometimes Mercurial needs to open a text file in an editor for a
+    user to modify, for example when writing commit messages. The
+    editor it uses is determined by looking at the environment
+    variables HGEDITOR, VISUAL and EDITOR, in that order. The first
+    non-empty one is chosen. If all of them are empty, the editor
+    defaults to 'vi'.
+
+PYTHONPATH
+    This is used by Python to find imported modules and may need to be
+    set appropriately if this Mercurial is not installed system-wide.

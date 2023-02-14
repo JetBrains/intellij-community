@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.javaFX;
 
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxEntryPoint extends EntryPoint {
+public final class JavaFxEntryPoint extends EntryPoint {
   public static final String INITIALIZE_METHOD_NAME = "initialize";
   public boolean ADD_JAVAFX_TO_ENTRIES = true;
 
@@ -32,13 +32,12 @@ public class JavaFxEntryPoint extends EntryPoint {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)psiElement;
+    if (psiElement instanceof PsiMethod method) {
       final int paramsCount = method.getParameterList().getParametersCount();
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
       if (paramsCount == 1 &&
-          PsiType.VOID.equals(method.getReturnType()) &&
+          PsiTypes.voidType().equals(method.getReturnType()) &&
           "start".equals(methodName)) {
         return InheritanceUtil.isInheritor(containingClass, true, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION);
       }

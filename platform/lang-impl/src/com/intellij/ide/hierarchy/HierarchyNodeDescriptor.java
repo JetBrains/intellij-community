@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -17,12 +18,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
+  public static final HierarchyNodeDescriptor[] EMPTY_ARRAY = new HierarchyNodeDescriptor[0];
   @NotNull
   protected CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren;
   protected final boolean myIsBase;
+  private Color myBackgroundColor;
 
   protected HierarchyNodeDescriptor(@NotNull Project project,
                                     @Nullable NodeDescriptor parentDescriptor,
@@ -53,8 +57,20 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return myCachedChildren;
   }
 
-  public final void setCachedChildren(final Object[] cachedChildren) {
+  public final void setCachedChildren(Object[] cachedChildren) {
     myCachedChildren = cachedChildren;
+  }
+
+  @Nullable
+  public final Color getBackgroundColorCached() {
+    return myBackgroundColor;
+  }
+
+  @Override
+  public boolean update() {
+    boolean changed = super.update();
+    myBackgroundColor = ProjectViewTree.getColorForElement(getContainingFile());
+    return changed;
   }
 
   @Override

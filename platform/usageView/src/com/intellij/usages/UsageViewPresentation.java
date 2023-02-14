@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,17 +20,17 @@ public class UsageViewPresentation {
   private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
 
   private @NlsContexts.TabTitle String myTabText;
-  private String myScopeText = ""; // Default value. to be overwritten in most cases.
+  private @NlsSafe String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
   private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
     // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private boolean myShowReadOnlyStatusAsRed = false;
-  private boolean myShowCancelButton = false;
+  private boolean myShowReadOnlyStatusAsRed;
+  private boolean myShowCancelButton;
   private boolean myOpenInNewTab = true;
-  private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
+  private int myRerunHash;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
 
@@ -43,7 +42,9 @@ public class UsageViewPresentation {
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
-  private Pattern myReplacePattern;
+  private boolean myCaseSensitive;
+  private boolean myPreserveCase;
+  private String myReplaceString;
   private boolean myReplaceMode;
 
   public @NlsContexts.TabTitle String getTabText() {
@@ -55,11 +56,12 @@ public class UsageViewPresentation {
   }
 
   @NotNull
+  @NlsSafe
   public String getScopeText() {
     return myScopeText;
   }
 
-  public void setScopeText(@NotNull String scopeText) {
+  public void setScopeText(@NotNull @NlsSafe String scopeText) {
     myScopeText = scopeText;
   }
 
@@ -69,15 +71,6 @@ public class UsageViewPresentation {
 
   public void setShowReadOnlyStatusAsRed(boolean showReadOnlyStatusAsRed) {
     myShowReadOnlyStatusAsRed = showReadOnlyStatusAsRed;
-  }
-
-  /**
-   * @deprecated use {@link #getSearchString}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getUsagesString() {
-    return myUsagesString;
   }
 
   /**
@@ -165,23 +158,6 @@ public class UsageViewPresentation {
     myCodeUsages = codeUsages;
   }
 
-  /**
-   * @deprecated please avoid using this method, because it leads to string concatenations that are shown in UI
-   */
-  @Deprecated
-  @NotNull
-  public @Nls String getUsagesWord() {
-    return UsageViewBundle.message("usage.name", 1);
-  }
-
-  /**
-   * @deprecated no-op
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
-  public void setUsagesWord(@NotNull @Nls String usagesWord) {}
-
   public @NlsContexts.TabTitle String getTabName() {
     return myTabName;
   }
@@ -246,12 +222,42 @@ public class UsageViewPresentation {
     return mySearchPattern;
   }
 
-  public void setReplacePattern(Pattern replacePattern) {
-    myReplacePattern = replacePattern;
+  public void setCaseSensitive(boolean caseSensitive) {
+    myCaseSensitive = caseSensitive;
   }
 
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
+
+  public void setPreserveCase(boolean preserveCase) {
+    myPreserveCase = preserveCase;
+  }
+
+  public boolean isPreserveCase() {
+    return myPreserveCase;
+  }
+
+  /**
+   * @deprecated Use {@link #setReplaceString(String)}
+   */
+  @Deprecated
+  public void setReplacePattern(Pattern replacePattern) { }
+
+  public void setReplaceString(String replaceString) {
+    myReplaceString = replaceString;
+  }
+
+  /**
+   * @deprecated Use {@link #getReplaceString()}
+   */
+  @Deprecated(forRemoval = true)
   public Pattern getReplacePattern() {
-    return myReplacePattern;
+    return null;
+  }
+
+  public String getReplaceString() {
+    return myReplaceString;
   }
 
   public boolean isReplaceMode() {
@@ -287,7 +293,7 @@ public class UsageViewPresentation {
            && Objects.equals(myUsagesString, that.myUsagesString)
            && Objects.equals(mySearchString, that.mySearchString)
            && arePatternsEqual(mySearchPattern, that.mySearchPattern)
-           && arePatternsEqual(myReplacePattern, that.myReplacePattern);
+           && Objects.equals(myReplaceString, that.myReplaceString);
   }
 
   public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
@@ -323,10 +329,10 @@ public class UsageViewPresentation {
       myDetachedMode,
       myDynamicCodeUsagesString,
       myMergeDupLinesAvailable,
-      myReplaceMode
+      myReplaceMode,
+      myReplaceString
     );
     result = 31 * result + getHashCode(mySearchPattern);
-    result = 31 * result + getHashCode(myReplacePattern);
     return result;
   }
 
@@ -351,7 +357,7 @@ public class UsageViewPresentation {
     copyInstance.myMergeDupLinesAvailable = myMergeDupLinesAvailable;
     copyInstance.myExcludeAvailable = myExcludeAvailable;
     copyInstance.mySearchPattern = mySearchPattern;
-    copyInstance.myReplacePattern = myReplacePattern;
+    copyInstance.myReplaceString = myReplaceString;
     copyInstance.myReplaceMode = myReplaceMode;
     return copyInstance;
   }

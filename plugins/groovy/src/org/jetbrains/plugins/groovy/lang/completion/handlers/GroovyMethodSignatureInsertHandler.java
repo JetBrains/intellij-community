@@ -33,12 +33,11 @@ public class GroovyMethodSignatureInsertHandler implements InsertHandler<LookupE
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-    if (!(item.getObject() instanceof PsiMethod)) {
+    if (!(item.getObject() instanceof PsiMethod method)) {
       return;
     }
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
     final Editor editor = context.getEditor();
-    final PsiMethod method = (PsiMethod)item.getObject();
 
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final StringBuilder buffer = new StringBuilder();

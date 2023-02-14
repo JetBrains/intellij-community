@@ -1,10 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.palette;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
@@ -13,15 +13,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public class EditComponentAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(EditComponentAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     if (project == null || selectedItem == null || selectedItem.isAnyComponent() || selectedItem.isSpacer()) {
       return;
@@ -52,8 +50,14 @@ public class EditComponentAction extends AnAction {
     palette.fireGroupsChanged();
   }
 
-  @Override public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
     ComponentItem selectedItem = e.getData(ComponentItem.DATA_KEY);
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
     e.getPresentation().setEnabled(project != null &&

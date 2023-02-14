@@ -101,8 +101,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
 
         wrapper.add(errorLabel, BorderLayout.EAST);
 
-        if (component instanceof JComponent) {
-          final JComponent jComponent = (JComponent)component;
+        if (component instanceof JComponent jComponent) {
           wrapper.setBorder(jComponent.getBorder());
           jComponent.setBorder(BorderFactory.createEmptyBorder());
           jComponent.setToolTipText(TooltipUtils.getTooltipText(errorDescriptors));

@@ -30,9 +30,6 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.dsl.DescriptorsKt.*;
 
-/**
- * @author peter
- */
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final @NonNls String THROWS = "throws";

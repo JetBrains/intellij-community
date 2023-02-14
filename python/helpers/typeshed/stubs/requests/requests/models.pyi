@@ -1,12 +1,16 @@
 import datetime
-from typing import Any, Dict, Iterator, List, Optional, Text, Union
+from _typeshed import Self
+from collections.abc import Callable, Iterator
+from json import JSONDecoder
+from typing import Any
 
-from . import auth, cookies, exceptions, hooks, status_codes, structures, utils
+from urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
+
+from . import auth, cookies, exceptions, hooks, status_codes, utils
 from .cookies import RequestsCookieJar
-from .packages.urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
+from .structures import CaseInsensitiveDict as CaseInsensitiveDict
 
 default_hooks = hooks.default_hooks
-CaseInsensitiveDict = structures.CaseInsensitiveDict
 HTTPBasicAuth = auth.HTTPBasicAuth
 cookiejar_from_dict = cookies.cookiejar_from_dict
 get_cookie_header = cookies.get_cookie_header
@@ -66,10 +70,10 @@ class Request(RequestHooksMixin):
     def prepare(self) -> PreparedRequest: ...
 
 class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
-    method: Optional[Union[str, Text]]
-    url: Optional[Union[str, Text]]
+    method: str | None
+    url: str | None
     headers: CaseInsensitiveDict[str]
-    body: Optional[Union[bytes, Text]]
+    body: bytes | str | None
     hooks: Any
     def __init__(self) -> None: ...
     def prepare(
@@ -87,13 +91,13 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
 
 class Response:
     __attrs__: Any
-    _content: Optional[bytes]  # undocumented
+    _content: bytes | None  # undocumented
     status_code: int
     headers: CaseInsensitiveDict[str]
     raw: Any
     url: str
-    encoding: str
-    history: List[Response]
+    encoding: str | None
+    history: list[Response]
     reason: str
     cookies: RequestsCookieJar
     elapsed: datetime.timedelta
@@ -102,10 +106,10 @@ class Response:
     def __bool__(self) -> bool: ...
     def __nonzero__(self) -> bool: ...
     def __iter__(self) -> Iterator[bytes]: ...
-    def __enter__(self) -> Response: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __enter__(self: Self) -> Self: ...
+    def __exit__(self, *args: object) -> None: ...
     @property
-    def next(self) -> Optional[PreparedRequest]: ...
+    def next(self) -> PreparedRequest | None: ...
     @property
     def ok(self) -> bool: ...
     @property
@@ -114,16 +118,26 @@ class Response:
     def is_permanent_redirect(self) -> bool: ...
     @property
     def apparent_encoding(self) -> str: ...
-    def iter_content(self, chunk_size: Optional[int] = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
+    def iter_content(self, chunk_size: int | None = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
     def iter_lines(
-        self, chunk_size: Optional[int] = ..., decode_unicode: bool = ..., delimiter: Optional[Union[Text, bytes]] = ...
+        self, chunk_size: int | None = ..., decode_unicode: bool = ..., delimiter: str | bytes | None = ...
     ) -> Iterator[Any]: ...
     @property
     def content(self) -> bytes: ...
     @property
     def text(self) -> str: ...
-    def json(self, **kwargs) -> Any: ...
+    def json(
+        self,
+        *,
+        cls: type[JSONDecoder] | None = ...,
+        object_hook: Callable[[dict[Any, Any]], Any] | None = ...,
+        parse_float: Callable[[str], Any] | None = ...,
+        parse_int: Callable[[str], Any] | None = ...,
+        parse_constant: Callable[[str], Any] | None = ...,
+        object_pairs_hook: Callable[[list[tuple[Any, Any]]], Any] | None = ...,
+        **kwds: Any,
+    ) -> Any: ...
     @property
-    def links(self) -> Dict[Any, Any]: ...
+    def links(self) -> dict[Any, Any]: ...
     def raise_for_status(self) -> None: ...
     def close(self) -> None: ...

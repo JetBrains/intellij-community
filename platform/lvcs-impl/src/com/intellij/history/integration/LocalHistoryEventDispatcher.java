@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -80,7 +66,7 @@ class LocalHistoryEventDispatcher {
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
         if (isVersioned(f)) {
-          myVcs.created(f.getPath(), f.isDirectory());
+          myVcs.created(myGateway.getPathOrUrl(f), f.isDirectory());
         }
         return true;
       }
@@ -102,7 +88,7 @@ class LocalHistoryEventDispatcher {
 
     Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
     if (content != null) {
-      myVcs.contentChanged(f.getPath(), content.first, content.second);
+      myVcs.contentChanged(myGateway.getPathOrUrl(f), content.first, content.second);
     }
   }
 
@@ -132,13 +118,13 @@ class LocalHistoryEventDispatcher {
       if (!wasVersioned && !isVersioned) return;
 
       String oldName = (String)e.getOldValue();
-      myVcs.renamed(f.getPath(), oldName);
+      myVcs.renamed(myGateway.getPathOrUrl(f), oldName);
     }
     else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
       if (!isVersioned(e.getFile())) return;
       VirtualFile f = e.getFile();
       if (!f.isDirectory()) {
-        myVcs.readOnlyStatusChanged(f.getPath(), !(Boolean)e.getOldValue());
+        myVcs.readOnlyStatusChanged(myGateway.getPathOrUrl(f), !(Boolean)e.getOldValue());
       }
     }
   }
@@ -153,14 +139,14 @@ class LocalHistoryEventDispatcher {
 
     if (!wasVersioned && !isVersioned) return;
 
-    myVcs.moved(f.getPath(), e.getOldParent().getPath());
+    myVcs.moved(myGateway.getPathOrUrl(f), myGateway.getPathOrUrl(e.getOldParent()));
   }
 
   private void beforeFileDeletion(@NotNull VFileDeleteEvent e) {
     VirtualFile f = e.getFile();
     Entry entry = myGateway.createEntryForDeletion(f);
     if (entry != null) {
-      myVcs.deleted(f.getPath(), entry);
+      myVcs.deleted(myGateway.getPathOrUrl(f), entry);
     }
   }
 
@@ -210,7 +196,7 @@ class LocalHistoryEventDispatcher {
     myVfsEventListeners.add(virtualFileListener, disposable);
   }
 
-  public static class LocalHistoryFileManagerListener implements VirtualFileManagerListener {
+  static final class LocalHistoryFileManagerListener implements VirtualFileManagerListener {
     @Override
     public void beforeRefreshStart(boolean asynchronous) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
@@ -224,7 +210,7 @@ class LocalHistoryEventDispatcher {
     }
   }
 
-  public static class LocalHistoryCommandListener implements CommandListener {
+  static final class LocalHistoryCommandListener implements CommandListener {
     @Override
     public void commandStarted(@NotNull CommandEvent e) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
@@ -238,7 +224,7 @@ class LocalHistoryEventDispatcher {
     }
   }
 
-  public static class LocalHistoryBulkFileListener implements BulkFileListener {
+  static final class LocalHistoryBulkFileListener implements BulkFileListener {
     @Override
     public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();

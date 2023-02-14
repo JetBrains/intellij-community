@@ -42,7 +42,8 @@ public interface ExternalFormatProcessor {
                    @NotNull TextRange range,
                    boolean canChangeWhiteSpacesOnly,
                    boolean keepLineBreaks,
-                   boolean enableBulkUpdate);
+                   boolean enableBulkUpdate,
+                   int cursorOffset);
 
   /**
    * Indents the line.
@@ -111,9 +112,10 @@ public interface ExternalFormatProcessor {
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
                                      boolean keepLineBreaks,
-                                     boolean enableBulkUpdate) {
+                                     boolean enableBulkUpdate,
+                                     int cursorOffset) {
     ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
-    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, enableBulkUpdate) : null;
+    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, enableBulkUpdate, cursorOffset) : null;
   }
 
   @Nullable
@@ -121,7 +123,7 @@ public interface ExternalFormatProcessor {
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
                                      boolean keepLineBreaks) {
-    return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, true);
+    return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, true, -1);
   }
 
   /**

@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.editorActions
-
 
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
@@ -34,14 +32,35 @@ class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
   }
   void testPrecedingTextBlock() { doTest 'f(""<caret> + """\n  .""")', 'f("""\n          <caret>""" + """\n  .""")' }
 
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15
+  void testJavadocSnippetAttributeDouble() { doFileTest """/**
+* {@snippet <caret> :}
+*/
+class A {
+}""", """/**
+* {@snippet "<caret>" :}
+*/
+class A {
+}"""
+  }
+  
+  void testJavadocSnippetAttributeSingle() { doFileTest"""/**
+* {@snippet <caret> :}
+*/
+class A {
+}""", """/**
+* {@snippet '<caret>' :}
+*/
+class A {
+}""", '\'' as char
   }
 
   private void doTest(String before, String after, char c = '"') {
-    myFixture.configureByText("a.java", "class C {{\n  ${before}\n}}")
+    doFileTest("class C {{\n  ${before}\n}}", "class C {{\n  ${after}\n}}", c)
+  }
+
+  private void doFileTest(String completeBefore, String expectedResult, char c = '"') {
+    myFixture.configureByText("a.java", completeBefore)
     TypedAction.instance.actionPerformed(editor, c, (editor as EditorEx).dataContext)
-    myFixture.checkResult("class C {{\n  ${after}\n}}")
+    myFixture.checkResult(expectedResult)
   }
 }

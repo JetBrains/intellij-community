@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
@@ -22,10 +23,15 @@ import java.util.Set;
  * or other advanced logic.
  *
  * @see com.intellij.codeInsight.completion.PrioritizedLookupElement
- * @author peter
  */
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
+  /**
+   * The timestamp when the item was shown in the lookup window during the completion session for the first time.
+   * It is recorded only if it is used later by completion logs {@link com.intellij.stats.completion.tracker.CompletionLogger}
+   * or FUS logs of the completion {@link com.intellij.codeInsight.lookup.impl.LookupUsageTracker}
+   */
+  public static final Key<Long> LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS = Key.create("lookup element shown timestamp");
 
   /**
    * @return the string which will be inserted into the editor when this lookup element is chosen
@@ -130,7 +136,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * list is shown as soon as possible. If there are heavy computations involved, consider making them optional and moving into
    * to {@link #getExpensiveRenderer()}.
    */
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setItemText(getLookupString());
   }
 
@@ -146,7 +152,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /** Prefer to use {@link #as(Class)} */
   @Nullable
-  public <T> T as(ClassConditionKey<T> conditionKey) {
+  public <T> T as(@NotNull ClassConditionKey<T> conditionKey) {
     //noinspection unchecked
     return conditionKey.isInstance(this) ? (T)this : null;
   }
@@ -156,7 +162,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * If this object is not a decorator, return it if it's instance of the given class, otherwise null.
    */
   @Nullable
-  public <T> T as(Class<T> clazz) {
+  public <T> T as(@NotNull Class<T> clazz) {
     //noinspection unchecked
     return clazz.isInstance(this) ? (T) this : null;
   }

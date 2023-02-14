@@ -1,0 +1,2 @@
+@MustBeDocumented
+annotation class MyAnnotation

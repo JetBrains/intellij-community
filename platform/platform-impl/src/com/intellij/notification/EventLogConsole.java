@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
@@ -45,10 +44,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author peter
- */
-final class EventLogConsole {
+public final class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
   private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
 
@@ -74,7 +70,17 @@ final class EventLogConsole {
     });
 
     myLogEditor.getSettings().setWhitespacesShown(false);
-    installNotificationsFont(myLogEditor, parentDisposable);
+    installNotificationsFont(myLogEditor, parentDisposable, new FontProvider() {
+      @Override
+      public @Nullable String getFontName() {
+        return NotificationsUtil.getFontName();
+      }
+
+      @Override
+      public @Nullable Float getFontSize() {
+        return NotificationsUtil.getFontSize();
+      }
+    });
 
     ((EditorMarkupModel)myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
 
@@ -90,7 +96,19 @@ final class EventLogConsole {
     });
   }
 
-  private static void installNotificationsFont(@NotNull EditorEx editor, @NotNull Disposable parentDisposable) {
+  public interface FontProvider {
+    @Nullable String getFontName();
+
+    @Nullable Float getFontSize();
+
+    default @Nullable Float getLineSpacing() {
+      return null;
+    }
+  }
+
+  public static void installNotificationsFont(@NotNull EditorEx editor,
+                                              @NotNull Disposable parentDisposable,
+                                              @NotNull FontProvider provider) {
     DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
       @Override
       public String getEditorFontName() {
@@ -103,15 +121,25 @@ final class EventLogConsole {
       }
 
       @Override
+      public float getEditorFontSize2D() {
+        return getConsoleFontSize2D();
+      }
+
+      @Override
       public String getConsoleFontName() {
-        String name = NotificationsUtil.getFontName();
+        String name = provider.getFontName();
         return name == null ? super.getConsoleFontName() : name;
       }
 
       @Override
       public int getConsoleFontSize() {
-        Integer size = NotificationsUtil.getFontSize();
-        return size == null ? super.getConsoleFontSize() : size;
+        return (int)(getConsoleFontSize2D() + 0.5);
+      }
+
+      @Override
+      public float getConsoleFontSize2D() {
+        Float size = provider.getFontSize();
+        return size == null ? super.getConsoleFontSize2D() : size;
       }
 
       @Override
@@ -127,7 +155,27 @@ final class EventLogConsole {
       }
 
       @Override
+      public void setEditorFontSize(float fontSize) {
+      }
+
+      @Override
       public void setConsoleFontSize(int fontSize) {
+      }
+
+      @Override
+      public void setConsoleFontSize(float fontSize) {
+      }
+
+      @Override
+      public float getLineSpacing() {
+        Float spacing = provider.getLineSpacing();
+        return spacing == null ? super.getLineSpacing() : spacing;
+      }
+
+      @Override
+      public float getConsoleLineSpacing() {
+        Float spacing = provider.getLineSpacing();
+        return spacing == null ? super.getConsoleLineSpacing() : spacing;
       }
     };
 
@@ -164,7 +212,7 @@ final class EventLogConsole {
                                                      @NotNull EditorMouseEvent event,
                                                      @NotNull DefaultActionGroup actions) {
     LogicalPosition position = editor.xyToLogicalPosition(event.getMouseEvent().getPoint());
-    if (EditorUtil.inVirtualSpace(editor, position)) {
+    if (EditorCoreUtil.inVirtualSpace(editor, position)) {
       return;
     }
     int offset = editor.logicalPositionToOffset(position);
@@ -220,6 +268,11 @@ final class EventLogConsole {
         NotificationsConfigurationImpl.getInstanceImpl().changeSettings(mySettings.withDisplayType(myType));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   void doPrintNotification(@NotNull Notification notification) {
@@ -261,7 +314,7 @@ final class EventLogConsole {
                               : ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY;
 
     int msgStart = document.getTextLength();
-    append(document, pair.message);
+    append(document, pair.message());
 
     int layer = HighlighterLayer.CARET_ROW + 1;
     RangeHighlighter highlighter = editor.getMarkupModel()
@@ -269,7 +322,7 @@ final class EventLogConsole {
     GROUP_ID.set(highlighter, notification.getGroupId());
     NOTIFICATION_ID.set(highlighter, notification.id);
 
-    for (Pair<TextRange, HyperlinkInfo> link : pair.links) {
+    for (Pair<TextRange, HyperlinkInfo> link : pair.links()) {
       final RangeHighlighter rangeHighlighter = myHyperlinkSupport.getValue()
         .createHyperlink(link.first.getStartOffset() + msgStart, link.first.getEndOffset() + msgStart, null, link.second);
       if (link.second instanceof EventLog.ShowBalloon) {
@@ -285,7 +338,7 @@ final class EventLogConsole {
     }
 
     if (notification.isImportant()) {
-      highlightNotification(notification, pair.status, startLine, document.getLineCount() - 1, titleStartOffset, pair.titleLength);
+      highlightNotification(notification, pair.status(), startLine, document.getLineCount() - 1, titleStartOffset, pair.titleLength());
     }
   }
 
@@ -453,6 +506,11 @@ final class EventLogConsole {
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

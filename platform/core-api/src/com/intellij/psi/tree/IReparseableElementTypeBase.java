@@ -34,7 +34,7 @@ public interface IReparseableElementTypeBase extends ILazyParseableElementTypeBa
    * @return true if the content is valid, false if not
    * @deprecated use {@link #isReparseable(ASTNode, CharSequence, Language, Project)} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   default boolean isParsable(@Nullable ASTNode parent,
                              @NotNull CharSequence buffer,
@@ -45,7 +45,7 @@ public interface IReparseableElementTypeBase extends ILazyParseableElementTypeBa
 
   /**
    * The same as {@link #isParsable(ASTNode, CharSequence, Language, Project)} but receives original node as a parameter, instead of
-   * parent. Original node may be used to look around for context dependent languages.
+   * parent. Original node may be used to look around for context-dependent languages.
    */
   default boolean isReparseable(@NotNull ASTNode currentNode,
                                 @NotNull CharSequence newText,

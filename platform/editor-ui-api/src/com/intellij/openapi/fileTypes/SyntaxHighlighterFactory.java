@@ -8,6 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This extension point <pre>{@code <lang.syntaxHighlighterFactory>}</pre> allows highlighting subsystem to provide syntax highlighting for the particular file.
+ * By "syntax highlighting" we mean highlighting of keywords, comments, braces etc. where lexing the file content is enough.
+ *
+ * To provide rich highlighting based on PSI see {@link com.intellij.codeInspection.LocalInspectionTool} or {@link com.intellij.lang.annotation.Annotator}
  * @see SingleLazyInstanceSyntaxHighlighterFactory
  */
 public abstract class SyntaxHighlighterFactory {

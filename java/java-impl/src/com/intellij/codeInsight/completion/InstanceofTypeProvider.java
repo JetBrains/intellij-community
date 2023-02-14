@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -16,9 +16,6 @@ import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/**
- * @author peter
- */
 final class InstanceofTypeProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(PsiKeyword.INSTANCEOF);
 
@@ -28,8 +25,7 @@ final class InstanceofTypeProvider {
     final Set<PsiClassType> expectedClassTypes = new LinkedHashSet<>();
     final Set<PsiClass> parameterizedTypes = new HashSet<>();
     for (final PsiType type : leftTypes) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         if (!classType.isRaw()) {
           ContainerUtil.addIfNotNull(parameterizedTypes, classType.resolve());
         }

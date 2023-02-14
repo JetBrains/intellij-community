@@ -2,7 +2,7 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +18,8 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -70,9 +71,9 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspection extends BaseInsp
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.private.methods.option"), this, "ignorePrivateMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignorePrivateMethods", InspectionGadgetsBundle.message("ignore.private.methods.option")));
   }
 
   @Override

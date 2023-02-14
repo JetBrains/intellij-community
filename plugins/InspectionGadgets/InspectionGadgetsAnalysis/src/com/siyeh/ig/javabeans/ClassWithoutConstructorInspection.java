@@ -51,7 +51,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classIdentifier = descriptor.getPsiElement();
       final PsiClass aClass = (PsiClass)classIdentifier.getParent();
       final PsiElementFactory factory =
@@ -84,7 +84,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
   }
 

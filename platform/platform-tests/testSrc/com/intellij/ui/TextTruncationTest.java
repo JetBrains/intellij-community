@@ -8,9 +8,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Irina.Chernushina on 1/25/2016.
- */
 public class TextTruncationTest {
   @Test
   public void testVariants() {

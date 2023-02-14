@@ -6,14 +6,9 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaLabelUI;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
-public class WinIntelliJLabelUI extends DarculaLabelUI {
+public final class WinIntelliJLabelUI extends DarculaLabelUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
     return new WinIntelliJLabelUI();
-  }
-
-  @Override
-  protected int getMnemonicIndex(JLabel l) {
-    return l.getDisplayedMnemonicIndex();
   }
 }

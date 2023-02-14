@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.notification.Notification;
@@ -24,6 +24,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
@@ -48,8 +49,6 @@ public final class GitUntrackedFilesHelper {
   /**
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
-   * @param root
-   * @param relativePaths
    * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    * @param description the content of the notification or null if the default content is to be used.
    */
@@ -133,8 +132,11 @@ public final class GitUntrackedFilesHelper {
       return GitUtil.findRefreshFileOrLog(absolutePath);
     });
 
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc,
-                                                                                NotificationType.ERROR, listener, "untracked.files.overwritten");
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
+      .setDisplayId(GitNotificationIdsHolder.UNTRACKED_FIES_OVERWITTEN);
+
+    if (listener != null) notification.setListener(listener);
 
     notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override

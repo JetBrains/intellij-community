@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
@@ -9,10 +9,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class DvcsBranchManager {
   @NotNull private final DvcsBranchSettings myBranchSettings;
@@ -27,15 +24,19 @@ public abstract class DvcsBranchManager {
     myProject = project;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {
-      String defaultBranchName = getDefaultBranchName(type);
-      if (!StringUtil.isEmptyOrSpaces(defaultBranchName)) {
-        myPredefinedFavoriteBranches.put(type, Collections.singleton(defaultBranchName));
+      Collection<String> predefinedFavoriteBranches = myPredefinedFavoriteBranches.computeIfAbsent(type, __ -> new HashSet<>());
+
+      for (String branchName : getDefaultBranchNames(type)) {
+        if (!StringUtil.isEmptyOrSpaces(branchName)) {
+          predefinedFavoriteBranches.add(branchName);
+        }
       }
+
+      myPredefinedFavoriteBranches.put(type, predefinedFavoriteBranches);
     }
   }
 
-  @Nullable
-  protected String getDefaultBranchName(@NotNull BranchType type) {return null;}
+  protected Collection<String> getDefaultBranchNames(@NotNull BranchType type) { return Collections.EMPTY_LIST; }
 
   public boolean isFavorite(@Nullable BranchType branchType, @Nullable Repository repository, @NotNull String branchName) {
     if (branchType == null) return false;
@@ -68,16 +69,39 @@ public abstract class DvcsBranchManager {
         myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
       }
     }
-    notifySettingsChanged();
+    notifyFavoriteSettingsChanged();
   }
 
-  private void notifySettingsChanged() {
+  private void notifyFavoriteSettingsChanged() {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchSettingsChanged();
+      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchFavoriteSettingsChanged();
+    });
+  }
+
+  public boolean isGroupingEnabled(@NotNull GroupingKey key) {
+    return myBranchSettings.getGroupingKeyIds().contains(key.getId());
+  }
+
+  public void setGrouping(@NotNull GroupingKey key, boolean state) {
+    if (state) {
+      myBranchSettings.getGroupingKeyIds().add(key.getId());
+    }
+    else {
+      myBranchSettings.getGroupingKeyIds().remove(key.getId());
+    }
+
+    myBranchSettings.intIncrementModificationCount();
+    notifyGroupingSettingsChanged(key, state);
+  }
+
+  private void notifyGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) {
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchGroupingSettingsChanged(key, state);
     });
   }
 
   public interface DvcsBranchManagerListener {
-    void branchSettingsChanged();
+    default void branchFavoriteSettingsChanged() { }
+    default void branchGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) { }
   }
 }

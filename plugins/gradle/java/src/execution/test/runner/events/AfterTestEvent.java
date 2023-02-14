@@ -87,7 +87,7 @@ public class AfterTestEvent extends AbstractTestEvent {
     if (testProxy == null) return;
 
     try {
-      testProxy.setDuration(Long.valueOf(endTime) - Long.valueOf(startTime));
+      testProxy.setDuration(Long.parseLong(endTime) - Long.parseLong(startTime));
     }
     catch (NumberFormatException ignored) {
     }

@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,24 +37,6 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
     myIgnored = ignored;
   }
 
-  /**
-   * @deprecated Use the constructors with {@link HtmlChunk} for description
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description) {
-    this(plainTextTitle, description, false);
-  }
-
-  /**
-   * @deprecated Use the constructors with {@link HtmlChunk} for description
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description, final boolean ignored) {
-    this(plainTextTitle, HtmlChunk.raw(description), ignored);
-  }
-
   @NotNull
   public String getPlainTextTitle() {
     return myPlainTextTitle;
@@ -69,7 +49,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
 
   /**
    * Called when user invokes "Ignore" action
-   * @param "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
+   * @param b "true" if user invokes "Ignore", "false" if user wish to not ignore this error anymore
    */
   public void ignore(final boolean b) {
     if (b != myIgnored) {

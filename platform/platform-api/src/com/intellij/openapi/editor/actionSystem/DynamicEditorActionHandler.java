@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings("deprecation")
 final class DynamicEditorActionHandler extends EditorActionHandler {
   private static final List<EditorActionHandler> UPDATE_MARKER = new ArrayList<>();
   private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
@@ -40,6 +41,7 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
     return getHandler().runForAllCarets();
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     return getHandler().isEnabled(editor, dataContext);
@@ -50,6 +52,7 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
     return getHandler().isEnabledForCaret(editor, caret, dataContext);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void execute(@NotNull Editor editor, @Nullable DataContext dataContext) {
     getHandler().execute(editor, dataContext);
@@ -129,6 +132,7 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
         }
       }
       catch (Exception e) {
+        if (ExceptionUtil.causedBy(e, ExtensionNotApplicableException.class)) continue;
         Logger.getInstance(EditorActionHandlerBean.class).error(new PluginException(e, bean.pluginDescriptor.getPluginId()));
         continue;
       }

@@ -1,0 +1,17 @@
+// FIR_IDENTICAL
+package testing
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>enum<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>FIRST<!>,
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SECOND<!>
+}
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>enum<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Type<!>(val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>id<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>) {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>FIRST<!>(1),
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SECOND<!>(2)
+}
+
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>testing<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>t1<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>t2<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!>): <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!> {
+    if (<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>t1<!> != <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>t2<!>) return <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>FIRST<!>
+    return <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>testing<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>FIRST<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>Test<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SECOND<!>)
+}

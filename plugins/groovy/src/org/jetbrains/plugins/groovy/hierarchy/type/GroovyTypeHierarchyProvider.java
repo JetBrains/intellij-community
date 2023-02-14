@@ -17,8 +17,5 @@ package org.jetbrains.plugins.groovy.hierarchy.type;
 
 import com.intellij.ide.hierarchy.type.JavaTypeHierarchyProvider;
 
-/**
- * @author peter
- */
 public class GroovyTypeHierarchyProvider extends JavaTypeHierarchyProvider{
 }

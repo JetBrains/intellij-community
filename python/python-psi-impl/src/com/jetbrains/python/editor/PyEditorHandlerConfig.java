@@ -15,9 +15,13 @@ public final class PyEditorHandlerConfig {
     PyDictLiteralExpression.class,
     PyParenthesizedExpression.class,
     PyArgumentList.class,
-    PyParameterList.class
+    PyParameterList.class,
+    PyGroupPattern.class,
+    PySequencePattern.class,
+    PyMappingPattern.class,
+    PyPatternArgumentList.class,
   };
-  static final Class[] WRAPPABLE_CLASSES = new Class[]{
+  public static final Class[] WRAPPABLE_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
     PyListCompExpression.class,
@@ -31,6 +35,10 @@ public final class PyEditorHandlerConfig {
     PyDecoratorList.class,
     PySliceExpression.class,
     PySubscriptionExpression.class,
-    PyGeneratorExpression.class
+    PyGeneratorExpression.class,
+    PyGroupPattern.class,
+    PySequencePattern.class,
+    PyMappingPattern.class,
+    PyPatternArgumentList.class,
   };
 }

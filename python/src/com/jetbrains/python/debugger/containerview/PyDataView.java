@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -160,7 +160,7 @@ public final class PyDataView implements DumbAware {
   public void init(@NotNull ToolWindow toolWindow) {
     myTabs = new JBRunnerTabs(myProject, PythonPluginDisposable.getInstance(myProject));
     myTabs.setDataProvider(dataId -> {
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       return null;
@@ -168,7 +168,7 @@ public final class PyDataView implements DumbAware {
     myTabs.getPresentation().setEmptyText(PyBundle.message("debugger.data.view.empty.text"));
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, PyBundle.message("debugger.data.view.data"), false);
+    final Content content = ContentFactory.getInstance().createContent(myTabs, PyBundle.message("debugger.data.view.data"), false);
     content.setCloseable(true);
     toolWindow.getContentManager().addContent(content);
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
@@ -210,8 +210,8 @@ public final class PyDataView implements DumbAware {
     }
     info.setText(PyBundle.message("debugger.data.view.empty.tab"));
     info.setPreferredFocusableComponent(panel.getSliceTextField());
-    info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.UNKNOWN);
-    info.setTabLabelActions(new DefaultActionGroup(new CloseViewerAction(info, frameAccessor)), ActionPlaces.UNKNOWN);
+    info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.EDITOR_TAB);
+    info.setTabLabelActions(new DefaultActionGroup(new CloseViewerAction(info, frameAccessor)), ActionPlaces.EDITOR_TAB);
     panel.addListener(name -> info.setText(name));
     myTabs.addTab(info);
     myTabs.select(info, true);
@@ -299,6 +299,11 @@ public final class PyDataView implements DumbAware {
       if (panel != null) {
         panel.setColored(state);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

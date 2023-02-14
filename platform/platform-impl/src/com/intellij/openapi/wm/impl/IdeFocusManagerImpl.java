@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated Use {@link IdeFocusManager}'s methods directly.
+ */
+@Deprecated
 public final class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   @NotNull
@@ -53,18 +57,8 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
-    getGlobalInstance().typeAheadUntil(callback, cause);
-  }
-
-  @Override
   public boolean isFocusTransferEnabled() {
     return getGlobalInstance().isFocusTransferEnabled();
-  }
-
-  @Override
-  public void setTypeaheadEnabled(boolean enabled) {
-    getGlobalInstance().setTypeaheadEnabled(enabled);
   }
 
   @Override

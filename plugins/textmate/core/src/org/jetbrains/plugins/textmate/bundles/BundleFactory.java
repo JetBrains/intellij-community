@@ -9,6 +9,10 @@ import org.jetbrains.plugins.textmate.plist.PlistReader;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * @deprecated use `TextMateService#readBundle` or `TextMateBundleReader`
+ */
+@Deprecated
 public class BundleFactory {
   private final PlistReader myPlistReader;
 
@@ -21,22 +25,19 @@ public class BundleFactory {
    * Return {code}null{code} if bundle type can't be defined or
    * if IO exception occurred while reading directory.
    *
-   * @param directory
    * @return Bundle object or null
+   * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
+  @Deprecated
   @Nullable
   public Bundle fromDirectory(@NotNull File directory) throws IOException {
-    final BundleType type = BundleType.fromDirectory(directory);
-    switch (type) {
-      case TEXTMATE:
-        return fromTextMateBundle(directory);
-      case SUBLIME:
-        return new Bundle(directory.getName(), directory.getPath(), type);
-      case VSCODE:
-        return new VSCBundle(directory.getName(), directory.getPath());
-      default:
-        return null;
-    }
+    final BundleType type = BundleType.detectBundleType(directory.toPath());
+    return switch (type) {
+      case TEXTMATE -> fromTextMateBundle(directory);
+      case SUBLIME -> new Bundle(directory.getName(), directory.getPath(), type);
+      case VSCODE -> new VSCBundle(directory.getName(), directory.getPath());
+      default -> null;
+    };
   }
 
   private Bundle fromTextMateBundle(File directory) throws IOException {

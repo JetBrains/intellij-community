@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="opentelemetry-exporter-otlp-common" type="repository">
+    <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.22.0">
+      <exclude>
+        <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+        <dependency maven-id="io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi" />
+        <dependency maven-id="com.squareup.okhttp3:okhttp" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.22.0/opentelemetry-exporter-otlp-common-1.22.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.22.0/opentelemetry-exporter-common-1.22.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.22.0/opentelemetry-exporter-otlp-common-1.22.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.22.0/opentelemetry-exporter-common-1.22.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

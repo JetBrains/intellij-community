@@ -1,35 +1,34 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.StartUpPerformanceService
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import java.util.concurrent.atomic.AtomicBoolean
 
 // todo `com.intellij.internal.statistic` package should be moved out of platform-impl module to own,
 // and then this will be class moved to corresponding `intellij.platform.diagnostic` module
-internal class StartupMetricCollector : StartupActivity.Background {
-  private var wasReported = AtomicBoolean(ApplicationManager.getApplication().isUnitTestMode)
+internal class StartupMetricCollector : ProjectActivity {
+  private var wasReported = AtomicBoolean(false)
 
-  override fun runActivity(project: Project) {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override suspend fun execute(project: Project) {
     if (!wasReported.compareAndSet(false, true)) {
       return
     }
 
-    val metrics = StartUpPerformanceService.getInstance().metrics ?: return
-    val usageLogger = FUCounterUsageLogger.getInstance()
+    val metrics = StartUpPerformanceService.getInstance().getMetrics() ?: return
     for (entry in Object2IntMaps.fastIterable(metrics)) {
-      val usageData = FeatureUsageData()
-      usageData.addData("duration", entry.intValue)
-      var eventId = entry.key
-      if (eventId == "app initialization") {
-        eventId = "appInit"
-      }
-      usageLogger.logEvent("startup", eventId, usageData)
+      StartupPerformanceCollector.logEvent(project, entry.key, entry.intValue)
     }
   }
 }

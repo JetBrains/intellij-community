@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,10 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.ListTable;
-import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
-import com.intellij.util.ui.CheckBox;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,21 +27,21 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
-                                                                   BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.*;
+
+public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseInspection {
+  public static final @NonNls String DEFAULT_QUESTION_WORDS =
+    "are,can,check,contains,could,endsWith,equals,has,is,matches,must,shall,should,startsWith,was,were,will,would";
 
   @SuppressWarnings("PublicField")
-  @NonNls public String questionString = BooleanMethodNameMustStartWithQuestionInspection.DEFAULT_QUESTION_WORDS;
+  @NonNls public String questionString = DEFAULT_QUESTION_WORDS;
   @SuppressWarnings("PublicField")
   public boolean ignoreBooleanMethods = false;
   @SuppressWarnings("PublicField")
@@ -59,20 +53,12 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final ListTable table = new ListTable(new ListWrappingTableModel(questionList, InspectionGadgetsBundle
-      .message("boolean.method.name.must.start.with.question.table.column.name")));
-    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
-
-    final CheckBox checkBox1 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option"), this, "ignoreBooleanMethods");
-    final CheckBox checkBox2 =
-      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), this, "onlyWarnOnBaseMethods");
-
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(FormBuilder.createFormBuilder().addComponent(checkBox1).addComponent(checkBox2).getPanel(), BorderLayout.SOUTH);
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("questionList", InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.table.label")),
+      checkbox("ignoreBooleanMethods", InspectionGadgetsBundle.message("ignore.methods.with.boolean.return.type.option")),
+      checkbox("onlyWarnOnBaseMethods", InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"))
+    );
   }
 
   @Override
@@ -113,35 +99,19 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
     return new NonBooleanMethodNameMayNotStartWithQuestionVisitor();
   }
 
-  private class NonBooleanMethodNameMayNotStartWithQuestionVisitor
-    extends BaseInspectionVisitor {
+  private class NonBooleanMethodNameMayNotStartWithQuestionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final PsiType returnType = method.getReturnType();
-      if (returnType == null || returnType.equals(PsiType.BOOLEAN)) {
+      if (returnType == null || returnType.equals(PsiTypes.booleanType())) {
         return;
       }
       if (ignoreBooleanMethods && returnType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
         return;
       }
-      final String name = method.getName();
-      boolean startsWithQuestionWord = false;
-      for (String question : questionList) {
-        if (name.startsWith(question)) {
-          if (name.length() == question.length()) {
-            startsWithQuestionWord = true;
-            break;
-          }
-          final char nextChar = name.charAt(question.length());
-          if (Character.isUpperCase(nextChar) || nextChar == '_') {
-            startsWithQuestionWord = true;
-            break;
-          }
-        }
-      }
-      if (!startsWithQuestionWord) {
+      if (!startsWithQuestionWord(method.getName())) {
         return;
       }
       if (onlyWarnOnBaseMethods) {
@@ -154,5 +124,20 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends
       }
       registerMethodError(method, method);
     }
+  }
+
+  protected boolean startsWithQuestionWord(String name) {
+    for (String question : questionList) {
+      if (name.startsWith(question)) {
+        if (name.length() == question.length()) {
+          return true;
+        }
+        final char nextChar = name.charAt(question.length());
+        if (Character.isUpperCase(nextChar) || nextChar == '_') {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

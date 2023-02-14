@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
@@ -35,12 +36,12 @@ import java.util.concurrent.TimeoutException;
 public abstract class SingleTaskController<Request, Result> implements Disposable {
   protected static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
-  @NotNull @NonNls private final String myName;
-  @NotNull private final Consumer<? super Result> myResultHandler;
-  @NotNull private final Object LOCK = new Object();
+  private final @NotNull @NonNls String myName;
+  private final @NotNull Consumer<? super Result> myResultHandler;
+  private final @NotNull Object LOCK = new Object();
 
-  @NotNull private List<Request> myAwaitingRequests;
-  @Nullable private SingleTask myRunningTask;
+  private @NotNull List<Request> myAwaitingRequests;
+  private @Nullable SingleTask myRunningTask;
 
   private boolean myIsClosed = false;
 
@@ -83,7 +84,11 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   private void debug(@NotNull String message) {
-    LOG.debug("[" + myName + "] " + message);
+    LOG.debug(formMessage(message));
+  }
+
+  private @NotNull String formMessage(@NotNull String message) {
+    return "[" + myName + "] " + message;
   }
 
   private void cancelTask(@NotNull SingleTask t) {
@@ -97,15 +102,13 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
    * Starts new task on a background thread. <br/>
    * <b>NB:</b> Don't invoke StateController methods inside this method, otherwise a deadlock will happen.
    */
-  @NotNull
-  protected abstract SingleTask startNewBackgroundTask();
+  protected abstract @NotNull SingleTask startNewBackgroundTask();
 
   /**
    * Returns all awaiting requests and clears the queue. <br/>
-   * I.e. the second call to this method will return an empty list (unless new requests came via {@link #request(Object[])}.
+   * I.e. the second call to this method will return an empty list (unless new requests came via {@link #request(Object[])}).
    */
-  @NotNull
-  public final List<Request> popRequests() {
+  public final @NotNull List<Request> popRequests() {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
       myAwaitingRequests = new LinkedList<>();
@@ -114,8 +117,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
-  @NotNull
-  public final List<Request> peekRequests() {
+  public final @NotNull List<Request> peekRequests() {
     synchronized (LOCK) {
       List<Request> requests = new ArrayList<>(myAwaitingRequests);
       debug("Peeked requests: " + requests);
@@ -130,8 +132,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
-  @Nullable
-  public final Request popRequest() {
+  public final @Nullable Request popRequest() {
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) return null;
       Request request = myAwaitingRequests.remove(0);
@@ -143,7 +144,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   /**
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
-   * Otherwise result handler is not called, the task just completes.
+   * Otherwise, result handler is not called, the task just completes.
    * After result handler is called, a new task is started if there are new requests awaiting in the queue.
    */
   public final void taskCompleted(@Nullable Result result) {
@@ -163,6 +164,14 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     }
   }
 
+  public void cancelCurrentTask() {
+    synchronized (LOCK) {
+      if (myRunningTask != null) {
+        myRunningTask.cancel();
+      }
+    }
+  }
+
   private void closeQueue() {
     synchronized (LOCK) {
       if (myIsClosed) return;
@@ -173,6 +182,12 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
       }
 
       myAwaitingRequests.clear();
+    }
+  }
+
+  public boolean isClosed() {
+    synchronized (LOCK) {
+      return myIsClosed;
     }
   }
 
@@ -200,10 +215,12 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
         task.waitFor(timeout, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException | ExecutionException e) {
-        LOG.debug(e);
+        if (!(e.getCause() instanceof ProcessCanceledException)) {
+          LOG.debug(e);
+        }
       }
       catch (TimeoutException e) {
-        if (longTimeOut) LOG.warn("Wait time out ", e);
+        if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }
     }
   }
@@ -217,8 +234,8 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   public static class SingleTaskImpl implements SingleTask {
-    @NotNull private final Future<?> myFuture;
-    @NotNull private final ProgressIndicator myIndicator;
+    private final @NotNull Future<?> myFuture;
+    private final @NotNull ProgressIndicator myIndicator;
 
     public SingleTaskImpl(@NotNull Future<?> future, @NotNull ProgressIndicator indicator) {
       myFuture = future;

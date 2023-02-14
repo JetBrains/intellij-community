@@ -153,7 +153,11 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   }
 
   public void setSingleSelectionMode() {
+    int selectedRow = myTable.getSelectedRow();
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    if (selectedRow != -1) {
+      myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+    }
   }
 
   public void refresh() {
@@ -278,6 +282,10 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       return null;
     }
     @Nullable
+    default Color getBackgroundColor() {
+      return null;
+    }
+    @Nullable
     default @Nls String getLocation() {
       return null;
     }
@@ -302,8 +310,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   @Nullable
   public T getSelectedElement() {
     int viewRow = getSelectedElementRow();
-    int modelRow = myTable.convertRowIndexToModel(viewRow);
-    return modelRow < 0? null : myTableModel.getElementAt(modelRow);
+    int modelRow = viewRow < 0 ? -1 : myTable.convertRowIndexToModel(viewRow);
+    return modelRow < 0 ? null : myTableModel.getElementAt(modelRow);
   }
 
   public int getSelectedElementRow() {
@@ -624,6 +632,12 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
       setForeground(properties != null && properties.getColor() != null ?
                     properties.getColor() :
                     selected ? table.getSelectionForeground() : table.getForeground());
+
+      setBackground(selected
+                    ? table.getSelectionBackground()
+                    : properties != null && properties.getBackgroundColor() != null
+                      ? properties.getBackgroundColor()
+                      : table.getBackground());
 
       @SuppressWarnings("unchecked") MyTableModel model = (MyTableModel)table.getModel();
       setEnabled(selected || (MultiStateElementsChooser.this.isEnabled() &&

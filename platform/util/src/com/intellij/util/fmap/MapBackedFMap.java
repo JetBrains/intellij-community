@@ -1,16 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.fmap;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
+final class MapBackedFMap<K, V> implements FMap<K, V> {
 
   private final @NotNull Map<K, V> myMap;
 
@@ -20,22 +16,22 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @NotNull FMap<K, V> plus(K key, V value) {
+  public @NotNull FMap<K, V> plus(@NotNull K key, @NotNull V value) {
     if (value.equals(myMap.get(key))) {
       return this;
     }
-    Map<K, V> newMap = new THashMap<>(myMap);
+    Map<K, V> newMap = new HashMap<>(myMap);
     newMap.put(key, value);
     return new MapBackedFMap<>(newMap);
   }
 
   @Override
-  public @NotNull FMap<K, V> minus(K key) {
+  public @NotNull FMap<K, V> minus(@NotNull K key) {
     if (!myMap.containsKey(key)) {
       return this;
     }
 
-    THashMap<K, V> newMap = new THashMap<>(myMap);
+    Map<K, V> newMap = new HashMap<>(myMap);
     newMap.remove(key);
 
     if (newMap.size() > ArrayBackedFMap.ARRAY_THRESHOLD) {
@@ -47,7 +43,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   }
 
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(@NotNull K key) {
     return myMap.get(key);
   }
 

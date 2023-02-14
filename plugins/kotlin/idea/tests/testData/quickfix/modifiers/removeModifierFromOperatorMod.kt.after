@@ -1,0 +1,6 @@
+// "Remove 'operator' modifier" "true"
+
+object A {
+    <caret>fun mod(x: Int) {}
+}
+/* IGNORE_FIR */

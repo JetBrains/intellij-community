@@ -48,10 +48,7 @@ public final class MarkdownUtil {
    * @param lines List of String in markdown format
    */
   public static void removeImages(@NotNull List<String> lines) {
-    for (int i = 0; i < lines.size(); i++) {
-      String newText = removeAllImages(lines.get(i));
-      lines.set(i, newText);
-    }
+    lines.replaceAll(MarkdownUtil::removeAllImages);
   }
 
   @NotNull

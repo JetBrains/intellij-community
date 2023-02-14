@@ -1,19 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
+import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
-import com.intellij.util.ui.codereview.diff.DiffEditorGutterIconRendererFactory
-import com.intellij.util.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel: GHPRReviewProcessModel,
@@ -30,10 +32,8 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
     private var reviewState = ReviewState(false, null)
 
-    private val reviewProcessListener = object : SimpleEventListener {
-      override fun eventOccurred() {
-        reviewState = ReviewState(reviewProcessModel.isActual, reviewProcessModel.pendingReview?.id)
-      }
+    private val reviewProcessListener = SimpleEventListener {
+      reviewState = ReviewState(reviewProcessModel.isActual, reviewProcessModel.pendingReview?.id)
     }
 
     private var inlay: Pair<JComponent, Disposable>? = null
@@ -41,6 +41,8 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
     init {
       reviewProcessModel.addAndInvokeChangesListener(reviewProcessListener)
     }
+
+    override fun getShortcut(): ShortcutSet = getActiveKeymapShortcuts("Github.PullRequest.Diff.Comment.Create")
 
     override fun getClickAction(): DumbAwareAction? {
       if (inlay != null) return FocusInlayAction()
@@ -52,7 +54,9 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
 
     private inner class FocusInlayAction : DumbAwareAction() {
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let {
+            CollaborationToolsUIUtil.focusPanel(it.first)
+          } != null) return
       }
     }
 
@@ -73,7 +77,9 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
       : DumbAwareAction(actionName) {
 
       override fun actionPerformed(e: AnActionEvent) {
-        if (inlay?.let { GHUIUtil.focusPanel(it.first) } != null) return
+        if (inlay?.let {
+            CollaborationToolsUIUtil.focusPanel(it.first)
+          } != null) return
 
         val (side, line, startLine, realEditorLine) = lineLocationCalculator(editorLine) ?: return
 
@@ -88,7 +94,7 @@ class GHPRDiffEditorGutterIconRendererFactoryImpl(private val reviewProcessModel
           createComponent(side, line, line, hideCallback)
 
         val disposable = inlaysManager.insertAfter(realEditorLine, component) ?: return
-        GHUIUtil.focusPanel(component)
+        CollaborationToolsUIUtil.focusPanel(component)
         inlay = component to disposable
       }
 

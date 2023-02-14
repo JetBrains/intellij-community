@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -61,14 +60,6 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   public BaseLibrariesConfigurable getOppositeGroup() {
     return myProjectStructureConfigurable.getGlobalLibrariesConfigurable();
-  }
-
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getProjectLibrariesConfigurable()}
-   */
-  @Deprecated
-  public static ProjectLibrariesConfigurable getInstance(final Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getProjectLibrariesConfigurable();
   }
 
   @Override

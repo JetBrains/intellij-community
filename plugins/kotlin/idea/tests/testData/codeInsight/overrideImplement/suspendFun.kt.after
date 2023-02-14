@@ -1,0 +1,10 @@
+// FIR_IDENTICAL
+interface I {
+    suspend fun foo()
+}
+
+class C : I {
+    override suspend fun foo() {
+        <selection><caret>TODO("Not yet implemented")</selection>
+    }
+}

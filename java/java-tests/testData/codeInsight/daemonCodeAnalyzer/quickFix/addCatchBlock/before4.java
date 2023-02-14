@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class MyException1 extends Exception {}
 class MyException2 extends Exception {}
 

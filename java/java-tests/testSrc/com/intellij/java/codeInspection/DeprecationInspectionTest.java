@@ -101,14 +101,15 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
 
   public void testDeprecatedDefaultConstructor() {
     myFixture.enableInspections(new DeprecationInspection());
-    myFixture.configureByText("B.java", "class B extends A {\n" +
-                                        "    B() { this(0); }\n" +
-                                        "    B(int i) { super(i); }\n" +
-                                        "}\n" +
-                                        "class A {\n" +
-                                        "    @Deprecated A() {}\n" +
-                                        "    A(int i) {}\n" +
-                                        "}");
+    myFixture.configureByText("B.java", """
+      class B extends A {
+          B() { this(0); }
+          B(int i) { super(i); }
+      }
+      class A {
+          @Deprecated A() {}
+          A(int i) {}
+      }""");
     assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING));
   }
 

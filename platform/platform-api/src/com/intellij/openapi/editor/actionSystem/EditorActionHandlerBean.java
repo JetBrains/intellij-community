@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Registers action invoked in the editor.
- *
- * @author yole
  */
 public final class EditorActionHandlerBean implements PluginAware {
   PluginDescriptor pluginDescriptor;

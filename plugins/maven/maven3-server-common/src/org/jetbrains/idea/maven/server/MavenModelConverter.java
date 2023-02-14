@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ReflectionUtilRt;
-import gnu.trove.THashMap;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.model.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -45,14 +32,14 @@ public class MavenModelConverter {
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),
                         asSourcesList(build.getTestSourceDirectory()),
-                        Collections.<Artifact>emptyList(),
-                        Collections.<DependencyNode>emptyList(),
-                        Collections.<Artifact>emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
                         localRepository);
   }
 
   private static List<String> asSourcesList(String directory) {
-    return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
+    return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
   @NotNull
@@ -76,7 +63,7 @@ public class MavenModelConverter {
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
     result.setPlugins(convertPlugins(model));
 
-    Map<Artifact, MavenArtifact> convertedArtifacts = new THashMap<Artifact, MavenArtifact>();
+    Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
     result.setDependencyTree(convertDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
@@ -103,7 +90,7 @@ public class MavenModelConverter {
     result.setDirectory(build.getDirectory());
     result.setResources(convertResources(build.getResources()));
     result.setTestResources(convertResources(build.getTestResources()));
-    result.setFilters(build.getFilters() == null ? Collections.<String>emptyList() : build.getFilters());
+    result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
   public static MavenId createMavenId(Artifact artifact) {
@@ -115,7 +102,11 @@ public class MavenModelConverter {
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
     for (Resource each : resources) {
-      result.add(new MavenResource(each.getDirectory(),
+      String directory = each.getDirectory();
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory,
                                    each.isFiltering(),
                                    each.getTargetPath(),
                                    ensurePatterns(each.getIncludes()),
@@ -125,7 +116,7 @@ public class MavenModelConverter {
   }
 
   private static List<String> ensurePatterns(List<String> patterns) {
-    return patterns == null ? Collections.<String>emptyList() : patterns;
+    return patterns == null ? Collections.emptyList() : patterns;
   }
 
   public static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
@@ -143,7 +134,29 @@ public class MavenModelConverter {
     return result;
   }
 
+  public static List<MavenRemoteRepository> convertRemoteRepositories(List<? extends ArtifactRepository> repositories) {
+    if (repositories == null) return new ArrayList<MavenRemoteRepository>();
+
+    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
+    for (ArtifactRepository each : repositories) {
+      result.add(new MavenRemoteRepository(each.getId(),
+                                           each.getId(),
+                                           each.getUrl(),
+                                           each.getLayout() != null ? each.getLayout().getId() : "default",
+                                           convertPolicy(each.getReleases()),
+                                           convertPolicy(each.getSnapshots())));
+    }
+    return result;
+  }
+
+
   private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
+    return policy != null
+           ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
+           : null;
+  }
+
+  private static MavenRemoteRepository.Policy convertPolicy(ArtifactRepositoryPolicy policy) {
     return policy != null
            ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
            : null;
@@ -309,7 +322,7 @@ public class MavenModelConverter {
       if (id == null) continue;
       MavenProfile profile = new MavenProfile(id, each.getSource());
       List<String> modules = each.getModules();
-      profile.setModules(modules == null ? Collections.<String>emptyList() : modules);
+      profile.setModules(modules == null ? Collections.emptyList() : modules);
       profile.setActivation(convertActivation(each.getActivation()));
       if (each.getBuild() != null) convertBuildBase(profile.getBuild(), each.getBuild());
       result.add(profile);
@@ -343,7 +356,7 @@ public class MavenModelConverter {
 
   public static Map<String, String> convertToMap(Object object) {
     try {
-      Map<String, String> result = new THashMap<String, String>();
+      Map<String, String> result = new HashMap<String, String>();
       doConvert(object, "", result);
       return result;
     }

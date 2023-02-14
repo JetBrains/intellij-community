@@ -1,0 +1,13 @@
+// "Initialize with constructor parameter" "true"
+
+class User {
+    constructor(userName: String) {
+        this.userName = userName
+    }
+
+    constructor(blah: String, userName: String) {
+        this.userName = userName
+    }
+
+    val userN<caret>ame: String
+}

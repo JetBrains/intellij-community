@@ -8,9 +8,6 @@ import com.intellij.psi.impl.light.LightIdentifier;
 
 import java.util.Objects;
 
-/**
- * Date: 12.10.13 Time: 23:27
- */
 public class LombokLightIdentifier extends LightIdentifier implements SyntheticElement {
   private String myText;
 

@@ -1,16 +1,18 @@
 <html>
 <body>
-Reports local variables with a <code>var</code> type that can be replaced with an explicit type.
-This could be used to eliminate the usages of implicit types in case of downgrading.
-<!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 10 or higher.</p>
-<p>Example: </p>
-<pre>
+Reports local variables of the <code>var</code> type that can be replaced with an explicit type.
+<p><b>Example:</b></p>
+<pre><code>
   var str = "Hello";
-</pre>
-<p>After the fix: </p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   String str = "Hello";
-</pre>
+</code></pre>
+<!-- tooltip end -->
+<p>
+  <code>var</code> <i>keyword</i> appeared in Java 10.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 </body>
 </html>

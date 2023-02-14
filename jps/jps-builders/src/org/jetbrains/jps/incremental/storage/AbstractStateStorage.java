@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
@@ -12,8 +13,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   private PersistentHashMap<Key, T> myMap;
@@ -32,14 +35,6 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
   public void force() {
     synchronized (myDataLock) {
       myMap.force();
-    }
-  }
-
-  public void dropMemoryCache() {
-    synchronized (myDataLock) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
-      }
     }
   }
 
@@ -108,16 +103,19 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   public Collection<Key> getKeys() throws IOException {
     synchronized (myDataLock) {
-      return myMap.getAllKeysWithExistingMapping();
+      List<Key> result = new ArrayList<>();
+      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      return result;
     }
   }
 
   public Iterator<Key> getKeysIterator() throws IOException {
     synchronized (myDataLock) {
-      return myMap.getAllKeysWithExistingMapping().iterator();
+      List<Key> result = new ArrayList<>();
+      myMap.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(result));
+      return result.iterator();
     }
   }
-
 
   private PersistentHashMap<Key, T> createMap(final File file) throws IOException {
     FileUtil.createIfDoesntExist(file); //todo assert
@@ -126,10 +124,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   @Override
   public void flush(boolean memoryCachesOnly) {
-    if (memoryCachesOnly) {
-      dropMemoryCache();
-    }
-    else {
+    if (!memoryCachesOnly) {
       force();
     }
   }

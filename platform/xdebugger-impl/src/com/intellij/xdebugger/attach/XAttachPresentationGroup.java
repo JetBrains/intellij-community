@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +28,11 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   /**
    * @deprecated Use {@link #getItemIcon(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default Icon getProcessIcon(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}
@@ -47,11 +47,12 @@ public interface XAttachPresentationGroup<T> extends Comparator<T> {
   /**
    * @deprecated Use {@link #getItemDisplayText(Project, Object, UserDataHolder)} (will be removed in 2020.1)
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   @Nls
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder);
+  default String getProcessDisplayText(@NotNull Project project, @NotNull T info, @NotNull UserDataHolder dataHolder) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * @param dataHolder you may put your specific data into the holder at previous step in {@link XAttachDebuggerProvider#getAvailableDebuggers}

@@ -28,9 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author Irina.Chernushina on 8/29/2015.
- */
 public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
   @Override
@@ -79,7 +76,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
       for (HighlightInfo info : infos) {
         if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
           fail(String.format("%s in: %s", info.getDescription(),
-                             myFixture.getEditor().getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))));
+                             myFixture.getEditor().getDocument().getText(TextRange.create(info))));
         }
       }
     }

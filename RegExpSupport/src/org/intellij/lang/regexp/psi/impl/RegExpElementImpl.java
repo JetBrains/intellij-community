@@ -24,7 +24,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
@@ -76,10 +75,6 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
     @NotNull
     @Override
     public final String getUnescapedText() {
-        if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
-            // do not attempt to decode text if PsiElement is part of prefix/suffix
-            return getText();
-        }
         return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
     }
 

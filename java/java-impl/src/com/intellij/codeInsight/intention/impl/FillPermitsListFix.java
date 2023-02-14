@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
@@ -26,7 +28,7 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
 
   public FillPermitsListFix(PsiIdentifier classIdentifier) {
     super(classIdentifier);
@@ -72,7 +74,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
         return null;
       }
       String qualifiedName = Objects.requireNonNull(inheritor.getQualifiedName());
-      if (!permittedClasses.contains(inheritor)) missingInheritors.add(qualifiedName);
+      if (!ContainerUtil.exists(permittedClasses, cls -> cls.isEquivalentTo(inheritor))) missingInheritors.add(qualifiedName);
     }
 
     if (missingInheritors.isEmpty()) {
@@ -84,6 +86,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
   }
 
   private static void reportError(@NotNull Project project, @NotNull @NlsContexts.HintText String message) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     HintManager.getInstance().showErrorHint(editor, message);

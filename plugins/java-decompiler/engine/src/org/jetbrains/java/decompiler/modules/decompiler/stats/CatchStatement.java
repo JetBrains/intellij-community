@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -9,11 +9,13 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +28,7 @@ public final class CatchStatement extends Statement {
   // *****************************************************************************
 
   private CatchStatement() {
-    type = TYPE_TRYCATCH;
+    super(StatementType.TRY_CATCH);
   }
 
   private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
@@ -35,7 +37,7 @@ public final class CatchStatement extends Statement {
     first = head;
     stats.addWithKey(first, first.id);
 
-    for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
+    for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
       Statement stat = edge.getDestination();
 
       if (setHandlers.contains(stat)) {
@@ -59,7 +61,7 @@ public final class CatchStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-    if (head.getLastBasicType() != LASTBASICTYPE_GENERAL) {
+    if (head.getLastBasicType() != StatementType.GENERAL) {
       return null;
     }
 
@@ -68,24 +70,24 @@ public final class CatchStatement extends Statement {
       int hnextcount = 0; // either no statements with connection to next, or more than 1
 
       Statement next = null;
-      List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-      if (!lstHeadSuccs.isEmpty() && lstHeadSuccs.get(0).getType() == StatEdge.TYPE_REGULAR) {
+      List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
+      if (!lstHeadSuccs.isEmpty() && lstHeadSuccs.get(0).getType() == EdgeType.REGULAR) {
         next = lstHeadSuccs.get(0).getDestination();
         hnextcount = 2;
       }
 
-      for (StatEdge edge : head.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
+      for (StatEdge edge : head.getSuccessorEdges(EdgeType.EXCEPTION)) {
         Statement stat = edge.getDestination();
 
         boolean handlerok = true;
 
         if (edge.getExceptions() != null && setHandlers.contains(stat)) {
-          if (stat.getLastBasicType() != LASTBASICTYPE_GENERAL) {
+          if (stat.getLastBasicType() != StatementType.GENERAL) {
             handlerok = false;
           }
           else {
-            List<StatEdge> lstStatSuccs = stat.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-            if (!lstStatSuccs.isEmpty() && lstStatSuccs.get(0).getType() == StatEdge.TYPE_REGULAR) {
+            List<StatEdge> lstStatSuccs = stat.getSuccessorEdges(EdgeType.DIRECT_ALL);
+            if (!lstStatSuccs.isEmpty() && lstStatSuccs.get(0).getType() == EdgeType.REGULAR) {
 
               Statement statn = lstStatSuccs.get(0).getDestination();
 
@@ -137,7 +139,7 @@ public final class CatchStatement extends Statement {
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 
     if (isLabeled()) {
-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
+      buf.appendIndent(indent).append("label").append(Integer.toString(id)).append(":").appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
 
@@ -152,7 +154,7 @@ public final class CatchStatement extends Statement {
       // map first instruction storing the exception to the catch statement
       BasicBlock block = stat.getBasichead().getBlock();
       if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
-        Integer offset = block.getOldOffset(0);
+        Integer offset = block.getOriginalOffset(0);
         if (offset > -1) tracer.addMapping(offset);
       }
 
@@ -162,7 +164,7 @@ public final class CatchStatement extends Statement {
       if (exception_types.size() > 1) { // multi-catch, Java 7 style
         for (int exc_index = 1; exc_index < exception_types.size(); ++exc_index) {
           VarType exc_type = new VarType(CodeConstants.TYPE_OBJECT, 0, exception_types.get(exc_index));
-          String exc_type_name = ExprProcessor.getCastTypeName(exc_type);
+          String exc_type_name = ExprProcessor.getCastTypeName(exc_type, Collections.emptyList());
 
           buf.append(exc_type_name).append(" | ");
         }

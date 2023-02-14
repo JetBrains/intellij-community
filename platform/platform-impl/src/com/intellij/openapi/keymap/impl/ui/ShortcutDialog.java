@@ -53,7 +53,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   }
 
   String getActionPath(String actionId) {
-    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId);
+    return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId, true);
   }
 
   boolean hasConflicts() {

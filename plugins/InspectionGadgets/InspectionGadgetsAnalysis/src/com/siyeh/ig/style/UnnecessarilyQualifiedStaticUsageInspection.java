@@ -17,7 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +31,8 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -63,15 +65,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.field.option"),
-                             "m_ignoreStaticFieldAccesses");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.method.option"),
-                             "m_ignoreStaticMethodCalls");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("only.report.qualified.static.usages.option"),
-                             "m_ignoreStaticAccessFromStaticContext");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreStaticFieldAccesses", InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.field.option")),
+      checkbox("m_ignoreStaticMethodCalls", InspectionGadgetsBundle.message("unnecessarily.qualified.static.usage.ignore.method.option")),
+      checkbox("m_ignoreStaticAccessFromStaticContext", InspectionGadgetsBundle.message("only.report.qualified.static.usages.option")));
   }
 
   @Override
@@ -88,7 +86,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }
@@ -102,7 +100,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
   private class UnnecessarilyQualifiedStaticUsageVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
       if (qualifier == null) {
@@ -111,11 +109,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       if (!isUnnecessarilyQualifiedAccess(reference, m_ignoreStaticAccessFromStaticContext, m_ignoreStaticFieldAccesses, m_ignoreStaticMethodCalls)) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference);
+      registerError(qualifier, reference);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }
@@ -132,10 +130,9 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiElement qualifierElement = referenceElement.getQualifier();
-    if (!(qualifierElement instanceof PsiJavaCodeReferenceElement)) {
+    if (!(qualifierElement instanceof PsiJavaCodeReferenceElement qualifier)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
     if (GenericsUtil.isGenericReference(referenceElement, qualifier)) {
       return false;
     }
@@ -154,11 +151,10 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiElement resolvedQualifier = qualifier.resolve();
-    if (!(resolvedQualifier instanceof PsiClass)) {
+    if (!(resolvedQualifier instanceof PsiClass qualifyingClass)) {
       return false;
     }
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(referenceElement, PsiClass.class);
-    final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
     if (containingClass == null || !PsiTreeUtil.isAncestor(qualifyingClass, containingClass, false)) {
       return false;
     }

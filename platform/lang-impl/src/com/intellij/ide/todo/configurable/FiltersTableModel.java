@@ -20,9 +20,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ui.ItemRemovable;
+import one.util.streamex.StreamEx;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.Iterator;
 import java.util.List;
 
 final class FiltersTableModel extends AbstractTableModel implements ItemRemovable {
@@ -30,11 +30,11 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
     IdeBundle.message("column.todo.filters.name"),
     IdeBundle.message("column.todo.filter.patterns")
   };
-  private final Class[] ourColumnClasses = new Class[]{String.class, String.class};
+  private final Class<?>[] ourColumnClasses = new Class[]{String.class, String.class};
 
-  private final List<? extends TodoFilter> myFilters;
+  private final List<TodoFilter> myFilters;
 
-  FiltersTableModel(List<? extends TodoFilter> filters) {
+  FiltersTableModel(List<TodoFilter> filters) {
     myFilters = filters;
   }
 
@@ -44,7 +44,7 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
   }
 
   @Override
-  public Class getColumnClass(int column) {
+  public Class<?> getColumnClass(int column) {
     return ourColumnClasses[column];
   }
 
@@ -61,25 +61,11 @@ final class FiltersTableModel extends AbstractTableModel implements ItemRemovabl
   @Override
   public Object getValueAt(int row, int column) {
     TodoFilter filter = myFilters.get(row);
-    switch (column) {
-      case 0: { // "Name" column
-        return filter.getName();
-      }
-      case 1: {
-        StringBuilder sb = new StringBuilder();
-        for (Iterator i = filter.iterator(); i.hasNext(); ) {
-          TodoPattern pattern = (TodoPattern)i.next();
-          sb.append(pattern.getPatternString());
-          if (i.hasNext()) {
-            sb.append(" | ");
-          }
-        }
-        return sb.toString();
-      }
-      default: {
-        throw new IllegalArgumentException();
-      }
-    }
+    return switch (column) {
+      case 0 -> filter.getName(); // "Name" column
+      case 1 -> StreamEx.of(filter.iterator()).map(TodoPattern::getPatternString).joining(" | ");
+      default -> throw new IllegalArgumentException();
+    };
   }
 
   @Override

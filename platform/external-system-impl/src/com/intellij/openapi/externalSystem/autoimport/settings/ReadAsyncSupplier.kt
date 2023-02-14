@@ -5,36 +5,48 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.impl.CoreProgressManager
 import java.util.concurrent.Executor
 
-abstract class ReadAsyncSupplier<R>(private val backgroundExecutor: Executor, private vararg val equality: Any) : AsyncSupplier<R> {
-  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
-    if (isBlocking()) {
-      consumer(runReadAction(this::get))
+class ReadAsyncSupplier<R>(
+  private val supplier: () -> R,
+  private val shouldKeepTasksAsynchronous: () -> Boolean,
+  private val equality: Array<out Any>,
+  private val backgroundExecutor: Executor
+) : AsyncSupplier<R> {
+
+  override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
+    if (shouldKeepTasksAsynchronous()) {
+      var readAction = ReadAction.nonBlocking(supplier)
+        .expireWith(parentDisposable)
+        .finishOnUiThread(ModalityState.defaultModalityState(), consumer)
+      if (equality.isNotEmpty()) {
+        readAction = readAction.coalesceBy(*equality)
+      }
+      readAction.submit(backgroundExecutor)
     }
     else {
-      ReadAction.nonBlocking<R> { get() }
-        .expireWith(parentDisposable)
-        .coalesceBy(*equality)
-        .finishOnUiThread(ModalityState.defaultModalityState(), consumer)
-        .submit(backgroundExecutor)
+      consumer(runReadAction(supplier))
     }
   }
 
-  companion object {
-    fun <R> readAction(action: () -> R, backgroundExecutor: Executor, vararg equality: Any) =
-      readAction(null, action, backgroundExecutor, equality)
+  class Builder<R>(private val supplier: () -> R) {
 
-    fun <R> readAction(
-      isBlocking: (() -> Boolean)?,
-      action: () -> R,
-      backgroundExecutor: Executor,
-      vararg equality: Any
-    ): ReadAsyncSupplier<R> {
-      return object : ReadAsyncSupplier<R>(backgroundExecutor, equality) {
-        override fun isBlocking() = isBlocking?.invoke() ?: super.isBlocking()
-        override fun get() = action()
-      }
+    private var shouldKeepTasksAsynchronous: () -> Boolean =
+      CoreProgressManager::shouldKeepTasksAsynchronous
+
+    private var equality: Array<out Any> = emptyArray()
+
+    fun shouldKeepTasksAsynchronous(provider: () -> Boolean) = apply {
+      shouldKeepTasksAsynchronous = provider
+    }
+
+    fun coalesceBy(vararg equality: Any) = apply {
+      this.equality = equality
+    }
+
+    fun build(backgroundExecutor: Executor): AsyncSupplier<R> {
+      return ReadAsyncSupplier(supplier, shouldKeepTasksAsynchronous, equality, backgroundExecutor)
     }
   }
 }

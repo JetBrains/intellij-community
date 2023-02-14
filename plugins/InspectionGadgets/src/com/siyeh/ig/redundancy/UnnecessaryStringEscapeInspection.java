@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,7 +23,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -39,11 +39,10 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option"), this, "reportChars");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportChars", InspectionGadgetsBundle.message("inspection.unnecessary.string.escape.report.char.literals.option")));
   }
 
   @Nullable
@@ -69,12 +68,11 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final PsiType type = literalExpression.getType();
       if (type == null) {
         return;
@@ -87,7 +85,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         final StringBuilder newExpression = new StringBuilder();
         if (literalExpression.isTextBlock()) {
           int offset = 0;
-          int start = findUnnecessarilyEscapedChars(text, 4);
+          int start = findUnnecessaryTextBlockEscapes(text, 4);
           while (start >= 0) {
             newExpression.append(text, offset, start);
             offset = start + 2;
@@ -100,9 +98,14 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
             else {
               newExpression.append(escape.charAt(1));
             }
-            start = findUnnecessarilyEscapedChars(text, offset);
+            start = findUnnecessaryTextBlockEscapes(text, offset);
           }
           newExpression.append(text.substring(offset));
+          final Document document = element.getContainingFile().getViewProvider().getDocument();
+          assert document != null;
+          final TextRange replaceRange = element.getTextRange();
+          document.replaceString(replaceRange.getStartOffset(), replaceRange.getEndOffset(), newExpression.toString());
+          return;
         }
         else {
           boolean escaped = false;
@@ -120,22 +123,27 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         }
         PsiReplacementUtil.replaceExpression(literalExpression, newExpression.toString());
       }
-      else if (PsiType.CHAR.equals(type) && text.equals("'\\\"'")) {
+      else if (PsiTypes.charType().equals(type) && text.equals("'\\\"'")) {
         PsiReplacementUtil.replaceExpression(literalExpression, "'\"'");
       }
     }
   }
 
-  static int findUnnecessarilyEscapedChars(String text, int start) {
+  static int findUnnecessaryTextBlockEscapes(String text, int start) {
     boolean slash = false;
+    boolean ws = false;
     int doubleQuotes = 0;
     final int max = text.length() - 3; // skip closing """
     for (int i = start; i < max; i++) {
       final char ch = text.charAt(i);
       if (ch == '\\') slash = !slash;
+      else if (ch == ' ' || ch == '\t') ws = true;
       else {
         if (slash) {
-          if (ch == 'n' || ch == '\'') {
+          if (ch == 'n') {
+            if (!ws) return i - 1;
+          }
+          else if (ch == '\'') {
             return i - 1;
           }
           else if (ch == '"' && doubleQuotes < 2) {
@@ -153,6 +161,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
         else if (ch == '"') doubleQuotes++;
         else doubleQuotes = 0;
         slash = false;
+        ws = false;
       }
     }
     return -1;
@@ -166,24 +175,24 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
   private class RedundantStringEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (type == null) {
         return;
       }
-      final HighlightInfo
-        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
+      HighlightInfo.Builder
+        parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null, null);
       if (parsingError != null) {
         return;
       }
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (expression.isTextBlock()) {
           final String text = expression.getText();
-          int start = findUnnecessarilyEscapedChars(text, 4);
+          int start = findUnnecessaryTextBlockEscapes(text, 4);
           while (start >= 0) {
             registerErrorAtOffset(expression, start, 2, text);
-            start = findUnnecessarilyEscapedChars(text, start + 2);
+            start = findUnnecessaryTextBlockEscapes(text, start + 2);
           }
         }
         else {
@@ -200,7 +209,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           }
         }
       }
-      else if (reportChars && PsiType.CHAR.equals(type)) {
+      else if (reportChars && PsiTypes.charType().equals(type)) {
         final String text = expression.getText();
         if ("'\\\"'".equals(text)) {
           registerErrorAtOffset(expression, 1, 2, text);

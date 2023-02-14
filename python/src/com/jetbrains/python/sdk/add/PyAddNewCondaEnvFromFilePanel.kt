@@ -10,14 +10,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
-import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout
+import java.nio.file.Path
 import javax.swing.JPanel
+import kotlin.io.path.pathString
 
-class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: VirtualFile? = null) : JPanel() {
+class PyAddNewCondaEnvFromFilePanel(private val module: Module, localCondaBinaryPath: Path?, environmentYml: VirtualFile? = null) : JPanel() {
 
   val envData: Data
     get() = Data(condaPathField.text, environmentYmlField.text)
@@ -30,7 +31,7 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: 
 
   init {
     condaPathField.apply {
-      PyCondaPackageService.getCondaExecutable(null)?.also { text = it }
+      localCondaBinaryPath?.let { text = it.pathString }
 
       addBrowseFolderListener(
         PyBundle.message("python.sdk.select.conda.path.title"),
@@ -65,7 +66,8 @@ class PyAddNewCondaEnvFromFilePanel(private val module: Module, environmentYml: 
     initialEnvironmentYmlPath = environmentYmlField.text
   }
 
-  fun validateAll(): List<ValidationInfo> = listOfNotNull(CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+  fun validateAll(): List<ValidationInfo> = listOfNotNull(
+    CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
 
   /**
    * Must be called if the input is confirmed and the current instance will not be used anymore

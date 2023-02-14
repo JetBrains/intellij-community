@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ignore
 
 import com.intellij.openapi.diagnostic.logger
@@ -72,7 +72,7 @@ class HgIgnoredFileContentProvider(private val project: Project) : IgnoredFileCo
   private fun Iterable<IgnoredFileDescriptor>.ignoreBeansToRelativePaths(ignoreFileRoot: VirtualFile,
                                                                          untrackedFiles: Set<VirtualFile>): List<String> {
     val vcsRoot = VcsUtil.getVcsRootFor(project, ignoreFileRoot)
-    val vcsContextFactory = VcsContextFactory.SERVICE.getInstance()
+    val vcsContextFactory = VcsContextFactory.getInstance()
     return filter { ignoredBean ->
       when (ignoredBean.type) {
         IgnoreSettingsType.UNDER_DIR -> shouldIgnoreUnderDir(ignoredBean, untrackedFiles, ignoreFileRoot, vcsRoot, vcsContextFactory)

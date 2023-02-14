@@ -47,13 +47,12 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
   private static class VariableNotUsedInsideIfVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
-      if (!(condition instanceof PsiBinaryExpression)) {
+      if (!(condition instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
       final PsiReferenceExpression referenceExpression = extractVariableReference(binaryExpression);
       if (referenceExpression == null) {
         return;
@@ -72,13 +71,12 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     }
 
     @Override
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
-      if (!(condition instanceof PsiBinaryExpression)) {
+      if (!(condition instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
       final PsiReferenceExpression referenceExpression = extractVariableReference(binaryExpression);
       if (referenceExpression == null) {
         return;
@@ -98,10 +96,9 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
 
     private boolean checkVariableUsage(PsiReferenceExpression referenceExpression, PsiElement thenContext, PsiElement elseContext) {
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      if (!(target instanceof PsiVariable variable)) {
         return false;
       }
-      final PsiVariable variable = (PsiVariable)target;
       if (thenContext != null && (contextExits(thenContext) || VariableAccessUtils.variableIsAssigned(variable, thenContext))) {
         return false;
       }
@@ -120,13 +117,13 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
       if (rhs == null) {
         return null;
       }
-      if (PsiType.NULL.equals(rhs.getType())) {
+      if (PsiTypes.nullType().equals(rhs.getType())) {
         if (!(lhs instanceof PsiReferenceExpression)) {
           return null;
         }
         return (PsiReferenceExpression)lhs;
       }
-      if (PsiType.NULL.equals(lhs.getType())) {
+      if (PsiTypes.nullType().equals(lhs.getType())) {
         if (!(rhs instanceof PsiReferenceExpression)) {
           return null;
         }
@@ -136,8 +133,7 @@ public class VariableNotUsedInsideIfInspection extends BaseInspection {
     }
 
     private static boolean contextExits(PsiElement context) {
-      if (context instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)context;
+      if (context instanceof PsiBlockStatement blockStatement) {
         final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(blockStatement.getCodeBlock());
         return statementExits(lastStatement);
       }

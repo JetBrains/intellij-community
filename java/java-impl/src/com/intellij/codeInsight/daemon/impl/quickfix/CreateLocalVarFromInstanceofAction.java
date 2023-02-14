@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -8,7 +9,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -45,6 +45,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (instanceOfExpression == null) return false;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
     if (checkType == null) return false;
+    if (instanceOfExpression.getPattern() != null) return false;
     PsiExpression operand = instanceOfExpression.getOperand();
     PsiType operandType = operand.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)) return false;
@@ -87,9 +88,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       for (PsiElement element : declaredElements) {
         if (!(element instanceof PsiLocalVariable)) continue;
         PsiExpression initializer = ((PsiLocalVariable)element).getInitializer();
-        if (!(initializer instanceof PsiTypeCastExpression)) continue;
+        if (!(initializer instanceof PsiTypeCastExpression typeCastExpression)) continue;
 
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)initializer;
         final PsiExpression operand = typeCastExpression.getOperand();
         if (operand != null &&
             !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, instanceOfExpression.getOperand())) continue;
@@ -200,16 +200,12 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       List<String> names = new VariableNameGenerator(initializer, VariableKind.LOCAL_VARIABLE).byExpression(initializer)
         .byType(localVariable.getType()).generateAll(true);
       PsiIdentifier identifier = Objects.requireNonNull(localVariable.getNameIdentifier());
-      if (!file.isPhysical()) {
-        identifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier(names.get(0)));
-        return;
-      }
-      
+
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
       Template template = generateTemplate(project, names);
-      Editor newEditor = CreateFromUsageBaseFix.positionCursor(project, file, identifier);
+      Editor newEditor = CodeInsightUtil.positionCursor(project, file, identifier);
       if (newEditor == null) return;
       TextRange range = localVariable.getNameIdentifier().getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -223,8 +219,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
           final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
           final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(value.getText(), instanceOfExpression);
-          if (target instanceof PsiField) {
-            final PsiField field = (PsiField)target;
+          if (target instanceof PsiField field) {
             final CaretModel caretModel = editor.getCaretModel();
             final PsiElement elementAt = file.findElementAt(caretModel.getOffset());
             final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
@@ -235,7 +230,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
               ApplicationManager.getApplication().runWriteAction(() -> {
                 initializer.accept(new JavaRecursiveElementVisitor() {
                   @Override
-                  public void visitReferenceExpression(PsiReferenceExpression expression) {
+                  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
                     final PsiExpression qualifierExpression = expression.getQualifierExpression();
                     if (qualifierExpression != null) {
                       qualifierExpression.accept(this);
@@ -255,7 +250,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
         @Override
         public void templateFinished(@NotNull Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
+          Runnable action = () -> {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
             CaretModel caretModel = editor.getCaretModel();
@@ -264,8 +259,13 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
             if (declarationStatement != null) {
               caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
-            new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
-          });
+            new EnterAction().getHandler().execute(editor, null, null);
+          };
+          if (file.isPhysical()) {
+            ApplicationManager.getApplication().runWriteAction(action);
+          } else {
+            action.run();
+          }
         }
       });
     }
@@ -340,8 +340,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(toInsert.getProject());
     PsiElement anchorAfter = null;
     PsiBlockStatement emptyBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", instanceOfExpression);
-    if (statement instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    if (statement instanceof PsiIfStatement ifStatement) {
       if (negated) {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch == null) {
@@ -376,8 +375,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
         }
       }
     }
-    if (statement instanceof PsiWhileStatement) {
-      PsiWhileStatement whileStatement = (PsiWhileStatement)statement;
+    if (statement instanceof PsiWhileStatement whileStatement) {
       LOG.assertTrue(whileStatement.getLParenth() != null);
       LOG.assertTrue(whileStatement.getCondition() != null);
       if (whileStatement.getRParenth() == null) {
@@ -408,7 +406,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       if (nextSibling instanceof PsiWhiteSpace) {
         final String text = nextSibling.getText();
         if (StringUtil.countNewLines(text) > 1) {
-          final PsiElement newWhitespace = PsiParserFacade.SERVICE.getInstance(nextSibling.getProject())
+          final PsiElement newWhitespace = PsiParserFacade.getInstance(nextSibling.getProject())
             .createWhiteSpaceFromText(text.substring(0, text.lastIndexOf('\n')));
           nextSibling.replace(newWhitespace);
           break;
@@ -426,10 +424,9 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   }
 
   private static boolean isValidDeclarationStatement(PsiElement nextSibling) {
-    if (!(nextSibling instanceof PsiDeclarationStatement)) {
+    if (!(nextSibling instanceof PsiDeclarationStatement declarationStatement)) {
       return false;
     }
-    final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)nextSibling;
     final PsiElement[] elements = declarationStatement.getDeclaredElements();
     if (elements.length == 0) {
       return false;

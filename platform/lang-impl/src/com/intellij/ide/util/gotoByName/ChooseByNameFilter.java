@@ -77,7 +77,6 @@ public abstract class ChooseByNameFilter<T> {
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
     myToolbar.getComponent().setFocusable(false);
     myToolbar.getComponent().setBorder(null);
     myProject = project;
@@ -133,7 +132,7 @@ public abstract class ChooseByNameFilter<T> {
     final int count = chooser.getElementCount();
     for (int i = 0; i < count; i++) {
       T type = chooser.getElementAt(i);
-      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isFileTypeVisible(type)) {
+      if (!DumbService.getInstance(myProject).isDumb() && !filterConfiguration.isVisible(type)) {
         chooser.setElementMarked(type, false);
       }
     }
@@ -203,6 +202,11 @@ public abstract class ChooseByNameFilter<T> {
     @Override
     public boolean isSelected(@NotNull final AnActionEvent e) {
       return myPopup != null;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

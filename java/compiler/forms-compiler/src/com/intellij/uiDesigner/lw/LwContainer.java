@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -25,13 +11,7 @@ import org.jdom.Element;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class LwContainer extends LwComponent implements IContainer{
-  // PLEASE DO NOT USE GENERICS IN THIS FILE AS IT IS USED IN JAVAC2 ANT TASK THAT SHOULD BE RUNNABLE WITH JDK 1.3
-
   /**
    * Children components
    */
@@ -53,7 +33,7 @@ public class LwContainer extends LwComponent implements IContainer{
   private ColorDescriptor myBorderColor;
   private LayoutManager myLayout;
   private String myLayoutManager;
-  protected LayoutSerializer myLayoutSerializer;
+  LayoutSerializer myLayoutSerializer;
 
   public LwContainer(final String className){
     super(className);
@@ -181,7 +161,7 @@ public class LwContainer extends LwComponent implements IContainer{
    * @param title new border's title. {@code null} means that
    * the containr doesn't have have titled border.
    */
-  public final void setBorderTitle(final StringDescriptor title){
+  private void setBorderTitle(final StringDescriptor title){
     myBorderTitle=title;
   }
 
@@ -224,7 +204,7 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * 'border' is required subtag
    */
-  protected final void readBorder(final Element element) {
+  private void readBorder(final Element element) {
     final Element borderElement = LwXmlReader.getRequiredChild(element, UIFormXmlConstants.ELEMENT_BORDER);
     setBorderType(BorderType.valueOf(LwXmlReader.getRequiredString(borderElement, UIFormXmlConstants.ATTRIBUTE_TYPE)));
 
@@ -258,7 +238,7 @@ public class LwContainer extends LwComponent implements IContainer{
   /**
    * 'children' is required attribute
    */
-  protected final void readChildren(final Element element, final PropertiesProvider provider) throws Exception{
+  private void readChildren(final Element element, final PropertiesProvider provider) throws Exception{
     final Element childrenElement = LwXmlReader.getRequiredChild(element, "children");
     for (final Element child : childrenElement.getChildren()) {
       final LwComponent component = createComponentFromTag(child);
@@ -372,7 +352,7 @@ public class LwContainer extends LwComponent implements IContainer{
     readChildren(element, provider);
   }
 
-  protected void readNoLayout(final Element element, final PropertiesProvider provider) throws Exception {
+  void readNoLayout(final Element element, final PropertiesProvider provider) throws Exception {
     readBase(element);
 
     // Constraints and properties

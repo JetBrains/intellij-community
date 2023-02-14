@@ -37,7 +37,7 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
       return visible;
     }
     if (group instanceof RunAnythingCompletionGroup) {
-      String name = ((RunAnythingCompletionGroup)group).getProvider().getClass().getCanonicalName();
+      String name = ((RunAnythingCompletionGroup<?, ?>)group).getProvider().getClass().getCanonicalName();
       Boolean providerValue = mySettings.myKeys.get(name);
       if (providerValue != null) {
         return providerValue;

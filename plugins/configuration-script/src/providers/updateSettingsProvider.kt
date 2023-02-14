@@ -12,7 +12,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xmlb.annotations.XCollection
 
-private val dataKey = NotNullLazyKey.create<SynchronizedClearableLazy<PluginsConfiguration?>, Project>("MyUpdateSettingsProvider") { project ->
+private val dataKey = NotNullLazyKey.createLazyKey<SynchronizedClearableLazy<PluginsConfiguration?>, Project>("MyUpdateSettingsProvider") { project ->
   val data = SynchronizedClearableLazy {
     val node = ConfigurationFileManager.getInstance(project).findValueNode(PluginJsonSchemaGenerator.plugins) ?: return@SynchronizedClearableLazy null
     readIntoObject(PluginsConfiguration(), node)

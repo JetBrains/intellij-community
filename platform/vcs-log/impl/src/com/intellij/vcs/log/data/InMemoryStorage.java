@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +24,8 @@ public final class InMemoryStorage implements VcsLogStorage {
     return myCommitIdEnumerator.enumerate(new CommitId(hash, root));
   }
 
-  @NotNull
   @Override
-  public CommitId getCommitId(int commitIndex) {
+  public @NotNull CommitId getCommitId(int commitIndex) {
     return myCommitIdEnumerator.getValue(commitIndex);
   }
 
@@ -45,9 +44,8 @@ public final class InMemoryStorage implements VcsLogStorage {
     return myRefsEnumerator.enumerate(ref);
   }
 
-  @Nullable
   @Override
-  public VcsRef getVcsRef(int refIndex) {
+  public @Nullable VcsRef getVcsRef(int refIndex) {
     return myRefsEnumerator.getValue(refIndex);
   }
 

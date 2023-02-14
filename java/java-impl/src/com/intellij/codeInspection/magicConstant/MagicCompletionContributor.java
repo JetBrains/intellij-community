@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -15,8 +15,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   public static MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
     MagicConstantUtils.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
-      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second);
+      MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second, pos);
       if (values == null) continue;
       if (allowedValues == null) {
         allowedValues = values;
@@ -89,23 +89,16 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     Set<Pair<PsiModifierListOwner, PsiType>> result = new HashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
-      if (!(call instanceof PsiExpression)) return Collections.emptyList();
-      PsiType type = ((PsiExpression)call).getType();
+      if (call == null) return Collections.emptyList();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(call.getProject()).getResolveHelper();
-      JavaResolveResult[] methods = call instanceof PsiMethodCallExpression
-                                    ? ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)
-                                    : call instanceof PsiNewExpression && type instanceof PsiClassType
-                                      ? resolveHelper.multiResolveConstructor((PsiClassType)type, call.getArgumentList(), call)
-                                      : JavaResolveResult.EMPTY_ARRAY;
+      JavaResolveResult[] methods = getMethodCandidates(call, resolveHelper);
       for (JavaResolveResult resolveResult : methods) {
         PsiElement element = resolveResult.getElement();
-        if (!(element instanceof PsiMethod)) return Collections.emptyList();
-        PsiMethod method = (PsiMethod)element;
+        if (!(element instanceof PsiMethod method)) return Collections.emptyList();
         if (!resolveHelper.isAccessible(method, call, null)) continue;
         PsiElement argument = pos;
-        while (!(argument.getContext() instanceof PsiExpressionList)) argument = argument.getContext();
-        PsiExpressionList list = (PsiExpressionList)argument.getContext();
+        while (!(argument.getContext() instanceof PsiExpressionList list)) argument = argument.getContext();
         int i = ArrayUtil.indexOf(list.getExpressions(), argument);
         if (i == -1) continue;
         PsiParameter[] params = method.getParameterList().getParameters();
@@ -180,13 +173,33 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     return new ArrayList<>(result);
   }
 
+  private static @NotNull JavaResolveResult @NotNull [] getMethodCandidates(PsiCall call, PsiResolveHelper resolveHelper) {
+    if (call instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true);
+    }
+    if (call instanceof PsiNewExpression) {
+      PsiType type = ((PsiExpression)call).getType();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (type instanceof PsiClassType && argumentList != null) {
+        return resolveHelper.multiResolveConstructor((PsiClassType)type, argumentList, call);
+      }
+    }
+    if (call instanceof PsiEnumConstant) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result != JavaResolveResult.EMPTY) {
+        return new JavaResolveResult[]{result};
+      }
+    }
+    return JavaResolveResult.EMPTY_ARRAY;
+  }
+
   private static void addCompletionVariants(@NotNull final CompletionParameters parameters,
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantUtils.AllowedValues allowedValues) {
-    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<>() {
+    final Set<PsiElement> allowed = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(PsiElement object) {
+      public int hashCode(PsiElement object) {
         return 0;
       }
 

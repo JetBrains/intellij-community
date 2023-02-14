@@ -21,9 +21,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author peter
- */
 public final class IdReferenceProvider extends PsiReferenceProvider {
   @NonNls public static final String FOR_ATTR_NAME = "for";
   @NonNls public static final String ID_ATTR_NAME = "id";
@@ -50,8 +47,7 @@ public final class IdReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement grandParent = ((PsiElement)element).getParent().getParent();
-        if (grandParent instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)grandParent;
+        if (grandParent instanceof XmlTag tag) {
 
           if (!tag.getNamespacePrefix().isEmpty()) {
             return true;

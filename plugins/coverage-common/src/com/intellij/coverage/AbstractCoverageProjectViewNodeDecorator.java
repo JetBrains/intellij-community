@@ -5,27 +5,19 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractCoverageProjectViewNodeDecorator implements ProjectViewNodeDecorator {
-  private Project myProject;
-
-  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
-    myProject = project;
+  protected AbstractCoverageProjectViewNodeDecorator() {
   }
 
   /**
-   * @deprecated Use {@link #getCoverageDataManager(Project)}
-   * @return
+   * @deprecated use {@link #AbstractCoverageProjectViewNodeDecorator()} instead
    */
-  @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected final CoverageDataManager getCoverageDataManager() {
-    return getCoverageDataManager(myProject);
+  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

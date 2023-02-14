@@ -20,6 +20,7 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -53,6 +54,11 @@ public class StopProcessAction extends DumbAwareAction {
     update(e.getPresentation(), getTemplatePresentation(), myProcessHandler);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   public static void update(@NotNull Presentation presentation,
                             @NotNull Presentation templatePresentation,
                             @Nullable ProcessHandler processHandler) {
@@ -61,8 +67,7 @@ public class StopProcessAction extends DumbAwareAction {
     String description = templatePresentation.getDescription();
     if (processHandler != null && !processHandler.isProcessTerminated()) {
       enable = true;
-      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess) {
-        KillableProcess killableProcess = (KillableProcess) processHandler;
+      if (processHandler.isProcessTerminating() && processHandler instanceof KillableProcess killableProcess) {
         if (killableProcess.canKillProcess()) {
           // 'force quite' action presentation
           icon = AllIcons.Debugger.KillProcess;

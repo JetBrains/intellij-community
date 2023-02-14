@@ -45,7 +45,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     if (mnemoPos >= 0 && mnemoPos < option.length() - 2) {
       String mnemoChar = option.substring(mnemoPos + 1, mnemoPos + 2).trim();
       if (mnemoChar.length() == 1) {
-        action.putValue(Action.MNEMONIC_KEY, new Integer(mnemoChar.charAt(0)));
+        action.putValue(Action.MNEMONIC_KEY, Integer.valueOf(mnemoChar.charAt(0)));
       }
     }
   }

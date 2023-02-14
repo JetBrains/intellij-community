@@ -30,10 +30,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class LoaderFactory implements Disposable {
   private final Project myProject;
 
@@ -63,7 +59,7 @@ public final class LoaderFactory implements Disposable {
     myModule2ClassLoader.clear();
   }
 
-  @NotNull public ClassLoader getLoader(final VirtualFile formFile) {
+  @NotNull public ClassLoader getLoader(@NotNull VirtualFile formFile) {
     final Module module = ModuleUtilCore.findModuleForFile(formFile, myProject);
     if (module == null) {
       return getClass().getClassLoader();
@@ -72,7 +68,7 @@ public final class LoaderFactory implements Disposable {
     return getLoader(module);
   }
 
-  public ClassLoader getLoader(final Module module) {
+  public ClassLoader getLoader(@NotNull Module module) {
     final ClassLoader cachedLoader = myModule2ClassLoader.get(module);
     if (cachedLoader != null) {
       return cachedLoader;
@@ -123,7 +119,7 @@ public final class LoaderFactory implements Disposable {
       Object key = it.next();
       Object value = uiDefaults.get(key);
       if (value instanceof Class) {
-        ClassLoader loader = ((Class)value).getClassLoader();
+        ClassLoader loader = ((Class<?>)value).getClassLoader();
         if (loader instanceof DesignTimeClassLoader) {
           it.remove();
         }

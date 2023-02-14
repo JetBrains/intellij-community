@@ -168,14 +168,12 @@ final class ErrorStripeMarkersModel {
     return highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null;
   }
 
-  private void createErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
+  private void createErrorStripeMarker(@NotNull RangeHighlighterEx h) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), highlighter);
-    RangeHighlighterEx ex = marker.getHighlighter();
-    boolean isStickingToRight = (ex instanceof RangeMarkerImpl) && ((RangeMarkerImpl)highlighter).isStickingToRight();
-    treeFor(ex).addInterval(marker, ex.getStartOffset(), ex.getEndOffset(),
-                            ex.isGreedyToLeft(), ex.isGreedyToRight(), isStickingToRight, ex.getLayer());
-    myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
+    ErrorStripeMarkerImpl marker = new ErrorStripeMarkerImpl(myEditor.getDocument(), h);
+    treeFor(h).addInterval(marker, h.getStartOffset(), h.getEndOffset(), h.isGreedyToLeft(), h.isGreedyToRight(),
+                           (h instanceof RangeMarkerImpl) && ((RangeMarkerImpl)h).isStickingToRight(), h.getLayer());
+    myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, h)));
   }
 
   private void removeErrorStripeMarker(ErrorStripeMarkerImpl errorStripeMarker) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
@@ -29,9 +29,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public class PythonFileType extends LanguageFileType {
   private static final Pattern ENCODING_PATTERN = Pattern.compile("coding[:=]\\s*([-\\w.]+)");
   public static final int MAX_CHARSET_ENCODING_LINE = 2;
@@ -67,7 +65,6 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
   public Icon getIcon() {
     return PythonPsiApiIcons.PythonFile;
   }
@@ -115,22 +112,17 @@ public class PythonFileType extends LanguageFileType {
     if (content == null || content.length() == 0) {
       return null;
     }
-    try {
-      final BufferedReader reader = new BufferedReader(new CharSequenceReader(content));
-      try {
-        for (int i = 0; i < MAX_CHARSET_ENCODING_LINE; i++) {
-          final String line = reader.readLine();
-          if (line == null) {
-            return null;
-          }
-          final Matcher matcher = ENCODING_PATTERN.matcher(line);
-          if (matcher.find()) {
-            final String charset = matcher.group(1);
-            return normalizeCharset(charset);
-          }
+    try (BufferedReader reader = new BufferedReader(new CharSequenceReader(content))) {
+      for (int i = 0; i < MAX_CHARSET_ENCODING_LINE; i++) {
+        final String line = reader.readLine();
+        if (line == null) {
+          return null;
         }
-      } finally {
-        reader.close();
+        final Matcher matcher = ENCODING_PATTERN.matcher(line);
+        if (matcher.find()) {
+          final String charset = matcher.group(1);
+          return normalizeCharset(charset);
+        }
       }
     }
     catch (IOException ignored) {

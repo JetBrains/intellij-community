@@ -4,6 +4,17 @@ import java.util.*;
 
 public class ControlFlow
 {
+  void nonLeak(Object obj) {
+    while (true) {
+      Object obj2 = new Object();
+      if (obj == <warning descr="New object is compared using '=='">obj2</warning>) {
+        System.out.println("equal");
+      } else {
+        if (Math.random() > 0.5) return;
+      }
+    }
+  }
+
   void test() {
     while (true) {
       Object obj = new Object();
@@ -49,7 +60,12 @@ public class ControlFlow
         System.out.println("equal: "+obj+":"+obj2);
       }
     }
-  } 
+  }
+
+  void usedInSameExpression() {
+    Object obj = new Object();
+    if (obj == getObject(obj)) {}
+  }
   
   private Object getObject(Object obj) {
     return Math.random() > 0.5 ? obj : new Object();

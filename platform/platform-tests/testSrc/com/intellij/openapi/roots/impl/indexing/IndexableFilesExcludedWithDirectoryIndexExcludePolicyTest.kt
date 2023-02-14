@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -9,7 +10,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.util.Function
 import org.junit.Test
@@ -77,7 +77,7 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
       }
     }
 
-    val sdk = projectModelRule.addSdk(projectModelRule.createSdk("sdkName")) { sdkModificator ->
+    val sdk = projectModelRule.addSdk("sdkName") { sdkModificator ->
       sdkModificator.addRoot(classesDir.file, OrderRootType.CLASSES)
       sdkModificator.addRoot(sourcesDir.file, OrderRootType.SOURCES)
     }
@@ -97,8 +97,8 @@ class IndexableFilesExcludedWithDirectoryIndexExcludePolicyTest : IndexableFiles
 
   private fun maskDirectoryIndexExcludePolicy(vararg directoryIndexExcludePolicy: DirectoryIndexExcludePolicy) {
     runWriteAction {
-      ExtensionTestUtil.maskExtensions(DirectoryIndexExcludePolicy.EP_NAME, directoryIndexExcludePolicy.toList(), disposableRule.disposable,
-                                       areaInstance = project)
+      (DirectoryIndexExcludePolicy.EP_NAME.getPoint(project) as ExtensionPointImpl<DirectoryIndexExcludePolicy>).maskAll(
+        directoryIndexExcludePolicy.toList(), disposableRule.disposable, true)
       fireRootsChanged()
     }
   }

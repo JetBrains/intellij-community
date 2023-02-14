@@ -80,6 +80,20 @@ public class SameParameterValueLocalTest extends JavaInspectionTestCase {
     doTest(getGlobalTestDir(), myTool);
   }
 
+  public void testFixAvailable() { doTest(getGlobalTestDir(), myTool); }
+
+  public void testFixNotAvailable() { doTest(getGlobalTestDir(), myTool); }
+
+  public void testFixNotAvailableIsShown() {
+    boolean previous = myGlobalTool.ignoreWhenRefactoringIsComplicated;
+    try {
+      myGlobalTool.ignoreWhenRefactoringIsComplicated = false;
+      doTest(getGlobalTestDir(), myTool);
+    } finally {
+      myGlobalTool.ignoreWhenRefactoringIsComplicated = previous;
+    }
+  }
+
   public void testUsageCount() {
     int previous = myGlobalTool.minimalUsageCount;
     try {

@@ -17,7 +17,6 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Modifier;
@@ -106,8 +105,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
   /**
    * @deprecated use {@link ClassUtil#getBinaryPresentation(PsiType)} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   public static String createTypeSignature(PsiType type) {
     return ClassUtil.getBinaryPresentation(type);
   }

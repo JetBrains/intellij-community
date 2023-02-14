@@ -17,8 +17,6 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 /**
  * Enumerates types soft wrap-related drawings supported by {@link SoftWrapPainter}.
- *
- * @author Denis Zhdanov
  */
 public enum SoftWrapDrawingType {
   BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP

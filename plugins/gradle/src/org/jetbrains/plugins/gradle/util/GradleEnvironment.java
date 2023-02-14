@@ -3,9 +3,6 @@ package org.jetbrains.plugins.gradle.util;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author Denis Zhdanov
- */
 public final class GradleEnvironment {
 
   @NonNls public static final boolean DEBUG_GRADLE_HOME_PROCESSING = Boolean.getBoolean("gradle.debug.home.processing");

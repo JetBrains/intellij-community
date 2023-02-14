@@ -22,9 +22,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
   @Nullable private final ElementFilter myFilter;
 
@@ -53,7 +50,7 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
   }
 
   public int hashCode() {
-    return (myFilter != null ? myFilter.hashCode() : 0);
+    return myFilter != null ? myFilter.hashCode() : 0;
   }
 
   @Override

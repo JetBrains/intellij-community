@@ -8,6 +8,7 @@ class Boo{}
     [Modifiers]
     [Extends clause]
     [Implements clause]
+    [Permits clause]
     [Type definition body]
       [Variable definitions]
         [Modifiers]
@@ -16,4 +17,5 @@ class Boo{}
     [Modifiers]
     [Extends clause]
     [Implements clause]
+    [Permits clause]
     [Type definition body]

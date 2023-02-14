@@ -23,9 +23,6 @@ import java.awt.*;
 
 /**
  * Used in design time only. 
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 abstract class DesignSpacer extends Spacer{
   protected static final int HANDLE_ATOM_WIDTH = 5;

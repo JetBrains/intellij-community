@@ -2,7 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -19,12 +19,13 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +44,7 @@ public final class IdeaTestUtil {
     final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
 
     final LanguageLevel projectLevel = projectExt.getLanguageLevel();
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     try {
       projectExt.setLanguageLevel(level);
       setModuleLanguageLevel(module, level);
@@ -56,13 +57,11 @@ public final class IdeaTestUtil {
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
-    ModuleRootModificationUtil.updateModel(module, (model) -> {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
-    });
+    ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level));
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
-    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
     setModuleLanguageLevel(module, level);
     Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
   }
@@ -78,10 +77,6 @@ public final class IdeaTestUtil {
   }
 
   public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
-    return createMockJdk(name, path, false);
-  }
-
-  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path, boolean isJre) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
@@ -113,30 +108,45 @@ public final class IdeaTestUtil {
       }
     };
 
-    Path jdkHomeFile = Path.of(path);
-    JavaSdkImpl.addClasses(jdkHomeFile, sdkModificator, isJre);
-    JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
+    File[] jars = new File(path, "jre/lib").listFiles(f -> f.getName().endsWith(".jar"));
+    if (jars != null) {
+      for (File jar : jars) {
+        sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(jar.getPath())+"!/", OrderRootType.CLASSES);
+      }
+    }
+    // only Mock JDKs 1.4/1.7 have src.zip
+    if (path.endsWith("mockJDK-1.7") || path.endsWith("mockJDK-1.4")) {
+      if (new File(path, "src.zip").exists()) {
+        sdkModificator.addRoot("jar://"+PathUtil.toSystemIndependentName(path)+"/src.zip!/", OrderRootType.SOURCES);
+      }
+    }
+
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
     return new MockSdk(name, PathUtil.toSystemIndependentName(path), name, roots, () -> JavaSdk.getInstance());
   }
 
+  // it's JDK 1.4, not 14
   public static @NotNull Sdk getMockJdk14() {
     return getMockJdk(JavaVersion.compose(4));
   }
 
+  // it's JDK 1.6, not 16
   public static @NotNull Sdk getMockJdk16() {
     return getMockJdk(JavaVersion.compose(6));
   }
 
+  // it's JDK 1.7, not 17
   public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
 
+  // it's JDK 1.7, not 17
   public static @NotNull Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
+  // it's JDK 1.8, not 18
   public static @NotNull Sdk getMockJdk18() {
     return getMockJdk(JavaVersion.compose(8));
   }
@@ -161,20 +171,13 @@ public final class IdeaTestUtil {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
   }
 
-  public static @NotNull File getMockJdk9Path() {
-    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
-  }
-
   public static String getMockJdkVersion(@NotNull String path) {
     String name = PathUtil.getFileName(path);
-    if (name.startsWith(MOCK_JDK_DIR_NAME_PREFIX)) {
-      return "java " + StringUtil.trimStart(name, MOCK_JDK_DIR_NAME_PREFIX);
-    }
-    return null;
+    return name.startsWith(MOCK_JDK_DIR_NAME_PREFIX) ? "java " + StringUtil.trimStart(name, MOCK_JDK_DIR_NAME_PREFIX) : null;
   }
 
   private static @NotNull File getPathForJdkNamed(@NotNull String name) {
-    return new File(PathManager.getCommunityHomePath(), "java/" + name);
+    return new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {

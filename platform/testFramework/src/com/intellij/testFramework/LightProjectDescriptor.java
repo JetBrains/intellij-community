@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -9,7 +10,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -46,6 +46,10 @@ public class LightProjectDescriptor {
         createContentEntry(module, sourceRoot);
       }
     });
+  }
+
+  public @NotNull OpenProjectTask getOpenProjectOptions() {
+    return OpenProjectTask.build();
   }
 
   public void registerSdk(Disposable disposable) {
@@ -154,10 +158,7 @@ public class LightProjectDescriptor {
   }
 
   private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
-    WriteAction.run(() -> {
-      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-      ((ProjectJdkTableImpl)jdkTable).addTestJdk(jdk, parentDisposable);
-    });
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
   }
 
   @NotNull

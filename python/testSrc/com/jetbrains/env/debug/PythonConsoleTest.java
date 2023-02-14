@@ -43,11 +43,13 @@ public class PythonConsoleTest extends PyEnvTestCase {
     runPythonTest(new PyConsoleTask() {
       @Override
       public void testing() throws Exception {
-        exec("if True:\n" +
-             "  x = 1\n" +
-             "y = x + 100\n" +
-             "for i in range(1):\n" +
-             "  print(y)\n");
+        exec("""
+               if True:
+                 x = 1
+               y = x + 100
+               for i in range(1):
+                 print(y)
+               """);
         waitForOutput("101");
       }
 
@@ -65,9 +67,10 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         exec("import time");
-        execNoWait("for i in range(10000):\n" +
-                   "  print(i)\n" +
-                   "  time.sleep(0.1)");
+        execNoWait("""
+                     for i in range(10000):
+                       print(i)
+                       time.sleep(0.1)""");
         waitForOutput("3\n4\n5");
         Assert.assertFalse(canExecuteNow());
         interrupt();
@@ -90,8 +93,10 @@ public class PythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         exec("x = 96");
         exec("x = x + 1");
-        exec("if True:\n" +
-             "  print(x)\n");
+        exec("""
+               if True:
+                 print(x)
+               """);
         waitForOutput("97");
       }
     });
@@ -264,13 +269,15 @@ public class PythonConsoleTest extends PyEnvTestCase {
     runPythonTest(new PyConsoleTask("/debug") {
       @Override
       public void testing() throws Exception {
-        exec("class Bar:\n" +
-             "    @property\n" +
-             "    def prop(self):\n" +
-             "        x = 238\n" +
-             "        print(x + 1)\n" +
-             "        return \"bar\"\n" +
-             "    \n");
+        exec("""
+               class Bar:
+                   @property
+                   def prop(self):
+                       x = 238
+                       print(x + 1)
+                       return "bar"
+                  \s
+               """);
         exec("bar = Bar()");
         exec("print(\"Hey\")");
         waitForOutput("Hey");

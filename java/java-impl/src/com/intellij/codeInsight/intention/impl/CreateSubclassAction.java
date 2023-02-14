@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -24,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -53,20 +37,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static com.intellij.util.ObjectUtils.tryCast;
+import java.util.Objects;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
@@ -95,7 +75,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       return false;
     }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiClass);
-    if (virtualFile == null || ScratchUtil.isScratch(virtualFile)) {
+    if (virtualFile == null) {
       return false;
     }
     if (!isSupportedLanguage(psiClass)) return false;
@@ -154,6 +134,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
       createInnerClass(psiClass);
       return;
     }
+    if (ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(psiClass))) {
+      createSameFileClass(suggestTargetClassName(psiClass), psiClass);
+      return;
+    }
     createTopLevelClass(psiClass);
   }
 
@@ -165,7 +149,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     String actionTitle = getTitle(psiClass);
     Project project = psiClass.getProject();
     WriteCommandAction.writeCommandAction(project).withName(actionTitle).withGroupId(actionTitle).run(() -> {
-      final PsiJavaFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
+      PsiJavaFile containingFile = ObjectUtils.tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
       LOG.assertTrue(containingFile != null);
 
       PsiClass[] classes = containingFile.getClasses();
@@ -204,7 +188,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     final CreateClassDialog dlg = chooseSubclassToCreate(psiClass);
     if (dlg != null) {
       PsiDirectory targetDirectory = dlg.getTargetDirectory();
-      PsiJavaFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
+      PsiJavaFile containingFile = ObjectUtils.tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
       boolean inSamePackage = containingFile != null && containingFile.getPackageName().equals(targetDirectory.getName());
       if (inSamePackage && hasOnlySameFileInheritors(psiClass)) {
         createSameFileClass(dlg.getClassName(), psiClass);
@@ -316,12 +300,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
       if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getContainingFile() != targetClass.getContainingFile()) {
         String createdClassName = Objects.requireNonNull(targetClass.getQualifiedName());
-        SmartHashSet<String> missingInheritors = new SmartHashSet<>();
-        missingInheritors.add(createdClassName);
-        if (psiClass.getPermitsList() == null) {
-          missingInheritors.addAll(SealedUtils.findSameFileInheritors(psiClass));
-        }
-        SealedUtils.fillPermitsList(psiClass, missingInheritors);
+        SealedUtils.addClassToPermitsList(psiClass, createdClassName);
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
@@ -408,17 +387,8 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
     if (hasNonTrivialConstructor) {
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(psiClass, targetClass, PsiSubstitutor.EMPTY);
-      final List<PsiMethodMember> baseConstructors = new ArrayList<>();
-      for (PsiMethod baseConstr : constructors) {
-        if (PsiUtil.isAccessible(project, baseConstr, targetClass, targetClass)) {
-          baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
-        }
-      }
       final int offset = editor.getCaretModel().getOffset();
-      CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
-                                                                   substitutor,
-                                                                   baseConstructors, constructors, targetClass);
+      CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor, targetClass);
       editor.getCaretModel().moveToOffset(offset);
     }
 

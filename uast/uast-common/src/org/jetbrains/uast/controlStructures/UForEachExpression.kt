@@ -19,7 +19,13 @@ interface UForEachExpression : ULoopExpression {
   /**
    * Returns the loop variable.
    */
+  @Deprecated(message = "property may throw exception if foreach doesn't have variable", replaceWith = ReplaceWith("parameter"))
   val variable: UParameter
+
+  /**
+   * Returns the loop parameter.
+   */
+  val parameter: UParameter?
 
   /**
    * Returns the iterated value (collection, sequence, iterable etc.)
@@ -44,7 +50,7 @@ interface UForEachExpression : ULoopExpression {
 
   override fun asRenderString(): String = buildString {
     append("for (")
-    append(variable.name)
+    append(variable?.name ?: "<no var>")
     append(" : ")
     append(iteratedValue.asRenderString())
     append(") ")

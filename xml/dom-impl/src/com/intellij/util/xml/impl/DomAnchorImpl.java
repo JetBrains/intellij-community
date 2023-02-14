@@ -16,9 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author peter
- */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
   private static final Logger LOG = Logger.getInstance(DomAnchorImpl.class);
 
@@ -45,8 +42,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       LOG.error("Parent null: " + t);
     }
 
-    if (parent instanceof DomFileElementImpl) {
-      final DomFileElementImpl fileElement = (DomFileElementImpl)parent;
+    if (parent instanceof DomFileElementImpl fileElement) {
       //noinspection unchecked
       return new RootAnchor<>(fileElement.getFile(), fileElement.getRootElementClass());
     }
@@ -115,7 +111,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       diag.append("\n");
     }
     diag.append("Child name: ").append(t.getXmlElementName()).append(";").append(t.getXmlElementNamespaceKey());
-    LOG.error(diag);
+    LOG.error(diag.toString());
   }
 
 
@@ -149,9 +145,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof NamedAnchor)) return false;
-
-      final NamedAnchor that = (NamedAnchor)o;
+      if (!(o instanceof NamedAnchor that)) return false;
 
       if (myDescr != null ? !myDescr.equals(that.myDescr) : that.myDescr != null) return false;
       if (myName != null ? !myName.equals(that.myName) : that.myName != null) return false;
@@ -212,9 +206,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof IndexedAnchor)) return false;
-
-      final IndexedAnchor that = (IndexedAnchor)o;
+      if (!(o instanceof IndexedAnchor that)) return false;
 
       if (myIndex != that.myIndex) return false;
       if (myDescr != null ? !myDescr.equals(that.myDescr) : that.myDescr != null) return false;
@@ -263,9 +255,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
-      if (!(o instanceof RootAnchor)) return false;
-
-      final RootAnchor that = (RootAnchor)o;
+      if (!(o instanceof RootAnchor that)) return false;
 
       if (myClass != null ? !myClass.equals(that.myClass) : that.myClass != null) return false;
       if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;

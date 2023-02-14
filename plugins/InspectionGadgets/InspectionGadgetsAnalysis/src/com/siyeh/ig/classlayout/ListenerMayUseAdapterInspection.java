@@ -17,7 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +30,8 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ListenerMayUseAdapterInspection extends BaseInspection {
 
@@ -48,9 +49,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("listener.may.use.adapter.emtpy.methods.option"), this,
-                                          "checkForEmptyMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkForEmptyMethods", InspectionGadgetsBundle.message("listener.may.use.adapter.emtpy.methods.option")));
   }
 
   @Override
@@ -80,7 +81,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
       final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (aClass == null) {
@@ -93,10 +94,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       final PsiMethod[] methods = aClass.getMethods();
       if (methods.length > 0) {
         final PsiElement target = element.resolve();
-        if (!(target instanceof PsiClass)) {
+        if (!(target instanceof PsiClass interfaceClass)) {
           return;
         }
-        final PsiClass interfaceClass = (PsiClass)target;
         for (PsiMethod method : methods) {
           if (!ControlFlowUtils.isEmptyCodeBlock(method.getBody())) {
             continue;
@@ -126,7 +126,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
   private class ListenerMayUseAdapterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
         return;
@@ -147,10 +147,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
 
     private void checkReference(@NotNull PsiClass aClass, @NotNull PsiJavaCodeReferenceElement implementsReference) {
       final PsiElement target = implementsReference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass implementsClass)) {
         return;
       }
-      final PsiClass implementsClass = (PsiClass)target;
       @NonNls final String className = implementsClass.getQualifiedName();
       if (className == null || !className.endsWith("Listener")) {
         return;

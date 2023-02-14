@@ -7,6 +7,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -37,6 +38,11 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     presentation.setText(text);
     presentation.setDescription(text);
     presentation.setIcon(AllIcons.Actions.Help);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

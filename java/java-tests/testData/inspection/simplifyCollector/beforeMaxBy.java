@@ -1,4 +1,4 @@
-// "Use 'Collectors.toConcurrentMap' collector" "true"
+// "Use 'Collectors.toConcurrentMap()' collector" "true"
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

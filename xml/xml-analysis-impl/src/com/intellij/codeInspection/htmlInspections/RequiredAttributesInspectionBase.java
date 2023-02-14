@@ -75,6 +75,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
   }
 
+  @NotNull
   public static LocalQuickFix getIntentionAction(String name) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message(
       "html.quickfix.add.optional.html.attribute", name));
@@ -142,7 +143,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
                                    @NotNull @InspectionMessage String localizedMessage,
                                    final LocalQuickFix basicIntention,
                                    ProblemsHolder holder,
-                                   final LocalQuickFix addAttributeFix,
+                                   @NotNull LocalQuickFix addAttributeFix,
                                    boolean isOnTheFly) {
     boolean htmlTag = false;
 
@@ -161,7 +162,9 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
       fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
       highlightType = ProblemHighlightType.ERROR;
     }
-    addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    if (isOnTheFly || highlightType != ProblemHighlightType.INFORMATION) {
+      addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
+    }
   }
 
   private static void addElementsForTag(XmlTag tag,
@@ -169,7 +172,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
                                         ProblemHighlightType error,
                                         ProblemsHolder holder,
                                         boolean isOnTheFly,
-                                        LocalQuickFix... fixes) {
+                                        @NotNull LocalQuickFix @NotNull ... fixes) {
     registerProblem(message, error, holder, XmlTagUtil.getStartTagNameElement(tag), fixes);
     if (isOnTheFly) {
       registerProblem(message, error, holder, XmlTagUtil.getEndTagNameElement(tag), fixes);

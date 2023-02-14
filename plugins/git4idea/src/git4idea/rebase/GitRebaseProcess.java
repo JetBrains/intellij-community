@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +31,7 @@ import com.intellij.util.progress.StepsProgressIndicator;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import git4idea.DialogManager;
+import git4idea.GitNotificationIdsHolder;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.branch.GitRebaseParams;
 import git4idea.commands.*;
@@ -134,6 +135,11 @@ public class GitRebaseProcess {
 
     Map<GitRepository, GitRebaseStatus> statuses = new LinkedHashMap<>(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
+    if (repositoriesToRebase.isEmpty()) {
+      LOG.info("Nothing to rebase");
+      return;
+    }
+
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
@@ -389,16 +395,12 @@ public class GitRebaseProcess {
 
   private void notifyNotAllConflictsResolved(@NotNull GitRepository conflictingRepository) {
     String description = GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(
-      GitBundle.message("rebase.notification.conflict.title"),
-      description,
-      NotificationType.WARNING,
-      null,
-      "git.rebase.stopped.due.to.conflicts"
-    );
-    notification.addAction(createResolveNotificationAction(conflictingRepository));
-    notification.addAction(CONTINUE_ACTION);
-    notification.addAction(ABORT_ACTION);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(GitBundle.message("rebase.notification.conflict.title"), description, NotificationType.WARNING)
+      .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_CONFLICTS)
+      .addAction(createResolveNotificationAction(conflictingRepository))
+      .addAction(CONTINUE_ACTION)
+      .addAction(ABORT_ACTION);
     if (mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
     myNotifier.notify(notification);
   }
@@ -417,15 +419,11 @@ public class GitRebaseProcess {
   }
 
   private void showStoppedForEditingMessage() {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(
-      GitBundle.message("rebase.notification.editing.title"),
-      "",
-      NotificationType.INFORMATION,
-      null,
-      "git.rebase.stopped.for.editing"
-    );
-    notification.addAction(CONTINUE_ACTION);
-    notification.addAction(ABORT_ACTION);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(GitBundle.message("rebase.notification.editing.title"), "", NotificationType.INFORMATION)
+      .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING)
+      .addAction(CONTINUE_ACTION)
+      .addAction(ABORT_ACTION);
     myNotifier.notify(notification);
   }
 
@@ -442,14 +440,10 @@ public class GitRebaseProcess {
     String title = myRebaseSpec.getOngoingRebase() == null
                    ? GitBundle.message("rebase.notification.failed.rebase.title")
                    : GitBundle.message("rebase.notification.failed.continue.title");
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(
-      title,
-      descriptionBuilder.toString(),
-      NotificationType.ERROR,
-      null,
-      "git.rebase.failed"
-    );
-    notification.addAction(RETRY_ACTION);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(title, descriptionBuilder.toString(), NotificationType.ERROR)
+      .setDisplayId(GitNotificationIdsHolder.REBASE_FAILED)
+      .addAction(RETRY_ACTION);
     if (somethingWasRebased || !successful.isEmpty()) {
       notification.addAction(ABORT_ACTION);
     }

@@ -1,29 +1,63 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * <h3>Example 1</h3>
- * {@linkplain com.intellij.psi.SmartPsiElementPointer Smart pointers} might be used to restore the element across different read actions.
  * <p>
- * Elements are expected to stay valid within a single {@link Application#runReadAction read action}.
+ * {@linkplain com.intellij.psi.SmartPsiElementPointer Smart pointers} might be used to restore the element across different read actions.
+ * </p>
+ * <p>
+ * Elements are expected to stay valid within a single {@linkplain Application#runReadAction read action}.
  * It's highly advised to split long read actions into several short ones, but this also means
- * that some {@link Application#runWriteAction write action} might be run in between these short read actions,
+ * that some {@linkplain Application#runWriteAction write action} might be run in between these short read actions,
  * which could potentially change the model of the element (reference model, PSI model, framework model or whatever model).
  * </p>
+ * <pre>
+ * val pointer = readAction {
+ *   val instance = obtainSomeInstanceWhichIsValidWithinAReadAction()
+ *   return@readAction instance.createPointer()
+ * }
+ * // the pointer might be safely stored in the UI or another model for later usage
+ * readAction { // another read action
+ *   val restoredInstance = pointer.dereference()
+ *   if (restoredInstance == null) {
+ *     // instance was invalidated, act accordingly
+ *     return
+ *   }
+ *   // at this point the instance is valid because it should've not exist if it's not
+ *   doSomething(restoredInstance)
+ * }
+ *
+ * readAction {
+ *   // same pointer may be used in several subsequent read actions
+ *   val restoredInstance = pointer.dereference()
+ *   ...
+ * }
+ * </pre>
  *
  * <h3>Example 2</h3>
+ * <p>
  * Pointers might be used to avoid hard references to the element to save the memory.
  * In this case the pointer stores minimal needed information to be able to restore the element when requested.
+ * </p>
+ *
+ * <h3>Equality</h3>
+ * <p>
+ * It's expected that most pointers would require a read action for comparison, thus no equality is defined for pointers.
+ * Pointers should be {@linkplain Pointer#dereference de-referenced} in a read action, and their values should be compared instead.
+ * </p>
  *
  * @param <T> type of underlying element
  */
@@ -31,22 +65,58 @@ import java.util.function.Function;
 public interface Pointer<T> {
 
   /**
-   * @return value or {@code null} if the value was invalidated or cannot be restored
+   * @return referenced value, or {@code null} if the value was invalidated or cannot be restored
    */
+  @RequiresReadLock
+  @RequiresBackgroundThread
   @Nullable T dereference();
 
-  boolean equals(Object o);
-
-  int hashCode();
-
   /**
-   * Creates a pointer which holds strong reference to the {@code value}.
-   * The pointer always dereferences into the passed {@code value}.
+   * Creates a pointer which holds the strong reference to the {@code value}.
+   * The pointer is always de-referenced into the passed {@code value}.
    * Hard pointers should be used only for values that cannot be invalidated.
    */
   @Contract(value = "_ -> new", pure = true)
   static <T> @NotNull Pointer<T> hardPointer(@NotNull T value) {
-    return new HardPointer<>(value);
+    return () -> value;
+  }
+
+  /**
+   * Creates a pointer which uses {@code underlyingPointer} value to restore its value with {@code restoration} function.
+   */
+  @Contract(value = "_, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> delegatingPointer(
+    @NotNull Pointer<? extends U> underlyingPointer,
+    @NotNull Function<? super U, ? extends T> restoration
+  ) {
+    return new DelegatingPointer.ByValue<>(underlyingPointer, restoration);
+  }
+
+  /**
+   * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
+   * into the {@code restoration} function to allow caching the pointer in the restored value.
+   */
+  @Contract(value = "_, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> uroborosPointer(
+    @NotNull Pointer<? extends U> underlyingPointer,
+    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration
+  ) {
+    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, restoration);
+  }
+
+  /**
+   * Creates a pointer which holds the strong reference to the {@code value}.
+   * The pointer is always de-referenced into the passed {@code value}.
+   * Hard pointers should be used only for values that cannot be invalidated.
+   *
+   * @deprecated use {@link #hardPointer(Object)}.
+   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  @Contract(value = "_ -> new", pure = true)
+  static <T> @NotNull Pointer<T> hardPointerWithEquality(@NotNull T value) {
+    return new HardPointerEq<>(value);
   }
 
   /**
@@ -55,50 +125,32 @@ public interface Pointer<T> {
    * Equality of {@code restoration} function is unreliable, because it might be a lambda.
    * The {@code key} must be passed to check for equality instead,
    * where two equal keys mean the same restoration logic will be applied.
+   *
+   * @deprecated use {@link #delegatingPointer(Pointer, Function)}.
+   * This method is deprecated because the pointer equality was intended to be used without the read action,
+   * while often being impossible to implement without it, which makes it infeasible to use on the EDT.
    */
+  @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                       @NotNull Object key,
                                                       @NotNull Function<? super U, ? extends T> restoration) {
-    return new DelegatingPointer.ByValue<>(underlyingPointer, key, restoration);
+    return new DelegatingPointerEq.ByValue<>(underlyingPointer, key, restoration);
   }
 
   /**
-   * Creates same pointer as {@link #delegatingPointer}, which additionally passes itself
+   * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
    * into the {@code restoration} function to allow caching the pointer in the restored value.
+   *
+   * @deprecated use {@link #uroborosPointer(Pointer, BiFunction)}.
+   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
    */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                     @NotNull Object key,
                                                     @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
-    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
-  }
-}
-
-final class HardPointer<T> implements Pointer<T> {
-
-  private final T myValue;
-
-  HardPointer(@NotNull T value) {
-    myValue = value;
-  }
-
-  @NotNull
-  @Override
-  public T dereference() {
-    return myValue;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    HardPointer<?> pointer = (HardPointer<?>)o;
-    return Objects.equals(myValue, pointer.myValue);
-  }
-
-  @Override
-  public int hashCode() {
-    return myValue.hashCode();
+    return new DelegatingPointerEq.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }

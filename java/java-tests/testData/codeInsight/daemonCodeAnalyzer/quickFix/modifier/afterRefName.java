@@ -1,4 +1,4 @@
-// "Make 'Bar.f' public" "true"
+// "Make 'Bar.f()' public" "true"
 public class Foo {
     void foo(Bar f) {
         f.<caret>f(2);

@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,9 +22,6 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CommandRuntime {
 
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
@@ -47,6 +46,11 @@ public class CommandRuntime {
 
   @NotNull
   public CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
+    Project project = myVcs.getProject();
+    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+      throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
+    }
+
     try {
       onStart(command);
 
@@ -65,8 +69,13 @@ public class CommandRuntime {
 
   @NotNull
   public CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
+    Project project = myVcs.getProject();
+    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+      throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
+    }
+
     if (command.getWorkingDirectory() == null) {
-      command.setWorkingDirectory(CommandParametersResolutionModule.getDefaultWorkingDirectory(myVcs.getProject()));
+      command.setWorkingDirectory(CommandParametersResolutionModule.getDefaultWorkingDirectory(project));
     }
 
     CommandExecutor executor = newExecutor(command);

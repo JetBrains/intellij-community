@@ -78,7 +78,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   @Override
   @SuppressWarnings("HardCodedStringLiteral")
   public Object getData(@NotNull String dataId) {
-    return PlatformDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
+    return PlatformCoreDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
   }
 
   protected abstract JComponent createCenterPanel();
@@ -90,6 +90,11 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCloseEnabled);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

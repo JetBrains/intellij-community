@@ -24,9 +24,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class CachingReference implements PsiReference {
   @Override
   public PsiElement resolve(){
@@ -37,7 +34,7 @@ public abstract class CachingReference implements PsiReference {
   public abstract PsiElement resolveInner();
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return getElement().getManager().areElementsEquivalent(resolve(), element);
   }
 

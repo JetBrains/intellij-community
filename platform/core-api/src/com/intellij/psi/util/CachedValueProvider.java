@@ -10,7 +10,7 @@ import java.util.Collection;
 
 /**
  * A computation (typically a lambda) used by {@link CachedValue} to calculate a result and cache it.
- * The provider should not have side effects and shouldn't depend on variables that change during CachedValue lifetime. See
+ * The provider should not have side effects and shouldn't depend on variables that change during the CachedValue lifetime. See
  * {@link CachedValue} documentation for examples.<p></p>
  * @param <T> the type of the cached value
  */
@@ -27,15 +27,11 @@ public interface CachedValueProvider<T> {
    * The object holding the value to cache and the dependencies indicating when that value will be outdated
    * @param <T> the type of the cached value
    */
-  class Result<T> {
+  final class Result<T> {
     private static final Logger LOG = Logger.getInstance(Result.class);
     private final T myValue;
     private final Object[] myDependencyItems;
 
-    /**
-     * Constructor
-     * @see #getDependencyItems()
-     */
     public Result(@Nullable T value, Object @NotNull ... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;

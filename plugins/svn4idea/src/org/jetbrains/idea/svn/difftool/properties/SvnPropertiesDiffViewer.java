@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContentFactory;
@@ -18,7 +18,7 @@ import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -35,7 +35,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,7 +191,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     MyDividerPainter() {
       myLabel = new JBLabel();
-      myLabel.setFont(UIUtil.getLabelFont());
+      myLabel.setFont(StartupUiUtil.getLabelFont());
       myLabel.setHorizontalAlignment(SwingConstants.CENTER);
       myLabel.setVerticalAlignment(SwingConstants.TOP);
     }
@@ -316,7 +316,7 @@ public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     return super.getData(dataId);
   }
 

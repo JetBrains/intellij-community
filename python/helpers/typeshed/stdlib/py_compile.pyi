@@ -1,52 +1,46 @@
 import enum
 import sys
-from typing import AnyStr, List, Optional, Text, Type, Union
+from typing import AnyStr
 
-_EitherStr = Union[bytes, Text]
+__all__ = ["compile", "main", "PyCompileError", "PycInvalidationMode"]
 
 class PyCompileError(Exception):
     exc_type_name: str
     exc_value: BaseException
     file: str
     msg: str
-    def __init__(self, exc_type: Type[BaseException], exc_value: BaseException, file: str, msg: str = ...) -> None: ...
+    def __init__(self, exc_type: type[BaseException], exc_value: BaseException, file: str, msg: str = ...) -> None: ...
 
-if sys.version_info >= (3, 7):
-    class PycInvalidationMode(enum.Enum):
-        TIMESTAMP: int = ...
-        CHECKED_HASH: int = ...
-        UNCHECKED_HASH: int = ...
-    def _get_default_invalidation_mode() -> PycInvalidationMode: ...
+class PycInvalidationMode(enum.Enum):
+    TIMESTAMP: int
+    CHECKED_HASH: int
+    UNCHECKED_HASH: int
+
+def _get_default_invalidation_mode() -> PycInvalidationMode: ...
 
 if sys.version_info >= (3, 8):
     def compile(
         file: AnyStr,
-        cfile: Optional[AnyStr] = ...,
-        dfile: Optional[AnyStr] = ...,
+        cfile: AnyStr | None = ...,
+        dfile: AnyStr | None = ...,
         doraise: bool = ...,
         optimize: int = ...,
-        invalidation_mode: Optional[PycInvalidationMode] = ...,
+        invalidation_mode: PycInvalidationMode | None = ...,
         quiet: int = ...,
-    ) -> Optional[AnyStr]: ...
-
-elif sys.version_info >= (3, 7):
-    def compile(
-        file: AnyStr,
-        cfile: Optional[AnyStr] = ...,
-        dfile: Optional[AnyStr] = ...,
-        doraise: bool = ...,
-        optimize: int = ...,
-        invalidation_mode: Optional[PycInvalidationMode] = ...,
-    ) -> Optional[AnyStr]: ...
-
-elif sys.version_info >= (3, 2):
-    def compile(
-        file: AnyStr, cfile: Optional[AnyStr] = ..., dfile: Optional[AnyStr] = ..., doraise: bool = ..., optimize: int = ...
-    ) -> Optional[AnyStr]: ...
+    ) -> AnyStr | None: ...
 
 else:
     def compile(
-        file: _EitherStr, cfile: Optional[_EitherStr] = ..., dfile: Optional[_EitherStr] = ..., doraise: bool = ...
-    ) -> None: ...
+        file: AnyStr,
+        cfile: AnyStr | None = ...,
+        dfile: AnyStr | None = ...,
+        doraise: bool = ...,
+        optimize: int = ...,
+        invalidation_mode: PycInvalidationMode | None = ...,
+    ) -> AnyStr | None: ...
 
-def main(args: Optional[List[Text]] = ...) -> int: ...
+if sys.version_info >= (3, 10):
+    def main() -> None: ...
+
+else:
+    def main(args: list[str] | None = ...) -> int: ...

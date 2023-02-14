@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
@@ -15,7 +13,7 @@ import javax.swing.*;
 import java.io.File;
 
 public final class JavadocConfigurable implements Configurable {
-  private JavadocGenerationPanel myPanel;
+  private JavadocGenerationAdditionalUi myPanel;
   private final JavadocConfiguration myConfiguration;
   private final Project myProject;
 
@@ -31,9 +29,9 @@ public final class JavadocConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
-    myPanel = new JavadocGenerationPanel();
+    myPanel = new JavadocGenerationAdditionalUi();
     myPanel.myLinkToJdkDocs.setEnabled(sdkHasJavadocUrls(myProject));
-    return myPanel.myPanel;
+    return myPanel.getPanel();
   }
 
   public void applyTo(JavadocConfiguration configuration) {
@@ -42,7 +40,7 @@ public final class JavadocConfigurable implements Configurable {
     configuration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
     configuration.LOCALE = convertString(myPanel.myLocaleTextField.getText());
     configuration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
-    configuration.OPTION_SCOPE = convertString(myPanel.getScope());
+    configuration.OPTION_SCOPE = myPanel.myScopeCombo.getItem();
     configuration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
     configuration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
     configuration.OPTION_INDEX = myPanel.myIndex.isSelected();
@@ -62,7 +60,7 @@ public final class JavadocConfigurable implements Configurable {
     myPanel.myHeapSizeField.setText(configuration.HEAP_SIZE);
     myPanel.myLocaleTextField.setText(configuration.LOCALE);
     myPanel.myOpenInBrowserCheckBox.setSelected(configuration.OPEN_IN_BROWSER);
-    myPanel.setScope(configuration.OPTION_SCOPE);
+    myPanel.myScopeCombo.setSelectedItem(configuration.OPTION_SCOPE);
     myPanel.myHierarchy.setSelected(configuration.OPTION_HIERARCHY);
     myPanel.myNavigator.setSelected(configuration.OPTION_NAVIGATOR);
     myPanel.myIndex.setSelected(configuration.OPTION_INDEX);
@@ -89,7 +87,7 @@ public final class JavadocConfigurable implements Configurable {
     isModified |= !compareStrings(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
     isModified |= !compareStrings(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
     isModified |= myPanel.myOpenInBrowserCheckBox.isSelected() != configuration.OPEN_IN_BROWSER;
-    isModified |= !compareStrings(myPanel.getScope(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
+    isModified |= !compareStrings(myPanel.myScopeCombo.getItem(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
     isModified |= myPanel.myHierarchy.isSelected() != configuration.OPTION_HIERARCHY;
     isModified |= myPanel.myNavigator.isSelected() != configuration.OPTION_NAVIGATOR;
     isModified |= myPanel.myIndex.isSelected() != configuration.OPTION_INDEX;
@@ -106,7 +104,7 @@ public final class JavadocConfigurable implements Configurable {
   }
 
   @Override
-  public final void apply() {
+  public void apply() {
     applyTo(myConfiguration);
   }
 

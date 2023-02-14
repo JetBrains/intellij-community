@@ -19,9 +19,6 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
 public final class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance(ClsParsingUtil.class);
 
@@ -103,7 +100,7 @@ public final class ClsParsingUtil {
     if (expr instanceof PsiLiteralExpression) {
       PsiFile file = parent.getContainingFile();
       boolean forDecompiling = file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling();
-      PsiType type = forDecompiling ? PsiType.NULL : expr.getType();
+      PsiType type = forDecompiling ? (PsiPrimitiveType)PsiTypes.nullType() : expr.getType();
       Object value = forDecompiling ? null : ((PsiLiteralExpression)expr).getValue();
       return new ClsLiteralExpressionImpl(parent, expr.getText(), type, value);
     }
@@ -143,7 +140,7 @@ public final class ClsParsingUtil {
 
     PsiFile file = parent.getContainingFile();
     if (file instanceof ClsFileImpl && ((ClsFileImpl)file).isForDecompiling()) {
-      return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiType.NULL, null);
+      return new ClsLiteralExpressionImpl(parent, expr.getText(), PsiTypes.nullType(), null);
     }
 
     PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();

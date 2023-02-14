@@ -8,9 +8,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 
-/**
- * @author yole
- */
+
 public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatement> implements PyFromImportStatementStub {
   private final QualifiedName myImportSourceQName;
   private final boolean myStarImport;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.Disposable
@@ -43,7 +43,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
       makeCommit(anotherUser, file)
     }
 
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
@@ -76,7 +76,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     makeCommit(anotherFile)
     makeCommit(file)
 
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     val maxCommitsHistoryCount = 5
     var fileInCommitCount = 0
@@ -112,14 +112,14 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     makeCommit(anotherUser, anotherFile)
     makeCommit(anotherUser, file)
 
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
     traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
       val fileCommits = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.File(filePath))
 
       val authorCommitsWithFile = authorCommitIds.intersect(fileCommits)
-      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxBy { it.timestamp }!!
+      val actualLastCommitByUserWithFile = authorCommitsWithFile.map { indexedRoot.loadTimedCommit(it) }.maxByOrNull { it.timestamp }!!
       val expectedCommitByUserWithFile = GitHistoryUtils.collectCommitsMetadata(project, repo.root, lastCommitByUserWithFile)!!.single()
       assertEquals(expectedCommitByUserWithFile.commitTime, actualLastCommitByUserWithFile.timestamp)
     }
@@ -132,7 +132,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
       makeCommit(file)
     }
 
-    logData.refreshAndWait(repo, withIndex = false)
+    logData.refreshAndWait(repo, waitIndexFinishing = false)
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
     val indexWaiterDisposable = Disposable {}
     var blockExecutedCount = 0
@@ -162,7 +162,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     repeat(expectedCommitsCount - 1) {
       makeCommit(file)
     }
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     var commitsCount = 0
     traverser.traverse(
@@ -183,7 +183,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     repeat(expectedCommitsCount - 1) {
       makeCommit(file)
     }
-    logData.refreshAndWait(repo, withIndex = true)
+    logData.refreshAndWait(repo, waitIndexFinishing = true)
 
     val commitHashes = mutableSetOf<Hash>()
     traverser.traverse(

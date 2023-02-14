@@ -62,15 +62,19 @@ class SpecialCharacterFragment implements LineFragment {
       }
       else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
         // we don't display ZWNJ/ZWJ surrounded by non-ASCII characters, to avoid breaking complex scripts and emoji display
-        if (pos > 0 && text[pos - 1] >= 128) {
+        if (pos > 0 && hideJoiningCharactersAround(text[pos - 1])) {
           return null;
         }
-        if (pos < text.length - 1 && text[pos + 1] >= 128) {
+        if (pos < text.length - 1 && hideJoiningCharactersAround(text[pos + 1])) {
           return null;
         }
       }
     }
     return new SpecialCharacterFragment(view, code);
+  }
+
+  private static boolean hideJoiningCharactersAround(char c) {
+    return c >= 128 && Character.getType(c) != Character.FORMAT;
   }
 
   private final EditorView myView;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -8,18 +8,9 @@ import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
 
-/**
- * @author yole
- */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
-  private static final NotNullLazyValue<BorderProperty> myBorderProperty = NotNullLazyValue.lazy(new Supplier<>() {
-    @Override
-    public BorderProperty get() {
-      return new BorderProperty(null);
-    }
-  });
+  private static final NotNullLazyValue<BorderProperty> myBorderProperty = NotNullLazyValue.lazy(() -> new BorderProperty(null));
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
     super(inspectionKey);
@@ -29,22 +20,19 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
   protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     for(IProperty prop: component.getModifiedProperties()) {
       Object propValue = prop.getPropertyValue(component);
-      if (propValue instanceof StringDescriptor) {
-        StringDescriptor descriptor = (StringDescriptor) propValue;
+      if (propValue instanceof StringDescriptor descriptor) {
         checkStringDescriptor(module, component, prop, descriptor, collector);
       }
     }
 
-    if (component instanceof IContainer) {
-      IContainer container = (IContainer) component;
+    if (component instanceof IContainer container) {
       StringDescriptor descriptor = container.getBorderTitle();
       if (descriptor != null) {
         checkStringDescriptor(module, component, myBorderProperty.getValue(), descriptor, collector);
       }
     }
 
-    if (component.getParentContainer() instanceof ITabbedPane) {
-      ITabbedPane parentTabbedPane = (ITabbedPane) component.getParentContainer();
+    if (component.getParentContainer() instanceof ITabbedPane parentTabbedPane) {
       StringDescriptor descriptor = parentTabbedPane.getTabProperty(component, ITabbedPane.TAB_TITLE_PROPERTY);
       if (descriptor != null) {
         checkStringDescriptor(module, component, MockTabTitleProperty.INSTANCE, descriptor, collector);

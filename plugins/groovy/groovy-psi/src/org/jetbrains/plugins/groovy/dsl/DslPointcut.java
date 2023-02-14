@@ -10,9 +10,6 @@ import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 
 import java.util.*;
 
-/**
- * @author peter
- */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class DslPointcut<T,V> {
   public static final DslPointcut UNKNOWN = new DslPointcut() {
@@ -230,7 +227,7 @@ public abstract class DslPointcut<T,V> {
 
   public static DslPointcut bind(final Object arg) {
     assert arg instanceof Map;
-    assert ((Map)arg).size() == 1;
+    assert ((Map<?, ?>)arg).size() == 1;
     final String name = (String)((Map)arg).keySet().iterator().next();
     final DslPointcut pct = (DslPointcut)((Map)arg).values().iterator().next();
 

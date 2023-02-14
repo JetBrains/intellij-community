@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -23,8 +23,7 @@ internal class ConstructorParameterResolver {
                    expectedType: Class<*>,
                    pluginId: PluginId,
                    isExtensionSupported: Boolean): Boolean {
-    if (isLightService(expectedType) ||
-        expectedType === ComponentManager::class.java ||
+    if (expectedType === ComponentManager::class.java ||
         findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId) != null) {
       return true
     }
@@ -54,7 +53,7 @@ internal class ConstructorParameterResolver {
         // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
         adapter.getInstance(adapter.componentManager, null)
       }
-      componentManager.parent == null -> adapter.getComponentInstance(componentManager)
+      componentManager.parent == null -> adapter.componentInstance
       else -> componentManager.getComponentInstance(adapter.componentKey)
     }
   }
@@ -79,7 +78,7 @@ private fun findTargetAdapter(componentManager: ComponentManagerImpl,
                               requestorKey: Any,
                               requestorClass: Class<*>,
                               requestorConstructor: Constructor<*>,
-                              @Suppress("UNUSED_PARAMETER") pluginId: PluginId): ComponentAdapter? {
+                              pluginId: PluginId): ComponentAdapter? {
   val byKey = componentManager.getComponentAdapter(expectedType)
   if (byKey != null && requestorKey != byKey.componentKey) {
     return byKey

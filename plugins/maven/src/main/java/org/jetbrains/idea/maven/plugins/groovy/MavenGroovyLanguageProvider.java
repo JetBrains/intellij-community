@@ -23,9 +23,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.plugins.api.MavenParamLanguageProvider;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenGroovyLanguageProvider extends MavenParamLanguageProvider {
 
   @Nullable

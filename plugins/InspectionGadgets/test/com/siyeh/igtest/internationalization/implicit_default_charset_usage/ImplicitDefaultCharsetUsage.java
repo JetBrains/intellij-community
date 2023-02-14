@@ -29,6 +29,7 @@ class ImplicitDefaultCharsetUsage {
     new PrintStream("filename", "utf-8");
     new PrintStream("filename");
     new PrintWriter((Writer)null);
+    new PrintWriter(System.out);
     new PrintWriter("filename", "utf-8");
     new <warning descr="'new PrintWriter()' call uses the platform's default charset">PrintWriter</warning>("filename");
     new <warning descr="'new Formatter()' call uses the platform's default charset">Formatter</warning>(new FileOutputStream("null"));

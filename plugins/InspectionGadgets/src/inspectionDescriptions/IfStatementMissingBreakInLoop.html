@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports cases in which a loop contains the <code>if</code> statement that can end with <code>break</code> without changing the semantics.
-This prevents executing redundant loop iterations.
-<p>Example:</p>
-<pre>
+Reports loops with an <code>if</code> statement that can end with <code>break</code> without changing the semantics.
+This prevents redundant loop iterations.
+<p><b>Example:</b></p>
+<pre><code>
   boolean found = false;
   for (int i = 0; i &lt; arr.length; i++) {
     if (Objects.equals(value, arr[i])) {
       found = true;
     }
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   boolean found = false;
   for (int i = 0; i &lt; arr.length; i++) {
     if (Objects.equals(value, arr[i])) {
@@ -20,8 +20,8 @@ This prevents executing redundant loop iterations.
       break;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<small>New in 2019.2</small>
+<p><small>New in 2019.2</small></p>
 </body>
 </html>

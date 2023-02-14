@@ -224,8 +224,7 @@ public final class GroovyOverrideImplementUtil {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();
-        if (element instanceof GrMethod) {
-          GrMethod method = (GrMethod)element;
+        if (element instanceof GrMethod method) {
           if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
             iterator.remove();
             secondary.add(candidate);
@@ -249,7 +248,7 @@ public final class GroovyOverrideImplementUtil {
   @NotNull
   private static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (!superMethod.isConstructor() && !PsiTypes.voidType().equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");

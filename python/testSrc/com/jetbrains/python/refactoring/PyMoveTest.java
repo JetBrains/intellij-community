@@ -37,9 +37,6 @@ import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
 
-/**
- * @author vlan
- */
 public class PyMoveTest extends PyTestCase {
   public void testFunction() {
     doMoveSymbolTest("f", "b.py");
@@ -436,6 +433,31 @@ public class PyMoveTest extends PyTestCase {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
     doMoveSymbolTest("func", "dst.py");
+  }
+
+  // PY-16221
+  public void testFromFutureImports() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-16221
+  public void testExistingFromFutureImportsNotDuplicated() {
+    doMoveSymbolTest("C", "b.py");
+  }
+
+  // PY-23831
+  public void testWithImportedForwardReferencesInTypeHints() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedFunctionTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
+  }
+
+  // PY-23831
+  public void testWithImportedTypeComments() {
+    doMoveSymbolTest("test", "dst.py");
   }
 
   private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {

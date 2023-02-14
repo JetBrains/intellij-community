@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -90,7 +90,7 @@ public final class CompletionUtil {
   }
 
   /**
-   * @return an alphanumertic prefix for completion matching, calculated from the given parameters.
+   * @return an alphanumeric prefix for completion matching, calculated from the given parameters.
    * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
    * ending at {@code parameters.getOffset()}, consisting of letters and digits.
    */
@@ -114,7 +114,6 @@ public final class CompletionUtil {
     return findInText(offsetInFile, startOffset, idPart, idStart, position.getNode().getChars());
   }
 
-  @SuppressWarnings("unused") // used in Rider
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {
     final CharSequence text = document.getImmutableCharSequence();
@@ -300,7 +299,21 @@ public final class CompletionUtil {
                                                                                      OffsetMap offsetMap) {
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
 
-    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
+    return createInsertionContext(lookupItems, completionChar, editor, psiFile, initialStartOffset, caretOffset, idEndOffset, offsetMap);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
+                                                                                     char completionChar,
+                                                                                     Editor editor,
+                                                                                     PsiFile psiFile,
+                                                                                     int startOffset,
+                                                                                     int caretOffset,
+                                                                                     int idEndOffset,
+                                                                                     OffsetMap offsetMap) {
+
+    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset);
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 

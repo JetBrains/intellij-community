@@ -22,9 +22,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author ven
- */
 public abstract class ResolverProcessor<T extends GroovyResolveResult> extends GrScopeProcessorWithHints {
 
   protected final PsiElement myPlace;
@@ -66,8 +63,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   }
 
   protected boolean isAccessible(@NotNull PsiNamedElement namedElement) {
-    if (namedElement instanceof GrField) {
-      final GrField field = (GrField)namedElement;
+    if (namedElement instanceof GrField field) {
       if (PsiUtil.isAccessible(myPlace, field)) {
         return true;
       }

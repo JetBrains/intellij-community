@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.javadoc;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,13 +37,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.*;
+
+public class UnnecessaryJavaDocLinkInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   private static final int THIS_METHOD = 1;
   private static final int THIS_CLASS = 2;
   private static final int SUPER_METHOD = 3;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreInlineLinkToSuper = false;
 
   @NotNull
@@ -61,11 +65,10 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessary.javadoc.link.option"),
-      this, "ignoreInlineLinkToSuper");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInlineLinkToSuper", InspectionGadgetsBundle.message(
+        "unnecessary.javadoc.link.option")));
   }
 
   @Override
@@ -96,13 +99,12 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiDocTag)) {
+      if (!(parent instanceof PsiDocTag docTag)) {
         return;
       }
-      final PsiDocTag docTag = (PsiDocTag)parent;
       final PsiDocComment docComment = docTag.getContainingComment();
       if (docComment != null) {
         if (shouldDeleteEntireComment(docComment)) {
@@ -142,7 +144,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitDocTag(PsiDocTag tag) {
+    public void visitDocTag(@NotNull PsiDocTag tag) {
       super.visitDocTag(tag);
       @NonNls final String name = tag.getName();
       if ("link".equals(name) || "linkplain".equals(name)) {
@@ -180,10 +182,9 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
                       Integer.valueOf(THIS_CLASS));
         return;
       }
-      if (!(target instanceof PsiMethod)) {
+      if (!(target instanceof PsiMethod method)) {
         return;
       }
-      final PsiMethod method = (PsiMethod)target;
       if (!isSuperMethod(method, containingMethod)) {
         return;
       }

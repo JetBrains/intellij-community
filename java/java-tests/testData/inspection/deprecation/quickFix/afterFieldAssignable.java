@@ -1,4 +1,4 @@
-// "Replace field reference with Main.YYY" "true"
+// "Replace field reference with 'Main.YYY'" "true"
 public class Main {
   public static void main(String[] args) {
     boolean yyy = Main.YYY;

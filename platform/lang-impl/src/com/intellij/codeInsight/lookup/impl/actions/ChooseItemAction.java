@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.lookup.impl.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -13,7 +12,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.codeInsight.template.impl.editorActions.ExpandLiveTemplateCustomAction;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -57,18 +55,6 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
         return;
       }
 
-      if (finishingChar == Lookup.NORMAL_SELECT_CHAR) {
-        if (!lookup.isFocused()) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ENTER);
-        }
-      } else if (finishingChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
-      } else if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
-      } else if (finishingChar == '.')  {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_CONTROL_DOT);
-      }
-
       SlowOperations.allowSlowOperations(() -> lookup.finishLookup(finishingChar));
     }
 
@@ -78,6 +64,7 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
       if (lookup == null) return false;
       if (!lookup.isAvailableToUser()) return false;
+      if (lookup.getCurrentItemOrEmpty() == null) return false;
       if (focusedOnly && lookup.getLookupFocusDegree() == LookupFocusDegree.UNFOCUSED) return false;
       if (finishingChar == Lookup.REPLACE_SELECT_CHAR) {
         return !lookup.getItems().isEmpty();
@@ -108,9 +95,9 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
     if (liveTemplateLookup == null || !liveTemplateLookup.sudden) {
-      // Lookup doesn't contain sudden live templates. It means that 
+      // Lookup doesn't contain sudden live templates. It means that
       // - there are no live template with given key:
-      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
+      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action).
       // - completion provider worked too long:
       //    in this case we should check custom templates that provides completion lookup.
       if (LiveTemplateCompletionContributor.customTemplateAvailableAndHasCompletionItem(shortcutChar, editor, file, offset)) {

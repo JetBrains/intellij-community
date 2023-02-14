@@ -3,14 +3,8 @@
  */
 package org.jetbrains.idea.devkit.inspections
 
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.codeInspection.*
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
 import com.intellij.psi.util.TypeConversionUtil.isNullType
@@ -40,6 +34,10 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
     }.toTypedArray()
   }
 
+  override fun isAllowed(holder: ProblemsHolder): Boolean =
+    super.isAllowed(holder)
+    && JavaPsiFacade.getInstance(holder.project).findClass(UElement::class.java.canonicalName, holder.file.resolveScope) != null
+
   private class CodeVisitor(private val uElementType: PsiClassType, private val psiElementType: PsiClassType) : AbstractUastVisitor() {
 
     val reportedElements = SmartList<PsiElement>()
@@ -52,12 +50,13 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
     private fun checkArguments(node: UCallExpression) {
       for (valueArgument in node.valueArguments) {
-        if (getDimIfPsiElementType(node.getParameterForArgument(valueArgument)?.type) == getDimIfUElementType(valueArgument.getExpressionType())) {
+        if (getDimIfPsiElementType(node.getParameterForArgument(valueArgument)?.type) ==
+          getDimIfUElementType(valueArgument.getExpressionType())
+        ) {
           valueArgument.sourcePsiElement?.let { reportedElements.add(it) }
         }
       }
     }
-
 
     private fun checkReceiver(node: UCallExpression) {
       if (getDimIfUElementType(node.receiverType) == NOT_UELEMENT) return
@@ -76,7 +75,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
       if (getDimIfUElementType(node.rightOperand.getExpressionType()) == getDimIfPsiElementType(node.leftOperand.getExpressionType())) {
         node.rightOperand.sourcePsiElement?.let { reportedElements.add(it) }
       }
-      return false;
+      return false
     }
 
     override fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType): Boolean {
@@ -87,15 +86,30 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
     }
 
     override fun visitVariable(node: UVariable): Boolean {
-      if (getDimIfUElementType(node.uastInitializer?.getExpressionType()) == getDimIfPsiElementType(node.type)) {
+      if (getDimIfUElementType(node.uastInitializer?.getExpressionType()) == getDimIfPsiElementType(node.typeReference?.type)) {
         node.uastInitializer.sourcePsiElement?.let { reportedElements.add(it) }
       }
       return false
     }
 
+    override fun visitReturnExpression(node: UReturnExpression): Boolean {
+      val expected = when (val jt = node.jumpTarget) {
+        is UMethod -> jt.returnType
+        is ULambdaExpression -> jt.getExpressionType()
+        else -> null
+      }
+      if (getDimIfUElementType(node.returnExpression?.getExpressionType()) == getDimIfPsiElementType(expected)) {
+        node.returnExpression.sourcePsiElement?.let { reportedElements.add(it) }
+      }
+      return super.visitReturnExpression(node)
+    }
+
     private fun getDimIfPsiElementType(type: PsiType?): Int {
-      val dim = type?.arrayDimensions ?: NOT_PSI_ELEMENT
-      return (if (type?.deepComponentType?.let { !isNullType(type) && isAssignable(psiElementType, it) && getDimIfUElementType(it) == NOT_UELEMENT } == true) dim else NOT_PSI_ELEMENT)
+      val dim = type?.arrayDimensions ?: return NOT_PSI_ELEMENT
+      return if (
+        type.deepComponentType.let { !isNullType(type) && isAssignable(psiElementType, it) && getDimIfUElementType(it) == NOT_UELEMENT }
+      ) dim
+      else NOT_PSI_ELEMENT
     }
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
@@ -104,8 +118,8 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
     }
 
     private fun getDimIfUElementType(type: PsiType?): Int {
-      val dim = type?.arrayDimensions ?: NOT_UELEMENT
-      return if (type?.deepComponentType?.let { !isNullType(type) && isAssignable(uElementType, it) } == true) dim else NOT_UELEMENT
+      val dim = type?.arrayDimensions ?: return NOT_UELEMENT
+      return if (type.deepComponentType.let { !isNullType(type) && isAssignable(uElementType, it) }) dim else NOT_UELEMENT
     }
   }
 
@@ -120,5 +134,4 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
       UClassInitializer::class.java.name
     )
   }
-
 }

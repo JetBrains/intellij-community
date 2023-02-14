@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -12,9 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,12 +25,14 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.event.HyperlinkListener;
 
 /**
- * Extends this class to provide debugging capabilities for custom language/framework.
- *
- * In order to start debugger by 'Debug' action for a specific run configuration implement {@link com.intellij.execution.runners.ProgramRunner}
- * and call {@link XDebuggerManager#startSession} from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method
- *
- * Otherwise use method {@link XDebuggerManager#startSessionAndShowTab} to start new debugging session
+ * Extend this class to provide debugging capabilities for a custom language/framework.
+ * <p>
+ * In order to start the debugger by a 'Debug' action for a specific run configuration,
+ * implement {@link com.intellij.execution.runners.ProgramRunner}
+ * and call {@link XDebuggerManager#startSession}
+ * from the {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method.
+ * <p>
+ * Otherwise, use method {@link XDebuggerManager#startSessionAndShowTab} to start a new debugging session.
  */
 public abstract class XDebugProcess {
   private final XDebugSession mySession;
@@ -70,9 +70,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Interrupt debugging process and call {@link XDebugSession#positionReached}
-   * when next line in current method/function is reached.
-   * Do not call this method directly. Use {@link XDebugSession#pause()} instead
+   * Interrupt the debugging process and call {@link XDebugSession#positionReached}
+   * when the next line in current method/function is reached.
+   * Do not call this method directly. Use {@link XDebugSession#pause()} instead.
    */
   public void startPausing() {
   }
@@ -87,20 +87,19 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
-   * when next line in current method/function is reached.
-   * Do not call this method directly. Use {@link XDebugSession#stepOver} instead
+   * when the next line in the current method/function is reached.
+   * Do not call this method directly. Use {@link XDebugSession#stepOver} instead.
    */
   public void startStepOver(@Nullable XSuspendContext context) {
-    //noinspection deprecation
     startStepOver();
   }
 
   /**
-   * Steps into suppressed call
+   * Step into a suppressed call.
    * <p>
    * Resume execution and call {@link XDebugSession#positionReached}
-   * when next line is reached.
-   * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead
+   * when the next line is reached.
+   * Do not call this method directly. Use {@link XDebugSession#forceStepInto} instead.
    */
   public void startForceStepInto(@Nullable XSuspendContext context) {
     startStepInto(context);
@@ -116,11 +115,10 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
-   * when next line is reached.
-   * Do not call this method directly. Use {@link XDebugSession#stepInto} instead
+   * when the next line is reached.
+   * Do not call this method directly. Use {@link XDebugSession#stepInto} instead.
    */
   public void startStepInto(@Nullable XSuspendContext context) {
-    //noinspection deprecation
     startStepInto();
   }
 
@@ -134,17 +132,15 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached}
-   * after returning from current method/function.
-   * Do not call this method directly. Use {@link XDebugSession#stepOut} instead
+   * after returning from the current method/function.
+   * Do not call this method directly. Use {@link XDebugSession#stepOut} instead.
    */
   public void startStepOut(@Nullable XSuspendContext context) {
-    //noinspection deprecation
     startStepOut();
   }
 
   /**
-   * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable Smart Step Into action
-   * @return {@link XSmartStepIntoHandler} instance
+   * Implement {@link XSmartStepIntoHandler} and return its instance from this method to enable the Smart Step Into action.
    */
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
@@ -152,8 +148,27 @@ public abstract class XDebugProcess {
   }
 
   /**
+   * Implement {@link XDropFrameHandler} and return its instance from this method to enable the Drop Frame action.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public XDropFrameHandler getDropFrameHandler() {
+    return null;
+  }
+
+  /**
+   * Implement {@link XAlternativeSourceHandler} and return an instance of it to enable
+   * support for alternative view of the execution position, like a disassembly view.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  public XAlternativeSourceHandler getAlternativeSourceHandler() {
+    return null;
+  }
+
+  /**
    * Stop debugging and dispose resources.
-   * Do not call this method directly. Use {@link XDebugSession#stop} instead
+   * Do not call this method directly. Use {@link XDebugSession#stop} instead.
    */
   public void stop() {
     throw new AbstractMethodError();
@@ -175,10 +190,9 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution.
-   * Do not call this method directly. Use {@link XDebugSession#resume} instead
+   * Do not call this method directly. Use {@link XDebugSession#resume} instead.
    */
   public void resume(@Nullable XSuspendContext context) {
-    //noinspection deprecation
     resume();
   }
 
@@ -193,25 +207,26 @@ public abstract class XDebugProcess {
   /**
    * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
    * when {@code position} is reached.
-   * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
+   * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead.
    *
    * @param position position in source code
    */
   public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
-    //noinspection deprecation
     runToPosition(position);
   }
 
   /**
-   * Check is it is possible to perform commands such as resume, step etc. And notify user if necessary
-   * @return {@code true} if process can actually perform user requests at this moment
+   * Check if it is possible to perform commands such as resume, step etc. Notify the user if necessary.
+   *
+   * @return {@code true} if the process can actually perform user requests at this moment
    */
   public boolean checkCanPerformCommands() {
     return true;
   }
 
   /**
-   * Check is it is possible to init breakpoints. Otherwise you should call {@link XDebugSession#initBreakpoints()} at the appropriate time
+   * Check if it is possible to initialize breakpoints.
+   * Otherwise, you should call {@link XDebugSession#initBreakpoints()} at the appropriate time.
    */
   public boolean checkCanInitBreakpoints() {
     return true;
@@ -239,8 +254,8 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to enable 'Mark Object' action
-   * @return new instance of {@link XValueMarkerProvider}'s implementation or {@code null} if 'Mark Object' feature isn't supported
+   * Override this method to enable the 'Mark Object' action.
+   * @return new instance of {@link XValueMarkerProvider}'s implementation, or {@code null} if the 'Mark Object' feature isn't supported
    */
   @Nullable
   public XValueMarkerProvider<?,?> createValueMarkerProvider() {
@@ -248,13 +263,13 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to provide additional actions in 'Debug' tool window
+   * Override this method to provide additional actions in the 'Debug' tool window.
    */
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
   }
 
   /**
-   * @return message to show in Variables View when debugger isn't paused
+   * @return the message to show in the Variables View when the debugger isn't paused
    */
   public @Nls String getCurrentStateMessage() {
     return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
@@ -266,7 +281,7 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Override this method to customize content of tab in 'Debug' tool window
+   * Override this method to customize the content of the tab in the 'Debug' tool window.
    */
   @NotNull
   public XDebugTabLayouter createTabLayouter() {
@@ -275,8 +290,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Add or not SortValuesAction (alphabetically sort)
-   * @todo this action should be moved to "Variables" as gear action
+   * Add or not SortValuesAction (alphabetically sort).
+   * <p>
+   * TODO this action should be moved to "Variables" as gear action
    */
   public boolean isValuesCustomSorted() {
     return false;
@@ -289,7 +305,8 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * Is "isShowLibraryStackFrames" setting respected. If true, ShowLibraryFramesAction will be shown, for example.
+   * Whether the "isShowLibraryStackFrames" setting is respected.
+   * If true, the ShowLibraryFramesAction will be shown, for example.
    */
   public boolean isLibraryFrameFilterSupported() {
     return false;

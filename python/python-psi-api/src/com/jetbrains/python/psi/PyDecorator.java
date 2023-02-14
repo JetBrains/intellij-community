@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * In {@code @foo} form, {@code PyCallExpression}'s methods are related to invocation of {@code foo}
  * as decorator. In {@code @foo(...)} form, these very methods are related to the call that returns the decorator
  * to be applied. In either case, they are related to an invocation of {@code foo}.
- * User: dcheryasov
  */
 public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
   /**

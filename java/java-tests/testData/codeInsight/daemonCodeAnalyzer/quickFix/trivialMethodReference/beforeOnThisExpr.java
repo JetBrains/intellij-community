@@ -1,4 +1,4 @@
-// "Replace with qualifier" "true"
+// "Replace with qualifier" "true-preview"
 class A implements Runnable {
   public void run() {}
 }

@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -28,8 +30,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonProtectedConstructorInAbstractClassInspection
-  extends BaseInspection {
+import static com.intellij.codeInspection.options.OptPane.*;
+
+public class NonProtectedConstructorInAbstractClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   /**
    * @noinspection PublicField
@@ -50,11 +53,10 @@ public class NonProtectedConstructorInAbstractClassInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "non.protected.constructor.in.abstract.class.ignore.option"),
-      this, "m_ignoreNonPublicClasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreNonPublicClasses", InspectionGadgetsBundle.message(
+        "non.protected.constructor.in.abstract.class.ignore.option")));
   }
 
   @Override

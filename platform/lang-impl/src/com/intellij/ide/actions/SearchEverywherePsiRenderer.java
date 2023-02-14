@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.NavigationItem;
@@ -28,7 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.NamedColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,22 +44,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   private EditorColorsScheme scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
 
   public SearchEverywherePsiRenderer(Disposable parent) {
-    setFocusBorderEnabled(false);
-    setLayout(new BorderLayout() {
-      @Override
-      public void layoutContainer(Container target) {
-        super.layoutContainer(target);
-        final Component right = getLayoutComponent(EAST);
-        final Component left = getLayoutComponent(WEST);
-
-        //IDEA-140824
-        if (right != null && left != null && left.getBounds().x + left.getBounds().width > right.getBounds().x) {
-          final Rectangle bounds = right.getBounds();
-          final int newX = left.getBounds().x + left.getBounds().width;
-          right.setBounds(newX, bounds.y, bounds.width - (newX - bounds.x), bounds.height);
-        }
-      }
-    });
+    setLayout(new SELayout());
 
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(LafManagerListener.TOPIC, __ -> {
       scheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
@@ -70,7 +54,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   @Override
   protected @NotNull SimpleTextAttributes getErrorAttributes() {
     SimpleTextAttributes schemeAttributes = SimpleTextAttributes.fromTextAttributes(scheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES));
-    return new SimpleTextAttributes(schemeAttributes.getBgColor(), UIUtil.getInactiveTextColor(), schemeAttributes.getWaveColor(),
+    return new SimpleTextAttributes(schemeAttributes.getBgColor(), NamedColorUtil.getInactiveTextColor(), schemeAttributes.getWaveColor(),
                                     schemeAttributes.getStyle() | SimpleTextAttributes.STYLE_USE_EFFECT_COLOR);
   }
 
@@ -186,17 +170,23 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
   }
 
   @Override
-  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-    final DefaultListCellRenderer rightRenderer = super.getRightCellRenderer(value);
-    if (rightRenderer instanceof PlatformModuleRendererFactory.PlatformModuleRenderer) {
-      // that renderer will display file path, but we're showing it ourselves - no need to show twice
-      return null;
-    }
-    return rightRenderer;
-  }
-
-  @Override
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_READ_STATUS;
+  }
+
+  public static class SELayout extends BorderLayout {
+    @Override
+    public void layoutContainer(Container target) {
+      super.layoutContainer(target);
+      final Component right = getLayoutComponent(EAST);
+      final Component left = getLayoutComponent(WEST);
+
+      //IDEA-140824
+      if (right != null && left != null && left.getBounds().x + left.getBounds().width > right.getBounds().x) {
+        final Rectangle bounds = right.getBounds();
+        final int newX = left.getBounds().x + left.getBounds().width;
+        right.setBounds(newX, bounds.y, bounds.width - (newX - bounds.x), bounds.height);
+      }
+    }
   }
 }

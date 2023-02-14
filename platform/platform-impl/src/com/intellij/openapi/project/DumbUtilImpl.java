@@ -3,8 +3,9 @@ package com.intellij.openapi.project;
 
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class DumbUtilImpl implements DumbUtil {
+public final class DumbUtilImpl implements DumbUtil {
   private final Project myProject;
 
   public DumbUtilImpl(@NotNull Project project) {
@@ -14,5 +15,16 @@ public class DumbUtilImpl implements DumbUtil {
   @Override
   public boolean mayUseIndices() {
     return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null;
+  }
+
+  public static void waitForSmartMode(@Nullable Project project) {
+    if (project != null) {
+      DumbService.getInstance(project).waitForSmartMode();
+    }
+    else {
+      for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
+        DumbService.getInstance(openProject).waitForSmartMode();
+      }
+    }
   }
 }

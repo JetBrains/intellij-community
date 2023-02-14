@@ -5,10 +5,7 @@ import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -141,7 +138,7 @@ public class TreeBasedMap<T> {
 
 
   private class KeysIterator implements Iterator<String> {
-    private final Stack<PathElement<T>> myCurrentNodePath = new Stack<>();
+    private final Deque<PathElement<T>> myCurrentNodePath = new ArrayDeque<>();
     private final StringBuilder myCurrentName = new StringBuilder();
 
     KeysIterator() {

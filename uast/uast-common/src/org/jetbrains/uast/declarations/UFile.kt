@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -15,10 +15,11 @@ interface UFile : UElement, UAnnotated {
   /**
    * Returns the original [PsiFile].
    */
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiFile
 
-  @JvmDefault
   @Suppress("DEPRECATION")
   override val sourcePsi: PsiFile
     get() = psi
@@ -33,6 +34,10 @@ interface UFile : UElement, UAnnotated {
    * Returns the import statements for this file.
    */
   val imports: List<UImportStatement>
+
+  @Suppress("DEPRECATION")
+  val implicitImports: List<String>
+    get() = emptyList()
 
   /**
    * Returns the list of top-level classes declared in this file.

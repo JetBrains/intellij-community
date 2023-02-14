@@ -46,9 +46,11 @@ public class EditorConfigEncodingTest extends EditorConfigFileSettingsTestCase {
     Files.createDirectories(dir);
     Files.copy(getTestDataPath().resolve(".editorconfig"), dir.resolve(".editorconfig"));
     VirtualFile targetDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dir);
-    return WriteAction.computeAndWait(() -> {
+    VirtualFile file = WriteAction.computeAndWait(() -> {
       return targetDir.createChildData(this, "test.txt");
     });
+    EditorConfigEncodingCache.getInstance().computeAndCacheEncoding(getProject(), file);
+    return file;
   }
 
   @Override

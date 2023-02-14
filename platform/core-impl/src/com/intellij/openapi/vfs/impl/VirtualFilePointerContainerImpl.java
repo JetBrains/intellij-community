@@ -75,7 +75,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   public void writeExternal(@NotNull final Element element, @NotNull final String childElementName, boolean externalizeJarDirectories) {
     for (VirtualFilePointer pointer : myList) {
       String url = pointer.getUrl();
-      final Element rootPathElement = new Element(childElementName);
+      Element rootPathElement = new Element(childElementName);
       rootPathElement.setAttribute(URL_ATTR, url);
       element.addContent(rootPathElement);
     }

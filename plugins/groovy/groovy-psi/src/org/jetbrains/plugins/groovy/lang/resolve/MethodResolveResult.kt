@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -30,7 +30,7 @@ open class MethodResolveResult(
   }
 
   private val fullSubstitutor by recursionSafeLazy {
-    buildTopLevelSession(place).inferSubst(this)
+    buildTopLevelSession(place, isOperatorPutAt = method.name == "putAt").inferSubst(this)
   }
 
   override fun createMethodCandidate(method: PsiMethod, place: PsiElement, state: ResolveState): GroovyMethodCandidate {

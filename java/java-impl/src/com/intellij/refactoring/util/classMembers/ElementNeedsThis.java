@@ -19,9 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author dsl
- */
 public class ElementNeedsThis extends ClassThisReferencesVisitor {
   private boolean myResult;
   private final PsiElement myMember;
@@ -63,7 +60,7 @@ public class ElementNeedsThis extends ClassThisReferencesVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     PsiType type = expression.getType();
     if (type != null) {

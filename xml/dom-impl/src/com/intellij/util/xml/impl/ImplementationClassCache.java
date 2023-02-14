@@ -8,8 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.DomReflectionUtil;
-import com.intellij.util.xml.Implementation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +16,6 @@ import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-/**
- * @author peter
- */
 final class ImplementationClassCache {
   private static final Comparator<Class<?>> CLASS_COMPARATOR = (o1, o2) -> {
     if (o1.isAssignableFrom(o2)) return 1;
@@ -38,9 +33,7 @@ final class ImplementationClassCache {
       return set.first();
     }
 
-    @SuppressWarnings("deprecation")
-    Implementation implementation = DomReflectionUtil.findAnnotationDFS(concreteInterface, Implementation.class);
-    return implementation == null ? concreteInterface : implementation.value();
+    return concreteInterface;
   });
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {

@@ -49,7 +49,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
-  @NotNull private final SimpleThreesideTextDiffProvider myTextDiffProvider;
+  @NotNull protected final SimpleThreesideTextDiffProvider myTextDiffProvider;
 
   @NotNull private final List<SimpleThreesideDiffChange> myDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<>();
@@ -157,7 +157,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  private Runnable apply(@NotNull final List<FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
+  protected Runnable apply(final @NotNull List<? extends FineMergeLineFragment> fragments, @Nullable FoldingModelSupport.Data foldingState) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
@@ -240,7 +240,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   @NotNull
   @Override
   public List<SimpleThreesideDiffChange> getChanges() {
-    return myDiffChanges;
+    return Collections.unmodifiableList(myDiffChanges);
   }
 
   @NotNull
@@ -346,7 +346,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes) {
+    protected void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<? extends SimpleThreesideDiffChange> changes) {
       if (!isEditable(myModifiedSide)) return;
 
       String title = DiffBundle.message("message.use.selected.changes.command", e.getPresentation().getText());
@@ -359,6 +359,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   protected abstract class SelectedChangesActionBase extends DumbAwareAction {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -405,7 +410,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     protected abstract Icon getIcon(@NotNull ThreeSide side);
 
     @RequiresWriteLock
-    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes);
+    protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<? extends SimpleThreesideDiffChange> changes);
 
     private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
       if (getChanges().isEmpty()) return false;

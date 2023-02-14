@@ -11,7 +11,6 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.repo.GitRepository
-import java.util.*
 
 private val LOG = logger<GitUpdatedRanges>()
 

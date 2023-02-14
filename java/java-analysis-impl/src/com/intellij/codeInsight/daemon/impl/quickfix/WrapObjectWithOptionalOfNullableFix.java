@@ -53,7 +53,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @NotNull
   @Override
   public String getText() {
-    if (myArgList.getExpressionCount() == 1) {
+    PsiExpressionList list = myArgList.getElement();
+    if (list != null && list.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
     else {
@@ -68,48 +69,55 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return null;
+    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                                    myArgumentFixerActionFactory);
   }
 
   public static IntentionAction createFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    class MyFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-      protected MyFix(@Nullable PsiElement element) {
-        super(element);
-      }
+    return new MyFix(expression, type);
+  }
 
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
-      }
+  private static class MyFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+    @SafeFieldForPreview // used only in isAvailable
+    private final PsiType myType;
 
-      @Override
-      public void invoke(@NotNull Project project,
-                         @NotNull PsiFile file,
-                         @Nullable Editor editor,
-                         @NotNull PsiElement startElement,
-                         @NotNull PsiElement endElement) {
-        startElement.replace(getModifiedExpression((PsiExpression)getStartElement()));
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project,
-                                 @NotNull PsiFile file,
-                                 @NotNull PsiElement startElement,
-                                 @NotNull PsiElement endElement) {
-        return BaseIntentionAction.canModify(startElement) &&
-               PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), type);
-      }
-
-      @NotNull
-      @Override
-      public String getText() {
-        return getFamilyName();
-      }
+    protected MyFix(@Nullable PsiElement element, @Nullable PsiType type) {
+      super(element);
+      myType = type;
     }
-    return new MyFix(expression);
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
+    }
+
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      startElement.replace(getModifiedExpression((PsiExpression)getStartElement()));
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      return BaseIntentionAction.canModify(startElement) &&
+             PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), myType);
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getFamilyName();
+    }
   }
 
   public static class MyFixerActionFactory extends ArgumentFixerActionFactory {

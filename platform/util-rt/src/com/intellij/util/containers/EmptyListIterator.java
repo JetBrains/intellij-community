@@ -13,33 +13,39 @@ final class EmptyListIterator<E> extends EmptyIterator<E> implements ListIterato
   private EmptyListIterator() {
   }
 
-  private static final EmptyListIterator<Object> INSTANCE = new EmptyListIterator<Object>();
+  private static final EmptyListIterator<Object> INSTANCE = new EmptyListIterator<>();
 
   public static <E> EmptyListIterator<E> getInstance() {
     //noinspection unchecked
     return (EmptyListIterator<E>)INSTANCE;
   }
 
+  @Override
   public boolean hasPrevious() {
     return false;
   }
 
+  @Override
   public E previous() {
     throw new NoSuchElementException();
   }
 
+  @Override
   public int nextIndex() {
     return 0;
   }
 
+  @Override
   public int previousIndex() {
     return -1;
   }
 
+  @Override
   public void set(E e) {
     throw new IllegalStateException();
   }
 
+  @Override
   public void add(E e) {
     throw new UnsupportedOperationException();
   }

@@ -31,12 +31,16 @@ import org.jetbrains.annotations.SystemDependent;
 import java.io.File;
 import java.util.*;
 
-@State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
+/**
+ * @deprecated This class doesn't support targets, can't work with remote systems and shouldn't be used
+ */
+@Deprecated
+@State(name = "PyCondaPackageService", storages = @Storage(value = "conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
 
-  private final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
-    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
+  private final static String[] CONDA_DEFAULT_ROOTS =
+    new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
 
   private static final String CONDA_ENVS_DIR = "envs";
 
@@ -85,11 +89,23 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public static String getSystemCondaExecutable() {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+  private static String getSystemCondaExecutable() {
+    final String condaName = SystemInfo.isWindows ? "conda.bat" : "conda";
+
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
-    if (condaInPath != null) return condaInPath.getPath();
-    return getCondaExecutableByName(condaName);
+    if (condaInPath != null) {
+      LOG.info("Using " + condaInPath + " as a conda executable (found in PATH)");
+      return condaInPath.getPath();
+    }
+
+    final String condaInRoots = getCondaExecutableByName(condaName);
+    if (condaInRoots != null) {
+      LOG.info("Using " + condaInRoots + " as a conda executable (found by visiting possible conda roots)");
+      return condaInRoots;
+    }
+
+    LOG.info("System conda executable is not found");
+    return null;
   }
 
   @Nullable
@@ -97,11 +113,17 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   public static String getCondaExecutable(@Nullable String sdkPath) {
     if (sdkPath != null) {
       String condaPath = findCondaExecutableRelativeToEnv(sdkPath);
-      if (condaPath != null) return condaPath;
+      if (condaPath != null) {
+        LOG.info("Using " + condaPath + " as a conda executable for " + sdkPath + " (found as a relative to the env)");
+        return condaPath;
+      }
     }
 
-    if (StringUtil.isNotEmpty(getInstance().PREFERRED_CONDA_PATH)) {
-      return getInstance().PREFERRED_CONDA_PATH;
+    final String preferredCondaPath = getInstance().PREFERRED_CONDA_PATH;
+    if (StringUtil.isNotEmpty(preferredCondaPath)) {
+      final String forSdkPath = sdkPath == null ? "" : " for " + sdkPath;
+      LOG.info("Using " + preferredCondaPath + " as a conda executable" + forSdkPath + " (specified as a preferred conda path)");
+      return preferredCondaPath;
     }
 
     return getSystemCondaExecutable();
@@ -122,7 +144,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final String condaName;
     final VirtualFile condaFolder;
     if (SystemInfo.isWindows) {
-      condaName = "conda.exe";
+      condaName = "conda.bat";
       // On Windows python.exe is directly inside base interpreter/environment directory.
       // On other systems executable normally resides in "bin" subdirectory.
       condaFolder = pyExecutableDir;
@@ -148,31 +170,31 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String getCondaExecutableByName(@NotNull final String condaName) {
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
-    if (userHome != null) {
-      for (String root : CONDA_DEFAULT_ROOTS) {
-        VirtualFile condaFolder = userHome.findChild(root);
-        String executableFile = findExecutable(condaName, condaFolder);
-        if (executableFile != null) return executableFile;
-        if (SystemInfo.isWindows) {
-          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
-          executableFile = findExecutable(condaName, appData);
-          if (executableFile != null) return executableFile;
 
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
-          executableFile = findExecutable(condaName, condaFolder);
-          if (executableFile != null) return executableFile;
-
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
-          executableFile = findExecutable(condaName, condaFolder);
-          if (executableFile != null) return executableFile;
-        }
-      }
-    }
-
-    if (!SystemInfo.isWindows) {
-      final VirtualFile systemCondaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/anaconda");
-      final String executableFile = findExecutable(condaName, systemCondaFolder);
+    for (String root : CONDA_DEFAULT_ROOTS) {
+      VirtualFile condaFolder = userHome == null ? null : userHome.findChild(root);
+      String executableFile = findExecutable(condaName, condaFolder);
       if (executableFile != null) return executableFile;
+
+      //noinspection IfStatementWithIdenticalBranches
+      if (SystemInfo.isWindows) {
+        condaFolder = userHome == null ? null : userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
+
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
+
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
+      }
+      else {
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
+      }
     }
 
     return null;
@@ -181,7 +203,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String findExecutable(String condaName, @Nullable final VirtualFile condaFolder) {
     if (condaFolder != null) {
-      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
+      final VirtualFile binFolder = condaFolder.findChild(SystemInfo.isWindows ? "condabin" : "bin");
       if (binFolder != null) {
         final VirtualFile bin = binFolder.findChild(condaName);
         if (bin != null) {

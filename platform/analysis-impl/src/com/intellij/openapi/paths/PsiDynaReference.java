@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -44,6 +45,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   private final List<PsiReference> myReferences = new ArrayList<>();
   private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
+  private @Nullable TextRange myPredefinedRange = null;
 
   public PsiDynaReference(final T psiElement) {
     super(psiElement, true);
@@ -63,6 +65,12 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   public void addReference(PsiReference reference) {
     myReferences.add(reference);
     if (!reference.isSoft()) mySoft = false;
+  }
+
+  @Override
+  public void setRangeInElement(TextRange rangeInElement) {
+    super.setRangeInElement(rangeInElement);
+    this.myPredefinedRange = rangeInElement;
   }
 
   @NotNull
@@ -87,6 +95,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
         end = Math.max(end, textRange.getEndOffset());
       }
     }
+    if (myPredefinedRange != null && myPredefinedRange.containsRange(start, end)) return myPredefinedRange;
     return new TextRange(start, end);
   }
 
@@ -140,7 +149,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   protected ResolveResult[] innerResolve(final boolean incompleteCode) {
-    List<ResolveResult> result = new ArrayList<>();
+    LinkedHashSet<ResolveResult> result = new LinkedHashSet<>();
     for (PsiReference reference : myReferences) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult rr: ((PsiPolyVariantReference)reference).multiResolve(incompleteCode)) {

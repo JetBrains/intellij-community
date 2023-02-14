@@ -1,0 +1,5 @@
+object ConsumerJvmMain {
+    init {
+      ProducerJvmMain
+    }
+}

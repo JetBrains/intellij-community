@@ -5,7 +5,6 @@ import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.filePrediction.features.history.FileHistoryManager
 import com.intellij.filePrediction.features.history.FilePredictionHistoryBaseTest
-import com.intellij.filePrediction.features.history.FilePredictionHistoryState
 import com.intellij.filePrediction.features.history.NextFileProbability
 import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
 import com.intellij.internal.ml.ngram.VocabularyWithLimit
@@ -16,23 +15,17 @@ class FilePredictionNGramTest : FilePredictionHistoryBaseTest() {
                               maxSequenceLength: Int, vocabularyLimit: Int, maxIdx: Int? = null,
                               expectedInternalState: FilePredictionRunnerAssertion,
                               assertion: (FileHistoryManager) -> Unit) {
-    val state = FilePredictionHistoryState()
     val model = JMModel(counter = ArrayTrieCounter(), order = nGramLength, lambda = 1.0)
     val vocabulary = VocabularyWithLimit(vocabularyLimit, nGramLength, maxSequenceLength, 2)
     maxIdx?.let { vocabulary.recent.setMaxTokenIndex(it) }
     val runner = NGramIncrementalModelRunner(nGramLength, 1.0, model, vocabulary)
-    val manager = FileHistoryManager(runner, state, vocabularyLimit)
-    try {
-      for (file in openedFiles) {
-        manager.onFileOpened(file)
-      }
+    val manager = FileHistoryManager(runner)
+    for (file in openedFiles) {
+      manager.onFileOpened(file)
+    }
 
-      expectedInternalState.assert(runner)
-      assertion.invoke(manager)
-    }
-    finally {
-      manager.cleanup()
-    }
+    expectedInternalState.assert(runner)
+    assertion.invoke(manager)
   }
 
   private fun doTestNGram(openedFiles: List<String>,

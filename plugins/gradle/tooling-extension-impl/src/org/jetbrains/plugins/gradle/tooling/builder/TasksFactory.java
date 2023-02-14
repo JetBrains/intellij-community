@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.DefaultTaskContainer;
@@ -26,12 +25,13 @@ import org.jetbrains.plugins.gradle.tooling.MessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TasksFactory {
   private static final boolean TASKS_REFRESH_REQUIRED =
     GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("5.0")) < 0;
-  private final Map<Project, Set<Task>> allTasks = new HashMap<Project, Set<Task>>();
-  private final Set<Project> processedRootProjects = new HashSet<Project>();
+  private final Map<Project, Set<Task>> allTasks = new ConcurrentHashMap<>();
+  private final Set<Project> processedRootProjects = Collections.newSetFromMap(new ConcurrentHashMap<Project, Boolean>());
   @NotNull private final MessageReporter myMessageReporter;
 
   public TasksFactory(@NotNull MessageReporter messageReporter) {
@@ -44,23 +44,41 @@ public class TasksFactory {
 
   @NotNull
   private Map<Project, Set<Task>> getAllTasks(@NotNull Project root) {
-    final Map<Project, Set<Task>> foundTargets = new TreeMap<Project, Set<Task>>();
-    Action<Project> action = new Action<Project>() {
-      @Override
-      public void execute(@NotNull Project project) {
-        try {
-          maybeRefreshTasks(project);
-          TaskContainer projectTasks = project.getTasks();
-          foundTargets.put(project, new TreeSet<Task>(projectTasks));
-        }
-        catch (Exception e) {
-          String title = "Can not load tasks for " + project;
-          myMessageReporter.report(project, MessageBuilder.create(title, title).warning().withException(e).build());
-        }
+    final Map<Project, Set<Task>> foundTargets = new TreeMap<>();
+    for (final Project project : root.getAllprojects()) {
+      try {
+        retryOnce(new Runnable() {
+          @Override
+          public void run() {
+            maybeRefreshTasks(project);
+            TaskContainer projectTasks = project.getTasks();
+            foundTargets.put(project, new TreeSet<>(projectTasks));
+          }
+        });
       }
-    };
-    root.allprojects(action);
+      catch (Exception e) {
+        String title = "Can not load tasks for " + project;
+        myMessageReporter.report(project, MessageBuilder.create(title, title).warning().withException(e).build());
+      }
+    }
     return foundTargets;
+  }
+
+  /**
+   * Retries to launch given runnable.
+   * If fails second time, throw exception from first failure.
+   * @param r runnable to run
+   */
+  private static void retryOnce(Runnable r) {
+    try {
+      r.run();
+    } catch (Exception first) {
+      try {
+        r.run();
+      } catch (Exception second) {
+        throw first;
+      }
+    }
   }
 
   public Set<Task> getTasks(Project project) {
@@ -69,7 +87,7 @@ public class TasksFactory {
       collectTasks(rootProject);
     }
 
-    Set<Task> tasks = new LinkedHashSet<Task>(getTasksNullsafe(project));
+    Set<Task> tasks = new LinkedHashSet<>(getTasksNullsafe(project));
     for (Project subProject : project.getSubprojects()) {
       tasks.addAll(getTasksNullsafe(subProject));
     }

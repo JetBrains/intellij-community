@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -51,10 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author vlan
- */
-public class PyUserSkeletonsUtil {
+public final class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance(PyUserSkeletonsUtil.class);
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
@@ -207,16 +205,12 @@ public class PyUserSkeletonsUtil {
     if (owner != null && name != null) {
       assert owner != element;
       final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile, context);
-      if (originalOwner instanceof PyClass) {
-        final PyClass classOwner = (PyClass)originalOwner;
-        final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
-        if (type instanceof PyClassLikeType) {
-          final PyClassLikeType classType = (PyClassLikeType)type;
+      if (originalOwner instanceof PyClass classOwner) {
+        final var fallbackContext = TypeEvalContext.codeInsightFallback(classOwner.getProject());
+        final PyType type = fallbackContext.getType(classOwner);
+        if (type instanceof PyClassLikeType classType) {
           final PyClassLikeType instanceType = classType.toInstance();
-          PyResolveContext resolveContext = PyResolveContext.defaultContext();
-          if (context != null) {
-            resolveContext = resolveContext.withTypeEvalContext(context);
-          }
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(ObjectUtils.notNull(context, fallbackContext));
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
                                                                                                resolveContext, false);
           if (resolveResults != null && !resolveResults.isEmpty()) {

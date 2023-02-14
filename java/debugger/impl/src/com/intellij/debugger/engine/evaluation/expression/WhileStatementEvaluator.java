@@ -21,9 +21,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.BooleanValue;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author lex
- */
 public class WhileStatementEvaluator extends LoopEvaluator {
   private final Evaluator myConditionEvaluator;
 

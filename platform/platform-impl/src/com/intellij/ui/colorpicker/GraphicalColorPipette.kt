@@ -41,18 +41,18 @@ private const val SCREEN_CAPTURE_SIZE = 11
 /**
  * The size of zoomed rectangle which shows the captured screen.
  */
-private const val ZOOM_RECTANGLE_SIZE = 64
+private val ZOOM_RECTANGLE_SIZE = Toolkit.getDefaultToolkit().getBestCursorSize(64, 64).width
 
 private val PIPETTE_BORDER_COLOR = Color.BLACK
 private val INDICATOR_BOUND_COLOR = Color.RED
 /**
  * The left/top bound of selected pixel in zoomed rectangle.
  */
-private const val INDICATOR_BOUND_START = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2) / SCREEN_CAPTURE_SIZE
+private val INDICATOR_BOUND_START = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2) / SCREEN_CAPTURE_SIZE
 /**
  * The width/height of selected pixel in zoomed rectangle.
  */
-private const val INDICATOR_BOUND_SIZE = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2 + 1) / SCREEN_CAPTURE_SIZE - INDICATOR_BOUND_START
+private val INDICATOR_BOUND_SIZE = ZOOM_RECTANGLE_SIZE * (SCREEN_CAPTURE_SIZE / 2 + 1) / SCREEN_CAPTURE_SIZE - INDICATOR_BOUND_START
 
 private val TRANSPARENT_COLOR = Color(0, true)
 
@@ -105,9 +105,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
   private var previousLoc: Point? = null
 
   private val picker: Dialog = let {
-    val owner = SwingUtilities.getWindowAncestor(parent)
-
-    val pickerFrame = when (owner) {
+    val pickerFrame = when (val owner = SwingUtilities.getWindowAncestor(parent)) {
       is Dialog -> JDialog(owner)
       is Frame -> JDialog(owner)
       else -> JDialog(JFrame())
@@ -177,7 +175,7 @@ private class PickerDialog(val parent: JComponent, val callback: ColorPipette.Ca
               }
             }
             else if (it.id == MouseEvent.MOUSE_MOVED) {
-              updatePipette();
+              updatePipette()
             }
           }
           if (it is KeyEvent && it.id == KeyEvent.KEY_PRESSED) {

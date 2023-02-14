@@ -19,10 +19,16 @@ import org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction;
 import org.jetbrains.idea.maven.dom.generate.GenerateManagedDependencyAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+
+import static org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionTrackerKt.logMavenDependencyInsertion;
 
 public class MavenTopLevelDependencyInsertionHandler implements InsertHandler<LookupElement> {
 
@@ -34,10 +40,9 @@ public class MavenTopLevelDependencyInsertionHandler implements InsertHandler<Lo
       return; // Don't brake the template.
     }
     Object object = item.getObject();
-    if (!(object instanceof MavenRepositoryArtifactInfo)) {
+    if (!(object instanceof MavenRepositoryArtifactInfo completionItem)) {
       return;
     }
-    MavenRepositoryArtifactInfo completionItem = (MavenRepositoryArtifactInfo)object;
     PsiFile contextFile = context.getFile();
     if (!(contextFile instanceof XmlFile)) return;
     Project project = context.getProject();
@@ -63,5 +68,7 @@ public class MavenTopLevelDependencyInsertionHandler implements InsertHandler<Lo
       context.getEditor().getCaretModel().moveToOffset(dependency.getXmlTag().getTextOffset());
     }
     context.commitDocument();
+
+    logMavenDependencyInsertion(context, item, completionItem);
   }
 }

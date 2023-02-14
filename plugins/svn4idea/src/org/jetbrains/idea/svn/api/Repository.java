@@ -3,9 +3,6 @@ package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class Repository {
 
   @NotNull private final Url myUrl;

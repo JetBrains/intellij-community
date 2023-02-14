@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -25,10 +25,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
 
   @Override
   public TypeConversionDescriptorBase findConversion(PsiType from,
-                                                 PsiType to,
-                                                 PsiMember member,
-                                                 PsiExpression context,
-                                                 TypeMigrationLabeler labeler) {
+                                                     PsiType to,
+                                                     PsiMember member,
+                                                     PsiExpression context,
+                                                     TypeMigrationLabeler labeler) {
     if (to instanceof PsiClassType && isThreadLocalTypeMigration(from, (PsiClassType)to, context)) {
       return findDirectConversion(context, to, from, labeler);
     }
@@ -64,14 +64,17 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
   }
 
   @Nullable
-  public static TypeConversionDescriptor findDirectConversion(PsiElement context, PsiType to, PsiType from, TypeMigrationLabeler labeler) {
+  private static TypeConversionDescriptor findDirectConversion(PsiElement context, PsiType to, PsiType from, TypeMigrationLabeler labeler) {
     final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
     LOG.assertTrue(toTypeClass != null);
 
+    final PsiElement parent = context.getParent();
+    if (parent instanceof PsiVariable && ((PsiVariable)parent).getInitializer() == context) {
+      return wrapWithNewExpression(to, from, (PsiExpression)context);
+    }
     if (context instanceof PsiArrayAccessExpression) {
       return new TypeConversionDescriptor("$qualifier$[$val$]", "$qualifier$.get()[$val$]");
     }
-    final PsiElement parent = context.getParent();
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
       if (operationSign == JavaTokenType.EQ) {
@@ -80,7 +83,6 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
         return new TypeConversionDescriptor("$qualifier$ = $val$", replacement, (PsiAssignmentExpression)parent);
       }
     }
-
     if (context instanceof PsiReferenceExpression) {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression)context).getQualifierExpression();
       final PsiExpression expression = context.getParent() instanceof PsiMethodCallExpression && qualifierExpression != null
@@ -88,19 +90,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                        : (PsiExpression)context;
       return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), expression);
     }
-    else if (context instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)context;
+    else if (context instanceof PsiBinaryExpression binaryExpression) {
       final String sign = binaryExpression.getOperationSign().getText();
       return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", toPrimitive("$qualifier$.get()", from, context) + " " + sign + " $val$");
     }
-
-    if (parent instanceof PsiVariable && ((PsiVariable)parent).getInitializer() == context) {
-      return wrapWithNewExpression(to, from, (PsiExpression)context);
-    }
-
     if (parent instanceof PsiExpressionStatement) {
-      if (context instanceof PsiPostfixExpression) {
-        final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)context;
+      if (context instanceof PsiPostfixExpression postfixExpression) {
         final String sign = postfixExpression.getOperationSign().getText();
 
         return new TypeConversionDescriptor("$qualifier$" + sign, "$qualifier$.set(" +
@@ -110,8 +105,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                                            " 1") +
                                                                   ")");
       }
-      else if (context instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)context;
+      else if (context instanceof PsiPrefixExpression prefixExpression) {
         final PsiJavaToken operationSign = ((PsiPrefixExpression)context).getOperationSign();
         if (operationSign.getTokenType() == JavaTokenType.EXCL) {
           return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
@@ -125,8 +119,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                                                              " 1" : null) +
                                                                   ")");
       }
-      else if (context instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)context;
+      else if (context instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiJavaToken signToken = assignmentExpression.getOperationSign();
         final IElementType operationSign = signToken.getTokenType();
         final String sign = signToken.getText();

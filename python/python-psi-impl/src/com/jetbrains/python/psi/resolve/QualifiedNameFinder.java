@@ -34,10 +34,8 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
-public class QualifiedNameFinder {
+
+public final class QualifiedNameFinder {
   /**
    * Looks for a way to import given file.
    *
@@ -257,7 +255,7 @@ public class QualifiedNameFinder {
 
     public QualifiedNameBasedScope(@NotNull Project project) {
       super(project);
-      myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      myProjectFileIndex = ProjectFileIndex.getInstance(project);
     }
 
     @Override

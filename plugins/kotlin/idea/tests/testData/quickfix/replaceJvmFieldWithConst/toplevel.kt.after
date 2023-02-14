@@ -1,0 +1,3 @@
+// "Replace '@JvmField' with 'const'" "true"
+// WITH_STDLIB
+private const val number: Int = 42

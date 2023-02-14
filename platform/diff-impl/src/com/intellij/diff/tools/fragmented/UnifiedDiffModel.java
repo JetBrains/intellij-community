@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class UnifiedDiffModel {
@@ -40,17 +41,19 @@ public class UnifiedDiffModel {
 
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
-    return myData != null ? myData.getDiffChanges() : null;
+    ChangedBlockData data = myData;
+    return data != null ? data.getDiffChanges() : null;
   }
 
   @Nullable
   public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
-    return myData != null ? myData.getLineNumberConvertor(side) : null;
+    ChangedBlockData data = myData;
+    return data != null ? data.getLineNumberConvertor(side) : null;
   }
 
   public void setChanges(@NotNull List<UnifiedDiffChange> changes,
                          boolean isContentsEqual,
-                         @NotNull List<RangeMarker> guardedBlocks,
+                         @NotNull List<? extends RangeMarker> guardedBlocks,
                          @NotNull LineNumberConvertor convertor1,
                          @NotNull LineNumberConvertor convertor2,
                          @NotNull List<HighlightRange> ranges) {
@@ -100,10 +103,10 @@ public class UnifiedDiffModel {
                      @NotNull LineNumberConvertor lineNumberConvertor1,
                      @NotNull LineNumberConvertor lineNumberConvertor2,
                      @NotNull List<HighlightRange> ranges) {
-      myDiffChanges = diffChanges;
+      myDiffChanges = Collections.unmodifiableList(diffChanges);
       myLineNumberConvertor1 = lineNumberConvertor1;
       myLineNumberConvertor2 = lineNumberConvertor2;
-      myRanges = ranges;
+      myRanges = Collections.unmodifiableList(ranges);
     }
 
     @NotNull

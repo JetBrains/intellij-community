@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -36,6 +36,7 @@ public interface HighlightInfoType {
   @Deprecated HighlightInfoType INFO = new HighlightInfoTypeImpl(HighlightSeverity.INFO, CodeInsightColors.INFO_ATTRIBUTES);
   HighlightInfoType WEAK_WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WEAK_WARNING, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
   HighlightInfoType INFORMATION = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  HighlightInfoType TEXT_ATTRIBUTES = new HighlightInfoTypeImpl(HighlightSeverity.TEXT_ATTRIBUTES, CodeInsightColors.CONSIDERATION_ATTRIBUTES);
 
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
@@ -66,6 +67,8 @@ public interface HighlightInfoType {
   HighlightSeverity INJECTED_FRAGMENT_SEVERITY = new HighlightSeverity("INJECTED_FRAGMENT", SYMBOL_TYPE_SEVERITY.myVal - 1);
   HighlightInfoType INJECTED_LANGUAGE_FRAGMENT = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SYNTAX_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
   HighlightInfoType INJECTED_LANGUAGE_BACKGROUND = new HighlightInfoTypeImpl(INJECTED_FRAGMENT_SEVERITY, CodeInsightColors.INFORMATION_ATTRIBUTES);
+  
+  HighlightInfoType POSSIBLE_PROBLEM = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, HighlighterColors.NO_HIGHLIGHTING);
 
   HighlightSeverity ELEMENT_UNDER_CARET_SEVERITY = new HighlightSeverity("ELEMENT_UNDER_CARET", HighlightSeverity.ERROR.myVal + 1);
   HighlightInfoType ELEMENT_UNDER_CARET_READ = new HighlightInfoType.HighlightInfoTypeImpl(ELEMENT_UNDER_CARET_SEVERITY, EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
@@ -114,6 +117,11 @@ public interface HighlightInfoType {
       myNeedsUpdateOnTyping = needsUpdateOnTyping;
     }
 
+    /** Whether the corresponding severity should be available for choosing and editing in inspection settings */
+    public boolean isApplicableToInspections() {
+      return true;
+    }
+
     @Override
     @NotNull
     public HighlightSeverity getSeverity(@Nullable PsiElement psiElement) {
@@ -144,9 +152,7 @@ public interface HighlightInfoType {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof HighlightInfoTypeImpl)) return false;
-
-      HighlightInfoTypeImpl that = (HighlightInfoTypeImpl)o;
+      if (!(o instanceof HighlightInfoTypeImpl that)) return false;
 
       if (!Comparing.equal(myAttributesKey, that.myAttributesKey)) return false;
       if (!mySeverity.equals(that.mySeverity)) return false;
@@ -168,9 +174,6 @@ public interface HighlightInfoType {
   }
 
   class HighlightInfoTypeSeverityByKey implements HighlightInfoType {
-    @SuppressWarnings("unused")
-    static final Logger LOG = Logger.getInstance(HighlightInfoTypeSeverityByKey.class);
-
     private final TextAttributesKey myAttributesKey;
     private final HighlightDisplayKey myToolKey;
 

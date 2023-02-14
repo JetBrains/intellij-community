@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
@@ -10,7 +11,9 @@ import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,6 +21,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.DirtyUI;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +37,7 @@ import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersS
  * @author Mikhail Sokolov
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
+  private static final Logger LOG = Logger.getInstance(FileSearchEverywhereContributor.class);
   private final GotoFileModel myModelForRenderer;
   private final PersistentSearchEverywhereContributorFilter<FileTypeRef> myFilter;
 
@@ -68,11 +74,6 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return model;
   }
 
-  @Override
-  protected @Nullable SearchEverywhereCommandInfo getFilterCommand() {
-    return new SearchEverywhereCommandInfo("f", IdeBundle.message("search.everywhere.filter.files.description"), this);
-  }
-
   @NotNull
   @Override
   public List<AnAction> getActions(@NotNull Runnable onChanged) {
@@ -83,9 +84,10 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @Override
   public ListCellRenderer<Object> getElementsRenderer() {
     return new SearchEverywherePsiRenderer(this) {
+      @DirtyUI
       @NotNull
       @Override
-      protected ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+      public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem) || myModelForRenderer == null) {
           return defaultMatchers;
@@ -97,15 +99,31 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   }
 
   @Override
+  protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
+                                   @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
+                                   FilteringGotoByModel<?> model, Object element, int degree) {
+    if (progressIndicator.isCanceled()) return false;
+
+    if (element == null) {
+      LOG.error("Null returned from " + model + " in " + this.getClass().getSimpleName());
+      return true;
+    }
+
+    return consumer.process(new FoundItemDescriptor<>(element, degree));
+  }
+
+  @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
       if (file != null && myProject != null) {
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
-        descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
         if (descriptor.canNavigate()) {
           descriptor.navigate(true);
+          if (pos.first > 0) {
+            FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
+          }
           return true;
         }
       }
@@ -119,9 +137,12 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
     }
+    return super.getDataForItem(element, dataId);
+  }
 
-    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)
-        && (element instanceof PsiFile || element instanceof PsiDirectory)) {
+  @Override
+  public @Nullable String getItemDescription(@NotNull Object element) {
+    if ((element instanceof PsiFile || element instanceof PsiDirectory) && ((PsiFileSystemItem)element).isValid()) {
       String path = ((PsiFileSystemItem)element).getVirtualFile().getPath();
       path = FileUtil.toSystemIndependentName(path);
       if (myProject != null) {
@@ -132,15 +153,14 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
       }
       return path;
     }
-
-    return super.getDataForItem(element, dataId);
+    return super.getItemDescription(element);
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Object> {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new FileSearchEverywhereContributor(initEvent));
     }
   }
 

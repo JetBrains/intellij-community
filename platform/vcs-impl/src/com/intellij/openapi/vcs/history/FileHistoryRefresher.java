@@ -18,7 +18,6 @@ import java.util.concurrent.Future;
 /**
  * Refreshes file history.
  *
- * @author irengrig
  * @author Kirill Likhodedov
  */
 public class FileHistoryRefresher implements FileHistoryRefresherI {
@@ -88,7 +87,6 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   }
 
   /**
-   * @param canUseCache
    */
   @Override
   public void refresh(boolean canUseCache) {

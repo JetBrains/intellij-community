@@ -29,12 +29,12 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugins;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.*;
@@ -42,12 +42,10 @@ import java.util.*;
 public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
-  private final MavenProjectIndicesManager myIndicesManager;
 
   public MavenProjectModelModifier(Project project) {
     myProject = project;
     myProjectsManager = MavenProjectsManager.getInstance(project);
-    myIndicesManager = MavenProjectIndicesManager.getInstance(project);
   }
 
   @Nullable
@@ -144,7 +142,9 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
                                @Nullable String minVersion,
                                @Nullable String maxVersion,
                                @Nullable String preferredVersion) {
-    Set<String> versions = myIndicesManager.getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
+    Set<String> versions = (mavenId.getGroupId() == null || mavenId.getArtifactId() == null)
+                           ? Collections.emptySet()
+                           : DependencySearchService.getInstance(myProject).getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
     if (preferredVersion != null && versions.contains(preferredVersion)) {
       return preferredVersion;
     }
@@ -214,32 +214,33 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @NotNull
-  private static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
-    MavenDomPlugins plugins = model.getBuild().getPlugins();
-    for (MavenDomPlugin plugin : plugins.getPlugins()) {
-      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getValue()) &&
-          "maven-compiler-plugin".equals(plugin.getArtifactId().getValue())) {
-        return plugin;
-      }
-    }
-    MavenDomPlugin plugin = plugins.addPlugin();
+  public static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugin plugin = findCompilerPlugin(model);
+    if (plugin != null) return plugin;
+    plugin = model.getBuild().getPlugins().addPlugin();
     plugin.getGroupId().setValue("org.apache.maven.plugins");
     plugin.getArtifactId().setValue("maven-compiler-plugin");
     return plugin;
   }
 
-  private static String getMavenScope(@NotNull DependencyScope scope) {
-    switch (scope) {
-      case RUNTIME:
-        return MavenConstants.SCOPE_RUNTIME;
-      case COMPILE:
-        return MavenConstants.SCOPE_COMPILE;
-      case TEST:
-        return MavenConstants.SCOPE_TEST;
-      case PROVIDED:
-        return MavenConstants.SCOPE_PROVIDED;
-      default:
-        throw new IllegalArgumentException(String.valueOf(scope));
+  @Nullable
+  public static MavenDomPlugin findCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugins plugins = model.getBuild().getPlugins();
+    for (MavenDomPlugin plugin : plugins.getPlugins()) {
+      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getStringValue()) &&
+          "maven-compiler-plugin".equals(plugin.getArtifactId().getStringValue())) {
+        return plugin;
+      }
     }
+    return null;
+  }
+
+  private static String getMavenScope(@NotNull DependencyScope scope) {
+    return switch (scope) {
+      case RUNTIME -> MavenConstants.SCOPE_RUNTIME;
+      case COMPILE -> MavenConstants.SCOPE_COMPILE;
+      case TEST -> MavenConstants.SCOPE_TEST;
+      case PROVIDED -> MavenConstants.SCOPE_PROVIDED;
+    };
   }
 }

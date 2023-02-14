@@ -314,16 +314,12 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
 
     @Override
     public Object getField(NameLocationPair pair, int columnIndex) {
-      switch (columnIndex) {
-        case 0:
-          return pair.myName;
-        case 1:
-          return pair.myLocation;
-        case 2:
-          return !pair.myShared;
-      }
-
-      return "";
+      return switch (columnIndex) {
+        case 0 -> pair.myName;
+        case 1 -> pair.myLocation;
+        case 2 -> !pair.myShared;
+        default -> "";
+      };
     }
 
     @Override

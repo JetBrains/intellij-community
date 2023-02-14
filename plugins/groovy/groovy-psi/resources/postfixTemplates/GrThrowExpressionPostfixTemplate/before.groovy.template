@@ -1,0 +1,3 @@
+try {
+  <spot>expr</spot>$key
+} catch (e) {}

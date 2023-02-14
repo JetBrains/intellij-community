@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
-/**
- * @author Sergey Evdokimov
- */
 @CompileStatic
 class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase {
 

@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.client.ClientAwareComponentManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -24,15 +23,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 import org.picocontainer.PicoContainer;
 
-import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class DefaultProject extends UserDataHolderBase implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
@@ -42,7 +38,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       DefaultProjectImpl project = new DefaultProjectImpl(DefaultProject.this);
       ProjectStoreFactory componentStoreFactory = ApplicationManager.getApplication().getService(ProjectStoreFactory.class);
-      project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.getFakeCorePluginDescriptor());
+      project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.fakeCorePluginDescriptor);
 
       // mark myDelegate as not disposed if someone cluelessly did Disposer.dispose(getDefaultProject())
       Disposer.register(DefaultProject.this,this);
@@ -56,7 +52,12 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   };
 
   @Override
-  public <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+  public ComponentManager getActualComponentManager() {
+    return getDelegate();
+  }
+
+  @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
     return getDelegate().instantiateClass(aClass, pluginId);
   }
 
@@ -77,9 +78,10 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull RuntimeException createError(@NotNull @NonNls String message,
+                                               @Nullable Throwable error,
                                                @NotNull PluginId pluginId,
                                                @Nullable Map<String, String> attachments) {
-    return getDelegate().createError(message, pluginId, attachments);
+    return getDelegate().createError(message, null, pluginId, attachments);
   }
 
   @Override
@@ -102,12 +104,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return getDelegate().hasComponent(interfaceClass);
   }
 
-  @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    //noinspection deprecation
-    return getDelegate().getComponents(baseClass);
-  }
-
   // make default project facade equal to any other default project facade
   // to enable Map<Project, T>
   @Override
@@ -118,6 +114,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   @Override
   public int hashCode() {
     return DefaultProjectImpl.DEFAULT_HASH_CODE;
+  }
+
+  @Override
+  public String toString() {
+    return "Project" + (isDisposed() ? " (Disposed)" : "") + DefaultProjectImpl.TEMPLATE_PROJECT_NAME;
   }
 
   @Override
@@ -198,7 +199,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
     return true;
   }
 
-  @SuppressWarnings("deprecation")
+  @Override
+  public CoroutineScope getCoroutineScope() {
+    return ApplicationManager.getApplication().getCoroutineScope();
+  }
+
   @Override
   @Deprecated
   public BaseComponent getComponent(@NotNull String name) {
@@ -227,7 +232,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull PicoContainer getPicoContainer() {
-    return getDelegate().getPicoContainer();
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -256,7 +261,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 }
 
-final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
+final class DefaultProjectImpl extends ClientAwareComponentManager implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProjectImpl.class);
   static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
 
@@ -266,7 +271,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   private final Project actualContainerInstance;
 
   DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication());
+    super((ComponentManagerImpl)ApplicationManager.getApplication(), false);
 
     this.actualContainerInstance = actualContainerInstance;
   }
@@ -274,10 +279,6 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @Override
   public boolean isParentLazyListenersIgnored() {
     return true;
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
   }
 
   @Override
@@ -305,16 +306,14 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
 
   @Override
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();
+    return componentConfig.loadForDefaultProject && super.isComponentSuitable(componentConfig);
   }
 
   public void init() {
     // do not leak internal delegate, use DefaultProject everywhere instead
-    registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), null);
-    createComponents(null);
+    registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerComponents();
+    createComponents();
     Disposer.register(actualContainerInstance, this);
   }
 
@@ -336,7 +335,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getProject();
+    return pluginDescriptor.projectContainerDescriptor;
   }
 
   @Override

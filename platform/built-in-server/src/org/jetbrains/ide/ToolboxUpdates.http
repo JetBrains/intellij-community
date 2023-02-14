@@ -2,24 +2,24 @@
 # run IDEA with -Dtoolbox.notification.token=token234
 
 
-POST 127.0.0.1:63343/api/toolbox/update-notification
+POST 127.0.0.1:63344/api/toolbox/update-notification
 Authorization: toolbox token234
 Content-Type: application/json
 
 {
-  "build": "2024.3.5 RC",
+  "build": "212.234.234",
   "version": "2021.1 RC"
 }
 
 
 ###
 
-POST 127.0.0.1:63343/api/toolbox/restart-notification
+POST 127.0.0.1:63344/api/toolbox/restart-notification
 Authorization: toolbox token234
 Content-Type: application/json
 
 {
-  "build": "2024.3.5 RC",
+  "build": "212.234.234",
   "version": "2021.1 RC"
 }
 

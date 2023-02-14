@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -34,8 +33,10 @@ public class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTo
         if (expression == null) return;
 
         for (PsiReference reference : element.getReferences()) {
-          if (reference instanceof PluginConfigReference && reference.resolve() == null) {
-            holder.registerProblem(reference, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          if (reference instanceof PluginConfigReference &&
+              !reference.isSoft() &&
+              reference.resolve() == null) {
+            holder.registerProblem(reference);
           }
         }
       }

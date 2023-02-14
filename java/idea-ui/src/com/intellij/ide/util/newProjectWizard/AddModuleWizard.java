@@ -72,7 +72,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
 
       @Override
       public void nextStepRequested() {
-        doNextAction();
+        proceedToNextStep();
       }
     });
 
@@ -121,11 +121,6 @@ public class AddModuleWizard extends AbstractProjectWizard {
     }
 
     return null;
-  }
-
-  @NotNull
-  public WizardContext getWizardContext() {
-    return myWizardContext;
   }
 
   @Override

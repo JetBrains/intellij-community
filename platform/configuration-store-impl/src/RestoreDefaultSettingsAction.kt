@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -35,5 +36,9 @@ private class RestoreDefaultSettingsAction : DumbAwareAction() {
       restartButtonText,
       CommonBundle.getCancelButtonText(), Messages.getWarningIcon()
     )
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

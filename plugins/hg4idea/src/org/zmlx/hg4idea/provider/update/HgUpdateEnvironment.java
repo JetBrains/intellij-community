@@ -35,11 +35,9 @@ import java.util.List;
 public class HgUpdateEnvironment implements UpdateEnvironment {
 
   private final Project project;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
 
   public HgUpdateEnvironment(Project project) {
     this.project = project;
-    updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
   }
 
   @Override
@@ -66,6 +64,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       }
       try {
         result &= ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+          HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
           HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
           return updater.update(updatedFiles, indicator, exceptions);
         });
@@ -80,6 +79,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
+    HgUpdateConfigurationSettings updateConfiguration = project.getService(HgUpdateConfigurationSettings.class);
     return new UpdateConfigurable(updateConfiguration);
   }
 

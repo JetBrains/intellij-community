@@ -5,7 +5,6 @@ package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,10 @@ import java.util.List;
  * <p>
  * Implement either {@link #getAvailableRepositories(ProgressIndicator)} to load everything in a single request
  * or {@link #getAvailableRepositoriesFromMultipleSources(ProgressIndicator)} to load in several requests
+ *
+ * @deprecated deprecated with the removal of completion from an old clone dialog
  */
+@Deprecated
 public interface RepositoryListLoader {
   /**
    * Check if this loader is configured (e.g. has necessary authentication data)
@@ -36,8 +38,7 @@ public interface RepositoryListLoader {
   /**
    * @deprecated parent component is required for dialogs to not fall through on welcome screen
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default boolean enable() { return false; }
 
   /**

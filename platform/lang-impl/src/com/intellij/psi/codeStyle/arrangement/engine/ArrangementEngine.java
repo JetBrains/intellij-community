@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
@@ -29,8 +29,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,11 +67,10 @@ public final class ArrangementEngine {
    * Arranges given PSI root contents that belong to the given ranges.
    * <b>Note:</b> After arrangement editor foldings we'll be preserved.
    *
-   * @param editor
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<TextRange> ranges) {
+  public void arrange(@NotNull final Editor editor, @NotNull PsiFile file, Collection<? extends TextRange> ranges) {
     arrange(file, ranges, new RestoreFoldArrangementCallback(editor));
   }
 
@@ -80,7 +81,7 @@ public final class ArrangementEngine {
    * @param file   target PSI root
    * @param ranges target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) {
     arrange(file, ranges, null);
   }
 
@@ -90,7 +91,7 @@ public final class ArrangementEngine {
    * @param file    target PSI root
    * @param ranges  target ranges to use within the given root
    */
-  public void arrange(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable final ArrangementCallback callback) {
+  public void arrange(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges, @Nullable final ArrangementCallback callback) {
     myCodeChanged = false;
 
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
@@ -217,7 +218,7 @@ public final class ArrangementEngine {
    */
   @NotNull
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<? extends E> entries,
-                                                             @NotNull List<? extends ArrangementSectionRule> sectionRules,
+                                                             @NotNull List<ArrangementSectionRule> sectionRules,
                                                              @NotNull List<? extends ArrangementMatchRule> rulesByPriority,
                                                              @Nullable Map<E, ArrangementSectionRule> entryToSection)
   {
@@ -320,7 +321,7 @@ public final class ArrangementEngine {
     if (entries.size() < 2) {
       return;
     }
-    final TObjectIntHashMap<E> weights = new TObjectIntHashMap<>();
+    final Object2IntMap<E> weights = new Object2IntOpenHashMap<>();
     int i = 0;
     for (E e : entries) {
       weights.put(e, ++i);
@@ -332,7 +333,7 @@ public final class ArrangementEngine {
         return name1.compareTo(name2);
       }
       else if (name1 == null && name2 == null) {
-        return weights.get(e1) - weights.get(e2);
+        return weights.getInt(e1) - weights.getInt(e2);
       }
       else if (name2 == null) {
         return -1;
@@ -441,7 +442,7 @@ public final class ArrangementEngine {
 
     public static boolean isSectionEntry(@NotNull ArrangementEntry entry, @NotNull String sectionText) {
       if (entry instanceof TypeAwareArrangementEntry && entry instanceof TextAwareArrangementEntry) {
-        final Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
+        final Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)entry).getTypes();
         if (types.size() == 1) {
           final ArrangementSettingsToken type = types.iterator().next();
           if (type.equals(START_SECTION) || type.equals(END_SECTION)) {
@@ -538,7 +539,7 @@ public final class ArrangementEngine {
     public static <T extends ArrangementEntry> Context<T> from(@NotNull Rearranger<T> rearranger,
                                                                @NotNull Document document,
                                                                @NotNull PsiElement root,
-                                                               @NotNull Collection<TextRange> ranges,
+                                                               @NotNull Collection<? extends TextRange> ranges,
                                                                @NotNull ArrangementSettings arrangementSettings,
                                                                @NotNull CodeStyleSettings codeStyleSettings)
     {
@@ -633,14 +634,14 @@ public final class ArrangementEngine {
 
     private boolean isTypeOf(@Nullable E element, @NotNull ArrangementSettingsToken token) {
       if (element instanceof TypeAwareArrangementEntry) {
-        Set<ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
+        Set<? extends ArrangementSettingsToken> types = ((TypeAwareArrangementEntry)element).getTypes();
         return types.size() == 1 && token.equals(types.iterator().next());
       }
       return false;
     }
   }
 
-  private static class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
+  private static final class DefaultChanger<E extends ArrangementEntry> extends Changer<E> {
     @NotNull private String myParentText;
     private          int    myParentShift;
 
@@ -667,7 +668,7 @@ public final class ArrangementEngine {
     {
       // Calculate blank lines before the arrangement.
       int blankLinesBefore = 0;
-      TIntArrayList lineFeedOffsets = new TIntArrayList();
+      IntList lineFeedOffsets = new IntArrayList();
       int oldStartLine = context.document.getLineNumber(oldWrapper.getStartOffset());
       if (oldStartLine > 0) {
         int lastLineFeed = context.document.getLineStartOffset(oldStartLine) - 1;
@@ -708,7 +709,7 @@ public final class ArrangementEngine {
       }
       else {
         // Cut exceeding blank lines.
-        int replacementStartOffset = lineFeedOffsets.get(-lineFeedsDiff) + 1;
+        int replacementStartOffset = lineFeedOffsets.getInt(-lineFeedsDiff) + 1;
         context.document.replaceString(replacementStartOffset, oldWrapper.getEndOffset(), newEntryText);
       }
 

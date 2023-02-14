@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
+import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
@@ -12,10 +13,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.PsiDiamondTypeUtil
 import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
-import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.util.castSafelyTo
+import com.intellij.psi.util.*
+import com.intellij.util.asSafely
 import com.siyeh.ig.psiutils.ParenthesesUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -42,7 +43,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
           )
       ) {
         val emptyTypeArgumentsMethodCall = JavaPsiFacade.getElementFactory(methodCall.project)
-                                             .createExpressionFromText("foo()", null) as PsiMethodCallExpression
+          .createExpressionFromText("foo()", null) as PsiMethodCallExpression
 
         methodCall.typeArgumentList.replace(emptyTypeArgumentsMethodCall.typeArgumentList)
       }
@@ -75,19 +76,66 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
       else -> oldPsi
     }
     val updNewPsi = when {
-      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpresionStatement(newPsi) ?: return null
+      updOldPsi is PsiStatement && newPsi is PsiExpression -> factory.createExpressionStatement(newPsi) ?: return null
       updOldPsi is PsiCodeBlock && newPsi is PsiBlockStatement -> newPsi.codeBlock
       else -> newPsi
     }
     return when (val replaced = updOldPsi.replace(updNewPsi)) {
       is PsiExpressionStatement -> replaced.expression.toUElementOfExpectedTypes(elementType)
       is PsiMethodCallExpression -> cleanupMethodCall(replaced).toUElementOfExpectedTypes(elementType)
+      is PsiReferenceExpression -> {
+        JavaCodeStyleManager.getInstance(replaced.project).shortenClassReferences(replaced).toUElementOfExpectedTypes(elementType)
+      }
       else -> replaced.toUElementOfExpectedTypes(elementType)
     }
   }
+
+  override fun bindToElement(reference: UReferenceExpression, element: PsiElement): PsiElement? {
+    val sourceReference = reference.sourcePsi ?: return null
+    if (sourceReference !is PsiReference) return null
+    return sourceReference.bindToElement(element)
+  }
+
+  override fun shortenReference(reference: UReferenceExpression): UReferenceExpression? {
+    val sourceReference = reference.sourcePsi ?: return null
+    val styleManager = JavaCodeStyleManager.getInstance(sourceReference.project)
+    return styleManager.shortenClassReferences(sourceReference).toUElementOfType()
+  }
+
+  override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
+    val source = reference.sourcePsi ?: return null
+    val (qualifier, selector) = when (source) {
+      is PsiMethodCallExpression -> source.methodExpression.qualifierExpression to source.methodExpression
+      is PsiReferenceExpression -> source.qualifier to source.referenceNameElement
+      else -> return null
+    }
+    if (qualifier == null || selector == null) return null
+    val ptr = SmartPointerManager.createPointer(selector)
+    val qualifierIdentifier = qualifier.childrenOfType<PsiIdentifier>().firstOrNull() ?: return null
+    AddOnDemandStaticImportAction.invoke(source.project, source.containingFile, null, qualifierIdentifier)
+    return ptr.element?.parent.toUElementOfType()
+  }
+
+  override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+    val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
+    val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return null
+    val body = psiMethod.body ?: return null
+
+    val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
+    val prefix = if (uField.name == uParameter.name) "this." else ""
+    val statement = elementFactory.createStatementFromText("$prefix${uField.name} = ${uParameter.name};", psiMethod)
+    val lastBodyElement = body.lastBodyElement
+    if (lastBodyElement is PsiWhiteSpace) {
+      lastBodyElement.replace(statement)
+    }
+    else {
+      body.add(statement)
+    }
+    return statement.toUElementOfType()
+  }
 }
 
-private fun PsiElementFactory.createExpresionStatement(expression: PsiExpression): PsiStatement? {
+private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {
   val statement = createStatementFromText("x;", null) as? PsiExpressionStatement ?: return null
   statement.expression.replace(expression)
   return statement
@@ -96,9 +144,9 @@ private fun PsiElementFactory.createExpresionStatement(expression: PsiExpression
 class JavaUastElementFactory(private val project: Project) : UastElementFactory {
   private val psiFactory: PsiElementFactory = JavaPsiFacade.getElementFactory(project)
 
-  override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-    return psiFactory.createExpressionFromText(qualifiedName, context?.sourcePsi)
-      .castSafelyTo<PsiReferenceExpression>()
+  override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
+    return psiFactory.createExpressionFromText(qualifiedName, context)
+      .asSafely<PsiReferenceExpression>()
       ?.let { JavaUQualifiedReferenceExpression(it, null) }
   }
 
@@ -127,7 +175,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     if (kind != UastCallKind.METHOD_CALL) return null
 
     val methodCall = psiFactory.createExpressionFromText(
-      if (receiver != null) "a.b()" else "a()", context
+      createCallExpressionTemplateRespectingChainStyle(receiver), context
     ) as? PsiMethodCallExpression ?: return null
 
     val methodIdentifier = psiFactory.createIdentifier(methodName)
@@ -142,16 +190,52 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
 
     return if (expectedReturnType == null)
-      methodCall.toUElementOfType<UCallExpression>()
+      methodCall.toUElementOfType()
     else
       MethodCallUpgradeHelper(project, methodCall, expectedReturnType).tryUpgradeToExpectedType()
         ?.let { JavaUCallExpression(it, null) }
+  }
+
+  private fun createCallExpressionTemplateRespectingChainStyle(receiver: UExpression?): String {
+    if (receiver == null) return "a()"
+    val siblings = receiver.sourcePsi?.siblings(withSelf = false) ?: return "a.b()"
+
+    (siblings.firstOrNull() as? PsiWhiteSpace)?.let { whitespace ->
+      return "a${whitespace.text}.b()"
+    }
+
+    if (siblings.firstOrNull()?.elementType == ElementType.DOT) {
+      (siblings.elementAt(2) as? PsiWhiteSpace)?.let { whitespace ->
+        return "a.${whitespace.text}b()"
+      }
+    }
+    return "a.b()"
+  }
+
+  override fun createCallableReferenceExpression(
+    receiver: UExpression?,
+    methodName: String,
+    context: PsiElement?
+  ): UCallableReferenceExpression? {
+    val receiverSource = receiver?.sourcePsi
+    requireNotNull(receiverSource) { "Receiver should not be null for Java callable references." }
+    val callableExpression = psiFactory.createExpressionFromText("${receiverSource.text}::$methodName", context)
+    if (callableExpression !is PsiMethodReferenceExpression) return null
+    return JavaUCallableReferenceExpression(callableExpression, null)
   }
 
   override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
     val literalExpr = psiFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(text), context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null
     return JavaULiteralExpression(literalExpr, null)
+  }
+
+  override fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression? {
+    return when (val literalExpr = psiFactory.createExpressionFromText(long.toString() + "L", context)) {
+      is PsiLiteralExpressionImpl -> JavaULiteralExpression(literalExpr, null)
+      is PsiPrefixExpression -> JavaUPrefixExpression(literalExpr, null)
+      else -> null
+    }
   }
 
   override fun createNullLiteral(context: PsiElement?): ULiteralExpression? {
@@ -175,8 +259,8 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
 
     private fun tryPickUpTypeParameters(): PsiMethodCallExpression? {
-      val expectedTypeTypeParameters = expectedReturnType.castSafelyTo<PsiClassType>()?.parameters ?: return null
-      val resultTypeTypeParameters = resultType.castSafelyTo<PsiClassType>()?.parameters ?: return null
+      val expectedTypeTypeParameters = expectedReturnType.asSafely<PsiClassType>()?.parameters ?: return null
+      val resultTypeTypeParameters = resultType.asSafely<PsiClassType>()?.parameters ?: return null
       val notEqualTypeParametersIndices = expectedTypeTypeParameters
         .zip(resultTypeTypeParameters)
         .withIndex()
@@ -184,7 +268,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
         .map { (i, _) -> i }
 
       val resolvedMethod = methodCall.resolveMethod() ?: return null
-      val methodReturnTypeTypeParameters = (resolvedMethod.returnType.castSafelyTo<PsiClassType>())?.parameters ?: return null
+      val methodReturnTypeTypeParameters = (resolvedMethod.returnType.asSafely<PsiClassType>())?.parameters ?: return null
       val methodDefinitionTypeParameters = resolvedMethod.typeParameters
       val methodDefinitionToReturnTypeParametersMapping = methodDefinitionTypeParameters.map {
         it to methodReturnTypeTypeParameters.indexOfFirst { param -> it.name == param.canonicalText }
@@ -232,20 +316,20 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
 
     infix fun PsiType.eqResolved(other: PsiType): Boolean {
-      val resolvedThis = this.castSafelyTo<PsiClassType>()?.resolve() ?: return false
-      val resolvedOther = other.castSafelyTo<PsiClassType>()?.resolve() ?: return false
+      val resolvedThis = this.asSafely<PsiClassType>()?.resolve() ?: return false
+      val resolvedOther = other.asSafely<PsiClassType>()?.resolve() ?: return false
 
       return PsiManager.getInstance(project).areElementsEquivalent(resolvedThis, resolvedOther)
     }
   }
 
-  override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression? {
+  override fun createDeclarationExpression(declarations: List<UDeclaration>, context: PsiElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(null, declarations)
   }
 
-  override fun createReturnExpresion(expression: UExpression?,
-                                     inLambda: Boolean,
-                                     context: PsiElement?): UReturnExpression? {
+  override fun createReturnExpression(expression: UExpression?,
+                                      inLambda: Boolean,
+                                      context: PsiElement?): UReturnExpression? {
     val returnStatement = psiFactory.createStatementFromText("return ;", null) as? PsiReturnStatement ?: return null
 
     expression?.sourcePsi?.node?.let { (returnStatement as CompositeElement).addChild(it, returnStatement.lastChild.node) }
@@ -278,8 +362,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       context = initializerPsi
     ) ?: return null
     val variable = (type ?: initializer.getExpressionType())?.let { variableType ->
-      psiFactory.createVariableDeclarationStatement(name, variableType, initializerPsi,
-                                                    initializerPsi.context).declaredElements.firstOrNull() as? PsiLocalVariable
+      psiFactory.createVariableDeclarationStatement(
+        name,
+        variableType,
+        initializerPsi,
+        initializerPsi.context
+      ).declaredElements.firstOrNull() as? PsiLocalVariable
     } ?: return null
 
     variable.setMutability(immutable)
@@ -301,7 +389,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       }
 
       expression.sourcePsi?.let { psi ->
-        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpresionStatement(it) }
+        psi as? PsiStatement ?: (psi as? PsiExpression)?.let { psiFactory.createExpressionStatement(it) }
       }?.let { blockStatement.codeBlock.add(it) } ?: return null
     }
 
@@ -326,7 +414,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
           parameterInfo.suggestedName,
           VariableKind.PARAMETER,
           parameterInfo.type,
-          context = body.sourcePsi
+          context = context ?: body.sourcePsi
         ) ?: return null
         parameter.nameIdentifier?.replace(psiFactory.createIdentifier(name))
 
@@ -345,12 +433,13 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
       lambda.parameterList.lastChild.delete()
     }
 
-    val normalizedBody = when (val bodyPsi = body.sourcePsi) {
-      is PsiExpression -> bodyPsi
-      is PsiCodeBlock -> normalizeBlockForLambda(bodyPsi)
-      is PsiBlockStatement -> normalizeBlockForLambda(bodyPsi.codeBlock)
-      else -> return null
-    }
+    val normalizedBody = JavaULambdaExpression.unwrapImplicitBody(body)?.copy() // reuse existing lambda body
+                         ?: when (val bodyPsi = body.sourcePsi) {
+                           is PsiExpression -> bodyPsi
+                           is PsiCodeBlock -> normalizeBlockForLambda(bodyPsi)
+                           is PsiBlockStatement -> normalizeBlockForLambda(bodyPsi.codeBlock)
+                           else -> return null
+                         }
 
     lambda.body?.replace(normalizedBody) ?: return null
 
@@ -370,7 +459,7 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaUParenthesizedExpression(parenthesizedExpression, null)
   }
 
-  override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression? {
+  override fun createSimpleReference(name: String, context: PsiElement?): USimpleNameReferenceExpression {
     val reference = psiFactory.createExpressionFromText(name, null)
     return JavaUSimpleNameReferenceExpression(reference, name, null)
   }
@@ -415,9 +504,12 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     }
   }
 
+  override fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? =
+    psiFactory.createMethodFromText(methodText, context).toUElementOfType()
+
   private val PsiElement.branchStatement: PsiStatement?
     get() = when (this) {
-      is PsiExpression -> JavaPsiFacade.getElementFactory(project).createExpresionStatement(this)
+      is PsiExpression -> JavaPsiFacade.getElementFactory(project).createExpressionStatement(this)
       is PsiCodeBlock -> BlockUtils.createBlockStatement(project).also { it.codeBlock.replace(this) }
       is PsiStatement -> this
       else -> null

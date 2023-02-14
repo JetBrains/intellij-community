@@ -29,9 +29,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 public abstract class TagBasedDocString extends DocStringLineParser implements StructuredDocString {
   protected final String myDescription;
 
@@ -205,11 +203,27 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
 
   @NotNull
   @Override
+  public List<String> getParameters() {
+    return toUniqueStrings(getParameterSubstrings());
+  }
+
+  @NotNull
+  @Override
   public List<Substring> getParameterSubstrings() {
     final List<Substring> results = new ArrayList<>();
     results.addAll(getTagArguments(PARAM_TAGS));
     results.addAll(getTagArguments(PARAM_TYPE_TAGS));
     return results;
+  }
+
+  @Override
+  public @NotNull List<String> getAttributes() {
+    return toUniqueStrings(getAttributeSubstrings());
+  }
+
+  @Override
+  public @NotNull List<Substring> getAttributeSubstrings() {
+    return new ArrayList<>(getTagArguments(VARIABLE_TAGS));
   }
 
   @Override

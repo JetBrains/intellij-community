@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.generation;
 
-/**
- * @author peter
- */
 public interface ClassMember extends MemberChooserObject {
   ClassMember[] EMPTY_ARRAY = new ClassMember[0];
 

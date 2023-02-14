@@ -1,31 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.BitUtil;
-import com.intellij.util.Functions;
-import com.intellij.util.ObjectUtils;
+import com.intellij.testFramework.TestModeFlags;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -53,28 +51,51 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
  * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
  *
- * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
+ * 5. The file with removed data is marked as "dead" (see {@link #myDeadMarker}), any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
- *
- * @author peter
  */
 public final class VfsData {
+  @TestOnly
+  public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
   private static final Logger LOG = Logger.getInstance(VfsData.class);
+  private static volatile Boolean isIsIndexedFlagDisabled = null;
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
 
+  private static final short NULL_INDEXING_STAMP = 0;
+  private static final AtomicInteger ourIndexingStamp = new AtomicInteger(1);
+
+  public static boolean isIsIndexedFlagDisabled() {
+    if (isIsIndexedFlagDisabled == null) {
+      Boolean enable;
+      if (ApplicationManager.getApplication().isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
+        isIsIndexedFlagDisabled = !enable;
+      }
+      else {
+        isIsIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", true);
+      }
+    }
+    return isIsIndexedFlagDisabled;
+  }
+
+  @ApiStatus.Internal
+  static void markAllFilesAsUnindexed() {
+    ourIndexingStamp.updateAndGet(cur -> {
+      int next = cur + 1;
+      return (short)next == NULL_INDEXING_STAMP ? (NULL_INDEXING_STAMP + 1) : next;
+    });
+  }
+
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
-  private final ConcurrentIntObjectMap<Segment> mySegments =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Segment> mySegments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
 
   /** guarded by {@link #myDeadMarker} */
   private IntSet myDyingIds = new IntOpenHashSet();
 
-  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   public VfsData() {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -127,7 +148,7 @@ public final class VfsData {
 
     if (o instanceof DirectoryData) {
       if (putToMemoryCache) {
-        return persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
+        return persistentFS.getOrCacheDir(new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
       }
       VirtualFileSystemEntry entry = persistentFS.getCachedDir(id);
       if (entry != null) return entry;
@@ -145,12 +166,14 @@ public final class VfsData {
     return id & OFFSET_MASK;
   }
 
-  @Nullable @Contract("_,true->!null")
+  @Contract("_,true->!null")
   public Segment getSegment(int id, boolean create) {
     int key = id >>> SEGMENT_BITS;
     Segment segment = mySegments.get(key);
-    if (segment != null || !create) return segment;
-    return mySegments.cacheOrGet(key, new Segment(this, key));
+    if (segment != null || !create) {
+      return segment;
+    }
+    return mySegments.cacheOrGet(key, new Segment(this));
   }
 
   public boolean hasLoadedFile(int id) {
@@ -208,7 +231,6 @@ public final class VfsData {
   }
 
   static final class Segment {
-    private final int myIndex;
     // user data for files, DirectoryData for folders
     private final AtomicReferenceArray<Object> myObjectArray;
 
@@ -221,27 +243,41 @@ public final class VfsData {
     // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData vfsData, int index) {
-      this(vfsData, index, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 2));
+    Segment(@NotNull VfsData vfsData) {
+      this(vfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
     }
 
     private Segment(@NotNull VfsData vfsData,
-                    int index,
                     @NotNull AtomicReferenceArray<Object> objectArray,
                     @NotNull AtomicIntegerArray intArray) {
-      myIndex = index;
       myObjectArray = objectArray;
       myIntArray = intArray;
       this.vfsData = vfsData;
     }
 
+    boolean isIndexed(int fileId) {
+      if (isIsIndexedFlagDisabled()) {
+        return false;
+      }
+      return myIntArray.get(getOffset(fileId) * 3 + 2) == ourIndexingStamp.intValue();
+    }
+
+    void setIndexed(int fileId, boolean indexed) {
+      if (isIsIndexedFlagDisabled()) {
+        return;
+      }
+      if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
+      int stamp = indexed ? ourIndexingStamp.intValue() : NULL_INDEXING_STAMP;
+      myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
+    }
+
     int getNameId(int fileId) {
-      return myIntArray.get(getOffset(fileId) * 2);
+      return myIntArray.get(getOffset(fileId) * 3);
     }
 
     void setNameId(int fileId, int nameId) {
-      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+fileId+"; nameId: "+nameId);
-      myIntArray.set(getOffset(fileId) * 2, nameId);
+      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId + "; nameId: " + nameId);
+      myIntArray.set(getOffset(fileId) * 3, nameId);
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
@@ -264,7 +300,7 @@ public final class VfsData {
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
+      return (myIntArray.get(getOffset(id) * 3 + 1) & mask) != 0;
     }
 
     void setFlag(int id, @VirtualFileSystemEntry.Flags int mask, boolean value) {
@@ -272,7 +308,7 @@ public final class VfsData {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
     void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
@@ -282,23 +318,24 @@ public final class VfsData {
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue)+ ") set bits outside mask ("+
                                                     Integer.toHexString(combinedMask)+")";
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
     long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * 2 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
+      return myIntArray.get(getOffset(id) * 3 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int id, long stamp) {
-      int offset = getOffset(id) * 2 + 1;
+      int offset = getOffset(id) * 3 + 1;
       myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) | ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
       assert replacement == null;
-      replacement = new Segment(vfsData, myIndex, myObjectArray, myIntArray);
-      boolean replaced = vfsData.mySegments.replace(myIndex, this, replacement);
+      replacement = new Segment(vfsData, myObjectArray, myIntArray);
+      int key = fileId >>> SEGMENT_BITS;
+      boolean replaced = vfsData.mySegments.replace(key, this, replacement);
       assert replaced;
       vfsData.changeParent(fileId, directory);
     }
@@ -313,7 +350,7 @@ public final class VfsData {
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
-     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
     volatile boolean myAllChildrenLoaded;

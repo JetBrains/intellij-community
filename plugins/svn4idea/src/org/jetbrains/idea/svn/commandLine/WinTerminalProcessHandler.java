@@ -8,9 +8,6 @@ import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class WinTerminalProcessHandler extends TerminalProcessHandler {
 
   // see http://en.wikipedia.org/wiki/ANSI_escape_code

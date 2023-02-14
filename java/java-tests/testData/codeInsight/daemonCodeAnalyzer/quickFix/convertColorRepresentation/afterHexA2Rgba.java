@@ -1,4 +1,4 @@
-// "Convert to 'new Color(100, 120, 140, 37)'" "true"
+// "Convert to 'new Color(100, 120, 140, 37)'" "true-preview"
 
 package java.awt;
 

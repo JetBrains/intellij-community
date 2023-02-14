@@ -44,7 +44,7 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       visitSwitchBlock(expression);
     }
@@ -55,10 +55,9 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
         return;
       }
       for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiLabeledStatement)) {
+        if (!(statement instanceof PsiLabeledStatement labeledStatement)) {
           continue;
         }
-        final PsiLabeledStatement labeledStatement = (PsiLabeledStatement)statement;
         registerError(labeledStatement.getLabelIdentifier(), block);
       }
     }

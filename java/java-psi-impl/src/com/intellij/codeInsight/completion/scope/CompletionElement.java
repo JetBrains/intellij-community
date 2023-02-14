@@ -79,7 +79,7 @@ public final class CompletionElement{
     Object thatObj = ((CompletionElement)obj).myEqualityObject;
     if (myEqualityObject instanceof MethodSignature) {
       return thatObj instanceof MethodSignature &&
-             MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)myEqualityObject, (MethodSignature)thatObj);
+             MethodSignatureUtil.areSignaturesErasureEqual((MethodSignature)myEqualityObject, (MethodSignature)thatObj);
     }
     return Comparing.equal(myEqualityObject, thatObj);
   }
@@ -87,7 +87,7 @@ public final class CompletionElement{
   @Override
   public int hashCode() {
     if (myEqualityObject instanceof MethodSignature) {
-      return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.hashCode((MethodSignature)myEqualityObject);
+      return myEqualityObject.hashCode();
     }
     return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
   }

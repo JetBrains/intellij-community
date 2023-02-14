@@ -1,0 +1,9 @@
+// "Replace scope function with safe (?.) call" "true"
+// WITH_STDLIB
+var i = 0
+
+fun foo(a: String?) {
+    i = a?.run {
+        length
+    } ?: <caret>
+}

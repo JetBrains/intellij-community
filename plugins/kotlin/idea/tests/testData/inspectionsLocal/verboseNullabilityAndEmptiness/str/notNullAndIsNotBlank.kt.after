@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun test(str: String?) {
+    if (!str.isNullOrBlank()) println(str.length) else println(0)
+}

@@ -38,14 +38,6 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myKey = HighlighterColors.TEXT;
   }
 
-  /**
-   * @deprecated Avoid specifying text attributes. Use {@link TextAttributesKey} instead
-   */
-  @Deprecated
-  public void setAttributes(TextAttributes attributes) {
-    myCachedAttributes = attributes;
-  }
-
   @Override
   public void setText(@NotNull CharSequence text) {
     myTextLength = text.length();
@@ -59,7 +51,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Override
   public void setColorScheme(@NotNull EditorColorsScheme scheme) {
-    setAttributes(scheme.getAttributes(myKey));
+    myCachedAttributes = scheme.getAttributes(myKey);
   }
 
   @Override

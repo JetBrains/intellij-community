@@ -17,7 +17,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class JsonInPropertyKeysContextType extends TemplateContextType {
   protected JsonInPropertyKeysContextType() {
-    super("JSON_PROPERTY_KEYS", JsonBundle.message("json.property.keys"), JsonContextType.class);
+    super(JsonBundle.message("json.property.keys"));
   }
 
   @Override

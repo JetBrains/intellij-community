@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Denis Zhdanov
- */
 public class ExternalSystemRunConfigurationEditor extends SettingsEditor<ExternalSystemRunConfiguration> {
 
   @NotNull private final ExternalSystemTaskSettingsControl myControl;

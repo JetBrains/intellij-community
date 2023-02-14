@@ -3,7 +3,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -32,11 +33,10 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
     return InspectionGadgetsBundle.message("conditional.can.be.pushed.inside.expression.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("conditional.can.be.pushed.inside.expression.option"),
-                                          this, "ignoreSingleArgument");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSingleArgument", InspectionGadgetsBundle.message("conditional.can.be.pushed.inside.expression.option")));
   }
 
   @Nullable
@@ -54,7 +54,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)descriptor.getPsiElement();
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (thenExpression == null) {
@@ -87,7 +87,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
   private  class ConditionalCanBePushedInsideExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenExpression = expression.getThenExpression();
       if (thenExpression == null) {
@@ -104,7 +104,7 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return;
       }
       final PsiType type = ((PsiExpression)leftDiff).getType();
-      if (type == null || PsiType.VOID.equals(type)) {
+      if (type == null || PsiTypes.voidType().equals(type)) {
         return;
       }
       if (ignoreSingleArgument && isOnlyArgumentOfMethodCall(leftDiff, expression)) {
@@ -121,10 +121,9 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         return false;
       }
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
+      if (!(parent instanceof PsiExpressionList expressionList)) {
         return false;
       }
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
       if (expressionList.getExpressionCount() != 1) {
         return false;
       }

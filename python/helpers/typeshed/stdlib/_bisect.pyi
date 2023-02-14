@@ -1,8 +1,74 @@
-from typing import MutableSequence, Optional, Sequence, TypeVar
+import sys
+from _typeshed import SupportsRichComparisonT
+from collections.abc import Callable, MutableSequence, Sequence
+from typing import TypeVar, overload
 
 _T = TypeVar("_T")
 
-def bisect_left(a: Sequence[_T], x: _T, lo: int = ..., hi: Optional[int] = ...) -> int: ...
-def bisect_right(a: Sequence[_T], x: _T, lo: int = ..., hi: Optional[int] = ...) -> int: ...
-def insort_left(a: MutableSequence[_T], x: _T, lo: int = ..., hi: Optional[int] = ...) -> None: ...
-def insort_right(a: MutableSequence[_T], x: _T, lo: int = ..., hi: Optional[int] = ...) -> None: ...
+if sys.version_info >= (3, 10):
+    @overload
+    def bisect_left(
+        a: Sequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ..., *, key: None = ...
+    ) -> int: ...
+    @overload
+    def bisect_left(
+        a: Sequence[_T],
+        x: SupportsRichComparisonT,
+        lo: int = ...,
+        hi: int | None = ...,
+        *,
+        key: Callable[[_T], SupportsRichComparisonT] = ...,
+    ) -> int: ...
+    @overload
+    def bisect_right(
+        a: Sequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ..., *, key: None = ...
+    ) -> int: ...
+    @overload
+    def bisect_right(
+        a: Sequence[_T],
+        x: SupportsRichComparisonT,
+        lo: int = ...,
+        hi: int | None = ...,
+        *,
+        key: Callable[[_T], SupportsRichComparisonT] = ...,
+    ) -> int: ...
+    @overload
+    def insort_left(
+        a: MutableSequence[SupportsRichComparisonT],
+        x: SupportsRichComparisonT,
+        lo: int = ...,
+        hi: int | None = ...,
+        *,
+        key: None = ...,
+    ) -> None: ...
+    @overload
+    def insort_left(
+        a: MutableSequence[_T], x: _T, lo: int = ..., hi: int | None = ..., *, key: Callable[[_T], SupportsRichComparisonT] = ...
+    ) -> None: ...
+    @overload
+    def insort_right(
+        a: MutableSequence[SupportsRichComparisonT],
+        x: SupportsRichComparisonT,
+        lo: int = ...,
+        hi: int | None = ...,
+        *,
+        key: None = ...,
+    ) -> None: ...
+    @overload
+    def insort_right(
+        a: MutableSequence[_T], x: _T, lo: int = ..., hi: int | None = ..., *, key: Callable[[_T], SupportsRichComparisonT] = ...
+    ) -> None: ...
+
+else:
+    def bisect_left(
+        a: Sequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ...
+    ) -> int: ...
+    def bisect_right(
+        a: Sequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ...
+    ) -> int: ...
+    def insort_left(
+        a: MutableSequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ...
+    ) -> None: ...
+    def insort_right(
+        a: MutableSequence[SupportsRichComparisonT], x: SupportsRichComparisonT, lo: int = ..., hi: int | None = ...
+    ) -> None: ...

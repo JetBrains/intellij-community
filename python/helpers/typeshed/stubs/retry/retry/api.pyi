@@ -1,28 +1,28 @@
+from _typeshed import IdentityFunction
+from collections.abc import Callable, Sequence
 from logging import Logger
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, TypeVar
 
-_T = TypeVar("_T", bound=Callable[..., Any])
-_Decorator = Callable[[_T], _T]
 _R = TypeVar("_R")
 
 def retry_call(
     f: Callable[..., _R],
-    fargs: Optional[Sequence[Any]] = ...,
-    fkwargs: Optional[Dict[str, Any]] = ...,
-    exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]] = ...,
+    fargs: Sequence[Any] | None = ...,
+    fkwargs: dict[str, Any] | None = ...,
+    exceptions: type[Exception] | tuple[type[Exception], ...] = ...,
     tries: int = ...,
     delay: float = ...,
-    max_delay: Optional[float] = ...,
+    max_delay: float | None = ...,
     backoff: float = ...,
-    jitter: Union[Tuple[float, float], float] = ...,
-    logger: Optional[Logger] = ...,
+    jitter: tuple[float, float] | float = ...,
+    logger: Logger | None = ...,
 ) -> _R: ...
 def retry(
-    exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]] = ...,
+    exceptions: type[Exception] | tuple[type[Exception], ...] = ...,
     tries: int = ...,
     delay: float = ...,
-    max_delay: Optional[float] = ...,
+    max_delay: float | None = ...,
     backoff: float = ...,
-    jitter: Union[Tuple[float, float], float] = ...,
-    logger: Optional[Logger] = ...,
-) -> _Decorator[_T]: ...
+    jitter: tuple[float, float] | float = ...,
+    logger: Logger | None = ...,
+) -> IdentityFunction: ...

@@ -31,7 +31,7 @@ class GitBranchContextTest: GitSingleRepoTest() {
 
     project.messageBus.connect(testRootDisposable).subscribe(BranchChangeListener.VCS_BRANCH_CHANGED, Listener())
 
-    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
     worker.checkoutNewBranch("foo", listOf(repo))
     TestCase.assertEquals("foo", toBranch)
     TestCase.assertEquals("master", fromBranch)
@@ -60,7 +60,7 @@ class GitBranchContextTest: GitSingleRepoTest() {
     }
     ExtensionTestUtil.maskExtensions(WorkingContextProvider.EP_NAME, listOf(TestContextProvider()), testRootDisposable)
 
-    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler())
+    val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
     value = "master"
     worker.checkoutNewBranch("foo", listOf(repo))
     value = "foo"

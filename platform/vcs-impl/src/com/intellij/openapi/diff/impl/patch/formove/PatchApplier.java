@@ -102,7 +102,7 @@ public final class PatchApplier {
   }
 
   @NotNull
-  private Collection<FilePatch> getFailedPatches() {
+  public Collection<FilePatch> getFailedPatches() {
     return myFailedPatches;
   }
 

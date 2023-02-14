@@ -29,9 +29,6 @@ import icons.PythonIcons
 import java.awt.BorderLayout
 import javax.swing.Icon
 
-/**
- * @author vlan
- */
 open class PyAddExistingVirtualEnvPanel(private val project: Project?,
                                    private val module: Module?,
                                    private val existingSdks: List<Sdk>,
@@ -63,8 +60,7 @@ open class PyAddExistingVirtualEnvPanel(private val project: Project?,
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    val sdk = sdkComboBox.selectedSdk
-    return when (sdk) {
+    return when (val sdk = sdkComboBox.selectedSdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
         if (!makeSharedField.isSelected) {
           associateWithModule(module, newProjectPath)

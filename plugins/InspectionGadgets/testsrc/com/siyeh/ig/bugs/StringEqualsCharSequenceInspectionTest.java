@@ -43,6 +43,12 @@ public class StringEqualsCharSequenceInspectionTest extends LightJavaInspectionT
                  "}");
   }
 
+  public void testPredicate() {
+    doMemberTest("boolean m(String s, CharSequence cs) {" +
+                 "  return java.util.function.Predicate./*'String.equals()' called with 'CharSequence' argument*/isEqual/**/(s).test(cs);" +
+                 "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

@@ -21,9 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
-*/
 public class SameModuleWeigher extends ProximityWeigher {
 
   @Override

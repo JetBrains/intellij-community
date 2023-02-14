@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,23 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.codeInspection.reference.RefPackage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int limit = 10;
 
   @Override
@@ -44,23 +44,19 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
     @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {
-    if (!(refEntity instanceof RefClass)) {
+    if (!(refEntity instanceof RefClass refClass)) {
       return null;
     }
-    final RefClass refClass = (RefClass)refEntity;
-    final PsiElement aClass = refClass.getPsiElement();
-    if (!(aClass instanceof PsiClass) || ClassUtils.isInnerClass((PsiClass)aClass)) {
+    if (!(refClass.getOwner() instanceof RefPackage)) {
       return null;
     }
-    final Set<RefClass> dependents =
-      DependencyUtils.calculateDependentsForClass(refClass);
+    final Set<RefClass> dependents = DependencyUtils.calculateDependentsForClass(refClass);
     final int numDependents = dependents.size();
     if (numDependents <= limit) {
       return null;
     }
-    final String errorString = InspectionGadgetsBundle.message(
-      "class.with.too.many.dependents.problem.descriptor",
-      refEntity.getName(), numDependents, limit);
+    final String errorString =
+      InspectionGadgetsBundle.message("class.with.too.many.dependents.problem.descriptor", refEntity.getName(), numDependents, limit);
 
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(errorString)
@@ -68,10 +64,8 @@ public class ClassWithTooManyDependentsInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "class.with.too.many.dependents.max.option"),
-      this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("class.with.too.many.dependents.max.option"), 1, 1000));
   }
 }

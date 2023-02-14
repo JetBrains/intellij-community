@@ -1,12 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
+import com.intellij.execution.configurations.ModuleBasedConfigurationOptions;
+import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector;
+import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface CommonJavaRunConfigurationParameters extends CommonProgramRunConfigurationParameters, ConfigurationWithAlternativeJre {
+import java.util.Collections;
+import java.util.List;
+
+public interface CommonJavaRunConfigurationParameters extends CommonProgramRunConfigurationParameters, ConfigurationWithAlternativeJre,
+                                                              FusAwareRunConfiguration {
   void setVMParameters(@Nullable String value);
 
   String getVMParameters();
@@ -27,4 +36,27 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   @Nullable
   String getPackage();
+
+  default List<ModuleBasedConfigurationOptions.ClasspathModification> getClasspathModifications() {
+    return Collections.emptyList();
+  }
+
+  default void setClasspathModifications(List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {
+  }
+
+  @Override
+  default @NotNull List<EventPair<?>> getAdditionalUsageData() {
+    EventPair<Integer> data = getAlternativeJreUserData(getAlternativeJrePath());
+    return data != null ? Collections.singletonList(data) : Collections.emptyList();
+  }
+
+  static EventPair<Integer> getAlternativeJreUserData(String jrePath) {
+    if (jrePath != null) {
+      JavaVersion version = JavaParametersUtil.getJavaVersion(jrePath);
+      if (version != null) {
+        return RunConfigurationUsageTriggerCollector.ALTERNATIVE_JRE_VERSION.with(version.feature);
+      }
+    }
+    return null;
+  }
 }

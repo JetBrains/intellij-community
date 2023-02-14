@@ -14,7 +14,6 @@ import static com.intellij.psi.PsiJvmConversionHelper.getAnnotationAttributeValu
 /**
  * Represents a single element-value pair of an annotation parameter list.
  *
- * @author ven
  * @see PsiAnnotation
  * @see PsiAnnotationParameterList
  */

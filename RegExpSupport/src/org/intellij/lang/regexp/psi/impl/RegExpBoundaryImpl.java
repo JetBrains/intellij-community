@@ -36,27 +36,20 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
         } else if (type == RegExpTT.DOLLAR) {
             return Type.LINE_END;
         } else if (type == RegExpTT.BOUNDARY){
-            final String s = getUnescapedText();
-            if (s.equals("\\b")) {
-                return Type.WORD;
-            } else if (s.equals("\\b{g}")) {
-                return Type.UNICODE_EXTENDED_GRAPHEME;
-            } else if (s.equals("\\B")) {
-                return Type.NON_WORD;
-            } else if (s.equals("\\A")) {
-                return Type.BEGIN;
-            } else if (s.equals("\\Z")) {
-                return Type.END_NO_LINE_TERM;
-            } else if (s.equals("\\z")) {
-                return Type.END;
-            } else if (s.equals("\\G")) {
-                return Type.PREVIOUS_MATCH;
-            } else if (s.equals("\\K")) {
-                return Type.RESET_MATCH;
-            }
+            final String text = getUnescapedText();
+            return switch (text) {
+              case "\\b" -> Type.WORD;
+              case "\\b{g}" -> Type.UNICODE_EXTENDED_GRAPHEME;
+              case "\\B" -> Type.NON_WORD;
+              case "\\A" -> Type.BEGIN;
+              case "\\Z" -> Type.END_NO_LINE_TERM;
+              case "\\z" -> Type.END;
+              case "\\G" -> Type.PREVIOUS_MATCH;
+              case "\\K" -> Type.RESET_MATCH;
+              default -> throw new AssertionError("unknown boundary '" + text + "'");
+            };
         }
-        assert false;
-        return null;
+        throw new AssertionError("unknown boundary '" + getUnescapedText() + "'");
     }
 
     @Override

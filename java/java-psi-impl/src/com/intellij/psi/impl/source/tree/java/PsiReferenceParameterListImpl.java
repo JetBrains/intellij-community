@@ -26,9 +26,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- *  @author dsl
- */
 public class PsiReferenceParameterListImpl extends CompositePsiElement implements PsiReferenceParameterList {
   private static final Logger LOG = Logger.getInstance(PsiReferenceParameterListImpl.class);
   private static final TokenSet TYPE_SET = TokenSet.create(JavaElementType.TYPE);
@@ -40,6 +37,20 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   @Override
   public PsiTypeElement @NotNull [] getTypeParameterElements() {
     return getChildrenAsPsiElements(JavaElementType.TYPE, PsiTypeElement.ARRAY_FACTORY);
+  }
+
+  @Override
+  public int getTypeArgumentCount() {
+    int children = countChildren(TYPE_SET);
+    if (children == 1) {
+      PsiTypeElement typeElement = (PsiTypeElement)findChildByType(JavaElementType.TYPE);
+      LOG.assertTrue(typeElement != null);
+      PsiType soleType = typeElement.getType();
+      if (soleType instanceof PsiDiamondType) {
+        return ((PsiDiamondType)soleType).resolveInferredTypes().getInferredTypes().size();
+      }
+    }
+    return children;
   }
 
   @Override

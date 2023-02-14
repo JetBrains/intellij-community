@@ -261,25 +261,23 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         arc = arc > bw + lw ? arc - bw - lw : 0.0f;
 
         switch (direction) {
-          case SOUTH:
+          case SOUTH -> {
             shape.moveTo(lw, 0);
             shape.lineTo(w - bw - lw, 0);
             shape.lineTo(w - bw - lw, h - bw - lw - arc);
             shape.quadTo(w - bw - lw, h - bw - lw, w - bw - lw - arc, h - bw - lw);
             shape.lineTo(lw, h - bw - lw);
             shape.closePath();
-            break;
-
-          case NORTH:
+          }
+          case NORTH -> {
             shape.moveTo(lw, bw + lw);
             shape.lineTo(w - bw - lw - arc, bw + lw);
             shape.quadTo(w - bw - lw, bw + lw, w - bw - lw, bw + lw + arc);
             shape.lineTo(w - bw - lw, h);
             shape.lineTo(lw, h);
             shape.closePath();
-            break;
-          default:
-            break;
+          }
+          default -> {}
         }
         return shape;
       }
@@ -290,21 +288,19 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         int ah = ARROW_HEIGHT.get();
 
         switch (direction) {
-          case SOUTH:
+          case SOUTH -> {
             arrow.moveTo(0, 0);
             arrow.lineTo(aw, 0);
             arrow.lineTo(aw / 2.0, ah);
             arrow.closePath();
-            break;
-
-          case NORTH:
+          }
+          case NORTH -> {
             arrow.moveTo(0, 0);
             arrow.lineTo(aw, 0);
             arrow.lineTo(aw / 2.0, -ah);
             arrow.closePath();
-            break;
-          default:
-            break;
+          }
+          default -> {}
         }
 
         return arrow;

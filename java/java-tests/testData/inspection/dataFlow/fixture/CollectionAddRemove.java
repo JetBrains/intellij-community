@@ -1,6 +1,15 @@
 import java.util.*;
 
 public class CollectionAddRemove {
+  void testPutKeySet() {
+    Map<String, Integer> testMap = new HashMap<>();
+    Set<String> keys = testMap.keySet();
+    if (<warning descr="Condition 'keys.isEmpty()' is always 'true'">keys.isEmpty()</warning>) {}
+    testMap.put("a", 1);
+    if (keys.isEmpty()) {}
+    if (keys.contains("a")) {}
+  }
+  
   void testAdd(List<String> list) {
     list.add("foo");
     if (<warning descr="Condition 'list.isEmpty()' is always 'false'">list.isEmpty()</warning>) { }
@@ -74,7 +83,7 @@ public class CollectionAddRemove {
     list.remove("bar");
     list.remove("baz");
     if (<warning descr="Condition 'list.size() > 3' is always 'false'">list.size() > 3</warning>) {}
-    list.<warning descr="The call to 'remove' always fails as index is out of bounds">remove</warning>(100);
+    list.<warning descr="The call to 'remove' always fails as an argument is out of bounds">remove</warning>(100);
   }
 
   void testRemoveByIndex() {
@@ -123,7 +132,7 @@ public class CollectionAddRemove {
 
     someSideEffect(new ArrayList<>(strings)); 
 
-    if (<warning descr="Condition '!strings.isEmpty()' is always 'true'">!<warning descr="Result of 'strings.isEmpty()' is always 'false'">strings.isEmpty()</warning></warning>) { 
+    if (<warning descr="Condition '!strings.isEmpty()' is always 'true'">!strings.isEmpty()</warning>) { 
       System.out.println("ok");
     }
   }

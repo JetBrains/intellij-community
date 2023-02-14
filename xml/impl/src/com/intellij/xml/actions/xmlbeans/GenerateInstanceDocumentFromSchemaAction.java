@@ -2,10 +2,7 @@
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -43,6 +40,11 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -125,7 +127,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     String xml;
     try {
       xml = Xsd2InstanceUtils.generate(ArrayUtilRt.toStringArray(parameters));
-    } catch (IllegalArgumentException e) {
+    } catch (Throwable e) {
       Messages.showErrorDialog(project, StringUtil.getMessage(e), XmlBundle.message("error"));
       return;
     }

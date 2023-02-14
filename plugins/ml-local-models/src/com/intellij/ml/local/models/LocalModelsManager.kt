@@ -4,7 +4,9 @@ import com.intellij.ml.local.models.api.LocalModel
 import com.intellij.lang.Language
 import com.intellij.ml.local.models.api.LocalModelFactory
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LocalModelsManager private constructor(private val project: Project) {
   companion object {
     fun getInstance(project: Project): LocalModelsManager = project.getService(LocalModelsManager::class.java)
@@ -23,6 +25,10 @@ class LocalModelsManager private constructor(private val project: Project) {
 
   fun registerModel(language: Language, model: LocalModel) {
     models.getOrPut(language.id, { mutableMapOf() })[model.id] = model
+  }
+
+  fun unregisterModel(language: Language, modelId: String) {
+    models[language.id]?.remove(modelId)
   }
 
   inline fun <reified T : LocalModel> getModel(language: Language): T? = getModels(language).filterIsInstance<T>().firstOrNull()

@@ -46,7 +46,7 @@ public class ExtendsAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
@@ -76,10 +76,9 @@ public class ExtendsAnnotationInspection extends BaseInspection {
         referenceList.getReferenceElements();
       for (final PsiJavaCodeReferenceElement element : elements) {
         final PsiElement referent = element.resolve();
-        if (!(referent instanceof PsiClass)) {
+        if (!(referent instanceof PsiClass psiClass)) {
           continue;
         }
-        final PsiClass psiClass = (PsiClass)referent;
         if (psiClass.isAnnotationType()) {
           registerError(element, containingClass);
         }

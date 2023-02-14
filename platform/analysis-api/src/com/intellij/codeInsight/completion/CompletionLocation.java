@@ -8,9 +8,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public class CompletionLocation implements UserDataHolder {
   private final CompletionParameters myCompletionParameters;
   private final ProcessingContext myProcessingContext = new ProcessingContext();

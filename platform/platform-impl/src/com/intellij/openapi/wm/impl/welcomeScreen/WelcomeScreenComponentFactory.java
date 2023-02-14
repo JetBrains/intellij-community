@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -21,15 +21,15 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -50,22 +50,18 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.Objects;
-
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
-import static com.intellij.util.ui.UIUtil.FontSize.SMALL;
+import java.util.List;
+import java.util.*;
 
 public final class WelcomeScreenComponentFactory {
-  @NotNull static JComponent createSmallLogo() {
+  static @NotNull JComponent createSmallLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
     if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl);
+      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
       float scale = 28f / icon.getIconWidth();
       Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
       JLabel logo = new JLabel(smallLogoIcon);
@@ -92,8 +88,8 @@ public final class WelcomeScreenComponentFactory {
     }
 
     JLabel version = new JLabel(appVersion);
-    version.setFont(UIUtil.getLabelFont(SMALL));
-    version.setForeground(Gray._128);
+    version.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    version.setForeground(ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ContextHelp.FOREGROUND : Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
     textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
@@ -117,14 +113,14 @@ public final class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  @NotNull static JComponent createLogo() {
+  static @NotNull JComponent createLogo() {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
     if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
+      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
       logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
@@ -135,7 +131,7 @@ public final class WelcomeScreenComponentFactory {
                              : ApplicationNamesInfo.getInstance().getFullProductName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
+    appName.setFont(WelcomeScreenUIManager.getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
     String appVersion = IdeBundle.message("welcome.screen.logo.version.label", appInfo.getFullVersion());
 
@@ -144,7 +140,7 @@ public final class WelcomeScreenComponentFactory {
     }
 
     JLabel version = new JLabel(appVersion);
-    version.setFont(getProductFont(16));
+    version.setFont(WelcomeScreenUIManager.getProductFont(16));
     version.setHorizontalAlignment(SwingConstants.CENTER);
     version.setForeground(Gray._128);
 
@@ -163,8 +159,8 @@ public final class WelcomeScreenComponentFactory {
   static JComponent createRecentProjects(Disposable parentDisposable) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new NewRecentProjectPanel(parentDisposable), BorderLayout.CENTER);
-    panel.setBackground(getProjectsBackground());
-    panel.setBorder(new CustomLineBorder(getSeparatorColor(), JBUI.insetsRight(1)));
+    panel.setBackground(WelcomeScreenUIManager.getProjectsBackground());
+    panel.setBorder(new CustomLineBorder(WelcomeScreenUIManager.getSeparatorColor(), JBUI.insetsRight(1)));
     return panel;
   }
 
@@ -186,7 +182,7 @@ public final class WelcomeScreenComponentFactory {
    * Wraps an {@link ActionLink} component and delegates accessibility support to it.
    */
   protected static final class JActionLinkPanel extends JPanel {
-    @NotNull private final ActionLink myActionLink;
+    private final @NotNull ActionLink myActionLink;
 
     public JActionLinkPanel(@NotNull ActionLink actionLink) {
       super(new BorderLayout());
@@ -233,8 +229,7 @@ public final class WelcomeScreenComponentFactory {
     }
   }
 
-  @NotNull
-  public static AnAction createShowPopupAction(@NonNls @NotNull String groupId) {
+  public static @NotNull AnAction createShowPopupAction(@NonNls @NotNull String groupId) {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -256,75 +251,148 @@ public final class WelcomeScreenComponentFactory {
                                      @Nullable Component focusOnLeft) {
     AnAction action = createShowPopupAction(groupId);
     JComponent panel = wrapActionLink(new ActionLink(text, icon, action));
-    installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
+    WelcomeScreenFocusManager.installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
     return panel;
   }
 
   public static JComponent wrapActionLink(@NotNull ActionLink link) {
-    JPanel panel = (JPanel)wrapActionLinkWithoutArrow(link);
+    JPanel panel = wrapActionLinkWithoutArrow(link);
     if (!StringUtil.isEmptyOrSpaces(link.getText())) {
       panel.add(createArrow(link), BorderLayout.EAST);
     }
     return panel;
   }
 
-  public static JComponent wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
+  public static JActionLinkPanel wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
-    link.setNormalColor(getLinkNormalColor());
+    link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
     return panel;
   }
 
-  public static JComponent createErrorsLink(Disposable parent) {
+  public static JComponent createErrorsLink(@NotNull Disposable parent) {
     IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
-    panel.setBorder(JBUI.Borders.emptyRight(13));
-    panel.setOpaque(false);
+    panel.getComponent().setBorder(JBUI.Borders.emptyRight(13));
     Disposer.register(parent, panel);
-    return panel;
+    return panel.getComponent();
   }
 
-  @NotNull
-  public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new AnAction() {
+  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+    SelectablePanel selectablePanel = new SelectablePanel();
+    ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
+      private boolean hideListenerInstalled = false;
+
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
-        if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-          WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
-          if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
-            welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
+        if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
+          if (!hideListenerInstalled) {
+            welcomeBalloonLayout.setHideListener(() -> selectablePanel.setSelectionColor(null));
+            hideListenerInstalled = true;
           }
           welcomeBalloonLayout.showPopup();
+          selectablePanel.setSelectionColor(JBUI.CurrentTheme.ActionButton.pressedBackground());
         }
       }
     });
-    final JComponent panel = wrapActionLink(actionLink);
-    panel.setVisible(false);
+
+
+    JComponent panel = wrapActionLink(actionLink);
+    selectablePanel.setLayout(new BorderLayout());
+    selectablePanel.add(panel);
+    selectablePanel.setOpaque(false);
+    selectablePanel.setBorder(panel.getBorder());
+    selectablePanel.setSelectionArc(JBUIScale.scale(6));
+    panel.setBorder(null);
+    selectablePanel.setVisible(false);
+
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
-      if (!types.isEmpty()) {
-        NotificationType type = Collections.max(types);
-        actionLink.setIcon(type == NotificationType.IDE_UPDATE
-                           ? AllIcons.Ide.Notification.IdeUpdate
-                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+      BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+      if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
+        if (welcomeBalloonLayout.getLocationComponent() == null) {
+          welcomeBalloonLayout.setLocationComponent(actionLink);
+        }
       }
-      panel.setVisible(!types.isEmpty());
+      if (!types.isEmpty()) {
+        actionLink.setIcon(getNotificationIcon(types, selectablePanel));
+      }
+      selectablePanel.setVisible(!types.isEmpty());
     });
-    return panel;
+    return selectablePanel;
   }
 
-  @Nls
-  public static String getApplicationTitle() {
+  private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
+    if (ExperimentalUI.isNewUI()) {
+      return IconUtil.resizeSquared(
+        notificationTypes.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew, JBUIScale.scale(16));
+    }
+    else {
+      if (notificationTypes.isEmpty()) {
+        return AllIcons.Ide.Notification.NoEvents;
+      }
+
+      NotificationType type = Collections.max(notificationTypes);
+      return type == NotificationType.IDE_UPDATE
+             ? AllIcons.Ide.Notification.IdeUpdate
+             : IdeNotificationArea.createIconWithNotificationCount(panel, type, notificationTypes.size(), false);
+    }
+  }
+
+  public static @Nls String getApplicationTitle() {
     String title = IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName());
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
-    String suffix = ProjectFrameHelper.getSuperUserSuffix();
+    String suffix = ProjectFrameHelper.Companion.getSuperUserSuffix();
     if (suffix != null) {
       title += " (" + suffix + ")";
     }
     return title;
+  }
+
+  public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
+    JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
+    JComponent errorsLink = createErrorsLink(parentDisposable);
+    JComponent eventLink = createEventLink("", parentDisposable);
+    if (ExperimentalUI.isNewUI()) {
+      panel.setBorder(JBUI.Borders.empty(10, 0, 16, 24));
+      errorsLink.setBorder(JBUI.Borders.empty(5, 5, 5, 13));
+      eventLink.setBorder(JBUI.Borders.empty(5));
+      panel.add(errorsLink);
+      panel.add(eventLink);
+    }
+    else {
+      panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
+      panel.add(errorsLink);
+      panel.add(eventLink);
+    }
+    return panel;
+  }
+
+  static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
+    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
+    List<StartPagePromoter> promoters = new ArrayList<>();
+    int maxPriorityLevel = Integer.MIN_VALUE;
+
+    for (StartPagePromoter promoter : extensions) {
+      int priorityLevel = promoter.getPriorityLevel();
+      if (priorityLevel >= maxPriorityLevel && promoter.canCreatePromo(isEmptyState)) {
+        if (priorityLevel > maxPriorityLevel) {
+          maxPriorityLevel = priorityLevel;
+          promoters.clear();
+        }
+        promoters.add(promoter);
+      }
+    }
+
+    if (promoters.isEmpty()) {
+      return null;
+    }
+
+    StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
+    return selectedPromoter.getPromotion(isEmptyState);
   }
 }

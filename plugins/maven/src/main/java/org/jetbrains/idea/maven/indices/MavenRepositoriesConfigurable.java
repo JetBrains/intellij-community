@@ -87,8 +87,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     });
 
     myIndicesTable.setDefaultRenderer(Object.class, new MyCellRenderer());
-    myIndicesTable.setDefaultRenderer(MavenIndicesManager.IndexUpdatingState.class,
-                                      new MyIconCellRenderer());
+    myIndicesTable.setDefaultRenderer(MavenIndexUpdateManager.IndexUpdatingState.class, new MyIconCellRenderer());
 
     myIndicesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
 
@@ -112,7 +111,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdate(getSelectedIndices());
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices());
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -155,7 +154,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   @Override
   public void reset() {
-    myIndicesTable.setModel(new MyTableModel(MavenProjectIndicesManager.getInstance(myProject).getIndices()));
+    myIndicesTable.setModel(new MyTableModel(MavenIndicesManager.getInstance(myProject).getIndex().getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myIndicesTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myIndicesTable.getColumnModel().getColumn(2).setPreferredWidth(50);
@@ -214,31 +213,31 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (columnIndex == 3) return MavenIndicesManager.IndexUpdatingState.class;
+      if (columnIndex == 3) return MavenIndexUpdateManager.IndexUpdatingState.class;
       return super.getColumnClass(columnIndex);
     }
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       MavenSearchIndex i = getIndex(rowIndex);
-      switch (columnIndex) {
-        case 0:
-          return i.getRepositoryPathOrUrl();
-        case 1:
-          if (i.getKind() == MavenSearchIndex.Kind.LOCAL) return "Local";
-          if (i.getKind() == MavenSearchIndex.Kind.ONLINE) return "Online";
-          return "Remote";
-        case 2:
+      return switch (columnIndex) {
+        case 0 -> i.getRepositoryPathOrUrl();
+        case 1 -> switch (i.getKind()) {
+          case LOCAL -> "Local";
+          case REMOTE -> "Remote";
+          case ONLINE -> "Online";
+        };
+        case 2 -> {
           if (i.getFailureMessage() != null) {
-            return IndicesBundle.message("maven.index.updated.error");
+            yield IndicesBundle.message("maven.index.updated.error");
           }
           long timestamp = i.getUpdateTimestamp();
-          if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
-          return DateFormatUtil.formatDate(timestamp);
-        case 3:
-          return MavenProjectIndicesManager.getInstance(myProject).getUpdatingState(i);
-      }
-      throw new RuntimeException();
+          if (timestamp == -1) yield IndicesBundle.message("maven.index.updated.never");
+          yield DateFormatUtil.formatDate(timestamp);
+        }
+        case 3 -> MavenIndicesManager.getInstance(myProject).getUpdatingState(i);
+        default -> throw new RuntimeException();
+      };
     }
 
     public MavenIndex getIndex(int rowIndex) {
@@ -270,11 +269,11 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private class MyIconCellRenderer extends MyCellRenderer {
-    MavenIndicesManager.IndexUpdatingState myState;
+    MavenIndexUpdateManager.IndexUpdatingState myState;
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      myState = (MavenIndicesManager.IndexUpdatingState)value;
+      myState = (MavenIndexUpdateManager.IndexUpdatingState)value;
       return super.getTableCellRendererComponent(table, "", isSelected, hasFocus, row, column);
     }
 
@@ -283,16 +282,16 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
       super.paintComponent(g);
       Dimension size = getSize();
       switch (myState) {
-        case UPDATING:
+        case UPDATING -> {
           myUpdatingIcon.setBackground(getBackground());
           myUpdatingIcon.setSize(size.width, size.height);
           myUpdatingIcon.paint(g);
-          break;
-        case WAITING:
+        }
+        case WAITING -> {
           int x = (size.width - AllIcons.Process.Step_passive.getIconWidth()) / 2;
           int y = (size.height - AllIcons.Process.Step_passive.getIconHeight()) / 2;
           AllIcons.Process.Step_passive.paintIcon(this, g, x, y);
-          break;
+        }
       }
     }
   }

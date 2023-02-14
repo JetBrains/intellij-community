@@ -16,5 +16,5 @@ public abstract class UnresolvedMergeCheckProvider {
   @Nullable
   public abstract CheckinHandler.ReturnResult checkUnresolvedConflicts(@NotNull CheckinProjectPanel panel,
                                                                        @NotNull CommitContext commitContext,
-                                                                       @Nullable CommitExecutor executor);
+                                                                       @NotNull CommitInfo commitInfo);
 }

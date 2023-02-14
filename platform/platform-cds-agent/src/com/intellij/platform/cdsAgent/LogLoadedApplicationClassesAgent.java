@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.cdsAgent;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  * other dependencies)
  * <p>
  * Java Agent to log all loaded class in CDS supported format
- * <a href="https://openjdk.java.net/jeps/310">JEP 310</a>
+ * <a href="https://openjdk.org/jeps/310">JEP 310</a>
  */
 public final class LogLoadedApplicationClassesAgent {
   public static final String TARGET_FILE = "JB_CDS_TARGET_FILE";
@@ -65,7 +64,7 @@ public final class LogLoadedApplicationClassesAgent {
     log("");
 
     String targetFileName = System.getenv().get(TARGET_FILE);
-    boolean useAppCDS = Boolean.valueOf(System.getenv().getOrDefault(USE_APP_CDS, "true"));
+    boolean useAppCDS = Boolean.parseBoolean(System.getenv().getOrDefault(USE_APP_CDS, "true"));
 
     if (targetFileName == null) {
       log("Failed to find " + TARGET_FILE + " parameter to -javaagentpath");
@@ -78,13 +77,10 @@ public final class LogLoadedApplicationClassesAgent {
 
     final TransitiveClassesCollector myAllClasses = new TransitiveClassesCollector();
 
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-      @Override
-      public Thread newThread(@NotNull Runnable r) {
-        Thread thread = new Thread(r, "LogLoadedApplicationClassesAgent-watcher");
-        thread.setDaemon(true);
-        return thread;
-      }
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread thread = new Thread(r, "LogLoadedApplicationClassesAgent-watcher");
+      thread.setDaemon(true);
+      return thread;
     });
 
     executor.scheduleWithFixedDelay(() -> myAllClasses.addClasses(inst), 0, 20, TimeUnit.MILLISECONDS);
@@ -471,7 +467,7 @@ public final class LogLoadedApplicationClassesAgent {
 
     @NotNull
     public List<String> generateReportWarnings() {
-      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).collect(Collectors.toList());
+      List<ClassInfo> allInfos = myClasses.values().stream().sorted(Comparator.comparing(info -> info.name)).toList();
 
       List<String> lines = new ArrayList<>();
       lines.add("Pre 1.6 classes:");

@@ -1,0 +1,3 @@
+<!ELEMENT tag2 (#PCDATA)>
+<!ATTLIST tag2 i<caret>d2 ID #IMPLIED>
+<!ELEMENT tag (tag2)>

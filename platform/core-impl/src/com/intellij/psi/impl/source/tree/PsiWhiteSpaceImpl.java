@@ -41,7 +41,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
   @Override
   @NotNull
   public Language getLanguage() {
-    final PsiElement master = getParent();
+    PsiElement master = getParent();
     return master != null ?  master.getLanguage() : Language.ANY;
   }
 }

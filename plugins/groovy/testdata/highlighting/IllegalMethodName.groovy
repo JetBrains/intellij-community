@@ -6,8 +6,8 @@ class CC {
   def <warning descr="Method name contains illegal character(s): '/'">'/'</warning>() {}
   def <warning descr="Method name contains illegal character(s): '<'">'<'</warning>() {}
   def <warning descr="Method name contains illegal character(s): '>'">'>'</warning>() {}
-  def <warning descr="Method name contains illegal character(s): ':'">':'</warning>() {}
-  def <warning descr="Method name contains illegal character(s): ':', '.'">'different:chars.'</warning>() {}
+  def ':'() {}
+  def <warning descr="Method name contains illegal character(s): '.'">'different:chars.'</warning>() {}
 }
 
 class CU {
@@ -17,5 +17,5 @@ class CU {
   def <warning descr="Method name contains illegal character(s): '/'">'\u002f'</warning>() {}
   def <warning descr="Method name contains illegal character(s): '<'">'\u003c'</warning>() {}
   def <warning descr="Method name contains illegal character(s): '>'">'\u003e'</warning>() {}
-  def <warning descr="Method name contains illegal character(s): ':'">'\u003a'</warning>() {}
+  def '\u003a'() {}
 }

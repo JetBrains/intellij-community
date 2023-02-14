@@ -3,7 +3,6 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
@@ -17,16 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> implements Cloneable {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated
-  public AbstractPatternBasedConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   protected AbstractPatternBasedConfigurationProducer() {
-    super();
   }
 
   public boolean isConfiguredFromContext(ConfigurationContext context, Set<String> patterns) {

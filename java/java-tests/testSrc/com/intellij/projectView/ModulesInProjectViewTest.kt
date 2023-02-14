@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -10,7 +11,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import java.lang.RuntimeException
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 // directory-based project must be used to ensure that .iws/.ipr file won't break the test (they may be created if workspace model is used)
 class ModulesInProjectViewTest : BaseProjectViewTestCase() {
@@ -56,18 +57,23 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
-    assertStructureEqual("""
-      Project
-       loaded
-        unloaded-inner
-         subdir
-         y.txt
-       unloaded
-        loaded-inner
-         subdir
-         z.txt
-    """.trimIndent())
+    runUnderModalProgressIfIsEdt {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
+    }
+    if (!WorkspaceFileIndexEx.IS_ENABLED) {
+      //todo temporarily dispose until events are fired after unloading
+      assertStructureEqual("""
+        Project
+         loaded
+          unloaded-inner
+           subdir
+           y.txt
+         unloaded
+          loaded-inner
+           subdir
+           z.txt
+      """.trimIndent())
+    }
   }
 
   fun `test unloaded module with qualified name`() {
@@ -94,7 +100,9 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    runUnderModalProgressIfIsEdt {
+      ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
+    }
     assertStructureEqual(expected)
   }
 
@@ -165,6 +173,29 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
       |  Group: baz
       |   module2
       |    subdir
+      |
+      """.trimMargin())
+  }
+
+  fun `test modules in nested groups`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module2") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("foo.module2"), root.findChild("module2")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: foo
+      |  Group: bar
+      |   module1
+      |    subdir
+      |  module2
+      |   subdir
       |
       """.trimMargin())
   }

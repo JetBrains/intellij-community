@@ -1,15 +1,12 @@
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 /**
  * Defines contract for callback to listen external task notifications.
- *
- * @author Denis Zhdanov
  */
 public interface ExternalSystemTaskNotificationListener extends EventListener {
 
@@ -29,9 +26,11 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated(forRemoval = true)
   void onStart(@NotNull ExternalSystemTaskId id);
+
+  default void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
+  }
 
   /**
    * Notifies about processing state change of task with the given id.

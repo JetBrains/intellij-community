@@ -36,7 +36,6 @@ public interface PropertiesProvider {
   Iterator<@NonNls String> getNamesIterator();
 
   /**
-   * @param propertyName
    * @return property value string as defined in xml or null if this provider does not define a property with such name
    */
   @Nullable
@@ -45,7 +44,6 @@ public interface PropertiesProvider {
   /**
    * Needed for referencing purposes.
    * Returned element will be used as a target element for the property reference.
-   * @param propertyName
    */
   @Nullable
   PsiElement getNavigationElement(@NonNls String propertyName);

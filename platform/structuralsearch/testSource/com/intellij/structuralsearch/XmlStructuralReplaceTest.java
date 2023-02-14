@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+@SuppressWarnings("LanguageMismatch")
 public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
   @Override
@@ -24,27 +26,29 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult = "<a><b/></a>";
     assertEquals("First tag replacement", expectedResult, replace(s1, s2, s3));
 
-    String s4 = "<group id=\"EditorTabPopupMenu\">\n" +
-                "      <reference id=\"Compile\"/>\n" +
-                "      <reference id=\"RunContextPopupGroup\"/>\n" +
-                "      <reference id=\"ValidateXml\"/>\n" +
-                "      <separator/>\n" +
-                "      <reference id=\"VersionControlsGroup\"/>\n" +
-                "      <separator/>\n" +
-                "      <reference id=\"ExternalToolsGroup\"/>\n" +
-                "</group>";
+    String s4 = """
+      <group id="EditorTabPopupMenu">
+            <reference id="Compile"/>
+            <reference id="RunContextPopupGroup"/>
+            <reference id="ValidateXml"/>
+            <separator/>
+            <reference id="VersionControlsGroup"/>
+            <separator/>
+            <reference id="ExternalToolsGroup"/>
+      </group>""";
     String s5 = "<reference id=\"'_Value\"/>";
     String s6 = "<reference ref=\"$Value$\"/>";
 
-    expectedResult = "<group id=\"EditorTabPopupMenu\">\n" +
-                     "      <reference ref=\"Compile\"/>\n" +
-                     "      <reference ref=\"RunContextPopupGroup\"/>\n" +
-                     "      <reference ref=\"ValidateXml\"/>\n" +
-                     "      <separator/>\n" +
-                     "      <reference ref=\"VersionControlsGroup\"/>\n" +
-                     "      <separator/>\n" +
-                     "      <reference ref=\"ExternalToolsGroup\"/>\n" +
-                     "</group>";
+    expectedResult = """
+      <group id="EditorTabPopupMenu">
+            <reference ref="Compile"/>
+            <reference ref="RunContextPopupGroup"/>
+            <reference ref="ValidateXml"/>
+            <separator/>
+            <reference ref="VersionControlsGroup"/>
+            <separator/>
+            <reference ref="ExternalToolsGroup"/>
+      </group>""";
     assertEquals("Replace tag", expectedResult, replace(s4, s5, s6));
 
     String s7 = "<h4 class=\"a\">My title<aaa>ZZZZ</aaa> My title 3</h4>\n" +
@@ -110,16 +114,60 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testRemoveTag() {
-    String in = "<a>\n" +
-                "  <b>liberation</b>\n" +
-                "  <c>remuneration</c>\n" +
-                "</a>";
+    String in = """
+      <a>
+        <b>liberation</b>
+        <c>remuneration</c>
+      </a>""";
     String what = "<'tag:[regex( c )]>'_text</'tag>";
     String by = "";
-    String expected = "<a>\n" +
-                      "  <b>liberation</b>\n" +
-                      "</a>";
+    String expected = """
+      <a>
+        <b>liberation</b>
+      </a>""";
 
+    assertEquals(expected, replace(in, what, by));
+  }
+
+  public void testReplaceTargetText() {
+    final ReplacementVariableDefinition definition = new ReplacementVariableDefinition("result");
+    definition.setScriptCodeConstraint("value.getText().toInteger() + 1");
+    options.addVariableDefinition(definition);
+    String in = """
+      <!doctype html>
+      <html>
+      <head>
+          <title class="EXAMPLE">Structural Replace Example</title>
+      <body>
+      <ul>
+          <li class="EXAMPLE">2<!--comment--></li>
+          <li class="example">3</li>
+          <li class="EXAMPLE">4</li>
+          <li class="example">Example line a</li>
+          <li id="EXAMPLE">6</li>
+      </ul>
+      </body>
+      </html>
+      """;
+    String what = "<li>'value:[regex(  \\d+  )]</li>";
+    String by = "$result$";
+
+    final String expected = """
+      <!doctype html>
+      <html>
+      <head>
+          <title class="EXAMPLE">Structural Replace Example</title>
+      <body>
+      <ul>
+          <li class="EXAMPLE">3<!--comment--></li>
+          <li class="example">4</li>
+          <li class="EXAMPLE">5</li>
+          <li class="example">Example line a</li>
+          <li id="EXAMPLE">7</li>
+      </ul>
+      </body>
+      </html>
+      """;
     assertEquals(expected, replace(in, what, by));
   }
 
@@ -153,5 +201,10 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(message, expectedResult, replace(content, pattern, replacement, filepattern));
 
     options.getMatchOptions().setFileType(XmlFileType.INSTANCE);
+  }
+
+  @Override
+  protected String replace(@Language("HTML") String in, String what, String by) {
+    return super.replace(in, what, by);
   }
 }

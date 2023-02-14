@@ -28,12 +28,9 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class HtmlTextContextType extends TemplateContextType {
   public HtmlTextContextType() {
-    super("HTML_TEXT", XmlBundle.message("dialog.edit.template.checkbox.html.text"), HtmlContextType.class);
+    super(XmlBundle.message("dialog.edit.template.checkbox.html.text"));
   }
 
   @Override

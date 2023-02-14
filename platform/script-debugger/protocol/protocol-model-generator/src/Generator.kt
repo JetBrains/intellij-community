@@ -3,7 +3,6 @@ package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.*
 import org.jetbrains.protocolReader.TextOutput
@@ -255,8 +254,7 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
   if (refName != null) {
     return visitor.visitRef(refName)
   }
-  val typeName = typedObject.type
-  return when (typeName) {
+  return when (val typeName = typedObject.type) {
     BOOLEAN_TYPE -> visitor.visitBoolean()
     STRING_TYPE, BINARY_TYPE -> if (typedObject.enum == null) visitor.visitString() else visitor.visitEnum(typedObject.enum!!)
     INTEGER_TYPE, "int" -> visitor.visitInteger()

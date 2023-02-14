@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -13,69 +13,77 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.tabs.TabInfo;
-import org.jdom.JDOMException;
+import org.intellij.lang.annotations.Language;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
-/**
- * @author Dmitry Avdeev
- */
+import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
-
-  public void testAsyncOpening() throws JDOMException, ExecutionException, InterruptedException, IOException {
-    openFiles("<component name=\"FileEditorManager\">\n" +
-              "    <leaf>\n" +
-              "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-              "        <entry file=\"file://$PROJECT_DIR$/src/Bar.java\">\n" +
-              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-              "            <state vertical-scroll-proportion=\"0.032882012\" vertical-offset=\"0\" max-vertical-offset=\"517\">\n" +
-              "              <caret line=\"1\" column=\"26\" selection-start=\"45\" selection-end=\"45\" />\n" +
-              "              <folding>\n" +
-              "                <element signature=\"e#69#70#0\" expanded=\"true\" />\n" +
-              "              </folding>\n" +
-              "            </state>\n" +
-              "          </provider>\n" +
-              "        </entry>\n" +
-              "      </file>\n" +
-              "    </leaf>\n" +
-              "  </component>");
+  public void testAsyncOpening() {
+    @Language("XML")
+    String FEM_XML = """
+      <component name="FileEditorManager">
+          <leaf>
+            <file pinned="false" current="true" current-in-tab="true">
+              <entry file="file://$PROJECT_DIR$/src/Bar.java">
+                <provider selected="true" editor-type-id="text-editor">
+                  <state vertical-scroll-proportion="0.032882012" vertical-offset="0" max-vertical-offset="517">
+                    <caret line="1" column="26" selection-start="45" selection-end="45" />
+                    <folding>
+                      <element signature="e#69#70#0" expanded="true" />
+                    </folding>
+                  </state>
+                </provider>
+              </entry>
+            </file>
+          </leaf>
+        </component>""";
+    openFiles(FEM_XML);
   }
 
   public void testFoldingIsNotBlinkingOnNavigationToSingleLineMethod() {
-    VirtualFile file = getFile("/src/Bar.java");
-    PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
-    assertNotNull(psiFile);
-    PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
-    method.navigate(true);
+    VirtualFile dir = getFile("/src");
+    PsiTestUtil.addSourceContentToRoots(getModule(), dir);
+    try {
+      VirtualFile file = getFile("/src/Bar.java");
+      PsiJavaFile psiFile = (PsiJavaFile)getPsiManager().findFile(file);
+      assertNotNull(psiFile);
+      PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
+      method.navigate(true);
 
-    FileEditor[] editors = myManager.getEditors(file);
-    assertEquals(1, editors.length);
-    Editor editor = ((TextEditor)editors[0]).getEditor();
-    EditorTestUtil.waitForLoading(editor);
-    FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    assertEquals(2, regions.length);
-    assertTrue(regions[0].isExpanded());
-    assertTrue(regions[1].isExpanded());
+      FileEditor[] editors = manager.getEditors(file);
+      assertEquals(1, editors.length);
+      Editor editor = ((TextEditor)editors[0]).getEditor();
+      EditorTestUtil.waitForLoading(editor);
+      FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
+      assertEquals(2, regions.length);
+      assertTrue(regions[0].isExpanded());
+      assertTrue(regions[1].isExpanded());
 
-    CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+      CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
-    regions = editor.getFoldingModel().getAllFoldRegions();
-    assertEquals(2, regions.length);
-    assertTrue(regions[0].isExpanded());
-    assertTrue(regions[1].isExpanded());
+      regions = editor.getFoldingModel().getAllFoldRegions();
+      assertEquals(2, regions.length);
+      assertTrue(regions[0].isExpanded());
+      assertTrue(regions[1].isExpanded());
+    }
+    finally {
+      PsiTestUtil.removeSourceRoot(getModule(), dir);
+    }
   }
 
   public void testOpenModuleDescriptorFile() {
     VirtualFile moduleInfoFile = getFile("/src/module-info.java");
     assertNotNull(moduleInfoFile);
 
-    myManager.openFile(moduleInfoFile, false);
+    manager.openFile(moduleInfoFile);
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
 
-    EditorTabbedContainer openedTabPane = myManager.getCurrentWindow().getTabbedPane();
+    EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());
     TabInfo firstTab = openedTabPane.getTabs().getTabAt(0);
     assertEquals("module-info.java (test.module)", firstTab.getText());

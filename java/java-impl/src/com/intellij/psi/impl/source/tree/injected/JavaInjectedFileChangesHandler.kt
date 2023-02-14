@@ -93,7 +93,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     }
 
-    val wholeRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no wholeRange", e)
+    val wholeRange = (markersWholeRange(affectedMarkers) union workingRange) ?: failAndReport("no wholeRange", e)
 
     CodeStyleManager.getInstance(myProject).reformatRange(
       hostPsiFile, wholeRange.startOffset, wholeRange.endOffset, true)
@@ -124,7 +124,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     }
   }
 
-  private fun rebuildMarkers(contextRange: TextRange) {
+  override fun rebuildMarkers(contextRange: TextRange) {
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     psiDocumentManager.commitDocument(myHostDocument)
 
@@ -231,8 +231,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
   }
 
 }
-
-private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 private fun intermediateElement(psi: PsiElement) =
   psi is PsiWhiteSpace || (psi is PsiJavaToken && psi.tokenType == JavaTokenType.PLUS)

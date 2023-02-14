@@ -42,10 +42,9 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
       return false;
     }
     final PsiElement target = expression.resolve();
-    if (!(target instanceof PsiMethod)) {
+    if (!(target instanceof PsiMethod method)) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)target;
     final PsiClass aClass = method.getContainingClass();
     return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
   }
@@ -59,7 +58,7 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiIdentifier identifier = JavaPsiFacade.getElementFactory(project).createIdentifier("contentEquals");
       element.replace(identifier);
@@ -74,17 +73,18 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
   private static class StringEqualsCharSequenceVisitor extends BaseEqualsVisitor {
 
     @Override
-    void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
+    boolean checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
       if (!leftType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        return;
+        return false;
       }
       if (rightType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
           !InheritanceUtil.isInheritor(rightType, CommonClassNames.JAVA_LANG_CHAR_SEQUENCE)) {
-        return;
+        return false;
       }
       final PsiElement name = expression.getReferenceNameElement();
       assert name != null;
       registerError(name, rightType, expression);
+      return true;
     }
   }
 }

@@ -15,7 +15,9 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -28,11 +30,20 @@ public abstract class HgAbstractGlobalSingleRepoAction extends HgAbstractGlobalA
   @Override
   protected void execute(@NotNull Project project,
                          @NotNull Collection<HgRepository> repositories,
-                         @NotNull List<HgRepository> selectedRepositories) {
-    execute(project, repositories, selectedRepositories.isEmpty() ? null : selectedRepositories.get(0));
+                         @NotNull List<HgRepository> selectedRepositories,
+                         @NotNull DataContext context) {
+    execute(project, repositories, selectedRepositories.isEmpty() ? null : selectedRepositories.get(0), context);
   }
 
   protected abstract void execute(@NotNull Project project,
                                   @NotNull Collection<HgRepository> repositories,
-                                  @Nullable HgRepository selectedRepo);
+                                  @Nullable HgRepository selectedRepo,
+                                  @NotNull DataContext dataContext);
+
+  @Nullable
+  @CalledInAny
+  protected HgRepository getSelectedRepositoryFromEvent(@NotNull DataContext dataContext) {
+    List<HgRepository> repositories = getSelectedRepositoriesFromEvent(dataContext);
+    return repositories.isEmpty() ? null : repositories.get(0);
+  }
 }

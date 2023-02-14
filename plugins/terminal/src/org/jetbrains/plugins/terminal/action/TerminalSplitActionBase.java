@@ -6,12 +6,11 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.TerminalView;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 import javax.swing.*;
 import java.util.function.Supplier;
@@ -26,19 +25,9 @@ public class TerminalSplitActionBase extends TerminalSessionContextMenuActionBas
   }
 
   @Override
-  public void actionPerformedInTerminalToolWindow(@NotNull AnActionEvent e, @NotNull Project project, @NotNull Content content) {
-    JBTerminalWidget terminalWidget = getContextTerminal(e, content);
-    if (terminalWidget != null) {
-      TerminalView.getInstance(project).split(terminalWidget, myVertically);
-    }
-  }
-
-  static @Nullable JBTerminalWidget getContextTerminal(@NotNull AnActionEvent e, @NotNull Content content) {
-    JBTerminalWidget terminal = e.getDataContext().getData(JBTerminalWidget.TERMINAL_DATA_KEY);
-    if (terminal != null && UIUtil.isAncestor(content.getComponent(), terminal)) {
-      return terminal;
-    }
-    return TerminalView.getWidgetByContent(content);
+  public void actionPerformedInTerminalToolWindow(@NotNull AnActionEvent e, @NotNull Project project, @NotNull Content content,
+                                                  @NotNull TerminalWidget terminalWidget) {
+    TerminalToolWindowManager.getInstance(project).split(terminalWidget, myVertically);
   }
 
   public static final class Vertical extends TerminalSplitActionBase {

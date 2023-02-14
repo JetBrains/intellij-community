@@ -18,12 +18,10 @@ package org.jetbrains.idea.maven.intentions
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
+import org.junit.Test
 
-/**
- * @author Sergey Evdokimov
- */
 class MavenAddDependencyIntentionTest extends MavenDomTestCase {
 
   @Override
@@ -36,6 +34,7 @@ class MavenAddDependencyIntentionTest extends MavenDomTestCase {
 """)
   }
 
+  @Test
   void testAddDependencyVariableDeclaration() {
     doTest("""
 class A {
@@ -46,6 +45,7 @@ class A {
 """, "Foo")
   }
 
+  @Test 
   void testAddDependencyWithQualifier() {
     doTest("""
 class A {
@@ -56,6 +56,7 @@ class A {
 """, "java.xxxx.Foo")
   }
 
+  @Test 
   void testAddDependencyNotAClass() {
     doTest("""
 class A {
@@ -66,6 +67,7 @@ class A {
 """, null)
   }
 
+  @Test 
   void testAddDependencyFromExtendsWithGeneric() {
     doTest("""
 class A extends Fo<caret>o<String> {
@@ -74,6 +76,7 @@ class A extends Fo<caret>o<String> {
 """, "Foo")
   }
 
+  @Test 
   void testAddDependencyFromClassInsideGeneric() {
     doTest("""
 class A extends List<Fo<caret>o> {
@@ -82,6 +85,7 @@ class A extends List<Fo<caret>o> {
 """, "Foo")
   }
 
+  @Test 
   void testAddDependencyFromClassInsideGenericWithExtends() {
     doTest("""
 class A extends List<? extends Fo<caret>o> {

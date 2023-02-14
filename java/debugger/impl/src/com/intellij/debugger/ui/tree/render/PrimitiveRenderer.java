@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -60,7 +60,8 @@ public class PrimitiveRenderer extends NodeRendererImpl {
         appendCharValue((CharValue)value, buf);
         if (SHOW_HEX_VALUE) {
           appendHexValue((CharValue)value, buf);
-        } else {
+        }
+        else {
           buf.append(' ').append(((PrimitiveValue)value).longValue());
         }
         return buf.toString();
@@ -68,7 +69,7 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       else {
         if (SHOW_HEX_VALUE) {
           StringBuilder buf = new StringBuilder();
-          buf.append(value.toString());
+          buf.append(value);
           appendHexValue((PrimitiveValue)value, buf);
           return buf.toString();
         }

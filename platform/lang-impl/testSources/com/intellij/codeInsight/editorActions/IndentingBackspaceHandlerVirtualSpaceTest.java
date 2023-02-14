@@ -20,53 +20,62 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCodeInsightTestCase {
   public void testAfterLargeIndent() {
-    doTest("class Foo {\n" +
-           "      \n" +
-           "}",
+    doTest("""
+             class Foo {
+                  \s
+             }""",
            new LogicalPosition(1, 10),
-           "class Foo {\n" +
-           "    \n" +
-           "}",
+           """
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 4));
   }
 
   public void testAfterProperIndent() {
-    doTest("class Foo {\n" +
-           "    \n" +
-           "}",
+    doTest("""
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 10),
-           "class Foo {\n" +
-           "    \n" +
-           "}",
+           """
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 4));
   }
 
   public void testAfterSmallIndent() {
-    doTest("class Foo {\n" +
-           "   \n" +
-           "}",
+    doTest("""
+             class Foo {
+               \s
+             }""",
            new LogicalPosition(1, 10),
-           "class Foo {\n" +
-           "    \n" +
-           "}",
+           """
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 4));
   }
 
   public void testAfterEmptyIndent() {
-    doTest("class Foo {\n" +
-           "\n" +
-           "}",
+    doTest("""
+             class Foo {
+
+             }""",
            new LogicalPosition(1, 10),
-           "class Foo {\n" +
-           "    \n" +
-           "}",
+           """
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 4));
   }
 
   public void testAtIndent() {
-    doTest("class Foo {\n" +
-           "   \n" +
-           "}",
+    doTest("""
+             class Foo {
+               \s
+             }""",
            new LogicalPosition(1, 4),
            "class Foo {\n" +
            "}",
@@ -74,9 +83,10 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
   }
 
   public void testAtIndentOnEmptyLine() {
-    doTest("class Foo {\n" +
-           "\n" +
-           "}",
+    doTest("""
+             class Foo {
+
+             }""",
            new LogicalPosition(1, 4),
            "class Foo {\n" +
            "}",
@@ -84,9 +94,10 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
   }
 
   public void testBeforeIndent() {
-    doTest("class Foo {\n" +
-           "  \n" +
-           "}",
+    doTest("""
+             class Foo {
+              \s
+             }""",
            new LogicalPosition(1, 3),
            "class Foo {\n" +
            "}",
@@ -94,14 +105,16 @@ public class IndentingBackspaceHandlerVirtualSpaceTest extends LightPlatformCode
   }
 
   public void testDeleteLine() {
-    doTest("class Foo {\n" +
-           "\n" +
-           "\n" +
-           "}",
+    doTest("""
+             class Foo {
+
+
+             }""",
            new LogicalPosition(2, 0),
-           "class Foo {\n" +
-           "    \n" +
-           "}",
+           """
+             class Foo {
+                \s
+             }""",
            new LogicalPosition(1, 4));
   }
 

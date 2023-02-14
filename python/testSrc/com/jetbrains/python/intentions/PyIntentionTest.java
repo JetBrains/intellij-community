@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Alexey.Ivanov
- */
 public class PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
 
@@ -71,7 +68,6 @@ public class PyIntentionTest extends PyTestCase {
   /**
    * Ensures that intention with given hint <i>is not</i> active.
    *
-   * @param hint
    */
   private void doNegativeTest(@NotNull String hint) {
     final PsiFile file = myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
@@ -151,6 +147,19 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testJoinIfMultiStatements() {           //PY-2970
     doNegativeTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  public void testJoinIfOrExpressionInOuterCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  // EA-401551
+  public void testJoinIfAssignmentExpressionInInnerCondition() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
+  }
+
+  public void testJoinIfAssignmentExpressionsInBothConditions() {
+    doTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testDictConstructorToLiteralForm() {

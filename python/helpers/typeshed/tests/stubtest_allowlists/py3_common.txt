@@ -1,0 +1,797 @@
+# ==========
+# Allowlist entries that should be fixed
+# ==========
+
+# Please keep sorted alphabetically
+
+# Coroutine and Generator properties are added programmatically
+_collections_abc.Coroutine.cr_await
+_collections_abc.Coroutine.cr_code
+_collections_abc.Coroutine.cr_frame
+_collections_abc.Coroutine.cr_running
+_collections_abc.Generator.gi_code
+_collections_abc.Generator.gi_frame
+_collections_abc.Generator.gi_running
+_collections_abc.Generator.gi_yieldfrom
+_collections_abc.Mapping.__reversed__  # set to None at runtime for a better error message
+_collections_abc.Mapping.get  # Adding None to the Union messed up mypy
+_collections_abc.Sequence.index  # Supporting None in end is not mandatory
+
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+_collections_abc.Set.__rand__
+_collections_abc.Set.__ror__
+_collections_abc.Set.__rsub__
+_collections_abc.Set.__rxor__
+
+_csv.Dialect.__init__  # C __init__ signature is inaccurate
+_threading_local.local.__new__
+_weakref.ref.*  # Alias for _weakref.ReferenceType, problems should be fixed there
+_weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
+_weakref.ProxyType.__getattr__  # Should have all attributes of proxy
+_weakref.ReferenceType.__call__  # C function default annotation is wrong
+_weakref.ReferenceType.__init__  # Runtime defines __new__ but stubtest thinks __init__ is also defined.
+argparse.Namespace.__getattr__  # The whole point of this class is its attributes are dynamic
+asynchat.async_chat.encoding  # Removal planned for 3.12, can add if someone needs this
+asynchat.async_chat.use_encoding  # Removal planned for 3.12, can add if someone needs this
+asynchat.find_prefix_at_end  # Removal planned for 3.12, can add if someone needs this
+asyncio.BaseEventLoop.subprocess_exec # BaseEventLoop adds several parameters and stubtest fails on the difference if we add them
+# Condition functions are exported in __init__
+asyncio.Condition.acquire
+asyncio.Condition.locked
+asyncio.Condition.release
+asyncio.base_events.BaseEventLoop.subprocess_exec # BaseEventLoop adds several parameters and stubtest fails on the difference if we add them
+# Condition functions are exported in __init__
+asyncio.locks.Condition.acquire
+asyncio.locks.Condition.locked
+asyncio.locks.Condition.release
+asyncio.proactor_events.BaseProactorEventLoop.sock_recv # nbytes parameter has different name 'n' in implementation
+asyncio.selector_events.BaseSelectorEventLoop.sock_recv # nbytes parameter has different name 'n' in implementation
+builtins.dict.get
+builtins.ellipsis  # type is not exposed anywhere
+builtins.function
+builtins.memoryview.__contains__  # C type that implements __getitem__
+sqlite3.dbapi2.Binary.__contains__  # C type that implements __getitem__
+sqlite3.Binary.__contains__  # C type that implements __getitem__
+builtins.object.__init__  # default C signature is incorrect
+builtins.type.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
+bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
+# The following CodecInfo properties are added in __new__
+codecs.CodecInfo.decode
+codecs.CodecInfo.encode
+codecs.CodecInfo.incrementaldecoder
+codecs.CodecInfo.incrementalencoder
+codecs.CodecInfo.streamreader
+codecs.CodecInfo.streamwriter
+collections.ChainMap.get  # Adding None to the underlying Mapping Union messed up mypy
+collections.ChainMap.fromkeys  # Runtime has *args which can really only be one argument
+collections.UserList.sort  # Runtime has *args but will error if any are supplied
+configparser.SectionProxy.__getattr__  # SectionProxy can have arbitrary attributes when custom converters are used
+# SectionProxy get functions are set in __init__
+configparser.SectionProxy.getboolean
+configparser.SectionProxy.getfloat
+configparser.SectionProxy.getint
+copy.PyStringMap  # defined only in Jython
+# The Dialect properties are initialized as None in Dialect but their values are enforced in _Dialect
+csv.Dialect.delimiter
+csv.Dialect.doublequote
+csv.Dialect.lineterminator
+csv.Dialect.quoting
+csv.Dialect.skipinitialspace
+csv.DictReader.__init__  # runtime sig has *args but will error if more than 5 positional args are supplied
+csv.DictWriter.__init__  # runtime sig has *args but will error if more than 5 positional args are supplied
+ctypes.Array._type_  # _type_ and _length_ are abstract, https://github.com/python/typeshed/pull/6361
+ctypes.Array._length_
+ctypes.CDLL._FuncPtr  # None at class level but initialized in __init__ to this value
+ctypes.memmove  # CFunctionType
+ctypes.memset  # CFunctionType
+ctypes.pointer  # imported C function
+ctypes.string_at  # docstring argument name is wrong
+ctypes.wstring_at  # docstring argument name is wrong
+distutils.command.bdist_packager  # It exists in docs as package name but not in code except as a mention in a comment.
+distutils.version.Version._cmp  # class should have declared this
+distutils.version.Version.parse  # class should have declared this
+enum.Enum._generate_next_value_
+hashlib.sha3_\d+  # Can be a class or a built-in function, can't be subclassed at runtime
+hashlib.shake_\d+  # Can be a class or a built-in function, can't be subclassed at runtime
+http.HTTPStatus.description  # set in __new__
+http.HTTPStatus.phrase  # set in __new__
+http.client.HTTPConnection.response_class  # the actual type at runtime is abc.ABCMeta
+importlib.abc.FileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
+importlib.abc.FileLoader.load_module  # Wrapped with _check_name decorator which changes runtime signature
+importlib.abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+importlib.abc.MetaPathFinder.find_spec  # Not defined on the actual class, but expected to exist.
+importlib.abc.PathEntryFinder.find_spec  # Not defined on the actual class, but expected to exist.
+importlib.machinery.ExtensionFileLoader.get_filename  # Wrapped with _check_name decorator which changes runtime signature
+inspect.Parameter.empty  # set as private marker _empty
+inspect.Signature.empty  # set as private marker _empty
+io.BufferedRandom.truncate
+io.BufferedReader.seek
+io.BufferedReader.truncate
+io.BufferedWriter.seek
+io.BufferedWriter.truncate
+io.BytesIO.readlines
+io.BytesIO.seek  # Parameter name for a positional-only param differs from its name in the inherited method
+io.FileIO.seek
+io.StringIO.seek
+io.StringIO.truncate
+io.TextIOWrapper.truncate
+ipaddress._BaseAddress.is_global
+ipaddress._BaseAddress.is_link_local
+ipaddress._BaseAddress.is_loopback
+ipaddress._BaseAddress.is_multicast
+ipaddress._BaseAddress.is_private
+ipaddress._BaseAddress.is_reserved
+ipaddress._BaseAddress.is_unspecified
+ipaddress._BaseAddress.max_prefixlen
+ipaddress._BaseAddress.packed
+ipaddress._BaseNetwork.max_prefixlen
+lib2to3.pygram.pattern_symbols
+lib2to3.pygram.python_symbols
+lib2to3.pytree.Base.__new__
+lib2to3.pytree.Base.children
+lib2to3.pytree.Base.type
+lib2to3.pytree.BasePattern.__new__
+lib2to3.pytree.BasePattern.type
+lib2to3.pytree.NegatedPattern.match
+lib2to3.pytree.NegatedPattern.match_seq
+multiprocessing.JoinableQueue
+multiprocessing.Queue
+multiprocessing.SimpleQueue
+multiprocessing.managers.BaseManager.shutdown
+multiprocessing.managers.SyncManager.Event
+multiprocessing.managers.SyncManager.Lock
+multiprocessing.managers.SyncManager.Namespace
+multiprocessing.managers.SyncManager.RLock
+multiprocessing.queues.JoinableQueue.__init__
+multiprocessing.queues.Queue.__init__
+multiprocessing.queues.Queue.put_nowait
+multiprocessing.queues.SimpleQueue.__init__
+multiprocessing.queues.SimpleQueue.put
+multiprocessing.synchronize.Barrier.__init__
+multiprocessing.synchronize.Condition.acquire
+multiprocessing.synchronize.Condition.release
+multiprocessing.synchronize.Event.__init__
+multiprocessing.synchronize.SemLock.__init__
+multiprocessing.synchronize.SemLock.acquire
+multiprocessing.synchronize.SemLock.release
+numbers.Number.__hash__  # typeshed marks this as abstract but code just sets this as None
+optparse.Values.__getattr__  # Some attributes are set in __init__ using setattr
+pickle.Pickler.persistent_id  # C pickler persistent_id is an attribute
+pickle.Unpickler.persistent_load  # C unpickler persistent_load is an attribute
+pickle._Unpickler\..*  # Best effort typing for undocumented internals
+pickle._Pickler\..*  # Best effort typing for undocumented internals
+poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
+pyexpat.expat_CAPI
+select.poll  # Depends on configuration
+selectors.DevpollSelector  # Depends on configuration
+socketserver.BaseServer.RequestHandlerClass  # is defined as a property, because we need `Self` type
+socketserver.BaseServer.fileno  # implemented in derived classes
+socketserver.BaseServer.get_request  # implemented in derived classes
+socketserver.BaseServer.server_bind  # implemented in derived classes
+ssl.Purpose.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
+ssl._ASN1Object.__new__  # You cannot override __new__ in NamedTuple and runtime uses namedtuple.
+sys.implementation  # Actually SimpleNamespace but then you wouldn't have convenient attributes
+sys.thread_info
+tarfile.TarFile.errors  # errors is initialized for some reason as None even though it really only accepts str
+threading.Condition.acquire  # Condition functions are exported in __init__
+threading.Condition.release  # Condition functions are exported in __init__
+tkinter.simpledialog.[A-Z_]+
+tkinter.simpledialog.TclVersion
+tkinter.simpledialog.TkVersion
+tkinter.tix.[A-Z_]+
+tkinter.tix.TclVersion
+tkinter.tix.TkVersion
+multiprocessing.dummy.Condition.acquire
+multiprocessing.dummy.Condition.release
+threading.Lock  # A factory function that returns 'most efficient lock'. Marking it as a function will make it harder for users to mark the Lock type.
+threading.RLock  # Similar to above
+multiprocessing.dummy.Lock  # Similar to above
+multiprocessing.dummy.RLock  # Similar to above
+# alias for a class defined elsewhere, mypy infers the variable has type `(*args) -> ForkingPickler` but stubtest infers the runtime type as <class ForkingPickler>
+multiprocessing.reduction.AbstractReducer.ForkingPickler
+tkinter.Misc.grid_propagate  # The noarg placeholder is a set value list
+tkinter.Misc.pack_propagate  # The noarg placeholder is a set value list
+tkinter.Tk.eval  # from __getattr__
+tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
+tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
+tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dunder__ methods)
+traceback.TracebackException.from_exception  # explicitly expanding arguments going into TracebackException __init__
+types.MethodType.__closure__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.MethodType.__defaults__  # read-only but not actually a property; stubtest thinks it doesn't exist.
+types.ModuleType.__dict__  # read-only but not actually a property; stubtest thinks it's a mutable attribute.
+types.ModuleType.__getattr__  # this doesn't exist at runtime
+types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
+typing.IO.__next__  # Added because IO streams are iterable. See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
+typing.type_check_only  # typing decorator that is not available at runtime
+unittest.mock.patch  # It's a complicated overload and I haven't been able to figure out why stubtest doesn't like it
+urllib.parse._DefragResultBase.__new__  # Generic NamedTuple is problematic in mypy, so regular tuple was used. See https://github.com/python/mypy/issues/685
+urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
+weakref.CallableProxyType.__getattr__  # Should have all attributes of proxy
+weakref.ProxyType.__getattr__  # Should have all attributes of proxy
+weakref.ReferenceType.*  # Alias for _weakref.ReferenceType, problems should be fixed there
+weakref.WeakKeyDictionary.get
+weakref.WeakKeyDictionary.update
+weakref.WeakValueDictionary.get
+weakref.ref.*  # Alias for _weakref.ReferenceType, problems should be fixed there
+webbrowser.UnixBrowser.remote_action  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newtab  # always overridden in inheriting class
+webbrowser.UnixBrowser.remote_action_newwin  # always overridden in inheriting class
+xml.parsers.expat.expat_CAPI
+
+# ==========
+# Exists at runtime, but missing from stubs
+# ==========
+_json.encode_basestring
+_socket.CAPI
+_thread.LockType.acquire_lock
+_thread.LockType.locked_lock
+_thread.LockType.release_lock
+_thread.RLock
+_thread.allocate
+_thread.exit_thread
+_thread.start_new
+_threading_local._localimpl.localargs
+_threading_local._localimpl.locallock
+builtins.SyntaxError.print_file_and_line
+bz2.BZ2File.peek
+codecs.StreamReader.charbuffertype
+codecs.StreamReader.seek
+codecs.StreamWriter.seek
+configparser.ParsingError.filename
+configparser.RawConfigParser.converters
+ctypes.ARRAY
+ctypes.SetPointerType
+ctypes.c_voidp
+ctypes.util.test
+importlib.abc.Finder.find_module
+lib2to3.pgen2.grammar.Grammar.loads
+logging.config.BaseConfigurator
+logging.config.ConvertingDict
+logging.config.ConvertingList
+logging.config.ConvertingMixin
+logging.config.ConvertingTuple
+logging.config.DictConfigurator
+logging.config.dictConfigClass
+mimetypes.MimeTypes.add_type
+modulefinder.test
+multiprocessing.managers.Server.accepter
+multiprocessing.managers.Server.create
+multiprocessing.managers.Server.debug_info
+multiprocessing.managers.Server.decref
+multiprocessing.managers.Server.dummy
+multiprocessing.managers.Server.fallback_getvalue
+multiprocessing.managers.Server.fallback_mapping
+multiprocessing.managers.Server.fallback_repr
+multiprocessing.managers.Server.fallback_str
+multiprocessing.managers.Server.get_methods
+multiprocessing.managers.Server.handle_request
+multiprocessing.managers.Server.incref
+multiprocessing.managers.Server.number_of_objects
+multiprocessing.managers.Server.public
+multiprocessing.managers.Server.serve_client
+multiprocessing.managers.Server.shutdown
+multiprocessing.managers.SyncManager.Barrier
+multiprocessing.managers.SyncManager.JoinableQueue
+multiprocessing.managers.SyncManager.Pool
+multiprocessing.pool.Pool.Process
+multiprocessing.pool.ThreadPool.Process
+multiprocessing.synchronize.Semaphore.get_value
+socket.CAPI
+tkinter.Misc.config
+tkinter.font.Font.counter
+tkinter.tix.CObjView
+tkinter.tix.DialogShell
+tkinter.tix.ExFileSelectDialog
+tkinter.tix.FileSelectDialog
+tkinter.tix.FileTypeList
+tkinter.tix.Grid
+tkinter.tix.NoteBookFrame
+tkinter.tix.OptionName
+tkinter.tix.ResizeHandle
+tkinter.tix.ScrolledGrid
+tkinter.tix.ScrolledHList
+tkinter.tix.ScrolledListBox
+tkinter.tix.ScrolledTList
+tkinter.tix.ScrolledText
+tkinter.tix.ScrolledWindow
+tkinter.tix.Shell
+turtle.TNavigator.speed
+
+# Undocumented implementation details of a deprecated class
+importlib.machinery.WindowsRegistryFinder.DEBUG_BUILD
+importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY
+importlib.machinery.WindowsRegistryFinder.REGISTRY_KEY_DEBUG
+
+# Undocumented implementation details
+profile.Profile.dispatch
+profile.Profile.fake_code
+profile.Profile.fake_frame
+profile.Profile.trace_dispatch
+profile.Profile.trace_dispatch_c_call
+profile.Profile.trace_dispatch_call
+profile.Profile.trace_dispatch_exception
+profile.Profile.trace_dispatch_i
+profile.Profile.trace_dispatch_l
+profile.Profile.trace_dispatch_mac
+profile.Profile.trace_dispatch_return
+cgi.FieldStorage.bufsize
+cgi.FieldStorage.read_binary
+cgi.FieldStorage.read_lines
+cgi.FieldStorage.read_lines_to_eof
+cgi.FieldStorage.read_lines_to_outerboundary
+cgi.FieldStorage.read_multi
+cgi.FieldStorage.read_single
+cgi.FieldStorage.read_urlencoded
+cgi.FieldStorage.skip_lines
+email.contentmanager.get_and_fixup_unknown_message_content
+email.contentmanager.get_message_content
+email.contentmanager.get_non_text_content
+email.contentmanager.get_text_content
+email.contentmanager.set_bytes_content
+email.contentmanager.set_message_content
+email.contentmanager.set_text_content
+pipes.Template.makepipeline
+pipes.Template.open_r
+pipes.Template.open_w
+sunau.Au_read.initfp
+sunau.Au_write.initfp
+turtle.ScrolledCanvas.adjustScrolls
+turtle.ScrolledCanvas.onResize
+wave.Wave_read.initfp
+wave.Wave_write.initfp
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+_collections_abc.AsyncGenerator.asend  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+_collections_abc.AsyncGenerator.__anext__  # async at runtime, deliberately not in the stub, see #7491
+_collections_abc.AsyncGenerator.aclose  # async at runtime, deliberately not in the stub, see #7491
+_collections_abc.AsyncIterator.__anext__  # async at runtime, deliberately not in the stub, see #7491
+_pydecimal.*  # See comments in file
+_weakref.ProxyType.__bytes__  # Doesn't really exist
+ast.NodeVisitor.visit_\w+  # Methods are discovered dynamically, see #3796
+
+# Weird special builtins that are typed as functions, but aren't functions
+builtins.copyright
+builtins.credits
+builtins.exit
+builtins.help
+builtins.license
+builtins.quit
+
+builtins.float.__getformat__  # Internal method for CPython test suite
+
+# These super() dunders don't seem to be particularly useful,
+# and having them pop up on autocomplete suggestions would be annoying
+builtins.super.__self__
+builtins.super.__self_class__
+builtins.super.__thisclass__
+
+# Enum `name` and `value` are special properties that exists at runtime, but stubtest can't detect
+# https://github.com/python/typeshed/pull/6576#issuecomment-992538677
+enum.Enum.name
+enum.Enum.value
+enum.Flag.name
+enum.Flag.value
+enum.IntEnum.value
+
+# These enums derive from (int, IntEnum) or (str, Enum).
+pstats.SortKey.__new__
+tkinter.EventType.__new__
+
+# These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
+# But have more precise (accurate) signatures in the stub
+multiprocessing.managers.BaseListProxy.__imul__
+multiprocessing.managers.BaseListProxy.__len__
+multiprocessing.managers.BaseListProxy.__reversed__
+multiprocessing.managers.BaseListProxy.reverse
+multiprocessing.managers.BaseListProxy.sort
+multiprocessing.managers.DictProxy.__iter__
+multiprocessing.managers.DictProxy.__len__
+multiprocessing.managers.DictProxy.clear
+multiprocessing.managers.DictProxy.copy
+multiprocessing.managers.DictProxy.items
+multiprocessing.managers.DictProxy.keys
+multiprocessing.managers.DictProxy.popitem
+multiprocessing.managers.DictProxy.values
+
+# Items that depend on the existence and flags of SSL
+imaplib.IMAP4_SSL.ssl
+ssl.PROTOCOL_SSLv2
+ssl.PROTOCOL_SSLv3
+ssl.RAND_egd
+
+# GetSetDescriptor that always raises AttributeError
+builtins.OSError.characters_written
+# Aliases for OSError
+_socket.error.characters_written
+builtins.EnvironmentError.characters_written
+builtins.IOError.characters_written
+dbm.dumb.error.characters_written
+os.error.characters_written
+select.error.characters_written
+socket.error.characters_written
+
+collections.abc.*  # Types are re-exported from _collections_abc, so errors should be fixed there
+distutils.command.check.SilentReporter  # only defined if docutils in installed
+hmac.HMAC.blocksize  # use block_size instead
+http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
+pickle.Pickler.memo  # undocumented implementation detail, has different type in C/Python implementations
+pickle.Unpickler.memo  # undocumented implementation detail, has different type in C/Python implementations
+re.Pattern.scanner  # Undocumented and not useful. #6405
+tempfile._TemporaryFileWrapper.[\w_]+  # Dynamically specified by __getattr__, and thus don't exist on the class
+
+# Runtime signature is incorrect (https://github.com/python/cpython/issues/93021)
+types.ClassMethodDescriptorType.__get__
+types.GetSetDescriptorType.__get__
+types.MemberDescriptorType.__get__
+types.MethodDescriptorType.__get__
+types.WrapperDescriptorType.__get__
+
+# Various classes in typing aren't types at runtime. In addition, mypy thinks some special forms are tautologically defined.
+typing.[A-Z]\w+
+typing_extensions\..*
+
+# Typing-related weirdness
+_collections_abc.Callable
+_typeshed.*  # Utility types for typeshed, doesn't exist at runtime
+typing._SpecialForm.__call__
+typing._SpecialForm.__init__
+
+# Builtins that type checkers pretends exist
+builtins.reveal_locals
+builtins.reveal_type
+
+# White lies around defaults
+dataclasses.field
+
+# We can't distinguish not having a default value from having a default value of inspect.Parameter.empty
+inspect.Parameter.__init__
+inspect.Signature.__init__
+
+# C signature is broader than what is actually accepted
+contextvars.Context.__init__
+
+multiprocessing.(dummy|managers).Namespace.__[gs]etattr__  # Any field can be set on Namespace
+
+# sys attributes that are not always defined
+sys.gettotalrefcount  # Available on python debug builds
+sys.last_traceback
+sys.last_type
+sys.last_value
+sys.ps1
+sys.ps2
+sys.tracebacklimit
+
+# See comments in file. List out methods that are delegated by __getattr__ at runtime.
+# Used to make the relevant class satisfy BinaryIO interface.
+codecs.StreamReaderWriter.\w+
+codecs.StreamRecoder.\w+
+urllib.response.addbase.\w+
+
+weakref.ProxyType.__bytes__  # Doesn't actually exist
+
+# Dynamically created, has unnecessary *args
+turtle.ScrolledCanvas.find_all
+turtle.ScrolledCanvas.select_clear
+turtle.ScrolledCanvas.select_item
+
+# Unnecessary re-exports
+asyncore\.E[A-Z]+  # re-exported from errno
+asyncore.errorcode  # re-exported from errno
+email._header_value_parser.hexdigits
+logging.handlers.ST_[A-Z]+
+xml.dom.expatbuilder.EMPTY_NAMESPACE
+xml.dom.expatbuilder.EMPTY_PREFIX
+xml.dom.expatbuilder.XMLNS_NAMESPACE
+xml.dom.minidom.EMPTY_NAMESPACE
+xml.dom.minidom.EMPTY_PREFIX
+xml.dom.minidom.XMLNS_NAMESPACE
+xml.dom.minidom.StringTypes
+
+# __all__-related weirdness (see #6523)
+distutils.command.build
+distutils.command.build_py
+distutils.command.build_ext
+distutils.command.build_clib
+distutils.command.build_scripts
+distutils.command.clean
+distutils.command.install
+distutils.command.install_lib
+distutils.command.install_headers
+distutils.command.install_scripts
+distutils.command.install_data
+distutils.command.sdist
+distutils.command.register
+distutils.command.bdist
+distutils.command.bdist_dumb
+distutils.command.bdist_rpm
+distutils.command.check
+distutils.command.upload
+email.base64mime
+email.charset
+email.encoders
+email.errors
+email.feedparser
+email.generator
+email.header
+email.iterators
+email.message
+email.mime
+email.parser
+email.quoprimime
+email.utils
+xml.dom
+xml.etree
+xml.sax
+
+# Platform differences that cannot be captured by the type system
+os.O_[A-Z_]+
+(posix.O_[A-Z_]+)?
+(posix.ST_[A-Z]+)?
+socket.AF_DECnet
+(termios.[A-Z0-9_]+)?
+
+# Loadable SQLite extensions are disabled on GitHub runners
+(sqlite3(.dbapi2)?.Connection.enable_load_extension)?
+(sqlite3(.dbapi2)?.Connection.load_extension)?
+
+# Missing aliases to existing methods that not many people seem to use.
+# Complicated multiple inheritance, confuses type checkers.
+tkinter.Grid.bbox
+tkinter.Grid.columnconfigure
+tkinter.Grid.config
+tkinter.Grid.configure
+tkinter.Grid.forget
+tkinter.Grid.grid_bbox
+tkinter.Grid.grid_columnconfigure
+tkinter.Grid.grid_location
+tkinter.Grid.grid_propagate
+tkinter.Grid.grid_rowconfigure
+tkinter.Grid.grid_size
+tkinter.Grid.grid_slaves
+tkinter.Grid.info
+tkinter.Grid.propagate
+tkinter.Grid.rowconfigure
+tkinter.Grid.slaves
+tkinter.Pack.config
+tkinter.Pack.configure
+tkinter.Pack.info
+tkinter.Pack.pack_propagate
+tkinter.Pack.pack_slaves
+tkinter.Pack.slaves
+tkinter.Place.config
+tkinter.Place.configure
+tkinter.Place.forget
+tkinter.Place.place_slaves
+tkinter.Place.slaves
+
+# Methods that come from __getattr__() at runtime
+tkinter.Tk.adderrorinfo
+tkinter.Tk.call
+tkinter.Tk.createcommand
+tkinter.Tk.createtimerhandler
+tkinter.Tk.dooneevent
+tkinter.Tk.evalfile
+tkinter.Tk.exprboolean
+tkinter.Tk.exprdouble
+tkinter.Tk.exprlong
+tkinter.Tk.exprstring
+tkinter.Tk.globalgetvar
+tkinter.Tk.globalsetvar
+tkinter.Tk.globalunsetvar
+tkinter.Tk.interpaddr
+tkinter.Tk.record
+tkinter.Tk.splitlist
+tkinter.Tk.unsetvar
+tkinter.Tk.wantobjects
+tkinter.Tk.willdispatch
+
+# Undocumented and have a comment in the source code saying "State variables (don't mess with these)"
+wsgiref.handlers.BaseHandler.bytes_sent
+wsgiref.handlers.BaseHandler.headers
+wsgiref.handlers.BaseHandler.headers_sent
+wsgiref.handlers.BaseHandler.result
+wsgiref.handlers.BaseHandler.status
+
+# Iterable classes that don't define __iter__ at runtime (usually iterable via __getitem__)
+# These would ideally be special-cased by type checkers; see https://github.com/python/mypy/issues/2220
+ctypes.Array.__iter__
+mmap.mmap.__iter__
+xml.etree.ElementTree.Element.__iter__
+xml.etree.cElementTree.Element.__iter__
+typing.IO.__iter__  # See https://github.com/python/typeshed/commit/97bc450acd60c1bcdafef3ce8fbe3b95a9c0cac3
+
+# ==========
+# Missing from deprecated modules
+# Any of these can be added if someone needs them
+# ==========
+
+# Removal planned for 3.12
+asyncore.dispatcher.addr
+asyncore.dispatcher.handle_accepted
+# Missing from distutils module (deprecated, to be removed in 3.12)
+distutils.archive_util.ARCHIVE_FORMATS
+distutils.archive_util.check_archive_formats
+distutils.bcppcompiler.BCPPCompiler.compiler_type
+distutils.bcppcompiler.BCPPCompiler.exe_extension
+distutils.bcppcompiler.BCPPCompiler.executables
+distutils.bcppcompiler.BCPPCompiler.obj_extension
+distutils.bcppcompiler.BCPPCompiler.shared_lib_extension
+distutils.bcppcompiler.BCPPCompiler.shared_lib_format
+distutils.bcppcompiler.BCPPCompiler.src_extensions
+distutils.bcppcompiler.BCPPCompiler.static_lib_extension
+distutils.bcppcompiler.BCPPCompiler.static_lib_format
+distutils.ccompiler.CCompiler.EXECUTABLE
+distutils.ccompiler.CCompiler.SHARED_LIBRARY
+distutils.ccompiler.CCompiler.SHARED_OBJECT
+distutils.ccompiler.CCompiler.compiler_type
+distutils.ccompiler.CCompiler.exe_extension
+distutils.ccompiler.CCompiler.language_map
+distutils.ccompiler.CCompiler.language_order
+distutils.ccompiler.CCompiler.obj_extension
+distutils.ccompiler.CCompiler.set_executable
+distutils.ccompiler.CCompiler.shared_lib_extension
+distutils.ccompiler.CCompiler.shared_lib_format
+distutils.ccompiler.CCompiler.src_extensions
+distutils.ccompiler.CCompiler.static_lib_extension
+distutils.ccompiler.CCompiler.static_lib_format
+distutils.ccompiler.compiler_class
+distutils.cmd.Command.dump_options
+distutils.cmd.Command.ensure_finalized
+distutils.command.bdist
+distutils.command.bdist_rpm.DEBUG
+distutils.command.build_ext.USER_BASE
+distutils.command.build_scripts.ST_MODE
+distutils.command.install.*
+distutils.command.install_scripts.ST_MODE
+distutils.core.Command.dump_options
+distutils.core.Command.ensure_finalized
+distutils.core.DEBUG
+distutils.core.USAGE
+distutils.core.Distribution.announce
+distutils.core.Distribution.common_usage
+distutils.core.Distribution.display_option_names
+distutils.core.Distribution.display_options
+distutils.core.Distribution.dump_option_dicts
+distutils.core.Distribution.finalize_options
+distutils.core.Distribution.find_config_files
+distutils.core.Distribution.get_command_class
+distutils.core.Distribution.get_command_list
+distutils.core.Distribution.get_command_packages
+distutils.core.Distribution.global_options
+distutils.core.Distribution.handle_display_options
+distutils.core.Distribution.has_c_libraries
+distutils.core.Distribution.has_data_files
+distutils.core.Distribution.has_ext_modules
+distutils.core.Distribution.has_headers
+distutils.core.Distribution.has_modules
+distutils.core.Distribution.has_pure_modules
+distutils.core.Distribution.has_scripts
+distutils.core.Distribution.is_pure
+distutils.core.Distribution.negative_opt
+distutils.core.Distribution.parse_command_line
+distutils.core.Distribution.print_command_list
+distutils.core.Distribution.print_commands
+distutils.core.Distribution.reinitialize_command
+distutils.core.Distribution.run_command
+distutils.core.Distribution.run_commands
+distutils.core.extension_keywords
+distutils.core.gen_usage
+distutils.core.setup_keywords
+distutils.cygwinccompiler.CONFIG_H_NOTOK
+distutils.cygwinccompiler.CONFIG_H_OK
+distutils.cygwinccompiler.CONFIG_H_UNCERTAIN
+distutils.cygwinccompiler.PIPE
+distutils.cygwinccompiler.CygwinCCompiler.compiler_type
+distutils.cygwinccompiler.CygwinCCompiler.exe_extension
+distutils.cygwinccompiler.CygwinCCompiler.obj_extension
+distutils.cygwinccompiler.CygwinCCompiler.shared_lib_extension
+distutils.cygwinccompiler.CygwinCCompiler.shared_lib_format
+distutils.cygwinccompiler.CygwinCCompiler.static_lib_extension
+distutils.cygwinccompiler.CygwinCCompiler.static_lib_format
+distutils.cygwinccompiler.Mingw32CCompiler.compiler_type
+distutils.cygwinccompiler.check_config_h
+distutils.cygwinccompiler.get_msvcr
+distutils.cygwinccompiler.get_versions
+distutils.cygwinccompiler.is_cygwingcc
+distutils.dir_util.ensure_relative
+distutils.dist.DEBUG
+distutils.dist.Distribution.announce
+distutils.dist.Distribution.common_usage
+distutils.dist.Distribution.display_option_names
+distutils.dist.Distribution.display_options
+distutils.dist.Distribution.dump_option_dicts
+distutils.dist.Distribution.finalize_options
+distutils.dist.Distribution.find_config_files
+distutils.dist.Distribution.get_command_class
+distutils.dist.Distribution.get_command_list
+distutils.dist.Distribution.get_command_packages
+distutils.dist.Distribution.global_options
+distutils.dist.Distribution.handle_display_options
+distutils.dist.Distribution.has_c_libraries
+distutils.dist.Distribution.has_data_files
+distutils.dist.Distribution.has_ext_modules
+distutils.dist.Distribution.has_headers
+distutils.dist.Distribution.has_modules
+distutils.dist.Distribution.has_pure_modules
+distutils.dist.Distribution.has_scripts
+distutils.dist.Distribution.is_pure
+distutils.dist.Distribution.negative_opt
+distutils.dist.Distribution.parse_command_line
+distutils.dist.Distribution.print_command_list
+distutils.dist.Distribution.print_commands
+distutils.dist.Distribution.reinitialize_command
+distutils.dist.Distribution.run_command
+distutils.dist.Distribution.run_commands
+distutils.dist.DistributionMetadata.set_classifiers
+distutils.dist.DistributionMetadata.set_keywords
+distutils.dist.DistributionMetadata.set_platforms
+distutils.dist.fix_help_options
+distutils.extension.read_setup_file
+distutils.fancy_getopt.WS_TRANS
+distutils.fancy_getopt.FancyGetopt.add_option
+distutils.fancy_getopt.FancyGetopt.get_attr_name
+distutils.fancy_getopt.FancyGetopt.has_option
+distutils.fancy_getopt.FancyGetopt.print_help
+distutils.fancy_getopt.FancyGetopt.set_aliases
+distutils.fancy_getopt.FancyGetopt.set_negative_aliases
+distutils.fancy_getopt.FancyGetopt.set_option_table
+distutils.fancy_getopt.longopt_pat
+distutils.fancy_getopt.longopt_xlate
+distutils.fancy_getopt.translate_longopt
+distutils.msvccompiler.MSVCCompiler.compiler_type
+distutils.msvccompiler.MSVCCompiler.exe_extension
+distutils.msvccompiler.MSVCCompiler.executables
+distutils.msvccompiler.MSVCCompiler.find_exe
+distutils.msvccompiler.MSVCCompiler.initialize
+distutils.msvccompiler.MSVCCompiler.obj_extension
+distutils.msvccompiler.MSVCCompiler.res_extension
+distutils.msvccompiler.MSVCCompiler.shared_lib_extension
+distutils.msvccompiler.MSVCCompiler.shared_lib_format
+distutils.msvccompiler.MSVCCompiler.src_extensions
+distutils.msvccompiler.MSVCCompiler.static_lib_extension
+distutils.msvccompiler.MSVCCompiler.static_lib_format
+distutils.msvccompiler.convert_mbcs
+distutils.msvccompiler.get_build_architecture
+distutils.msvccompiler.get_build_version
+distutils.msvccompiler.normalize_and_reduce_paths
+distutils.msvccompiler.read_keys
+distutils.msvccompiler.read_values
+distutils.spawn.DEBUG
+distutils.sysconfig.BASE_EXEC_PREFIX
+distutils.sysconfig.BASE_PREFIX
+distutils.sysconfig.build_flags
+distutils.sysconfig.parse_config_h
+distutils.sysconfig.parse_makefile
+distutils.sysconfig.project_base
+distutils.sysconfig.python_build
+distutils.text_file.TextFile.default_options
+distutils.text_file.TextFile.error
+distutils.text_file.TextFile.gen_error
+distutils.unixccompiler.UnixCCompiler.compiler_type
+distutils.unixccompiler.UnixCCompiler.dylib_lib_extension
+distutils.unixccompiler.UnixCCompiler.dylib_lib_format
+distutils.unixccompiler.UnixCCompiler.executables
+distutils.unixccompiler.UnixCCompiler.obj_extension
+distutils.unixccompiler.UnixCCompiler.shared_lib_extension
+distutils.unixccompiler.UnixCCompiler.shared_lib_format
+distutils.unixccompiler.UnixCCompiler.src_extensions
+distutils.unixccompiler.UnixCCompiler.static_lib_extension
+distutils.unixccompiler.UnixCCompiler.static_lib_format
+distutils.unixccompiler.UnixCCompiler.xcode_stub_lib_extension
+distutils.unixccompiler.UnixCCompiler.xcode_stub_lib_format
+distutils.util.grok_environment_error
+
+# Missing from pkgutil.ImpImporter/ImpLoader (both deprecated since 3.3, can add if someone needs it)
+pkgutil.ImpImporter.find_module
+pkgutil.ImpImporter.iter_modules
+pkgutil.ImpLoader.code
+pkgutil.ImpLoader.get_code
+pkgutil.ImpLoader.get_data
+pkgutil.ImpLoader.get_filename
+pkgutil.ImpLoader.get_source
+pkgutil.ImpLoader.is_package
+pkgutil.ImpLoader.load_module
+pkgutil.ImpLoader.source

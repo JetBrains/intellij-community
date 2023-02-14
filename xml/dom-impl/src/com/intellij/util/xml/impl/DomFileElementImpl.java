@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author peter
- */
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T>, SemElement {
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
     @Override
@@ -156,9 +153,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (!(o instanceof DomFileElementImpl)) return false;
-
-    final DomFileElementImpl that = (DomFileElementImpl)o;
+    if (!(o instanceof DomFileElementImpl that)) return false;
 
     if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
     if (myRootElementClass != null ? !myRootElementClass.equals(that.myRootElementClass) : that.myRootElementClass != null) return false;

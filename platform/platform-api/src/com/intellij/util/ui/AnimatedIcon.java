@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui;
 
@@ -119,7 +119,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
   @Override
   public Dimension getPreferredSize() {
-    final Insets insets = getInsets();
+    Insets insets = getInsets();
     return new Dimension(myPrefSize.width + insets.left + insets.right, myPrefSize.height + insets.top + insets.bottom);
   }
 
@@ -138,7 +138,7 @@ public class AnimatedIcon extends JComponent implements Disposable {
     //if (myPaintingBgNow) return;
 
     if (isOpaque()) {
-      final Container parent = getParent();
+      Container parent = getParent();
       JComponent opaque = null;
       if (parent instanceof JComponent) {
         opaque = (JComponent)UIUtil.findNearestOpaque(parent);
@@ -149,7 +149,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
 
     Icon icon;
-
     if (myAnimator.isRunning()) {
       icon = myIcons[myCurrentIconIndex];
     }

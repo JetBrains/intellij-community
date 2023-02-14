@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Disposer
@@ -37,7 +38,7 @@ class BrokenPluginIndexingTest : JavaCodeInsightFixtureTestCase() {
     }
 
     val text = "<fileBasedIndex implementation=\"" + BrokenFileBasedIndexExtension::class.qualifiedName + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text, BrokenFileBasedIndexExtension::class.java.classLoader))
+    Disposer.register(testRootDisposable, loadExtensionWithText(text))
     val file = myFixture.addClass("class Some {}").containingFile.virtualFile
     FileBasedIndex.getInstance().getFileData(BrokenFileBasedIndexExtension.INDEX_ID, file, project)
 
@@ -50,9 +51,10 @@ class BrokenPluginIndexingTest : JavaCodeInsightFixtureTestCase() {
   }
 }
 
-class BrokenPluginException : RuntimeException()
+internal class BrokenPluginException : RuntimeException()
 
-class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
+@InternalIgnoreDependencyViolation
+internal class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
   override fun getIndexer() = DataIndexer<Int, Void, FileContent> { throw BrokenPluginException() }
   override fun getName() = INDEX_ID
   override fun getKeyDescriptor() = EnumeratorIntegerDescriptor.INSTANCE!!

@@ -1,0 +1,39 @@
+// WITH_STDLIB
+// AFTER-WARNING: Variable 'n' is never used
+
+sealed class <caret>MyEnum(val s: String = "") {
+
+    fun foo() {
+
+    }
+
+    object FOO : MyEnum("FOO")
+    object BAR : MyEnum("BAR")
+    object DEFAULT : MyEnum()
+    companion object {
+        fun values(): Array<MyEnum> {
+            return arrayOf(FOO, BAR, DEFAULT)
+        }
+
+        fun valueOf(value: String): MyEnum {
+            return when (value) {
+                "FOO" -> FOO
+                "BAR" -> BAR
+                "DEFAULT" -> DEFAULT
+                else -> throw IllegalArgumentException("No object MyEnum.$value")
+            }
+        }
+    }
+}
+
+fun test(e: MyEnum) {
+    if (e == MyEnum.BAR) {
+        println()
+    }
+
+    val n = when (e) {
+        MyEnum.BAR -> 1
+        MyEnum.FOO -> 2
+        MyEnum.DEFAULT -> 0
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -7,6 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.similarity.bag.Bag;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
+import com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -103,12 +109,35 @@ public final class UsageInfoToUsageConverter {
     if (usageElement != null && primaryElements.length != 0) {
       ReadWriteAccessDetector.Access rwAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
       if (rwAccess != null) {
-        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Write,
-                                                         rwAccess != ReadWriteAccessDetector.Access.Read);
+        return new ReadWriteAccessUsageInfo2UsageAdapter(usageInfo, rwAccess);
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);
+  }
+
+
+  public static @NotNull Usage convertToSimilarUsage(PsiElement @NotNull [] primaryElements,
+                                                     @NotNull UsageInfo usageInfo,
+                                                     @NotNull ClusteringSearchSession session) {
+    PsiElement usageElement = usageInfo.getElement();
+    if (usageElement != null && primaryElements.length != 0) {
+      Bag features = new Bag();
+      UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
+        features.addAll(provider.getFeatures(usageElement));
+      });
+      if (!features.isEmpty()) {
+        final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
+        final SimilarUsage similarUsageAdapter;
+        if (readWriteAccess != null) {
+          similarUsageAdapter = new SimilarReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session);
+        }
+        else {
+          similarUsageAdapter = new SimilarUsageInfo2UsageAdapter(usageInfo, features, session);
+        }
+        return session.clusterUsage(similarUsageAdapter);
+      }
+    }
+    return convert(primaryElements, usageInfo);
   }
 
   public static Usage @NotNull [] convert(@NotNull TargetElementsDescriptor descriptor, UsageInfo @NotNull [] usageInfos) {

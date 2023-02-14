@@ -1,4 +1,4 @@
-// "Replace 'Integer' with 'Number' in cast" "true"
+// "Replace 'Integer' with 'Number' in cast" "true-preview"
 import java.util.*;
 
 class X {

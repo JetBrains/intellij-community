@@ -2,22 +2,22 @@
 package com.intellij.coverage;
 
 import com.intellij.java.coverage.JavaCoverageBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.rt.coverage.data.ProjectData;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman.Chernyatchik
@@ -29,8 +29,8 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<>();
-  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<>();
-  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = CollectionFactory.createWeakMap();
+  private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
+  private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
@@ -61,7 +61,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Override
   @Nullable
   public String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
-    // N/A here we work with java classes
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, file);
+      if (info != null) {
+        return getCoverageInformationString(info, manager.isSubCoverageActive());
+      }
+    }
     return null;
   }
 
@@ -79,21 +84,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
   @Override
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
-
-
     final Project project = getProject();
-    final List<PsiPackage> packages = new ArrayList<>();
-    final List<PsiClass> classes = new ArrayList<>();
-
-    for (CoverageSuite coverageSuite : suite.getSuites()) {
-      final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
-      classes.addAll(javaSuite.getCurrentSuiteClasses(project));
-      packages.addAll(javaSuite.getCurrentSuitePackages(project));
-    }
-
-    if (packages.isEmpty() && classes.isEmpty()) {
-      return null;
-    }
 
     return () -> {
       final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
@@ -133,19 +124,17 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
           myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
         }
       };
-      for (PsiPackage aPackage : packages) {
-        new PackageAnnotator(aPackage).annotate(suite, annotator);
-      }
-      for (final PsiClass aClass : classes) {
-        Runnable runnable = () -> {
-          final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
-          final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-          if (psiPackage == null) return;
-          new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
-        };
-        ApplicationManager.getApplication().runReadAction(runnable);
-      }
+      final long startNs = System.nanoTime();
+
+      final int totalRoots = new JavaCoverageClassesEnumerator.RootsCounter(suite, project).getRoots();
+      new JavaCoverageClassesAnnotator(suite, project, annotator, totalRoots).visitSuite();
       dataManager.triggerPresentationUpdate();
+
+      final long endNs = System.nanoTime();
+      final int annotatedClasses = myClassCoverageInfos.size();
+      final ProjectData data = suite.getCoverageData();
+      final int loadedClasses = data == null ? 0 : data.getClassesNumber();
+      CoverageLogger.logReportBuilding(project, TimeUnit.NANOSECONDS.toMillis(endNs - startNs), annotatedClasses, loadedClasses);
     };
   }
 
@@ -164,7 +153,6 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
    *
    * @param psiPackage qualified name of a package to obtain coverage information for
    * @param module optional parameter to restrict coverage to source directories of a certain module
-   * @param coverageDataManager
    * @return human-readable coverage information
    */
   @Nullable
@@ -179,8 +167,6 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
    *
    * @param psiPackage qualified name of a package to obtain coverage information for
    * @param module optional parameter to restrict coverage to source directories of a certain module
-   * @param coverageDataManager
-   * @param flatten
    * @return human-readable coverage information
    */
   @Nullable
@@ -201,13 +187,12 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage, flatten);
+      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage.getQualifiedName(), flatten);
       return getCoverageInformationString(info, subCoverageActive);
     }
   }
 
-  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull PsiPackage psiPackage, boolean flattenPackages) {
-    final String qualifiedName = psiPackage.getQualifiedName();
+  public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull String qualifiedName, boolean flattenPackages) {
     return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
 
@@ -260,6 +245,11 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+    return getClassCoverageInformationString(info, coverageDataManager);
+  }
+
+  @Nullable
+  public static @Nls String getClassCoverageInformationString(PackageAnnotator.ClassCoverageInfo info, CoverageDataManager coverageDataManager) {
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;
     if (coverageDataManager.isSubCoverageActive()){
@@ -270,11 +260,14 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
+  public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(@Nullable String classFQName) {
+    if (classFQName == null) return null;
     return myClassCoverageInfos.get(classFQName);
   }
 
-  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(PsiNamedElement value) {
+  @Nullable
+  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(@Nullable PsiNamedElement value) {
+    if (value == null) return null;
     PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
     if (cachedInfo != null) {
       return cachedInfo;

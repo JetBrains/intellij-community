@@ -8,9 +8,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author peter
- */
 public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
   protected PsiTypePattern() {
     super(PsiType.class);

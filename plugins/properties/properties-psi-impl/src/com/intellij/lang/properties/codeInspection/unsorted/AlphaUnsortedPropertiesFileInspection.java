@@ -18,15 +18,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-/**
- * @author Dmitry Batkovich
- */
-public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
+public final class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
 
   @NotNull
@@ -35,31 +31,37 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
-        final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        if (!(propertiesFile instanceof PropertiesFileImpl)) {
-          return;
-        }
-        for (AlphaUnsortedPropertiesFileInspectionSuppressor filter : AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME.getExtensions()) {
-          if (filter.suppressInspectionFor(propertiesFile)) {
-            return;
-          }
-        }
-        final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
+        var propertiesFile = findPropertiesFile(file);
+        if (propertiesFile == null) return;
+        var resourceBundle = propertiesFile.getResourceBundle();
         final String resourceBundleBaseName = resourceBundle.getBaseName();
         if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
-          final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
           holder.registerProblem(file,
                                  PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description1", resourceBundleBaseName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new PropertiesSorterQuickFix(allFiles.toArray(new PropertiesFile[0])));
+                                 new PropertiesSorterQuickFix(false));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
-          holder.registerProblem(file, PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PropertiesSorterQuickFix(
-            propertiesFile));
+          PropertiesSorterQuickFix fix = new PropertiesSorterQuickFix(true);
+          holder.registerProblem(file, PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description"),
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         }
       }
     };
+  }
+
+  private static @Nullable PropertiesFile findPropertiesFile(@NotNull PsiFile file) {
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+    if (!(propertiesFile instanceof PropertiesFileImpl)) {
+      return null;
+    }
+    for (AlphaUnsortedPropertiesFileInspectionSuppressor filter : AlphaUnsortedPropertiesFileInspectionSuppressor.EP_NAME.getExtensions()) {
+      if (filter.suppressInspectionFor(propertiesFile)) {
+        return null;
+      }
+    }
+    return propertiesFile;
   }
 
   private static boolean isResourceBundleAlphaSortedExceptOneFile(@NotNull final ResourceBundle resourceBundle,
@@ -76,10 +78,10 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   }
 
   private static final class PropertiesSorterQuickFix implements LocalQuickFix {
-    private final PropertiesFile[] myFilesToSort;
+    private final boolean myOnlyCurrentFile;
 
-    private PropertiesSorterQuickFix(PropertiesFile... toSort) {
-      myFilesToSort = toSort;
+    private PropertiesSorterQuickFix(boolean onlyCurrentFile) {
+      myOnlyCurrentFile = onlyCurrentFile;
     }
 
     @NotNull
@@ -90,13 +92,23 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final boolean force = myFilesToSort.length == 1;
-      for (PropertiesFile file : myFilesToSort) {
+      Collection<PropertiesFile> filesToSort = getFilesToSort(descriptor.getPsiElement().getContainingFile());
+      final boolean force = filesToSort.size() == 1;
+      for (PropertiesFile file : filesToSort) {
         if (!force && file.isAlphaSorted()) {
           continue;
         }
         sortPropertiesFile(file);
       }
+    }
+
+    private @NotNull Collection<PropertiesFile> getFilesToSort(@NotNull PsiFile file) {
+      PropertiesFile propertiesFile = findPropertiesFile(file);
+      if (propertiesFile == null) return Collections.emptyList();
+      if (myOnlyCurrentFile) {
+        return Collections.singleton(propertiesFile);
+      }
+      return propertiesFile.getResourceBundle().getPropertiesFiles();
     }
   }
 
@@ -120,7 +132,8 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
       final String key = property.getKey();
       final String propertyText;
       if (key != null) {
-        propertyText = PropertiesElementFactory.getPropertyText(key, value != null ? value : "", delimiter, null, PropertyKeyValueFormat.FILE);
+        propertyText =
+          PropertiesElementFactory.getPropertyText(key, value != null ? value : "", delimiter, null, PropertyKeyValueFormat.FILE);
         rawText.append(propertyText);
         if (i != properties.size() - 1) {
           rawText.append("\n");

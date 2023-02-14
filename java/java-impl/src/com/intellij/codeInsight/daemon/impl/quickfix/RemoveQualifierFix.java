@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -24,8 +25,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RemoveQualifierFix implements IntentionAction {
   private final PsiExpression myQualifier;
@@ -36,6 +39,13 @@ public class RemoveQualifierFix implements IntentionAction {
     myQualifier = qualifier;
     myExpression = expression;
     myResolved = resolved;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new RemoveQualifierFix(PsiTreeUtil.findSameElementInCopy(myQualifier, target),
+                                  PsiTreeUtil.findSameElementInCopy(myExpression, target),
+                                  myResolved);
   }
 
   @Override

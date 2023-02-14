@@ -18,8 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 06.04.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrEnumConstantListImpl extends GrStubElementBase<EmptyStub>
   implements GrEnumConstantList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {

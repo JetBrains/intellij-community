@@ -31,7 +31,8 @@ xxx<caret>
   }
 
   void testEmpty() {
-    doTest '<caret>', "txt", '<caret>'
+    doTest '<caret>', "txt", '''
+<caret>'''
   }
 
   private void doTest(String before, @NonNls String ext, String after) {

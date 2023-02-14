@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
-  @NotNull private final IntentionAction myAction;
+  private final @NotNull IntentionAction myAction;
   public final String @NotNull [] myCategory;
   private String myDirName;
-  @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
+  private static final @NonNls String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
   public IntentionActionMetaData(@NotNull IntentionAction action,
                                  @Nullable ClassLoader loader,
@@ -38,14 +38,11 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     return null;
   }
 
-  @NotNull
-  @IntentionFamilyName
-  public String getFamily() {
+  public @NotNull @IntentionFamilyName String getFamily() {
     return myAction.getFamilyName();
   }
 
-  @NotNull
-  public IntentionAction getAction() {
+  public @NotNull IntentionAction getAction() {
     return myAction;
   }
 
@@ -53,16 +50,17 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   protected String getResourceLocation(String resourceName) {
     if (myDirName == null) {
       String dirName = myDescriptionDirectoryName;
-
       if (myLoader != null && myLoader.getResource(getResourceLocationStatic(dirName, resourceName)) == null) {
         dirName = getFamily();
 
         if (myLoader.getResource(getResourceLocationStatic(dirName, resourceName)) == null) {
           PluginId pluginId = getPluginId();
-          String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; " + myDescriptionDirectoryName + "; while looking for " + resourceName;
+          String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; "
+                                + myDescriptionDirectoryName + "; while looking for " + resourceName;
           if (pluginId != null) {
             throw new PluginException(errorMessage, pluginId);
-          } else {
+          }
+          else {
             throw new RuntimeException(errorMessage);
           }
         }
@@ -73,8 +71,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     return getResourceLocationStatic(myDirName, resourceName);
   }
 
-  @NotNull
-  private static String getResourceLocationStatic(String dirName, String resourceName) {
+  private static @NotNull String getResourceLocationStatic(String dirName, String resourceName) {
     return INTENTION_DESCRIPTION_FOLDER + "/" + dirName + "/" + resourceName;
   }
 

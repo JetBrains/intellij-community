@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.ide.plugins.auth.PluginRepositoryAuthListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +16,17 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public final class CustomPluginRepositoryService {
+public final class CustomPluginRepositoryService implements PluginRepositoryAuthListener {
   public static CustomPluginRepositoryService getInstance() {
     return ApplicationManager.getApplication().getService(CustomPluginRepositoryService.class);
+  }
+
+  public CustomPluginRepositoryService() {
+    ApplicationManager
+      .getApplication()
+      .getMessageBus()
+      .connect()
+      .subscribe(PLUGIN_REPO_AUTH_CHANGED_TOPIC, this);
   }
 
   private Collection<PluginNode> myCustomRepositoryPluginsList;
@@ -56,10 +64,6 @@ public final class CustomPluginRepositoryService {
       }
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
-    });
-
     synchronized (myRepositoriesLock) {
       if (myCustomRepositoryPluginsMap == null) {
         myCustomRepositoryPluginsMap = customRepositoryPluginsMap;
@@ -67,6 +71,11 @@ public final class CustomPluginRepositoryService {
       }
       return myCustomRepositoryPluginsMap;
     }
+  }
+
+  @Override
+  public void authenticationChanged() {
+    clearCache();
   }
 
   public @NotNull Collection<PluginNode> getCustomRepositoryPlugins() {

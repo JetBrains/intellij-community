@@ -1,4 +1,4 @@
-// "Wrap with unmodifiable map" "true"
+// "Wrap with unmodifiable map" "true-preview"
 import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;

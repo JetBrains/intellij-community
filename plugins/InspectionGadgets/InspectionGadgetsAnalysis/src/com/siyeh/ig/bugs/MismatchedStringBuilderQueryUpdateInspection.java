@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -64,7 +64,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   private static class MismatchedQueryAndUpdateOfStringBuilderVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         return;
@@ -82,7 +82,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (!checkVariable(variable, codeBlock)) {
@@ -155,14 +155,14 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (updated) return;
       super.visitMethodCallExpression(expression);
       checkReferenceExpression(expression.getMethodExpression());
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (updated) return;
       super.visitMethodReferenceExpression(expression);
       checkReferenceExpression(expression);
@@ -202,14 +202,13 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       if (queried) return;
       super.visitReferenceExpression(expression);
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (!(parent instanceof PsiPolyadicExpression)) {
+      if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
         return;
       }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (!JavaTokenType.PLUS.equals(tokenType)) {
         return;
@@ -226,12 +225,12 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (queried) return;
       super.visitMethodReferenceExpression(expression);
       final String name = expression.getReferenceName();
       if (!queryNames.contains(name) && !returnSelfNames.contains(name)) return;
-      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) return;
+      if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) return;
       final PsiExpression qualifierExpression = expression.getQualifierExpression();
       if (hasReferenceToVariable(variable, qualifierExpression)) {
         queried = true;
@@ -239,7 +238,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (queried) return;
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -274,16 +273,13 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     private static boolean isVariableValueUsed(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)parent;
+      if (parent instanceof PsiParenthesizedExpression parenthesizedExpression) {
         return isVariableValueUsed(parenthesizedExpression);
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression polyadicExpression) {
         return isVariableValueUsed(polyadicExpression);
       }
-      if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+      if (parent instanceof PsiTypeCastExpression typeCastExpression) {
         return isVariableValueUsed(typeCastExpression);
       }
       if (parent instanceof PsiReturnStatement) {
@@ -298,13 +294,11 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       else if (parent instanceof PsiArrayInitializerExpression) {
         return true;
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression rhs = assignmentExpression.getRExpression();
         return expression.equals(rhs);
       }
-      else if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
+      else if (parent instanceof PsiVariable variable) {
         final PsiExpression initializer = variable.getInitializer();
         return expression.equals(initializer);
       }
@@ -313,25 +307,21 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   }
 
   static boolean hasReferenceToVariable(PsiVariable variable, PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       return referenceExpression.isReferenceTo(variable);
     }
-    else if (element instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)element;
+    else if (element instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression expression = parenthesizedExpression.getExpression();
       return hasReferenceToVariable(variable, expression);
     }
-    else if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+    else if (element instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
       if (returnSelfNames.contains(name)) {
         return hasReferenceToVariable(variable, methodExpression.getQualifierExpression());
       }
     }
-    else if (element instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
+    else if (element instanceof PsiConditionalExpression conditionalExpression) {
       final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (hasReferenceToVariable(variable, thenExpression)) {
         return true;

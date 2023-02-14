@@ -25,237 +25,249 @@ public class JavaFxAntTaskTest extends TestCase {
   private static final String VERBOSE = "verbose";
 
   public void testJarDeployNoInfo() {
-    doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployNoInfo.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployNoInfo.jar\">\n" +
-           "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployNoInfo\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployNoInfo\">\n" +
-           "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployNoInfo\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.emptyMap());
+    doTest("""
+             <fx:fileset id="all_but_jarDeployNoInfo" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployNoInfo.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployNoInfo" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployNoInfo_id" name="jarDeployNoInfo" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployNoInfo.jar">
+             <fx:application refid="jarDeployNoInfo_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployNoInfo">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployNoInfo">
+             <fx:application refid="jarDeployNoInfo_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployNoInfo">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, Collections.emptyMap());
   }
 
   public void testJarDeployTitle() {
-    doTest("<fx:fileset id=\"all_but_jarDeployTitle\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployTitle.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployTitle\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployTitle_id\" name=\"jarDeployTitle\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployTitle.jar\">\n" +
-           "<fx:application refid=\"jarDeployTitle_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployTitle\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "<manifest>\n" +
-           "<attribute name=\"Implementation-Title\" value=\"My App\">\n" +
-           "</attribute>\n" +
-           "</manifest>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployTitle\">\n" +
-           "<fx:application refid=\"jarDeployTitle_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:info title=\"My App\">\n" +
-           "</fx:info>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployTitle\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
+    doTest("""
+             <fx:fileset id="all_but_jarDeployTitle" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployTitle.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployTitle" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployTitle_id" name="jarDeployTitle" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployTitle.jar">
+             <fx:application refid="jarDeployTitle_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployTitle">
+             </fx:fileset>
+             </fx:resources>
+             <manifest>
+             <attribute name="Implementation-Title" value="My App">
+             </attribute>
+             </manifest>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployTitle">
+             <fx:application refid="jarDeployTitle_id">
+             </fx:application>
+             <fx:info title="My App">
+             </fx:info>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployTitle">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, Collections.singletonMap(TITLE, "My App"));
   }
 
   public void testJarDeployIcon() {
-    doTest("<fx:fileset id=\"all_but_jarDeployIcon\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployIcon.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployIcon\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployIcon_id\" name=\"jarDeployIcon\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployIcon.jar\">\n" +
-           "<fx:application refid=\"jarDeployIcon_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployIcon\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.png\">\n" +
-           "<and>\n" +
-           "<os family=\"unix\">\n" +
-           "</os>\n" +
-           "<not>\n" +
-           "<os family=\"mac\">\n" +
-           "</os>\n" +
-           "</not>\n" +
-           "</and>\n" +
-           "</condition>\n" +
-           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.icns\">\n" +
-           "<os family=\"mac\">\n" +
-           "</os>\n" +
-           "</condition>\n" +
-           "<condition property=\"app.icon.path\" value=\"${basedir}/app_icon.ico\">\n" +
-           "<os family=\"windows\">\n" +
-           "</os>\n" +
-           "</condition>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployIcon\" nativeBundles=\"all\">\n" +
-           "<fx:application refid=\"jarDeployIcon_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:info>\n" +
-           "<fx:icon href=\"${app.icon.path}\">\n" +
-           "</fx:icon>\n" +
-           "</fx:info>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployIcon\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", new ContainerUtil.ImmutableMapBuilder<String, String>()
+    doTest("""
+             <fx:fileset id="all_but_jarDeployIcon" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployIcon.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployIcon" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployIcon_id" name="jarDeployIcon" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployIcon.jar">
+             <fx:application refid="jarDeployIcon_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployIcon">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <condition property="app.icon.path" value="${basedir}/app_icon.png">
+             <and>
+             <os family="unix">
+             </os>
+             <not>
+             <os family="mac">
+             </os>
+             </not>
+             </and>
+             </condition>
+             <condition property="app.icon.path" value="${basedir}/app_icon.icns">
+             <os family="mac">
+             </os>
+             </condition>
+             <condition property="app.icon.path" value="${basedir}/app_icon.ico">
+             <os family="windows">
+             </os>
+             </condition>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployIcon" nativeBundles="all">
+             <fx:application refid="jarDeployIcon_id">
+             </fx:application>
+             <fx:info>
+             <fx:icon href="${app.icon.path}">
+             </fx:icon>
+             </fx:info>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployIcon">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, new ContainerUtil.ImmutableMapBuilder<String, String>()
              .put(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico")
              .put(BASE_DIR_PATH, "/project_dir")
              .build());
   }
 
   public void testJarDeployIconAbsolute() {
-    doTest("<fx:fileset id=\"all_but_jarDeployIconAbsolute\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployIconAbsolute.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployIconAbsolute\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployIconAbsolute_id\" name=\"jarDeployIconAbsolute\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployIconAbsolute.jar\">\n" +
-           "<fx:application refid=\"jarDeployIconAbsolute_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployIconAbsolute\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.png\">\n" +
-           "<and>\n" +
-           "<os family=\"unix\">\n" +
-           "</os>\n" +
-           "<not>\n" +
-           "<os family=\"mac\">\n" +
-           "</os>\n" +
-           "</not>\n" +
-           "</and>\n" +
-           "</condition>\n" +
-           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.icns\">\n" +
-           "<os family=\"mac\">\n" +
-           "</os>\n" +
-           "</condition>\n" +
-           "<condition property=\"app.icon.path\" value=\"/project_dir/app_icon.ico\">\n" +
-           "<os family=\"windows\">\n" +
-           "</os>\n" +
-           "</condition>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployIconAbsolute\" nativeBundles=\"all\">\n" +
-           "<fx:application refid=\"jarDeployIconAbsolute_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:info>\n" +
-           "<fx:icon href=\"${app.icon.path}\">\n" +
-           "</fx:icon>\n" +
-           "</fx:info>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployIconAbsolute\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n",
+    doTest("""
+             <fx:fileset id="all_but_jarDeployIconAbsolute" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployIconAbsolute.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployIconAbsolute" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployIconAbsolute_id" name="jarDeployIconAbsolute" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployIconAbsolute.jar">
+             <fx:application refid="jarDeployIconAbsolute_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployIconAbsolute">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <condition property="app.icon.path" value="/project_dir/app_icon.png">
+             <and>
+             <os family="unix">
+             </os>
+             <not>
+             <os family="mac">
+             </os>
+             </not>
+             </and>
+             </condition>
+             <condition property="app.icon.path" value="/project_dir/app_icon.icns">
+             <os family="mac">
+             </os>
+             </condition>
+             <condition property="app.icon.path" value="/project_dir/app_icon.ico">
+             <os family="windows">
+             </os>
+             </condition>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployIconAbsolute" nativeBundles="all">
+             <fx:application refid="jarDeployIconAbsolute_id">
+             </fx:application>
+             <fx:info>
+             <fx:icon href="${app.icon.path}">
+             </fx:icon>
+             </fx:info>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployIconAbsolute">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """,
            Collections.singletonMap(ICONS, "/project_dir/app_icon.png,/project_dir/app_icon.icns,/project_dir/app_icon.ico"));
   }
 
   public void testJarDeployVersion() {
-    doTest("<fx:fileset id=\"all_but_jarDeployVersion\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployVersion.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployVersion\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployVersion_id\" name=\"jarDeployVersion\" mainClass=\"Main\" version=\"4.2\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployVersion.jar\">\n" +
-           "<fx:application refid=\"jarDeployVersion_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployVersion\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "<manifest>\n" +
-           "<attribute name=\"Implementation-Version\" value=\"4.2\">\n" +
-           "</attribute>\n" +
-           "</manifest>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployVersion\">\n" +
-           "<fx:application refid=\"jarDeployVersion_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployVersion\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap(VERSION, "4.2"));
+    doTest("""
+             <fx:fileset id="all_but_jarDeployVersion" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployVersion.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployVersion" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployVersion_id" name="jarDeployVersion" mainClass="Main" version="4.2">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployVersion.jar">
+             <fx:application refid="jarDeployVersion_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployVersion">
+             </fx:fileset>
+             </fx:resources>
+             <manifest>
+             <attribute name="Implementation-Version" value="4.2">
+             </attribute>
+             </manifest>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployVersion">
+             <fx:application refid="jarDeployVersion_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployVersion">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, Collections.singletonMap(VERSION, "4.2"));
   }
 
   public void testJarDeployTemplate() {
-    doTest("<fx:fileset id=\"all_but_jarDeployTemplate\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployTemplate.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployTemplate\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployTemplate_id\" name=\"jarDeployTemplate\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployTemplate.jar\">\n" +
-           "<fx:application refid=\"jarDeployTemplate_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployTemplate\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployTemplate\" placeholderId=\"app-placeholder-id\">\n" +
-           "<fx:application refid=\"jarDeployTemplate_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployTemplate\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "<fx:template file=\"${basedir}/app_template.html\" tofile=\"temp/deploy/app_template.html\">\n" +
-           "</fx:template>\n" +
-           "</fx:deploy>\n", new ContainerUtil.ImmutableMapBuilder<String, String>()
+    doTest("""
+             <fx:fileset id="all_but_jarDeployTemplate" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployTemplate.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployTemplate" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployTemplate_id" name="jarDeployTemplate" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployTemplate.jar">
+             <fx:application refid="jarDeployTemplate_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployTemplate">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployTemplate" placeholderId="app-placeholder-id">
+             <fx:application refid="jarDeployTemplate_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployTemplate">
+             </fx:fileset>
+             </fx:resources>
+             <fx:template file="${basedir}/app_template.html" tofile="temp/deploy/app_template.html">
+             </fx:template>
+             </fx:deploy>
+             """, new ContainerUtil.ImmutableMapBuilder<String, String>()
              .put(TEMPLATE, "/project_dir/app_template.html")
              .put(PLACEHOLDER, "app-placeholder-id")
              .put(BASE_DIR_PATH, "/project_dir")
@@ -263,105 +275,111 @@ public class JavaFxAntTaskTest extends TestCase {
   }
 
   public void testJarDeploySigned() {
-    doTest("<fx:fileset id=\"all_but_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeploySigned.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeploySigned_id\" name=\"jarDeploySigned\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp" + "/" + "jarDeploySigned.jar\">\n" +
-           "<fx:application refid=\"jarDeploySigned_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeploySigned\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + "/" + "deploy\" outfile=\"jarDeploySigned\">\n" +
-           "<fx:permissions elevated=\"true\">\n" +
-           "</fx:permissions>\n" +
-           "<fx:application refid=\"jarDeploySigned_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeploySigned\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap(SIGNED, "true"));
+    doTest("""
+             <fx:fileset id="all_but_jarDeploySigned" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeploySigned.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeploySigned" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeploySigned_id" name="jarDeploySigned" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeploySigned.jar">
+             <fx:application refid="jarDeploySigned_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeploySigned">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeploySigned">
+             <fx:permissions elevated="true">
+             </fx:permissions>
+             <fx:application refid="jarDeploySigned_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeploySigned">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, Collections.singletonMap(SIGNED, "true"));
   }
 
   public void testJarDeployPreloader() {
     final HashMap<String, String> options = new HashMap<>();
     options.put(PRELOADER_CLASS, "MyPreloader");
     options.put(PRELOADER_JAR, "preloader.jar");
-    doTest("<fx:fileset id=\"jarDeployPreloader_preloader_files\" requiredFor=\"preloader\" dir=\"temp\" includes=\"preloader.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_but_preloader_jarDeployPreloader\" dir=\"temp\" excludes=\"preloader.jar\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_but_jarDeployPreloader\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployPreloader.jar\">\n" +
-           "</exclude>\n" +
-           "<exclude name=\"preloader.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployPreloader\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployPreloader_id\" name=\"jarDeployPreloader\" mainClass=\"Main\" preloaderClass=\"MyPreloader\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployPreloader.jar\">\n" +
-           "<fx:application refid=\"jarDeployPreloader_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployPreloader\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployPreloader\">\n" +
-           "<fx:application refid=\"jarDeployPreloader_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset refid=\"all_but_preloader_jarDeployPreloader\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", options);
+    doTest("""
+             <fx:fileset id="jarDeployPreloader_preloader_files" requiredFor="preloader" dir="temp" includes="preloader.jar">
+             </fx:fileset>
+             <fx:fileset id="all_but_preloader_jarDeployPreloader" dir="temp" excludes="preloader.jar" includes="**/*.jar">
+             </fx:fileset>
+             <fx:fileset id="all_but_jarDeployPreloader" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployPreloader.jar">
+             </exclude>
+             <exclude name="preloader.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployPreloader" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployPreloader_id" name="jarDeployPreloader" mainClass="Main" preloaderClass="MyPreloader">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployPreloader.jar">
+             <fx:application refid="jarDeployPreloader_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="jarDeployPreloader_preloader_files">
+             </fx:fileset>
+             <fx:fileset refid="all_but_jarDeployPreloader">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployPreloader">
+             <fx:application refid="jarDeployPreloader_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="jarDeployPreloader_preloader_files">
+             </fx:fileset>
+             <fx:fileset refid="all_but_preloader_jarDeployPreloader">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, options);
   }
 
   public void testJarDeployVerbose() {
-    doTest("<fx:fileset id=\"all_but_jarDeployVerbose\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "<exclude name=\"jarDeployVerbose.jar\">\n" +
-           "</exclude>\n" +
-           "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployVerbose\" dir=\"temp\" includes=\"**/*.jar\">\n" +
-           "</fx:fileset>\n" +
-           "<fx:application id=\"jarDeployVerbose_id\" name=\"jarDeployVerbose\" mainClass=\"Main\">\n" +
-           "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployVerbose.jar\" verbose=\"true\">\n" +
-           "<fx:application refid=\"jarDeployVerbose_id\">\n" +
-           "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
-           "</fileset>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_but_jarDeployVerbose\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployVerbose\" verbose=\"true\">\n" +
-           "<fx:application refid=\"jarDeployVerbose_id\">\n" +
-           "</fx:application>\n" +
-           "<fx:resources>\n" +
-           "<fx:fileset refid=\"all_jarDeployVerbose\">\n" +
-           "</fx:fileset>\n" +
-           "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap(VERBOSE, "true"));
+    doTest("""
+             <fx:fileset id="all_but_jarDeployVerbose" dir="temp" includes="**/*.jar">
+             <exclude name="jarDeployVerbose.jar">
+             </exclude>
+             </fx:fileset>
+             <fx:fileset id="all_jarDeployVerbose" dir="temp" includes="**/*.jar">
+             </fx:fileset>
+             <fx:application id="jarDeployVerbose_id" name="jarDeployVerbose" mainClass="Main">
+             </fx:application>
+             <fx:jar destfile="temp/jarDeployVerbose.jar" verbose="true">
+             <fx:application refid="jarDeployVerbose_id">
+             </fx:application>
+             <fileset dir="temp" excludes="**/*.jar">
+             </fileset>
+             <fx:resources>
+             <fx:fileset refid="all_but_jarDeployVerbose">
+             </fx:fileset>
+             </fx:resources>
+             </fx:jar>
+             <fx:deploy width="800" height="400" updatemode="background" outdir="temp/deploy" outfile="jarDeployVerbose" verbose="true">
+             <fx:application refid="jarDeployVerbose_id">
+             </fx:application>
+             <fx:resources>
+             <fx:fileset refid="all_jarDeployVerbose">
+             </fx:fileset>
+             </fx:resources>
+             </fx:deploy>
+             """, Collections.singletonMap(VERBOSE, "true"));
   }
 
   private void doTest(final String expected, Map<String, String> options) {

@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A place for {@link SearchableOptionContributor} implementations to feed the searchable options to.
- *
- * @author peter
  */
 public abstract class SearchableOptionProcessor {
   /**

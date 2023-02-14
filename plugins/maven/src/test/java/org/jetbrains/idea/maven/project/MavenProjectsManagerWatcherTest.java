@@ -1,18 +1,20 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
-import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -21,10 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
+public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
 
   private MavenProjectsManager myProjectsManager;
-  private ProjectNotificationAware myNotificationAware;
+  private AutoImportProjectNotificationAware myNotificationAware;
   private ExternalSystemProjectTracker myProjectTracker;
   private MavenProjectTreeTracker myProjectsTreeTracker;
 
@@ -32,7 +34,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    myNotificationAware = ProjectNotificationAware.getInstance(myProject);
+    myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
     myProjectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     myProjectsTreeTracker = new MavenProjectTreeTracker();
 
@@ -41,9 +43,11 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     initProjectsManager(true);
 
     createProjectPom(createPomContent("test", "project"));
-    addManagedFiles(myProjectPom);
+    importProject();
+    //addManagedFiles(myProjectPom);
   }
 
+  @Test
   public void testChangeConfigInAnotherProjectShouldNotUpdateOur() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
@@ -52,13 +56,17 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
-  public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws IOException {
+  @Test
+  public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws Exception {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
+    waitForImportCompletion();
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
+    //    assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
+  @Test
   public void testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
@@ -70,6 +78,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
+  @Test
   public void testSaveDocumentChangesBeforeAutoImport() throws IOException {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
 
@@ -88,6 +97,7 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
+  @Test
   public void testIncrementalAutoReload() {
     assertRootProjects("project");
     assertFalse(myNotificationAware.isNotificationVisible());
@@ -133,11 +143,14 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
   private void scheduleProjectImportAndWait() {
     assertTrue(myNotificationAware.isNotificationVisible());
     myProjectTracker.scheduleProjectRefresh();
-    MavenUtil.invokeAndWait(myProject, () -> {
-      // Do not save documents here, MavenProjectAware should do this before import
-      myProjectsManager.waitForImportFinishCompletion();
-      myProjectsManager.performScheduledImportInTests();
-    });
+    waitForImportCompletion();
+    if(!isNewImportingProcess) {
+      MavenUtil.invokeAndWait(myProject, () -> {
+        // Do not save documents here, MavenProjectAware should do this before import
+        myProjectsManager.performScheduledImportInTests();
+      });
+    }
+
     assertFalse(myNotificationAware.isNotificationVisible());
   }
 
@@ -147,8 +160,10 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
 
   private void addManagedFiles(@NotNull VirtualFile pom) {
     myProjectsManager.addManagedFiles(Collections.singletonList(pom));
-    myProjectsManager.waitForResolvingCompletion();
-    myProjectsManager.performScheduledImportInTests();
+    waitForImportCompletion();
+    if (!isNewImportingProcess) {
+      myProjectsManager.performScheduledImportInTests();
+    }
   }
 
   private void replaceContent(@NotNull VirtualFile file, @NotNull String content) throws IOException {
@@ -169,35 +184,35 @@ public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
     });
   }
 
-  static class MavenProjectTreeTracker implements MavenProjectsTree.Listener {
-    private final Map<String, MavenProjectStatus> projects = new HashMap<>();
+static class MavenProjectTreeTracker implements MavenProjectsTree.Listener {
+  private final Map<String, MavenProjectStatus> projects = new HashMap<>();
 
-    public MavenProjectStatus getProjectStatus(String artifactId) {
-      return projects.computeIfAbsent(artifactId, __ -> new MavenProjectStatus());
-    }
-
-    public void reset() {
-      projects.clear();
-    }
-
-    @Override
-    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-      for (Pair<MavenProject, MavenProjectChanges> it : updated) {
-        String artifactId = it.first.getMavenId().getArtifactId();
-        MavenProjectStatus projectStatus = getProjectStatus(artifactId);
-        projectStatus.updateCounter++;
-      }
-      for (MavenProject mavenProject : deleted) {
-        String artifactId = mavenProject.getMavenId().getArtifactId();
-        MavenProjectStatus projectStatus = getProjectStatus(artifactId);
-        projectStatus.deleteCounter++;
-      }
-    }
+  public MavenProjectStatus getProjectStatus(String artifactId) {
+    return projects.computeIfAbsent(artifactId, __ -> new MavenProjectStatus());
   }
 
-  static class MavenProjectStatus {
-    int updateCounter = 0;
-    int deleteCounter = 0;
+  public void reset() {
+    projects.clear();
   }
+
+  @Override
+  public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+    for (Pair<MavenProject, MavenProjectChanges> it : updated) {
+      String artifactId = it.first.getMavenId().getArtifactId();
+      MavenProjectStatus projectStatus = getProjectStatus(artifactId);
+      projectStatus.updateCounter++;
+    }
+    for (MavenProject mavenProject : deleted) {
+      String artifactId = mavenProject.getMavenId().getArtifactId();
+      MavenProjectStatus projectStatus = getProjectStatus(artifactId);
+      projectStatus.deleteCounter++;
+    }
+  }
+}
+
+static class MavenProjectStatus {
+  int updateCounter = 0;
+  int deleteCounter = 0;
+}
 }
 

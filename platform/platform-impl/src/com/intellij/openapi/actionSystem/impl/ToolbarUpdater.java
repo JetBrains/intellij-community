@@ -27,15 +27,12 @@ public abstract class ToolbarUpdater implements Activatable {
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
-  /** @noinspection FieldCanBeLocal*/
   private final TimerListener myTimerListener = new MyTimerListener();
-  private final WeakTimerListener myWeakTimerListener;
 
   private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
     myComponent = component;
-    myWeakTimerListener = new WeakTimerListener(myTimerListener);
     new UiNotifyConnector(component, this);
   }
 
@@ -47,7 +44,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = true;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.addTimerListener(-1, myWeakTimerListener);
+    actionManager.addTimerListener(myTimerListener);
     KeymapManagerEx.getInstanceEx().addWeakListener(myKeymapManagerListener);
     updateActionTooltips();
   }
@@ -60,7 +57,7 @@ public abstract class ToolbarUpdater implements Activatable {
 
     myListenersArmed = false;
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.removeTimerListener(myWeakTimerListener);
+    actionManager.removeTimerListener(myTimerListener);
     KeymapManagerEx.getInstanceEx().removeWeakListener(myKeymapManagerListener);
   }
 
@@ -73,7 +70,7 @@ public abstract class ToolbarUpdater implements Activatable {
     else if (!application.isHeadlessEnvironment()) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
       if (application.isDispatchThread()) {
-        focusManager.doWhenFocusSettlesDown(updateRunnable);
+        application.runReadAction(() -> focusManager.doWhenFocusSettlesDown(updateRunnable));
       }
       else {
         UiNotifyConnector.doWhenFirstShown(myComponent, () -> focusManager.doWhenFocusSettlesDown(updateRunnable));
@@ -148,7 +145,7 @@ public abstract class ToolbarUpdater implements Activatable {
       JComponent component = updater == null ? null : updater.myComponent;
       if (component == null ||
           !ApplicationManager.getApplication().isUnitTestMode() &&
-          (!component.isDisplayable() || !component.isShowing() && !myIncludeInvisible)) {
+          !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
 
@@ -157,9 +154,8 @@ public abstract class ToolbarUpdater implements Activatable {
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof MyUpdateRunnable)) return false;
+      if (!(obj instanceof MyUpdateRunnable that)) return false;
 
-      MyUpdateRunnable that = (MyUpdateRunnable)obj;
       if (myHash != that.myHash) return false;
 
       ToolbarUpdater updater1 = myUpdaterRef.get();

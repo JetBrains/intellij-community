@@ -2,12 +2,13 @@
 package git4idea.actions
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 import git4idea.GitUtil
 
-abstract class GitRepositoryStateActionGroup(val repositoryState: Repository.State) : DefaultActionGroup(), DumbAware {
+abstract class GitRepositoryStateActionGroup(private val repositoryState: Repository.State) : DefaultActionGroup(), DumbAware {
 
   class Merge : GitRepositoryStateActionGroup(Repository.State.MERGING)
   class Rebase : GitRepositoryStateActionGroup(Repository.State.REBASING)
@@ -21,4 +22,7 @@ abstract class GitRepositoryStateActionGroup(val repositoryState: Repository.Sta
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }

@@ -1,0 +1,12 @@
+// "Remove parameter 'bar'" "true"
+fun foo(foo: String) {
+    println(foo)
+}
+
+fun test() {
+    foo(
+        "foo" // foo comment
+    )
+}
+
+fun println(s: String) {}

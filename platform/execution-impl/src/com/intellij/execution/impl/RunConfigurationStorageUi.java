@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -32,9 +33,11 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.UriUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -42,7 +45,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -70,7 +72,6 @@ public class RunConfigurationStorageUi {
   private @Nullable @SystemIndependent @NonNls String myFolderPathIfStoredInArbitraryFile;
 
   private @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
-  private boolean myShowCompatibilityHint;
 
   public RunConfigurationStorageUi(@NotNull Project project, @Nullable Runnable onModifiedRunnable) {
     if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
@@ -96,16 +97,17 @@ public class RunConfigurationStorageUi {
 
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
       if (myStoreAsFileCheckBox.isSelected()) {
-        manageStorageFileLocation();
+        manageStorageFileLocation(null);
       }
     });
   }
 
   private @NotNull ActionButton createStoreAsFileGearButton() {
+    PopupState<Balloon> state = PopupState.forBalloon();
     AnAction showStoragePathAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        manageStorageFileLocation();
+        if (!state.isRecentlyHidden()) manageStorageFileLocation(state);
       }
     };
     Presentation presentation = new Presentation(ExecutionBundle.message("run.configuration.manage.file.location"));
@@ -124,17 +126,12 @@ public class RunConfigurationStorageUi {
     };
   }
 
-  void setShowCompatibilityHint(boolean showCompatibilityHint) {
-    myShowCompatibilityHint = showCompatibilityHint;
-  }
-
-  private void manageStorageFileLocation() {
+  private void manageStorageFileLocation(@Nullable PopupState<Balloon> state) {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
     RunConfigurationStoragePopup popup =
-      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable,
-                                       myShowCompatibilityHint);
+      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable);
 
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(popup.getMainPanel())
       .setDialogMode(true)
@@ -180,6 +177,7 @@ public class RunConfigurationStorageUi {
       }
     });
 
+    if (state != null) state.prepareToShow(balloon);
     balloon.show(RelativePoint.getSouthOf(myStoreAsFileCheckBox), Balloon.Position.below);
   }
 
@@ -299,7 +297,8 @@ public class RunConfigurationStorageUi {
     LOG.assertTrue(baseDir != null);
 
     // 5. If project base dir is not within project content, use .idea/runConfigurations
-    if (!ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
+    // In Rider baseDir always not in the project content by design after migration to the new workspace model.
+    if (!PlatformUtils.isRider() && !ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
@@ -381,17 +380,15 @@ public class RunConfigurationStorageUi {
   }
 
   public void apply(@NotNull RunnerAndConfigurationSettings settings) {
-    if (!isModified()) return;
+    apply(settings, true);
+  }
 
+  public void apply(@NotNull RunnerAndConfigurationSettings settings, boolean checkPathValidity) {
     switch (myRCStorageType) {
-      case Workspace:
-        settings.storeInLocalWorkspace();
-        break;
-      case DotIdeaFolder:
-        settings.storeInDotIdeaFolder();
-        break;
-      case ArbitraryFileInProject:
-        if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
+      case Workspace -> settings.storeInLocalWorkspace();
+      case DotIdeaFolder -> settings.storeInDotIdeaFolder();
+      case ArbitraryFileInProject -> {
+        if (checkPathValidity && getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
           // don't apply incorrect UI to the model
         }
         else {
@@ -400,9 +397,8 @@ public class RunConfigurationStorageUi {
           String fileName = getFileNameByRCName(name);
           settings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
         }
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + myRCStorageType);
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
   }
 
@@ -417,8 +413,7 @@ public class RunConfigurationStorageUi {
     RunConfigurationStoragePopup(@NotNull Project project,
                                  @NotNull String dotIdeaStoragePath,
                                  @NotNull Function<? super String, @NlsContexts.DialogMessage String> pathToErrorMessage,
-                                 @NotNull Disposable uiDisposable,
-                                 boolean showCompatibilityHint) {
+                                 @NotNull Disposable uiDisposable) {
       myDotIdeaStoragePath = dotIdeaStoragePath;
       myPathComboBox = createPathComboBox(project, uiDisposable);
 
@@ -433,14 +428,6 @@ public class RunConfigurationStorageUi {
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(myPathComboBox)
         .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop();
-      if (showCompatibilityHint) {
-        builder = builder.withComment(getCompatibilityHintText(project), false)
-          .withCommentHyperlinkListener(e -> {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
-            }
-          });
-      }
       JPanel comboBoxPanel = builder.createPanel();
 
       JButton doneButton = new JButton(ExecutionBundle.message("run.configuration.done.button"));
@@ -483,13 +470,14 @@ public class RunConfigurationStorageUi {
         }
 
         @Override
-        public boolean isFileSelectable(VirtualFile file) {
+        public boolean isFileSelectable(@Nullable VirtualFile file) {
+          if (file == null) return false;
           if (file.getPath().equals(myDotIdeaStoragePath)) return true;
           return file.isDirectory() &&
                  super.isFileSelectable(file) &&
-                 ProjectFileIndex.getInstance(project).isInContent(file) &&
                  !file.getPath().endsWith("/.idea") &&
-                 !file.getPath().contains("/.idea/");
+                 !file.getPath().contains("/.idea/") &&
+                 ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInContent(file));
         }
       };
 
@@ -499,13 +487,6 @@ public class RunConfigurationStorageUi {
 
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
       return comboBox;
-    }
-
-    private static @NotNull @NlsContexts.DetailedDescription String getCompatibilityHintText(@NotNull Project project) {
-      String oldStorage = ProjectKt.isDirectoryBased(project)
-                          ? FileUtil.toSystemDependentName(".idea/runConfigurations")
-                          : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
-      return ExecutionBundle.message("run.configuration.storage.compatibility.hint", oldStorage);
     }
 
     JPanel getMainPanel() {
@@ -523,7 +504,7 @@ public class RunConfigurationStorageUi {
     }
 
     @NotNull @SystemIndependent String getPath() {
-      return StringUtil.trimTrailing(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()), '/');
+      return UriUtil.trimTrailingSlashes(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()));
     }
   }
 

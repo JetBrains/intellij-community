@@ -29,9 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TrimZenCodingFilter extends ZenCodingFilter {
   private static final Pattern PATTERN = Pattern.compile("^([\\s|\u00a0])?[\\d|#|\\-|\\*|\u2022]+\\.?\\s*");
 
@@ -59,7 +56,7 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
     if (tag != null && !tag.getText().isEmpty()) {
       tag.accept(new XmlElementVisitor() {
         @Override
-        public void visitXmlTag(final XmlTag tag) {
+        public void visitXmlTag(final @NotNull XmlTag tag) {
           if (!tag.isEmpty()) {
             final XmlTagValue tagValue = tag.getValue();
             final Matcher matcher = PATTERN.matcher(tagValue.getText());

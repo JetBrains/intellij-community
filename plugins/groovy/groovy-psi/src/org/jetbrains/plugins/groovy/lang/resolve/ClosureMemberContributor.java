@@ -11,9 +11,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class ClosureMemberContributor extends NonCodeMembersContributor {
 
   @Override

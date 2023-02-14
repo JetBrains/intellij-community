@@ -30,13 +30,11 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    if (element instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)element;
+    if (element instanceof PsiClass psiClass) {
       return isDomElementClass(psiClass);
     }
 
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
+    if (element instanceof PsiMethod psiMethod) {
       return isDomElementMethod(psiMethod);
     }
 
@@ -81,11 +79,9 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
     }
 
     final PsiType returnType = psiMethod.getReturnType();
-    if (!(returnType instanceof PsiClassType)) {
+    if (!(returnType instanceof PsiClassType returnClassType)) {
       return false;
     }
-
-    PsiClassType returnClassType = (PsiClassType)returnType;
 
     // Dom getDom(), GenericAttributeValue<X> getAttr(), ...
     final PsiClass returnResolved = returnClassType.resolve();
@@ -105,7 +101,7 @@ public class DevKitImplicitUsageProvider implements ImplicitUsageProvider {
 
   private static boolean isDomElementVisitorMethod(PsiMethod method,
                                                    PsiClass containingClass) {
-    if (!PsiType.VOID.equals(method.getReturnType()) ||
+    if (!PsiTypes.voidType().equals(method.getReturnType()) ||
         !method.getName().startsWith("visit") ||
         method.getParameterList().getParametersCount() != 1 ||
         !InheritanceUtil.isInheritor(containingClass, "com.intellij.util.xml.DomElementVisitor")) {

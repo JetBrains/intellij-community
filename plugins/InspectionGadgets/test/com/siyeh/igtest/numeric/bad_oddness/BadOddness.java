@@ -2,7 +2,7 @@ package com.siyeh.igtest.numeric.bad_oddness;
 
 public class BadOddness {
     public void foo(int i) {
-        if (<warning descr="Test for oddness 'i % 2 == 1' will fail on negative values">i % 2 == 1</warning>) {
+        if (<warning descr="Oddness check will fail on negative values">i % 2 == 1</warning>) {
             System.out.println("odd");
         }
     }
@@ -15,14 +15,23 @@ public class BadOddness {
     }
 
     public void check2(final int sideLength) {
-        if (<warning descr="Test for oddness 'sideLength % 2 == 1' will fail on negative values">sideLength % 2 == 1</warning>) {
+        if (<warning descr="Oddness check will fail on negative values">sideLength % 2 == 1</warning>) {
             throw new IllegalArgumentException("Illegal side length");
         }
     }
     
     public void parenthesized(Double intervals) {
-      if (<warning descr="Test for oddness '((intervals) % (2)) == (1)' will fail on negative values">((intervals) % (2)) == (1)</warning>) {
+      if (<warning descr="Oddness check will fail on negative values">((intervals) % (2)) == (1)</warning>) {
         throw new IllegalArgumentException("Odd intervals!");
       }
+    }
+
+    public static boolean badOddnessTest(int number) {
+      int counter = 0;
+      while (number > 0) {
+        counter++;
+        number--;
+      }
+      return (counter % 2) == 1;
     }
 }

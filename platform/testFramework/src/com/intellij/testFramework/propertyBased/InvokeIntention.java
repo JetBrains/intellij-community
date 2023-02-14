@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -47,8 +48,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -77,7 +76,7 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   @Nullable
-  private static IntentionAction chooseIntention(@NotNull Environment env, List<IntentionAction> actions) {
+  private static IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
     if (actions.isEmpty()) {
       env.logMessage("No intentions found");
       return null;
@@ -191,19 +190,20 @@ public class InvokeIntention extends ActionOnFile {
     IntentionAction unwrapped = IntentionActionDelegate.unwrap(intention);
     // Suppress actions are under submenu, no preview is generated for them anyway
     if (unwrapped instanceof SuppressIntentionAction) return;
-    String previewText;
+    IntentionPreviewInfo previewInfo;
     try {
       // Should not require EDT or write-action
-      previewText = ApplicationManager.getApplication().executeOnPooledThread(
+      previewInfo = ApplicationManager.getApplication().executeOnPooledThread(
         () -> ReadAction.compute(
-          () -> IntentionPreviewPopupUpdateProcessor.Companion.getPreviewText(getProject(), intention, getFile(), editor))
+          () -> IntentionPreviewPopupUpdateProcessor.getPreviewInfo(getProject(), intention, getFile(), editor))
       ).get();
     }
     catch (Exception e) {
       throw new RuntimeException(
         "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " fails during preview", e);
     }
-    if (previewText == null) {
+    if (previewInfo == null || previewInfo == IntentionPreviewInfo.EMPTY ||
+        previewInfo == IntentionPreviewInfo.FALLBACK_DIFF) {
       throw new RuntimeException(
         "Intention action " + MadTestingUtil.getIntentionDescription(intention) + " is not preview-friendly");
     }
@@ -230,7 +230,7 @@ public class InvokeIntention extends ActionOnFile {
     if (elementsToWrap.isEmpty()) return intentions;
 
     Project project = getProject();
-    Map<String, IntentionAction> names = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
+    Map<String, IntentionAction> names = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
     PsiElement elementToWrap = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
     String text = elementToWrap.getText();
     String prefix = myPolicy.getWrapPrefix();
@@ -257,7 +257,7 @@ public class InvokeIntention extends ActionOnFile {
       }
     }
     intentions = getAvailableIntentions(editor, file);
-    Map<String, IntentionAction> namesWithParentheses = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
+    Map<String, IntentionAction> namesWithParentheses = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
     Map<String, IntentionAction> added = new HashMap<>(namesWithParentheses);
     added.keySet().removeAll(names.keySet());
     Map<String, IntentionAction> removed = new HashMap<>(names);
@@ -284,8 +284,7 @@ public class InvokeIntention extends ActionOnFile {
         editor.getCaretModel().moveToOffset(offset);
       });
       intentions = getAvailableIntentions(editor, file);
-      Map<String, IntentionAction> namesBackAgain =
-        StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a, b) -> a);
+      Map<String, IntentionAction> namesBackAgain = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
       if (!namesBackAgain.keySet().equals(names.keySet())) {
         if (namesBackAgain.keySet().equals(namesWithParentheses.keySet())) {
           messages.add(0, "Unstable result: intentions changed after parenthesizing, but remain the same when parentheses removed");
@@ -302,9 +301,10 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   private static String describeIntentions(Map<String, IntentionAction> intentionMap) {
-    return EntryStream.of(intentionMap)
-                   .mapKeyValue(MadTestingUtil::getIntentionDescription)
-                   .map("\t"::concat).joining("\n");
+    return intentionMap.entrySet().stream()
+      .map(entry -> MadTestingUtil.getIntentionDescription(entry.getKey(), entry.getValue()))
+      .map("\t"::concat)
+      .collect(Collectors.joining("\n"));
   }
 
   private void restoreAfterPotentialPsiTextInconsistency() {

@@ -27,16 +27,15 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class BorderProperty extends Property<RadContainer, BorderType> {
   @NonNls public static final String NAME = "border";
 
   private final Project myProject;
   private final Property[] myChildren;
 
+  // Converting this anonymous class to lambda causes javac 11 failure (should compile fine in later javac)
+  // suppression can be removed when we migrate to newer Java
+  @SuppressWarnings("Convert2Lambda")
   private final NotNullLazyValue<PropertyRenderer<BorderType>> myRenderer = NotNullLazyValue.lazy(
     new Supplier<>() {
       @Override

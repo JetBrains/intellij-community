@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
@@ -19,13 +19,13 @@ import com.intellij.execution.testframework.sm.runner.history.actions.ImportTest
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.config.Storage;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +42,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   private boolean myPrintTestingStartedTime = true;
 
   /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit".
    *                          Is used to distinguish problems of different test frameworks in logged exceptions
-   * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
     this(config.getProject(), config, testFrameworkName, executor);
@@ -66,7 +64,6 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @deprecated Fix your runner and stop adding "\n" before TC message.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean serviceMessageHasNewLinePrefix() {
     return false;
   }
@@ -101,15 +98,38 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     myPrintTestingStartedTime = printTestingStartedTime;
   }
 
-  @Nullable
-  @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
-    return getErrorNavigatable(location.getProject(), stacktrace);
+  public static class FileHyperlinkNavigatable implements Navigatable {
+    private OpenFileDescriptor myFileDescriptor;
+    private final FileHyperlinkInfo myFileHyperlinkInfo;
+
+    public FileHyperlinkNavigatable(@NotNull FileHyperlinkInfo info) { myFileHyperlinkInfo = info; }
+
+    public OpenFileDescriptor getOpenFileDescriptor() {
+      if (myFileDescriptor == null) {
+        myFileDescriptor = myFileHyperlinkInfo.getDescriptor();
+      }
+      return myFileDescriptor;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      getOpenFileDescriptor().navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return getOpenFileDescriptor().canNavigate();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return getOpenFileDescriptor().canNavigateToSource();
+    }
   }
 
   @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull final Project project, final @NotNull String stacktrace) {
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
       return null;
     }
@@ -131,10 +151,11 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
         // covers 99% use existing cases
         if (info instanceof FileHyperlinkInfo) {
-          return ((FileHyperlinkInfo)info).getDescriptor();
+          return new FileHyperlinkNavigatable((FileHyperlinkInfo)info);
         }
 
         // otherwise
+        Project project = location.getProject();
         return new Navigatable() {
           @Override
           public void navigate(boolean requestFocus) {

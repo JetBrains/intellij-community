@@ -1,17 +1,22 @@
 <html>
 <body>
-Reports the forward (/) or backward (\) slash in a string or
-character literal. These characters are commonly used as file separators, and portability may suffer if their use is hardcoded.
-This will not report backward slash inside escape sequences, or forward slash immediately following a '&lt;' character,
-or immediately preceding a '&gt;' character, as those often indicate XML or HTML tags rather than file names,
-strings representing a <b>java.util.TimeZone</b> ID, strings that are a valid regular expression or strings that equal an IANA-registered MIME media type.
+Reports the forward (<code>/</code>) or backward (<code>\</code>) slash in a string or
+character literal. These characters are commonly used as file separators, and portability may suffer if they are hardcoded.
 <p>
-Normally, usage of the <b>example/*</b> MIME media type outside of an example (<em>e.g.</em> in a <b>Content-Type</b>
-header) is an error.
+  The inspection will not report backward slashes inside escape sequences and forward slashes immediately following the '&lt;' character
+  or immediately preceding the '&gt;' character, as those often indicate XML or HTML tags rather than file names.
+  Strings representing a <code>java.util.TimeZone</code> ID, strings that are valid regular expressions,
+  or strings that equal IANA-registered MIME media types will not be reported either.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  new File("C:\\Users\\Name");
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to include <b>example/*</b> in the set of recognized media types.
-<p>
-
+  Use the option to include <code>example/*</code> in the set of recognized media types.
+  Normally, usage of the <code>example/*</code> MIME media type outside of an example (e.g. in a <code>Content-Type</code>
+  header) is an error.
+</p>
 </body>
 </html>

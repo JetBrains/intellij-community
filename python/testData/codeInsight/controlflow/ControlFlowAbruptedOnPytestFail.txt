@@ -1,0 +1,11 @@
+0(1) element: null
+1(2) element: PyIfStatement
+2(3) READ ACCESS: True
+3(4,8) READ ACCESS: False
+4(5) element: PyStatementList. Condition: True == False:true
+5(6) element: PyExpressionStatement
+6(10) READ ACCESS: pytest
+7(10) element: PyPrintStatement
+8(9) element: PyStatementList. Condition: True == False:false
+9(10) element: PyReturnStatement
+10() element: null

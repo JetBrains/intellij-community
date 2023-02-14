@@ -1,4 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -6,9 +8,8 @@ import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.UnknownConfigurationType
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.isEmpty
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jdom.Element
 import java.util.*
@@ -83,6 +84,12 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
   }
 
+  fun updateConfigurationId(oldId: String, newId: String) {
+    if (customOrder.containsKey(oldId)) {
+      customOrder.put(newId, customOrder.removeInt(oldId))
+    }
+  }
+
   fun requestSort() {
     isSorted = false
     immutableSortedSettingsList = null
@@ -98,7 +105,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       listElement.addContent(Element("item").setAttribute("itemvalue", it.uniqueID))
     }
 
-    if (!listElement.isEmpty()) {
+    if (!JDOMUtil.isEmpty(listElement)) {
       parent.addContent(listElement)
     }
   }
@@ -123,7 +130,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
     }
 
     val folderNames = getSortedFolderNames(idToSettings.values)
-    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames, kotlin.Comparator { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.name, o2.name) }))
+    val list = idToSettings.values.sortedWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.name, o2.name) })
     idToSettings.clear()
     for (settings in list) {
       idToSettings.put(settings.uniqueID, settings)
@@ -158,8 +165,8 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   private fun doCustomSort() {
     val list = idToSettings.values.toTypedArray()
     val folderNames = getSortedFolderNames(idToSettings.values)
-    // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied)
-    list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames, Comparator { o1, o2 ->
+    // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied
+    list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 ->
       val index1 = customOrder.getInt(o1.uniqueID)
       val index2 = customOrder.getInt(o2.uniqueID)
       if (index1 == -1 && index2 == -1) {
@@ -168,7 +175,7 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       else {
         index1 - index2
       }
-    }))
+    })
 
     isSorted = true
     idToSettings.clear()
@@ -205,11 +212,9 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
           continue
         }
 
-        if (ContainerUtil.containsIdentity(children.keys, otherConfiguration)) {
-          if (otherSettings.isTemporary) {
-            manager.makeStable(otherSettings)
-            checkIfDependenciesAreStable(otherConfiguration, list)
-          }
+        if (children.keys.any { it === otherConfiguration } && otherSettings.isTemporary) {
+          manager.makeStable(otherSettings)
+          checkIfDependenciesAreStable(otherConfiguration, list)
         }
       }
     }

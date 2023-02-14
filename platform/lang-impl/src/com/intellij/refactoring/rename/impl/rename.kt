@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.model.ModelPatch
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.Progress
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.util.registry.Registry
@@ -20,14 +18,11 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.search.runSearch
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.api.FileOperation
-import com.intellij.refactoring.rename.api.ModifiableRenameUsage
+import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.api.RenameUsage
+import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
 import com.intellij.refactoring.rename.ui.*
 import com.intellij.util.Query
-import com.intellij.util.text.StringOperation
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -38,7 +33,6 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Path
 
 
 internal typealias UsagePointer = Pointer<out RenameUsage>
@@ -52,7 +46,7 @@ internal fun showDialogAndRename(project: Project, target: RenameTarget, targetN
     targetName = targetName,
     renameOptions = renameOptions(project, target)
   )
-  val dialog = RenameDialog(project, target.presentation.presentableText, initOptions)
+  val dialog = RenameDialog(project, target.presentation().presentableText, target.validator(), initOptions)
   if (!dialog.showAndGet()) {
     // cancelled
     return
@@ -180,8 +174,8 @@ suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String):
     val (
       byFileUpdater: Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
       byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>
-    ) = readAction { progress: Progress ->
-      classifyUsages(progress, allUsages)
+    ) = readAction {
+      classifyUsages(allUsages)
     }
     val fileUpdates: Deferred<FileUpdates?> = async {
       prepareFileUpdates(byFileUpdater, newName)
@@ -197,7 +191,6 @@ suspend fun prepareRename(allUsages: Collection<UsagePointer>, newName: String):
 }
 
 private fun classifyUsages(
-  progress: Progress,
   allUsages: Collection<UsagePointer>
 ): Pair<
   Map<FileUpdater, List<Pointer<out ModifiableRenameUsage>>>,
@@ -208,7 +201,7 @@ private fun classifyUsages(
   val byFileUpdater = HashMap<FileUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   val byModelUpdater = HashMap<ModelUpdater, MutableList<Pointer<out ModifiableRenameUsage>>>()
   for (pointer: UsagePointer in allUsages) {
-    progress.checkCancelled()
+    ProgressManager.checkCanceled()
     val renameUsage: ModifiableRenameUsage = pointer.dereference() as? ModifiableRenameUsage ?: continue
     @Suppress("UNCHECKED_CAST") val modifiablePointer = pointer as Pointer<out ModifiableRenameUsage>
     renameUsage.fileUpdater?.let { fileUpdater: FileUpdater ->
@@ -240,49 +233,21 @@ private suspend fun prepareFileUpdates(
   usagePointers: List<Pointer<out ModifiableRenameUsage>>,
   newName: String
 ): FileUpdates? {
-  return readAction { progress: Progress ->
+  return readAction {
     usagePointers.dereferenceOrNull()?.let { usages: List<ModifiableRenameUsage> ->
-      createFileUpdates(progress, fileUpdater.prepareFileUpdateBatch(progress, usages, newName))
+      createFileUpdates(fileUpdater.prepareFileUpdateBatch(usages, newName))
     }
   }
 }
 
-private fun createFileUpdates(progress: Progress, fileOperations: Collection<FileOperation>): FileUpdates {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-
-  val filesToAdd = ArrayList<Pair<Path, CharSequence>>()
-  val filesToMove = ArrayList<Pair<VirtualFile, Path>>()
-  val filesToRemove = ArrayList<VirtualFile>()
-  val fileModifications = ArrayList<Pair<RangeMarker, CharSequence>>()
-
-  loop@
-  for (fileOperation: FileOperation in fileOperations) {
-    progress.checkCancelled()
-    when (fileOperation) {
-      is FileOperation.Add -> filesToAdd += Pair(fileOperation.path, fileOperation.content)
-      is FileOperation.Move -> filesToMove += Pair(fileOperation.file, fileOperation.path)
-      is FileOperation.Remove -> filesToRemove += fileOperation.file
-      is FileOperation.Modify -> {
-        val document: Document = FileDocumentManager.getInstance().getDocument(fileOperation.file.virtualFile) ?: continue@loop
-        for (stringOperation: StringOperation in fileOperation.modifications) {
-          progress.checkCancelled()
-          val rangeMarker: RangeMarker = document.createRangeMarker(stringOperation.range)
-          fileModifications += Pair(rangeMarker, stringOperation.replacement)
-        }
-      }
-    }
-  }
-
-  return FileUpdates(filesToAdd, filesToMove, filesToRemove, fileModifications)
-}
 
 private suspend fun prepareModelUpdate(byModelUpdater: Map<ModelUpdater, List<Pointer<out ModifiableRenameUsage>>>): ModelUpdate? {
   val updates: List<ModelUpdate> = byModelUpdater
     .flatMap { (modelUpdater: ModelUpdater, usagePointers: List<Pointer<out ModifiableRenameUsage>>) ->
-      readAction { progress: Progress ->
+      readAction {
         usagePointers.dereferenceOrNull()
           ?.let { usages: List<ModifiableRenameUsage> ->
-            modelUpdater.prepareModelUpdateBatch(progress, usages)
+            modelUpdater.prepareModelUpdateBatch(usages)
           }
         ?: emptyList()
       }
@@ -321,7 +286,7 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
     override fun getBranchChanges(): Map<VirtualFile, CharSequence> = preview
     override fun applyBranchChanges() = error("not implemented")
   }
-  return withContext(uiDispatcher) {
+  return withContext(Dispatchers.EDT) {
     VcsFacade.getInstance().createPatchPreviewComponent(project, patch)?.let { previewComponent ->
       DialogBuilder(project)
         .title(RefactoringBundle.message("rename.preview.tab.title"))
@@ -356,4 +321,11 @@ fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
     }
   }
   PsiDocumentManager.getInstance(project).commitAllDocuments()
+}
+
+internal object EmptyRenameValidator: RenameValidator {
+  override fun validate(newName: String): RenameValidationResult {
+    return RenameValidationResult.ok()
+  }
+
 }

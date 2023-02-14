@@ -23,7 +23,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +150,7 @@ public final class SMTestRunnerConnectionUtil {
    * @return true if in debug mode, otherwise false.
    */
   public static boolean isInDebugMode() {
-    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
+    return Boolean.parseBoolean(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static void attachEventsProcessors(TestConsoleProperties consoleProperties,
@@ -266,8 +265,7 @@ public final class SMTestRunnerConnectionUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -308,8 +306,7 @@ public final class SMTestRunnerConnectionUtil {
    * @deprecated should be removed with createConsoleWithCustomLocator()
    */
   @SuppressWarnings("rawtypes")
-  @ApiStatus.ScheduledForRemoval()
-  @Deprecated
+  @Deprecated(forRemoval = true)
   private static final class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
 

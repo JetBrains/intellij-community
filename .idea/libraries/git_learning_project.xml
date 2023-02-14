@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="git-learning-project" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps.ift:git-learning-project:212.0.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ift/git-learning-project/212.0.2/git-learning-project-212.0.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

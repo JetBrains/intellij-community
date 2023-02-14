@@ -28,7 +28,7 @@
   <item name='java.lang.Boolean boolean logicalXor(boolean, boolean)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value"
-           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; true&quot;"/>
+           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; false&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
   </item>
@@ -50,6 +50,12 @@
       <val name="to" val="java.lang.Byte.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Byte int toUnsignedInt(byte)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="255"/>
+    </annotation>
+  </item>
   <item name='java.lang.Byte java.lang.Byte valueOf(byte)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -57,6 +63,12 @@
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Byte.MIN_VALUE"/>
       <val name="to" val="java.lang.Byte.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Byte long toUnsignedLong(byte)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="255"/>
     </annotation>
   </item>
   <item name='java.lang.CharSequence char charAt(int) 0'>
@@ -528,6 +540,12 @@
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Integer long toUnsignedLong(int)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFFFFFFL"/>
+    </annotation>
+  </item>
   <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -821,6 +839,12 @@
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
     </annotation>
   </item>
+  <item name='java.lang.Short int toUnsignedInt(short)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
   <item name='java.lang.Short java.lang.Short decode(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -837,6 +861,12 @@
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="java.lang.Short.MIN_VALUE"/>
       <val name="to" val="java.lang.Short.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Short long toUnsignedLong(short)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="0xFFFF"/>
     </annotation>
   </item>
   <item name='java.lang.StackTraceElement java.lang.String getClassName()'>
@@ -1354,7 +1384,12 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
@@ -1448,6 +1483,24 @@
   </item>
   <item name='java.lang.Thread void setName(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread void sleep(long) 0'>
+      <annotation name='org.jetbrains.annotations.Range'>
+          <val name="from" val="0"/>
+          <val name="to" val="java.lang.Long.MAX_VALUE"/>
+      </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread void sleep(long, int) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="999999"/>
+    </annotation>
   </item>
 </root>
 

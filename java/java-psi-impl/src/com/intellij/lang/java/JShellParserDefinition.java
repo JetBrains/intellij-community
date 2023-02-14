@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.JShellFileImpl;
 import com.intellij.psi.impl.source.tree.IJShellElementType;
-import com.intellij.psi.impl.source.tree.JShellElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene Zhuravlev
  */
-public class JShellParserDefinition extends JavaParserDefinition{
+public class JShellParserDefinition extends JavaParserDefinition {
+  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
+
   private static final PsiParser PARSER = new PsiParser() {
     @NotNull
     @Override
@@ -41,7 +42,7 @@ public class JShellParserDefinition extends JavaParserDefinition{
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return JShellElementType.FILE;
+    return FILE_ELEMENT_TYPE;
   }
 
   @NotNull

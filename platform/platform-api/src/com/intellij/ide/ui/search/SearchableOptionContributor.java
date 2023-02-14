@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * An extension allowing plugins to provide the data at runtime for the setting search to work on.
- *
- * @author peter
  */
 public abstract class SearchableOptionContributor {
   public abstract void processOptions(@NotNull SearchableOptionProcessor processor);

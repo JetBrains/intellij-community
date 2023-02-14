@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
@@ -7,9 +7,10 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI.Panels;
 import com.intellij.util.ui.MouseEventHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,6 +21,12 @@ import java.util.Objects;
 import static com.intellij.icons.AllIcons.General.ArrowDown;
 import static com.intellij.icons.AllIcons.General.ArrowRight;
 
+/**
+ * @deprecated This component confuses users, because it's not obvious that it allows to change size like by a splitter.
+ * Commit form (the only place it's used) is going to be revised/removed in the future. After that this component will be removed
+ */
+@Deprecated
+@ApiStatus.Internal
 public abstract class SplitterWithSecondHideable {
   public interface OnOffListener {
     void on(int hideableHeight);
@@ -170,7 +177,8 @@ public abstract class SplitterWithSecondHideable {
     protected Divider createDivider() {
       MyDivider divider = new MyDivider();
       divider.add(myTitledSeparator,
-                  new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(),
+                  new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                         JBInsets.emptyInsets(),
                                          0, 0));
       return divider;
     }

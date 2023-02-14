@@ -72,11 +72,18 @@ public interface OrderRootsEnumerator {
   OrderRootsEnumerator withoutSelfModuleOutput();
 
   /**
-   * Use {@code provider} to obtain roots of an library or jdk order entry instead of {@link OrderEntry#getFiles(OrderRootType)} method. Note that
-   * this option won't affect result of {@link #getUrls()} method
-   * @param provider function to evaluate roots for an order entry
+   * @deprecated use {@link #usingCustomSdkRootProvider(NotNullFunction)} instead.
+   */
+  @Deprecated
+  @NotNull
+  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
+
+  /**
+   * Instructs the enumerator to use {@code provider} to obtain roots of an SDK order entry instead of taking them from SDK configuration. 
+   * Note that this option won't affect the result of {@link #getUrls()} method
+   * 
    * @return this instance
    */
   @NotNull
-  OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider);
+  OrderRootsEnumerator usingCustomSdkRootProvider(@NotNull NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider);
 }

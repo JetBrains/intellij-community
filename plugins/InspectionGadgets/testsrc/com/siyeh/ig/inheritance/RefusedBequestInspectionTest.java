@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -15,6 +13,15 @@ public class RefusedBequestInspectionTest extends LightJavaInspectionTestCase {
   public void testFinalizeCallsSuperFinalize() { doTest(); }
   public void testGenericsSignatures() { doTest(); }
   public void testDefaultMethods() { doTest(); }
+
+  public void testNonTrivialSuperMethod() {
+    final RefusedBequestInspection inspection = new RefusedBequestInspection();
+    inspection.onlyReportWhenAnnotated = false;
+    inspection.ignoreEmptySuperMethods = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
+
   public void testSetupCallsSuperSetup2() {
     myFixture.enableInspections(new RefusedBequestInspection());
     doTest();
@@ -33,11 +40,12 @@ public class RefusedBequestInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "package org.junit;\n" +
-      "@Retention(RetentionPolicy.RUNTIME)\n" +
-      "@Target(ElementType.METHOD)\n" +
-      "public @interface Before {\n" +
-      "}",
+      """
+package org.junit;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Before {
+}""",
 
       "package junit.framework;" +
       "public abstract class TestCase {" +

@@ -6,9 +6,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class XmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   protected XmlCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(XMLLanguage.INSTANCE, currentSettings, settings);

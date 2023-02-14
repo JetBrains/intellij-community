@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.ImmediateFullValueEvaluator;
@@ -55,7 +52,10 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     myIconTag = node.getIconTag();
 
     Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
-    int rowX = getNodeRowX(tree, row);
+    int rowX = getNodeRowX(tree, row) + tree.getInsets().left;
+
+    // Renderer is not in the hierarchy yet, so we need to set FRC etc. manually
+    AppUIUtil.targetToDevice(this, tree);
 
     if (myHaveLink) {
       setupLinkDimensions(treeVisibleRect, rowX);
@@ -81,7 +81,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
   }
 
   private void updateIcon(XDebuggerTreeNode node) {

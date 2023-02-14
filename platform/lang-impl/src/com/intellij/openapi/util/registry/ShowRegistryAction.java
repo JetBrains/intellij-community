@@ -17,6 +17,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.EditorFactory;
@@ -30,6 +31,11 @@ public class ShowRegistryAction extends AnAction implements DumbAware, LightEdit
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(myUi == null);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

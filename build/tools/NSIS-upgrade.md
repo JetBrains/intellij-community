@@ -1,6 +1,6 @@
 ### Upgrading NSIS to a newer version
 
-The NSIS.zip archive contains both Windows and Linux binaries, so in order to upgrade NSIS one has to download the former,
+The NSIS.zip archive contains both Windows and Linux binaries, so in order to upgrade NSIS, one has to download the former,
 compile the latter, and pack both together. **Note**: please make sure all archives are of the same version.
 
 ##### [Building](https://documentation.help/NSIS/SectionG.3.html) NSIS compiler on Linux
@@ -28,5 +28,6 @@ compile the latter, and pack both together. **Note**: please make sure all archi
    - 'Plugins/x86-unicode/INetC.dll'
    - 'Plugins/x86-unicode/ShellLink.dll'
    - 'Plugins/x86-unicode/UAC.dll'
-   - 'Plugins/x86-unicode/untgz.dll'
 1. Zip the 'NSIS' directory.
+1. Upload to https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/.
+1. Update the version of 'nsisBuild' in community/build/dependencies/dependencies.properties.

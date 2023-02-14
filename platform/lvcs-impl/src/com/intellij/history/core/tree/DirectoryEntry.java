@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.core.tree;
 
 import com.intellij.history.core.DataStreamUtil;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -18,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class DirectoryEntry extends Entry {
   private final ArrayList<Entry> myChildren;
@@ -150,14 +150,14 @@ public class DirectoryEntry extends Entry {
 
     if (commonIndex == myChildrenSize && commonIndex == rightChildrenSize) return;
 
-    TIntObjectHashMap<Entry> uniqueNameIdToMyChildEntries = new TIntObjectHashMap<>(myChildrenSize - commonIndex);
+    Int2ObjectMap<Entry> uniqueNameIdToMyChildEntries = new Int2ObjectOpenHashMap<>(myChildrenSize - commonIndex);
     for (int i = commonIndex; i < myChildrenSize; ++i) {
       Entry childEntry = myChildren.get(i);
       uniqueNameIdToMyChildEntries.put(childEntry.getNameId(), childEntry);
     }
 
-    TIntObjectHashMap<Entry> uniqueNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
-    TIntObjectHashMap<Entry> myNameIdToRightChildEntries = new TIntObjectHashMap<>(rightChildrenSize - commonIndex);
+    Int2ObjectMap<Entry> uniqueNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
+    Int2ObjectMap<Entry> myNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
 
     for(int i = commonIndex; i < rightChildrenSize; ++i) {
       Entry rightChildEntry = e.myChildren.get(i);
@@ -173,22 +173,19 @@ public class DirectoryEntry extends Entry {
     }
 
     if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
-      THashMap<String, Entry> nameToEntryMap = new THashMap<>(uniqueNameIdToMyChildEntries.size(), CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<String, Entry> nameToEntryMap = CollectionFactory.createCaseInsensitiveStringMap(uniqueNameIdToMyChildEntries.size());
+      for (Entry entry : uniqueNameIdToMyChildEntries.values()) {
+        nameToEntryMap.put(entry.getName(), entry);
+      }
 
-      uniqueNameIdToMyChildEntries.forEachValue(myChildEntry -> {
-        nameToEntryMap.put(myChildEntry.getName(), myChildEntry);
-        return true;
-      });
-
-      uniqueNameIdToRightChildEntries.forEachValue(rightChildEntry -> {
+      for (Entry rightChildEntry : uniqueNameIdToRightChildEntries.values()) {
         Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
         if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
           myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
           uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
           uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
         }
-        return true;
-      });
+      }
     }
 
     for (Entry child : e.myChildren) {
@@ -209,7 +206,7 @@ public class DirectoryEntry extends Entry {
 
   Entry findDirectChild(String name, boolean isDirectory) {
     int nameHash = calcNameHash(name);
-    
+
     for (Entry child : getChildren()) {
       if (child.isDirectory() == isDirectory && nameHash == child.getNameHash() && child.nameEquals(name)) {
         return child;

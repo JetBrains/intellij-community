@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,15 +8,17 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.charset.Charset
-import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 
 internal val LOG = logger<BaseState>()
 
-private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
+private val factory: StatePropertyFactory = run {
+  val implClass = BaseState::class.java.classLoader.loadClass("com.intellij.serialization.stateProperties.StatePropertyFactoryImpl")
+  MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(Void.TYPE)).invoke() as StatePropertyFactory
+}
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {
@@ -53,20 +55,20 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean) = addProperty(factory.obj(initialValue, isDefault))
 
   /**
-   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
-   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   * Collection considered as default if empty.
+   * It is *YOUR* responsibility to call [incrementModificationCount] on incremental collection modifications.
    */
   protected fun stringSet(): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(null))
 
   /**
-   * Collection considered as default if contains only the specified default value. It is *your* responsibility to call `incrementModificationCount` on collection modification.
-   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   * Collection considered as default if it contains only the specified default value.
+   * It is *YOUR* responsibility to call [incrementModificationCount] on incremental collection modifications.
    */
   protected fun stringSet(defaultValue: String): StoredPropertyBase<MutableSet<String>> = addProperty(factory.stringSet(defaultValue))
 
   /**
-   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
-   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   * Collection considered as default if empty.
+   * It is *YOUR* responsibility to call [incrementModificationCount] on incremental collection modifications.
    */
   protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet())
 
@@ -83,16 +85,24 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected inline fun <reified T : Enum<*>> enum(): StoredPropertyBase<T?> = doEnum(null, T::class.java)
 
   @PublishedApi
-  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> = addProperty(factory.enum(defaultValue, clazz))
+  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> = addProperty(
+    factory.enum(defaultValue, clazz))
 
   /**
    * Not-null list. Initialized as SmartList.
+   * It is *YOUR* responsibility to call [incrementModificationCount] if stored values are not immutable.
    */
   protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> = addProperty(factory.list())
 
-  protected fun <K : Any, V: Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(null))
+  /**
+   * It is *YOUR* responsibility to call [incrementModificationCount] if stored values are not immutable.
+   */
+  protected fun <K : Any, V : Any> map(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(null))
 
-  protected fun <K : Any, V: Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(LinkedHashMap()))
+  /**
+   * It is *YOUR* responsibility to call [incrementModificationCount] on incremental collection modifications.
+   */
+  protected fun <K : Any, V : Any> linkedMap(): StoredPropertyBase<MutableMap<K, V>> = addProperty(factory.map(LinkedHashMap()))
 
   /**
    * Empty string is always normalized to null.
@@ -114,6 +124,16 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     ownModificationCount = 0
   }
 
+  /**
+   * If you use [set], [treeSet] or [linkedMap] you must ensure that [incrementModificationCount] is called for each
+   * mutation operation on corresponding property value (e.g. add, remove, put).
+   *
+   * [list] and [map] track content mutation, but if key or value is mutable, you have to call [incrementModificationCount].
+   *
+   * You can set property value to a new collection.
+   * In this case, the underlying collection will be cleared and filled with an assigned collection's contents.
+   * It will update modification count.
+   */
   protected fun incrementModificationCount() {
     intIncrementModificationCount()
   }
@@ -145,10 +165,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   /**
-   * If you use [set], [treeSet] or [linkedMap], you must ensure that [incrementModificationCount] is called for each mutation operation on corresponding property value (e.g. add, remove).
-   * Setting property to a new value updates modification count, but direct modification of mutable collection or map doesn't.
-   *
-   * [list] and [map] track content mutation, but if key or value is not primitive value, you also have to [incrementModificationCount] in case of nested mutation.
+   * See [incrementModificationCount]
    */
   @Transient
   override fun getModificationCount(): Long {
@@ -205,7 +222,7 @@ interface StatePropertyFactory {
 
   fun <T : Any> list(): StoredPropertyBase<MutableList<T>>
 
-  fun <K : Any, V: Any> map(value: MutableMap<K, V>?): StoredPropertyBase<MutableMap<K, V>>
+  fun <K : Any, V : Any> map(value: MutableMap<K, V>?): StoredPropertyBase<MutableMap<K, V>>
 
   fun float(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float>
 

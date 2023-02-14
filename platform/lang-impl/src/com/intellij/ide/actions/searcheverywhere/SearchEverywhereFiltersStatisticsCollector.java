@@ -4,6 +4,8 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.LanguageRef;
+import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
@@ -20,23 +22,23 @@ public class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCol
     LANGUAGE, FILE_TYPE, CONTRIBUTORS
   }
 
-  private static final EventLogGroup GROUP = new EventLogGroup("search.everywhere.filters", 1);
+  private static final EventLogGroup GROUP = new EventLogGroup("search.everywhere.filters", 2);
 
   private static final EventId2<String, Boolean> FILE_TYPE_CHANGED_EVENT = GROUP.registerEvent(
     "file.type.changed",
-    EventFields.StringValidatedByCustomRule("fileType", "file_type"),
+    EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule.class),
     EventFields.Boolean("enabled")
   );
 
   private static final EventId2<String, Boolean> LANG_CHANGED_EVENT = GROUP.registerEvent(
     "lang.changed",
-    EventFields.StringValidatedByCustomRule("langID", "lang"),
+    EventFields.StringValidatedByCustomRule("langID", LangCustomRuleValidator.class),
     EventFields.Boolean("enabled")
   );
 
   private static final EventId2<String, Boolean> CONTRIBUTOR_CHANGED_EVENT = GROUP.registerEvent(
     "contributor.changed",
-    EventFields.StringValidatedByCustomRule("contributorID", "se_contributor"),
+    EventFields.StringValidatedByCustomRule("contributorID", SearchEverywhereContributorValidationRule.class),
     EventFields.Boolean("enabled")
   );
 

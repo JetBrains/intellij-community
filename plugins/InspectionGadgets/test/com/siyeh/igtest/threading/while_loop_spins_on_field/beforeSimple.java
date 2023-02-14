@@ -1,4 +1,4 @@
-// "Make 'b' volatile" "true"
+// "Make 'b' volatile" "true-preview"
 import java.util.*;
 
 public class Test {

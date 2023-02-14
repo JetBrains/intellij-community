@@ -18,9 +18,6 @@ package com.intellij.application.options.colors;
 
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 
-/**
- * @author Rustam Vishnyakov
- */
 public interface ColorAndFontPanelFactoryEx extends ColorAndFontPanelFactory, DisplayPrioritySortable {
 
 }

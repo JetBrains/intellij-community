@@ -1,25 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -30,29 +24,30 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.EmptyIcon;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 
 public final class CachedIntentions {
   private static final Logger LOG = Logger.getInstance(CachedIntentions.class);
 
-  private final Set<IntentionActionWithTextCaching> myIntentions = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myErrorFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myInspectionFixes = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myGutters = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
-  private final Set<IntentionActionWithTextCaching> myNotifications = ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private final Set<IntentionActionWithTextCaching> myIntentions = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myErrorFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myInspectionFixes = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myGutters = new CopyOnWriteArraySet<>();
+  private final Set<IntentionActionWithTextCaching> myNotifications = new CopyOnWriteArraySet<>();
   private int myOffset;
+  private HighlightInfoType myHighlightInfoType;
+
   @Nullable
   private final Editor myEditor;
   @NotNull
@@ -112,6 +107,10 @@ public final class CachedIntentions {
     return myOffset;
   }
 
+  public HighlightInfoType getHighlightInfoType() {
+    return myHighlightInfoType;
+  }
+
   @NotNull
   public static CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
@@ -126,11 +125,9 @@ public final class CachedIntentions {
     return res;
   }
 
-  private static final IntentionActionWithTextCachingHashingStrategy ACTION_TEXT_AND_CLASS_EQUALS =
-    new IntentionActionWithTextCachingHashingStrategy();
-
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
     myOffset = newInfo.getOffset();
+    myHighlightInfoType = newInfo.getHighlightInfoType();
     boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myErrorFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myIntentions, callUpdate);
@@ -165,8 +162,8 @@ public final class CachedIntentions {
     DataContext dataContext = Utils.wrapDataContext(EditorUtil.getEditorDataContext(myEditor));
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
-      false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
-      dataContext, ActionPlaces.INTENTION_MENU, true, null);
+      new DefaultActionGroup(myGuttersRaw), presentationFactory,
+      dataContext, ActionPlaces.INTENTION_MENU);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     for (AnAction action : actions) {
@@ -193,7 +190,7 @@ public final class CachedIntentions {
   }
 
   private boolean wrapActionsTo(@NotNull List<? extends HighlightInfo.IntentionActionDescriptor> newDescriptors,
-                                @NotNull Set<IntentionActionWithTextCaching> cachedActions,
+                                @NotNull Set<? super IntentionActionWithTextCaching> cachedActions,
                                 boolean shouldCallIsAvailable) {
     if (cachedActions.isEmpty() && newDescriptors.isEmpty()) return false;
     boolean changed = false;
@@ -231,20 +228,7 @@ public final class CachedIntentions {
       injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
     }
 
-    if (shouldCallIsAvailable) {
-      for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
-        IntentionActionWithTextCaching cachedAction = iterator.next();
-        IntentionAction action = cachedAction.getAction();
-        Pair<PsiFile, Editor> applicableIn = ShowIntentionActionsHandler
-          .chooseBetweenHostAndInjected(myFile, myEditor, injectedFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, action));
-        if (applicableIn  == null) {
-          iterator.remove();
-          changed = true;
-        }
-      }
-    }
-
-    Set<IntentionActionWithTextCaching> wrappedNew = new ObjectOpenCustomHashSet<>(newDescriptors.size(), ACTION_TEXT_AND_CLASS_EQUALS);
+    Set<IntentionActionWithTextCaching> wrappedNew = new LinkedHashSet<>(newDescriptors.size());
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
       final IntentionAction action = descriptor.getAction();
       if (element != null &&
@@ -252,23 +236,18 @@ public final class CachedIntentions {
           (!shouldCallIsAvailable || ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
         wrappedNew.add(cachedAction);
-        changed |= cachedActions.add(cachedAction);
       }
       else if (hostElement != null && (!shouldCallIsAvailable || ShowIntentionActionsHandler.availableFor(myFile, myEditor, action))) {
         IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
         wrappedNew.add(cachedAction);
-        changed |= cachedActions.add(cachedAction);
       }
     }
-    for (Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator(); iterator.hasNext(); ) {
-      IntentionActionWithTextCaching cachedAction = iterator.next();
-      if (!wrappedNew.contains(cachedAction)) {
-        // action disappeared
-        iterator.remove();
-        changed = true;
-      }
+
+    if (cachedActions.equals(wrappedNew)) {
+      return false;
     }
-    return changed;
+    cachedActions.addAll(wrappedNew);
+    return true;
   }
 
   @NotNull
@@ -276,23 +255,22 @@ public final class CachedIntentions {
                                             @NotNull PsiElement element,
                                             @NotNull  PsiFile containingFile,
                                             @Nullable Editor containingEditor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor, (cached, action) -> {
-      if (action instanceof QuickFixWrapper) {
-        // remove only inspection fixes after invocation,
-        // since intention actions might be still available
-        removeActionFromCached(cached);
-        markInvoked(action);
-      }
-    });
-    final List<IntentionAction> options = descriptor.getOptions(element, containingEditor);
-    if (options == null) return cachedAction;
-    for (IntentionAction option : options) {
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(),
+                                                                                     (cached, action) -> {
+          if (action instanceof QuickFixWrapper) {
+            // remove only inspection fixes after invocation,
+            // since intention actions might be still available
+            removeActionFromCached(cached);
+            markInvoked(action);
+          }
+        });
+    for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;
       Pair<PsiFile, Editor> availableIn = ShowIntentionActionsHandler
         .chooseBetweenHostAndInjected(myFile, editor, containingFile, (f, e) -> ShowIntentionActionsHandler.availableFor(f, e, option));
       if (availableIn == null) continue;
-      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option, option.getText(), null, (__1, __2) -> {});
       boolean isErrorFix = myErrorFixes.contains(textCaching);
       if (isErrorFix) {
         cachedAction.addErrorFix(option);
@@ -316,7 +294,7 @@ public final class CachedIntentions {
 
   private void removeActionFromCached(@NotNull IntentionActionWithTextCaching action) {
     // remove from the action from the list after invocation to make it appear unavailable sooner.
-    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it's may be too long)
+    // (the highlighting will process the whole file and remove the no more available action from the list automatically - but it may be too long)
     myErrorFixes.remove(action);
     myGutters.remove(action);
     myInspectionFixes.remove(action);
@@ -328,49 +306,18 @@ public final class CachedIntentions {
   public List<IntentionActionWithTextCaching> getAllActions() {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
     result.addAll(myInspectionFixes);
-    result.addAll(myIntentions);
+    for (IntentionActionWithTextCaching intention : myIntentions) {
+      if (!myErrorFixes.contains(intention) && !myInspectionFixes.contains(intention)) {
+        result.add(intention);
+      }
+    }
     result.addAll(myGutters);
     result.addAll(myNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
-    result.sort((o1, o2) -> {
-      int weight1 = getWeight(o1);
-      int weight2 = getWeight(o2);
-      if (weight1 != weight2) {
-        return weight2 - weight1;
-      }
-      return o1.compareTo(o2);
-    });
-    return result;
-  }
 
-  private int getWeight(@NotNull IntentionActionWithTextCaching action) {
-    IntentionAction a = action.getAction();
-    int group = getGroup(action).getPriority();
-    while (a instanceof IntentionActionDelegate && !(a instanceof PriorityAction)) {
-      a = ((IntentionActionDelegate)a).getDelegate();
-    }
-    if (a instanceof PriorityAction) {
-      return group + getPriorityWeight(((PriorityAction)a).getPriority());
-    }
-    if (a instanceof SuppressIntentionActionFromFix) {
-      if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-        return group - 1;
-      }
-    }
-    return group;
-  }
-
-  private static int getPriorityWeight(PriorityAction.Priority priority) {
-    switch (priority) {
-      case TOP:
-        return 20;
-      case HIGH:
-        return 3;
-      case LOW:
-        return -3;
-      default:
-        return 0;
-    }
+    Language language = PsiUtilCore.getLanguageAtOffset(getFile(), getOffset());
+    IntentionsOrderProvider intentionsOrder = IntentionsOrderProvider.EXTENSION.forLanguage(language);
+    return intentionsOrder.getSortedIntentions(this, result);
   }
 
   @NotNull
@@ -393,7 +340,7 @@ public final class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
-  @NotNull
+  @Nullable
   public Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
@@ -420,11 +367,11 @@ public final class CachedIntentions {
     if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
       return myErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
                                           : myInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
-                                            AllIcons.Actions.RealIntentionBulb;
+                                            ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RealIntentionBulb;
     }
     else {
       if (myErrorFixes.contains(value)) return AllIcons.Actions.QuickfixOffBulb;
-      return IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
+      return ExperimentalUI.isNewUI() ? null : IconLoader.getDisabledIcon(AllIcons.Actions.RealIntentionBulb);
     }
   }
 
@@ -441,21 +388,5 @@ public final class CachedIntentions {
            ", myGutters=" + myGutters +
            ", myNotifications=" + myNotifications +
            '}';
-  }
-
-  private static class IntentionActionWithTextCachingHashingStrategy implements HashingStrategy<IntentionActionWithTextCaching>, Hash.Strategy<IntentionActionWithTextCaching> {
-    @Override
-    public int hashCode(final IntentionActionWithTextCaching object) {
-      return object == null ? 0 : object.getText().hashCode();
-    }
-
-    @Override
-    public boolean equals(IntentionActionWithTextCaching o1, IntentionActionWithTextCaching o2) {
-      return o1 == o2 || (o1 != null && o2 != null && getActionClass(o1) == getActionClass(o2) && o1.getText().equals(o2.getText()));
-    }
-
-    private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
-      return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
-    }
   }
 }

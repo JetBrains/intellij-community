@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ControlFlowStatementWithoutBracesInspection extends BaseInspection {
+public class ControlFlowStatementWithoutBracesInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -69,26 +70,24 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
       final PsiElement parent = element.getParent();
       final PsiStatement statement;
       if (element instanceof PsiStatement) {
         statement = (PsiStatement)element;
       }
-      else if ((parent instanceof PsiStatement)) {
+      else if (parent instanceof PsiStatement) {
         statement = (PsiStatement)parent;
       }
       else {
         return;
       }
       final PsiStatement statementWithoutBraces;
-      if (statement instanceof PsiLoopStatement) {
-        final PsiLoopStatement loopStatement = (PsiLoopStatement)statement;
+      if (statement instanceof PsiLoopStatement loopStatement) {
         statementWithoutBraces = loopStatement.getBody();
       }
-      else if (statement instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+      else if (statement instanceof PsiIfStatement ifStatement) {
         statementWithoutBraces = (element == ifStatement.getElseElement()) ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
       }
       else {
@@ -113,8 +112,7 @@ public class ControlFlowStatementWithoutBracesInspection extends BaseInspection 
     protected boolean isApplicable(PsiStatement body) {
       if (body instanceof PsiIfStatement && isVisibleHighlight(body)) {
         final PsiElement parent = body.getParent();
-        if (parent instanceof PsiIfStatement) {
-          final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+        if (parent instanceof PsiIfStatement ifStatement) {
           if (ifStatement.getElseBranch() == body) {
             return false;
           }

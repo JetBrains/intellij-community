@@ -25,14 +25,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author peter
- */
 abstract class WeighingActionGroup extends ActionGroup {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     getDelegate().update(e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getDelegate().getActionUpdateThread();
   }
 
   protected abstract ActionGroup getDelegate();
@@ -44,11 +46,11 @@ abstract class WeighingActionGroup extends ActionGroup {
 
   @NotNull
   @Override
-  public List<AnAction> afterExpandGroup(@NotNull List<AnAction> visibleActions, @NotNull UpdateSession updater) {
+  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
     LinkedHashSet<AnAction> heaviest = null;
     double maxWeight = Presentation.DEFAULT_WEIGHT;
-    for (AnAction action : visibleActions) {
-      Presentation presentation = updater.presentation(action);
+    for (AnAction action : visibleChildren) {
+      Presentation presentation = updateSession.presentation(action);
       if (presentation.isEnabled() && presentation.isVisible()) {
         if (presentation.getWeight() > maxWeight) {
           maxWeight = presentation.getWeight();
@@ -61,12 +63,12 @@ abstract class WeighingActionGroup extends ActionGroup {
     }
 
     if (heaviest == null) {
-      return visibleActions;
+      return new ArrayList<>(visibleChildren);
     }
 
     ArrayList<AnAction> chosen = new ArrayList<>();
     boolean prevSeparator = true;
-    for (AnAction action : visibleActions) {
+    for (AnAction action : visibleChildren) {
       final boolean separator = action instanceof Separator;
       if (separator && !prevSeparator) {
         chosen.add(action);
@@ -83,7 +85,7 @@ abstract class WeighingActionGroup extends ActionGroup {
     }
     ActionGroup other = new ExcludingActionGroup(getDelegate(), heaviest);
     other.setPopup(true);
-    updater.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    updateSession.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
     return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 

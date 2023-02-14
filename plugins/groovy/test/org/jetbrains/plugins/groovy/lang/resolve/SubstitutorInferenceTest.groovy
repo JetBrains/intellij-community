@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
@@ -248,12 +248,16 @@ static <T> T ppp(Producer<T> p) {}
 
   @Test
   void 'plus assignment generic property r-value'() {
+    //RecursionManager.disableAssertOnRecursionPrevention(fixture.testRootDisposable)
+    //RecursionManager.disableMissedCacheAssertions(fixture.testRootDisposable)
     def ref = elementUnderCaret('new GenericPropertyContainer().<caret>genericList += new ArrayList<String>()', GrReferenceExpression)
     assertSubstitutor(ref.RValueReference.advancedResolve(), JAVA_LANG_STRING)
   }
 
   @Test
   void 'plus assignment generic property'() {
+    RecursionManager.disableAssertOnRecursionPrevention(fixture.testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(fixture.testRootDisposable)
     def op = elementUnderCaret('new GenericPropertyContainer().genericList <caret>+= new ArrayList<String>()', GrAssignmentExpression)
     assertSubstitutor(op.reference.advancedResolve(), JAVA_LANG_STRING)
   }
@@ -271,7 +275,6 @@ static <T> T ppp(Producer<T> p) {}
     assertSubstitutor(op.RValueReference.advancedResolve(), JAVA_LANG_NUMBER, JAVA_LANG_STRING)
   }
 
-  @Ignore("we don't yet infer l-value substitutors")
   @Test
   void 'plus assignment with index l-value'() {
     def op = elementUnderCaret('Map<Number, String> mns; mns<caret>[42] += "foo"', GrIndexProperty)

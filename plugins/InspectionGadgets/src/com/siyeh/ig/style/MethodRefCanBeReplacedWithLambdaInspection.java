@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -65,7 +67,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
   private static class MethodRefToLambdaVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
       if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
         registerError(methodReferenceExpression, methodReferenceExpression, isOnTheFly());
@@ -82,7 +84,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiMethodReferenceExpression) {
         doFix(project, (PsiMethodReferenceExpression)element);
@@ -121,6 +123,16 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
                                                      getFamilyName(), null);
                    }
                  });
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      PsiMethodReferenceExpression methodRef = ObjectUtils.tryCast(previewDescriptor.getPsiElement(), PsiMethodReferenceExpression.class);
+      if (methodRef == null) {
+        return IntentionPreviewInfo.EMPTY;
+      }
+      LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
+      return IntentionPreviewInfo.DIFF;
     }
 
     private static void doFixAndRemoveSideEffects(@NotNull Editor editor, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {

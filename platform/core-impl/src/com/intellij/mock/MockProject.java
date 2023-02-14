@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.pico.DefaultPicoContainer;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +29,8 @@ public class MockProject extends MockComponentManager implements Project {
     super(parent, parentDisposable);
   }
 
-  @NotNull
   @Override
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return o -> isDisposed();
   }
 
@@ -43,27 +45,32 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
+  public CoroutineScope getCoroutineScope() {
+    return GlobalScope.INSTANCE;
+  }
+
+  @Override
+  public ComponentManager getActualComponentManager() {
+    return this;
+  }
+
+  @Override
   public VirtualFile getProjectFile() {
     return null;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getLocationHash() {
+  public @NotNull @NonNls String getLocationHash() {
     return "mock";
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
@@ -77,15 +84,12 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDir() {
+  public @Nullable VirtualFile getBaseDir() {
     return myBaseDir;
   }
 
-  @Nullable
-  @SystemIndependent
   @Override
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
@@ -93,15 +97,14 @@ public class MockProject extends MockComponentManager implements Project {
   public void save() {
   }
 
-  @NotNull
-  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType, boolean createIfNotYet) {
+  public @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> componentType) {
     List<T> result = new ArrayList<>();
     DefaultPicoContainer container = (DefaultPicoContainer)getPicoContainer();
     container.getComponentAdapters().forEach(componentAdapter -> {
       Class<?> descendant = componentAdapter.getComponentImplementation();
       if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
         //noinspection unchecked
-        T instance = (T)componentAdapter.getComponentInstance(container);
+        T instance = (T)componentAdapter.getComponentInstance();
         // may be null in the case of the "implicit" adapter representing "this"
         if (instance != null) {
           result.add(instance);
@@ -112,7 +115,7 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   public void projectOpened() {
-    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class, true)) {
+    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
       try {
         component.projectOpened();
       }

@@ -34,21 +34,22 @@ public final class JavacProtoUtil {
                                                                           ModulePath modulePath,
                                                                           Iterable<? extends File> upgradeModulePath,
                                                                           Iterable<? extends File> sourcePath,
-                                                                          Map<File, Set<File>> outs) {
+                                                                          Map<File, Set<File>> outs,
+                                                                          ExternalJavacMessageHandler.WslSupport wslSupport) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);
     builder.addAllOption(options);
     for (File file : files) {
-      builder.addFile(FileUtilRt.toSystemIndependentName(file.getPath()));
+      builder.addFile(wslSupport.convertPath(file.getPath()));
     }
     for (File file : classpath) {
-      builder.addClasspath(FileUtilRt.toSystemIndependentName(file.getPath()));
+      builder.addClasspath(wslSupport.convertPath(file.getPath()));
     }
     for (File file : platformCp) {
-      builder.addPlatformClasspath(FileUtilRt.toSystemIndependentName(file.getPath()));
+      builder.addPlatformClasspath(wslSupport.convertPath(file.getPath()));
     }
     for (File file : modulePath.getPath()) {
-      final String pathEntry = FileUtilRt.toSystemIndependentName(file.getPath());
+      final String pathEntry = wslSupport.convertPath(file.getPath());
       builder.addModulePath(pathEntry);
       final String moduleName = modulePath.getModuleName(file);
       if (moduleName != null) {
@@ -56,16 +57,16 @@ public final class JavacProtoUtil {
       }
     }
     for (File file : upgradeModulePath) {
-      builder.addUpgradeModulePath(FileUtilRt.toSystemIndependentName(file.getPath()));
+      builder.addUpgradeModulePath(wslSupport.convertPath(file.getPath()));
     }
     for (File file : sourcePath) {
-      builder.addSourcepath(FileUtilRt.toSystemIndependentName(file.getPath()));
+      builder.addSourcepath(wslSupport.convertPath(file.getPath()));
     }
     for (Map.Entry<File, Set<File>> entry : outs.entrySet()) {
       final JavacRemoteProto.Message.Request.OutputGroup.Builder groupBuilder = JavacRemoteProto.Message.Request.OutputGroup.newBuilder();
-      groupBuilder.setOutputRoot(FileUtilRt.toSystemIndependentName(entry.getKey().getPath()));
+      groupBuilder.setOutputRoot(wslSupport.convertPath(entry.getKey().getPath()));
       for (File srcRoot : entry.getValue()) {
-        groupBuilder.addSourceRoot(FileUtilRt.toSystemIndependentName(srcRoot.getPath()));
+        groupBuilder.addSourceRoot(wslSupport.convertPath(srcRoot.getPath()));
       }
       builder.addOutput(groupBuilder.build());
     }

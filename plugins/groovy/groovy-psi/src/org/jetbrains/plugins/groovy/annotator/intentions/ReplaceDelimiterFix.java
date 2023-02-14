@@ -62,9 +62,4 @@ public class ReplaceDelimiterFix extends Intention {
       }
     };
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

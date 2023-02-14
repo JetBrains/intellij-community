@@ -1,0 +1,6 @@
+from typing import Any
+
+tz_names: Any
+
+def valuestodict(key): ...
+def get_localzone_name(): ...

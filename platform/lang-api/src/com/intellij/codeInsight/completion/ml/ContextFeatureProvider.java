@@ -39,8 +39,7 @@ public interface ContextFeatureProvider {
    * @deprecated Use {@link #calculateFeatures(CompletionEnvironment)} instead
    */
   @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   default Map<String, MLFeatureValue> calculateFeatures(@NotNull Lookup lookup) {
     return Collections.emptyMap();
   }

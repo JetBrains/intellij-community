@@ -21,15 +21,16 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalShellCommandHandler;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
@@ -38,9 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
-import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,11 +46,14 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.jediterm.terminal.ui.AwtTransformers.fromAwtToTerminalColor;
 
 public final class TerminalShellCommandHandlerHelper {
-  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
+  private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandlerHelper.class);
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
+  private static final int TYPING_THRESHOLD_MS = 200;
 
   private static Experiments ourExperiments;
   private final ShellTerminalWidget myWidget;
@@ -60,7 +61,7 @@ public final class TerminalShellCommandHandlerHelper {
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
-  private final AtomicBoolean myKeyPressed = new AtomicBoolean(false);
+  private final AtomicLong myLastKeyPressedMillis = new AtomicLong();
   private TerminalLineIntervalHighlighting myCommandHighlighting;
   private Disposable myNotificationDisposable;
 
@@ -72,7 +73,7 @@ public final class TerminalShellCommandHandlerHelper {
       TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
 
     TerminalModelListener listener = () -> {
-      if (myKeyPressed.compareAndSet(true, false)) {
+      if (System.currentTimeMillis() - myLastKeyPressedMillis.get() < TYPING_THRESHOLD_MS) {
         scheduleCommandHighlighting();
       }
     };
@@ -82,7 +83,7 @@ public final class TerminalShellCommandHandlerHelper {
 
   public void processKeyPressed(KeyEvent e) {
     if (isFeatureEnabled()) {
-      myKeyPressed.set(true);
+      myLastKeyPressedMillis.set(System.currentTimeMillis());
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiersEx() == 0 && hideNotification()) {
         e.consume();
       }
@@ -154,15 +155,20 @@ public final class TerminalShellCommandHandlerHelper {
       .withHeader(TerminalBundle.message("smart_command_execution.notification.title"))
       .withLink(TerminalBundle.message("smart_command_execution.notification.configure_link.text"), () -> {
         ShowSettingsUtil.getInstance().showSettingsDialog(myWidget.getProject(), TerminalOptionsConfigurable.class);
-      });
+      })
+      .withPosition(Balloon.Position.below);
     if (!tooltip.canShow()) {
       Disposer.dispose(notificationDisposable);
       return;
     }
-    tooltip.show(myWidget.getTerminalPanel(), component -> {
+    tooltip.show(myWidget.getTerminalPanel(), (component, balloon) -> {
       Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
       if (bounds != null) {
-        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+        int shiftY = 0;
+        if (balloon instanceof BalloonImpl && BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition()) {
+          shiftY = bounds.height;
+        }
+        return new Point(bounds.x + bounds.width / 2, bounds.y + shiftY);
       }
       Disposer.dispose(notificationDisposable);
       return new Point(0, 0);
@@ -188,7 +194,7 @@ public final class TerminalShellCommandHandlerHelper {
   private String getWorkingDirectory() {
     String workingDirectory = myWorkingDirectory;
     if (workingDirectory == null) {
-      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget, null));
+      workingDirectory = StringUtil.notNullize(TerminalWorkingDirectoryManager.getWorkingDirectory(myWidget.asNewWidget()));
       myWorkingDirectory = workingDirectory;
     }
     return StringUtil.nullize(workingDirectory);
@@ -234,7 +240,7 @@ public final class TerminalShellCommandHandlerHelper {
     if (attributes == null) {
       return null;
     }
-    return new TextStyle(TerminalColor.awt(attributes.getForegroundColor()), TerminalColor.awt(attributes.getBackgroundColor()));
+    return new TextStyle(fromAwtToTerminalColor(attributes.getForegroundColor()), fromAwtToTerminalColor(attributes.getBackgroundColor()));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
@@ -242,7 +248,7 @@ public final class TerminalShellCommandHandlerHelper {
       onShellCommandExecuted();
       return false;
     }
-    myKeyPressed.set(true);
+    myLastKeyPressedMillis.set(System.currentTimeMillis());
     String command = myWidget.getTypedShellCommand().trim();
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + command);
@@ -251,7 +257,21 @@ public final class TerminalShellCommandHandlerHelper {
 
     Project project = myWidget.getProject();
     String workingDirectory = getWorkingDirectory();
-    boolean localSession = !hasRunningCommands();
+    Executor executor = matchedExecutor(keyPressed);
+    boolean hasRunningCommands;
+    if (executor != null) {
+      hasRunningCommands = hasRunningCommands();
+    }
+    else {
+      Boolean hasRunningCommandsLocal = myHasRunningCommands;
+      if (hasRunningCommandsLocal == null) {
+        // to not execute hasRunningCommands() on EDT just to report statistics
+        onShellCommandExecuted();
+        return false;
+      }
+      hasRunningCommands = hasRunningCommandsLocal;
+    }
+    boolean localSession = !hasRunningCommands;
     if (!TerminalShellCommandHandler.Companion.matches(project, workingDirectory, localSession, command)) {
       onShellCommandExecuted();
       return false;
@@ -262,7 +282,6 @@ public final class TerminalShellCommandHandlerHelper {
       .findFirst()
       .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
 
-    Executor executor = matchedExecutor(keyPressed);
     if (executor == null) {
       onShellCommandExecuted();
       TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
@@ -293,42 +312,26 @@ public final class TerminalShellCommandHandlerHelper {
     }
   }
 
-  @Nullable
-  static Executor matchedExecutor(@NotNull KeyEvent e) {
-    if (matchedRunAction(e) != null) {
+  static @Nullable Executor matchedExecutor(@NotNull KeyEvent e) {
+    if (matchAction(e, getRunAction())) {
       return DefaultRunExecutor.getRunExecutorInstance();
-    } else if (matchedDebugAction(e) != null) {
-      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-    } else {
-      return null;
     }
+    if (matchAction(e, getDebugAction())) {
+      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    }
+    return null;
   }
 
-  private static TerminalExecutorAction matchedRunAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getRunAction();
-    return action instanceof TerminalRunSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalRunSmartCommandAction)action)
-           : null;
+  private static boolean matchAction(@NotNull KeyEvent e, @NotNull AnAction action) {
+    KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
+    return ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut));
   }
 
-  private static TerminalExecutorAction matchedDebugAction(@NotNull KeyEvent e) {
-    final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
-    AnAction action = getDebugAction();
-    return action instanceof TerminalDebugSmartCommandAction
-           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
-           ? ((TerminalDebugSmartCommandAction)action)
-           : null;
-  }
-
-  @NotNull
-  private static AnAction getRunAction() {
+  private static @NotNull AnAction getRunAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Run"));
   }
 
-  @NotNull
-  private static AnAction getDebugAction() {
+  private static @NotNull AnAction getDebugAction() {
     return Objects.requireNonNull(ActionManager.getInstance().getAction("Terminal.SmartCommandExecution.Debug"));
   }
 }

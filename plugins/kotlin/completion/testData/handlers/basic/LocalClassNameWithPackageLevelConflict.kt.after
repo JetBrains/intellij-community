@@ -1,0 +1,14 @@
+package test
+
+import foo.Bar
+
+class Main {
+    fun test() {
+        class Bar
+
+        val b = foo.Bar<caret>
+    }
+}
+
+// ELEMENT: Bar
+// TAIL_TEXT: " (foo)"

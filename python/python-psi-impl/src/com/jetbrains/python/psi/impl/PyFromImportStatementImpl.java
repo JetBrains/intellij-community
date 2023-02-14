@@ -29,9 +29,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement{
   public PyFromImportStatementImpl(ASTNode astNode) {
     super(astNode);

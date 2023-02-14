@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,8 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class LongLiteralsEndingWithLowercaseLInspection
-  extends BaseInspection {
+public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -63,7 +64,7 @@ public class LongLiteralsEndingWithLowercaseLInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression literal =
         (PsiExpression)descriptor.getPsiElement();
       final String text = literal.getText();
@@ -83,7 +84,7 @@ public class LongLiteralsEndingWithLowercaseLInspection
       if (type == null) {
         return;
       }
-      if (!type.equals(PsiType.LONG)) {
+      if (!type.equals(PsiTypes.longType())) {
         return;
       }
       final String text = expression.getText();

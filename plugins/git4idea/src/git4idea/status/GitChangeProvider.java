@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
@@ -32,7 +31,6 @@ import java.util.*;
 @Service(Service.Level.PROJECT)
 public final class GitChangeProvider implements ChangeProvider {
   static final Logger LOG = Logger.getInstance("#GitStatus");
-  public static final Topic<ChangeProviderListener> TOPIC = Topic.create("GitChangeProvider Progress", ChangeProviderListener.class);
   private volatile boolean isRefreshInProgress = false;
 
   @NotNull private final Project project;
@@ -46,18 +44,17 @@ public final class GitChangeProvider implements ChangeProvider {
                          @NotNull ChangelistBuilder builder,
                          @NotNull ProgressIndicator progress,
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
-    BackgroundTaskUtil.syncPublisher(project, TOPIC).progressStarted();
+    BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStarted();
     isRefreshInProgress = true;
-
-    LOG.debug("initial dirty scope: ", dirtyScope);
-    appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
-    LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
-
-    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    Collection<VirtualFile> affectedRoots = dirtyScope.getAffectedContentRoots();
-    Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affectedRoots, repositoryManager::getRepositoryForRoot);
-
     try {
+      LOG.debug("initial dirty scope: ", dirtyScope);
+      appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
+      LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
+
+      GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
+      Collection<VirtualFile> affectedRoots = dirtyScope.getAffectedContentRoots();
+      Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affectedRoots, repositoryManager::getRepositoryForRoot);
+
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
@@ -94,13 +91,7 @@ public final class GitChangeProvider implements ChangeProvider {
           }
         }
 
-        Collection<FilePath> untracked = repo.getUntrackedFilesHolder().retrieveUntrackedFilePaths();
-        for (FilePath path : untracked) {
-          builder.processUnversionedFile(path);
-          holder.markPathProcessed(path);
-        }
-
-        BackgroundTaskUtil.syncPublisher(project, TOPIC).repositoryUpdated(repo);
+        BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).repositoryUpdated(repo);
       }
       holder.feedBuilder(dirtyScope, builder);
 
@@ -108,7 +99,7 @@ public final class GitChangeProvider implements ChangeProvider {
     }
     finally {
       isRefreshInProgress = false;
-      BackgroundTaskUtil.syncPublisher(project, TOPIC).progressStopped();
+      BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStopped();
     }
   }
 
@@ -179,9 +170,9 @@ public final class GitChangeProvider implements ChangeProvider {
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
         if (repository == null) continue;
+        if (repository.getUntrackedFilesHolder().containsFile(filePath)) continue;
+
         VirtualFile root = repository.getRoot();
-
-
         VcsRevisionNumber beforeRevisionNumber = myHeadRevisions.get(root);
         if (beforeRevisionNumber == null) {
           beforeRevisionNumber = GitChangesCollector.getHead(repository);
@@ -204,11 +195,5 @@ public final class GitChangeProvider implements ChangeProvider {
 
   public boolean isRefreshInProgress() {
     return isRefreshInProgress;
-  }
-
-  public interface ChangeProviderListener {
-    void repositoryUpdated(@NotNull GitRepository repository);
-    default void progressStarted() {}
-    default void progressStopped() {}
   }
 }

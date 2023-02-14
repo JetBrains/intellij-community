@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
@@ -97,8 +98,7 @@ public abstract class YamlMetaType {
 
     // TODO a case for sequence
 
-    if(value instanceof YAMLMapping) {
-      YAMLMapping mapping = (YAMLMapping)value;
+    if(value instanceof YAMLMapping mapping) {
 
       Collection<YAMLKeyValue> keyValues = mapping.getKeyValues();
 
@@ -210,13 +210,15 @@ public abstract class YamlMetaType {
     private final String myTabSymbol;
     private int myLevel;
     private boolean myCaretAppended;
+    private final YAMLCodeStyleSettings mySettings;
 
     public YamlInsertionMarkup(@NotNull InsertionContext context) {
-      this(getTabSymbol(context));
+      this(getTabSymbol(context), CodeStyle.getCustomSettings(context.getFile(), YAMLCodeStyleSettings.class));
     }
 
-    public YamlInsertionMarkup(@NotNull String tabSymbol) {
+    public YamlInsertionMarkup(@NotNull String tabSymbol, YAMLCodeStyleSettings settings) {
       myTabSymbol = tabSymbol;
+      mySettings = settings;
     }
 
     public void append(@NotNull String text) {
@@ -245,9 +247,24 @@ public abstract class YamlMetaType {
     @NotNull
     private String sequenceItemPrefix() {
       String result = SEQUENCE_ITEM_MARKUP;
-      if(myTabSymbol.length() > result.length())
+      if (myTabSymbol.length() > result.length()) {
         result += myTabSymbol.substring(result.length());
+      }
       return result;
+    }
+
+    public void doTabbedBlockForSequenceItem(Runnable doWhenTabbed) {
+      var indent = mySettings.INDENT_SEQUENCE_VALUE ? 2 : 1;
+
+      doTabbedBlock(indent, () -> {
+        newLineAndTabs(true);
+        doWhenTabbed.run();
+      });
+    }
+
+    public void doTabbedBlockForSequenceItem() {
+      doTabbedBlockForSequenceItem(() -> {
+      });
     }
 
     public void appendCaret() {

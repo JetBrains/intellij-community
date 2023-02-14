@@ -11,7 +11,7 @@ import java.util.Set;
 
 /**
  * Syntax rule that represents include-rules.
- * In fact it is proxy for real syntax rule and it delegates all read-only methods
+ * In fact, it is proxy for real syntax rule, and it delegates all read-only methods
  * to appropriate real rule.
  * <p/>
  */
@@ -29,10 +29,20 @@ abstract class SyntaxProxyDescriptor implements SyntaxNodeDescriptor {
     return getTargetNode().getStringAttribute(key);
   }
 
+  @Override
+  public boolean hasBackReference(Constants.@NotNull StringKey key) {
+    return getTargetNode().hasBackReference(key);
+  }
+
   @Nullable
   @Override
   public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
     return getTargetNode().getCaptures(key);
+  }
+
+  @Override
+  public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
+    return getTargetNode().hasBackReference(key, group);
   }
 
   @NotNull

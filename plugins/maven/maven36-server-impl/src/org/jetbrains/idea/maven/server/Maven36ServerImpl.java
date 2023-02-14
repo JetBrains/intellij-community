@@ -4,24 +4,14 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer {
-  @Override
-  public void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    try {
-      Maven3ServerGlobals.set(logger, downloadListener);
-    }
-    catch (Exception e) {
-      throw rethrowException(e);
-    }
-  }
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) {
@@ -31,8 +21,11 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (MavenCoreInitializationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -49,8 +42,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
-    catch (RemoteException e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -61,8 +54,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.interpolateAndAlignModel(model, basedir);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -72,8 +65,8 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.assembleInheritance(model, parentModel);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
@@ -86,11 +79,37 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
     try {
       return Maven3XServerEmbedder.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
-    catch (Exception e) {
-      throw rethrowException(e);
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
     }
   }
 
+
+  @Override
+  public MavenPullServerLogger createPullLogger(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerLoggerWrapper result = Maven3ServerGlobals.getLogger();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  @Override
+  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    try {
+      MavenServerDownloadListenerWrapper result = Maven3ServerGlobals.getDownloadListener();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (Throwable e) {
+      throw wrapToSerializableRuntimeException(e);
+    }
+  }
   @Override
   public synchronized void unreferenced() {
     System.exit(0);

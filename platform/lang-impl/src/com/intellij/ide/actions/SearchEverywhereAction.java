@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabDescriptor;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -13,18 +12,20 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.FontUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -47,7 +48,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ActionButton button = new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return new ActionButton(this, presentation, place, () -> getMinimumSize(place)) {
       @Override protected void updateToolTipText() {
         String shortcutText = getShortcut();
 
@@ -66,9 +67,16 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
         }
       }
     };
+  }
 
-    button.setBorder(JBUI.Borders.empty(1, 2));
-    return button;
+  private static boolean isExperimentalToolbar(@NotNull String place) {
+    return ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(place);
+  }
+
+  @NotNull
+  private static Dimension getMinimumSize(@NotNull String place) {
+    return isExperimentalToolbar(place) ? ActionToolbar.experimentalToolbarMinimumButtonSize()
+                                        : ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
   }
 
   @Nullable
@@ -89,16 +97,13 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (LightEdit.owns(e.getProject())) return;
 
-    if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
+    if (AdvancedSettings.getBoolean("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
       if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
         return;
       }
     }
 
-    String searchProviderID = Registry.is("search.everywhere.group.contributors.by.type")
-                              ? SearchEverywhereTabDescriptor.PROJECT.getId()
-                              : SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-    showInSearchEverywherePopup(searchProviderID, e, true, true);
+    showInSearchEverywherePopup(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, e, true, true);
   }
 }
 

@@ -2,16 +2,10 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 
 class GHGitActor(val name: String?,
                  val email: String?,
                  val avatarUrl: String,
                  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssX") val date: Date?,
-                 @JsonProperty("user") user: UserUrl?) {
-
-  val url = user?.url
-
-  class UserUrl(val url: String)
-}
+                 val user: GHUser?)

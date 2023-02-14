@@ -2,8 +2,7 @@
 class C {
     String foo(int n) {
         switch (n) {
-            case 1:
-            case 3:
+            case 1, 3:
                 return "A";
             case 2:
                 return "B";

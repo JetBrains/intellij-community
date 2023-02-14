@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public abstract class VisibleHighlightingPassFactory  {
-  public static Key<ProperTextRange> HEADLESS_VISIBLE_AREA = Key.create("Editor.headlessVisibleArea");
+  private static final Key<ProperTextRange> HEADLESS_VISIBLE_AREA = Key.create("Editor.headlessVisibleArea");
 
   @NotNull
   public static ProperTextRange calculateVisibleRange(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       ProperTextRange textRange = editor.getUserData(HEADLESS_VISIBLE_AREA);
       ProperTextRange entireTextRange = new ProperTextRange(0, editor.getDocument().getTextLength());
@@ -33,5 +34,12 @@ public abstract class VisibleHighlightingPassFactory  {
     int visibleEnd = editor.logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
 
     return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+  }
+
+  public static void setVisibleRangeForHeadlessMode(@NotNull Editor editor, @NotNull ProperTextRange range) {
+    if (range.getEndOffset() > editor.getDocument().getTextLength()) {
+      throw new IllegalArgumentException("Invalid range: " + range + "; document length: " + editor.getDocument().getTextLength());
+    }
+    editor.putUserData(HEADLESS_VISIBLE_AREA, range);
   }
 }

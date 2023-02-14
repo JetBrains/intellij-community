@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author ven
- */
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public final class GenericInlineHandler {
   private static final Logger LOG = Logger.getInstance(GenericInlineHandler.class);
@@ -93,6 +90,7 @@ public final class GenericInlineHandler {
         }
 
         Consumer<ProgressIndicator> perform = indicator -> {
+          indicator.setIndeterminate(false);
           for (int i = 0; i < usages.length; i++) {
             indicator.setFraction((double) i / usages.length);
             inlineReference(usages[i], element, inliners);
@@ -106,7 +104,8 @@ public final class GenericInlineHandler {
         if (Registry.is("run.refactorings.under.progress")) {
           ((ApplicationImpl)ApplicationManager.getApplication())
             .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
-        } else {
+        }
+        else {
           perform.accept(new EmptyProgressIndicator());
         }
       });

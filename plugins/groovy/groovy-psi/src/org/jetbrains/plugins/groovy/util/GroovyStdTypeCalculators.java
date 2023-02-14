@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.intellij.util.PairFunction;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -25,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * @author Sergey Evdokimov
- */
 public class GroovyStdTypeCalculators {
 
   public static class ClosureTypeExtractor implements PairFunction<GrMethodCall, PsiMethod, PsiType> {
@@ -49,7 +47,7 @@ public class GroovyStdTypeCalculators {
 
       return RecursionManager.doPreventingRecursion(methodCall, true, () -> {
         PsiType returnType = finalClosure.getReturnType();
-        if (PsiType.VOID.equals(returnType)) return null;
+        if (PsiTypes.voidType().equals(returnType)) return null;
         return returnType;
       });
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -10,21 +10,25 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectFileIndex myFileIndex;
+  private final WorkspaceFileIndexEx myWorkspaceFileIndex;
 
   protected ProjectFileIndexFacade(@NotNull Project project) {
     super(project);
 
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myWorkspaceFileIndex = WorkspaceFileIndexEx.IS_ENABLED ? (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project) : null;
   }
 
   @Override
@@ -73,11 +77,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
-    DirectoryIndex dirIndex = DirectoryIndex.getInstance(myProject);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
     while (true) {
       if (childDir == null) return false;
       if (childDir.equals(baseDir)) return true;
-      if (!dirIndex.getInfoForFile(childDir).isInProject(childDir)) return false;
+      if (!fileIndex.isInProject(childDir)) return false;
       childDir = childDir.getParent();
     }
   }
@@ -97,6 +101,16 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
+    if (myWorkspaceFileIndex != null) {
+      WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
+      if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
+        return false;
+      }
+      if (fileInfo.findFileSet(it -> it.getKind() == WorkspaceFileKind.EXTERNAL) != null && !myFileIndex.isInSourceContent(file)) {
+        return false;
+      }
+      return true;
+    }
     DirectoryInfo info = ((ProjectFileIndexImpl)myFileIndex).getInfoForFileOrDirectory(file);
     if (!info.isInProject(file)) return false;
     if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;

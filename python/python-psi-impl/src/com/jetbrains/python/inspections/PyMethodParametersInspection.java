@@ -1,36 +1,30 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Set;
 
 /**
  * Looks for the 'self' or its equivalents.
- *
- * @author dcheryasov
  */
 public class PyMethodParametersInspection extends PyInspection {
-  public @NlsSafe String MCS = "mcs";
-  public @NlsSafe String METACLS = "metacls";
 
   @Nullable
   public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
@@ -39,36 +33,18 @@ public class PyMethodParametersInspection extends PyInspection {
     return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    //TODO: simplify this (drop this?)
-    // it should offer only one default option mcs or metacls, inspection should accept both
-    return PythonUiService.getInstance().createComboBoxWithLabel(PyPsiBundle.message("INSP.method.parameters.metaclass.method.first.argument.name"),
-                                                   new String[]{MCS, METACLS}, MCS,
-                                   item -> {
-                                     MCS = (String)item;
-                                   });
-  }
-
-  @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WEAK_WARNING;
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
-  public class Visitor extends PyInspectionVisitor {
+  private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
-      super(holder, session);
+    private Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
+      super(holder, context);
     }
 
     @Override
@@ -85,7 +61,6 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
         final String methodName = node.getName();
-        final String CLS = "cls"; // TODO: move to style settings
         if (params.length == 0) { // fix: add
           // check for "staticmetod"
           if (flags.isStaticMethod()) return; // no params may be fine
@@ -99,16 +74,8 @@ public class PyMethodParametersInspection extends PyInspection {
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
               String paramName;
-              if (flags.isMetaclassMethod()) {
-                if (flags.isClassMethod()) {
-                  paramName = MCS;
-                }
-                else {
-                  paramName = CLS;
-                }
-              }
-              else if (flags.isClassMethod()) {
-                paramName = CLS;
+              if (flags.isMetaclassMethod() || flags.isClassMethod()) {
+                paramName = PyNames.CANONICAL_CLS;
               }
               else {
                 paramName = PyNames.CANONICAL_SELF;
@@ -142,18 +109,20 @@ public class PyMethodParametersInspection extends PyInspection {
                 return;
               }
               String expectedName;
-              String alternativeName = null;
+              Set<String> alternativeNames;
               if (PyNames.NEW.equals(methodName) || flags.isClassMethod()) {
-                expectedName = MCS;
+                expectedName = PyNames.CANONICAL_CLS;
+                alternativeNames = Set.of("mcs", "mcls", "metacls");
               }
               else if (flags.isSpecialMetaclassMethod()) {
-                expectedName = CLS;
+                expectedName = PyNames.CANONICAL_CLS;
+                alternativeNames = Set.of();
               }
               else {
                 expectedName = PyNames.CANONICAL_SELF;
-                alternativeName = CLS;
+                alternativeNames = Set.of(PyNames.CANONICAL_CLS);
               }
-              if (!expectedName.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
+              if (!expectedName.equals(pname) && !alternativeNames.contains(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
                   PyPsiBundle.message("INSP.usually.named", expectedName),
@@ -162,18 +131,15 @@ public class PyMethodParametersInspection extends PyInspection {
               }
             }
             else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
-              if (!CLS.equals(pname)) {
+              if (!PyNames.CANONICAL_CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named", CLS),
-                  new RenameParameterQuickFix(CLS)
+                  PyPsiBundle.message("INSP.usually.named", PyNames.CANONICAL_CLS),
+                  new RenameParameterQuickFix(PyNames.CANONICAL_CLS)
                 );
               }
             }
             else if (!flags.isStaticMethod() && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
-              if (flags.isMetaclassMethod() && CLS.equals(pname)) {
-                return;   // accept either 'self' or 'cls' for all methods in metaclass
-              }
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyPsiBundle.message("INSP.usually.named.self"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -20,7 +20,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedIntention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("replace.concatenation.with.format.string.intention.family.name");
+  }
 
   @Override
   @NotNull
@@ -72,10 +80,9 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
       return false;
     }
     final PsiElement grandParent = expressionParent.getParent();
-    if (!(grandParent instanceof PsiMethodCallExpression)) {
+    if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String name = methodExpression.getReferenceName();
     final boolean insertNewline;

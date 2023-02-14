@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
- * @author peter
- */
 public class GrReferenceListWeigher extends ReferenceListWeigher {
   private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
     PlatformPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrReferenceList.class);
@@ -37,8 +34,7 @@ public class GrReferenceListWeigher extends ReferenceListWeigher {
     if (INSIDE_REFERENCE_LIST.accepts(position)) {
       GrReferenceList list = (GrReferenceList)position.getParent().getParent();
       PsiElement parent = list.getParent();
-      if (parent instanceof GrTypeDefinition) {
-        GrTypeDefinition cls = (GrTypeDefinition)parent;
+      if (parent instanceof GrTypeDefinition cls) {
         if (cls.isInterface() && list == cls.getExtendsClause() || list == cls.getImplementsClause()) {
           return Preference.Interfaces;
         }

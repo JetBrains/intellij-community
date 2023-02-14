@@ -74,13 +74,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiTryStatement)) {
+      if (!(parent instanceof PsiTryStatement tryStatement)) {
         return;
       }
-      final PsiTryStatement tryStatement = (PsiTryStatement)parent;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return;
       Context context = Context.from(tryStatement);
@@ -94,10 +93,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       String resourceListAfter = joinToString(after);
       @NonNls StringBuilder sb = new StringBuilder("try(");
       PsiResourceList resourceListElement = tryStatement.getResourceList();
+      boolean hasSemicolon = false;
       if (!before.isEmpty()) {
         sb.append(resourceListBefore);
         if (resourceListElement != null || !after.isEmpty()) {
           sb.append(";");
+          hasSemicolon = true;
         }
       }
       if (resourceListElement != null) {
@@ -109,7 +110,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
       }
       if (!after.isEmpty()) {
-        if (!before.isEmpty() || resourceListElement != null) {
+        if ((!before.isEmpty() || resourceListElement != null) && !hasSemicolon) {
           sb.append(";");
         }
         sb.append(resourceListAfter);
@@ -207,7 +208,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel7OrHigher(file);
   }
 
@@ -219,7 +220,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   private static class TryFinallyCanBeTryWithResourcesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(PsiTryStatement tryStatement) {
+    public void visitTryStatement(@NotNull PsiTryStatement tryStatement) {
       super.visitTryStatement(tryStatement);
       if (Context.from(tryStatement) == null) return;
       registerStatementError(tryStatement);
@@ -261,7 +262,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
         if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
           PsiExpression initializer = resourceVariable.getInitializer();
-          boolean hasNonNullInitializer = initializer != null && !PsiType.NULL.equals(initializer.getType());
+          boolean hasNonNullInitializer = initializer != null && !PsiTypes.nullType().equals(initializer.getType());
           if (!hasNonNullInitializer) {
             int assignmentStatementIndex = findInitialization(tryStatements, resourceVariable);
             if (assignmentStatementIndex == -1) return null;
@@ -297,10 +298,10 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
 
       resourceVariables.sort(Comparator.comparing(o -> o.getInitializedElement(), PsiElementOrderComparator.getInstance()));
-      Optional<ResourceVariable> lastNonTryVar = StreamEx.of(ContainerUtil.reverse(resourceVariables))
-        .findFirst(r -> !PsiTreeUtil.isAncestor(tryStatement, r.myVariable, false));
-      if (lastNonTryVar.isPresent()) {
-        PsiVariable variable = lastNonTryVar.get().myVariable;
+      ResourceVariable lastNonTryVar = ContainerUtil.findLast(resourceVariables,
+                                                              r -> !PsiTreeUtil.isAncestor(tryStatement, r.myVariable, false));
+      if (lastNonTryVar != null) {
+        PsiVariable variable = lastNonTryVar.myVariable;
         PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         List<PsiStatement> statements = collectStatementsBetween(statement, tryStatement);
         boolean varUsedNotInTry = StreamEx.of(statements)
@@ -405,22 +406,20 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<? super PsiVariable> variables) {
-    if (statement instanceof PsiIfStatement) {
-      final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+    if (statement instanceof PsiIfStatement ifStatement) {
       if (ifStatement.getElseBranch() != null) return false;
       final PsiExpression condition = ifStatement.getCondition();
-      if (!(condition instanceof PsiBinaryExpression)) return false;
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      if (!(condition instanceof PsiBinaryExpression binaryExpression)) return false;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!JavaTokenType.NE.equals(tokenType)) return false;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) return false;
       final PsiElement variable;
-      if (PsiType.NULL.equals(rhs.getType())) {
+      if (PsiTypes.nullType().equals(rhs.getType())) {
         variable = ExpressionUtils.resolveLocalVariable(lhs);
       }
-      else if (PsiType.NULL.equals(lhs.getType())) {
+      else if (PsiTypes.nullType().equals(lhs.getType())) {
         variable = ExpressionUtils.resolveLocalVariable(rhs);
       }
       else {
@@ -432,8 +431,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (thenBranch instanceof PsiExpressionStatement) {
         resourceVariable = findAutoCloseableVariable(thenBranch);
       }
-      else if (thenBranch instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
+      else if (thenBranch instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         resourceVariable = findAutoCloseableVariable(ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
       }
@@ -445,17 +443,14 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return true;
       }
     }
-    else if (statement instanceof PsiExpressionStatement) {
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+    else if (statement instanceof PsiExpressionStatement expressionStatement) {
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) return false;
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) return false;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (HardcodedMethodConstants.CLOSE.equals(methodName)) {
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (!(qualifier instanceof PsiReferenceExpression)) return false;
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        if (!(qualifier instanceof PsiReferenceExpression referenceExpression)) return false;
         final PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiLocalVariable || target instanceof PsiParameter) || target instanceof PsiResourceVariable) return false;
         PsiVariable variable = (PsiVariable)target;
@@ -484,8 +479,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
   private static boolean findAutoCloseableVariables(PsiStatement statement, Set<? super PsiVariable> variables) {
     if (findAutoClosableVariableWithoutTry(statement, variables)) return true;
-    if (statement instanceof PsiTryStatement) {
-      PsiTryStatement tryStatement = (PsiTryStatement)statement;
+    if (statement instanceof PsiTryStatement tryStatement) {
       if (tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) return true;
       PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
       if (catchBlocks.length != 1) return true;

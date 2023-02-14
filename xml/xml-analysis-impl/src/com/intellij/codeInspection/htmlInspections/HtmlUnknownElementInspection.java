@@ -26,9 +26,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
-import java.util.StringTokenizer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.StringTokenizer;
 
 public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTool implements XmlEntitiesInspection {
   public JDOMExternalizableStringList myValues;
@@ -52,7 +52,7 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
   protected static void registerProblemOnAttributeName(@NotNull XmlAttribute attribute,
                                                        @InspectionMessage String message,
                                                        @NotNull ProblemsHolder holder,
-                                                       LocalQuickFix... quickfixes) {
+                                                       @NotNull LocalQuickFix @NotNull ... quickfixes) {
     final ASTNode node = attribute.getNode();
     assert node != null;
     final ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);
@@ -89,18 +89,9 @@ public abstract class HtmlUnknownElementInspection extends HtmlLocalInspectionTo
     return StringUtil.join(myValues, ",");
   }
 
-  public void enableCustomValues(boolean customValuesEnabled) {
-    myCustomValuesEnabled = customValuesEnabled;
-  }
-
   public void updateAdditionalEntries(@NotNull final String values) {
     myValues = reparseProperties(values);
   }
-
-  protected abstract @Nls String getCheckboxTitle();
-
-  @NotNull
-  protected abstract String getPanelTitle();
 
   @NotNull
   protected abstract Logger getLogger();

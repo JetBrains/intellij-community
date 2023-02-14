@@ -9,7 +9,10 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,12 +32,13 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
 import java.beans.PropertyChangeListener;
 
-import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MouseHoverPropertyTrigger;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.Outline;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
+public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
@@ -227,9 +231,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
           int bw = 1;
-          Object op = comboBox.getClientProperty("JComponent.outline");
+          Outline op = DarculaUIUtil.getOutline(comboBox);
           if (op != null) {
-            Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+            op.setGraphicsColor(g2, hasFocus);
             bw = DarculaUIUtil.isTableCellEditor(comboBox) ? 1 : 2;
           }
 
@@ -355,8 +359,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     super.configureEditor();
 
     installEditorKeyListener(comboBox.getEditor());
-    if (editor instanceof JComponent) {
-      JComponent jEditor = (JComponent)editor;
+    if (editor instanceof JComponent jEditor) {
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
 
       editorHoverListener = new MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
@@ -409,9 +412,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       int bw = 1;
 
       if (comboBox.isEnabled()) {
-        Object op = comboBox.getClientProperty("JComponent.outline");
+        Outline op = DarculaUIUtil.getOutline(comboBox);
         if (op != null) {
-          Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+          op.setGraphicsColor(g2, hasFocus);
           bw = isCellRenderer ? 1 : 2;
         }
         else if (comboBox.isEditable()) {

@@ -26,8 +26,7 @@ import java.lang.annotation.Target;
  * Used to indicate that a method should be called in background thread
  * @deprecated Use {@link RequiresBackgroundThread}.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+@Deprecated(forRemoval = true)
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInBackground {

@@ -5,16 +5,17 @@ import java.io.File
 
 class MavenRepoFixture(private val myMavenRepo: File) {
 
-  public fun addLibraryArtifact(group: String = "myGroup",
+  fun addLibraryArtifact(group: String = "myGroup",
                                 artifact: String = "myArtifact",
-                                version: String)
+                                version: String = "1.0",
+                                text: String = "Fake library artifact")
     : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version.jar")
     .apply {
       parentFile.mkdirs()
-      writeText("Fake library artifact")
+      writeText(text)
     }.name
 
-  public fun addAnnotationsArtifact(group: String = "myGroup",
+  fun addAnnotationsArtifact(group: String = "myGroup",
                                     artifact: String = "myArtifact",
                                     version: String)
     : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version-annotations.zip")
@@ -23,7 +24,7 @@ class MavenRepoFixture(private val myMavenRepo: File) {
       writeText("Fake annotations artifact")
     }.name
 
-  public fun generateMavenMetadata(group: String, artifact: String) {
+  fun generateMavenMetadata(group: String, artifact: String) {
     val files = listOf(File(myMavenRepo, "$group/$artifact/maven-metadata.xml"),
                        File(myMavenRepo, "$group/$artifact-annotations/maven-metadata.xml"))
     for (metadata in files) {

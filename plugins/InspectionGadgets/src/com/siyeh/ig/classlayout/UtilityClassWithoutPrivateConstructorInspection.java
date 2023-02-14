@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -44,6 +44,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -52,14 +54,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
   public boolean ignoreClassesWithOnlyMain = false;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel annotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
-    panel.add(annotationsPanel, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"), "ignoreClassesWithOnlyMain");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("ignorableAnnotations", InspectionGadgetsBundle.message("ignore.if.annotated.by"),
+                 new JavaClassValidator().annotationsOnly()),
+      checkbox("ignoreClassesWithOnlyMain", InspectionGadgetsBundle.message("utility.class.without.private.constructor.option"))
+    );
   }
 
   @Override
@@ -129,13 +129,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       if (isOnTheFly() && hasImplicitConstructorUsage(aClass)) {
         SwingUtilities.invokeLater(() -> Messages.showInfoMessage(
           aClass.getProject(),
@@ -162,13 +161,12 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
-      if (!(parent instanceof PsiClass)) {
+      if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)parent;
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();
@@ -237,7 +235,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
           return false;
         }
         final PsiType returnType = method.getReturnType();
-        if (!PsiType.VOID.equals(returnType)) {
+        if (!PsiTypes.voidType().equals(returnType)) {
           return false;
         }
         final PsiParameterList parameterList = method.getParameterList();

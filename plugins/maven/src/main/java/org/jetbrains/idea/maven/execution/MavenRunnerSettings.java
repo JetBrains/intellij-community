@@ -111,14 +111,6 @@ public class MavenRunnerSettings implements Cloneable {
     this.passParentEnv = passParentEnv;
   }
 
-  /**
-   * @deprecated use #addListener(Listener, Disposable)
-   */
-  @Deprecated
-  public void addListener(Listener l) {
-    myListeners.add(l);
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     myListeners.add(l, disposable);
   }
@@ -182,10 +174,6 @@ public class MavenRunnerSettings implements Cloneable {
   }
 
   private static <K, V> Map<K, V> cloneMap(final Map<K, V> source) {
-    final Map<K, V> clone = new LinkedHashMap<>();
-    for (Map.Entry<K, V> entry : source.entrySet()) {
-      clone.put(entry.getKey(), entry.getValue());
-    }
-    return clone;
+    return new LinkedHashMap<>(source);
   }
 }

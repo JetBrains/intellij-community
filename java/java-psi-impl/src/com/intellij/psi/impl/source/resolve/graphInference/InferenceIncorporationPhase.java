@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompa
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
@@ -67,12 +68,7 @@ public class InferenceIncorporationPhase {
   }
 
   private static boolean isCapturedVariable(InferenceVariable variable, Pair<InferenceVariable[], PsiClassType> capture) {
-    for (InferenceVariable capturedVariable : capture.first) {
-      if (variable == capturedVariable){
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(variable, capture.first);
   }
 
   public void collectCaptureDependencies(InferenceVariable variable, Set<? super InferenceVariable> dependencies) {
@@ -91,7 +87,7 @@ public class InferenceIncorporationPhase {
   public boolean incorporate() {
     final Collection<InferenceVariable> inferenceVariables = mySession.getInferenceVariables();
     for (InferenceVariable inferenceVariable : inferenceVariables) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      if (inferenceVariable.getInstantiation() != PsiTypes.nullType()) continue;
       final Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.get(inferenceVariable);
       if (boundsMap == null) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -251,7 +247,7 @@ public class InferenceIncorporationPhase {
   boolean isFullyIncorporated() {
     boolean needFurtherIncorporation = false;
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      if (inferenceVariable.getInstantiation() != PsiTypes.nullType()) continue;
       Map<InferenceBound, Set<PsiType>> boundsMap = myCurrentBounds.remove(inferenceVariable);
       if (boundsMap == null) continue;
       final Set<PsiType> upperBounds = boundsMap.get(InferenceBound.UPPER);
@@ -305,10 +301,10 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(Collection<? extends PsiType> eqBounds, Collection<? extends PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
-      if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
+      if (upperBound == null || PsiTypes.nullType().equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
       for (PsiType eqBound : eqBounds) {
-        if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
+        if (eqBound == null || PsiTypes.nullType().equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
           if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound, mySession)) {
             if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter && !mySession.isProperType(upperBound)) {

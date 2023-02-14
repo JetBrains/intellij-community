@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -22,10 +22,8 @@ public final class ModifierChooser {
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
-  private static final String[][] CLASS_MODIFIERS_WITH_SEALED = {
-    {PsiKeyword.PUBLIC},
-    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
-    {PsiKeyword.FINAL, PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
+  private static final String[] CLASS_MODIFIERS_WITH_SEALED = {
+    PsiKeyword.PUBLIC, PsiKeyword.FINAL, PsiKeyword.SEALED, PsiKeyword.NON_SEALED, PsiKeyword.ABSTRACT
   };
 
   private static final String[][] CLASS_MEMBER_MODIFIERS = {
@@ -97,7 +95,40 @@ public final class ModifierChooser {
   }
 
   public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    return addKeywords(list, HighlightingFeature.SEALED_CLASSES.isAvailable(scope) ? CLASS_MODIFIERS_WITH_SEALED : CLASS_MODIFIERS);
+    if (HighlightingFeature.SEALED_CLASSES.isAvailable(scope)) {
+      if (list == null) {
+        return CLASS_MODIFIERS_WITH_SEALED.clone();
+      }
+      else {
+        final List<String> ret = new ArrayList<>();
+        addIfNotPresent(PsiModifier.PUBLIC, list, ret);
+        if (!list.hasModifierProperty(PsiModifier.FINAL)) {
+          boolean hasNonSealed = list.hasModifierProperty(PsiModifier.NON_SEALED);
+          boolean hasSealed = list.hasModifierProperty(PsiModifier.SEALED);
+          if (!hasNonSealed) {
+            addIfNotPresent(PsiModifier.SEALED, list, ret);
+          }
+          if (!hasSealed) {
+            addIfNotPresent(PsiModifier.NON_SEALED, list, ret);
+          }
+          boolean hasAbstract = list.hasModifierProperty(PsiModifier.ABSTRACT);
+          if (!hasAbstract) {
+            ret.add(PsiModifier.ABSTRACT);
+            if (!hasNonSealed && !hasSealed) {
+              ret.add(PsiModifier.FINAL);
+            }
+          }
+        }
+        return ArrayUtilRt.toStringArray(ret);
+      }
+    }
+    return addKeywords(list, CLASS_MODIFIERS);
+  }
+
+  private static void addIfNotPresent(String modifier, PsiModifierList list, List<String> ret) {
+    if (!list.hasModifierProperty(modifier)) {
+      ret.add(modifier);
+    }
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {

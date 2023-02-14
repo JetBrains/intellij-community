@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * {@link com.intellij.openapi.editor.FoldRegion}s with same FoldingGroup instances expand and collapse together.
- *
- * @author peter
  */
 public final class FoldingGroup {
   private static final AtomicLong ourCounter = new AtomicLong();

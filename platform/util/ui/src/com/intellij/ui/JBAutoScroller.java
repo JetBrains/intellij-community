@@ -51,8 +51,7 @@ public final class JBAutoScroller implements ActionListener {
       component.putClientProperty(SCROLL_HANDLER_KEY, handler);
     }
 
-    if (component instanceof JTable) {
-      JTable t = (JTable)component;
+    if (component instanceof JTable t) {
       new MoveTableCellEditorOnAutoscrollFix(t);
       new ScrollOnTableSelectionChangeFix(t, locker);
     }
@@ -79,7 +78,7 @@ public final class JBAutoScroller implements ActionListener {
 
         myVerticalScrollDelta = handler.getVerticalScrollDelta(e);
         myHorizontalScrollDelta = handler.getHorizontalScrollDelta(e);
-        myLatestDragEvent = new SyntheticDragEvent(c, e.getID(), e.getWhen(), e.getModifiers(),
+        myLatestDragEvent = new SyntheticDragEvent(c, e.getID(), e.getWhen(), e.getModifiersEx(),
                                                    c.getX(), c.getY(), e.getXOnScreen(), e.getYOnScreen(),
                                                    e.getClickCount(), e.isPopupTrigger(), e.getButton());
       }
@@ -174,6 +173,7 @@ public final class JBAutoScroller implements ActionListener {
     }
 
     protected int getScrollDelta(int low, int high, int value) {
+      if (low > high) return low;
       return value - MathUtil.clamp(value, low, high);
     }
   }

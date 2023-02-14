@@ -18,9 +18,6 @@ package com.intellij.lang.properties;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class PropertiesFoldingTest extends BasePlatformTestCase {
 
   @Override

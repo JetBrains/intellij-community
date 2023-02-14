@@ -50,8 +50,8 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
 
     //Otherwise, if the type of each result expression is boolean or Boolean, 
     //an unboxing conversion (5.1.8) is applied to each result expression of type Boolean, and the switch expression has type boolean.
-    if (resultTypes.stream().allMatch(type -> PsiType.BOOLEAN.isAssignableFrom(type))) {
-      return PsiType.BOOLEAN;
+    if (resultTypes.stream().allMatch(type -> PsiTypes.booleanType().isAssignableFrom(type))) {
+      return PsiTypes.booleanType();
     }
 
     //Otherwise, if the type of each result expression is convertible to a numeric type (5.1.8), 
@@ -60,32 +60,32 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
     int maxRank = ArrayUtil.max(ranks);
     if (TypeConversionUtil.isNumericType(maxRank)) {
       if (maxRank == TypeConversionUtil.DOUBLE_RANK) {
-        return PsiType.DOUBLE;
+        return PsiTypes.doubleType();
       }
       if (maxRank == TypeConversionUtil.FLOAT_RANK) {
-        return PsiType.FLOAT;
+        return PsiTypes.floatType();
       }
       if (maxRank == TypeConversionUtil.LONG_RANK) {
-        return PsiType.LONG;
+        return PsiTypes.longType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.CHAR)) {
-        return PsiType.CHAR;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.charType())) {
+        return PsiTypes.charType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.SHORT)) {
-        return PsiType.SHORT;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.shortType())) {
+        return PsiTypes.shortType();
       }
 
-      if (isNumericPromotion(resultExpressions, ranks, PsiType.BYTE)) {
-        return PsiType.BYTE;
+      if (isNumericPromotion(resultExpressions, ranks, PsiTypes.byteType())) {
+        return PsiTypes.byteType();
       }
-      return PsiType.INT;
+      return PsiTypes.intType();
     }
 
     //Otherwise, boxing conversion (5.1.7) is applied to each result expression that has a primitive type, after which the type of the switch expression is the result of applying capture conversion (5.1.10) 
     // to the least upper bound (4.10.4) of the types of the result expressions.
-    PsiType leastUpperBound = PsiType.NULL;
+    PsiType leastUpperBound = PsiTypes.nullType();
     for (PsiType type : resultTypes) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
         type = ((PsiPrimitiveType)type).getBoxedType(this);
@@ -107,7 +107,7 @@ public class PsiSwitchExpressionImpl extends PsiSwitchBlockImpl implements PsiSw
       ((JavaElementVisitor)visitor).visitSwitchExpression(this);
     }
     else {
-      super.accept(visitor);
+      visitor.visitElement(this);
     }
   }
 

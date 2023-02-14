@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -26,9 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author yole
- */
+
 public class PyClassNameCompletionTest extends PyTestCase {
 
   public void testSimple() {
@@ -191,6 +190,10 @@ public class PyClassNameCompletionTest extends PyTestCase {
     assertNull(ndarray);
 
     PyClass ndarrayUserSkeleton = PyClassNameIndex.findClass("numpy.core.multiarray.ndarray", myFixture.getProject());
+    if (ndarrayUserSkeleton == null) {
+      System.out.println("Dumb mode: " + DumbService.isDumb(myFixture.getProject()));
+      dumpSdkRoots();
+    }
     assertNotNull(ndarrayUserSkeleton);
     assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(ndarrayUserSkeleton.getContainingFile()));
   }

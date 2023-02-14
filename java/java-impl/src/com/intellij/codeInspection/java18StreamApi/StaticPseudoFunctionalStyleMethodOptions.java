@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.java18StreamApi;
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -74,7 +75,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       final String streamApiMethod = element.getAttributeValue(STREAM_API_METHOD_ATTR);
       final PseudoLambdaReplaceTemplate.LambdaRole lambdaRole =
         PseudoLambdaReplaceTemplate.LambdaRole.valueOf(element.getAttributeValue(LAMBDA_ROLE_ATTR));
-      final boolean acceptsDefault = Boolean.valueOf(element.getAttributeValue(ACCEPTS_DEFAULT_ATTR));
+      final boolean acceptsDefault = Boolean.parseBoolean(element.getAttributeValue(ACCEPTS_DEFAULT_ATTR));
       final boolean toDelete = element.getAttribute(DELETE_ATTR) != null;
       final PipelineElement pipelineElement = new PipelineElement(fqn, method, new PseudoLambdaReplaceTemplate(streamApiMethod, lambdaRole, acceptsDefault));
       if (toDelete) {
@@ -129,7 +130,11 @@ public class StaticPseudoFunctionalStyleMethodOptions {
         append("." + element.getMethodName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     });
-    return ToolbarDecorator.createDecorator(list).disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
+    return ToolbarDecorator
+      .createDecorator(list)
+      .disableUpDownActions()
+      .setToolbarPosition(ActionToolbarPosition.RIGHT)
+      .setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         final Project currentProject = CommonDataKeys.PROJECT.getData(button.getDataContext());
@@ -149,7 +154,8 @@ public class StaticPseudoFunctionalStyleMethodOptions {
           ((DefaultListModel<PipelineElement>)list.getModel()).addElement(newElement);
         }
       }
-    }).setRemoveAction(new AnActionButtonRunnable() {
+    })
+      .setRemoveAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
         final int[] indices = list.getSelectedIndices();
@@ -160,7 +166,8 @@ public class StaticPseudoFunctionalStyleMethodOptions {
         myElements.removeAll(toRemove);
         ListUtil.removeSelectedItems(list);
       }
-    }).createPanel();
+    })
+      .createPanel();
   }
 
   public static class PipelineElement {

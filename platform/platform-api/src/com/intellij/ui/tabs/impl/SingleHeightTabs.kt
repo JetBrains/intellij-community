@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.Disposable
@@ -13,7 +13,7 @@ open class SingleHeightTabs(project: Project?, focusManager: IdeFocusManager?, p
     const val UNSCALED_PREF_HEIGHT = 28
   }
 
-  constructor(project: Project?, parent: Disposable) : this(project, if (project == null) null else IdeFocusManager.getInstance(project), parent)
+  constructor(project: Project?, parent: Disposable) : this(project = project, focusManager = null, parent = parent)
 
   override fun createTabLabel(info: TabInfo): TabLabel = SingleHeightLabel(this, info)
 

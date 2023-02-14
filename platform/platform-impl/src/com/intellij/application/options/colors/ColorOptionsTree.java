@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -10,8 +10,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.FontUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +25,6 @@ import java.util.List;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class ColorOptionsTree extends Tree {
   private final String myCategoryName;
   private final DefaultTreeModel myTreeModel;
@@ -41,7 +38,7 @@ public class ColorOptionsTree extends Tree {
     setRootVisible(false);
     getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myCategoryName = categoryName;
-    new TreeSpeedSearch(this, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+    new TreeSpeedSearch(this, true, TreeSpeedSearch.NODE_PRESENTATION_FUNCTION);
   }
 
   public void fillOptions(@NotNull ColorAndFontOptions options) {
@@ -114,7 +111,7 @@ public class ColorOptionsTree extends Tree {
   }
 
   public void selectOptionByName(@NotNull String name) {
-    String optionName = name.replace(FontUtil.rightArrow(UIUtil.getLabelFont()), NAME_SEPARATOR);
+    String optionName = name.replace(FontUtil.rightArrow(StartupUiUtil.getLabelFont()), NAME_SEPARATOR);
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {

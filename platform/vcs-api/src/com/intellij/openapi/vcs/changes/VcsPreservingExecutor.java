@@ -28,10 +28,10 @@ public interface VcsPreservingExecutor {
   /**
    * Executes an operation surrounding by saving/loading of all local changes
    *
-   * The implementation of saving/loading depends on underlying VCS
+   * The implementation of saving/loading depends on the underlying VCS
    */
   static void executeOperation(@NotNull Project project,
-                               @NotNull Collection<VirtualFile> rootsToSave,
+                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle,
                                @NotNull ProgressIndicator indicator,
                                @NotNull Runnable operation) {

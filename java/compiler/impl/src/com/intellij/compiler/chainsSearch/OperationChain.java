@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -32,8 +32,7 @@ public final class OperationChain {
   public static OperationChain create(@NotNull RefChainOperation operation,
                                       int weight,
                                       @NotNull ChainCompletionContext context) {
-    if (operation instanceof MethodCall) {
-      MethodCall signature = (MethodCall) operation;
+    if (operation instanceof MethodCall signature) {
       PsiClass qualifier = context.resolvePsiClass(signature.getQualifierDef());
       if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
         return null;

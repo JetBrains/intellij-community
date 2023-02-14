@@ -64,9 +64,6 @@ import java.util.function.Function;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
-/**
- * @author ilyas
- */
 public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> implements GrMethod, StubBasedPsiElement<GrMethodStub> {
 
   private static final Logger LOG = Logger.getInstance(GrMethodBaseImpl.class);
@@ -203,7 +200,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     if (block != null) {
       PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
       if (inferred != null) {
-        if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiType.NULL))) {
+        if (nominal == null || (nominal.isAssignableFrom(inferred) && !inferred.equals(PsiTypes.nullType()))) {
           return inferred;
         }
       }
@@ -232,7 +229,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   private PsiType getNominalType() {
     if (PsiImplUtil.isMainMethod(this)) {
-      return PsiType.VOID;
+      return PsiTypes.voidType();
     }
 
     final GrTypeElement element = getReturnTypeElementGroovy();
@@ -246,7 +243,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   @Nullable
   public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
     GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (newReturnType == null || newReturnType == PsiType.NULL) {
+    if (newReturnType == null || newReturnType == PsiTypes.nullType()) {
       if (typeElement != null) typeElement.delete();
       insertPlaceHolderToModifierList();
       return null;

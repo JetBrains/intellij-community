@@ -3,10 +3,6 @@ package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class RootDescriptor extends NodeDescriptor{
   private final Object myRootElement;
 

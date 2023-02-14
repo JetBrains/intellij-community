@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitLocalBranch;
@@ -18,7 +19,6 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,7 +34,6 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
   @Override
   public AnAction @NotNull [] getChildren(@NotNull AnActionEvent e,
                                           @NotNull Project project,
-                                          @NotNull VcsLog log,
                                           @NotNull GitRepository root,
                                           @NotNull CommitId commit) {
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
@@ -56,8 +55,8 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     if (provider != null) {
       VcsLogRefManager refManager = provider.getReferenceManager();
       Comparator<VcsRef> comparator = refManager.getLabelsOrderComparator();
-      ContainerUtil.sort(branchRefs, comparator);
-      ContainerUtil.sort(tagRefs, comparator);
+      branchRefs = ContainerUtil.sorted(branchRefs, comparator);
+      tagRefs = ContainerUtil.sorted(tagRefs, comparator);
     }
 
 
@@ -70,7 +69,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
       GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       List<GitRepository> allRepositories = repositoryManager.getRepositories();
 
-      Set<String> commonBranches = new THashSet<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);
+      Set<String> commonBranches = CollectionFactory.createCustomHashingStrategySet(GitReference.BRANCH_NAME_HASHING_STRATEGY);
       for (GitLocalBranch branch : GitBranchUtil.getCommonLocalBranches(allRepositories)) {
         commonBranches.add(branch.getName());
       }

@@ -2,8 +2,8 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -16,9 +16,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   /**
    * Check that indent options are correctly read if mixed with other language options
@@ -103,13 +100,14 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     settings.writeExternal(root);
     root.removeAttribute("version");
     assertXmlOutputEquals(
-      "<option name=\"config\" value=\"root\">\n" +
-      "  <option name=\"OTHER_INDENT_OPTIONS\">\n" +
-      "    <value>\n" +
-      "      <option name=\"INDENT_SIZE\" value=\"2\" />\n" +
-      "    </value>\n" +
-      "  </option>\n" +
-      "</option>",
+      """
+        <option name="config" value="root">
+          <option name="OTHER_INDENT_OPTIONS">
+            <value>
+              <option name="INDENT_SIZE" value="2" />
+            </value>
+          </option>
+        </option>""",
       root);
   }
 
@@ -121,20 +119,22 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     settings.writeExternal(root);
     root.removeAttribute("version");
     assertXmlOutputEquals(
-      "<option name=\"config\" value=\"root\">\n" +
-      "  <option name=\"RIGHT_MARGIN\" value=\"110\" />\n" +
-      "  <option name=\"SOFT_MARGINS\" value=\"60,80,140\" />\n" +
-      "</option>",
+      """
+        <option name="config" value="root">
+          <option name="RIGHT_MARGIN" value="110" />
+          <option name="SOFT_MARGINS" value="60,80,140" />
+        </option>""",
       root);
   }
 
   public void testReadSoftMargins() throws Exception {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     String source =
-      "<option name=\"config\" value=\"root\">\n" +
-      "  <option name=\"RIGHT_MARGIN\" value=\"110\" />\n" +
-      "  <option name=\"SOFT_MARGINS\" value=\"60,80,140\" />\n" +
-      "</option>";
+      """
+        <option name="config" value="root">
+          <option name="RIGHT_MARGIN" value="110" />
+          <option name="SOFT_MARGINS" value="60,80,140" />
+        </option>""";
     Element root = JDOMUtil.load(source);
     settings.readExternal(root);
     assertEquals(110, settings.getDefaultRightMargin());
@@ -147,39 +147,66 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
 
   public void testSaveExcludedFiles() throws Exception {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
-    settings.getExcludedFiles().addDescriptor(new PatternDescriptor("*.java"));
-    settings.getExcludedFiles().addDescriptor(new PatternDescriptor("/lib/**/*.min.js"));
+    settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor("*.java"));
+    settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor("/lib/**/*.min.js"));
     Element root = createOption("config", "root");
     settings.writeExternal(root);
     root.removeAttribute("version");
     assertXmlOutputEquals(
-      "<option name=\"config\" value=\"root\">\n" +
-      "  <option name=\"DO_NOT_FORMAT\">\n" +
-      "    <list>\n" +
-      "      <fileSet type=\"pattern\" pattern=\"*.java\" />\n" +
-      "      <fileSet type=\"pattern\" pattern=\"/lib/**/*.min.js\" />\n" +
-      "    </list>\n" +
-      "  </option>\n" +
-      "</option>",
+      """
+        <option name="config" value="root">
+          <option name="DO_NOT_FORMAT">
+            <list>
+              <fileSet type="globPattern" pattern="*.java" />
+              <fileSet type="globPattern" pattern="/lib/**/*.min.js" />
+            </list>
+          </option>
+        </option>""",
       root);
   }
 
   public void testReadExcludedFiles() throws Exception {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
     String source =
-      "<option name=\"config\" value=\"root\">\n" +
-      "  <option name=\"DO_NOT_FORMAT\">\n" +
-      "    <list>\n" +
-      "      <fileSet type=\"pattern\" pattern=\"*.java\" />\n" +
-      "      <fileSet type=\"pattern\" pattern=\"/lib/**/*.min.js\" />\n" +
-      "    </list>\n" +
-      "  </option>\n" +
-      "</option>";
+      """
+        <option name="config" value="root">
+          <option name="DO_NOT_FORMAT">
+            <list>
+              <fileSet type="globPattern" pattern="*.java" />
+              <fileSet type="globPattern" pattern="/lib/**/*.min.js" />
+            </list>
+          </option>
+        </option>""";
     Element root = JDOMUtil.load(source);
     settings.readExternal(root);
     List<FileSetDescriptor> descriptors = settings.getExcludedFiles().getDescriptors();
     assertSize(2, descriptors);
     assertEquals("*.java", descriptors.get(0).getPattern());
     assertEquals("/lib/**/*.min.js", descriptors.get(1).getPattern());
+  }
+
+  public void testKeepExistingKeys() throws Exception {
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
+    String source =
+      """
+        <option name="config" value="root" version="173">
+          <option name="RIGHT_MARGIN" value="100" />
+          <option name="FORMATTER_TAGS_ENABLED" value="%b" />
+        </option>""";
+    boolean defaultValue = settings.FORMATTER_TAGS_ENABLED;
+    source = source.formatted(defaultValue);
+    Element root = JDOMUtil.load(source);
+    settings.readExternal(root);
+    assertEquals(defaultValue, settings.FORMATTER_TAGS_ENABLED);
+    Element output = createOption("config", "root");
+    settings.writeExternal(output);
+    assertXmlOutputEquals(
+      """
+        <option name="config" value="root" version="173">
+          <option name="RIGHT_MARGIN" value="100" />
+          <option name="FORMATTER_TAGS_ENABLED" value="%b" />
+        </option>""".formatted(defaultValue),
+      output
+    );
   }
 }

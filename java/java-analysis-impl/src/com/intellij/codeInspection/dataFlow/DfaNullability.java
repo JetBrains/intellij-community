@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -90,33 +91,26 @@ public enum DfaNullability {
 
   @NotNull
   public static DfaNullability fromNullability(@NotNull Nullability nullability) {
-    switch (nullability) {
-      case NOT_NULL:
-        return NOT_NULL;
-      case NULLABLE:
-        return NULLABLE;
-      case UNKNOWN:
-        return UNKNOWN;
-    }
-    throw new IllegalStateException("Unknown nullability: "+nullability);
+    return switch (nullability) {
+      case NOT_NULL -> NOT_NULL;
+      case NULLABLE -> NULLABLE;
+      case UNKNOWN -> UNKNOWN;
+    };
   }
 
   @NotNull
   public DfReferenceType asDfType() {
-    switch (this) {
-      case NULL:
-        return DfTypes.NULL;
-      case NOT_NULL:
-        return DfTypes.NOT_NULL_OBJECT;
-      case UNKNOWN:
-        return DfTypes.OBJECT_OR_NULL;
-      default:
-        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
-    }
+    return switch (this) {
+      case NULL -> DfTypes.NULL;
+      case NOT_NULL -> DfTypes.NOT_NULL_OBJECT;
+      case UNKNOWN -> DfTypes.OBJECT_OR_NULL;
+      default -> DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfType.BOTTOM);
+    };
   }
 
   @NotNull
   public static DfaNullability fromDfType(@NotNull DfType type) {
-    return type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
+    return type == DfType.FAIL || type instanceof DfPrimitiveType ? NOT_NULL : 
+           type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
   }
 }

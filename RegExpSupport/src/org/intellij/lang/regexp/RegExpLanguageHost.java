@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
@@ -8,17 +8,34 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-/**
- * @author yole
- */
+
 public interface RegExpLanguageHost {
 
   EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
   String[][] EMPTY_COMPLETION_ITEMS_ARRAY = new String[0][];
 
-  boolean characterNeedsEscaping(char c);
+  /**
+   * @deprecated Use {@link #characterNeedsEscaping(char, boolean)} instead.
+   */
+  @Deprecated
+  default boolean characterNeedsEscaping(char c) {
+    throw new UnsupportedOperationException("Override characterNeedsEscaping(char, boolean)");
+  }
+
+  /**
+   * Returns whether the given character needs to be escaped to be treated as a literal.
+   * @param c a character to be considered.
+   * @param isInClass whether the character is within a RegExpClass (ie, within "[...]").
+   */
+  default boolean characterNeedsEscaping(char c, boolean isInClass) {
+    return characterNeedsEscaping(c);
+  }
+
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
+  default boolean isDuplicateGroupNamesAllowed(@NotNull RegExpGroup group) {
+    return false;
+  }
 
   /**
    * @return true, if this dialects support conditionals, i.e. the following construct: {@code (?(1)then|else)}
@@ -64,21 +81,10 @@ public interface RegExpLanguageHost {
   }
 
   default boolean supportsBoundary(RegExpBoundary boundary) {
-    switch (boundary.getType()) {
-      case UNICODE_EXTENDED_GRAPHEME:
-      case RESET_MATCH:
-        return false;
-      case LINE_START:
-      case LINE_END:
-      case WORD:
-      case NON_WORD:
-      case BEGIN:
-      case END:
-      case END_NO_LINE_TERM:
-      case PREVIOUS_MATCH:
-      default:
-        return true;
-    }
+    return switch (boundary.getType()) {
+      case UNICODE_EXTENDED_GRAPHEME, RESET_MATCH -> false;
+      case LINE_START, LINE_END, WORD, NON_WORD, BEGIN, END, END_NO_LINE_TERM, PREVIOUS_MATCH -> true;
+    };
   }
 
   default boolean supportsLiteralBackspace(RegExpChar aChar) {

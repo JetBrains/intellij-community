@@ -1,4 +1,4 @@
-// "Replace lambda expression with 'Pattern.asMatchPredicate()'" "true"
+// "Replace lambda expression with 'Pattern.asMatchPredicate()'" "true-preview"
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.UnaryOperator;

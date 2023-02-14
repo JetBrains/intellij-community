@@ -40,6 +40,10 @@ abstract class SearchListModel extends AbstractListModel<Object> {
     return listElements.get(index).getElement();
   }
 
+  public @NotNull SearchEverywhereFoundElementInfo getRawFoundElementAt(int index) {
+    return listElements.get(index);
+  }
+
   public int getWeightAt(int index) {
     return listElements.get(index).getPriority();
   }
@@ -75,6 +79,8 @@ abstract class SearchListModel extends AbstractListModel<Object> {
 
   public abstract void clearMoreItems();
 
+  public void freezeElements() {}
+
   public abstract int getIndexToScroll(int currentIndex, boolean scrollDown);
 
   public void clear() {
@@ -97,11 +103,6 @@ abstract class SearchListModel extends AbstractListModel<Object> {
   public <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
     //noinspection unchecked
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
-  }
-
-  @SuppressWarnings("unchecked")
-  public @Nullable ListCellRenderer<? super Object> getRendererForIndex(int index) {
-    return (ListCellRenderer<? super Object>)listElements.get(index).getRenderer();
   }
 
   @NotNull

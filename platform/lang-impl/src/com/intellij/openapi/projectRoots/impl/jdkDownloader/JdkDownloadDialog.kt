@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.VersionComparatorUtil
 import java.awt.Component
 import java.awt.event.ItemEvent
@@ -34,7 +34,7 @@ class JdkVersionItem(
   /* we should prefer the default selected item from the JDKs.json feed,
    * the list below is sorted by vendor, and default item is not necessarily first
    */
-  val defaultSelectedItem: JdkVersionVendorItem,
+  private val defaultSelectedItem: JdkVersionVendorItem,
   val includedItems: List<JdkVersionVendorItem>,
   val excludedItems: List<JdkVersionVendorItem>
 )  {
@@ -224,7 +224,7 @@ internal class JdkDownloadDialog(
   val project: Project?,
   val parentComponent: Component?,
   val sdkType: SdkTypeId,
-  val mergedModel: JdkDownloaderMergedModel,
+  private val mergedModel: JdkDownloaderMergedModel,
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
   private val panel: JComponent
   private val versionComboBox : ComboBox<JdkVersionItem>
@@ -275,6 +275,7 @@ internal class JdkDownloadDialog(
       installDirTextField.onTextChange {
         onTargetPathChanged(it)
       }
+      installDirTextField.textField.columns = 36
       installDirCombo = null
       installDirComponent = installDirTextField
     }
@@ -285,9 +286,9 @@ internal class JdkDownloadDialog(
 
 
     panel = panel {
-      row(ProjectBundle.message("dialog.row.jdk.version")) { versionComboBox.invoke().sizeGroup("combo") }
-      row(ProjectBundle.message("dialog.row.jdk.vendor")) { vendorComboBox.invoke().sizeGroup("combo").focused() }
-      row(ProjectBundle.message("dialog.row.jdk.location")) { installDirComponent.invoke() }
+      row(ProjectBundle.message("dialog.row.jdk.version")) { cell(versionComboBox).widthGroup("combo") }
+      row(ProjectBundle.message("dialog.row.jdk.vendor")) { cell(vendorComboBox).widthGroup("combo").focused() }
+      row(ProjectBundle.message("dialog.row.jdk.location")) { cell(installDirComponent) }
     }
 
     myOKAction.putValue(Action.NAME, ProjectBundle.message("dialog.button.download.jdk"))
@@ -325,7 +326,7 @@ internal class JdkDownloadDialog(
     val path = FileUtil.expandUserHome(path)
     selectedPath = path
 
-    setModel(WslDistributionManager.isWslPath(path))
+    setModel(WslPath.isWslUncPath(path))
   }
 
   private fun onVendorActionItemSelected(it: JdkVersionVendorElement?) {
@@ -384,6 +385,9 @@ internal class JdkDownloadDialog(
     if (selectedFile == null) {
       return null
     }
+
+    JdkDownloaderLogger.logSelected(selectedItem)
+
     return selectedItem to selectedFile
   }
 

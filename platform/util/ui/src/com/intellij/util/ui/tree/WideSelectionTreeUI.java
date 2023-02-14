@@ -38,13 +38,6 @@ import static com.intellij.util.ReflectionUtil.getMethod;
  */
 @Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
-  /**
-   * @deprecated use {@link RenderingUtil#FOCUSABLE_SIBLING} or {@link RenderingUtil#ALWAYS_PAINT_SELECTION_AS_FOCUSED}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
-
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
@@ -64,8 +57,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
@@ -88,8 +80,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     @Override
     public void actionPerformed(ActionEvent event) {
       Object source = event.getSource();
-      if (source instanceof JTree) {
-        JTree tree = (JTree)source;
+      if (source instanceof JTree tree) {
         TreePath path = tree.getLeadSelectionPath();
         if (path != null) {
           if (tree.isExpanded(path)) {

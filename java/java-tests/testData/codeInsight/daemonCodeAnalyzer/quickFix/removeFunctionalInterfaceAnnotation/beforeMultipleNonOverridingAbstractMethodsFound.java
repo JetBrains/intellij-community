@@ -1,4 +1,4 @@
-// "Remove annotation" "true"
+// "Remove annotation" "true-preview"
 @FunctionalInterface<caret>
 interface Test {
   void foo();

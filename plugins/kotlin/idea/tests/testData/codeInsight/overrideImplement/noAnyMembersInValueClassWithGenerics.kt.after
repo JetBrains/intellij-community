@@ -1,0 +1,8 @@
+// IGNORE_FIR
+// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
+@JvmInline
+value class V(val v: Int) {
+    override fun toString(): String {
+        return super.toString()
+    }
+}

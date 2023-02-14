@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
-import com.intellij.navigation.TargetPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -23,12 +23,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.navigation.ChooserKt.chooseTargetPopup;
-
-public class RenameElementAction extends AnAction implements UpdateInBackground {
+public class RenameElementAction extends AnAction {
 
   public RenameElementAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -65,7 +68,10 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
       return;
     }
 
-    List<Renamer> renamers = SlowOperations.allowSlowOperations(() -> getAvailableRenamers(dataContext).collect(Collectors.toList()));
+    List<Renamer> renamers;
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
+    }
     if (renamers.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")
@@ -82,38 +88,19 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
       renamers.get(0).performRename();
     }
     else {
-      chooseTargetPopup(
-        RefactoringBundle.message("what.would.you.like.to.do"),
-        renamers,
-        renamer -> TargetPresentation.builder(renamer.getPresentableText()).presentation(),
-        Renamer::performRename
-      ).showInBestPositionFor(dataContext);
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(renamers)
+        .setTitle(RefactoringBundle.message("what.would.you.like.to.do"))
+        .setRenderer(RenamerRenderer.INSTANCE)
+        .setItemChosenCallback(Renamer::performRename)
+        .createPopup()
+        .showInBestPositionFor(dataContext);
     }
   }
 
   @NotNull
   private static Stream<Renamer> getAvailableRenamers(@NotNull DataContext dataContext) {
-    return RenamerFactory.EP_NAME.extensions().flatMap(factory -> factory.createRenamers(dataContext).stream());
-  }
-
-  /**
-   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@code false}
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public final boolean isAvailableInEditorOnly() {
-    return false;
-  }
-
-  /**
-   * @deprecated no longer used since RenameElementAction doesn't extend BaseRefactoringAction anymore; use {@link #isRenameEnabledOnElements}
-   */
-  @SuppressWarnings("MethodMayBeStatic")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public final boolean isEnabledOnElements(PsiElement @NotNull [] elements) {
-    return isRenameEnabledOnElements(elements);
+    return RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(dataContext).stream());
   }
 
   public static boolean isRenameEnabledOnElements(PsiElement @NotNull [] elements) {

@@ -46,7 +46,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     }
   }
 
-  protected abstract void doFix(Project project, ProblemDescriptor descriptor);
+  protected abstract void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
 
   protected static void deleteElement(@NotNull PsiElement element) {
     element.delete();

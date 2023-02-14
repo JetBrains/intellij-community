@@ -21,7 +21,7 @@ public class TestTerminalBufferWatcher {
   private final TerminalTextBuffer myBuffer;
   private final Terminal myTerminal;
 
-  TestTerminalBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
+  public TestTerminalBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
     myBuffer = buffer;
     myTerminal = terminal;
   }

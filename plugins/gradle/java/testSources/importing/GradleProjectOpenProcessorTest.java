@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
@@ -15,17 +14,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.testFramework.utils.module.ModuleAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleImportingTestUtil;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
@@ -34,7 +32,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.executeOnEdt;
 
@@ -65,62 +62,64 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
     createProjectSubFile("foo/.idea/modules.xml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<project version=\"4\">\n" +
-                         "  <component name=\"ProjectModuleManager\">\n" +
-                         "    <modules>\n" +
-                         "      <module fileurl=\"file://$PROJECT_DIR$/foo.iml\" filepath=\"$PROJECT_DIR$/foo.iml\" />\n" +
-                         "      <module fileurl=\"file://$PROJECT_DIR$/bar.iml\" filepath=\"$PROJECT_DIR$/bar.iml\" />\n" +
-                         "    </modules>\n" +
-                         "  </component>\n" +
-                         "</project>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <project version="4">
+                             <component name="ProjectModuleManager">
+                               <modules>
+                                 <module fileurl="file://$PROJECT_DIR$/foo.iml" filepath="$PROJECT_DIR$/foo.iml" />
+                                 <module fileurl="file://$PROJECT_DIR$/bar.iml" filepath="$PROJECT_DIR$/bar.iml" />
+                               </modules>
+                             </component>
+                           </project>""");
     createProjectSubFile("foo/foo.iml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-                         "    <content url=\"file://$MODULE_DIR$\">\n" +
-                         "    </content>\n" +
-                         "  </component>\n" +
-                         "</module>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <module type="JAVA_MODULE" version="4">
+                             <component name="NewModuleRootManager" inherit-compiler-output="true">
+                               <content url="file://$MODULE_DIR$">
+                               </content>
+                             </component>
+                           </module>""");
     createProjectSubFile("foo/bar.iml",
-                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                         "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-                         "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n" +
-                         "  </component>\n" +
-                         "</module>");
+                         """
+                           <?xml version="1.0" encoding="UTF-8"?>
+                           <module type="JAVA_MODULE" version="4">
+                             <component name="NewModuleRootManager" inherit-compiler-output="true">
+                             </component>
+                           </module>""");
 
     Project fooProject = PlatformTestUtil.loadAndOpenProject(foo.toNioPath(), getTestRootDisposable());
-    AutoImportProjectTracker.getInstance(fooProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(getTestRootDisposable());
 
     try {
-      EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
-      assertModules(fooProject, "foo", "bar");
-
-      AsyncPromise<?> promise = new AsyncPromise<>();
-      final MessageBusConnection myBusConnection = fooProject.getMessageBus().connect();
-      myBusConnection.subscribe(ProjectDataImportListener.TOPIC, path -> promise.setResult(null));
-      createProjectSubFile("foo/.idea/gradle.xml",
-                           "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                           "<project version=\"4\">\n" +
-                           "  <component name=\"GradleSettings\">\n" +
-                           "    <option name=\"linkedExternalProjectsSettings\">\n" +
-                           "      <GradleProjectSettings>\n" +
-                           "        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\n" +
-                           "        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n" +
-                           "        <option name=\"gradleJvm\" value=\"" + GRADLE_JDK_NAME + "\" />\n" +
-                           "        <option name=\"modules\">\n" +
-                           "          <set>\n" +
-                           "            <option value=\"$PROJECT_DIR$\" />\n" +
-                           "          </set>\n" +
-                           "        </option>\n" +
-                           "        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\n" +
-                           "      </GradleProjectSettings>\n" +
-                           "    </option>\n" +
-                           "  </component>\n" +
-                           "</project>");
       edt(() -> UIUtil.dispatchAllInvocationEvents());
-      edt(() -> PlatformTestUtil.saveProject(fooProject));
-      edt(() -> PlatformTestUtil.waitForPromise(promise, TimeUnit.MINUTES.toMillis(1)));
+      ModuleAssertions.assertModules(fooProject, "foo", "bar");
+
+      GradleImportingTestUtil.waitForProjectReload(() -> {
+        createProjectSubFile("foo/.idea/gradle.xml",
+                             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                             "<project version=\"4\">\n" +
+                             "  <component name=\"GradleSettings\">\n" +
+                             "    <option name=\"linkedExternalProjectsSettings\">\n" +
+                             "      <GradleProjectSettings>\n" +
+                             "        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\n" +
+                             "        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n" +
+                             "        <option name=\"gradleJvm\" value=\"" + GRADLE_JDK_NAME + "\" />\n" +
+                             "        <option name=\"modules\">\n" +
+                             "          <set>\n" +
+                             "            <option value=\"$PROJECT_DIR$\" />\n" +
+                             "          </set>\n" +
+                             "        </option>\n" +
+                             "        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\n" +
+                             "      </GradleProjectSettings>\n" +
+                             "    </option>\n" +
+                             "  </component>\n" +
+                             "</project>");
+        edt(() -> UIUtil.dispatchAllInvocationEvents());
+        edt(() -> PlatformTestUtil.saveProject(fooProject));
+        return null;
+      });
       assertTrue("The module has not been linked",
                  ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, getModule(fooProject, "foo")));
     }
@@ -164,20 +163,22 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
     VirtualFile foo = createProjectSubDir("foo");
     createProjectSubFile("foo/build.gradle", "apply plugin: 'java'");
     createProjectSubFile("foo/.idea/inspectionProfiles/myInspections.xml",
-                         "<component name=\"InspectionProjectProfileManager\">\n" +
-                         "  <profile version=\"1.0\">\n" +
-                         "    <option name=\"myName\" value=\"myInspections\" />\n" +
-                         "    <option name=\"myLocal\" value=\"true\" />\n" +
-                         "    <inspection_tool class=\"MultipleRepositoryUrls\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
-                         "  </profile>\n" +
-                         "</component>");
+                         """
+                           <component name="InspectionProjectProfileManager">
+                             <profile version="1.0">
+                               <option name="myName" value="myInspections" />
+                               <option name="myLocal" value="true" />
+                               <inspection_tool class="MultipleRepositoryUrls" enabled="true" level="ERROR" enabled_by_default="true" />
+                             </profile>
+                           </component>""");
     createProjectSubFile("foo/.idea/inspectionProfiles/profiles_settings.xml",
-                         "<component name=\"InspectionProjectProfileManager\">\n" +
-                         "  <settings>\n" +
-                         "    <option name=\"PROJECT_PROFILE\" value=\"myInspections\" />\n" +
-                         "    <version value=\"1.0\" />\n" +
-                         "  </settings>\n" +
-                         "</component>");
+                         """
+                           <component name="InspectionProjectProfileManager">
+                             <settings>
+                               <option name="PROJECT_PROFILE" value="myInspections" />
+                               <version value="1.0" />
+                             </settings>
+                           </component>""");
     FileUtil.copyDir(new File(getProjectPath(), "gradle"), new File(getProjectPath(), "foo/gradle"));
 
     Project fooProject = null;

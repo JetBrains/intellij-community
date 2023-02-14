@@ -1,18 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.newBooleanMetric
-import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.vcs.commit.NonModalCommitCustomization.Companion.isNonModalCustomizationApplied
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.NON_MODAL_COMMIT_PROMOTION_ACCEPTED
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.NON_MODAL_COMMIT_PROMOTION_REJECTED
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.NON_MODAL_COMMIT_PROMOTION_SHOWN
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.NON_MODAL_COMMIT_STATE_CHANGED
+import com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector
 
-private const val COUNTER_GROUP = "vcs"
 private val appSettings get() = VcsApplicationSettings.getInstance()
 
 internal object NonModalCommitUsagesCollector {
@@ -20,19 +19,23 @@ internal object NonModalCommitUsagesCollector {
     val defaultSettings = VcsApplicationSettings()
 
     return mutableSetOf<MetricEvent>().apply {
-      addBoolIfDiffers(this, appSettings, defaultSettings, { it.COMMIT_FROM_LOCAL_CHANGES }, "non.modal.commit")
-      if (isNonModalCustomizationApplied()) add(newBooleanMetric("non.modal.commit.new.installation", true))
-      NonModalCommitPromoter.getPromotionState()?.let { add(newMetric("non.modal.commit.promotion", it)) }
+      addBoolIfDiffers(this, appSettings, defaultSettings, { it.COMMIT_FROM_LOCAL_CHANGES },
+                       VcsApplicationOptionsUsagesCollector.NON_MODEL_COMMIT)
+      if (NonModalCommitCustomization.isNonModalCustomizationApplied()) add(
+        VcsApplicationOptionsUsagesCollector.NON_MODEL_COMMIT_NEW_INSTALLATION.metric(true))
+      NonModalCommitPromoter.getPromotionState()?.let { add(VcsApplicationOptionsUsagesCollector.NON_MODEL_COMMIT_PROMOTION.metric(it)) }
     }
   }
 
-  fun logStateChanged(project: Project?) {
-    val data = FeatureUsageData().addEnabled(appSettings.COMMIT_FROM_LOCAL_CHANGES)
-    FUCounterUsageLogger.getInstance().logEvent(project, COUNTER_GROUP, "non.modal.commit.state.changed", data)
-  }
+  fun logStateChanged(project: Project?) = NON_MODAL_COMMIT_STATE_CHANGED.log(project, appSettings.COMMIT_FROM_LOCAL_CHANGES)
 
-  fun logPromotionEvent(project: Project, state: NonModalCommitPromotionState) =
-    FUCounterUsageLogger.getInstance().logEvent(project, COUNTER_GROUP, state.toEventId())
+  fun logPromotionEvent(project: Project, state: NonModalCommitPromotionState) = state.toEventId().log(project)
 }
 
-private fun NonModalCommitPromotionState.toEventId(): String = "non.modal.commit.promotion.${toLowerCase(name)}" // NON-NLS
+private fun NonModalCommitPromotionState.toEventId(): EventId {
+  return when (this) {
+    NonModalCommitPromotionState.SHOWN -> NON_MODAL_COMMIT_PROMOTION_SHOWN
+    NonModalCommitPromotionState.ACCEPTED -> NON_MODAL_COMMIT_PROMOTION_ACCEPTED
+    NonModalCommitPromotionState.REJECTED -> NON_MODAL_COMMIT_PROMOTION_REJECTED
+  }
+}

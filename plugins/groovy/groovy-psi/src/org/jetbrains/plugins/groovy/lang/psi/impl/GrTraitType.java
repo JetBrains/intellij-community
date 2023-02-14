@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -27,7 +28,7 @@ public final class GrTraitType extends PsiType {
     super(PsiAnnotation.EMPTY_ARRAY);
     myDelegate = delegate;
     myExprType = delegate.getConjuncts()[0];
-    myTraitTypes = ContainerUtil.newArrayList(delegate.getConjuncts(), 1, delegate.getConjuncts().length);
+    myTraitTypes = ContainerUtil.subArrayAsList(delegate.getConjuncts(), 1, delegate.getConjuncts().length);
   }
 
   @NotNull
@@ -36,6 +37,7 @@ public final class GrTraitType extends PsiType {
   }
 
   @NotNull
+  @Unmodifiable
   public List<PsiType> getTraitTypes() {
     return myTraitTypes;
   }

@@ -19,4 +19,7 @@ public class MismatchedStringCaseInspectionTest extends LightJavaCodeInsightFixt
   public void testMismatchedStringCase() {
     doTest();
   }
+  public void testMismatchedStringCaseSwitch() {
+    doTest();
+  }
 }

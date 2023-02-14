@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -21,6 +20,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -97,11 +97,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testLanguageLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "sourceCompatibility = 1.5\n" +
-      "compileTestJava {\n" +
-      "  sourceCompatibility = 1.8\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        sourceCompatibility = 1.5
+        compileTestJava {
+          sourceCompatibility = 1.8
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -133,11 +135,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testTargetLevel() throws Exception {
     importProject(
-      "apply plugin: 'java'\n" +
-      "targetCompatibility = 1.8\n" +
-      "compileJava {\n" +
-      "  targetCompatibility = 1.5\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        targetCompatibility = 1.8
+        compileJava {
+          targetCompatibility = 1.5
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -149,16 +153,18 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   @TargetVersions("3.4+")
   public void testJdkName() throws Exception {
-    Sdk myJdk = createJdk("MyJDK");
+    Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
     importProject(
-      "apply plugin: 'java'\n" +
-      "apply plugin: 'idea'\n" +
-      "idea {\n" +
-      "  module {\n" +
-      "    jdkName = 'MyJDK'\n" +
-      "  }\n" +
-      "}\n"
+      """
+        apply plugin: 'java'
+        apply plugin: 'idea'
+        idea {
+          module {
+            jdkName = 'MyJDK'
+          }
+        }
+        """
     );
 
     assertModules("project", "project.main", "project.test");
@@ -173,7 +179,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     );
     assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(Collections.singletonList("project.main")));
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(Collections.singletonList("project.main")));
     assertModules("project", "project.test");
 
     importProject();
@@ -183,10 +189,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Test
   public void testESLinkedProjectIds() throws Exception {
     // main build
-    createSettingsFile("rootProject.name = 'multiproject'\n" +
-                       "include ':app'\n" +
-                       "include ':util'\n" +
-                       "includeBuild 'included-build'");
+    createSettingsFile("""
+                         rootProject.name = 'multiproject'
+                         include ':app'
+                         include ':util'
+                         includeBuild 'included-build'""");
     createProjectSubFile("build.gradle", "allprojects { apply plugin: 'java' }");
 
     // main buildSrc
@@ -278,7 +285,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testSourceSetModuleNamesForDeduplicatedMainModule() throws Exception {
-    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/app.iml", StdModuleTypes.JAVA.getId());
     modelsProvider.newModule(getProjectPath() + "/my_group.app.main.iml", StdModuleTypes.JAVA.getId());
     edt(() -> ApplicationManager.getApplication().runWriteAction(modelsProvider::commit));
@@ -309,7 +316,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
-  public void testImportProjectWithExistingFakeModule() {
+  public void testImportProjectWithExistingFakeModule() throws IOException {
     // After first opening of the project, IJ creates a fake module at the project root
     edt(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -325,10 +332,23 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertFalse(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module));
 
-    assertNoThrowable(() -> importProject());
+    importProject("");
 
     Module moduleAfter = ModuleManager.getInstance(myProject).findModuleByName("project");
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));
+  }
+
+
+  @Test
+  public void testProjectLibraryCoordinatesAreSet() throws Exception {
+    importProject(createBuildScriptBuilder()
+                    .withJavaPlugin()
+                    .withMavenCentral()
+                    .addImplementationDependency("junit:junit:4.0")
+                    .generate());
+
+    assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
+                                    "junit", "junit", "4.0");
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {

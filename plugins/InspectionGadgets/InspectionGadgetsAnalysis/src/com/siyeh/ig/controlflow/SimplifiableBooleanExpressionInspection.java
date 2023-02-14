@@ -44,8 +44,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
   @Override
   protected String buildErrorString(Object... infos) {
     final Object info = infos[0];
-    if (info instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)info;
+    if (info instanceof PsiPrefixExpression prefixExpression) {
       return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
                                              calculateReplacementExpression(prefixExpression, new CommentTracker()));
     }
@@ -72,16 +71,14 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String replacement;
-      if (element instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element;
+      if (element instanceof PsiPrefixExpression prefixExpression) {
         replacement = calculateReplacementExpression(prefixExpression, commentTracker);
       }
-      else if (element instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
+      else if (element instanceof PsiBinaryExpression binaryExpression) {
         replacement = calculateReplacementExpression(binaryExpression, commentTracker);
       }
       else {
@@ -98,10 +95,9 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
   @NonNls
   static String calculateReplacementExpression(PsiPrefixExpression expression, CommentTracker commentTracker) {
     final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
-    if (!(operand instanceof PsiBinaryExpression)) {
+    if (!(operand instanceof PsiBinaryExpression binaryExpression)) {
       return null;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
     final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
     if (lhs == null || rhs == null) {
@@ -160,7 +156,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
   private static class SimplifiableBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) return;
 
@@ -176,7 +172,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     }
 
     @Override
-    public void visitBinaryExpression(PsiBinaryExpression disjunction) {
+    public void visitBinaryExpression(@NotNull PsiBinaryExpression disjunction) {
       super.visitBinaryExpression(disjunction);
       if (!JavaTokenType.OROR.equals(disjunction.getOperationTokenType())) return;
       PsiPolyadicExpression conjunction =

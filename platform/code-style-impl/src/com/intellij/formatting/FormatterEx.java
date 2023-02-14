@@ -6,8 +6,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class FormatterEx implements Formatter {
 
@@ -33,6 +36,12 @@ public abstract class FormatterEx implements Formatter {
                                        final int offset,
                                        final TextRange affectedRange);
 
+  @Nullable
+  @ApiStatus.Internal
+  public abstract List<String> getLineIndents(final FormattingModel model,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions);
+
 
   public abstract void adjustLineIndentsForRange(final FormattingModel model,
                                                  final CodeStyleSettings settings,
@@ -44,7 +53,7 @@ public abstract class FormatterEx implements Formatter {
                                          final PsiFile file,
                                          final TextRange textRange);
 
-  public abstract void setProgressTask(@NotNull FormattingProgressTask progressIndicator);
+  public abstract void setProgressTask(@NotNull FormattingProgressCallback progressIndicator);
 
   /**
    * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,

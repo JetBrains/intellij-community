@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.util.TipAndTrickBean;
@@ -18,7 +18,7 @@ public abstract class IdeResourcesTestCase extends LightPlatformTestCase {
     List<TipAndTrickBean> tips = TipAndTrickBean.EP_NAME.getExtensionList();
     assertNotEmpty(tips);
     for (TipAndTrickBean tip : tips) {
-      URL url = tip.getPluginDescriptor().getPluginClassLoader().getResource("tips/" + tip.fileName);
+      URL url = tip.getPluginDescriptor().getClassLoader().getResource("tips/" + tip.fileName);
       if (url == null) {
         errors.add(tip.fileName);
       }

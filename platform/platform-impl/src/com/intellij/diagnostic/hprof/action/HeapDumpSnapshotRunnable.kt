@@ -37,11 +37,11 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.MemoryDumpHelper
-import com.intellij.util.io.exists
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.io.path.exists
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun usedMemory(withGC: Boolean): Long {
@@ -208,7 +208,7 @@ class HeapDumpSnapshotRunnable(
             val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
               DiagnosticBundle.message("heap.dump.analysis.notification.title"),
               DiagnosticBundle.message("heap.dump.snapshot.created", hprofPath.toString(), productName),
-              NotificationType.INFORMATION, null)
+              NotificationType.INFORMATION)
             if (ApplicationManager.getApplication().isInternal) {
               notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
                 RevealFileAction.openFile(hprofPath.toFile())
@@ -224,7 +224,7 @@ class HeapDumpSnapshotRunnable(
           val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
             DiagnosticBundle.message("heap.dump.analysis.notification.title"),
             DiagnosticBundle.message("heap.dump.snapshot.created.no.analysis", hprofPath.toString()),
-            NotificationType.INFORMATION, null)
+            NotificationType.INFORMATION)
           notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
             RevealFileAction.openFile(hprofPath.toFile())
           })

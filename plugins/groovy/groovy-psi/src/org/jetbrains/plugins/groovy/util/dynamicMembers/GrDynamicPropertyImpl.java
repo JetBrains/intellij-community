@@ -142,21 +142,6 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
-  public String getText() {
-    return null;
-  }
-
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-
-  }
-
-  @Override
-  public PsiElement copy() {
-    return null;
-  }
-
-  @Override
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     return myField.getNameIdentifierGroovy();

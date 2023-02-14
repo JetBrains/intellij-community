@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.search.ConfigurableHit;
@@ -10,14 +10,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +46,10 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private Configurable myLastSelected;
 
   private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
+  private final Alarm myUpdatingAlarm;
 
   SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
+    myUpdatingAlarm = new Alarm(project != null ? project : ApplicationManager.getApplication());
     SearchableOptionsRegistrarImpl optionRegistrar =
       (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
     if (optionRegistrar == null || !optionRegistrar.isInitialized()) {
@@ -55,7 +60,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
         // must be set only after initializing (to avoid concurrent modifications)
         searchableOptionRegistrar = r;
         ApplicationManager.getApplication().invokeLater(() -> {
-           update(r, DocumentEvent.EventType.CHANGE, false, true);
+           update(DocumentEvent.EventType.CHANGE, false, true);
         }, ModalityState.any(), project == null ? ApplicationManager.getApplication().getDisposed() : project.getDisposed());
       });
     }
@@ -69,10 +74,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     mySearch.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent event) {
-        SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
-        if (registrar != null) {
-          update(registrar, event.getType(), true, false);
-        }
+        update(event.getType(), true, false);
         // request focus if needed on changing the filter text
         IdeFocusManager manager = IdeFocusManager.findInstanceByComponent(mySearch);
         if (manager.getFocusedDescendantFor(mySearch) == null) {
@@ -126,15 +128,24 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return true;
   }
 
-  String getFilterText() {
+  void setFilterText(@NotNull String text) {
+    mySearch.setText(text);
+  }
+
+  public boolean isEmptyFilter() {
+    return StringUtil.isEmpty(mySearch.getText());
+  }
+
+  @NotNull String getFilterText() {
     String text = mySearch.getText();
-    if (text != null) {
-      text = text.trim();
-      if (1 < text.length()) {
-        return text;
-      }
+    return text == null ? "" : text.trim();
+  }
+
+  @NotNull String getSpotlightFilterText() {
+    if (myHits != null) {
+      return myHits.getSpotlightFilter();
     }
-    return "";
+    return getFilterText();
   }
 
   private void setHoldingFilter(boolean holding) {
@@ -154,11 +165,15 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     finally {
       myUpdateRejected = false;
     }
+    update(DocumentEvent.EventType.CHANGE, false, true);
+  }
 
-    SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
-    if (registrar != null) {
-      update(registrar, DocumentEvent.EventType.CHANGE, false, true);
-    }
+  private void update(@NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
+    myUpdatingAlarm.cancelAllRequests();
+    myUpdatingAlarm.addRequest(() -> {
+      SearchableOptionsRegistrar registrar = searchableOptionRegistrar;
+      if (registrar != null) update(registrar, type, adjustSelection, now);
+    }, 100, ModalityState.any());
   }
 
   private void update(@NotNull SearchableOptionsRegistrar optionRegistrar, @NotNull DocumentEvent.EventType type, boolean adjustSelection, boolean now) {
@@ -169,6 +184,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     String text = getFilterText();
     if (text.isEmpty()) {
       myContext.setHoldingFilter(false);
+      myHits = null;
       myFiltered = null;
     }
     else {
@@ -208,19 +224,22 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     if (candidate == null && current != null) {
       myLastSelected = current;
     }
-    if (myFiltered != null) {
-      SettingsCounterUsagesCollector.SEARCH.log(getConfigurableClass(candidate), myFiltered.size(), text.length());
+
+    if (myFiltered != null &&
+        candidate != null) {
+      SettingsCounterUsagesCollector.SEARCH.log(getUnnamedConfigurable(candidate).getClass(),
+                                                myFiltered.size(),
+                                                text.length());
     }
+
     SimpleNode node = !adjustSelection ? null : findNode(candidate);
     fireUpdate(node, adjustSelection, now);
   }
 
-  @Nullable
-  private static Class<?> getConfigurableClass(Configurable candidate) {
-    if (candidate instanceof ConfigurableWrapper) {
-      return ((ConfigurableWrapper) candidate).getConfigurable().getClass();
-    }
-    return candidate != null ? candidate.getClass() : null;
+  private static @NotNull UnnamedConfigurable getUnnamedConfigurable(@NotNull Configurable candidate) {
+    return candidate instanceof ConfigurableWrapper ?
+           ((ConfigurableWrapper)candidate).getConfigurable() :
+           candidate;
   }
 
   private static Configurable findConfigurable(Set<? extends Configurable> configurables, Set<? extends Configurable> hits) {

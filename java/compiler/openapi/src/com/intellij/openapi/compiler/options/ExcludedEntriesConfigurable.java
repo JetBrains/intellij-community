@@ -12,7 +12,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -78,7 +77,6 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
     for (ExcludeEntryDescription description : myExcludeEntryDescriptions) {
       myConfiguration.addExcludeEntryDescription(description.copy(myProject));
     }
-    FileStatusManager.getInstance(myProject).fileStatusesChanged(); // refresh exclude from compile status
   }
 
   @Override

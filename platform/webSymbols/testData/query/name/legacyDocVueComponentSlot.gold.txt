@@ -1,0 +1,15 @@
+[
+ {
+  matchedName: "html/slots/foo",
+  origin: "test-lib@2.0.0-rc.24 (vue)",
+  complete: true,
+  description: "<p>The foo slot</p>",
+  priority: NORMAL,
+  segments: [
+   {
+    name-part: "foo",
+    symbol: <self>,
+   },
+  ],
+ },
+]

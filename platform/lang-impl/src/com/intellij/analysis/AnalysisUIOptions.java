@@ -5,6 +5,7 @@ package com.intellij.analysis;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -63,10 +65,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   }
 
   public AnAction createGroupBySeverityAction(final InspectionResultsView view) {
-    return new InspectionResultsViewToggleAction(view,
-                                                 InspectionsBundle.message("inspection.action.group.by.severity"),
-                                                 InspectionsBundle.message("inspection.action.group.by.severity.description"),
-                                                 AllIcons.Nodes.SortBySeverity) {
+    return new InspectionResultsViewToggleAction(
+      view,
+      InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.group.by.severity.new" : "inspection.action.group.by.severity"),
+      InspectionsBundle.message("inspection.action.group.by.severity.description"),
+      AllIcons.Nodes.SortBySeverity) {
 
 
       @Override
@@ -77,6 +80,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       @Override
       protected void setSelected(boolean state) {
         GROUP_BY_SEVERITY = state;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
   }
@@ -97,11 +105,17 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       public void setSelected(boolean state) {
         FILTER_RESOLVED_ITEMS = state;
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
   }
 
   public AnAction createGroupByDirectoryAction(final InspectionResultsView view) {
-    String message = InspectionsBundle.message("inspection.action.group.by.directory");
+    String message = InspectionsBundle.message(ExperimentalUI.isNewUI() ? "inspection.action.group.by.directory.new" :
+                                               "inspection.action.group.by.directory");
     return new InspectionResultsViewToggleAction(view, message, message, AllIcons.Actions.GroupByPackage) {
 
       @Override
@@ -112,6 +126,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       @Override
       public void setSelected(boolean state) {
         SHOW_STRUCTURE = state;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
   }

@@ -7,7 +7,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -18,6 +17,7 @@ import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.KeyStroke.getKeyStroke
+import javax.swing.ListCellRenderer
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
@@ -51,7 +51,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   constructor(item: T, items: List<T>, onChoose: Consumer<T> = Consumer { }) : this(item, { link ->
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(items)
-      .setRenderer(LinkCellRenderer(link))
+      .setRenderer(link.createRenderer())
       .setItemChosenCallback {
         onChoose.accept(it)
         link.selectedItem = it
@@ -83,6 +83,8 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   protected open fun itemToString(item: T) = item.toString()
 
   protected open fun popupPoint() = Point(0, height + scale(4))
+
+  open fun createRenderer(): ListCellRenderer<in T> = LinkCellRenderer(this)
 }
 
 
@@ -97,7 +99,6 @@ private class LinkCellRenderer(private val link: Component) : DefaultListCellRen
   override fun getPreferredSize() = coerce(super.getPreferredSize())
   override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, selected: Boolean, focused: Boolean): Component {
     super.getListCellRendererComponent(list, value, index, selected, false)
-    if (!selected) background = UIUtil.getLabelBackground()
     border = JBUI.Borders.empty(0, 5, 0, 10)
     return this
   }

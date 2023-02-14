@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.List;
 
-/**
- * @author peter
- */
 public class CollectionElementInvocationHandler extends DomInvocationHandler {
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,

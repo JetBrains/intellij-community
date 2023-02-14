@@ -17,23 +17,15 @@ package com.intellij.codeInsight.completion;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author peter
- */
 public interface
   CodeCompletionFeatures {
   @NonNls String EXCLAMATION_FINISH = "editing.completion.finishByExclamation";
   @NonNls String SECOND_BASIC_COMPLETION = "editing.completion.second.basic";
   @NonNls String EDITING_COMPLETION_SMARTTYPE_GENERAL = "editing.completion.smarttype.general";
-  @NonNls String EDITING_COMPLETION_BASIC = "editing.completion.basic";
-  @NonNls String EDITING_COMPLETION_CLASSNAME = "editing.completion.classname";
   @NonNls String EDITING_COMPLETION_CAMEL_HUMPS = "editing.completion.camelHumps";
   @NonNls String EDITING_COMPLETION_REPLACE = "editing.completion.replace";
   @NonNls String EDITING_COMPLETION_FINISH_BY_DOT_ETC = "editing.completion.finishByDotEtc";
   @NonNls String EDITING_COMPLETION_FINISH_BY_CONTROL_DOT = "editing.completion.finishByCtrlDot";
   @NonNls String EDITING_COMPLETION_FINISH_BY_SMART_ENTER = "editing.completion.finishBySmartEnter";
-
-  @NonNls String EDITING_COMPLETION_CONTROL_ENTER = "editing.completion.finishByControlEnter";
   @NonNls String EDITING_COMPLETION_CONTROL_ARROWS = "editing.completion.cancelByControlArrows";
-  @NonNls String EDITING_COMPLETION_CHANGE_SORTING = "editing.completion.changeSorting";
 }

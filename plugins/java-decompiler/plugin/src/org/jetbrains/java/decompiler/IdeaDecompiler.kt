@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginDescriptorLoader
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -29,6 +28,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
+import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
@@ -57,7 +57,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
         IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
         IFernflowerPreferences.REMOVE_BRIDGE to "1",
-        IFernflowerPreferences.LITERALS_AS_IS to "1",
         IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
@@ -101,11 +100,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
               PluginManagerCore.disablePlugin(id)
 
               val plugin = PluginManagerCore.getPlugin(id)
-              if (plugin is IdeaPluginDescriptorImpl) {
-                val descriptor = PluginDescriptorLoader.loadFullDescriptor(plugin)
-                if (DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
-                  val task = DynamicPlugins.getPluginUnloadingTask(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true, save = false))
-                  ApplicationManager.getApplication().invokeLater(task)
+              if (plugin is IdeaPluginDescriptorImpl && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
+                ApplicationManager.getApplication().invokeLater {
+                  DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
                 }
               }
             }
@@ -168,7 +165,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
           return Strings.EMPTY_CHAR_SEQUENCE
         }
-        ApplicationManager.getApplication().isUnitTestMode -> throw AssertionError(file.url, e)
+        ApplicationManager.getApplication().isUnitTestMode && e !is ClassFormatException -> throw AssertionError(file.url, e)
         else -> throw CannotDecompileException(file.url, e)
       }
     }

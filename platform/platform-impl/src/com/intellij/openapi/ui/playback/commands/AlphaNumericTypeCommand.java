@@ -2,10 +2,10 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -20,7 +20,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   }
 
   @Override
-  public Promise<Object> _execute(PlaybackContext context) {
+  public @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     return type(context, getText());
   }
 
@@ -49,17 +49,9 @@ public class AlphaNumericTypeCommand extends TypeCommand {
           final char next = text.charAt(i + 1);
           boolean processed = true;
           switch (next) {
-            case 'n':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            case 't':
-              type(robot, KeyEvent.VK_TAB, 0);
-              break;
-            case 'r':
-              type(robot, KeyEvent.VK_ENTER, 0);
-              break;
-            default:
-              processed = false;
+            case 'n', 'r' -> type(robot, KeyEvent.VK_ENTER, 0);
+            case 't' -> type(robot, KeyEvent.VK_TAB, 0);
+            default -> processed = false;
           }
 
           if (processed) {

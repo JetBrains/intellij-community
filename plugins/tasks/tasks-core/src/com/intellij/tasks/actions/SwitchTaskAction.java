@@ -26,7 +26,6 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.tools.SimpleActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,12 +53,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
       }
     };
-  }
-
-  @NotNull
-  @Override
-  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-    return new DefaultActionGroup();
   }
 
   @Override
@@ -94,6 +87,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static boolean isImplicit(LocalTask activeTask) {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
@@ -117,9 +115,8 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
                                            boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
-    final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.emptyList() :
-                               createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+                               createPopupActionGroup(project, shiftPressed, PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? TaskBundle.message("popup.title.switch.to.task") : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<>(title, items) {
       @Override
@@ -129,7 +126,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
           return FINAL_CHOICE;
         }
         ActionGroup group = createActionsStep(selectedValues, project, shiftPressed);
-        DataContext dataContext = DataManager.getInstance().getDataContext(componentRef.get());
+        DataContext dataContext = DataContext.EMPTY_CONTEXT;
         return JBPopupFactory.getInstance().createActionsStep(
           group, dataContext, null, false, false, null, null, true, 0, false);
       }
@@ -171,7 +168,6 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
         }
       });
     }
-    componentRef.set(popup.getComponent());
     if (items.size() <= 2) {
       return popup;
     }
@@ -202,7 +198,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
   }
 
   private static ActionGroup createActionsStep(final List<TaskListItem> tasks, final Project project, final Ref<Boolean> shiftPressed) {
-    SimpleActionGroup group = new SimpleActionGroup();
+    DefaultActionGroup group = new DefaultActionGroup();
     final TaskManager manager = TaskManager.getManager(project);
     final LocalTask task = tasks.get(0).getTask();
     if (tasks.size() == 1 && task != null) {

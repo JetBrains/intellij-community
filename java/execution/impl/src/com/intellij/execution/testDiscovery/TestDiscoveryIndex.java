@@ -49,7 +49,7 @@ public final class TestDiscoveryIndex implements Disposable {
   final static class MyPostStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
 

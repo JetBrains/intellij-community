@@ -12,8 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is for internal use, in order to get instance of the application-level library table, use {@link LibraryTablesRegistrar#getLibraryTable()}
+ * @deprecated Use {@link com.intellij.openapi.roots.libraries.LibraryTablesRegistrar#getLibraryTable()} instead
  */
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public class ApplicationLibraryTable extends LibraryTableBase {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     @NotNull
@@ -55,9 +57,5 @@ public class ApplicationLibraryTable extends LibraryTableBase {
   @Override
   public LibraryTablePresentation getPresentation() {
     return GLOBAL_LIBRARY_TABLE_PRESENTATION;
-  }
-
-  public static String getExternalFileName() {
-    return "applicationLibraries";
   }
 }

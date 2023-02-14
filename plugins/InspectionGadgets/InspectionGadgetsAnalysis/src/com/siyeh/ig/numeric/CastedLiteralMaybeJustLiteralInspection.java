@@ -39,19 +39,16 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
     if (expression instanceof PsiLiteralExpression) {
       out.append(expression.getText()).append(getSuffix());
     }
-    else if (expression instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+    else if (expression instanceof PsiPrefixExpression prefixExpression) {
       out.append(prefixExpression.getOperationSign().getText());
       return buildReplacementText(prefixExpression.getOperand(), out);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       out.append('(');
       buildReplacementText(parenthesizedExpression.getExpression(), out);
       out.append(')');
     }
-    else if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+    else if (expression instanceof PsiTypeCastExpression typeCastExpression) {
       buildReplacementText(typeCastExpression.getOperand(), out);
     }
     else {
@@ -89,12 +86,11 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiTypeCastExpression)) {
+      if (!(element instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)element;
       PsiReplacementUtil.replaceExpression(typeCastExpression, replacementString);
     }
   }
@@ -107,7 +103,7 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
   private class CastedLiteralMayBeJustLiteralVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!getTypeBeforeCast().equals(type)) {
@@ -117,10 +113,9 @@ abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
       while (parent instanceof PsiPrefixExpression || parent instanceof PsiParenthesizedExpression) {
         parent = parent.getParent();
       }
-      if (!(parent instanceof PsiTypeCastExpression)) {
+      if (!(parent instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       final PsiType castType = typeCastExpression.getType();
       if (!getCastType().equals(castType)) {
         return;

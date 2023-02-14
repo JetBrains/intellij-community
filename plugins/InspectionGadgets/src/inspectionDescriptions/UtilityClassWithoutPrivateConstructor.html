@@ -1,15 +1,14 @@
 <html>
 <body>
-Reports utility classes which do not have <b>private</b> constructors.
-Utility classes have all fields and methods declared <b>static</b>. Giving such classes a <b>private</b>
-constructor prevents them from being inadvertently instantiated.
+Reports utility classes without <code>private</code> constructors.
+<p>Utility classes have all fields and methods declared as <code>static</code>. Creating <code>private</code>
+constructors in utility classes prevents them from being accidentally instantiated.
 <!-- tooltip end -->
 <p>
-Use the list below to specify special annotations. Classes annotated with one of
-these annotations will be ignored by this inspection.
+  Use the <b>Ignore if annotated by</b> option to specify special annotations. The inspection ignores classes marked with one of
+these annotations.
 <p>
-Use the checkbox below to ignore classes which only have a main method and no other methods.
-<p>
-
+Use the <b>Ignore classes with only a main method</b> option to ignore classes with no methods other than the main one.
+</p>
 </body>
 </html>

@@ -44,7 +44,7 @@ public interface SyntaxTreeBuilder {
    *
    * @param type new type for the current token.
    */
-  void remapCurrentToken(IElementType type);
+  void remapCurrentToken(@NotNull IElementType type);
 
   /**
    * Subscribe for notification on default whitespace and comments skipped events.
@@ -56,7 +56,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead.
    *
-   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element which {@link #getTokenType()} will return if we call advance {@code steps} times in a row
    */
   @Nullable
@@ -65,7 +65,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead/behind.
    *
-   * @param steps 0 is current token (i.e. the same {@link PsiBuilder#getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link PsiBuilder#getTokenType()} returns)
    * @return type element ahead or behind, including whitespace/comment tokens
    */
   @Nullable
@@ -74,7 +74,7 @@ public interface SyntaxTreeBuilder {
   /**
    * See what token type is in {@code steps} ahead/behind current position.
    *
-   * @param steps 0 is current token (i.e. the same {@link #getTokenType()} returns)
+   * @param steps 0 is current token (i.e., the same {@link #getTokenType()} returns)
    * @return offset type element ahead or behind, including whitespace/comment tokens, -1 if first token,
    * {@code getOriginalText().getLength()} at end
    */

@@ -1,67 +1,58 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
+import com.intellij.util.Consumer
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import java.util.concurrent.ConcurrentHashMap
-
-internal class ToolboxSettingsActionRegistryState: BaseState() {
-  val knownActions by list<String>()
-}
+import org.jetbrains.annotations.Nls
+import java.util.*
 
 @Service(Service.Level.APP)
-@State(name = "toolbox-update-state", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
-internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<ToolboxSettingsActionRegistryState>(ToolboxSettingsActionRegistryState()), Disposable {
-  private val pendingActions : MutableMap<String, AnAction> = ConcurrentHashMap()
+class ToolboxSettingsActionRegistry : Disposable {
+  private val readActions = Collections.synchronizedSet(HashSet<String>())
+  private val pendingActions = Collections.synchronizedList(LinkedList<ToolboxUpdateAction>())
 
-  private val alarm = MergingUpdateQueue("toolbox-updates", 500, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD).usePassThroughInUnitTestMode()
+  private val alarm = MergingUpdateQueue("toolbox-updates", 500, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD).usePassThroughInUnitTestMode()
 
   override fun dispose() = Unit
+
+  fun isNewAction(actionId: String) = actionId !in readActions
+
+  fun markAsRead(actionId: String) {
+    readActions.add(actionId)
+  }
 
   fun scheduleUpdate() {
     alarm.queue(object: Update(this){
       override fun run() {
-        //we would not like it to overflow
-        if (state.knownActions.size > 300) {
-          val tail = state.knownActions.toList().takeLast(30).toHashSet()
-          state.knownActions.clear()
-          state.knownActions.addAll(tail)
-          state.intIncrementModificationCount()
-        }
-
-        val ids = pendingActions.keys.toSortedSet()
-        val iconState = if (!state.knownActions.containsAll(ids)) {
-          state.knownActions.addAll(ids)
-          state.intIncrementModificationCount()
-
-          SettingsEntryPointAction.IconState.ApplicationUpdate
-        } else {
-          SettingsEntryPointAction.IconState.Current
-        }
-
-        invokeLater {
-          SettingsEntryPointAction.updateState(iconState)
-        }
+        SettingsEntryPointAction.updateState()
       }
     })
   }
 
-  fun registerUpdateAction(lifetime: Disposable, persistentActionId: String, action: AnAction) {
+  internal fun registerUpdateAction(action: ToolboxUpdateAction) {
+    action.registry = this
+
     val dispose = Disposable {
-      pendingActions.remove(persistentActionId, action)
+      pendingActions.remove(action)
       scheduleUpdate()
     }
 
-    pendingActions[persistentActionId] = action
-    if (!Disposer.tryRegister(lifetime, dispose)) {
+    pendingActions += action
+    ApplicationManager.getApplication().messageBus.syncPublisher(UpdateActionsListener.TOPIC).actionReceived(action)
+
+    if (!Disposer.tryRegister(action.lifetime, dispose)) {
       Disposer.dispose(dispose)
       return
     }
@@ -69,9 +60,59 @@ internal class ToolboxSettingsActionRegistry : SimplePersistentStateComponent<To
     scheduleUpdate()
   }
 
-  fun getActions() : List<AnAction> = pendingActions.entries.sortedBy { it.key }.map { it.value }
+  fun getActions() : List<SettingsEntryPointAction.UpdateAction> = ArrayList(pendingActions).sortedBy { it.actionId }
 }
 
 class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
   override fun getUpdateActions(context: DataContext) = service<ToolboxSettingsActionRegistry>().getActions()
+}
+
+internal class ToolboxUpdateAction(
+  val actionId: String,
+  val lifetime: Disposable,
+  text: @Nls String,
+  description: @Nls String,
+  private val actionHandler: Consumer<AnActionEvent>,
+  val restartRequired: Boolean
+) : SettingsEntryPointAction.UpdateAction(text) {
+  lateinit var registry : ToolboxSettingsActionRegistry
+
+  init {
+    templatePresentation.description = description
+  }
+
+  override fun isIdeUpdate() = true
+
+  override fun isRestartRequired(): Boolean {
+    return restartRequired
+  }
+
+  override fun isNewAction(): Boolean {
+    return registry.isNewAction(actionId)
+  }
+
+  override fun markAsRead() {
+    registry.markAsRead(actionId)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    actionHandler.consume(e)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (Disposer.isDisposed(lifetime)) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+}
+
+interface UpdateActionsListener: EventListener {
+  companion object {
+    val TOPIC = Topic(UpdateActionsListener::class.java)
+  }
+
+  fun actionReceived(action: SettingsEntryPointAction.UpdateAction)
 }

@@ -112,7 +112,7 @@ public class BackPropagation {
       if (x - y > -1 && x <= y) {}
       if (x - y < -1 && x <= y) {}
       if (x - y == y && x == y) {}
-      if (x - y < y && (x == y || x < y)) {}
+      if (x - y < y && (<warning descr="Condition 'x == y' is always 'false' when reached">x == y</warning> || x < y)) {}
     }
   }
 
@@ -134,5 +134,10 @@ public class BackPropagation {
       return 100;
     }
     return x * 2;
+  }
+
+  public void backPropagationMinValue(int x) {
+    if (<warning descr="Condition 'x - Integer.MIN_VALUE == x + Integer.MIN_VALUE' is always 'true'">x - Integer.MIN_VALUE == x + Integer.MIN_VALUE</warning>) {}
+    if (<warning descr="Condition 'x - 2_000_000_000 - 2_000_000_000 == x + 294967296' is always 'true'">x - 2_000_000_000 - 2_000_000_000 == x + 294967296</warning>) {}
   }
 }

@@ -1,34 +1,36 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.impl.analysis.MoveAnnotationToPackageInfoFileFix;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefClass;
-import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreatePackageInfoAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Contract;
+import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MissingPackageInfoInspection extends BaseGlobalInspection {
+public class MissingPackageInfoInspection extends PackageGlobalInspection {
 
   @Nullable
   @Override
@@ -37,59 +39,30 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
-                                                           @NotNull AnalysisScope scope,
-                                                           @NotNull InspectionManager manager,
-                                                           @NotNull GlobalInspectionContext globalContext) {
-    if (!(refEntity instanceof RefPackage)) {
-      return null;
-    }
-    final RefPackage refPackage = (RefPackage)refEntity;
+  public CommonProblemDescriptor @Nullable [] checkPackage(@NotNull RefPackage refPackage,
+                                                           @NotNull AnalysisScope analysisScope,
+                                                           @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
     final String packageName = refPackage.getQualifiedName();
-    final Project project = globalContext.getProject();
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-    if (hasPackageInfoFile(aPackage)) {
-      return null;
-    }
-    final List<RefEntity> children = refPackage.getChildren();
-    boolean hasClasses = false;
-    for (RefEntity child : children) {
-      if (child instanceof RefClass) {
-        hasClasses = true;
-        break;
-      }
-    }
-    if (!hasClasses) {
+    final Project project = globalInspectionContext.getProject();
+    final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(packageName));
+    boolean needsPackageInfo =
+      ReadAction.compute(() -> aPackage != null &&
+                               MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) == null && aPackage.getClasses().length > 0);
+    if (!needsPackageInfo) {
       return null;
     }
     if (PsiUtil.isLanguageLevel5OrHigher(aPackage)) {
       return new CommonProblemDescriptor[] {
-        manager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageName))};
+        inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageName))};
     }
     else {
       return new CommonProblemDescriptor[] {
-        manager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageName))};
+        inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageName))};
     }
   }
 
-  @Contract("null -> true")
-  static boolean hasPackageInfoFile(PsiPackage aPackage) {
-    if (aPackage == null) {
-      return true;
-    }
-    final PsiDirectory[] directories = aPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      final boolean packageInfoFound = directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null;
-      final boolean packageDotHtmlFound = directory.findFile("package.html") != null;
-      if (packageInfoFound || packageDotHtmlFound) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static class LocalMissingPackageInfoInspection extends
-                                                         BaseSharedLocalInspection<MissingPackageInfoInspection> {
+  private static class LocalMissingPackageInfoInspection extends BaseSharedLocalInspection<MissingPackageInfoInspection> {
 
     LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {
       super(settingsDelegate);
@@ -111,13 +84,20 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
         }
 
         @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor) {
+        protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           DataManager.getInstance()
                      .getDataContextFromFocusAsync()
                      .onSuccess(context -> {
                        final AnActionEvent event = new AnActionEvent(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
                        new CreatePackageInfoAction().actionPerformed(event);
                      });
+        }
+
+        @Override
+        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+          Icon icon = FileTypeRegistry.getInstance().getFileTypeByFileName("package-info.java").getIcon();
+          HtmlChunk fragment = HtmlChunk.fragment(HtmlChunk.text(getFamilyName()), HtmlChunk.icon("file", icon));
+          return new IntentionPreviewInfo.Html(fragment);
         }
       };
     }
@@ -138,18 +118,17 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     public BaseInspectionVisitor buildVisitor() {
       return new BaseInspectionVisitor() {
         @Override
-        public void visitJavaFile(PsiJavaFile file) {
+        public void visitJavaFile(@NotNull PsiJavaFile file) {
           final PsiPackageStatement packageStatement = file.getPackageStatement();
           if (packageStatement == null) {
             return;
           }
           final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
           final PsiElement target = packageReference.resolve();
-          if (!(target instanceof PsiPackage)) {
+          if (!(target instanceof PsiPackage aPackage)) {
             return;
           }
-          final PsiPackage aPackage = (PsiPackage)target;
-          if (hasPackageInfoFile(aPackage)) {
+          if (MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) != null) {
             return;
           }
           registerError(packageReference, packageStatement);

@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,31 +19,13 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   /**
    * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated(forRemoval = true)
   protected LineAnnotationAspectAdapter() {
     this(null, null, false);
   }
 
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected LineAnnotationAspectAdapter(@Nullable String id) {
-    this(id, null, false);
-  }
-
   protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
     this(id, displayName, false);
-  }
-
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
-   */
-  @Deprecated
-  public LineAnnotationAspectAdapter(@NonNls @Nullable String id, boolean showByDefault) {
-    this(id, null, showByDefault);
   }
 
   public LineAnnotationAspectAdapter(@NonNls @Nullable String id,
@@ -87,4 +68,16 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   protected abstract void showAffectedPaths(int lineNum);
+
+  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter() {
+    @Override
+    protected void showAffectedPaths(int lineNum) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getValue(int line) {
+      throw new UnsupportedOperationException();
+    }
+  };
 }

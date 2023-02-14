@@ -25,7 +25,6 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
     return wrapIntentionToTooltipAction(intention, info, editor)
   }
-
 }
 
 /**
@@ -33,8 +32,7 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
-
+private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }
@@ -83,10 +81,11 @@ fun extractMostPriorityFixFromHighlightInfo(highlightInfo: HighlightInfo, editor
   ApplicationManager.getApplication().assertReadAccessAllowed()
 
   val fixes = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
-  val quickFixActionMarkers = highlightInfo.quickFixActionRanges
-  if (quickFixActionMarkers == null || quickFixActionMarkers.isEmpty()) return null
+  highlightInfo.findRegisteredQuickFix<Any?> { desc, _ ->
+    fixes.add(desc)
 
-  fixes.addAll(quickFixActionMarkers.map { it.first }.toList())
+    null
+  }
 
   val intentionsInfo = ShowIntentionsPass.IntentionsInfo()
   ShowIntentionsPass.fillIntentionsInfoForHighlightInfo(highlightInfo, intentionsInfo, fixes)
@@ -130,7 +129,14 @@ fun wrapIntentionToTooltipAction(intention: IntentionAction,
     //try to avoid caret movements
     return DaemonTooltipAction(text, intention.text, editorOffset)
   }
-  val pair = info.quickFixActionMarkers?.find { it.first?.action == intention }
-  val offset = if (pair?.second?.isValid == true) pair.second.startOffset else info.actualStartOffset
+  val offset: Int =
+  info.findRegisteredQuickFix { descriptor, range ->
+    if (descriptor.action == intention) {
+      range.startOffset
+    }
+    else {
+      null
+    }
+  }?:info.actualStartOffset
   return DaemonTooltipAction(text, intention.text, offset)
 }

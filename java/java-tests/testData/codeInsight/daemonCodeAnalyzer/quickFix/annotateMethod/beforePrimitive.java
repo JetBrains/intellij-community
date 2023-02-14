@@ -1,4 +1,4 @@
-// "Remove annotation" "true"
+// "Remove annotation" "true-preview"
 
 import org.jetbrains.annotations.*;
 

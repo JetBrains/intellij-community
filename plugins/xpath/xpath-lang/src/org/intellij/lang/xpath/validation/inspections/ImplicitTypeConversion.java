@@ -19,10 +19,11 @@ package org.intellij.lang.xpath.validation.inspections;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionController;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.Alarm;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -34,19 +35,21 @@ import org.intellij.plugins.xpathView.XPathBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.BitSet;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 // TODO: Option to flag literals: <number> = '123', <string> = 123, etc.
 public class ImplicitTypeConversion extends XPathInspection {
     @NonNls
     private static final String SHORT_NAME = "ImplicitTypeConversion";
+  private static final String STRING = "STRING";
+  private static final String NODESET = "NODESET";
+  private static final String NUMBER = "NUMBER";
+  private static final String BOOLEAN = "BOOLEAN";
 
-    public long BITS = 1720;
+  public long BITS = 1720;
     private final BitSet OPTIONS = new BitSet(12);
 
     public boolean FLAG_EXPLICIT_CONVERSION = true;
@@ -80,13 +83,37 @@ public class ImplicitTypeConversion extends XPathInspection {
         return new MyElementVisitor(manager, isOnTheFly);
     }
 
-    @Override
-    @Nullable
-    public JComponent createOptionsPanel() {
-        return new Options();
-    }
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    //noinspection InjectedReferences
+    return pane(
+      group(XPathBundle.message("label.to", STRING),
+            checkbox("0", XPathBundle.message("label.from", NODESET)),
+            checkbox("2", XPathBundle.message("label.from", NUMBER)),
+            checkbox("3", XPathBundle.message("label.from", BOOLEAN))).prefix("c"),
+      group(XPathBundle.message("label.to", NUMBER),
+            checkbox("4", XPathBundle.message("label.from", NODESET)),
+            checkbox("5", XPathBundle.message("label.from", STRING)),
+            checkbox("7", XPathBundle.message("label.from", BOOLEAN))).prefix("c"),
+      group(XPathBundle.message("label.to", BOOLEAN),
+            checkbox("8", XPathBundle.message("label.from", NODESET)),
+            checkbox("9", XPathBundle.message("label.from", STRING)),
+            checkbox("10", XPathBundle.message("label.from", NUMBER))).prefix("c"),
+      separator(),
+      checkbox("FLAG_EXPLICIT_CONVERSION", XPathBundle.message("checkbox.always.flag.explicit.conversion.to.unexpected.type")),
+      checkbox("IGNORE_NODESET_TO_BOOLEAN_VIA_STRING", XPathBundle.message("checkbox.ignore.conversion.of.nodeset.to.boolean.by.string.conversion"))
+    );
+  }
 
-    @Override
+  @Override
+  public @NotNull OptionController getOptionController() {
+    return super.getOptionController().onPrefix(
+      "c",
+      bindId -> OPTIONS.get(Integer.parseInt(bindId)),
+      (bindId, value) -> OPTIONS.set(Integer.parseInt(bindId), (Boolean) value));
+  }
+
+  @Override
     public void readSettings(@NotNull Element node) throws InvalidDataException {
         super.readSettings(node);
         update();
@@ -170,81 +197,6 @@ public class ImplicitTypeConversion extends XPathInspection {
                 if (type == XPathType.NUMBER && OPTIONS.get(11)) return true;
             }
             return false;
-        }
-    }
-
-    public class Options extends JPanel {
-        @SuppressWarnings({ "UNUSED_SYMBOL"})
-        private JPanel root;
-        private JCheckBox NS_S;
-        private JCheckBox NS_N;
-        private JCheckBox NS_B;
-        private JCheckBox S_S;
-        private JCheckBox S_N;
-        private JCheckBox S_B;
-        private JCheckBox N_S;
-        private JCheckBox N_N;
-        private JCheckBox N_B;
-        private JCheckBox B_S;
-        private JCheckBox B_N;
-        private JCheckBox B_B;
-        private JCheckBox myAlwaysFlagExplicitConversion;
-        private JCheckBox myIgnoreNodesetToString;
-
-        private final JCheckBox[][] matrix = new JCheckBox[][]{
-                {NS_S, S_S, N_S, B_S},
-                {NS_N, S_N, N_N, B_N},
-                {NS_B, S_B, N_B, B_B},
-        };
-
-        public Options() {
-            for (int i = 0; i < matrix.length; i++) {
-                JCheckBox[] row = matrix[i];
-                for (int j = 0; j < row.length; j++) {
-                    JCheckBox to = row[j];
-                    final int index = row.length * i + j;
-                    to.setSelected(OPTIONS.get(index));
-                    to.addItemListener(new ItemListener() {
-                        @Override
-                        public void itemStateChanged(ItemEvent e) {
-                            OPTIONS.set(index, e.getStateChange() == ItemEvent.SELECTED);
-                        }
-                    });
-                    if (j == i + 1) to.setEnabled(false);
-                }
-            }
-            myAlwaysFlagExplicitConversion.setSelected(FLAG_EXPLICIT_CONVERSION);
-            myAlwaysFlagExplicitConversion.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    FLAG_EXPLICIT_CONVERSION = e.getStateChange() == ItemEvent.SELECTED;
-                }
-            });
-            myIgnoreNodesetToString.setSelected(IGNORE_NODESET_TO_BOOLEAN_VIA_STRING);
-            myIgnoreNodesetToString.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    IGNORE_NODESET_TO_BOOLEAN_VIA_STRING = e.getStateChange() == ItemEvent.SELECTED;
-                }
-            });
-        }
-
-        @Override
-        public void setEnabled(final boolean enabled) {
-            super.setEnabled(enabled);
-            new Alarm().addRequest(() -> {
-                for (int i = 0; i < matrix.length; i++) {
-                    JCheckBox[] row = matrix[i];
-                    for (int j = 0; j < row.length; j++) {
-                        JCheckBox to = row[j];
-                        to.setEnabled(enabled && j != i + 1);
-                    }
-                }
-            }, 200);
-        }
-
-        private void createUIComponents() {
-            root = this;
         }
     }
 }

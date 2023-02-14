@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,12 +50,6 @@ public final class RegisteredIndexes {
     myFileDocumentManager = fileDocumentManager;
     myFileBasedIndex = fileBasedIndex;
     myStateFuture = IndexDataInitializer.submitGenesisTask(new FileBasedIndexDataInitialization(fileBasedIndex, this));
-
-    if (!IndexDataInitializer.ourDoAsyncIndicesInitialization) {
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        waitUntilIndicesAreInitialized();
-      });
-    }
   }
 
   boolean performShutdown() {
@@ -83,14 +78,12 @@ public final class RegisteredIndexes {
   }
 
   void waitUntilAllIndicesAreInitialized() {
-    try {
-      waitUntilIndicesAreInitialized();
-      ProgressIndicatorUtils.awaitWithCheckCanceled(myAllIndicesInitializedFuture);
-    } catch (Throwable ignore) {}
+    waitUntilIndicesAreInitialized();
+    await(myAllIndicesInitializedFuture);
   }
 
   void waitUntilIndicesAreInitialized() {
-    ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
+    await(myStateFuture);
   }
 
   void extensionsDataWasLoaded() {
@@ -115,6 +108,10 @@ public final class RegisteredIndexes {
     ID<?, ?> name = extension.getName();
     if (extension.dependsOnFileContent()) {
       myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    }
+
+    if (extension.getName() == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return;
     }
 
     if (!extension.dependsOnFileContent()) {
@@ -177,6 +174,20 @@ public final class RegisteredIndexes {
     @Override
     void doProcess(Document document, Project project) {
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
+    }
+  }
+
+  private static void await(@NotNull Future<?> future) {
+    if (ProgressManager.getInstance().isInNonCancelableSection()) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        FileBasedIndexImpl.LOG.error(e);
+      }
+    }
+    else {
+      ProgressIndicatorUtils.awaitWithCheckCanceled(future);
     }
   }
 }

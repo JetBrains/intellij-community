@@ -6,9 +6,6 @@ import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author vlan
- */
 public class PyStringFormatInspectionTest extends PyInspectionTestCase {
 
   @Override

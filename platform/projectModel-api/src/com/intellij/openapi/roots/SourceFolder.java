@@ -24,7 +24,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 /**
  * Represents a source or test source root under the content root of a module.
  *
- * @author dsl
  * @see ContentEntry#getSourceFolders()
  */
 @ApiStatus.NonExtendable

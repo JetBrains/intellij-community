@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
 import com.intellij.ide.RecentProjectsManager
@@ -11,21 +11,17 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.Rectangle
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JFrame
 
-internal class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(), CustomHeaderTitle {
-  companion object{
-    fun createInstance(frame: JFrame): CustomDecorationPath {
-      return CustomDecorationPath(frame)
-    }
+internal open class CustomDecorationPath(private val frame: JFrame) : SelectedEditorFilePath(frame), CustomHeaderTitle {
+  companion object {
+    fun createInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
   }
 
   private val projectManagerListener = object : ProjectManagerListener {
@@ -54,8 +50,8 @@ internal class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(
     multipleSameNamed = sameNameInRecent || sameNameInOpen
   }
 
-  private val titleChangeListener = PropertyChangeListener{
-    updateProject()
+  private val titleChangeListener = PropertyChangeListener {
+    updateProjectPath()
   }
 
   override fun getCustomTitle(): String? {
@@ -82,52 +78,39 @@ internal class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(
     }
   }
 
-  var disposable: Disposable? = null
-
   override fun installListeners() {
     super.installListeners()
     frame.addPropertyChangeListener("title", titleChangeListener)
+  }
 
-    disposable?.let {
-      if(!Disposer.isDisposed(it)) it.dispose()
-    }
+  override fun addAdditionalListeners(disp: Disposable) {
+    super.addAdditionalListeners(disp)
 
     project?.let {
-      val ds = Disposer.newDisposable()
-      Disposer.register(it, ds)
-
-      val busConnection = ApplicationManager.getApplication().messageBus.connect(ds)
+      val busConnection = ApplicationManager.getApplication().messageBus.connect(disp)
       busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener)
       busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { checkTabPlacement() })
 
-      disposable = ds
       checkTabPlacement()
       checkOpenedProjects()
     }
   }
 
   private fun checkTabPlacement() {
-    classPathNeeded = UISettings.instance.editorTabPlacement == 0
+    classPathNeeded = UISettings.getInstance().editorTabPlacement == 0
   }
 
   override fun unInstallListeners() {
     super.unInstallListeners()
-    disposable?.let {
-      if(!Disposer.isDisposed(it)) it.dispose()
-    }
-    disposable = null
     frame.removePropertyChangeListener(titleChangeListener)
   }
 
-  private fun getMouseInsetList(view: JComponent,
-                                mouseInsets: Int = 1): List<RelativeRectangle> {
+  private fun getMouseInsetList(view: JComponent, mouseInsets: Int = 1): List<RelativeRectangle> {
     return listOf(
       RelativeRectangle(view, Rectangle(0, 0, mouseInsets, view.height)),
       RelativeRectangle(view, Rectangle(0, 0, view.width, mouseInsets)),
-      RelativeRectangle(view,
-                        Rectangle(0, view.height - mouseInsets, view.width, mouseInsets)),
-      RelativeRectangle(view,
-                        Rectangle(view.width - mouseInsets, 0, mouseInsets, view.height))
+      RelativeRectangle(view, Rectangle(0, view.height - mouseInsets, view.width, mouseInsets)),
+      RelativeRectangle(view, Rectangle(view.width - mouseInsets, 0, mouseInsets, view.height))
     )
   }
 }

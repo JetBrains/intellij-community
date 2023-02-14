@@ -31,7 +31,7 @@ public class GroovyMethodParameterCountInspectionBase extends GroovyMethodMetric
       super.visitMethod(grMethod);
       final GrParameter[] parameters = grMethod.getParameters();
       final int limit = getLimit();
-      if (parameters == null || parameters.length <= limit) {
+      if (parameters.length <= limit) {
         return;
       }
       if (LibraryUtil.isOverrideOfLibraryMethod(grMethod)) {

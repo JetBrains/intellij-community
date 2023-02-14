@@ -1,12 +1,28 @@
 <html>
 <body>
-Reports any calls to <b>notify()</b>
-or <b>notifyAll()</b> on an object
-of class <b>java.util.concurrent.locks.Condition()</b>.
-It is almost certain that <b>signal()</b> or
-<b>signalAll()</b> was intended instead.
-<!-- tooltip end -->
+Reports calls to <code>notify()</code> or <code>notifyAll()</code> made on
+<code>java.util.concurrent.locks.Condition</code> object.
 <p>
+  This is probably a programming error, and some variant of the <code>signal()</code> or
+  <code>signalAll()</code> method was intended instead, otherwise <code>IllegalMonitorStateException</code> may occur.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class C {
+    final Lock l = new ReentrantLock();
+    final Condition c = l.newCondition();
+
+    void release() {
+      l.lock();
+      try {
+        c.notifyAll(); // probably 'signalAll()' was intended here
+      } finally {
+        l.unlock();
+      }
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 
 </body>
 </html>

@@ -6,6 +6,7 @@ import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.toNullableString
 
 abstract class SurroundAndUnwrapLesson
   : KLesson("Surround and unwrap", LessonsBundle.message("surround.and.unwrap.lesson.name")) {
@@ -14,6 +15,7 @@ abstract class SurroundAndUnwrapLesson
 
   protected abstract val surroundItems: Array<String>
   protected abstract val lineShiftBeforeUnwrap: Int
+  protected abstract val unwrapTryText: String
 
   protected open val surroundItemName: String
     get() = surroundItems.joinToString(separator = "/")
@@ -24,12 +26,12 @@ abstract class SurroundAndUnwrapLesson
 
       task("SurroundWith") {
         proposeIfModified {
-          editor.caretModel.currentCaret.selectionStart != previous.sample.selection?.first ||
-          editor.caretModel.currentCaret.selectionEnd != previous.sample.selection?.second
+          editor.caretModel.currentCaret.selectionStart != sample.selection?.first ||
+          editor.caretModel.currentCaret.selectionEnd != sample.selection?.second
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.surround", action(it)))
-        triggerByListItemAndHighlight { item ->
-          surroundItems.all { need -> wordIsPresent(item.toString(), need) }
+        triggerAndBorderHighlight().listItem { item ->
+          surroundItems.all { need -> wordIsPresent(item.toNullableString(), need) }
         }
         test { actions(it) }
       }
@@ -43,7 +45,8 @@ abstract class SurroundAndUnwrapLesson
         }
         restoreByUi()
         test {
-          type("${surroundItems.joinToString(separator = " ")}\n") }
+          type("${surroundItems.joinToString(separator = " ")}\n")
+        }
       }
 
       prepareRuntimeTask {
@@ -58,9 +61,7 @@ abstract class SurroundAndUnwrapLesson
           editor.caretModel.currentCaret.logicalPosition.line != previous.position.line
         }
         text(LessonsBundle.message("surround.and.unwrap.invoke.unwrap", action(it)))
-        triggerByListItemAndHighlight { item ->
-          wordIsPresent(item.toString(), surroundItems[0])
-        }
+        triggerAndBorderHighlight().listItem { item -> item.toNullableString() == unwrapTryText }
         test { actions(it) }
       }
       task {
@@ -78,15 +79,16 @@ abstract class SurroundAndUnwrapLesson
       }
     }
 
-  private fun wordIsPresent(text: String, word: String): Boolean {
+  private fun wordIsPresent(text: String?, word: String): Boolean {
+    if (text == null) return false
     var index = 0
-    while(index != -1 && index < text.length) {
+    while (index != -1 && index < text.length) {
       index = text.indexOf(word, startIndex = index)
       if (index != -1) {
         if ((index == 0 || !text[index - 1].isLetterOrDigit()) &&
-            (index + word.length == text.length || !text[index + word.length + 1].isLetterOrDigit()))
+            (index + word.length == text.length || !text[index + word.length].isLetterOrDigit()))
           return true
-        index = index + word.length
+        index += word.length
       }
     }
     return false
@@ -95,7 +97,15 @@ abstract class SurroundAndUnwrapLesson
   private fun TaskContext.proposeIfModified(checkCaret: TaskRuntimeContext.() -> Boolean) {
     proposeRestore {
       checkExpectedStateOfEditor(previous.sample, false)
-      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback) else null
+      ?: if (checkCaret()) TaskContext.RestoreNotification(TaskContext.CaretRestoreProposal, callback = restorePreviousTaskCallback)
+      else null
     }
   }
+
+  override val helpLinks: Map<String, String> = mapOf(
+    Pair(LessonsBundle.message("surround.and.unwrap.help.surround.code.fragments"),
+         LessonUtil.getHelpLink("surrounding-blocks-of-code-with-language-constructs.html")),
+    Pair(LessonsBundle.message("surround.and.unwrap.help.unwrapping.and.removing.statements"),
+         LessonUtil.getHelpLink("working-with-source-code.html#unwrap_remove_statement")),
+  )
 }

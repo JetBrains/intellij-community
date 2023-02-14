@@ -11,9 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author db
- */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;
 
@@ -204,19 +201,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //co-variant/contra-variant positions for primitive types 36-39
   public void testT36() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   public void testT37() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT38() {
-    doTestFirstParamType("foo", PsiType.LONG);
+    doTestFirstParamType("foo", PsiTypes.longType());
   }
 
   public void testT39() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   //Set s = new HashSet() -> HashSet s = new HashSet();
@@ -245,22 +242,22 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //long l; int  i; l = i; -> long l; byte i; l = i;
   public void testT44() {
-    doTestFieldType("i", PsiType.BYTE);
+    doTestFieldType("i", PsiTypes.byteType());
   }
 
   //long l; int i; l = i; -> byte l; -> byte i; l = i;
   public void testT45() {
-    doTestFieldType("l", PsiType.BYTE);
+    doTestFieldType("l", PsiTypes.byteType());
   }
 
   //byte i; long j = i; -> byte i; int j = i;
   public void testT46() {
-    doTestFieldType("j", PsiType.INT);
+    doTestFieldType("j", PsiTypes.intType());
   }
 
   //o = null -? int o = null
   public void testT47() {
-    doTestFieldType("o", PsiType.INT);
+    doTestFieldType("o", PsiTypes.intType());
   }
 
   //co-variant/contra-variant assignments: leave types if possible change generics signature only  48-49
@@ -313,11 +310,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //array index should be integer 56-57
   public void testT56() {
-    doTestFirstParamType("foo", PsiType.DOUBLE);
+    doTestFirstParamType("foo", PsiTypes.doubleType());
   }
 
   public void testT57() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   //Arrays can be assignable to Object/Serializable/Cloneable 58-59; ~ 60 varargs
@@ -338,7 +335,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //change parameter type -> vararg; assignment changed to array
   public void testT61() {
-    doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT));
+    doTestFirstParamType("foo", new PsiEllipsisType(PsiTypes.intType()));
   }
 
   //change field type -> change vararg parameter type due to assignment: 62-63
@@ -348,12 +345,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT63() {
-    doTestFieldType("p", PsiType.DOUBLE.createArrayType());
+    doTestFieldType("p", PsiTypes.doubleType().createArrayType());
   }
 
   //remove vararg type: 64-66
   public void testT64() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT65() {
@@ -367,7 +364,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT66() {
-    doTestFirstParamType("foo", PsiType.INT);
+    doTestFirstParamType("foo", PsiTypes.intType());
   }
 
   public void testT67() {
@@ -376,15 +373,15 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT68() {
-    doTestFirstParamType("foo", PsiType.DOUBLE);
+    doTestFirstParamType("foo", PsiTypes.doubleType());
   }
 
   public void testT69() {
-    doTestFirstParamType("foo", PsiType.BYTE);
+    doTestFirstParamType("foo", PsiTypes.byteType());
   }
 
   public void testT70() {
-    doTestFieldType("a", PsiType.FLOAT.createArrayType().createArrayType());
+    doTestFieldType("a", PsiTypes.floatType().createArrayType().createArrayType());
   }
 
   public void testT71() {
@@ -404,7 +401,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //prefix/postfix expression; binary expressions 74-76
   public void testT74() {
-    doTestFirstParamType("meth", PsiType.FLOAT);
+    doTestFirstParamType("meth", PsiTypes.floatType());
   }
 
   public void testT75() {
@@ -412,7 +409,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT76() {
-    doTestFirstParamType("meth", PsiType.FLOAT);
+    doTestFirstParamType("meth", PsiTypes.floatType());
   }
 
   //+= , etc 77-78
@@ -426,11 +423,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //casts 79-80,83
   public void testT79() {
-    doTestFirstParamType("meth", PsiType.BYTE);
+    doTestFirstParamType("meth", PsiTypes.byteType());
   }
 
   public void testT80() {
-    doTestFirstParamType("meth", PsiType.DOUBLE);
+    doTestFirstParamType("meth", PsiTypes.doubleType());
   }
 
   public void testT83() {
@@ -509,7 +506,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //generics signature do not support primitives: Map<Boolean, String> - Map<boolean, String>
   public void testT93() {
-    doTestFirstParamType("foo", PsiType.BOOLEAN);
+    doTestFirstParamType("foo", PsiTypes.booleanType());
   }
 
   //field initializers procession
@@ -519,7 +516,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT97() {
-    doTestFieldType("f1", PsiType.INT);
+    doTestFieldType("f1", PsiTypes.intType());
   }
 
   //list <-> array conversion in assignment statements
@@ -747,7 +744,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT135() {
-    doTestFieldType("foo", "Test", PsiType.INT);
+    doTestFieldType("foo", "Test", PsiTypes.intType());
   }
 
   public void testT136() {
@@ -805,11 +802,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testAssignableGetter() {
-    doTestFieldType("foo", "Test", PsiType.INT);
+    doTestFieldType("foo", "Test", PsiTypes.intType());
   }
 
   public void testAssignableSetter() {
-    doTestFieldType("foo", "Test", PsiType.LONG);
+    doTestFieldType("foo", "Test", PsiTypes.longType());
   }
 
   public void testMethodReturnTypeWithTypeParameter() {
@@ -817,23 +814,23 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testBooleanGetterMethodName() {
-    doTestFieldType("fooMigrateName", PsiType.INT);
+    doTestFieldType("fooMigrateName", PsiTypes.intType());
   }
 
   public void testBooleanGetterMethodName2() {
-    doTestFieldType("fooDontMigrateName", PsiType.INT);
+    doTestFieldType("fooDontMigrateName", PsiTypes.intType());
   }
 
   public void testGetterToBoolean() {
-    doTestFieldType("fooMigrateName", PsiType.BOOLEAN);
+    doTestFieldType("fooMigrateName", PsiTypes.booleanType());
   }
 
   public void testGetterToBoolean2() {
-    doTestFieldType("fooDontMigrateName", PsiType.BOOLEAN);
+    doTestFieldType("fooDontMigrateName", PsiTypes.booleanType());
   }
 
   public void testMethodMigrationToVoidWithUnusedReturns() {
-    doTestMethodType("toVoidMethod", PsiType.VOID);
+    doTestMethodType("toVoidMethod", PsiTypes.voidType());
   }
 
   public void testMigrationToSuper() {
@@ -853,19 +850,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testVoidMigrationInVarDecl() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInVarDeclFailed() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInAssignment() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testVoidMigrationInAssignmentFailed() {
-    doTestMethodType("migrationMethod", PsiType.VOID);
+    doTestMethodType("migrationMethod", PsiTypes.voidType());
   }
 
   public void testGenericEllipsis() {

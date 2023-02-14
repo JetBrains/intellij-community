@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.actions;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -33,6 +33,11 @@ public class GenerateCopyrightAction extends AnAction {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Nullable
   private static PsiFile getFile(DataContext context, Project project) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
@@ -50,7 +55,7 @@ public class GenerateCopyrightAction extends AnAction {
     DataContext context = e.getDataContext();
     Project project = e.getProject();
     assert project != null;
-    Module module = e.getData(LangDataKeys.MODULE);
+    Module module = e.getData(PlatformCoreDataKeys.MODULE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 

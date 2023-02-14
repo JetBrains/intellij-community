@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypes;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -34,12 +34,11 @@ class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiLiteralExpression literalExpression)) {
       return;
     }
-    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
     replaceWithDecimalLiteral(literalExpression);
   }
 
@@ -48,7 +47,7 @@ class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
     if (value == null) {
       return;
     }
-    final String decimalText = value + (PsiType.LONG.equals(literalExpression.getType()) ? "L" : "");
+    final String decimalText = value + (PsiTypes.longType().equals(literalExpression.getType()) ? "L" : "");
     PsiReplacementUtil.replaceExpression(literalExpression, decimalText);
   }
 }

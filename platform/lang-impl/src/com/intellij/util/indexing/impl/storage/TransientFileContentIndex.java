@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -23,7 +23,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceIndex<Key, Value> {
+public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
+  extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
   private static final Logger LOG = Logger.getInstance(TransientFileContentIndex.class);
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
@@ -32,14 +33,13 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
 
 
   public TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
-                                   @Nullable ReadWriteLock lock)
+                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
     throws IOException {
     super(extension,
           new VfsAwareIndexStorageLayout<>() {
             @Override
             public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
-              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension.getName());
+              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension);
             }
 
             @Override
@@ -61,8 +61,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
             public @Nullable ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() throws IOException {
               return indexStorageLayout.getForwardIndexAccessor();
             }
-          },
-          lock);
+          });
     installMemoryModeListener();
   }
 
@@ -82,7 +81,8 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myInMemoryMode.get()) {
       myInMemoryKeysAndValues.put(inputId, data.getKeyValues());
-    } else {
+    }
+    else {
       super.updateForwardIndex(inputId, data);
     }
   }
@@ -100,17 +100,18 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
   private void installMemoryModeListener() {
     IndexStorage<Key, Value> storage = getStorage();
     if (storage instanceof TransientChangesIndexStorage) {
-      ((TransientChangesIndexStorage<Key, Value>)storage).addBufferingStateListener(new TransientChangesIndexStorage.BufferingStateListener() {
-        @Override
-        public void bufferingStateChanged(boolean newState) {
-          myInMemoryMode.set(newState);
-        }
+      ((TransientChangesIndexStorage<Key, Value>)storage).addBufferingStateListener(
+        new TransientChangesIndexStorage.BufferingStateListener() {
+          @Override
+          public void bufferingStateChanged(boolean newState) {
+            myInMemoryMode.set(newState);
+          }
 
-        @Override
-        public void memoryStorageCleared() {
-          myInMemoryKeysAndValues.clear();
-        }
-      });
+          @Override
+          public void memoryStorageCleared() {
+            myInMemoryKeysAndValues.clear();
+          }
+        });
     }
   }
 
@@ -133,10 +134,12 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
         removeTransientDataForInMemoryKeys(inputId, keyValueMap);
         InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
         removeTransientDataForKeys(inputId, builder);
-      } catch (IOException throwable) {
+      }
+      catch (IOException throwable) {
         throw new RuntimeException(throwable);
       }
-    } finally {
+    }
+    finally {
       getLock().writeLock().unlock();
     }
   }
@@ -155,7 +158,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
       }
     }
     if (modified) {
-      myModificationStamp.incrementAndGet();
+      incrementModificationStamp();
     }
   }
 
@@ -163,11 +166,10 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
   @Override
   public void cleanupMemoryStorage() {
     TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
-    ConcurrencyUtil.withLock(getLock().writeLock(), () -> {
-      if (memStorage.clearMemoryMap()) {
-        myModificationStamp.incrementAndGet();
-      }
-    });
+    //no synchronization on index write-lock, should be performed fast as possible since executed in write-action
+    if (memStorage.clearMemoryMap()) {
+      incrementModificationStamp();
+    }
     memStorage.fireMemoryStorageCleared();
   }
 
@@ -178,4 +180,9 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
     ConcurrencyUtil.withLock(getLock().readLock(), () -> memStorage.clearCaches());
   }
 
+  public static <Key, Value> TransientFileContentIndex<Key, Value, VfsAwareMapReduceIndex.IndexerIdHolder> createIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                                                                                                                       @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
+    throws IOException {
+    return new TransientFileContentIndex<>(extension, indexStorageLayout);
+  }
 }

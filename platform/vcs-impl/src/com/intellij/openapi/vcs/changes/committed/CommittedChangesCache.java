@@ -41,9 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-/**
- * @author yole
- */
+
 @Service
 @State(
   name = "CommittedChangesCache",
@@ -131,8 +129,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public boolean isMaxCountSupportedForProject() {
     for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
+      if (provider instanceof CachingCommittedChangesProvider cachingProvider) {
         if (!cachingProvider.isMaxCountSupported()) {
           return false;
         }
@@ -275,7 +272,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
       return cacheFile.hasCompleteHistory();
     }
 
-    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_DATE_BEFORE_FILTER || settings.USE_CHANGE_AFTER_FILTER || settings.USE_CHANGE_BEFORE_FILTER;
+    boolean hasDateFilter = settings.USE_DATE_AFTER_FILTER || settings.USE_CHANGE_AFTER_FILTER;
     boolean hasNonDateFilter = settings.isNonDateFilterSpecified();
     if (!hasDateFilter && hasNonDateFilter) {
       return cacheFile.hasCompleteHistory();

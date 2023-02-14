@@ -3,7 +3,8 @@ import os
 import sys
 import traceback
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, IS_JYTHON, IS_PY36_OR_LESSER, IS_PY38_OR_GREATER, \
+from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, \
+    IS_JYTHON, IS_PY36_OR_LESSER, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, \
     get_current_thread_id
 from _pydev_bundle import pydev_log
 
@@ -108,6 +109,8 @@ def starts_with_python_shebang(path):
 
 
 def is_python(path):
+    if IS_PY36_OR_GREATER and isinstance(path, os.PathLike):
+        path = path.__fspath__()
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
     filename = os.path.basename(path).lower()
@@ -448,7 +451,6 @@ def create_execl(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
@@ -463,7 +465,6 @@ def create_execv(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args)
     return new_execv
@@ -478,7 +479,6 @@ def create_execve(original_name):
         import os
         args = patch_args(args)
         if is_python_args(args):
-            path = args[0]
             send_process_will_be_substituted()
         return getattr(os, original_name)(path, args, env)
     return new_execve
@@ -773,12 +773,12 @@ class _NewThreadStartupWithTrace:
             # Note: if this is a thread from threading.py, we're too early in the boostrap process (because we mocked
             # the start_new_thread internal machinery and thread._bootstrap has not finished), so, the code below needs
             # to make sure that we use the current thread bound to the original function and not use
-            # threading.currentThread() unless we're sure it's a dummy thread.
+            # threading.current_thread() unless we're sure it's a dummy thread.
             t = getattr(self.original_func, '__self__', getattr(self.original_func, 'im_self', None))
             if not isinstance(t, threading.Thread):
                 # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
                 # currentThread).
-                t = threading.currentThread()
+                t = threading.current_thread()
 
             if not getattr(t, 'is_pydev_daemon_thread', False):
                 thread_id = get_current_thread_id(t)

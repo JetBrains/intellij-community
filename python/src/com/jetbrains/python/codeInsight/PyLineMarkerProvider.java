@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -30,9 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * @author yole
- */
+
 public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
   private static final class TooltipProvider implements Function<PsiElement, @NlsContexts.Tooltip String> {
@@ -52,11 +50,10 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final Function<PsiElement, @NlsContexts.Tooltip String> ourSubclassTooltipProvider = identifier -> {
     PsiElement parent = identifier.getParent();
-    if (!(parent instanceof PyClass)) return null;
+    if (!(parent instanceof PyClass pyClass)) return null;
     final HtmlBuilder builder = new HtmlBuilder();
     builder.append(PyBundle.message("line.markers.tooltip.header.is.subclassed.by"));
     final AtomicInteger count = new AtomicInteger();
-    PyClass pyClass = (PyClass)parent;
     PyClassInheritorsSearch.search(pyClass, true).forEach(inheritor -> {
       String className = inheritor.getName();
       if (className == null) return true;
@@ -72,11 +69,10 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final Function<PsiElement, @NlsContexts.Tooltip String> ourOverridingMethodTooltipProvider = element -> {
     PsiElement parent = element.getParent();
-    if (!(parent instanceof PyFunction)) return "";
+    if (!(parent instanceof PyFunction pyFunction)) return "";
     final HtmlBuilder builder = new HtmlBuilder();
     builder.append(PyBundle.message("line.markers.tooltip.header.is.overridden.in"));
     final AtomicInteger count = new AtomicInteger();
-    PyFunction pyFunction = (PyFunction)parent;
 
     PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(pyClass -> {
       String className = pyClass.getName();
@@ -167,8 +163,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
     IElementType elementType = element.getNode().getElementType();
-    if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
-      final PyFunction function = (PyFunction)element.getParent();
+    if (elementType == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction function) {
       return getMethodMarker(element, function);
     }
     if (element instanceof PyTargetExpression && PyUtil.isClassAttribute(element)) {

@@ -17,6 +17,7 @@ import com.intellij.slicer.*;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
 
   @Override
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
-    if (infos == null) {
+    if (ContainerUtil.isEmpty(infos)) {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);

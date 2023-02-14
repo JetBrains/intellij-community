@@ -47,7 +47,7 @@
     </context>
   </template>
 
-  <template description="&lt;!-- --&gt;" name="c" toReformat="true" toShortenFQNames="true" value="&lt;!-- $END$ --&gt;">
+  <template description="&lt;!-- --&gt;" name="c" toReformat="true" toShortenFQNames="true" value="&lt;!-- $END$ --&gt;" shortcut="NONE">
     <context>
       <option name="HTML_TEXT" value="true"/>
       <option name="JSX_HTML" value="true"/>
@@ -90,7 +90,7 @@
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;a href=&quot;...&quot;&gt;...&lt;/a&gt;" name="a" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;$VAR0$&quot;&gt;$END$&lt;/a&gt;">
+  <template description="&lt;a href=&quot;...&quot;&gt;...&lt;/a&gt;" name="a" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;$VAR0$&quot;&gt;$END$&lt;/a&gt;" shortcut="NONE">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
@@ -1771,7 +1771,7 @@
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;p&gt;...&lt;/p&gt;" name="p" toReformat="false" toShortenFQNames="true" value="&lt;p&gt;$END$&lt;/p&gt;">
+  <template description="&lt;p&gt;...&lt;/p&gt;" name="p" toReformat="false" toShortenFQNames="true" value="&lt;p&gt;$END$&lt;/p&gt;" shortcut="NONE">
     <context>
       <option name="JSX_HTML" value="true"/>
     </context>
@@ -1786,12 +1786,12 @@
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;b&gt;...&lt;/b&gt;" name="b" toReformat="false" toShortenFQNames="true" value="&lt;b&gt;$END$&lt;/b&gt;">
+  <template description="&lt;b&gt;...&lt;/b&gt;" name="b" toReformat="false" toShortenFQNames="true" value="&lt;b&gt;$END$&lt;/b&gt;" shortcut="NONE">
     <context>
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;i&gt;...&lt;/i&gt;" name="i" toReformat="false" toShortenFQNames="true" value="&lt;i&gt;$END$&lt;/i&gt;">
+  <template description="&lt;i&gt;...&lt;/i&gt;" name="i" toReformat="false" toShortenFQNames="true" value="&lt;i&gt;$END$&lt;/i&gt;" shortcut="NONE">
     <context>
       <option name="JSX_HTML" value="true"/>
     </context>

@@ -42,6 +42,8 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
       return YAMLBundle.message("find.usages.mapping");
     } else if (element instanceof YAMLKeyValue) {
       return YAMLBundle.message("find.usages.key.value");
+    } else if (element instanceof YAMLDocument) {
+      return YAMLBundle.message("find.usages.document");
     } else {
       return "";
     }

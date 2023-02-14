@@ -1,16 +1,19 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
-import org.apache.log4j.Logger
+import com.intellij.util.JavaModuleOptions
+import com.intellij.util.system.OS
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
+import java.util.logging.Logger
 
 object Launcher {
 
   private const val defaultDebugPort = 5050
-  private val logger = Logger.getLogger(Launcher::class.java)
+  private val logger = Logger.getLogger(Launcher::class.java.name)
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
@@ -41,7 +44,7 @@ object Launcher {
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
-      "-Didea.initially.ask.config=force-not",
+      "-Didea.initially.ask.config=never",
       "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
@@ -52,6 +55,7 @@ object Launcher {
       "-Didea.fix.mac.env=true",
       "-Djdk.attach.allowAttachSelf",
       "-Djdk.module.illegalAccess.silent=true",
+      "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
       "-Dkotlinx.coroutines.debug=off",
       "-Dsun.awt.disablegrab=true",
       "-Dsun.io.useCanonCaches=false",
@@ -63,8 +67,15 @@ object Launcher {
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50"
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:+BytecodeVerificationLocal",
+      "-Dshared.indexes.download.auto.consent=true"
     )
+
+    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
+    cmd.addAll(optionsOpenedPackages)
 
     if (options.platformPrefix != null) {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")
@@ -72,7 +83,7 @@ object Launcher {
 
     if (!TeamCityHelper.isUnderTeamCity) {
       val suspendOnStart = if (options.debugSuspendOnStart) "y" else "n"
-      val port = if (options.debugPort > 0) options.debugPort else findFreeDebugPort()
+      val port = if (options.debugPort != null) options.debugPort else findFreeDebugPort()
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
       val host = if (options.runInDocker) "*:" else ""

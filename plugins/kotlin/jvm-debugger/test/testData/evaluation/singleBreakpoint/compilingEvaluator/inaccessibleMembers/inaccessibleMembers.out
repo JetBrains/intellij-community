@@ -1,0 +1,17 @@
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR, JVM_IR_WITH_OLD_EVALUATOR
+LineBreakpoint created at inaccessibleMembers.kt:21
+Run Java
+Connected to the target VM
+inaccessibleMembers.kt:21
+Compile bytecode for block { Foo("foo") }
+Compile bytecode for block { Foo.Nested(1, -5, "x") }
+Compile bytecode for block { Foo.Nested(1, -5, "x").a }
+Compile bytecode for block { Foo.Nested(1, -5, "x").l }
+Compile bytecode for block { Foo.Nested(1, -5, "x").s }
+Compile bytecode for block { Foo.Nested(1, -5, "x").boo() }
+Compile bytecode for block { Foo.x }
+Compile bytecode for block { Foo.x = 21 }
+Compiling evaluator failed: Method threw 'java.lang.IllegalAccessException' exception.
+Disconnected from the target VM
+
+Process finished with exit code 0

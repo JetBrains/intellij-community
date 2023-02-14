@@ -1,4 +1,4 @@
-// "Add 'type='" "true"
+// "Add 'type='" "true-preview"
 class T {
   @interface A {
     String name();

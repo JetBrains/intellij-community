@@ -18,7 +18,6 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,7 +41,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #setModalityType(Dialog.ModalityType)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   void setModal(boolean b);
 
   void toFront();
@@ -97,7 +96,7 @@ interface AbstractDialog extends Disposable {
   /**
    * @deprecated use {@link #getModalityType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   boolean isModal();
 
   void setModalityType(Dialog.ModalityType modalityType);

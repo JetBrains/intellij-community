@@ -71,21 +71,21 @@ public class a3 {
 
          while(true) {
             var10007 = var8[var10006];
-            switch(var1 % 5) {
-            case 0:
-               var10008 = 53;
-               break;
-            case 1:
-               var10008 = 22;
-               break;
-            case 2:
-               var10008 = 36;
-               break;
-            case 3:
-               var10008 = 117;
-               break;
-            default:
-               var10008 = 57;
+            switch (var1 % 5) {
+               case 0:
+                  var10008 = 53;
+                  break;
+               case 1:
+                  var10008 = 22;
+                  break;
+               case 2:
+                  var10008 = 36;
+                  break;
+               case 3:
+                  var10008 = 117;
+                  break;
+               default:
+                  var10008 = 57;
             }
 
             var8[var10006] = (char)(var10007 ^ var10008);
@@ -121,21 +121,21 @@ public class a3 {
          var8 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 53;
-            break;
-         case 1:
-            var10008 = 22;
-            break;
-         case 2:
-            var10008 = 36;
-            break;
-         case 3:
-            var10008 = 117;
-            break;
-         default:
-            var10008 = 57;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 53;
+               break;
+            case 1:
+               var10008 = 22;
+               break;
+            case 2:
+               var10008 = 36;
+               break;
+            case 3:
+               var10008 = 117;
+               break;
+            default:
+               var10008 = 57;
          }
       } else {
          var10004 = var10003;
@@ -164,21 +164,21 @@ public class a3 {
 
                while(true) {
                   var10007 = var8[var10006];
-                  switch(var1 % 5) {
-                  case 0:
-                     var10008 = 53;
-                     break;
-                  case 1:
-                     var10008 = 22;
-                     break;
-                  case 2:
-                     var10008 = 36;
-                     break;
-                  case 3:
-                     var10008 = 117;
-                     break;
-                  default:
-                     var10008 = 57;
+                  switch (var1 % 5) {
+                     case 0:
+                        var10008 = 53;
+                        break;
+                     case 1:
+                        var10008 = 22;
+                        break;
+                     case 2:
+                        var10008 = 36;
+                        break;
+                     case 3:
+                        var10008 = 117;
+                        break;
+                     default:
+                        var10008 = 57;
                   }
 
                   var8[var10006] = (char)(var10007 ^ var10008);
@@ -207,21 +207,21 @@ public class a3 {
                var8 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 53;
-                  break;
-               case 1:
-                  var10008 = 22;
-                  break;
-               case 2:
-                  var10008 = 36;
-                  break;
-               case 3:
-                  var10008 = 117;
-                  break;
-               default:
-                  var10008 = 57;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 53;
+                     break;
+                  case 1:
+                     var10008 = 22;
+                     break;
+                  case 2:
+                     var10008 = 36;
+                     break;
+                  case 3:
+                     var10008 = 117;
+                     break;
+                  default:
+                     var10008 = 57;
                }
             } else {
                var10004 = var10003;
@@ -250,21 +250,21 @@ public class a3 {
 
                      while(true) {
                         var10007 = var8[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 53;
-                           break;
-                        case 1:
-                           var10008 = 22;
-                           break;
-                        case 2:
-                           var10008 = 36;
-                           break;
-                        case 3:
-                           var10008 = 117;
-                           break;
-                        default:
-                           var10008 = 57;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 53;
+                              break;
+                           case 1:
+                              var10008 = 22;
+                              break;
+                           case 2:
+                              var10008 = 36;
+                              break;
+                           case 3:
+                              var10008 = 117;
+                              break;
+                           default:
+                              var10008 = 57;
                         }
 
                         var8[var10006] = (char)(var10007 ^ var10008);
@@ -293,21 +293,21 @@ public class a3 {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   } else {
                      var10004 = var10003;
@@ -336,21 +336,21 @@ public class a3 {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 53;
-                                 break;
-                              case 1:
-                                 var10008 = 22;
-                                 break;
-                              case 2:
-                                 var10008 = 36;
-                                 break;
-                              case 3:
-                                 var10008 = 117;
-                                 break;
-                              default:
-                                 var10008 = 57;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 53;
+                                    break;
+                                 case 1:
+                                    var10008 = 22;
+                                    break;
+                                 case 2:
+                                    var10008 = 36;
+                                    break;
+                                 case 3:
+                                    var10008 = 117;
+                                    break;
+                                 default:
+                                    var10008 = 57;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -393,21 +393,21 @@ public class a3 {
 
                         while(true) {
                            var9 = var5[var6];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10 = 53;
-                              break;
-                           case 1:
-                              var10 = 22;
-                              break;
-                           case 2:
-                              var10 = 36;
-                              break;
-                           case 3:
-                              var10 = 117;
-                              break;
-                           default:
-                              var10 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10 = 53;
+                                 break;
+                              case 1:
+                                 var10 = 22;
+                                 break;
+                              case 2:
+                                 var10 = 36;
+                                 break;
+                              case 3:
+                                 var10 = 117;
+                                 break;
+                              default:
+                                 var10 = 57;
                            }
 
                            var5[var6] = (char)(var9 ^ var10);
@@ -430,21 +430,21 @@ public class a3 {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   }
 
@@ -456,21 +456,21 @@ public class a3 {
                            var10006 = var6;
                            var8 = var10004;
                            var10007 = var10004[var6];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         } else {
                            if (var6 <= var1) {
@@ -497,21 +497,21 @@ public class a3 {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 53;
-                                       break;
-                                    case 1:
-                                       var10008 = 22;
-                                       break;
-                                    case 2:
-                                       var10008 = 36;
-                                       break;
-                                    case 3:
-                                       var10008 = 117;
-                                       break;
-                                    default:
-                                       var10008 = 57;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 53;
+                                          break;
+                                       case 1:
+                                          var10008 = 22;
+                                          break;
+                                       case 2:
+                                          var10008 = 36;
+                                          break;
+                                       case 3:
+                                          var10008 = 117;
+                                          break;
+                                       default:
+                                          var10008 = 57;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -554,21 +554,21 @@ public class a3 {
 
                               while(true) {
                                  var9 = var5[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10 = 53;
-                                    break;
-                                 case 1:
-                                    var10 = 22;
-                                    break;
-                                 case 2:
-                                    var10 = 36;
-                                    break;
-                                 case 3:
-                                    var10 = 117;
-                                    break;
-                                 default:
-                                    var10 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10 = 53;
+                                       break;
+                                    case 1:
+                                       var10 = 22;
+                                       break;
+                                    case 2:
+                                       var10 = 36;
+                                       break;
+                                    case 3:
+                                       var10 = 117;
+                                       break;
+                                    default:
+                                       var10 = 57;
                                  }
 
                                  var5[var6] = (char)(var9 ^ var10);
@@ -591,21 +591,21 @@ public class a3 {
                            var8 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         }
                      }
@@ -615,21 +615,21 @@ public class a3 {
                var8 = var10003;
                var10006 = var1;
                var10007 = var10003[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 53;
-                  break;
-               case 1:
-                  var10008 = 22;
-                  break;
-               case 2:
-                  var10008 = 36;
-                  break;
-               case 3:
-                  var10008 = 117;
-                  break;
-               default:
-                  var10008 = 57;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 53;
+                     break;
+                  case 1:
+                     var10008 = 22;
+                     break;
+                  case 2:
+                     var10008 = 36;
+                     break;
+                  case 3:
+                     var10008 = 117;
+                     break;
+                  default:
+                     var10008 = 57;
                }
             }
 
@@ -641,21 +641,21 @@ public class a3 {
                      var10006 = var6;
                      var8 = var10004;
                      var10007 = var10004[var6];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   } else {
                      if (var6 <= var1) {
@@ -682,21 +682,21 @@ public class a3 {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 53;
-                                 break;
-                              case 1:
-                                 var10008 = 22;
-                                 break;
-                              case 2:
-                                 var10008 = 36;
-                                 break;
-                              case 3:
-                                 var10008 = 117;
-                                 break;
-                              default:
-                                 var10008 = 57;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 53;
+                                    break;
+                                 case 1:
+                                    var10008 = 22;
+                                    break;
+                                 case 2:
+                                    var10008 = 36;
+                                    break;
+                                 case 3:
+                                    var10008 = 117;
+                                    break;
+                                 default:
+                                    var10008 = 57;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -725,21 +725,21 @@ public class a3 {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         } else {
                            var10004 = var10003;
@@ -768,21 +768,21 @@ public class a3 {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 53;
-                                       break;
-                                    case 1:
-                                       var10008 = 22;
-                                       break;
-                                    case 2:
-                                       var10008 = 36;
-                                       break;
-                                    case 3:
-                                       var10008 = 117;
-                                       break;
-                                    default:
-                                       var10008 = 57;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 53;
+                                          break;
+                                       case 1:
+                                          var10008 = 22;
+                                          break;
+                                       case 2:
+                                          var10008 = 36;
+                                          break;
+                                       case 3:
+                                          var10008 = 117;
+                                          break;
+                                       default:
+                                          var10008 = 57;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -825,21 +825,21 @@ public class a3 {
 
                               while(true) {
                                  var9 = var5[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10 = 53;
-                                    break;
-                                 case 1:
-                                    var10 = 22;
-                                    break;
-                                 case 2:
-                                    var10 = 36;
-                                    break;
-                                 case 3:
-                                    var10 = 117;
-                                    break;
-                                 default:
-                                    var10 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10 = 53;
+                                       break;
+                                    case 1:
+                                       var10 = 22;
+                                       break;
+                                    case 2:
+                                       var10 = 36;
+                                       break;
+                                    case 3:
+                                       var10 = 117;
+                                       break;
+                                    default:
+                                       var10 = 57;
                                  }
 
                                  var5[var6] = (char)(var9 ^ var10);
@@ -862,21 +862,21 @@ public class a3 {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         }
 
@@ -888,21 +888,21 @@ public class a3 {
                                  var10006 = var6;
                                  var8 = var10004;
                                  var10007 = var10004[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               } else {
                                  if (var6 <= var1) {
@@ -929,21 +929,21 @@ public class a3 {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 53;
-                                             break;
-                                          case 1:
-                                             var10008 = 22;
-                                             break;
-                                          case 2:
-                                             var10008 = 36;
-                                             break;
-                                          case 3:
-                                             var10008 = 117;
-                                             break;
-                                          default:
-                                             var10008 = 57;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 53;
+                                                break;
+                                             case 1:
+                                                var10008 = 22;
+                                                break;
+                                             case 2:
+                                                var10008 = 36;
+                                                break;
+                                             case 3:
+                                                var10008 = 117;
+                                                break;
+                                             default:
+                                                var10008 = 57;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -986,21 +986,21 @@ public class a3 {
 
                                     while(true) {
                                        var9 = var5[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10 = 53;
-                                          break;
-                                       case 1:
-                                          var10 = 22;
-                                          break;
-                                       case 2:
-                                          var10 = 36;
-                                          break;
-                                       case 3:
-                                          var10 = 117;
-                                          break;
-                                       default:
-                                          var10 = 57;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10 = 53;
+                                             break;
+                                          case 1:
+                                             var10 = 22;
+                                             break;
+                                          case 2:
+                                             var10 = 36;
+                                             break;
+                                          case 3:
+                                             var10 = 117;
+                                             break;
+                                          default:
+                                             var10 = 57;
                                        }
 
                                        var5[var6] = (char)(var9 ^ var10);
@@ -1023,21 +1023,21 @@ public class a3 {
                                  var8 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               }
                            }
@@ -1047,21 +1047,21 @@ public class a3 {
                      var8 = var10004;
                      var10006 = var1;
                      var10007 = var10004[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   }
                }
@@ -1071,21 +1071,21 @@ public class a3 {
          var8 = var10003;
          var10006 = var1;
          var10007 = var10003[var1];
-         switch(var1 % 5) {
-         case 0:
-            var10008 = 53;
-            break;
-         case 1:
-            var10008 = 22;
-            break;
-         case 2:
-            var10008 = 36;
-            break;
-         case 3:
-            var10008 = 117;
-            break;
-         default:
-            var10008 = 57;
+         switch (var1 % 5) {
+            case 0:
+               var10008 = 53;
+               break;
+            case 1:
+               var10008 = 22;
+               break;
+            case 2:
+               var10008 = 36;
+               break;
+            case 3:
+               var10008 = 117;
+               break;
+            default:
+               var10008 = 57;
          }
       }
 
@@ -1097,21 +1097,21 @@ public class a3 {
                var10006 = var6;
                var8 = var10004;
                var10007 = var10004[var6];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 53;
-                  break;
-               case 1:
-                  var10008 = 22;
-                  break;
-               case 2:
-                  var10008 = 36;
-                  break;
-               case 3:
-                  var10008 = 117;
-                  break;
-               default:
-                  var10008 = 57;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 53;
+                     break;
+                  case 1:
+                     var10008 = 22;
+                     break;
+                  case 2:
+                     var10008 = 36;
+                     break;
+                  case 3:
+                     var10008 = 117;
+                     break;
+                  default:
+                     var10008 = 57;
                }
             } else {
                if (var6 <= var1) {
@@ -1138,21 +1138,21 @@ public class a3 {
 
                      while(true) {
                         var10007 = var8[var10006];
-                        switch(var1 % 5) {
-                        case 0:
-                           var10008 = 53;
-                           break;
-                        case 1:
-                           var10008 = 22;
-                           break;
-                        case 2:
-                           var10008 = 36;
-                           break;
-                        case 3:
-                           var10008 = 117;
-                           break;
-                        default:
-                           var10008 = 57;
+                        switch (var1 % 5) {
+                           case 0:
+                              var10008 = 53;
+                              break;
+                           case 1:
+                              var10008 = 22;
+                              break;
+                           case 2:
+                              var10008 = 36;
+                              break;
+                           case 3:
+                              var10008 = 117;
+                              break;
+                           default:
+                              var10008 = 57;
                         }
 
                         var8[var10006] = (char)(var10007 ^ var10008);
@@ -1181,21 +1181,21 @@ public class a3 {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   } else {
                      var10004 = var10003;
@@ -1224,21 +1224,21 @@ public class a3 {
 
                            while(true) {
                               var10007 = var8[var10006];
-                              switch(var1 % 5) {
-                              case 0:
-                                 var10008 = 53;
-                                 break;
-                              case 1:
-                                 var10008 = 22;
-                                 break;
-                              case 2:
-                                 var10008 = 36;
-                                 break;
-                              case 3:
-                                 var10008 = 117;
-                                 break;
-                              default:
-                                 var10008 = 57;
+                              switch (var1 % 5) {
+                                 case 0:
+                                    var10008 = 53;
+                                    break;
+                                 case 1:
+                                    var10008 = 22;
+                                    break;
+                                 case 2:
+                                    var10008 = 36;
+                                    break;
+                                 case 3:
+                                    var10008 = 117;
+                                    break;
+                                 default:
+                                    var10008 = 57;
                               }
 
                               var8[var10006] = (char)(var10007 ^ var10008);
@@ -1267,21 +1267,21 @@ public class a3 {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         } else {
                            var10004 = var10003;
@@ -1310,21 +1310,21 @@ public class a3 {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 53;
-                                       break;
-                                    case 1:
-                                       var10008 = 22;
-                                       break;
-                                    case 2:
-                                       var10008 = 36;
-                                       break;
-                                    case 3:
-                                       var10008 = 117;
-                                       break;
-                                    default:
-                                       var10008 = 57;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 53;
+                                          break;
+                                       case 1:
+                                          var10008 = 22;
+                                          break;
+                                       case 2:
+                                          var10008 = 36;
+                                          break;
+                                       case 3:
+                                          var10008 = 117;
+                                          break;
+                                       default:
+                                          var10008 = 57;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -1367,21 +1367,21 @@ public class a3 {
 
                               while(true) {
                                  var9 = var5[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10 = 53;
-                                    break;
-                                 case 1:
-                                    var10 = 22;
-                                    break;
-                                 case 2:
-                                    var10 = 36;
-                                    break;
-                                 case 3:
-                                    var10 = 117;
-                                    break;
-                                 default:
-                                    var10 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10 = 53;
+                                       break;
+                                    case 1:
+                                       var10 = 22;
+                                       break;
+                                    case 2:
+                                       var10 = 36;
+                                       break;
+                                    case 3:
+                                       var10 = 117;
+                                       break;
+                                    default:
+                                       var10 = 57;
                                  }
 
                                  var5[var6] = (char)(var9 ^ var10);
@@ -1404,21 +1404,21 @@ public class a3 {
                            var8 = var10003;
                            var10006 = var1;
                            var10007 = var10003[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         }
 
@@ -1430,21 +1430,21 @@ public class a3 {
                                  var10006 = var6;
                                  var8 = var10004;
                                  var10007 = var10004[var6];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               } else {
                                  if (var6 <= var1) {
@@ -1471,21 +1471,21 @@ public class a3 {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 53;
-                                             break;
-                                          case 1:
-                                             var10008 = 22;
-                                             break;
-                                          case 2:
-                                             var10008 = 36;
-                                             break;
-                                          case 3:
-                                             var10008 = 117;
-                                             break;
-                                          default:
-                                             var10008 = 57;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 53;
+                                                break;
+                                             case 1:
+                                                var10008 = 22;
+                                                break;
+                                             case 2:
+                                                var10008 = 36;
+                                                break;
+                                             case 3:
+                                                var10008 = 117;
+                                                break;
+                                             default:
+                                                var10008 = 57;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -1528,21 +1528,21 @@ public class a3 {
 
                                     while(true) {
                                        var9 = var5[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10 = 53;
-                                          break;
-                                       case 1:
-                                          var10 = 22;
-                                          break;
-                                       case 2:
-                                          var10 = 36;
-                                          break;
-                                       case 3:
-                                          var10 = 117;
-                                          break;
-                                       default:
-                                          var10 = 57;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10 = 53;
+                                             break;
+                                          case 1:
+                                             var10 = 22;
+                                             break;
+                                          case 2:
+                                             var10 = 36;
+                                             break;
+                                          case 3:
+                                             var10 = 117;
+                                             break;
+                                          default:
+                                             var10 = 57;
                                        }
 
                                        var5[var6] = (char)(var9 ^ var10);
@@ -1565,21 +1565,21 @@ public class a3 {
                                  var8 = var10004;
                                  var10006 = var1;
                                  var10007 = var10004[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               }
                            }
@@ -1589,21 +1589,21 @@ public class a3 {
                      var8 = var10003;
                      var10006 = var1;
                      var10007 = var10003[var1];
-                     switch(var1 % 5) {
-                     case 0:
-                        var10008 = 53;
-                        break;
-                     case 1:
-                        var10008 = 22;
-                        break;
-                     case 2:
-                        var10008 = 36;
-                        break;
-                     case 3:
-                        var10008 = 117;
-                        break;
-                     default:
-                        var10008 = 57;
+                     switch (var1 % 5) {
+                        case 0:
+                           var10008 = 53;
+                           break;
+                        case 1:
+                           var10008 = 22;
+                           break;
+                        case 2:
+                           var10008 = 36;
+                           break;
+                        case 3:
+                           var10008 = 117;
+                           break;
+                        default:
+                           var10008 = 57;
                      }
                   }
 
@@ -1615,21 +1615,21 @@ public class a3 {
                            var10006 = var6;
                            var8 = var10004;
                            var10007 = var10004[var6];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         } else {
                            if (var6 <= var1) {
@@ -1656,21 +1656,21 @@ public class a3 {
 
                                  while(true) {
                                     var10007 = var8[var10006];
-                                    switch(var1 % 5) {
-                                    case 0:
-                                       var10008 = 53;
-                                       break;
-                                    case 1:
-                                       var10008 = 22;
-                                       break;
-                                    case 2:
-                                       var10008 = 36;
-                                       break;
-                                    case 3:
-                                       var10008 = 117;
-                                       break;
-                                    default:
-                                       var10008 = 57;
+                                    switch (var1 % 5) {
+                                       case 0:
+                                          var10008 = 53;
+                                          break;
+                                       case 1:
+                                          var10008 = 22;
+                                          break;
+                                       case 2:
+                                          var10008 = 36;
+                                          break;
+                                       case 3:
+                                          var10008 = 117;
+                                          break;
+                                       default:
+                                          var10008 = 57;
                                     }
 
                                     var8[var10006] = (char)(var10007 ^ var10008);
@@ -1699,21 +1699,21 @@ public class a3 {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               } else {
                                  var10004 = var10003;
@@ -1742,21 +1742,21 @@ public class a3 {
 
                                        while(true) {
                                           var10007 = var8[var10006];
-                                          switch(var1 % 5) {
-                                          case 0:
-                                             var10008 = 53;
-                                             break;
-                                          case 1:
-                                             var10008 = 22;
-                                             break;
-                                          case 2:
-                                             var10008 = 36;
-                                             break;
-                                          case 3:
-                                             var10008 = 117;
-                                             break;
-                                          default:
-                                             var10008 = 57;
+                                          switch (var1 % 5) {
+                                             case 0:
+                                                var10008 = 53;
+                                                break;
+                                             case 1:
+                                                var10008 = 22;
+                                                break;
+                                             case 2:
+                                                var10008 = 36;
+                                                break;
+                                             case 3:
+                                                var10008 = 117;
+                                                break;
+                                             default:
+                                                var10008 = 57;
                                           }
 
                                           var8[var10006] = (char)(var10007 ^ var10008);
@@ -1799,21 +1799,21 @@ public class a3 {
 
                                     while(true) {
                                        var9 = var5[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10 = 53;
-                                          break;
-                                       case 1:
-                                          var10 = 22;
-                                          break;
-                                       case 2:
-                                          var10 = 36;
-                                          break;
-                                       case 3:
-                                          var10 = 117;
-                                          break;
-                                       default:
-                                          var10 = 57;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10 = 53;
+                                             break;
+                                          case 1:
+                                             var10 = 22;
+                                             break;
+                                          case 2:
+                                             var10 = 36;
+                                             break;
+                                          case 3:
+                                             var10 = 117;
+                                             break;
+                                          default:
+                                             var10 = 57;
                                        }
 
                                        var5[var6] = (char)(var9 ^ var10);
@@ -1836,21 +1836,21 @@ public class a3 {
                                  var8 = var10003;
                                  var10006 = var1;
                                  var10007 = var10003[var1];
-                                 switch(var1 % 5) {
-                                 case 0:
-                                    var10008 = 53;
-                                    break;
-                                 case 1:
-                                    var10008 = 22;
-                                    break;
-                                 case 2:
-                                    var10008 = 36;
-                                    break;
-                                 case 3:
-                                    var10008 = 117;
-                                    break;
-                                 default:
-                                    var10008 = 57;
+                                 switch (var1 % 5) {
+                                    case 0:
+                                       var10008 = 53;
+                                       break;
+                                    case 1:
+                                       var10008 = 22;
+                                       break;
+                                    case 2:
+                                       var10008 = 36;
+                                       break;
+                                    case 3:
+                                       var10008 = 117;
+                                       break;
+                                    default:
+                                       var10008 = 57;
                                  }
                               }
 
@@ -1862,21 +1862,21 @@ public class a3 {
                                        var10006 = var6;
                                        var8 = var10004;
                                        var10007 = var10004[var6];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 53;
-                                          break;
-                                       case 1:
-                                          var10008 = 22;
-                                          break;
-                                       case 2:
-                                          var10008 = 36;
-                                          break;
-                                       case 3:
-                                          var10008 = 117;
-                                          break;
-                                       default:
-                                          var10008 = 57;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 53;
+                                             break;
+                                          case 1:
+                                             var10008 = 22;
+                                             break;
+                                          case 2:
+                                             var10008 = 36;
+                                             break;
+                                          case 3:
+                                             var10008 = 117;
+                                             break;
+                                          default:
+                                             var10008 = 57;
                                        }
                                     } else {
                                        if (var6 <= var1) {
@@ -1903,21 +1903,21 @@ public class a3 {
 
                                              while(true) {
                                                 var10007 = var8[var10006];
-                                                switch(var1 % 5) {
-                                                case 0:
-                                                   var10008 = 53;
-                                                   break;
-                                                case 1:
-                                                   var10008 = 22;
-                                                   break;
-                                                case 2:
-                                                   var10008 = 36;
-                                                   break;
-                                                case 3:
-                                                   var10008 = 117;
-                                                   break;
-                                                default:
-                                                   var10008 = 57;
+                                                switch (var1 % 5) {
+                                                   case 0:
+                                                      var10008 = 53;
+                                                      break;
+                                                   case 1:
+                                                      var10008 = 22;
+                                                      break;
+                                                   case 2:
+                                                      var10008 = 36;
+                                                      break;
+                                                   case 3:
+                                                      var10008 = 117;
+                                                      break;
+                                                   default:
+                                                      var10008 = 57;
                                                 }
 
                                                 var8[var10006] = (char)(var10007 ^ var10008);
@@ -1960,21 +1960,21 @@ public class a3 {
 
                                           while(true) {
                                              var9 = var5[var6];
-                                             switch(var1 % 5) {
-                                             case 0:
-                                                var10 = 53;
-                                                break;
-                                             case 1:
-                                                var10 = 22;
-                                                break;
-                                             case 2:
-                                                var10 = 36;
-                                                break;
-                                             case 3:
-                                                var10 = 117;
-                                                break;
-                                             default:
-                                                var10 = 57;
+                                             switch (var1 % 5) {
+                                                case 0:
+                                                   var10 = 53;
+                                                   break;
+                                                case 1:
+                                                   var10 = 22;
+                                                   break;
+                                                case 2:
+                                                   var10 = 36;
+                                                   break;
+                                                case 3:
+                                                   var10 = 117;
+                                                   break;
+                                                default:
+                                                   var10 = 57;
                                              }
 
                                              var5[var6] = (char)(var9 ^ var10);
@@ -1997,21 +1997,21 @@ public class a3 {
                                        var8 = var10004;
                                        var10006 = var1;
                                        var10007 = var10004[var1];
-                                       switch(var1 % 5) {
-                                       case 0:
-                                          var10008 = 53;
-                                          break;
-                                       case 1:
-                                          var10008 = 22;
-                                          break;
-                                       case 2:
-                                          var10008 = 36;
-                                          break;
-                                       case 3:
-                                          var10008 = 117;
-                                          break;
-                                       default:
-                                          var10008 = 57;
+                                       switch (var1 % 5) {
+                                          case 0:
+                                             var10008 = 53;
+                                             break;
+                                          case 1:
+                                             var10008 = 22;
+                                             break;
+                                          case 2:
+                                             var10008 = 36;
+                                             break;
+                                          case 3:
+                                             var10008 = 117;
+                                             break;
+                                          default:
+                                             var10008 = 57;
                                        }
                                     }
                                  }
@@ -2021,21 +2021,21 @@ public class a3 {
                            var8 = var10004;
                            var10006 = var1;
                            var10007 = var10004[var1];
-                           switch(var1 % 5) {
-                           case 0:
-                              var10008 = 53;
-                              break;
-                           case 1:
-                              var10008 = 22;
-                              break;
-                           case 2:
-                              var10008 = 36;
-                              break;
-                           case 3:
-                              var10008 = 117;
-                              break;
-                           default:
-                              var10008 = 57;
+                           switch (var1 % 5) {
+                              case 0:
+                                 var10008 = 53;
+                                 break;
+                              case 1:
+                                 var10008 = 22;
+                                 break;
+                              case 2:
+                                 var10008 = 36;
+                                 break;
+                              case 3:
+                                 var10008 = 117;
+                                 break;
+                              default:
+                                 var10008 = 57;
                            }
                         }
                      }
@@ -2045,21 +2045,21 @@ public class a3 {
                var8 = var10004;
                var10006 = var1;
                var10007 = var10004[var1];
-               switch(var1 % 5) {
-               case 0:
-                  var10008 = 53;
-                  break;
-               case 1:
-                  var10008 = 22;
-                  break;
-               case 2:
-                  var10008 = 36;
-                  break;
-               case 3:
-                  var10008 = 117;
-                  break;
-               default:
-                  var10008 = 57;
+               switch (var1 % 5) {
+                  case 0:
+                     var10008 = 53;
+                     break;
+                  case 1:
+                     var10008 = 22;
+                     break;
+                  case 2:
+                     var10008 = 36;
+                     break;
+                  case 3:
+                     var10008 = 117;
+                     break;
+                  default:
+                     var10008 = 57;
                }
             }
          }

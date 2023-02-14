@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -7,11 +7,12 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -20,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
@@ -32,6 +34,9 @@ import java.util.List;
 import java.util.Set;
 
 public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
+
+  @NonNls private static final String INSPECTION_CLASS_NAME_SUFFIX = "Inspection";
+
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
@@ -40,7 +45,7 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
       return Collections.emptyList();
     }
 
-    Module module = context.getData(LangDataKeys.MODULE);
+    Module module = context.getData(PlatformCoreDataKeys.MODULE);
     if (module == null) {
       return Collections.emptyList();
     }
@@ -68,7 +73,10 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
 
     // Try to find class by description name first. It may improve performance significantly.
     PsiShortNamesCache psiShortNamesCache = PsiShortNamesCache.getInstance(project);
-    String possibleImplementationName = FileUtilRt.getNameWithoutExtension(descriptionFile.getName()) + "Inspection";
+    String possibleImplementationName = FileUtilRt.getNameWithoutExtension(descriptionFile.getName());
+    if (!StringUtil.endsWith(possibleImplementationName, INSPECTION_CLASS_NAME_SUFFIX)) {
+      possibleImplementationName += INSPECTION_CLASS_NAME_SUFFIX;
+    }
     Set<PsiClass> checkedPossibleImplementation = new HashSet<>();
     for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
       PsiClass[] possibleImplementations = psiShortNamesCache.getClassesByName(possibleImplementationName, scope);
@@ -86,6 +94,10 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
       query.forEach(psiClass -> {
         if (checkedPossibleImplementation.contains(psiClass)) {
           return true; // already tried this class
+        }
+
+        if (!PsiUtil.isInstantiable(psiClass)) {
+          return true; // only check actual inspection
         }
 
         if (isTargetInspectionPsiClass(psiClass, descriptionFile, module)) {

@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="lucene-memory" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:8.11.2" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/8.11.2/lucene-memory-8.11.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/8.11.2/lucene-memory-8.11.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/8.11.2/lucene-memory-8.11.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

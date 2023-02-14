@@ -15,9 +15,6 @@ import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgLogTest extends HgPlatformTest {
 
   public void testParseCopiedWithoutBraces() throws HgCommandException {

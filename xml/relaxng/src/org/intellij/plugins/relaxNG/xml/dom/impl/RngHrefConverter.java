@@ -55,10 +55,6 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
       return PsiReference.EMPTY_ARRAY;
     }
     final FileReferenceSet set = FileReferenceSet.createSet(element, false, false, false);
-    if (set != null) {
-      return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE), true);
-    } else {
-      return PsiReference.EMPTY_ARRAY;
-    }
+    return FileReferenceUtil.restrict(set, FileReferenceUtil.byNamespace(RelaxNgMetaDataContributor.RNG_NAMESPACE), true);
   }
 }

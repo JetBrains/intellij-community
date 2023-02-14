@@ -25,7 +25,7 @@ class JdkListTest {
   }
 
   @Test
-  fun `parse feed v2 lists M1`() {
+  fun `parse feed v2 lists aarch64 macos`() {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
@@ -34,11 +34,11 @@ class JdkListTest {
 
     val items = JdkListParser.parseJdkList(json, predicate)
     //there must be only M1 builds
-    Assert.assertEquals(3, items.size)
+    Assert.assertEquals(31, items.size)
   }
 
   @Test
-  fun `parse feed v2 lists windows`() {
+  fun `parse feed v2 lists aarch64 windows`() {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
@@ -46,12 +46,11 @@ class JdkListTest {
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
-    //there must be only M1 builds
-    Assert.assertEquals("$items", 0, items.size)
+    Assert.assertEquals("$items", 9, items.size)
   }
 
   @Test
-  fun `parse feed v2 lists linux`() {
+  fun `parse feed v2 lists aarch64 linux`() {
     val json = loadTestData("feed-v2.json")
 
     val predicate = JdkPredicate(ideBuildNumber = BuildNumber.fromString("203.123")!!,
@@ -59,8 +58,7 @@ class JdkListTest {
     )
 
     val items = JdkListParser.parseJdkList(json, predicate)
-    //there must be only M1 builds
-    Assert.assertEquals("$items", 0, items.size)
+    Assert.assertEquals("$items", 36, items.size)
   }
 
   @Test
@@ -73,7 +71,7 @@ class JdkListTest {
 
     val items = JdkListParser.parseJdkList(json, predicate)
     //there must be only M1 builds
-    Assert.assertEquals("$items", 27, items.size)
+    Assert.assertEquals("$items", 71, items.size)
   }
 
   @Test

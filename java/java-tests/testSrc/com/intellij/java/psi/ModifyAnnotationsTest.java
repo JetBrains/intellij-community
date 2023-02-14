@@ -14,9 +14,6 @@ import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * @author ven
- */
 public class ModifyAnnotationsTest extends JavaPsiTestCase {
   @Override
   protected void setUp() throws Exception {

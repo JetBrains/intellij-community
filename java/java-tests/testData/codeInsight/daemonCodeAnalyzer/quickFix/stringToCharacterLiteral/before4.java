@@ -1,4 +1,4 @@
-// "Change "1" to '1' (to char literal)" "true"
+// "Change "1" to '1' (to char literal)" "true-preview"
 class Simple extends Ancestor {
     public void m(int i) {
 

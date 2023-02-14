@@ -6,12 +6,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
+/**
+ * @see PsiManagerEx#getFileManager()
+ */
 public interface FileManager {
   @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);

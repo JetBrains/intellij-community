@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyPlainStringElement;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,7 @@ public class PyPlainStringElementImpl extends LeafPsiElement implements PyPlainS
   @NotNull
   @Override
   public String getPrefix() {
-    return PyStringLiteralUtil.getPrefix(getText());
+    return PyStringLiteralCoreUtil.getPrefix(getText());
   }
 
   @Override

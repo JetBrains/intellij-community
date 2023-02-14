@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -30,46 +31,35 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
-/**
- * @author ven
- */
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
   private final AnnotationHolderImpl myAnnotationHolder;
-  private final ExternalToolPassFactory myExternalToolPassFactory;
   private final boolean myMainHighlightingPass;
-  private final List<MyData> myAnnotationData = new ArrayList<>();
+  private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
 
-  private static class MyData {
-    final ExternalAnnotator annotator;
+  private static class MyData<K,V> {
+    final ExternalAnnotator<K,V> annotator;
     final PsiFile psiRoot;
-    final Object collectedInfo;
-    volatile Object annotationResult;
+    final K collectedInfo;
+    volatile V annotationResult;
 
-    MyData(ExternalAnnotator annotator, PsiFile psiRoot, Object collectedInfo) {
+    MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
       this.annotator = annotator;
       this.psiRoot = psiRoot;
       this.collectedInfo = collectedInfo;
     }
   }
 
-  ExternalToolPass(@NotNull ExternalToolPassFactory factory,
-                   @NotNull PsiFile file,
-                   @NotNull Editor editor,
-                   int startOffset,
-                   int endOffset) {
-    this(factory, file, editor.getDocument(), editor, startOffset, endOffset, new DefaultHighlightInfoProcessor(), false);
-  }
-
-  ExternalToolPass(@NotNull ExternalToolPassFactory factory,
-                   @NotNull PsiFile file,
+  ExternalToolPass(@NotNull PsiFile file,
                    @NotNull Document document,
                    @Nullable Editor editor,
                    int startOffset,
@@ -77,8 +67,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    @NotNull HighlightInfoProcessor processor,
                    boolean mainHighlightingPass) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
-    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
-    myExternalToolPassFactory = factory;
+    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
     myMainHighlightingPass = mainHighlightingPass;
   }
 
@@ -86,12 +75,35 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     FileViewProvider viewProvider = myFile.getViewProvider();
     HighlightingLevelManager highlightingManager = HighlightingLevelManager.getInstance(myProject);
-    Map<PsiFile, List<ExternalAnnotator>> allAnnotators = new HashMap<>();
+    Map<PsiFile, List<ExternalAnnotator<?,?>>> allAnnotators = new HashMap<>();
     int externalAnnotatorsInRoots = 0;
-    for (Language language : viewProvider.getLanguages()) {
-      PsiFile psiRoot = viewProvider.getPsi(language);
-      if (highlightingManager.shouldInspect(psiRoot)) {
-        List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
+    InspectionProfile profile;
+    if (custom != null) {
+      profile = custom.apply(currentProfile).getInspectionProfile();
+    }
+    else {
+      profile = currentProfile;
+    }
+    for (PsiFile psiRoot : viewProvider.getAllFiles()) {
+      if (highlightingManager.shouldInspect(psiRoot) && !highlightingManager.runEssentialHighlightingOnly(psiRoot)) {
+        List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(psiRoot.getLanguage(), psiRoot);
+        annotators = ContainerUtil.filter(annotators, annotator -> {
+          String shortName = annotator.getPairedBatchInspectionShortName();
+          if (shortName != null) {
+            HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+            if (key == null) {
+              if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                // tests should care about registering corresponding paired tools
+                processError(new Exception("Paired tool '" + shortName + "' not found"), annotator, psiRoot);
+              }
+              return false;
+            }
+            return profile.isToolEnabled(key, myFile);
+          }
+          return true;
+        });
         if (!annotators.isEmpty()) {
           externalAnnotatorsInRoots += annotators.size();
           allAnnotators.put(psiRoot, annotators);
@@ -100,50 +112,32 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     setProgressLimit(externalAnnotatorsInRoots);
 
-    InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument);
     Editor editor = getEditor();
 
     DumbService dumbService = DumbService.getInstance(myProject);
-    for (PsiFile psiRoot : allAnnotators.keySet()) {
-      for (ExternalAnnotator annotator : allAnnotators.get(psiRoot)) {
+    for (Map.Entry<PsiFile, List<ExternalAnnotator<?,?>>> entry : allAnnotators.entrySet()) {
+      PsiFile psiRoot = entry.getKey();
+      List<ExternalAnnotator<?,?>> annotators = entry.getValue();
+      for (ExternalAnnotator<?,?> annotator : annotators) {
         progress.checkCanceled();
 
+        if (dumbService.isDumb() && !DumbService.isDumbAware(annotator)) {
+          continue;
+        }
+        Object collectedInfo = null;
         try {
-          if (dumbService.isDumb() && !DumbService.isDumbAware(annotator)) {
-            continue;
-          }
-
-          String shortName = annotator.getPairedBatchInspectionShortName();
-          if (shortName != null) {
-            HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-            if (key == null) {
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                // tests should care about registering corresponding paired tools
-                process(new Exception("Paired tool '" + shortName + "' not found"), annotator, psiRoot);
-              }
-              continue;
-            }
-            if (!profile.isToolEnabled(key, myFile)) {
-              continue;
-            }
-          }
-
-          Object collectedInfo = null;
-          try {
-            collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);
-          }
-          catch (Throwable t) {
-            process(t, annotator, psiRoot);
-          }
-
-          if (collectedInfo != null) {
-            myAnnotationData.add(new MyData(annotator, psiRoot, collectedInfo));
-          }
+          collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);
         }
-        finally {
-          advanceProgress(1);
+        catch (Throwable t) {
+          processError(t, annotator, psiRoot);
         }
+
+        if (collectedInfo != null) {
+          //noinspection unchecked,rawtypes
+          myAnnotationData.add(new MyData(annotator, psiRoot, collectedInfo));
+        }
+        advanceProgress(1);
       }
     }
   }
@@ -156,8 +150,10 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     if (myMainHighlightingPass) {
       doAnnotate();
-      doApply();
-      return getHighlights();
+      return ReadAction.compute(() -> {
+        doApply();
+        return getHighlights();
+      });
     }
     return super.getInfos();
   }
@@ -190,40 +186,47 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       }
     };
 
-    myExternalToolPassFactory.scheduleExternalActivity(update);
+    ExternalAnnotatorManager.getInstance().queue(update);
   }
 
   private boolean documentChanged(long modificationStampBefore) {
     return myDocument.getModificationStamp() != modificationStampBefore;
   }
 
-  @SuppressWarnings("unchecked")
   private void doAnnotate() {
-    for (MyData data : myAnnotationData) {
-      try {
-        data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
-      }
-      catch (Throwable t) {
-        process(t, data.annotator, data.psiRoot);
-      }
+    for (MyData<?,?> data : myAnnotationData) {
+      doAnnotate(data);
     }
   }
 
-  @SuppressWarnings("unchecked")
+  private static <K, V> void doAnnotate(@NotNull MyData<K, V> data) {
+    try {
+      data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+    }
+    catch (Throwable t) {
+      processError(t, data.annotator, data.psiRoot);
+    }
+  }
+
   private void doApply() {
-    for (MyData data : myAnnotationData) {
-      if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
-        try {
-          myAnnotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
-        }
-        catch (Throwable t) {
-          process(t, data.annotator, data.psiRoot);
-        }
-      }
+    for (MyData<?,?> data : myAnnotationData) {
+      doApply(data);
     }
     myAnnotationHolder.assertAllAnnotationsCreated();
   }
 
+  private <K,V> void doApply(@NotNull MyData<K,V> data) {
+    if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
+      try {
+        myAnnotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
+      }
+      catch (Throwable t) {
+        processError(t, data.annotator, data.psiRoot);
+      }
+    }
+  }
+
+  @NotNull
   private List<HighlightInfo> getHighlights() {
     List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
     for (Annotation annotation : myAnnotationHolder) {
@@ -232,9 +235,10 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     return infos;
   }
 
-  private void doFinish(List<? extends HighlightInfo> highlights, long modificationStampBefore) {
+  private void doFinish(@NotNull List<? extends HighlightInfo> highlights, long modificationStampBefore) {
     Editor editor = getEditor();
-    assert editor != null;
+    ModalityState modalityState =
+      editor == null ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(editor.getComponent());
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
         int start = myRestrictRange.getStartOffset();
@@ -242,10 +246,10 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    }, ModalityState.stateForComponent(editor.getComponent()), (x -> !myFile.isValid()));
+    }, modalityState, __ -> !myFile.isValid());
   }
 
-  private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
+  private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
 
     VirtualFile file = root.getVirtualFile();

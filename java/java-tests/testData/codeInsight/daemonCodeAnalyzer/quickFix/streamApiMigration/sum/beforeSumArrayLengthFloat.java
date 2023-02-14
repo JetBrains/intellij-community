@@ -1,4 +1,4 @@
-// "Replace with sum()" "false"
+// "Collapse loop with stream 'sum()'" "false"
 
 public class Main {
   public long test(String[] array) {

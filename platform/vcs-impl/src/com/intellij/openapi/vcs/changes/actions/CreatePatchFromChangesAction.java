@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_CREATION_FAILED;
@@ -80,7 +78,8 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     ShelvedChangeList shelvedChangeList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getShelvedLists(e.getDataContext()));
     if (shelvedChangeList != null) {
       boolean entireList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getExactlySelectedLists(e.getDataContext())) != null;
-      List<String> selectedPaths = entireList ? ContainerUtil.emptyList() : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
+      List<String> selectedPaths = entireList ? ContainerUtil.emptyList()
+                                              : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
       patchBuilder = new CreatePatchCommitExecutor.ShelfPatchBuilder(project, shelvedChangeList, selectedPaths);
     }
     else {
@@ -130,7 +129,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                   @NotNull PatchBuilder patchBuilder) {
     CommitContext commitContext = new CommitContext();
     if (silentClipboard) {
-      createIntoClipboard(project, changes, patchBuilder, commitContext);
+      createIntoClipboard(project, changes, commitMessage, patchBuilder, commitContext);
     }
     else {
       createWithDialog(project, commitMessage, changes, patchBuilder, commitContext);
@@ -139,29 +138,29 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   private static void createWithDialog(@NotNull Project project,
                                        @Nullable String commitMessage,
-                                       @NotNull List<? extends Change> changes, @NotNull PatchBuilder patchBuilder, @NotNull CommitContext commitContext) {
+                                       @NotNull List<? extends Change> changes,
+                                       @NotNull PatchBuilder patchBuilder,
+                                       @NotNull CommitContext commitContext) {
     CommitSession commitSession = CreatePatchCommitExecutor.createCommitSession(project, patchBuilder, commitContext);
-    DialogWrapper sessionDialog = new SessionDialog(VcsBundle.message("action.name.create.patch"),
-                                                    project,
-                                                    commitSession,
-                                                    changes,
-                                                    commitMessage);
-    if (!sessionDialog.showAndGet()) return;
+
+    String title = VcsBundle.message("action.name.create.patch");
+    if (!SessionDialog.configureCommitSession(project, title, commitSession, changes, commitMessage)) return;
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      //noinspection unchecked
-      commitSession.execute((Collection<Change>)changes, commitMessage);
+      commitSession.execute(changes, commitMessage);
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
 
   private static void createIntoClipboard(@NotNull Project project,
                                           @NotNull List<? extends Change> changes,
+                                          @Nullable String commitMessage,
                                           @NotNull PatchBuilder patchBuilder,
                                           @NotNull CommitContext commitContext) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         Path baseDir = PatchWriter.calculateBaseDirForWritingPatch(project, changes);
-        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false, patchBuilder, commitContext);
+        CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, commitMessage, false, false,
+                                                        patchBuilder, commitContext);
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);
@@ -174,14 +173,12 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   @Override
   public void defaultUpdate(@NotNull AnActionEvent e) {
-    Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
     int changelistNum = changeLists == null ? 0 : changeLists.length;
     changelistNum += shelveChangelists.size();
 
-    e.getPresentation().setEnabled(!Boolean.FALSE.equals(haveSelectedChanges) &&
-                                   changelistNum <= 1 &&
-                                   !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)));
+    e.getPresentation().setEnabled(changelistNum <= 1 && !ArrayUtil.isEmpty(changes));
   }
 }

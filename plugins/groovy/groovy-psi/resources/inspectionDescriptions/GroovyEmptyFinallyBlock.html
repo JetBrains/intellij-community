@@ -1,6 +1,16 @@
 <html>
 <body>
-Reports empty <b>finally</b> blocks.
-Empty <b>finally</b> blocks usually indicate coding errors.
+Reports empty <code>finally</code> blocks.
+Empty <code>finally</code> blocks usually indicate coding errors.
+<p><b>Example:</b></p>
+<pre>
+<code>
+try {
+  throw new Exception()
+}
+finally {
+}
+</code>
+</pre>
 </body>
 </html>

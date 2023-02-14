@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
@@ -15,15 +15,23 @@ import javax.swing.*;
 import java.util.List;
 
 /**
- * @author peter
+ * Base class which serves as a factory for custom code style settings and a settings page (configurable). In most cases language
+ * settings and the configurable are defined in {@link LanguageCodeStyleSettingsProvider}. This class can be extended directly to contribute
+ * to already existing settings page. In this case {@link #hasSettingsPage()} may return false not to create an extra node (configurable)
+ * in the settings tree.
  */
 public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettingsFactory, DisplayPrioritySortable {
   public static final ExtensionPointName<CodeStyleSettingsProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeStyleSettingsProvider");
 
 
+  /**
+   * Create an object with custom code style settings.
+   * @param settings The root settings (container).
+   * @return The custom settings object.
+   */
   @Override
   @Nullable
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return null;
   }
 
@@ -33,7 +41,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    */
   @Deprecated
   @NotNull
-  public Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings modelSettings) {
+  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     //noinspection ConstantConditions
     return null;
   }
@@ -44,6 +52,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *
    * @param settings      The original settings.
    * @param modelSettings The model settings.
+   *
    * @return The created code style configurable.
    */
   @NotNull
@@ -68,6 +77,10 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
     return lang == null ? null : lang.getDisplayName();
   }
 
+  /**
+   * @return True if a separate node must be created in the settings tree, false if created configurable will be used in already
+   * existing settings page.
+   */
   public boolean hasSettingsPage() {
     return true;
   }
@@ -101,9 +114,10 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
   }
 
   private static final class LegacyConfigurableWrapper implements CodeStyleConfigurable {
+    @NotNull
     private final Configurable myConfigurable;
 
-    private LegacyConfigurableWrapper(Configurable configurable) {
+    private LegacyConfigurableWrapper(@NotNull Configurable configurable) {
       myConfigurable = configurable;
     }
 

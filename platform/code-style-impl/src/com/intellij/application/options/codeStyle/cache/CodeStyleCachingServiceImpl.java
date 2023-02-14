@@ -1,29 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.cache;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
-public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
-  public final static int MAX_CACHE_SIZE = 100;
+public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
+  public static final int MAX_CACHE_SIZE = 100;
 
-  private final static Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
+  private static final Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
@@ -32,8 +30,10 @@ public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Dis
   private final PriorityQueue<FileData> myRemoveQueue = new PriorityQueue<>(
     MAX_CACHE_SIZE,
     Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
+  private final Project myProject;
 
-  public CodeStyleCachingServiceImpl() {
+  public CodeStyleCachingServiceImpl(Project project) {
+    myProject = project;
     ApplicationManager.getApplication().getMessageBus().connect(this).
       subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -48,50 +48,42 @@ public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Dis
   }
 
   @Override
-  @Nullable
-  public CodeStyleSettings tryGetSettings(@NotNull PsiFile file) {
-    CodeStyleCachedValueProvider provider = getOrCreateCachedValueProvider(file);
-    return provider != null ? provider.tryGetSettings() : null;
+  public CodeStyleSettings tryGetSettings(@NotNull VirtualFile file) {
+    return getOrCreateCachedValueProvider(file).tryGetSettings();
   }
 
   @Override
   public void scheduleWhenSettingsComputed(@NotNull PsiFile file, @NotNull Runnable runnable) {
-    CodeStyleCachedValueProvider provider = getOrCreateCachedValueProvider(file);
-    if (provider != null) {
-      provider.scheduleWhenComputed(runnable);
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      runnable.run();
     }
     else {
-      runnable.run();
+      getOrCreateCachedValueProvider(virtualFile).scheduleWhenComputed(runnable);
     }
   }
 
-  @Nullable
-  private CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull PsiFile file) {
+  private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
     synchronized (CACHE_LOCK) {
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null) {
-        FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
-        CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
-        if (provider == null || provider.isExpired()) {
-          provider = new CodeStyleCachedValueProvider(file);
-          fileData.putUserData(PROVIDER_KEY, provider);
-        }
-        return provider;
+      FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
+      CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+      if (provider == null || provider.isExpired()) {
+        FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
+        provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
+        fileData.putUserData(PROVIDER_KEY, provider);
       }
-      return null;
+      return provider;
     }
   }
 
   private void clearCache() {
     synchronized (CACHE_LOCK) {
-      myFileDataCache.values().forEach(
-        fileData -> {
-          ObjectUtils.consumeIfNotNull(
-            fileData.getUserData(PROVIDER_KEY),
-            provider -> provider.cancelComputation()
-          );
+      myFileDataCache.values().forEach(fileData -> {
+        CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+        if (provider != null) {
+          provider.cancelComputation();
         }
-      );
+      });
       myFileDataCache.clear();
       myRemoveQueue.clear();
     }
@@ -99,13 +91,11 @@ public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Dis
 
 
   @Override
-  @Nullable
-  public UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
+  public @NotNull UserDataHolder getDataHolder(@NotNull VirtualFile virtualFile) {
     return getOrCreateFileData(getFileKey(virtualFile));
   }
 
-  @NotNull
-  private synchronized FileData getOrCreateFileData(@NotNull String path) {
+  private synchronized @NotNull FileData getOrCreateFileData(@NotNull String path) {
     if (myFileDataCache.containsKey(path)) {
       final FileData fileData = myFileDataCache.get(path);
       fileData.update();
@@ -123,8 +113,7 @@ public class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Dis
     return newData;
   }
 
-  @NotNull
-  private static String getFileKey(VirtualFile file) {
+  private static @NotNull String getFileKey(VirtualFile file) {
     return file.getUrl();
   }
 

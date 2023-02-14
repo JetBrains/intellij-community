@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -26,8 +26,8 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.CommonInjectedFileChangesHandler;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInjectedFileChangesHandler;
@@ -51,20 +52,20 @@ import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 /**
-* @author Gregory Shrago
-*/
-public class QuickEditHandler implements Disposable, DocumentListener {
+ * @author Gregory Shrago
+ */
+public final class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
@@ -72,6 +73,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private final Editor myEditor;
   private final Document myOrigDocument;
 
+  @NotNull
   private final Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
@@ -80,7 +82,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private EditorWindow mySplittedWindow;
   private boolean myCommittingToOriginal;
 
-  private final InjectedFileChangesHandler myEditChangesHandler;
+  private final @NotNull InjectedFileChangesHandler myEditChangesHandler;
 
   public static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
 
@@ -93,7 +95,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     myEditor = editor;
     myAction = action;
     myOrigDocument = editor.getDocument();
-    Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
+    Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);
     FileType fileType = injectedFile.getFileType();
     Language language = injectedFile.getLanguage();
     PsiLanguageInjectionHost.Shred firstShred = ContainerUtil.getFirstItem(shreds);
@@ -121,12 +123,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
-    myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
-    assert myNewDocument != null;
+    myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
-    myOrigDocument.addDocumentListener(this, this);
-    myNewDocument.addDocumentListener(this, this);
     EditorFactory editorFactory = Objects.requireNonNull(EditorFactory.getInstance());
     // not FileEditorManager listener because of RegExp checker and alike
     editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
@@ -167,10 +166,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     Disposer.register(this, myEditChangesHandler);
 
     StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
-      Set<QuickEditHandler> editHandlers = QUICK_EDIT_HANDLERS.get(h);
+      Set<QuickEditHandler> editHandlers = h.getCopyableUserData(QUICK_EDIT_HANDLERS);
       if (editHandlers == null) {
         editHandlers = new SmartHashSet<>();
-        QUICK_EDIT_HANDLERS.set(h, editHandlers);
+        h.putCopyableUserData(QUICK_EDIT_HANDLERS, editHandlers);
       }
       editHandlers.add(this);
       Set<QuickEditHandler> finalEditHandlers = editHandlers;
@@ -178,12 +177,15 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     });
 
     initGuardedBlocks(shreds);
+
+    myOrigDocument.addDocumentListener(this, this);
+    myNewDocument.addDocumentListener(this, this);
   }
 
   private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");
 
   public static @NotNull Set<QuickEditHandler> getFragmentEditors(@NotNull PsiLanguageInjectionHost host) {
-    Set<QuickEditHandler> handlers = QUICK_EDIT_HANDLERS.get(host);
+    Set<QuickEditHandler> handlers = host.getCopyableUserData(QUICK_EDIT_HANDLERS);
     if (handlers == null) return Collections.emptySet();
     return handlers;
   }
@@ -201,8 +203,8 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
       final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
-        final EditorWindow curWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = curWindow.split(SwingConstants.HORIZONTAL, false, myNewVirtualFile, true);
+        EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
+        mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
@@ -275,7 +277,9 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal) return;
-      if (!myEditChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getOldLength()))) return;
+      InjectedFileChangesHandler injectedFileChangesHandler =
+        Objects.requireNonNull(myEditChangesHandler, "seems that 'myEditChangesHandler' was not initialized");
+      if (!injectedFileChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getOldLength()))) return;
       ApplicationManager.getApplication().invokeLater(() -> {
         Component owner = FocusManager.getCurrentManager().getFocusOwner();
         closeEditor();
@@ -287,13 +291,13 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private void closeEditor() {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      final EditorWithProviderComposite[] editors = mySplittedWindow.getEditors();
-      if (editors.length == 1 && Comparing.equal(editors[0].getFile(), myNewVirtualFile)) {
+      final List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+      if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }
     if (unsplit) {
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow, false);
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow);
     }
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
@@ -355,14 +359,14 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     return myNewFile;
   }
 
-  public @NotNull Editor getEditor() {
-    return myEditor;
-  }
-
   public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {
     return myEditChangesHandler.tryReuse(injectedFile, hostRange);
   }
 
+  @Override
+  public String toString() {
+    return "QuickEditHandler@" + this.hashCode() + super.toString();
+  }
 
   private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override

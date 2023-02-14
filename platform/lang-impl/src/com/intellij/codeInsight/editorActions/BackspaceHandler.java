@@ -12,10 +12,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtilEx;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -26,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileWithOneLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -51,7 +49,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     }
   }
 
-  protected boolean handleBackspace(Editor editor, Caret caret, DataContext dataContext, boolean toWordStart) {
+  boolean handleBackspace(@NotNull Editor editor, @NotNull Caret caret, @NotNull DataContext dataContext, boolean toWordStart) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
 
@@ -93,10 +91,15 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     myOriginalHandler.execute(originalEditor, caret, dataContext);
 
     if (!toWordStart && Character.isBmpCodePoint(c)) {
-      for(BackspaceHandlerDelegate delegate: delegates) {
-        if (delegate.charDeleted((char)c, file, editor)) {
-          return true;
+      try {
+        for(BackspaceHandlerDelegate delegate: delegates) {
+          if (delegate.charDeleted((char)c, file, editor)) {
+            return true;
+          }
         }
+      }
+      finally {
+        deleteCustomFoldRegionIfNeeded(caret);
       }
     }
 
@@ -138,6 +141,15 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     return true;
   }
 
+  private static void deleteCustomFoldRegionIfNeeded(@NotNull Caret caret) {
+    int caretOffset = caret.getOffset();
+    Editor editor = caret.getEditor();
+    FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(caretOffset - 1);
+    if (foldRegion instanceof CustomFoldRegion && foldRegion.getEndOffset() == caretOffset) {
+      editor.getDocument().deleteString(foldRegion.getStartOffset(), foldRegion.getEndOffset());
+    }
+  }
+
   public static char getRightChar(final char c) {
     if (c == '(') return ')';
     if (c == '[') return ']';
@@ -159,6 +171,10 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
   }
 
   static @NotNull Language getLanguageAtCursorPosition(final PsiFile file, final Editor editor) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
+
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     Language language = element != null ? PsiUtilCore.findLanguageFromElement(element) : Language.ANY;
     if (language != Language.ANY) {

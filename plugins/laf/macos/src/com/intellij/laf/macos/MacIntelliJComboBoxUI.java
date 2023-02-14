@@ -130,7 +130,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         @Override
         public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);
-          list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
+          list.setSelectionBackground(JBColor.lazy(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
         }
       };
     }
@@ -138,7 +138,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       @Override
       protected void configureList() {
         super.configureList();
-        list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
+        list.setSelectionBackground(JBColor.lazy(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
       }
     };
   }

@@ -6,6 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+/**
+ * @deprecated Will be removed with deprecated version of Kotlin UI DSL
+ */
+@Deprecated
 public interface VisualPaddingsProvider {
   @Nullable
   Insets

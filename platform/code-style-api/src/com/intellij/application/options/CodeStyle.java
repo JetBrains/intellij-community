@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -20,6 +21,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -69,36 +71,43 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns root {@link CodeStyleSettings} for the given PSI file. In some cases the returned instance may be of
-   * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific PSI file by
+   * Returns root {@link CodeStyleSettings} for the given project and virtual file. In some cases the returned instance may be of
+   * {@link TransientCodeStyleSettings} class if the original (project) settings are modified for specific file by
    * {@link CodeStyleSettingsModifier} extensions. In these cases the returned instance may change upon the next call if some of
    * {@link TransientCodeStyleSettings} dependencies become outdated.
-   * <p>
-   * A shorter way to get language-specific settings it to use one of the methods {@link #getLanguageSettings(PsiFile)}
-   * or {@link #getLanguageSettings(PsiFile, Language)}.
    *
-   * @param file The file to get code style settings for. The method may substitute it with an associated PSI,
-   *             see {@link #getSettingsPsi(PsiFile)}
+   * @param project The current project.
+   * @param file The file to get code style settings for.
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
   @NotNull
-  public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
-    final Project project = file.getProject();
+  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
+    @SuppressWarnings("TestOnlyProblems")
     CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
     if (tempSettings != null) {
       return tempSettings;
     }
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    return cachedSettings != null ? cachedSettings : getSettings(project);
+  }
 
-    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
-    if (result != null) {
-      return result;
+  public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    @SuppressWarnings("TestOnlyProblems")
+    CodeStyleSettings tempSettings = CodeStyleSettingsManager.getInstance(project).getTemporarySettings();
+    if (tempSettings != null) {
+      return tempSettings;
     }
 
     PsiFile settingsFile = getSettingsPsi(file);
     if (settingsFile == null) {
       return getSettings(project);
     }
-    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(settingsFile);
+    VirtualFile virtualFile = settingsFile.getVirtualFile();
+    if (virtualFile == null) {
+      return getSettings(project);
+    }
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(virtualFile);
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
@@ -134,8 +143,9 @@ public final class CodeStyle {
 
   public static CodeStyleSettings getSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
-    if (project != null) {
-      return getSettings(project, editor.getDocument());
+    VirtualFile file = editor.getVirtualFile();
+    if (file != null && project != null) {
+      return getSettings(project, file);
     }
     return getDefaultSettings();
   }
@@ -196,12 +206,7 @@ public final class CodeStyle {
   }
 
   /**
-   * Returns indent options for the given PSI file. The method attempts to use {@link FileIndentOptionsProvider}
-   * if applicable to the file. If there are no suitable indent options providers, it takes configurable language indent options or
-   * retrieves indent options by file type.
-   * @param file The file to get indent options for.
-   * @return The file indent options.
-   * @see FileIndentOptionsProvider
+   * Works similarly to {@link #getIndentOptions(Project, VirtualFile)} but for a PSI file.
    */
   @NotNull
   public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
@@ -209,21 +214,19 @@ public final class CodeStyle {
     return rootSettings.getIndentOptionsByFile(file);
   }
 
-
   /**
-   * Returns indent options by virtual file's type. If {@code null} is given instead of the virtual file or the type of the virtual
-   * file doesn't have it's own configuration, returns other indent options configured via "Other File Types" section in Settings.
-   * <p>
-   * <b>Note:</b> This method is faster then {@link #getIndentOptions(PsiFile)} but it doesn't take into account possible configurations
-   * overwriting the default, for example EditorConfig.
+   * Returns indent options for the given project and virtual file. The method attempts to use {@link FileIndentOptionsProvider}
+   * if applicable to the file. If there are no suitable indent options providers, it takes configurable language indent options or
+   * retrieves indent options by file type using {@link CodeStyleSettings#getIndentOptions(FileType)}.
    *
    * @param project The current project.
-   * @param file    The virtual file to get indent options for or {@code null} if the file is unknown.
-   * @return The indent options for the given project and file.
+   * @param virtualFile The virtual file to get the indent options for.
+   * @return The resulting indent options.
+   * @see FileIndentOptionsProvider
    */
-  @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptionsByFileType(@NotNull Project project, @Nullable VirtualFile file) {
-    return file != null ? getSettings(project).getIndentOptions(file.getFileType()) : getSettings(project).getIndentOptions();
+  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    CodeStyleSettings rootSetting = getSettings(project, virtualFile);
+    return rootSetting.getIndentOptionsByFile(project, virtualFile, null);
   }
 
   /**
@@ -301,7 +304,7 @@ public final class CodeStyle {
    * @param tempSettings  The temporary code style settings.
    * @param runnable      The runnable to execute with the temporary settings.
    */
-  @TestOnly
+  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings tempSettings,
                                              @NotNull Runnable runnable) {
@@ -330,7 +333,7 @@ public final class CodeStyle {
    * @param baseSettings         The base settings to be cloned and used in consumer.
    * @param tempSettingsConsumer The consumer to execute with the base settings copy.
    */
-  @TestOnly
+  @SuppressWarnings("TestOnlyProblems")
   public static void doWithTemporarySettings(@NotNull Project project,
                                              @NotNull CodeStyleSettings baseSettings,
                                              @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
@@ -360,24 +363,11 @@ public final class CodeStyle {
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
   }
 
-  /**
-   * Updates document's indent options from indent options providers.
-   * <p><b>Note:</b> Calling this method directly when there is an editor associated with the document may cause the editor work
-   * incorrectly. To keep consistency with the editor call {@code EditorEx.reinitSettings()} instead.
-   * @param project  The project of the document.
-   * @param document The document to update indent options for.
-   */
-  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull Document document) {
-    if (!project.isDisposed()) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      if (documentManager != null) {
-        PsiFile file = documentManager.getPsiFile(document);
-        if (file != null) {
-          CommonCodeStyleSettings.IndentOptions indentOptions = getSettings(file).getIndentOptionsByFile(file, null, true, null);
-          indentOptions.associateWithDocument(document);
-        }
-      }
-    }
+  @ApiStatus.Internal
+  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
+    CommonCodeStyleSettings.IndentOptions indentOptions =
+      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null);
+    indentOptions.associateWithDocument(document);
   }
 
   /**
@@ -448,7 +438,7 @@ public final class CodeStyle {
     if (project == null) return null;
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
     String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(project, editor, language, offset) : null;
-    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+    if (Strings.areSameInstance(indent, LineIndentProvider.DO_NOT_ADJUST)) {
       return allowDocCommit ? null : indent;
     }
     return indent != null ? indent : allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null;
@@ -509,10 +499,7 @@ public final class CodeStyle {
   @NotNull
   public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile != null) {
-      return new DefaultCodeStyleSettingsFacade(getSettings(psiFile), fileType);
-    }
-    return new DefaultCodeStyleSettingsFacade(getSettings(project), fileType);
+    return new DefaultCodeStyleSettingsFacade(psiFile == null ? getSettings(project) : getSettings(psiFile), fileType);
   }
 
   /**
@@ -520,7 +507,6 @@ public final class CodeStyle {
    *
    * @param editor The current editor.
    * @param offset The offset to find the language at.
-   * @return
    */
   public static CommonCodeStyleSettings getLocalLanguageSettings(Editor editor, int offset) {
     PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);

@@ -24,6 +24,7 @@ public interface Pass {
   int WOLF = 9;
   int LINE_MARKERS = 11;
   int WHOLE_FILE_LOCAL_INSPECTIONS = 12;
+  int SLOW_LINE_MARKERS = 13;
 
-  int LAST_PASS = WHOLE_FILE_LOCAL_INSPECTIONS;
+  int LAST_PASS = SLOW_LINE_MARKERS;
 }

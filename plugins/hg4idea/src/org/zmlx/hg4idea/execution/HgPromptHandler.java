@@ -23,8 +23,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * HgPromptHandler is used by {@link HgPromptCommandExecutor, when you want to change the behavior of
  * standard commands execution in the Mercurial.
- *
- * @author Nadya Zabrodina
  */
 public interface HgPromptHandler {
 
@@ -32,7 +30,6 @@ public interface HgPromptHandler {
    * Checks you need to change the default behavior.
    *
    * @param message standard output message from Mercurial
-   * @return
    */
   boolean shouldHandle(@Nullable @NonNls String message);
 
@@ -41,8 +38,6 @@ public interface HgPromptHandler {
    *
    * @param message       standard output message from Mercurial
    * @param choices       possible choices
-   * @param defaultChoice
-   * @return
    */
   HgPromptChoice promptUser(@NotNull @NlsSafe String message,
                             final HgPromptChoice @NotNull [] choices,

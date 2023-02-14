@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A part of a multi-part statement which can have an "else:" clause.
- * User: dcheryasov
  */
 public interface PyStatementWithElse extends PyStatement {
   @Nullable

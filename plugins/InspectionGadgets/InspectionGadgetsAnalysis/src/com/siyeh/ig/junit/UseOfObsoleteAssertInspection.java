@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,7 +32,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UseOfObsoleteAssertInspection extends BaseInspection {
+public class UseOfObsoleteAssertInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -53,7 +54,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
   private static class UseOfObsoleteAssertVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final Project project = expression.getProject();
       final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module == null) {
@@ -81,7 +82,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
   private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (call == null) {
         return;
@@ -145,7 +146,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         PsiParameter[] parameters = newTarget.getParameterList().getParameters();
         if (parameters.length > 0) {
           PsiType paramType = parameters[parameters.length - 1].getType();
-          if (PsiType.DOUBLE.equals(paramType) || PsiType.FLOAT.equals(paramType)) {
+          if (PsiTypes.doubleType().equals(paramType) || PsiTypes.floatType().equals(paramType)) {
             call.getArgumentList().add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("0.0", call));
           }
         }
@@ -174,7 +175,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         }
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (expression == methodCallExpression) {
             return;

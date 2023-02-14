@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException
 import com.intellij.internal.statistic.config.EventLogExternalSettings
 import com.intellij.internal.statistic.config.bean.EventLogBucketRange
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
-import com.intellij.internal.statistic.eventLog.EventLogBuildType
+import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
 import org.junit.Assert
 import java.io.BufferedReader
 import java.io.StringReader
@@ -59,12 +59,13 @@ abstract class EventLogConfigBaseParserTest {
       Assert.assertNull(settings.getEndpoint(endpoint))
     }
 
+    val options = settings.options
     for (option in existingOptions) {
-      Assert.assertEquals(option.value, settings.getOption(option.key))
+      Assert.assertEquals(option.value, options[option.key])
     }
 
     for (option in notExistingOptions) {
-      Assert.assertNull(settings.getOption(option))
+      Assert.assertNull(options[option])
     }
   }
 

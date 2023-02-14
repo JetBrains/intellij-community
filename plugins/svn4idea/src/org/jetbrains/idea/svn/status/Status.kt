@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status
 
 import com.intellij.openapi.vcs.FileStatus
@@ -29,11 +29,11 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
       return if (field.isValid || `is`(STATUS_NONE, STATUS_UNVERSIONED, STATUS_ADDED)) field else info?.revision ?: field
     }
 
-  val copyFromUrl get() = if (isCopied) info?.copyFromUrl else null
+  val copyFromUrl: Url? get() = if (isCopied) info?.copyFromUrl else null
   val treeConflict get() = if (isTreeConflicted) info?.treeConflict else null
   val repositoryRootUrl get() = info?.repositoryRootUrl
 
-  val file = builder.file
+  val file: File = builder.file
   val commitInfo: CommitInfo = builder.commitInfo?.build() ?: CommitInfo.EMPTY
   val itemStatus = builder.itemStatus
   val propertyStatus = builder.propertyStatus
@@ -41,9 +41,10 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
   val remotePropertyStatus = builder.remotePropertyStatus
   val isWorkingCopyLocked = builder.isWorkingCopyLocked
   val isCopied = builder.isCopied
+  val movedFrom: File? = builder.movedFrom
   val isSwitched = builder.isSwitched
-  val remoteLock = builder.remoteLock?.build()
-  val localLock = builder.localLock?.build()
+  val remoteLock: Lock? = builder.remoteLock?.build()
+  val localLock: Lock? = builder.localLock?.build()
   val changeListName = builder.changeListName
   val isTreeConflicted = builder.isTreeConflicted
 
@@ -65,6 +66,7 @@ class Status private constructor(builder: Builder) : BaseNodeDescription(builder
     var remotePropertyStatus: StatusType? = null
     var isWorkingCopyLocked = false
     var isCopied = false
+    var movedFrom: File? = null
     var isSwitched = false
     var remoteLock: Lock.Builder? = null
     var localLock: Lock.Builder? = null

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author Alexey Chmutov
- */
 public interface TemplateLanguageBlockFactory {
   TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node,
                                                     @Nullable Wrap wrap,

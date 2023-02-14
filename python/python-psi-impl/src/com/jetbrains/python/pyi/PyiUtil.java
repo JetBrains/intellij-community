@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author vlan
- */
 public final class PyiUtil {
   private PyiUtil() {}
 
@@ -67,13 +64,20 @@ public final class PyiUtil {
   @Nullable
   public static PsiElement getOriginalElement(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyiFile) {
-      final PyFile originalFile = getOriginalFile((PyiFile)file);
-      if (originalFile != null) {
-        return findSimilarElement(element, originalFile);
+    if (!(file instanceof PyiFile)) return null;
+
+    final PyFile originalFile = getOriginalFile((PyiFile)file);
+    if (originalFile == null) return null;
+
+    PsiElement result = findSimilarElement(element, originalFile);
+    if (result == null && element instanceof PyFunction) {
+      PyClass containingClass = PyUtil.turnConstructorIntoClass((PyFunction)element);
+      if (containingClass != null) {
+        result = findSimilarElement(containingClass, originalFile);
       }
     }
-    return null;
+
+    return result;
   }
 
   /**
@@ -203,7 +207,7 @@ public final class PyiUtil {
                                                            @NotNull TypeEvalContext context) {
     if (similarOwnerType == null) return null;
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     final List<? extends RatedResolveResult> results =
       similarOwnerType instanceof PyClassLikeType
@@ -229,14 +233,12 @@ public final class PyiUtil {
       return true;
     };
 
-    if (owner instanceof PyClass) {
-      final PyClass cls = (PyClass)owner;
+    if (owner instanceof PyClass cls) {
       if (name != null) {
         cls.visitMethods(overloadsProcessor, false, context);
       }
     }
-    else if (owner instanceof PyFile) {
-      final PyFile file = (PyFile)owner;
+    else if (owner instanceof PyFile file) {
       for (PyFunction f : file.getTopLevelFunctions()) {
         if (!overloadsProcessor.process(f)) {
           break;

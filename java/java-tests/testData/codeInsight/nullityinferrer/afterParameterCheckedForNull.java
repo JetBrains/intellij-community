@@ -11,7 +11,7 @@ class Test {
     return str;
   }
 
-  @Nullable
+  @NotNull
   String foo1(@Nullable String str) {
     if (str == null) return "null";
     return (str);
