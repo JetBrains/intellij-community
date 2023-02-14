@@ -11,10 +11,10 @@ consumer.commonTest
     com.h0tk3y.mpp.demo:lib:commonMain:1.0 (TEST)
 
 consumer.iosArm64Main
-    com.h0tk3y.mpp.demo:lib-iosarm64:klib:1.0 (COMPILE)
+    com.h0tk3y.mpp.demo:lib-iosarm64:1.0 (COMPILE)
 
 consumer.iosArm64Test
-    com.h0tk3y.mpp.demo:lib-iosarm64:klib:1.0 (TEST)
+    com.h0tk3y.mpp.demo:lib-iosarm64:1.0 (TEST)
 
 consumer.iosMain
     com.h0tk3y.mpp.demo:lib:commonMain:1.0 (COMPILE)
@@ -23,10 +23,10 @@ consumer.iosTest
     com.h0tk3y.mpp.demo:lib:commonMain:1.0 (TEST)
 
 consumer.iosX64Main
-    com.h0tk3y.mpp.demo:lib-iosx64:klib:1.0 (COMPILE)
+    com.h0tk3y.mpp.demo:lib-iosx64:1.0 (COMPILE)
 
 consumer.iosX64Test
-    com.h0tk3y.mpp.demo:lib-iosx64:klib:1.0 (TEST)
+    com.h0tk3y.mpp.demo:lib-iosx64:1.0 (TEST)
 
 consumer.main
     com.h0tk3y.mpp.demo:lib-android-debug:1.0@aar (COMPILE)

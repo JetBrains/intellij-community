@@ -10,10 +10,10 @@ project.kmmConsumer.commonTest
     org.jetbrains.kotlin.mpp.tests:kmmLib:commonMain:1.0 (TEST)
 
 project.kmmConsumer.iosArm64Main
-    org.jetbrains.kotlin.mpp.tests:kmmLib-iosarm64:klib:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:kmmLib-iosarm64:1.0 (COMPILE)
 
 project.kmmConsumer.iosArm64Test
-    org.jetbrains.kotlin.mpp.tests:kmmLib-iosarm64:klib:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:kmmLib-iosarm64:1.0 (TEST)
 
 project.kmmConsumer.iosMain
     org.jetbrains.kotlin.mpp.tests:kmmLib:commonMain:1.0 (COMPILE)
@@ -24,10 +24,10 @@ project.kmmConsumer.iosTest
     org.jetbrains.kotlin.mpp.tests:kmmLib:iosMain:1.0 (TEST)
 
 project.kmmConsumer.iosX64Main
-    org.jetbrains.kotlin.mpp.tests:kmmLib-iosx64:klib:1.0 (COMPILE)
+    org.jetbrains.kotlin.mpp.tests:kmmLib-iosx64:1.0 (COMPILE)
 
 project.kmmConsumer.iosX64Test
-    org.jetbrains.kotlin.mpp.tests:kmmLib-iosx64:klib:1.0 (TEST)
+    org.jetbrains.kotlin.mpp.tests:kmmLib-iosx64:1.0 (TEST)
 
 project.kmmConsumer.jvmMain
     org.jetbrains.kotlin.mpp.tests:kmmLib-jvm:1.0 (COMPILE)

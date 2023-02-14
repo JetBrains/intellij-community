@@ -15,7 +15,6 @@ my-app.jsMain
 my-app.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
 
@@ -29,7 +28,6 @@ my-app.jvmMain
 my-app.jvmTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
@@ -37,11 +35,11 @@ my-app.jvmTest
     org.jetbrains:annotations:13.0 (TEST)
 
 my-app.linuxX64Main
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
 
 my-app.linuxX64Test
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     linuxX64Main (friend, TEST)

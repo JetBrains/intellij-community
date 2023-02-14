@@ -1,5 +1,5 @@
-Kotlin/Native {{KGP_VERSION}} - builtin
-Kotlin/Native {{KGP_VERSION}} - iconv
-Kotlin/Native {{KGP_VERSION}} - linux
-Kotlin/Native {{KGP_VERSION}} - posix
-Kotlin/Native {{KGP_VERSION}} - zlib
+Kotlin/Native: platform.builtin
+Kotlin/Native: platform.iconv
+Kotlin/Native: platform.linux
+Kotlin/Native: platform.posix
+Kotlin/Native: platform.zlib

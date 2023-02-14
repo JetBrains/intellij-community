@@ -1,0 +1,55 @@
+MODULES
+project
+
+project.commonMain
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    targetPlatform = Native (linux_x64)/Native (macos_x64)
+
+project.commonTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    additionalVisibleModuleNames = project:commonMain
+    targetPlatform = Native (linux_x64)/Native (macos_x64)
+
+project.linuxX64Main
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain
+    targetPlatform = Native (linux_x64)
+
+project.linuxX64Test
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest
+    targetPlatform = Native (linux_x64)
+
+project.macosX64Main
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain
+    targetPlatform = Native (macos_x64)
+
+project.macosX64Test
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = 1.8
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest
+    targetPlatform = Native (macos_x64)
+
+
+Test configuration:
+- hiding following roots: resources, android-specific roots, generated
+- hiding following standard dependencies: sdk, self
+- dependencies order is not checked

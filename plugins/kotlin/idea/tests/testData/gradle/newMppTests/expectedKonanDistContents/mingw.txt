@@ -1,8 +1,8 @@
-Kotlin/Native {{KGP_VERSION}} - builtin
-Kotlin/Native {{KGP_VERSION}} - gdiplus
-Kotlin/Native {{KGP_VERSION}} - iconv
-Kotlin/Native {{KGP_VERSION}} - opengl32
-Kotlin/Native {{KGP_VERSION}} - posix
-Kotlin/Native {{KGP_VERSION}} - windows
-Kotlin/Native {{KGP_VERSION}} - winhttp
-Kotlin/Native {{KGP_VERSION}} - zlib
+Kotlin/Native: platform.builtin
+Kotlin/Native: platform.gdiplus
+Kotlin/Native: platform.iconv
+Kotlin/Native: platform.opengl32
+Kotlin/Native: platform.posix
+Kotlin/Native: platform.windows
+Kotlin/Native: platform.winhttp
+Kotlin/Native: platform.zlib
