@@ -32,7 +32,7 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
               mutableProperty: KMutableProperty0<Boolean>,
               comment: @NlsContexts.DetailedDescription String? = null,
               groupName: @Nls String? = null)
-    : this(name, mutableProperty.getter, mutableProperty.setter, comment, groupName)
+    : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, groupName)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("PropertyBinding is deprecated")

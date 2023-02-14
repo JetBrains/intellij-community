@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.WindowInfo
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
@@ -210,7 +209,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     manager.invokeLater { resetDrop() }
   }
 
-  fun getDropToSide(): Boolean? {
+  open fun getDropToSide(): Boolean? {
     return if (lastLayoutData == null || !lastLayoutData!!.dragTargetChosen) null else lastLayoutData!!.dragToSide || lastLayoutData!!.isSplit
   }
 
@@ -229,6 +228,8 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     return isShowing && Rectangle(locationOnScreen, size).contains(screenPoint)
   }
 
+  open fun getToolWindowDropAreaScreenBounds() = Rectangle(locationOnScreen, size)
+
   protected fun recomputeBounds(setBounds: Boolean, toFitWith: Dimension?, noDrop: Boolean): LayoutData {
     val horizontalOffset = height
     val data = LayoutData(horizontal = isHorizontal(), dragInsertPosition = -1)
@@ -239,7 +240,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
     val dragButton = dragButton
     val p = dropRectangle.location.also { SwingUtilities.convertPointToScreen(it, this) }
-    val processDrop = dragButton != null && !noDrop && containsPoint(p)
+    val processDrop = dragButton != null && !noDrop
     if (!isNewStripes && dragButton != null) {
       data.shouldSwapCoordinates = anchor.isHorizontal != dragButton.toolWindow.anchor.isHorizontal
     }

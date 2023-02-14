@@ -34,7 +34,6 @@ import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -418,8 +417,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
       model.insertElementAt(item, insertionIndex)
     }
 
-    cell(ComboBox(model))
-      .applyToComponent { renderer = SeparatorAwareListItemRenderer() }
+    comboBox(model, SeparatorAwareListItemRenderer())
       .align(AlignX.FILL)
       .bind(
         {

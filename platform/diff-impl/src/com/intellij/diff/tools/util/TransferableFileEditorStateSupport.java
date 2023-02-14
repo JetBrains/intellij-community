@@ -155,9 +155,8 @@ public class TransferableFileEditorStateSupport {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (myDuringUpdate || !isEnabled()) return;
-      if (!(evt.getSource() instanceof FileEditor)) return;
+      if (!(evt.getSource() instanceof FileEditor editor)) return;
 
-      FileEditor editor = (FileEditor)evt.getSource();
       if (!editor.getComponent().isShowing()) return;
       Dimension size = editor.getComponent().getSize();
       if (size.width <= 0 || size.height <= 0) return;

@@ -150,12 +150,12 @@ open class IdeStatusBarImpl internal constructor(
       JBUI.Borders.empty(1, 0, 0, 6)
     })
 
-    centerPanel = JPanel(BorderLayout())
+    centerPanel = StatusBarPanel(BorderLayout())
     centerPanel.isOpaque = false
     centerPanel.border = if (ExperimentalUI.isNewUI()) JBUI.Borders.empty() else JBUI.Borders.empty(0, 1)
     add(centerPanel, BorderLayout.CENTER)
 
-    rightPanel = JPanel(rightPanelLayout)
+    rightPanel = StatusBarPanel(rightPanelLayout)
     rightPanel.isOpaque = false
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
@@ -919,4 +919,21 @@ internal fun adaptV2Widget(id: String,
       scope.cancel()
     }
   }
+}
+
+private class StatusBarPanel(layout: LayoutManager) : JPanel(layout) {
+
+  init {
+    updateFont()
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateFont()
+  }
+
+  private fun updateFont() {
+    font = JBUI.CurrentTheme.StatusBar.font()
+  }
+
 }

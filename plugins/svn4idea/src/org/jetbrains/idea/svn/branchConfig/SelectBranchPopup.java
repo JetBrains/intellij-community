@@ -124,8 +124,7 @@ public final class SelectBranchPopup {
     @NotNull
     @Override
     public String getTextFor(@NotNull Object value) {
-      if (value instanceof Url) {
-        Url url = (Url)value;
+      if (value instanceof Url url) {
         String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : ELLIPSIS;
 
         return url.getTail() + suffix;

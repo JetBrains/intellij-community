@@ -22,7 +22,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -52,7 +52,7 @@ private fun isEnabled(project: Project) = !project.isDefault &&
                                           !ApplicationManager.getApplication().isUnitTestMode &&
                                           !ApplicationManager.getApplication().isHeadlessEnvironment
 
-internal class JdkUpdaterStartup : ProjectPostStartupActivity {
+internal class JdkUpdaterStartup : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!isEnabled(project)) {
       return
@@ -184,10 +184,9 @@ internal class JdkUpdatesCollector(
       val comparison = VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion)
       if (comparison < 0) continue
       else if (comparison == 0) {
-        if (feedItem.jdkVendorVersion != null && actualItem.jdkVendorVersion != null) {
-          if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
-          else { showVendor = true }
-        }
+        if (feedItem.jdkVendorVersion == null || actualItem.jdkVendorVersion == null) continue
+        if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
+        showVendor = true
       }
 
       notifications.showNotification(jdk, actualItem, feedItem, showVendor)

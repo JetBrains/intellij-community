@@ -100,8 +100,7 @@ public final class FilePathInterner extends WeakInterner<CharSequence> {
 
     @Override
     public boolean equals(Object obj) {
-      if (!(obj instanceof FileSeparatedCharSequence)) return false;
-      FileSeparatedCharSequence other = (FileSeparatedCharSequence)obj;
+      if (!(obj instanceof FileSeparatedCharSequence other)) return false;
       return Arrays.equals(nameIds, other.nameIds);
     }
   }

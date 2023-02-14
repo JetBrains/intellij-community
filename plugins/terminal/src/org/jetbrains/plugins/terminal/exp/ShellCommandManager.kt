@@ -5,54 +5,49 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.Terminal
-import com.jediterm.terminal.model.TerminalLine
-import com.jediterm.terminal.model.TerminalTextBuffer
-import java.awt.event.KeyEvent
+import com.jediterm.terminal.TerminalCustomCommandListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.max
-import kotlin.math.min
 
-class ShellCommandManager(terminalTextBuffer: TerminalTextBuffer, terminal: Terminal) {
+class ShellCommandManager(terminal: Terminal) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
-  private val prompt: Prompt = Prompt(terminalTextBuffer, terminal)
+
   @Volatile
   private var commandRun: CommandRun? = null
 
   init {
-    terminalTextBuffer.addModelListener {
-      val commandRun = this.commandRun
-      if (commandRun != null) {
-        val finished: Boolean = prompt.processTerminalBuffer {
-          val terminalLine = prompt.getLineAtCursor()
-          val text = prompt.getLineTextUpToCursor(terminalLine)
-          return@processTerminalBuffer text.isNotEmpty() && text == commandRun.prompt
-        }
-        if (finished) {
-          this.commandRun = null
-          fireCommandFinished(commandRun)
-        }
+    terminal.addCustomCommandListener(TerminalCustomCommandListener {
+      when (it.getOrNull(0)) {
+        "command_started" -> processCommandStartedEvent(it)
+        "command_finished" -> processCommandFinishedEvent(it)
       }
+    })
+  }
+
+  private fun processCommandStartedEvent(event: List<String>) {
+    val command = event.getOrNull(1)
+    val currentDirectory = event.getOrNull(2)
+    if (command != null && command.startsWith("command=") &&
+        currentDirectory != null && currentDirectory.startsWith("current_directory=")) {
+      val commandRun = CommandRun(System.nanoTime(), currentDirectory.removePrefix("current_directory="),
+                                  command.removePrefix("command="))
+      this.commandRun = commandRun
+      fireCommandStarted(commandRun)
     }
   }
 
-  fun onKeyPressed(e: KeyEvent) {
-    if (e.id == KeyEvent.KEY_PRESSED) {
-      if (e.keyCode == KeyEvent.VK_ENTER) {
-        val commandRun: CommandRun = prompt.processTerminalBuffer {
-          val command = prompt.getTypedShellCommand()
-          val prompt = prompt.prompt
-          return@processTerminalBuffer CommandRun(System.nanoTime(), prompt, command)
-        }
-        if (commandRun.command.isNotEmpty() && commandRun.prompt.isNotEmpty()) {
-          prompt.reset()
-          this.commandRun = commandRun
-          fireCommandStarted(commandRun)
-        }
+  private fun processCommandFinishedEvent(event: List<String>) {
+    val exitCodeStr = event.getOrNull(1)
+    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=")) {
+      val exitCode = try {
+        exitCodeStr.removePrefix("exit_code=").toInt()
       }
-      else {
-        prompt.onKeyPressed()
+      catch (_: NumberFormatException) {
+        return
+      }
+      val commandRun = this.commandRun
+      if (commandRun != null) {
+        fireCommandFinished(commandRun, exitCode)
       }
     }
   }
@@ -61,11 +56,17 @@ class ShellCommandManager(terminalTextBuffer: TerminalTextBuffer, terminal: Term
     for (listener in listeners) {
       listener.commandStarted(commandRun.command)
     }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Started $commandRun")
+    }
   }
 
-  private fun fireCommandFinished(commandRun: CommandRun) {
+  private fun fireCommandFinished(commandRun: CommandRun, exitCode: Int) {
     for (listener in listeners) {
-      listener.commandFinished(commandRun.command, 0, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
+      listener.commandFinished(commandRun.command, exitCode, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - commandRun.commandStartedNano))
+    }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Finished $commandRun, exit code: $exitCode")
     }
   }
 
@@ -75,112 +76,19 @@ class ShellCommandManager(terminalTextBuffer: TerminalTextBuffer, terminal: Term
       listeners.remove(listener)
     }
   }
+
+  companion object {
+    val LOG = logger<ShellCommandManager>()
+  }
 }
 
 interface ShellCommandListener {
-  fun commandStarted(command: String)
-  fun commandFinished(command: String, exitCode: Int, duration: Long)
+  fun commandStarted(command: String) {}
+  fun commandFinished(command: String, exitCode: Int, duration: Long) {}
 }
 
-private class Prompt(val terminalTextBuffer: TerminalTextBuffer, val terminal: Terminal) {
-  @Volatile
-  var prompt = ""
-  private val typings = AtomicInteger(0)
-  private var terminalLine: TerminalLine? = null
-  private var maxCursorX = -1
-
-  fun reset() {
-    typings.set(0)
-    terminalLine = null
-    maxCursorX = -1
-  }
-
-  fun onKeyPressed() {
-    val terminalLine: TerminalLine = processTerminalBuffer {
-      getLineAtCursor()
-    }
-    if (terminalLine != this.terminalLine) {
-      typings.set(0)
-      this.terminalLine = terminalLine
-      maxCursorX = -1
-    }
-    val prompt = getLineTextUpToCursor(terminalLine)
-    if (typings.get() == 0) {
-      this.prompt = prompt
-      this.terminalLine = terminalLine
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Guessed shell prompt: ${this.prompt}")
-      }
-    }
-    else {
-      if (prompt.startsWith(this.prompt)) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Guessed prompt confirmed by typing# " + (typings.get() + 1))
-        }
-      }
-      else {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Prompt rejected by typing#" + (typings.get() + 1) + ", new prompt: " + prompt)
-        }
-        this.prompt = prompt
-        typings.set(1)
-      }
-    }
-    typings.incrementAndGet()
-  }
-
-  fun getTypedShellCommand(): String {
-    if (typings.get() == 0) {
-      return ""
-    }
-    val terminalLine: TerminalLine = processTerminalBuffer {
-      getLineAtCursor()
-    }
-    if (terminalLine != this.terminalLine) {
-      return ""
-    }
-    val lineTextUpToCursor = getLineTextUpToCursor(terminalLine)
-    if (lineTextUpToCursor.startsWith(prompt)) {
-      return lineTextUpToCursor.substring(prompt.length)
-    }
-    return ""
-  }
-
-  fun getLineAtCursor(): TerminalLine {
-    return terminalTextBuffer.getLine(getLineNumberAtCursor())
-  }
-
-  fun getLineTextUpToCursor(line: TerminalLine?): String {
-    line ?: return ""
-    return processTerminalBuffer {
-      val cursorX: Int = terminal.cursorX - 1
-      val lineStr = line.text
-      var maxCursorX = max(maxCursorX, cursorX)
-      while (maxCursorX < lineStr.length && !Character.isWhitespace(lineStr[maxCursorX])) {
-        maxCursorX++
-      }
-      this.maxCursorX = maxCursorX
-      lineStr.substring(0, min(maxCursorX, lineStr.length))
-    }
-  }
-
-  private fun getLineNumberAtCursor(): Int {
-    return max(0, min(terminal.cursorY - 1, terminalTextBuffer.height - 1))
-  }
-
-  fun <T> processTerminalBuffer(processor: () -> T): T {
-    terminalTextBuffer.lock()
-    return try {
-      processor()
-    }
-    finally {
-      terminalTextBuffer.unlock()
-    }
-  }
-
-  companion object {
-    private val LOG = logger<Prompt>()
+private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {
+  override fun toString(): String {
+    return "command: $command, workingDirectory: $workingDirectory"
   }
 }
-
-private class CommandRun(val commandStartedNano: Long, val prompt: String, val command: String)

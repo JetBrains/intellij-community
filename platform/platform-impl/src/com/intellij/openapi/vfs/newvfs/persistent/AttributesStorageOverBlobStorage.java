@@ -3,12 +3,15 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  *
  */
-public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage {
+public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
   public static final int MAX_ATTRIBUTE_ID = Byte.MAX_VALUE;
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
@@ -66,7 +69,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   @Override
-  public @Nullable AttributeInputStream readAttribute(final PersistentFSConnection connection,
+  public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
@@ -97,7 +100,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   @Override
-  public boolean hasAttributePage(final PersistentFSConnection connection,
+  public boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
                                   final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
@@ -117,17 +120,17 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   @Override
-  public @NotNull AttributeOutputStream writeAttribute(final PersistentFSConnection connection,
+  public @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                                        final int fileId,
                                                        final @NotNull FileAttribute attribute) {
-    return new AttributeOutputStream(
+    return new AttributeOutputStreamBase(
       new AttributeOutputStreamImpl(connection, fileId, attribute),
       connection.getEnumeratedAttributes()
     );
   }
 
   @Override
-  public void deleteAttributes(final PersistentFSConnection connection,
+  public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     lock.writeLock().lock();
@@ -141,7 +144,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
   }
 
   @Override
-  public void checkAttributesStorageSanity(final PersistentFSConnection connection,
+  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
                                            final int fileId,
                                            final @NotNull IntList usedAttributeRecordIds,
                                            final @NotNull IntList validAttributeIds) throws IOException {
@@ -612,7 +615,7 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
     }
   }
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream {
+  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     @NotNull
     private final PersistentFSConnection connection;
     @NotNull
@@ -655,6 +658,12 @@ public class AttributesStorageOverBlobStorage extends AbstractAttributesStorage 
       finally {
         lock.writeLock().unlock();
       }
+    }
+
+    @NotNull
+    @Override
+    public ByteArraySequence asByteArraySequence() {
+      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 

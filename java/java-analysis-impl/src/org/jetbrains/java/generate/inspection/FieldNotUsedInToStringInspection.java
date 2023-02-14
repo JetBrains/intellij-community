@@ -126,12 +126,10 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
       }
       super.visitReferenceExpression(expression);
       final PsiElement target = expression.resolve();
-      if (target instanceof PsiField) {
-        final PsiField field = (PsiField)target;
+      if (target instanceof PsiField field) {
         myUnusedFields.remove(field);
       }
-      else if (target instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)target;
+      else if (target instanceof PsiMethod method) {
         if (usesReflection(method)) {
           myUnusedFields.clear();
           myUnusedMethods.clear();

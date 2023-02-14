@@ -23,6 +23,9 @@ internal class FrontMatterHeaderJsonSchemaFileProvider(private val project: Proj
   }
 
   private fun isInjectedFrontMatter(file: VirtualFile): Boolean {
+    if (!file.isValid) {
+      return false
+    }
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return false
     val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
     val host = injectedLanguageManager.getInjectionHost(psiFile) ?: return false

@@ -721,7 +721,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
-    return compilingTool != null && (compilingTool.getId() == JavaCompilers.JAVAC_ID || compilingTool.getId() == JavaCompilers.JAVAC_API_ID);
+    return compilingTool != null && (compilingTool.getId().equals(JavaCompilers.JAVAC_ID) ||
+                                     compilingTool.getId().equals(JavaCompilers.JAVAC_API_ID));
   }
 
   private static boolean preferTargetJdkCompiler(CompileContext context) {

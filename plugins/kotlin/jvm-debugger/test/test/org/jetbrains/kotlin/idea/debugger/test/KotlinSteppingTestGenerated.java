@@ -1265,6 +1265,16 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/lambdaBreakpoints.kt");
         }
 
+        @TestMetadata("lambdaWithImplicitReturn.kt")
+        public void testLambdaWithImplicitReturn() throws Exception {
+            runTest("testData/stepping/custom/lambdaWithImplicitReturn.kt");
+        }
+
+        @TestMetadata("lambdaWithNoExecutableCodeOnLine.kt")
+        public void testLambdaWithNoExecutableCodeOnLine() throws Exception {
+            runTest("testData/stepping/custom/lambdaWithNoExecutableCodeOnLine.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("testData/stepping/custom/manyFilesWithInlineCalls1.kt");
@@ -1448,6 +1458,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("smartStepIntoToLambdaParameter.kt")
         public void testSmartStepIntoToLambdaParameter() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoToLambdaParameter.kt");
+        }
+
+        @TestMetadata("smartStepIntoToLambdaParameterAfterSam.kt")
+        public void testSmartStepIntoToLambdaParameterAfterSam() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoToLambdaParameterAfterSam.kt");
         }
 
         @TestMetadata("smartStepIntoWithDelegates.kt")

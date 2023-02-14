@@ -32,7 +32,7 @@ public class AdditionalLibraryRootsListenerHelperImpl implements AdditionalLibra
     if (directoryIndex instanceof DirectoryIndexImpl) {
       ((DirectoryIndexImpl)directoryIndex).reset();
     }
-    ((WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project)).resetCustomContributors();
+    ((WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project)).getIndexData().resetCustomContributors();
     additionalLibraryRootsChanged(project, presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
 

@@ -112,8 +112,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection implements Clean
     }
 
     private static void deleteUntilFinally(PsiElement element) {
-      if (element instanceof PsiJavaToken) {
-        final PsiJavaToken keyword = (PsiJavaToken)element;
+      if (element instanceof PsiJavaToken keyword) {
         final IElementType tokenType = keyword.getTokenType();
         if (tokenType.equals(JavaTokenType.FINALLY_KEYWORD)) {
           keyword.delete();

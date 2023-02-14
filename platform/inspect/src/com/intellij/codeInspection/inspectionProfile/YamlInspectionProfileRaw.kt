@@ -7,6 +7,9 @@ import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import org.yaml.snakeyaml.introspector.BeanAccess
 import org.yaml.snakeyaml.representer.Representer
 import java.io.File
+import java.io.Reader
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class YamlInspectionProfileRaw(
   val baseProfile: String? = null,
@@ -31,8 +34,8 @@ class YamlInspectionConfigRaw(
 )
 
 
-fun readConfig(project: Project, filePath: String): YamlInspectionProfileRaw {
-  val merged = readRaw(project, filePath)
+fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
+  val merged = readRaw(reader, includeReaders)
   val representer = Representer()
   representer.propertyUtils.isSkipMissingProperties = true
   val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
@@ -60,12 +63,12 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   }
 }
 
-private fun readRaw(project: Project, filePath: String): Map<String, *> {
-  val configFile = File(filePath).absoluteFile
-  require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
+private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
-  val rawConfig: Map<String, *> = yamlReader.load(configFile.reader())
-  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty()
-  val includedPaths = includedConfigs.map { filename -> "${configFile.parent}/$filename" }
-  return includedPaths.fold(rawConfig) { accumulator, file -> merge(accumulator, readRaw(project, file)) }
+  val rawConfig: Map<String, *> = yamlReader.load(reader)
+  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
+
+  return includedConfigs.fold(rawConfig) { accumulator, path ->
+    merge(accumulator, readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.parent.resolve(it)) })
+  }
 }

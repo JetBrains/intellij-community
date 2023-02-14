@@ -100,7 +100,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   public void showGroupPopupMenu(final Component comp, final int x, final int y) {
     ActionGroup group = myGroup.getPopupActionGroup();
     if (group != null) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PaletteGroupHeader", group);
       popupMenu.getComponent().show(comp, x, y);
     }
   }
@@ -169,8 +169,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
         if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
         Component next =
           moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
-        if (next instanceof PaletteComponentList) {
-          final PaletteComponentList list = (PaletteComponentList)next;
+        if (next instanceof PaletteComponentList list) {
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
             return;

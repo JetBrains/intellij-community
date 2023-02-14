@@ -55,7 +55,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   );
   private final JavaModuleBuildTargetType myTargetType;
 
-  public ModuleBuildTarget(@NotNull JpsModule module, JavaModuleBuildTargetType targetType) {
+  public ModuleBuildTarget(@NotNull JpsModule module, @NotNull JavaModuleBuildTargetType targetType) {
     super(targetType, module);
     myTargetType = targetType;
   }

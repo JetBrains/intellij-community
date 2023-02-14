@@ -226,8 +226,6 @@ public class TestCaseLoader {
       return nastradamusClient.isClassInBucket(testIdentifier);
     }
     catch (Exception e) {
-      System.err.printf("Unexpected exception during bucketing via Nastradamus %s", e);
-
       // if fails, just fallback to consistent hashing
       return matchesCurrentBucketViaHashing(testIdentifier);
     }

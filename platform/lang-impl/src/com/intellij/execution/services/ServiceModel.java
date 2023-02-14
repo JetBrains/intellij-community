@@ -43,14 +43,16 @@ final class ServiceModel implements Disposable, InvokerSupplier {
   static final TreeTraversal NOT_LOADED_LAST_BFS = new TreeTraversal("NOT_LOADED_LAST_BFS") {
     @NotNull
     @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
       return new NotLoadedLastBfsIt<>(roots, tree);
     }
   };
   static final TreeTraversal ONLY_LOADED_BFS = new TreeTraversal("ONLY_LOADED_BFS") {
     @NotNull
     @Override
-    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
+    public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                    @NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
       return new OnlyLoadedBfsIt<>(roots, tree);
     }
   };
@@ -188,7 +190,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         listener.eventProcessed(e);
       }
     };
-    if (e.type != ServiceEventListener.EventType.SYNC_RESET) {
+    if (e.type != ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
       return getInvoker().invoke(handler);
     }
     handler.run();
@@ -346,8 +348,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
 
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
-    if (item instanceof ServiceNode) {
-      ServiceNode node = (ServiceNode)item;
+    if (item instanceof ServiceNode node) {
       updateServiceViewDescriptor(node, e.target);
       node.reloadChildren();
     }
@@ -626,11 +627,11 @@ final class ServiceModel implements Disposable, InvokerSupplier {
       return myRemoved || myParent != null && myParent.isRemoved();
     }
 
-    ItemPresentation getItemPresentation(@Nullable ServiceViewOptions viewOptions) {
+    ItemPresentation getItemPresentation(@Nullable ServiceViewOptions viewOptions, @NotNull ServiceViewItemState state) {
       if (isRemoved()) return myPresentation;
 
       ItemPresentation presentation =
-        viewOptions == null ? getViewDescriptor().getPresentation() : getViewDescriptor().getCustomPresentation(viewOptions);
+        viewOptions == null ? getViewDescriptor().getPresentation() : getViewDescriptor().getCustomPresentation(viewOptions, state);
       myPresentation = presentation instanceof PresentationData ?
                        (PresentationData)presentation :
                        new PresentationData(presentation.getPresentableText(),

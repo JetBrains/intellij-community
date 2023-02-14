@@ -8,11 +8,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 
-internal class CompilerCacheStartupActivity : ProjectPostStartupActivity {
+internal class CompilerCacheStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!Registry.`is`("compiler.process.use.portable.caches")) {
       thisLogger().debug("JPS Caches registry key is not enabled")

@@ -224,9 +224,8 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
       }
       else {
         RenderedImage renderedImage = image.getRenderedImage();
-        if (renderedImage instanceof BufferedImage) {
+        if (renderedImage instanceof BufferedImage bufferedImage) {
           // Convert indexed to RGB
-          BufferedImage bufferedImage = (BufferedImage)renderedImage;
           if (renderedImage.getColorModel() instanceof IndexColorModel) {
             //noinspection UndesirableClassUsage
             BufferedImage rgb = new BufferedImage(bufferedImage.getWidth(), bufferedImage.getHeight(), BufferedImage.TYPE_INT_ARGB);

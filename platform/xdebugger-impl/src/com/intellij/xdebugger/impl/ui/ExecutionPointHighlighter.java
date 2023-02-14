@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,13 +27,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,11 +50,23 @@ public class ExecutionPointHighlighter {
 
   private final AtomicBoolean updateRequested = new AtomicBoolean();
 
+  /**
+   * @deprecated This constructor doesn't subscribe to events for updating itself. Use the overload taking a {@link Disposable}.
+   */
+  @Deprecated
   public ExecutionPointHighlighter(@NotNull Project project) {
+    myProject = project;
+  }
+
+  public ExecutionPointHighlighter(@NotNull Project project, @NotNull Disposable parentDisposable) {
+    this(project, project.getMessageBus().connect(parentDisposable));
+  }
+
+  public ExecutionPointHighlighter(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
     myProject = project;
 
     // Update highlighter colors if global color schema was changed
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
+    messageBusConnection.subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
   }
 
   public void show(@NotNull XSourcePosition position, boolean notTopFrame,
@@ -61,10 +74,10 @@ public class ExecutionPointHighlighter {
     show(position, notTopFrame, gutterIconRenderer, true);
   }
 
-  public @NotNull Promise<?> show(@NotNull XSourcePosition position, boolean notTopFrame,
-                                  @Nullable GutterIconRenderer gutterIconRenderer, boolean navigate) {
+  public void show(@NotNull XSourcePosition position, boolean notTopFrame,
+                   @Nullable GutterIconRenderer gutterIconRenderer, boolean navigate) {
     updateRequested.set(false);
-    return AppUIExecutor
+    AppUIExecutor
       .onWriteThread(ModalityState.NON_MODAL)
       .expireWith(myProject)
       .submit(() -> {

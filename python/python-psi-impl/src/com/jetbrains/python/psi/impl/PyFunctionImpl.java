@@ -293,14 +293,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
                                        boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
       // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
-      if (returnType instanceof PyClassType) {
-        final PyClassType returnClassType = (PyClassType)returnType;
+      if (returnType instanceof PyClassType returnClassType) {
 
         if (returnClassType.getPyClass() == getContainingClass()) {
           final PyType receiverType = context.getType(receiver);
 
-          if (receiverType instanceof PyClassType) {
-            final PyClassType receiverClassType = (PyClassType)receiverType;
+          if (receiverType instanceof PyClassType receiverClassType) {
 
             if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
                 PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
@@ -428,10 +426,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   public static @Nullable String extractDeprecationMessage(List<? extends PyStatement> statements) {
     for (PyStatement statement : statements) {
-      if (statement instanceof PyExpressionStatement) {
-        PyExpressionStatement expressionStatement = (PyExpressionStatement)statement;
-        if (expressionStatement.getExpression() instanceof PyCallExpression) {
-          PyCallExpression callExpression = (PyCallExpression)expressionStatement.getExpression();
+      if (statement instanceof PyExpressionStatement expressionStatement) {
+        if (expressionStatement.getExpression() instanceof PyCallExpression callExpression) {
           if (callExpression.isCalleeText(PyNames.WARN)) {
             PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
             if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||

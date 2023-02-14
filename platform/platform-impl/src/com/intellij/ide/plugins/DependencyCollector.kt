@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
@@ -108,7 +108,7 @@ internal val DependencySupportBean.id: @NlsSafe String
 internal val DependencySupportBean.displayNameOrId: @NlsSafe String
   get() = displayName.ifEmpty { id }
 
-internal class DependencyFeatureCollector : ProjectPostStartupActivity {
+internal class DependencyFeatureCollector : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     PluginFeatureService.instance.collectFeatureMapping(

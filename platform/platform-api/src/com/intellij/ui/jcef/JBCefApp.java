@@ -143,6 +143,8 @@ public final class JBCefApp {
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
+    if (settings.log_file.trim().isEmpty())
+      settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     int port = Registry.intValue("ide.browser.jcef.debug.port");
@@ -167,6 +169,14 @@ public final class JBCefApp {
           }
         } else {
           LOG.info("JCEF-sandbox was disabled because java-process initialized without sandbox");
+          settings.no_sandbox = true;
+        }
+      } else if (SystemInfoRt.isMac) {
+        ProcessHandle.Info i = ProcessHandle.current().info();
+        Optional<String> processAppPath = i.command();
+        if (processAppPath.isPresent() && processAppPath.get().endsWith("/bin/java")) {
+          // Sandbox must be disabled when user runs IDE from debugger (otherwise dlopen will fail)
+          LOG.info("JCEF-sandbox was disabled (to enable you should start IDE from launcher)");
           settings.no_sandbox = true;
         }
       }

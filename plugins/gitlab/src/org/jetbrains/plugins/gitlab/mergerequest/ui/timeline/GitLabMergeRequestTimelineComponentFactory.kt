@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
+import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
@@ -66,9 +67,7 @@ object GitLabMergeRequestTimelineComponentFactory {
             }
           }
           is LoadingState.Result -> {
-            ComponentListPanelFactory.createVertical(this, state.items, GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
-              createItemComponent(project, cs, avatarIconsProvider, item)
-            }
+            createLoadedTimelineComponent(this, project, avatarIconsProvider, state)
           }
           else -> null
         }
@@ -95,6 +94,33 @@ object GitLabMergeRequestTimelineComponentFactory {
       UiNotifyConnector.doWhenFirstShown(it) {
         vm.requestLoad()
       }
+    }
+  }
+
+  private fun createLoadedTimelineComponent(
+    timelineCs: CoroutineScope,
+    project: Project,
+    avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    timelineLoadingResult: LoadingState.Result
+  ): JComponent {
+    val mr = timelineLoadingResult.mr
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(timelineCs, mr).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    }.apply {
+      border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
+    }
+
+    val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent.createComponent(timelineCs, mr, avatarIconsProvider)
+
+    val timelineItemsComponent = ComponentListPanelFactory.createVertical(timelineCs, timelineLoadingResult.items,
+                                                                          GitLabMergeRequestTimelineItemViewModel::id) { cs, item ->
+      createItemComponent(project, cs, avatarIconsProvider, item)
+    }
+
+    return VerticalListPanel().apply {
+      add(titleComponent)
+      add(descriptionComponent)
+      add(timelineItemsComponent)
     }
   }
 
@@ -177,8 +203,10 @@ object GitLabMergeRequestTimelineComponentFactory {
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {
-      GitLabResourceLabelEventDTO.Action.ADD -> GitLabBundle.message("merge.request.event.label.added", item.event.label.toHtml())
-      GitLabResourceLabelEventDTO.Action.REMOVE -> GitLabBundle.message("merge.request.event.label.removed", item.event.label.toHtml())
+      GitLabResourceLabelEventDTO.Action.ADD ->
+        GitLabBundle.message("merge.request.event.label.added", item.event.label?.toHtml().orEmpty())
+      GitLabResourceLabelEventDTO.Action.REMOVE ->
+        GitLabBundle.message("merge.request.event.label.removed", item.event.label?.toHtml().orEmpty())
     }
     val textPane = SimpleHtmlPane(text)
     return StatusMessageComponentFactory.create(textPane)

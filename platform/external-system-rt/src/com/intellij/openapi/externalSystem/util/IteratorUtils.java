@@ -40,8 +40,8 @@ public final class IteratorUtils {
 
     public AbstractObjectGraphIterator(@NotNull Collection<T> dependencies) {
       mySeenObjects = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
-      myToProcess = new LinkedList<T>(dependencies);
-      myProcessedStructure = new LinkedList<Integer>();
+      myToProcess = new LinkedList<>(dependencies);
+      myProcessedStructure = new LinkedList<>();
     }
 
     public abstract Collection<? extends T> getChildren(T t);

@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import java.util.List;
 final class TestDataHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   public static final List<String> SUPPORTED_FILE_TYPES = Collections.singletonList(JavaFileType.INSTANCE.getDefaultExtension());
   public static final List<@NonNls String> SUPPORTED_IN_TEST_DATA_FILE_TYPES =
-    ContainerUtil.immutableList("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
+    List.of("js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj");
   private static final int MAX_HOPES = 3;
   private static final @NonNls String TEST_DATA = "testdata";
 
@@ -57,7 +56,7 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
       return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file) == null;
     }
 
-    if (SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
+    if (ext != null && SUPPORTED_IN_TEST_DATA_FILE_TYPES.contains(ext)) {
       int i = 0;
       VirtualFile parent = file.getParent();
       while (parent != null && i < MAX_HOPES) {

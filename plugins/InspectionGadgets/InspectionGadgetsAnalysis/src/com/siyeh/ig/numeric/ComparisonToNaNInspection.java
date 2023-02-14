@@ -69,10 +69,9 @@ public class ComparisonToNaNInspection extends BaseInspection {
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression nanExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiElement target = nanExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
         return;
@@ -136,19 +135,17 @@ public class ComparisonToNaNInspection extends BaseInspection {
   }
 
   private static boolean isNaN(PsiExpression expression) {
-    if (!(expression instanceof PsiReferenceExpression)) {
+    if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
       return false;
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
     @NonNls final String referenceName = referenceExpression.getReferenceName();
     if (!"NaN".equals(referenceName)) {
       return false;
     }
     final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiField)) {
+    if (!(target instanceof PsiField field)) {
       return false;
     }
-    final PsiField field = (PsiField)target;
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) {
       return false;

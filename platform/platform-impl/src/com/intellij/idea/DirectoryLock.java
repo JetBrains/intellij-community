@@ -18,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
-import java.net.BindException;
-import java.net.SocketException;
-import java.net.StandardProtocolFamily;
-import java.net.UnixDomainSocketAddress;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
@@ -68,16 +65,19 @@ final class DirectoryLock {
   private final String myPid = String.valueOf(ProcessHandle.current().pid());
   private final Path myPortFile;
   private final Path myLockFile;
+  private final boolean myFallbackMode;
   private final @Nullable Path myRedirectedPortFile;
   private final Function<List<String>, CliResult> myProcessor;
 
   private volatile @Nullable ServerSocketChannel myServerChannel = null;
 
-  DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @Nullable Function<List<String>, CliResult> processor) {
+  DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
-    if (processor != null && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
+    myFallbackMode = myPortFile.getFileSystem().getClass().getModule() != Object.class.getModule();
+
+    if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
       myRedirectedPortFile = baseDir.resolve(".ij_redirected_port_" + myPid + "_" + COUNT.incrementAndGet());
     }
@@ -100,11 +100,6 @@ final class DirectoryLock {
       var systemDir = NioFiles.createDirectories(myPortFile.getParent());
       if (Files.isSameFile(systemDir, configDir)) {
         throw new IllegalArgumentException(BootstrapBundle.message("bootstrap.error.same.directories"));
-      }
-
-      if (myProcessor == null) {
-        trySimpleLock();
-        return null;
       }
 
       try {
@@ -146,22 +141,16 @@ final class DirectoryLock {
     }
   }
 
-  private void trySimpleLock() throws CannotActivateException {
-    try {
-      lockDirectory(myPortFile);
-      lockDirectory(myLockFile);
-    }
-    catch (Exception e) {
-      LOG.debug(e);
-      dispose();
-      throw new CannotActivateException(e);
-    }
-  }
-
   private CliResult tryConnect(List<String> args, Path currentDirectory) throws IOException {
-    try (var socketChannel = SocketChannel.open(StandardProtocolFamily.UNIX)) {
-      UnixDomainSocketAddress address;
-      if (myRedirectedPortFile != null) {
+    try (var socketChannel = SocketChannel.open(myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX)) {
+      SocketAddress address;
+      if (myFallbackMode) {
+        var port = 0;
+        try { port = Integer.parseInt(Files.readString(myPortFile)); }
+        catch (NumberFormatException e) { throw new SocketException("Invalid port; " + e.getMessage()); }
+        address = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), port);
+      }
+      else if (myRedirectedPortFile != null) {
         address = UnixDomainSocketAddress.of(Files.readString(myPortFile));
       }
       else {
@@ -198,10 +187,14 @@ final class DirectoryLock {
   }
 
   private @Nullable CliResult tryListen() throws IOException, CannotActivateException {
-    var serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+    var serverChannel = ServerSocketChannel.open(myFallbackMode ? StandardProtocolFamily.INET : StandardProtocolFamily.UNIX);
 
-    UnixDomainSocketAddress address;
-    if (myRedirectedPortFile != null) {
+    SocketAddress address;
+    if (myFallbackMode) {
+      Files.writeString(myPortFile, "0", StandardOpenOption.CREATE_NEW);
+      address = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127, 0, 0, 1}), 0);
+    }
+    else if (myRedirectedPortFile != null) {
       Files.writeString(myPortFile, myRedirectedPortFile.toString(), StandardOpenOption.CREATE_NEW);
       address = UnixDomainSocketAddress.of(myRedirectedPortFile);
     }
@@ -213,6 +206,10 @@ final class DirectoryLock {
     myServerChannel = serverChannel;
 
     try {
+      if (myFallbackMode) {
+        var port = ((InetSocketAddress)serverChannel.getLocalAddress()).getPort();
+        Files.writeString(myPortFile, String.valueOf(port), StandardOpenOption.TRUNCATE_EXISTING);
+      }
       lockDirectory(myLockFile);
     }
     catch (Exception e) {
@@ -291,7 +288,7 @@ final class DirectoryLock {
         result = new CliResult(AppExitCodes.ACTIVATE_ERROR, message);
       }
 
-      sendLines(socketChannel, List.of(String.valueOf(result.exitCode), requireNonNullElse(result.message, "")));
+      sendLines(socketChannel, List.of(String.valueOf(result.exitCode()), requireNonNullElse(result.message(), "")));
     }
     catch (IOException e) {
       LOG.warn(e);

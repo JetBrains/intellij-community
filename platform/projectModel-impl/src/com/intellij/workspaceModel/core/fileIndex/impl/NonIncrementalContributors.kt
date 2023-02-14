@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,9 +11,11 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityReference
@@ -168,6 +170,16 @@ internal class NonIncrementalContributors(private val project: Project,
   @RequiresWriteLock
   fun resetCache() {
     upToDate = false
+  }
+
+  companion object {
+    internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityReference is NonIncrementalMarker
+    }
+
+    fun isPlaceholderReference(entityReference: EntityReference<WorkspaceEntity>): Boolean {
+      return entityReference is NonIncrementalMarker
+    }
   }
 }
 

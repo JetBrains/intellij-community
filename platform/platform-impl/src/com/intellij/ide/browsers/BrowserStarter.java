@@ -127,13 +127,13 @@ public class BrowserStarter {
     JobScheduler.getScheduler().schedule(() -> openPageNow(), 1000, TimeUnit.MILLISECONDS);
   }
 
-  private void openPageNow() {
+  protected void openPageNow() {
     if (!isOutdated()) {
       JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myRunConfiguration, mySettings);
     }
   }
 
-  private boolean isOutdated() {
+  protected boolean isOutdated() {
     return myOutdated.getAsBoolean();
   }
 

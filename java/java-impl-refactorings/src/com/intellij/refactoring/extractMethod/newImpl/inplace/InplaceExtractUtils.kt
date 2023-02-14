@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.hint.EditorCodePreview
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
@@ -17,6 +20,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -30,13 +35,20 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.range
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -44,11 +56,94 @@ import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
+  fun showErrorHint(editor: Editor, offset: Int, message: @Nls String) {
+    val options = HintManager.HIDE_BY_ESCAPE or HintManager.HIDE_BY_TEXT_CHANGE
+    HintManager.getInstance().showErrorHint(editor, message, offset, offset, HintManager.ABOVE, options, 0)
+  }
+
+  private fun checkIdentifierName(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    val project = file.project
+    val referenceName = file.viewProvider.document.getText(variableRange)
+    if (! PsiNameHelper.getInstance(project).isIdentifier(referenceName)) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.invalid.identifier.name"))
+      return false
+    }
+    return true
+  }
+
+  fun showExtractErrorHint(editor: Editor, exception: ExtractException){
+    val file = exception.file
+    val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (exception.message ?: "")
+    CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
+    highlightErrors(editor, exception.problems)
+  }
+
+  private fun highlightErrors(editor: Editor, ranges: List<TextRange>) {
+    val project = editor.project ?: return
+    if (ranges.isEmpty()) return
+    val highlightManager = HighlightManager.getInstance(project)
+    ranges.forEach { textRange ->
+      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset,
+                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null)
+    }
+    WindowManager.getInstance().getStatusBar(project).info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
+  }
+
+  fun findTypeParameters(types: List<PsiType>): List<PsiTypeParameter>{
+    return types.mapNotNull{ type -> PsiUtil.resolveClassInClassTypeOnly(type) as? PsiTypeParameter }
+  }
+
+  fun checkReferenceIdentifier(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val reference = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiReferenceExpression::class.java, false)
+    val resolvedElements = reference?.multiResolve(false)
+    if (resolvedElements?.size != 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("extract.method.error.method.conflict"))
+      return false
+    }
+    return true
+  }
+
+  fun checkVariableIdentifier(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val variable = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiVariable::class.java, false)
+    if (variable != null && HighlightUtil.checkVariableAlreadyDefined(variable) != null) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.variable.already.defined"))
+      return false
+    }
+    return true
+  }
+
+  fun checkClassReference(editor: Editor, file: PsiFile, variableRange: TextRange): Boolean {
+    if (!checkIdentifierName(editor, file, variableRange)) {
+      return false
+    }
+    val name = editor.document.getText(variableRange)
+    val containingClass = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiClass::class.java, false)
+    val conflictsInParentClasses = generateSequence(containingClass?.containingClass) { parentClass -> parentClass.containingClass }
+      .map { parentClass -> parentClass.findInnerClassByName(name, false) }
+      .toList()
+    val conflictsInSameClass = PsiTreeUtil.findChildrenOfType(file, PsiClass::class.java).filter { psiClass -> psiClass.name == name }
+    if (conflictsInSameClass.size + conflictsInParentClasses.size > 1) {
+      showErrorHint(editor, variableRange.endOffset, JavaRefactoringBundle.message("template.error.class.already.defined"))
+      return false
+    }
+    return true
+  }
+
   fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
-    val project = editor.project ?: return Disposable {}
+    return createCodeHighlighting(editor, range, DiffColors.DIFF_INSERTED)
+  }
+
+  fun createCodeHighlighting(editor: Editor, range: TextRange, color: TextAttributesKey): Disposable {
+    val project = editor.project ?: return Disposer.newDisposable()
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
-    manager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
+    manager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, color, 0, highlighters)
     return Disposable {
       highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
     }
@@ -143,6 +238,11 @@ object InplaceExtractUtils {
     }
   }
 
+  fun navigateToTemplateVariable(editor: Editor) {
+    val textRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: return
+    navigateToEditorOffset(editor, textRange.endOffset)
+  }
+
   private fun navigateToEditorOffset(editor: Editor, offset: Int?) {
     if (offset == null) return
     val project: Project = editor.project ?: return
@@ -191,6 +291,11 @@ object InplaceExtractUtils {
   }
 
   private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+
+  fun getLinesFromTextRange(document: Document, range: TextRange, maxLength: Int): IntRange {
+    val lines = document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+    return lines.trim(maxLength)
+  }
 
   fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)

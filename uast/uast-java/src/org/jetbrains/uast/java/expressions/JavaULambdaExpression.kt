@@ -16,6 +16,8 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.util.asSafely
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -27,11 +29,11 @@ class JavaULambdaExpression(
   override val functionalInterfaceType: PsiType?
     get() = sourcePsi.functionalInterfaceType
 
-  override val valueParameters: List<UParameter> by lz {
+  override val valueParameters: List<UParameter> by lazyPub {
     sourcePsi.parameterList.parameters.map { JavaUParameter(it, this) }
   }
 
-  override val body: UExpression by lz {
+  override val body: UExpression by lazyPub {
     when (val b = sourcePsi.body) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> wrapLambdaBody(this, b)
@@ -39,6 +41,17 @@ class JavaULambdaExpression(
     }
   }
 
+  companion object {
+    internal fun unwrapImplicitBody(uExpression: UExpression): PsiExpression? =
+      uExpression
+        .asSafely<JavaImplicitUBlockExpression>()
+        ?.expressions
+        ?.firstOrNull()
+        ?.asSafely<JavaImplicitUReturnExpression>()
+        ?.returnExpression
+        ?.sourcePsi
+        ?.asSafely<PsiExpression>()
+  }
 }
 
 private fun wrapLambdaBody(parent: JavaULambdaExpression, b: PsiExpression): UBlockExpression =

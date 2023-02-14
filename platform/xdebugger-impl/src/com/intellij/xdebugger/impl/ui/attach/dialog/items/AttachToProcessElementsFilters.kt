@@ -34,7 +34,7 @@ class AttachToProcessElementsFilters(private val selectedFilter: AtomicLazyPrope
   }
 
   fun accept(item: AttachDialogProcessItem): Boolean {
-    return accept(item.getGroups()) && speedSearch.shouldBeShowing(item.indexedString)
+    return accept(item.getGroups()) && (speedSearch.shouldBeShowing(item.indexedString) || item.commandLineText.contains(speedSearch.filter ?: "", ignoreCase = true))
   }
 
   fun accept(item: Set<XAttachPresentationGroup<*>>): Boolean {

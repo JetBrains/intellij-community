@@ -73,6 +73,9 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
       if (indicator != null) {
         action = action.wrapProgress(indicator);
       }
+      if (requiresSmartMode()) {
+        action = action.inSmartMode(project);
+      }
       return action
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance());
@@ -90,10 +93,18 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   }
 
   /**
-   * @return true if collector should be run under read access. The clients of such collectors
-   * have to wrap invocation this{@link #getMetrics(Project)} with non-blocking read-action {@link ReadAction#nonBlocking(Runnable)}
+   * @return <code>true</code> if collector should be run under read access. The clients of such collectors
+   * have to wrap invocation this {@link #getMetrics(Project)} with non-blocking read-action {@link ReadAction#nonBlocking(Runnable)}
    */
   protected boolean requiresReadAccess() {
+    return false;
+  }
+
+  /**
+   * @return <code>true</code> if collector should be run under read access in smart mode.
+   * It is called only if {@link #requiresReadAccess()} returned <code>true</code>.
+   */
+  protected boolean requiresSmartMode() {
     return false;
   }
 }

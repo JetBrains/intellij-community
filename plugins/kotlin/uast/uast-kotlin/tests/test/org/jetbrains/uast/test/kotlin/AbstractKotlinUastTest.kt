@@ -121,6 +121,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
             put(CommonConfigurationKeys.MODULE_NAME, LightProjectDescriptor.TEST_MODULE_NAME)
 
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
+                put(CommonConfigurationKeys.ALLOW_ANY_SCRIPTS_IN_SOURCE_ROOTS, true)
                 loadScriptingPlugin(this)
             }
         }

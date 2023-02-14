@@ -144,10 +144,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return;
     }
     final PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
-    if (!(thenBranch instanceof PsiAssertStatement)) {
+    if (!(thenBranch instanceof PsiAssertStatement assertStatement)) {
       return;
     }
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)thenBranch;
     final PsiExpression assertCondition = assertStatement.getAssertCondition();
     if (assertCondition == null) {
       return;
@@ -211,10 +210,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       return false;
     }
     final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-    if (!(thenBranch instanceof PsiAssertStatement)) {
+    if (!(thenBranch instanceof PsiAssertStatement assertStatement)) {
       return false;
     }
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)thenBranch;
     return assertStatement.getAssertCondition() != null;
   }
 }

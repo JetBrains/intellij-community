@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.types.isError
 open class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedExpression, KotlinType, BindingContext>() {
 
     override val group: InlayGroup
-        get() = InlayGroup.TYPES_GROUP
+        get() = InlayGroup.METHOD_CHAINS_GROUP
 
     override val previewText: String
         get() = """

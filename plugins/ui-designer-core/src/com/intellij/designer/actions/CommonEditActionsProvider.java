@@ -246,8 +246,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   private String getSerializedComponentData() {
     try {
       Object transferData = CopyPasteManager.getInstance().getContents(DATA_FLAVOR);
-      if (transferData instanceof SerializedComponentData) {
-        SerializedComponentData data = (SerializedComponentData)transferData;
+      if (transferData instanceof SerializedComponentData data) {
         String xmlComponents = data.getSerializedComponents();
         if (xmlComponents.startsWith("<designer target=\"" + myDesigner.getPlatformTarget() + "\">")) {
           return xmlComponents;

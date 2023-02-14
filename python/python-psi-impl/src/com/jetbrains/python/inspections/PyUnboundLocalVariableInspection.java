@@ -178,8 +178,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
       final Ref<Boolean> first = Ref.create(true);
       ControlFlowUtil.iteratePrev(num, instructions, instruction -> {
-        if (instruction instanceof ReadWriteInstruction) {
-          final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+        if (instruction instanceof ReadWriteInstruction rwInstruction) {
           final String name = rwInstruction.getName();
           final PsiElement element = rwInstruction.getElement();
           if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {

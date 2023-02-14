@@ -29,7 +29,7 @@ public final class FileReferenceHelperRegistrar {
       return helper;
     }
     FileReferenceHelper[] helpers = getHelpers();
-    return helpers[helpers.length-1];
+    return helpers[helpers.length - 1];
   }
 
   /**

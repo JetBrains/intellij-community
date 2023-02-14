@@ -152,8 +152,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   }
 
   public String correctStringValue(@NotNull Object value) {
-    if (value instanceof String) {
-      String corrected = (String)value;
+    if (value instanceof String corrected) {
       if (myStrategy.isNumeric(myDebugValue.getType())) {
         if (corrected.startsWith("'") || corrected.startsWith("\"")) {
           corrected = corrected.substring(1, corrected.length() - 1);

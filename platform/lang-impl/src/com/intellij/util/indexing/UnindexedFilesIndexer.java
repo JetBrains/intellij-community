@@ -35,12 +35,12 @@ import java.util.*;
  */
 class UnindexedFilesIndexer extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesIndexer.class);
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final FileBasedIndexImpl myIndex;
-  private final Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles;
+  private final @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles;
   private final @NonNls @NotNull String indexingReason;
 
-  UnindexedFilesIndexer(Project project,
+  UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
     this(project, Collections.emptyMap(), indexingReason);
   }
@@ -50,8 +50,8 @@ class UnindexedFilesIndexer extends DumbModeTask {
    * <p>
    * if providerToFiles is not empty, providerToFiles files will be indexed in the first order, then files reported by FileBasedIndexImpl#getFilesToUpdate
    */
-  UnindexedFilesIndexer(Project project,
-                        Map<IndexableFilesIterator, Collection<VirtualFile>> providerToFiles,
+  UnindexedFilesIndexer(@NotNull Project project,
+                        @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> providerToFiles,
                         @NonNls @NotNull String indexingReason) {
     myProject = project;
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
@@ -187,8 +187,7 @@ class UnindexedFilesIndexer extends DumbModeTask {
 
   @Override
   public @Nullable UnindexedFilesIndexer tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
-    if (!(taskFromQueue instanceof UnindexedFilesIndexer)) return null;
-    UnindexedFilesIndexer otherIndexingTask = (UnindexedFilesIndexer)taskFromQueue;
+    if (!(taskFromQueue instanceof UnindexedFilesIndexer otherIndexingTask)) return null;
 
     Map<IndexableFilesIterator, Collection<VirtualFile>> largeMap =
       otherIndexingTask.providerToFiles.size() > providerToFiles.size() ? otherIndexingTask.providerToFiles : providerToFiles;
@@ -209,10 +208,20 @@ class UnindexedFilesIndexer extends DumbModeTask {
       mergedFilesToIndex.put(e.getKey(), mergedList);
     }
 
-    String mergedReason = "Merged " + StringUtil.trimStart(indexingReason, "Merged ") +
-                          " with " + StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
-
+    String mergedReason = mergeReasons(otherIndexingTask);
     return new UnindexedFilesIndexer(myProject, mergedFilesToIndex, mergedReason);
+  }
+
+  @NotNull
+  private String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
+    String trimmedReason = StringUtil.trimStart(indexingReason, "Merged ");
+    String trimmedOtherReason = StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
+    if (otherIndexingTask.providerToFiles.isEmpty() && trimmedReason.endsWith(trimmedOtherReason)) {
+      return indexingReason;
+    }
+    else {
+      return "Merged " + trimmedReason + " with " + trimmedOtherReason;
+    }
   }
 
   private static double getPowerForSmoothProgressIndicator() {
@@ -229,7 +238,16 @@ class UnindexedFilesIndexer extends DumbModeTask {
   }
 
   @TestOnly
-  Map<IndexableFilesIterator, Collection<VirtualFile>> getProviderToFiles() {
+  @NotNull Map<@NotNull IndexableFilesIterator, @NotNull Collection<@NotNull VirtualFile>> getProviderToFiles() {
     return providerToFiles;
+  }
+
+  public final @NotNull String getIndexingReason() {
+    return indexingReason;
+  }
+
+  @Override
+  public String toString() {
+    return "UnindexedFilesIndexer[" + myProject.getName() + ", " + providerToFiles.size() + " iterators, reason: " + indexingReason + "]";
   }
 }

@@ -21,23 +21,4 @@ public interface GraphColorManager<CommitId> {
    * @return the colorId which should be used to draw this fragment.
    */
   int getColorOfFragment(CommitId headCommit, int magicIndex);
-
-  /**
-   * Compares two head commits, which represent graph branches, by expected positions of these branches in the graph,
-   * and thus by their "importance".
-   * <p/>
-   * If branch1 is more important than branch2, branch1 will be laid out more to the left from the branch2, and
-   * the color of branch1 will be reused by the subgraph below the point when these branches have diverged.
-   * <p/>
-   * <ul>
-   * <li><b>Negative</b> value is returned if the branch represented by {@code head1} should be laid out at the left,
-   * i.e. if {@code head1} is more important than {@code head2}.
-   * <li><b>Positive</b> value is returned if the branch represented by {@code head1} should be laid out at the right from {@code head2}.
-   * i.e. if {@code head1} is less important than {@code head2}.
-   * <li>Zero is returned if the given commits are equal.
-   * </ul>
-   *
-   * @see com.intellij.vcs.log.VcsLogRefManager#getBranchLayoutComparator()
-   */
-  int compareHeads(CommitId head1, CommitId head2);
 }

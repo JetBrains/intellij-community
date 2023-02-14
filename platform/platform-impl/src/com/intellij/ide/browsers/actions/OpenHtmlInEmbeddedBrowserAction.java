@@ -71,7 +71,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    OpenInBrowserRequest request = BaseOpenInBrowserAction.doUpdate(e);
+    OpenInBrowserRequest request = BaseOpenInBrowserAction.Handler.doUpdate(e);
     Project project = e.getProject();
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     boolean enabled = project != null && psiFile != null && request != null && psiFile.getVirtualFile() != null;
@@ -79,7 +79,7 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
     if (!enabled) return;
 
     if (WebBrowserXmlService.getInstance().isHtmlFile(request.getFile())
-        && ActionPlaces.CONTEXT_TOOLBAR == e.getPlace()) {
+        && ActionPlaces.CONTEXT_TOOLBAR.equals(e.getPlace())) {
       String text = getTemplateText();
       text += " (" + IdeBundle.message("browser.shortcut") + ")";
       e.getPresentation().setText(text);

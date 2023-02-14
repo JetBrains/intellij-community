@@ -4,7 +4,7 @@ package git4idea.index
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.vcs.commit.CommitMode
@@ -27,7 +27,7 @@ internal class CommitModeListener(val project: Project) : CommitModeManager.Comm
   }
 }
 
-internal class GitStageStartupActivity : ProjectPostStartupActivity {
+internal class GitStageStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project) // initialize tracker

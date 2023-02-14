@@ -37,8 +37,7 @@ public class HighlightingAnnotator extends PyAnnotator {
   }
 
   private static boolean isArgOrKwargParameter(PyParameter parameter) {
-    if (parameter instanceof PyNamedParameter) {
-      final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+    if (parameter instanceof PyNamedParameter namedParameter) {
       return namedParameter.isPositionalContainer() ||
              namedParameter.isKeywordContainer();
     }

@@ -37,6 +37,7 @@
                          id="terminalEnter" order="first"/>
     <editorActionHandler action="EditorTab" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalTabHandler"
                          id="terminalTab"/>
+    <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -54,7 +55,13 @@
 
   <actions>
     <group id="TerminalToolwindowActionGroup">
-      <action id="TerminalNewSession" class="org.jetbrains.plugins.terminal.action.TerminalNewSessionAction"/>
+      <action id="Terminal.NewTab" class="org.jetbrains.plugins.terminal.action.TerminalNewTabAction">
+        <keyboard-shortcut first-keystroke="control shift T" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta T" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="ctrl shift BACK_QUOTE" keymap="VSCode OSX" replace-all="true"/>
+      </action>
       <action id="TerminalNewPredefinedSession" class="org.jetbrains.plugins.terminal.action.TerminalNewPredefinedSessionAction"/>
     </group>
   </actions>

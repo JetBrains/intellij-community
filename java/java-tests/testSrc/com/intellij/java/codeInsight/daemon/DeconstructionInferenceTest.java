@@ -84,6 +84,83 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testNested() {
+    myFixture.configureByText("Test.java", """
+      interface I {
+        void runI();
+      }
+      record R2<T>(T x) {}
+      
+      class Test {
+        public static void test(R2<R2<? extends I>> r) {
+          if (r instanceof R2(R2(var x))) {
+            x.runI();
+          }
+        }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  public void testNestedWithSuperType() {
+    myFixture.configureByText("Test.java", """
+      class Test {
+          interface A<X, Y, Z> {}
+      
+          record Pair<T,T1>(T first, T1 second) implements A<T, T1, Object> {}
+      
+          void test(A<? extends A<? extends Number, String, Object>, ? extends A<String, ? extends Number, Object>, Object> a) {
+              if (a instanceof Pair(Pair(var v1, var v2), Pair(var v3, var v4))) {
+                  System.out.println(v1.intValue());
+                  System.out.println(v2.length());
+                  System.out.println(v3.length());
+                  System.out.println(v4.intValue());
+              }
+          }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  public void testNestedInFor() {
+    myFixture.configureByText("Test.java", """
+      import java.util.List;
+            
+      public class Test {
+          record Record<T>(T x) {
+          }
+            
+          public static void test2(List<Record<? extends Record<? extends String>>> records) {
+              for (Record(Record(var x)) : records) {
+                  System.out.println(x.isEmpty());
+              }
+          }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  public void testWildcardTypeParameterBound() {
+    myFixture.configureByText("Test.java", """
+      public class Test {
+        interface BaseRecord<T> {}
+        record ExtendedRecord1<T extends CharSequence> (T a,T b) implements BaseRecord<T>{}
+        
+        public static void wildcardWiderBound0(BaseRecord<?> variable1) {
+           if (variable1 instanceof ExtendedRecord1(var a, var b)) {
+               System.out.println(a + " " + b.length());
+           }
+        }
+        public static void wildcardWiderBound1(BaseRecord<? extends String> variable1) {
+           if (variable1 instanceof ExtendedRecord1(var a, var b)) {
+               System.out.println(a + " " + b.trim());
+           }
+        }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
   public void testInvalid() {
     myFixture.configureByText("Test.java", """
       import java.util.List;
@@ -129,11 +206,11 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
             
       class ClassTest {
         <T extends Serializable & Supplier<String>> void typeArg(T t) {
-            // TODO: wrong error; looks like a problem in isUncheckedCast, not inference-related
-            if (t instanceof <error descr="'T' cannot be safely cast to 'Box<String>'">Box<String></error>(var v)) {
-              System.out.println(v.trim());
-            }
-            if (t instanceof <error descr="'T' cannot be safely cast to 'Box'">Box</error>(var v)) {
+          // TODO: wrong error; looks like a problem in isUncheckedCast, not inference-related
+          if (t instanceof <error descr="'T' cannot be safely cast to 'Box<String>'">Box<String>(var v)</error>) {
+            System.out.println(v.trim());
+          }
+          if (t instanceof Box(var v)) {
             System.out.println(v.trim());
           }
         }

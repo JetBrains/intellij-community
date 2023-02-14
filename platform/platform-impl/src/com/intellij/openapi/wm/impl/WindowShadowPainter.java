@@ -93,16 +93,13 @@ final class WindowShadowPainter extends AbstractPainter {
   private static Rectangle getShadowBounds(Point point, Window window) {
     if (!window.isShowing()) return null;
     if (!window.isDisplayable()) return null;
-    if (window instanceof Frame) {
-      Frame frame = (Frame)window;
+    if (window instanceof Frame frame) {
       if (!frame.isUndecorated()) return null;
     }
-    if (window instanceof Dialog) {
-      Dialog dialog = (Dialog)window;
+    if (window instanceof Dialog dialog) {
       if (!dialog.isUndecorated()) return null;
     }
-    if (window instanceof RootPaneContainer) {
-      RootPaneContainer container = (RootPaneContainer)window;
+    if (window instanceof RootPaneContainer container) {
       JRootPane root = container.getRootPane();
       if (root != null) {
         Object property = root.getClientProperty("Window.shadow");

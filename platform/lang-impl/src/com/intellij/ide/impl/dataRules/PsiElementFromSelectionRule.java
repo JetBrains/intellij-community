@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.model.Pointer;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -24,9 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiAwareObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiElementFromSelectionRule implements GetDataRule {
   @Override
@@ -48,9 +49,15 @@ public class PsiElementFromSelectionRule implements GetDataRule {
       element = project == null || !((VirtualFile)item).isValid() ? null :
                 PsiManager.getInstance(project).findFile((VirtualFile)item);
     }
-    else if (item instanceof SmartPsiElementPointer<?>) {
-      element = ((SmartPsiElementPointer<?>)item).getElement();
+    else if (item instanceof Pointer<?>) {
+      element = getElement((Pointer<?>)item);
     }
     return element != null && element.isValid() ? element : null;
+  }
+
+  @Nullable
+  static PsiElement getElement(Pointer<?> item) {
+    Object o = item.dereference();
+    return o instanceof PsiElement ? (PsiElement)o : null;
   }
 }

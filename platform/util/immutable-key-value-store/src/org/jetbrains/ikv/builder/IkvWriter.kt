@@ -17,7 +17,7 @@ fun sizeAwareIkvWriter(file: Path): IkvWriter {
 
 class IkvWriter(private val channel: FileChannel, writeSize: Boolean = true) : AutoCloseable {
   private val indexBuilder = IkvIndexBuilder(writeSize)
-  private var position = 0
+  private var position = 0L
 
   private var lastEntry: IkvIndexEntry? = null
 
@@ -31,30 +31,30 @@ class IkvWriter(private val channel: FileChannel, writeSize: Boolean = true) : A
   }
 
   fun write(entry: IkvIndexEntry, data: ByteBuffer) {
-    var currentPosition = position.toLong()
+    var currentPosition = position
     do {
       currentPosition += channel.write(data, currentPosition)
     }
     while (data.hasRemaining())
-    position = currentPosition.toInt()
+    position = currentPosition
     addEntry(entry)
   }
 
   fun write(entry: IkvIndexEntry, writer: (FileChannel, position: Long) -> Long) {
-    position = writer(channel, position.toLong()).toInt()
+    position = writer(channel, position)
     addEntry(entry)
   }
 
   private fun addEntry(entry: IkvIndexEntry) {
     indexBuilder.add(entry)
-    entry.size = position - entry.offset
+    entry.size = Math.toIntExact(position - entry.offset)
   }
 
   @Suppress("DuplicatedCode")
   override fun close() {
     channel.use {
       lastEntry?.let {
-        it.size = position - it.offset
+        it.size = Math.toIntExact(position - it.offset)
       }
       indexBuilder.write(::writeBuffer)
     }
@@ -63,7 +63,7 @@ class IkvWriter(private val channel: FileChannel, writeSize: Boolean = true) : A
   private fun writeBuffer(value: ByteBuffer) {
     var currentPosition = position
     do {
-      currentPosition += channel.write(value, currentPosition.toLong())
+      currentPosition += channel.write(value, currentPosition)
     }
     while (value.hasRemaining())
     position = currentPosition

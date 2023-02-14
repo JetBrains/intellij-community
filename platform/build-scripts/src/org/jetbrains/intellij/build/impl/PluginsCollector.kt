@@ -16,8 +16,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-fun collectCompatiblePluginsToPublish(providedModulesFile: Path, context: BuildContext): List<PluginLayout> {
-  val parse = JSON.std.mapFrom(Files.readString(providedModulesFile))
+fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildContext): List<PluginLayout> {
+  val parse = JSON.std.mapFrom(Files.readString(providedModuleFile))
 
   @Suppress("UNCHECKED_CAST")
   val availableModulesAndPlugins = HashSet(parse.get("modules") as Collection<String>)
@@ -28,13 +28,13 @@ fun collectCompatiblePluginsToPublish(providedModulesFile: Path, context: BuildC
                                                skipBundledPlugins = true,
                                                honorCompatiblePluginsToIgnore = true,
                                                context = context)
-  val descriptorsMapWithBundled = collectPluginDescriptors(skipImplementationDetailPlugins = true,
-                                                           skipBundledPlugins = false,
-                                                           honorCompatiblePluginsToIgnore = true,
-                                                           context = context)
+  val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetailPlugins = true,
+                                                          skipBundledPlugins = false,
+                                                          honorCompatiblePluginsToIgnore = true,
+                                                          context = context)
   val result = ArrayList<PluginLayout>(descriptorMap.size)
   for (descriptor in descriptorMap.values) {
-    if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorsMapWithBundled)) {
+    if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorMapWithBundled)) {
       result.add(descriptor.pluginLayout)
     }
   }
@@ -196,7 +196,7 @@ private class SourcesBasedXIncludeResolver(
 ) : JDOMXIncluder.PathResolver {
   override fun resolvePath(relativePath: String, base: URL?): URL {
     var result: URL? = null
-    for (moduleName in pluginLayout.includedModuleNames) {
+    for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
       result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue).toUri().toURL()
     }
     if (result == null) {

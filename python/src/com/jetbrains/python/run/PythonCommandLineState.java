@@ -326,8 +326,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // Python script that may be the debugger script that runs the original script
     PythonExecution realPythonExecution = builder.build(helpersAwareTargetRequest, pythonScript);
 
-    if (myConfig instanceof PythonRunConfiguration) {
-      PythonRunConfiguration pythonConfig = (PythonRunConfiguration)myConfig;
+    if (myConfig instanceof PythonRunConfiguration pythonConfig) {
       String inputFilePath = pythonConfig.getInputFile();
       if (pythonConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFilePath)) {
         realPythonExecution.withInputFile(new File(inputFilePath));

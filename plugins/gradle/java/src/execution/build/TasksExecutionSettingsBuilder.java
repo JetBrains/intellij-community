@@ -126,9 +126,8 @@ public class TasksExecutionSettingsBuilder {
     List<Module> affectedModules = new SmartList<>();
     Map<Module, String> rootPathsMap = FactoryMap.create(module -> notNullize(resolveProjectPath(module)));
     for (ProjectTask projectTask : projectTasks) {
-      if (!(projectTask instanceof ModuleBuildTask)) continue;
+      if (!(projectTask instanceof ModuleBuildTask moduleBuildTask)) continue;
 
-      ModuleBuildTask moduleBuildTask = (ModuleBuildTask)projectTask;
       collectAffectedModules(affectedModules, moduleBuildTask);
 
       Module module = moduleBuildTask.getModule();
@@ -220,9 +219,8 @@ public class TasksExecutionSettingsBuilder {
     if (ContainerUtil.isEmpty(tasks)) return;
 
     for (ProjectTask projectTask : tasks) {
-      if (!(projectTask instanceof ProjectModelBuildTask)) continue;
+      if (!(projectTask instanceof ProjectModelBuildTask<?> projectModelBuildTask)) continue;
 
-      ProjectModelBuildTask<?> projectModelBuildTask = (ProjectModelBuildTask<?>)projectTask;
       for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
         if (buildTasksProvider.isApplicable(projectModelBuildTask)) {
           buildTasksProvider.addBuildTasks(

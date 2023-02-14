@@ -6,6 +6,10 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.*
@@ -15,7 +19,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
-import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assume
 import org.junit.Before
 import org.junit.ClassRule
@@ -42,8 +45,8 @@ class JpsSplitModuleAndContentRootTest {
   fun `add local content root`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -100,8 +103,8 @@ class JpsSplitModuleAndContentRootTest {
   fun `add local content root local save`() {
     checkSaveProjectAfterChange("before/addContentRootLocalSave", "after/addContentRootLocalSave", false) { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -110,11 +113,11 @@ class JpsSplitModuleAndContentRootTest {
   fun `add multiple local content roots`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addMultipleContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
-      builder.addContentRootEntity(virtualFileManager.fromPath(path2), emptyList(), emptyList(), moduleEntity,
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url2), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -123,8 +126,8 @@ class JpsSplitModuleAndContentRootTest {
   fun `add external content root`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addExternalContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
     }
   }
 
@@ -132,10 +135,10 @@ class JpsSplitModuleAndContentRootTest {
   fun `add mixed content root`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addMixedContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
-      builder.addContentRootEntity(virtualFileManager.fromPath(path2), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url2), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -145,8 +148,8 @@ class JpsSplitModuleAndContentRootTest {
   fun `add second local content root`() {
     checkSaveProjectAfterChange("before/addSecondContentRoot", "after/addSecondContentRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                    (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -155,10 +158,10 @@ class JpsSplitModuleAndContentRootTest {
   fun `add local content and source root`() {
     checkSaveProjectAfterChange("before/addSourceRoot", "after/addSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                                            (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock",
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -168,8 +171,8 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock",
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -179,11 +182,11 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addMultipleCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock",
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url2), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -193,8 +196,8 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addExternalCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock", moduleEntity.entitySource)
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url), "mock", moduleEntity.entitySource)
     }
   }
 
@@ -203,10 +206,10 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addCustomSourceRoot", "after/addMixedCustomSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path), "mock", moduleEntity.entitySource)
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url), "mock", moduleEntity.entitySource)
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url2), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -215,11 +218,11 @@ class JpsSplitModuleAndContentRootTest {
   fun `add custom content and source root`() {
     checkSaveProjectAfterChange("before/addContentRoot", "after/addContentAndSourceRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromPath(path), emptyList(), emptyList(), moduleEntity,
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      val contentRootEntity = builder.addContentRootEntity(virtualFileManager.fromUrl(url), emptyList(), emptyList(), moduleEntity,
                                                            (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
-      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromPath(path2), "mock",
+      builder.addSourceRootEntity(contentRootEntity, virtualFileManager.fromUrl(url2), "mock",
                                   (moduleEntity.entitySource as JpsImportedEntitySource).internalFile)
     }
   }
@@ -229,8 +232,8 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addExcludeRoot", "after/addExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path),
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity
       }
@@ -242,13 +245,13 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addExcludeRoot", "after/addMultipleExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path),
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity
       }
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path2),
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url2),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity
       }
@@ -262,13 +265,13 @@ class JpsSplitModuleAndContentRootTest {
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single { it.url.url.endsWith("myContentRoot") }
       val contentRootEntity2 = moduleEntity.contentRoots.single { it.url.url.endsWith("myContentRoot2") }
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot/x")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2/y")
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path),
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot/x"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2/y"
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity
       }
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path2),
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url2),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity2
       }
@@ -280,8 +283,8 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addExcludeRoot", "after/addExternalExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path), moduleEntity.entitySource) {
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url), moduleEntity.entitySource) {
         this.contentRoot = contentRootEntity
       }
     }
@@ -292,13 +295,13 @@ class JpsSplitModuleAndContentRootTest {
     checkSaveProjectAfterChange("before/addExcludeRoot", "after/addMixedExcludeRoot") { builder, _, configLocation ->
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRootEntity = moduleEntity.contentRoots.single()
-      val path = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot")
-      val path2 = JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString + "/myContentRoot2")
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path),
+      val url = configLocation.baseDirectoryUrlString + "/myContentRoot"
+      val url2 = configLocation.baseDirectoryUrlString + "/myContentRoot2"
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url),
                                          (moduleEntity.entitySource as JpsImportedEntitySource).internalFile) {
         this.contentRoot = contentRootEntity
       }
-      builder addEntity ExcludeUrlEntity(virtualFileManager.fromPath(path2), moduleEntity.entitySource) {
+      builder addEntity ExcludeUrlEntity(virtualFileManager.fromUrl(url2), moduleEntity.entitySource) {
         this.contentRoot = contentRootEntity
       }
     }
@@ -310,7 +313,7 @@ class JpsSplitModuleAndContentRootTest {
       val moduleEntity = builder.entities(ModuleEntity::class.java).single()
       val contentRoot = moduleEntity.contentRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(contentRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(contentRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -323,7 +326,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
 
       // Will throw an exception if something is wrong
-      contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
+      contentRoots.single { it.entitySource is JpsProjectFileEntitySource.FileInDirectory }
       contentRoots.single { it.entitySource is JpsImportedEntitySource }
     }
   }
@@ -345,7 +348,7 @@ class JpsSplitModuleAndContentRootTest {
       val contentRoots = moduleEntity.contentRoots
       assertEquals(2, contentRoots.size)
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      contentRoots.single { it.entitySource is JpsFileEntitySource.FileInDirectory }
+      contentRoots.single { it.entitySource is JpsProjectFileEntitySource.FileInDirectory }
       contentRoots.single { it.entitySource is JpsImportedEntitySource }
     }
   }
@@ -357,8 +360,8 @@ class JpsSplitModuleAndContentRootTest {
       val contentRoot = moduleEntity.contentRoots.single()
       val sourceRoot = contentRoot.sourceRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(contentRoot.entitySource is JpsFileEntitySource.FileInDirectory)
-      assertTrue(sourceRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(contentRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
+      assertTrue(sourceRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -370,7 +373,7 @@ class JpsSplitModuleAndContentRootTest {
       val sourceRoot = contentRootEntity.sourceRoots.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(sourceRoot.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(sourceRoot.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -384,7 +387,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, sourceRoots.size)
-      assertTrue(sourceRoots.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(sourceRoots.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -411,7 +414,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, sourceRoots.size)
-      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
+      assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsProjectFileEntitySource.FileInDirectory } != null)
       assertTrue(sourceRoots.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
     }
   }
@@ -424,7 +427,7 @@ class JpsSplitModuleAndContentRootTest {
       val exclude = contentRootEntity.excludedUrls.single()
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(exclude.entitySource is JpsFileEntitySource.FileInDirectory)
+      assertTrue(exclude.entitySource is JpsProjectFileEntitySource.FileInDirectory)
     }
   }
 
@@ -436,7 +439,7 @@ class JpsSplitModuleAndContentRootTest {
       val exclude = contentRootEntity.excludedUrls
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
-      assertTrue(exclude.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(exclude.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -451,7 +454,7 @@ class JpsSplitModuleAndContentRootTest {
       assertEquals(2, contentRoots.size)
       assertEquals(2, exclude.size)
       assertTrue(contentRoots.all { it.entitySource is JpsImportedEntitySource })
-      assertTrue(exclude.all { it.entitySource is JpsFileEntitySource.FileInDirectory })
+      assertTrue(exclude.all { it.entitySource is JpsProjectFileEntitySource.FileInDirectory })
     }
   }
 
@@ -476,7 +479,7 @@ class JpsSplitModuleAndContentRootTest {
       assertTrue(moduleEntity.entitySource is JpsImportedEntitySource)
       assertTrue(contentRootEntity.entitySource is JpsImportedEntitySource)
       assertEquals(2, exclude.size)
-      assertTrue(exclude.singleOrNull { it.entitySource is JpsFileEntitySource.FileInDirectory } != null)
+      assertTrue(exclude.singleOrNull { it.entitySource is JpsProjectFileEntitySource.FileInDirectory } != null)
       assertTrue(exclude.singleOrNull { it.entitySource is JpsImportedEntitySource } != null)
     }
   }

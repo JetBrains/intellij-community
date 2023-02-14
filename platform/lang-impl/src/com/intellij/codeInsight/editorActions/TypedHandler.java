@@ -132,7 +132,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
   @Override
   public void execute(@NotNull final Editor originalEditor, final char charTyped, @NotNull final DataContext dataContext) {
-    SlowOperations.allowSlowOperations(()-> doExecute(originalEditor, charTyped, dataContext));
+    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      doExecute(originalEditor, charTyped, dataContext);
+    }
   }
 
   private void doExecute(@NotNull Editor originalEditor, char charTyped, @NotNull DataContext dataContext) {
@@ -522,9 +524,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   private static boolean isClosingQuote(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
-    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
-    if (iterator.atEnd()){
-      LOG.error(iterator);
+    HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset);
+    if (iterator == null) {
       return false;
     }
 
@@ -532,10 +533,19 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   @Nullable
-  private static CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
+  private static HighlighterIterator createIteratorAndCheckNotAtEnd(@NotNull Editor editor, int offset) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) {
-      LOG.error(iterator);
+      LOG.error("Iterator " + iterator + " ended unexpectedly right after creation");
+      return null;
+    }
+    return iterator;
+  }
+
+  @Nullable
+  private static CharSequence getClosingQuote(@NotNull Editor editor, @NotNull MultiCharQuoteHandler quoteHandler, int offset) {
+    HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset);
+    if (iterator == null) {
       return null;
     }
 
@@ -543,9 +553,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   private static boolean isOpeningQuote(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
-    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
-    if (iterator.atEnd()) {
-      LOG.error(iterator);
+    HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset);
+    if (iterator == null) {
       return false;
     }
 
@@ -553,9 +562,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   }
 
   private static boolean hasNonClosedLiterals(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset) {
-    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
-    if (iterator.atEnd()) {
-      LOG.error(iterator);
+    HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset);
+    if (iterator == null) {
       return false;
     }
 
@@ -573,9 +581,8 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static boolean isInsideLiteral(@NotNull Editor editor, @NotNull QuoteHandler quoteHandler, int offset){
     if (offset == 0) return false;
 
-    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
-    if (iterator.atEnd()){
-      LOG.error(iterator);
+    HighlighterIterator iterator = createIteratorAndCheckNotAtEnd(editor, offset - 1);
+    if (iterator == null){
       return false;
     }
 

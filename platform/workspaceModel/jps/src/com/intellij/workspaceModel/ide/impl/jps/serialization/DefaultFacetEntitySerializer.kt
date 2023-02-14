@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
@@ -15,7 +15,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   override val rootEntityType: Class<FacetEntity>
     get() = FacetEntity::class.java
   override val supportedFacetType: String
-    get() = ""
+    get() = ALL_FACETS_TYPES_MARKER
 
   override fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity,
                                           facetState: FacetState,
@@ -112,9 +112,6 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
   override fun serialize(entity: FacetEntity, rootElement: Element): Element = error("Unsupported operation")
 
   companion object {
-    val instance: DefaultFacetEntitySerializer
-      // It should be rewritten to `findExtensionOrFail` because of caching evaluation result
-      get() = CustomFacetRelatedEntitySerializer.EP_NAME.extensions.filterIsInstance<DefaultFacetEntitySerializer>().first()
-
+    internal const val ALL_FACETS_TYPES_MARKER = "<all types of facets>"
   }
 }

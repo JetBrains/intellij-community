@@ -7,58 +7,49 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
-internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies(
-    gradleModule: IdeaModule,
-    ideProject: DataNode<ProjectData>,
-    ideModule: DataNode<ModuleData>,
-    resolverCtx: ProjectResolverContext,
-    mppModel: KotlinMPPGradleModel,
-) {
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
     val dependenciesContainer = mppModel.dependencies
-
     if (dependenciesContainer != null) {
-        populateModuleDependenciesWithDependenciesContainer(
-            gradleModule, ideProject, ideModule, resolverCtx, mppModel, dependenciesContainer
-        )
+        populateModuleDependenciesWithDependenciesContainer(dependenciesContainer)
     } else {
-        populateModuleDependenciesWithoutDependenciesContainer(gradleModule, ideProject, ideModule, resolverCtx)
+        populateModuleDependenciesWithoutDependenciesContainer()
     }
 }
 
 /**
  *  New Kotlin Gradle Plugin versions will provide this dependencies container
  */
-internal fun populateModuleDependenciesWithDependenciesContainer(
-    gradleModule: IdeaModule,
-    ideProject: DataNode<ProjectData>,
-    ideModule: DataNode<ModuleData>,
-    resolverCtx: ProjectResolverContext,
-    mppModel: KotlinMPPGradleModel,
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
     dependencies: IdeaKotlinDependenciesContainer
 ) {
-    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject)
+    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(projectDataNode)
 
-    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
         val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-        val sourceSetDataNode = ideModule.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
+        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
 
         /* Call into extension points, skipping dependency population of source set if instructed */
-        if (
-            extensionInstance.beforePopulateSourceSetDependencies(
-                extensionContext, sourceSetDataNode, sourceSet, sourceSetDependencies
+        if (extensionInstance.beforePopulateSourceSetDependencies(
+                this, sourceSetDataNode, sourceSet, sourceSetDependencies
             ) == KotlinMppGradleProjectResolverExtension.Result.Skip
         ) return@forEach
+
+        /*
+         Support for non-mpp Android plugins, which are not aware of our new extension points yet
+         This is explicitly placed *after* calling into the extension points, so they can still handle the
+         request with the EP instead.
+         */
+        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
 
         /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
@@ -67,20 +58,19 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
         val projectArtifactDependencyResolver = KotlinProjectArtifactDependencyResolver()
         val resolvedSourceSetDependencies = sourceSetDependencies.flatMap { dependency ->
             if (dependency is IdeaKotlinProjectArtifactDependency)
-                projectArtifactDependencyResolver.resolve(ideProject, sourceSetDataNode, dependency)
+                projectArtifactDependencyResolver.resolve(this, sourceSetDataNode, dependency)
             else listOf(dependency)
         }.toSet()
 
         /* Add each resolved dependency */
         val createdDependencyNodes = resolvedSourceSetDependencies.flatMapIndexed { index, dependency ->
-            sourceSetDataNode.addDependency(dependency)
-                /* The classpath order of the dependencies is given by the order they were sent by the Kotlin Gradle Plugin */
+            sourceSetDataNode.addDependency(dependency)/* The classpath order of the dependencies is given by the order they were sent by the Kotlin Gradle Plugin */
                 .onEach { it.data.setOrder(index) }
         }
 
         /* Calling into extensions, notifying them about all populated dependencies */
         extensionInstance.afterPopulateSourceSetDependencies(
-            extensionContext, sourceSetDataNode, sourceSet, resolvedSourceSetDependencies, createdDependencyNodes
+            this, sourceSetDataNode, sourceSet, resolvedSourceSetDependencies, createdDependencyNodes
         )
     }
 }
@@ -89,20 +79,12 @@ internal fun populateModuleDependenciesWithDependenciesContainer(
  * Implementation for older Kotlin Gradle plugins that will use
  * IntelliJ injected code to resolve dependencies
  */
-internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesWithoutDependenciesContainer(
-    gradleModule: IdeaModule,
-    ideProject: DataNode<ProjectData>,
-    ideModule: DataNode<ModuleData>,
-    resolverCtx: ProjectResolverContext,
-) {
+internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithoutDependenciesContainer() {
     val context = createKotlinMppPopulateModuleDependenciesContext(
-        gradleModule = gradleModule,
-        ideProject = ideProject,
-        ideModule = ideModule,
-        resolverCtx = resolverCtx
+        gradleModule = gradleModule, ideProject = projectDataNode, ideModule = moduleDataNode, resolverCtx = resolverCtx
     ) ?: return
 
-    populateModuleDependenciesByCompilations(context)
-    populateModuleDependenciesByPlatformPropagation(context)
-    populateModuleDependenciesBySourceSetVisibilityGraph(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesByCompilations(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesByPlatformPropagation(context)
+    KotlinMppGradleProjectResolver.populateModuleDependenciesBySourceSetVisibilityGraph(context)
 }

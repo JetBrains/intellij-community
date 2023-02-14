@@ -37,10 +37,9 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
   public final void visitNewExpression(@NotNull PsiNewExpression expression) {
     super.visitNewExpression(expression);
     final PsiType type = expression.getType();
-    if (!(type instanceof PsiClassType)) {
+    if (!(type instanceof PsiClassType classType)) {
       return;
     }
-    PsiClassType classType = (PsiClassType)type;
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
     if (!(expectedType instanceof PsiClassType)) {
       return;
@@ -53,7 +52,7 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
       return;
     }
     final PsiType argumentType = typeArguments[0];
-    if (!(argumentType instanceof PsiClassType)) {
+    if (!(argumentType instanceof PsiClassType argumentClassType)) {
       return;
     }
     if (!TypeUtils.expressionHasTypeOrSubtype(expression, getBaseCollectionName())) {
@@ -63,7 +62,6 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
         TypeUtils.expressionHasTypeOrSubtype(expression, getUnreplaceableCollectionNames())) {
       return;
     }
-    final PsiClassType argumentClassType = (PsiClassType)argumentType;
     final PsiClass argumentClass = argumentClassType.resolve();
     if (argumentClass == null || !argumentClass.isEnum()) {
       return;

@@ -43,10 +43,9 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     }
 
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiPolyadicExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiType type = polyadicExpression.getType();
     if (type == null || type.equalsToText(JAVA_LANG_STRING)) {
       // handled by JoinConcatenatedStringLiteralsIntention
@@ -95,9 +94,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
       return true;
     }
     final PsiElement containingElement = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (containingElement instanceof PsiExpression) {
-      final PsiExpression containingExpression =
-        (PsiExpression)containingElement;
+    if (containingElement instanceof PsiExpression containingExpression) {
       if (!PsiUtil.isConstantExpression(containingExpression)) {
         return false;
       }

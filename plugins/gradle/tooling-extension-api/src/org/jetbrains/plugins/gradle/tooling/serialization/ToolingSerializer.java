@@ -29,7 +29,7 @@ public final class ToolingSerializer {
   public ToolingSerializer(@Nullable ClassLoader modelBuildersClassLoader) {
     myModelBuildersClassLoader = modelBuildersClassLoader;
     myDefaultSerializationService = new DefaultSerializationService();
-    mySerializationServices = new ClassMap<SerializationService<?>>();
+    mySerializationServices = new ClassMap<>();
     ClassLoader clientOwnedDaemonPayloadLoader = getClass().getClassLoader();
     if (modelBuildersClassLoader != null) {
       try {

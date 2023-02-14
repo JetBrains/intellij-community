@@ -168,8 +168,7 @@ public final class ExternalDiffToolUtil {
       File tempFile = createTempFile(file, fileName);
       return new NonLocalOutputFile(file, tempFile);
     }
-    else if (content instanceof DocumentContent) {
-      DocumentContent documentContent = (DocumentContent)content;
+    else if (content instanceof DocumentContent documentContent) {
       File tempFile = createTempFile(project, documentContent, fileName);
       Charset charset = getContentCharset(project, documentContent);
       return new DocumentOutputFile(documentContent.getDocument(), charset, tempFile);

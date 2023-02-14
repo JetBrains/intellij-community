@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
@@ -68,19 +68,17 @@ class ComplexityCalculator {
     if (e instanceof PsiClassObjectAccessExpression) {
       return QUALIFIER;
     }
-    if (e instanceof PsiQualifiedExpression) {
-      return ((PsiQualifiedExpression)e).getQualifier() != null ? QUALIFIER : 0;
+    if (e instanceof PsiQualifiedExpression qualifiedExpression) {
+      return qualifiedExpression.getQualifier() != null ? QUALIFIER : 0;
     }
-    if (e instanceof PsiParenthesizedExpression) {
-      return getComplexity(((PsiParenthesizedExpression)e).getExpression());
+    if (e instanceof PsiParenthesizedExpression parens) {
+      return getComplexity(parens.getExpression());
     }
-    if (e instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unary = (PsiUnaryExpression)e;
+    if (e instanceof PsiUnaryExpression unary) {
       int c = NEGATIONS.contains(unary.getOperationTokenType()) ? SIMPLE_OPERATOR : OPERATOR;
       return getComplexity(unary.getOperand()) + c;
     }
-    if (e instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binary = (PsiBinaryExpression)e;
+    if (e instanceof PsiBinaryExpression binary) {
       IElementType token = binary.getOperationTokenType();
       PsiExpression left = binary.getLOperand();
       PsiExpression right = binary.getROperand();
@@ -92,29 +90,25 @@ class ComplexityCalculator {
               ? SIMPLE_OPERATOR : OPERATOR;
       return c + getComplexity(left) + getComplexity(right);
     }
-    if (e instanceof PsiPolyadicExpression) {
-      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
+    if (e instanceof PsiPolyadicExpression polyadic) {
       int c = BOOLEAN_OPERATION_TOKENS.contains(polyadic.getOperationTokenType()) ? SIMPLE_OPERATOR : OPERATOR;
       for (PsiExpression operand : polyadic.getOperands()) {
         c += getComplexity(operand);
       }
       return c;
     }
-    if (e instanceof PsiConditionalExpression) {
-      PsiConditionalExpression conditional = (PsiConditionalExpression)e;
+    if (e instanceof PsiConditionalExpression conditional) {
       return TERNARY_OPERATOR +
              getComplexity(conditional.getCondition()) +
              getComplexity(conditional.getThenExpression()) +
              getComplexity(conditional.getElseExpression());
     }
-    if (e instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+    if (e instanceof PsiMethodCallExpression call) {
       if (PATH_CONSTRUCTION_CALL.test(call)) return PATH_CONSTRUCTION;
       PsiReferenceExpression ref = call.getMethodExpression();
       return METHOD_CALL + getComplexity(ref.getQualifierExpression()) + calculateArgumentsComplexity(call.getArgumentList());
     }
-    if (e instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+    if (e instanceof PsiReferenceExpression ref) {
       PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
         return QUALIFIER;
@@ -126,41 +120,35 @@ class ComplexityCalculator {
       if (PsiUtil.isJvmLocalVariable(resolved)) {
         w = IDENTIFIER;
       }
-      else if (resolved instanceof PsiField) {
-        PsiField field = (PsiField)resolved;
-        if (field.hasModifierProperty(PsiModifier.FINAL)) {
-          w = field.hasModifierProperty(PsiModifier.STATIC) ? CONSTANT : IDENTIFIER;
-        }
+      else if (resolved instanceof PsiField field && field.hasModifierProperty(PsiModifier.FINAL)) {
+        w = field.hasModifierProperty(PsiModifier.STATIC) ? CONSTANT : IDENTIFIER;
       }
       return getComplexity(ref.getQualifierExpression()) + w;
     }
-    if (e instanceof PsiArrayAccessExpression) {
-      PsiArrayAccessExpression access = (PsiArrayAccessExpression)e;
+    if (e instanceof PsiArrayAccessExpression access) {
       return SLICE + getComplexity(access.getArrayExpression()) + getComplexity(access.getIndexExpression());
     }
-    if (e instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)e;
+    if (e instanceof PsiLambdaExpression lambda) {
       PsiElement body = lambda.getBody();
       int c = LAMBDA + PARAMETER * lambda.getParameterList().getParametersCount();
       PsiExpression bodyExpr = LambdaUtil.extractSingleExpressionFromBody(body);
       if (bodyExpr != null) {
         return c + getComplexity(bodyExpr);
       }
-      if(body instanceof PsiCodeBlock) {
-        return c + UNKNOWN * ((PsiCodeBlock)body).getStatementCount();
+      if(body instanceof PsiCodeBlock block) {
+        return c + UNKNOWN * block.getStatementCount();
       }
       return c + UNKNOWN;
     }
-    if (e instanceof PsiArrayInitializerExpression) {
-      PsiExpression[] initializers = ((PsiArrayInitializerExpression)e).getInitializers();
+    if (e instanceof PsiArrayInitializerExpression arrayInitializer) {
+      PsiExpression[] initializers = arrayInitializer.getInitializers();
       int c = 0;
       for (PsiExpression initializer : initializers) {
         c += PARAMETER + getComplexity(initializer);
       }
       return c;
     }
-    if (e instanceof PsiNewExpression) {
-      PsiNewExpression newExpr = (PsiNewExpression)e;
+    if (e instanceof PsiNewExpression newExpr) {
       return NEW_EXPR +
              getComplexity(newExpr.getQualifier()) +
              getComplexity(newExpr.getArrayInitializer()) +

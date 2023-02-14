@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -40,8 +40,7 @@ public final class CodeInsightUtil {
     PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
       PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, JavaLanguage.INSTANCE);
-      if (element2 instanceof PsiJavaToken) {
-        final PsiJavaToken token = (PsiJavaToken)element2;
+      if (element2 instanceof PsiJavaToken token) {
         final IElementType tokenType = token.getTokenType();
         if (tokenType.equals(JavaTokenType.SEMICOLON) || element2.getParent() instanceof PsiErrorElement) {
           expression = findElementInRange(file, startOffset, element2.getTextRange().getStartOffset(), PsiExpression.class);

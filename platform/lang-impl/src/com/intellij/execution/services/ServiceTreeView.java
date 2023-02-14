@@ -500,17 +500,11 @@ final class ServiceTreeView extends ServiceView {
   private class ServiceViewTreeModelListener implements ServiceViewModel.ServiceViewModelListener {
     @Override
     public void eventProcessed(ServiceEventListener.@NotNull ServiceEvent e) {
-      if (e.type == ServiceEventListener.EventType.SYNC_RESET) {
-        TreeModel model = myTree.getModel();
-        if (model instanceof Disposable) {
-          Disposer.dispose((Disposable)model);
-        }
-        myTree.setModel(null);
-        AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
-        myTree.setModel(asyncTreeModel);
-        myNavBarPanel.hidePopup();
-        myNavBarPanel.getModel().updateModel((Object)null);
-        myNavBarPanel.getUpdateQueue().rebuildUi();
+      if (e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET) {
+        AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+          resetTreeModel();
+          updateNavBar();
+        });
         updateLastSelection();
       }
       else {
@@ -530,6 +524,24 @@ final class ServiceTreeView extends ServiceView {
     public void structureChanged() {
       selectFirstItemIfNeeded();
       updateSelectionPaths();
+    }
+
+    private void resetTreeModel() {
+      TreeModel model = myTree.getModel();
+      if (model instanceof Disposable) {
+        Disposer.dispose((Disposable)model);
+      }
+      myTree.setModel(null);
+      AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, ServiceTreeView.this);
+      myTree.setModel(asyncTreeModel);
+    }
+
+    private void updateNavBar() {
+      AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+        myNavBarPanel.hidePopup();
+        myNavBarPanel.getModel().updateModel((Object)null);
+        myNavBarPanel.getUpdateQueue().rebuildUi();
+      });
     }
   }
 

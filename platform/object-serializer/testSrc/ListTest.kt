@@ -144,7 +144,7 @@ class ListTest {
     """.trimIndent()))
     assertThat(file.readList(String::class.java)).isEqualTo(list)
 
-    // test that we can read regardless of compressed setting
+    // test that we can read regardless of the compressed setting
     VersionedFile(file.file, 42, isCompressed = true).writeList(list, String::class.java, configuration = configuration)
     assertThat(VersionedFile(file.file, 42, isCompressed = false).readList(String::class.java)).isEqualTo(list)
   }

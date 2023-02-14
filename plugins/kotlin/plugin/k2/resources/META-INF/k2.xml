@@ -73,6 +73,11 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
+    <registryKey key="kotlin.k2.scripting.enabled"
+                 description="Enable scripting support in the Kotlin K2 plugin"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
@@ -94,11 +99,11 @@
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelClassTypeArgumentInfoHandler"/>
     <codeInsight.parameterInfo language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.parameterInfo.KotlinHighLevelFunctionTypeArgumentInfoHandler"/>
-    <lang.psiDocumentation id="KotlinDocumentationTargetProvider"
-                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
-    <lang.documentationLinkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
-    <lang.documentation id="KotlinDocumentationTargetProvider"
-                        implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
+    <platform.documentation.psiTargetProvider id="KotlinDocumentationTargetProvider"
+                                              implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinPsiDocumentationTargetProvider"/>
+    <platform.documentation.linkHandler implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationLinkHandler"/>
+    <platform.documentation.targetProvider id="KotlinDocumentationTargetProvider"
+                                           implementation="org.jetbrains.kotlin.idea.quickDoc.KotlinDocumentationTargetProvider"/>
   </extensions>
 
   <xi:include href="scripting-support.xml" xpointer="xpointer(/idea-plugin/*)"/>

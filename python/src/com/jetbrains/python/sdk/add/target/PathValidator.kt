@@ -32,6 +32,7 @@ fun validateExecutableFile(
   request: ValidationRequest
 ): ValidationInfo? = request.validate {
   when (it) {
+    is PathInfo.Unknown -> null
     is PathInfo.RegularFile -> if (it.executable) null else PyBundle.message("python.sdk.cannot.execute", request.path)
     is PathInfo.Directory -> PyBundle.message("python.sdk.cannot.execute", request.path)
     else -> PyBundle.message("python.sdk.file.not.found", request.path)
@@ -46,6 +47,7 @@ fun validateEmptyDir(request: ValidationRequest,
                      @Nls directoryNotEmpty: String
 ): ValidationInfo? = request.validate {
   when (it) {
+    is PathInfo.Unknown -> null
     is PathInfo.Directory -> if (it.empty) null else directoryNotEmpty
     is PathInfo.RegularFile -> notADirectory
     else -> null

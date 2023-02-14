@@ -685,6 +685,18 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Font font() {
+        return ObjectUtils.coalesce(getFont(fontKey()), defaultFont());
+      }
+
+      public static @NotNull String fontKey() {
+        return "StatusBar.font";
+      }
+
+      public static @NotNull JBFont defaultFont() {
+        return JBFont.label();
+      }
+
       public interface Widget {
         Color FOREGROUND = JBColor.namedColor("StatusBar.Widget.foreground", UIUtil.getLabelForeground());
         Color HOVER_FOREGROUND = JBColor.namedColor("StatusBar.Widget.hoverForeground", UIUtil.getLabelForeground());
@@ -941,6 +953,18 @@ public final class JBUI {
 
       public static int defaultExperimentalToolbarButtonIconSize() {
         return 20;
+      }
+
+      public static Font experimentalToolbarFont() {
+        return ObjectUtils.coalesce(getFont(experimentalToolbarFontKey()), defaultExperimentalToolbarFont());
+      }
+
+      public @NotNull static String experimentalToolbarFontKey() {
+        return "MainToolbar.Button.font";
+      }
+
+      public static Font defaultExperimentalToolbarFont() {
+        return JBFont.label();
       }
 
       public static int burgerMenuButtonIconSize() {
@@ -1404,23 +1428,27 @@ public final class JBUI {
       }
 
       public static @NotNull Color foreground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
         if (useContrastColors) {
-          return JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5);
-        } else {
-          return JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
+          return JBColor.namedColor("Tooltip.Learning.foreground", base);
         }
+        return base;
       }
 
       public static @NotNull Color background(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
         if (useContrastColors) {
-          return JBColor.namedColor("Tooltip.Learning.background");
-        } else {
-          return JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
+          return JBColor.namedColor("Tooltip.Learning.background", base);
         }
+        return base;
       }
 
-      public static @NotNull Color stepForeground() {
-        return JBColor.namedColor("GotItTooltip.stepForeground", foreground(false));
+      public static @NotNull Color stepForeground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.stepForeground", foreground(false));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.stepNumberForeground", base);
+        }
+        return base;
       }
 
       public static @NotNull Color headerForeground() {
@@ -1428,16 +1456,20 @@ public final class JBUI {
       }
 
       public static @NotNull Color shortcutForeground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.shortcutForeground", foreground(false));
         if (useContrastColors) {
-          return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
-        } else {
-          return JBColor.namedColor("GotItTooltip.shortcutForeground", foreground(false));
+          return JBColor.namedColor("Tooltip.Learning.spanForeground", base);
         }
+        return base;
       }
 
-      public static @NotNull Color shortcutBackground() {
-        return JBColor.namedColor("GotItTooltip.shortcutBackground",
-                                  JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638));
+      public static @NotNull Color shortcutBackground(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.shortcutBackground",
+                                        JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638));
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.spanBackground", base);
+        }
+        return base;
       }
 
       public static @NotNull Color linkForeground() {
@@ -1445,11 +1477,11 @@ public final class JBUI {
       }
 
       public static @NotNull Color borderColor(boolean useContrastColors) {
+        Color base = JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor());
         if (useContrastColors) {
-          return JBColor.namedColor("Tooltip.Learning.background", 0x1071E8, 0x0E62CF);
-        } else {
-          return JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor());
+          return JBColor.namedColor("Tooltip.Learning.borderColor", base);
         }
+        return base;
       }
 
       public static @NotNull Color buttonBackgroundContrast() {
@@ -1483,6 +1515,25 @@ public final class JBUI {
                JBColor.namedColor("ComboBox.ArrowButton.nonEditableBackground", JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC))
                        : UIUtil.getPanelBackground();
       }
+    }
+    
+    public static final class NavBar {
+
+      @NotNull
+      public static Insets itemInsets() {
+        return insets(itemInsetsKey(), defaultItemInsets());
+      }
+
+      @NotNull
+      public static JBInsets defaultItemInsets() {
+        return insets(4, 2);
+      }
+
+      @NotNull
+      public static String itemInsetsKey() {
+        return "NavBar.Breadcrumbs.itemInsets";
+      }
+      
     }
 
     public static final class NewClassDialog {
@@ -1739,6 +1790,7 @@ public final class JBUI {
       public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
       public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
+      public static final Color STOP_BACKGROUND = JBColor.namedColor("RunWidget.stopBackground", new Color(0xC94F4F));
 
       // these colors will be applied over background color
       public static final Color HOVER_BACKGROUND = JBColor.namedColor("RunWidget.hoverBackground", new Color(0, 0, 0, 25));
@@ -1794,6 +1846,19 @@ public final class JBUI {
 
       public static int defaultConfigurationSelectorWidth() {
         return 90;
+      }
+
+      public static Font configurationSelectorFont() {
+        return ObjectUtils.coalesce(getFont(configurationSelectorFontKey()), defaultConfigurationSelectorFont());
+      }
+
+      @NotNull
+      public static String configurationSelectorFontKey() {
+        return "RunWidget.configurationSelectorFont";
+      }
+
+      public static Font defaultConfigurationSelectorFont() {
+        return JBFont.label();
       }
     }
 

@@ -19,6 +19,7 @@ import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.io.IOException
 import java.io.InputStream
@@ -156,7 +157,8 @@ sealed class GithubApiRequestExecutor {
           if (jsonError?.containsReasonMessage("API rate limit exceeded") == true) {
             GithubRateLimitExceededException(jsonError.presentableError)
           }
-          else GithubAuthenticationException("Request response: ${jsonError?.presentableError ?: errorText ?: statusLine}.")
+          else GithubAuthenticationException(
+            GithubBundle.message("request.response.0", jsonError?.presentableError ?: errorText ?: statusLine))
         }
 
         else -> {

@@ -6,7 +6,7 @@ fun main(args: Array<String>) {
     // RESULT: 1: I
     // STEP_INTO: 2
     a.foo { a }
-        //Breakpoint!
+        //Breakpoint! (lambdaOrdinal = -1)
         .foo { a }
 }
 

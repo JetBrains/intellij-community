@@ -227,7 +227,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PerformInBackgroundOption getCommitOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
@@ -235,7 +235,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PerformInBackgroundOption getEditOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
@@ -259,7 +259,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PerformInBackgroundOption getRollbackOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }

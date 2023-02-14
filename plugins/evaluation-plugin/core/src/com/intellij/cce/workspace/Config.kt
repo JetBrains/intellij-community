@@ -75,7 +75,7 @@ data class Config private constructor(
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
     var emulateUser: Boolean = false
-    var completionGolf: Boolean = false
+    var completionGolfMode: CompletionGolfMode? = null
     var emulationSettings: UserEmulator.Settings? = null
     var completionGolfSettings: CompletionGolfEmulation.Settings? = null
     var completeTokenProbability: Double = 1.0
@@ -131,7 +131,7 @@ data class Config private constructor(
       outputDir,
       ActionsGeneration(
         evaluationRoots,
-        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, completionGolf, filters)
+        CompletionStrategy(prefixStrategy, contextStrategy, emulateUser, completionGolfMode, filters)
       ),
       ActionsInterpretation(
         completionType,

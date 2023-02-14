@@ -29,7 +29,7 @@ public interface DiffPreviewProvider {
   /**
    * @deprecated Implement {@link #getEditorTabName(DiffRequestProcessor)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NlsContexts.TabTitle
   default String getEditorTabName() {
     throw new UnsupportedOperationException("Not implemented");

@@ -105,9 +105,16 @@ public class PastParticiple {
     char c1 = toLowerCase(verb.charAt(length - 1));
     char c2 = toLowerCase(verb.charAt(length - 2));
     if (c1 == 's' && (c2 == 'e' || c2 == 'l')) return true;
+    for (int i = 0; i < length; i++) {
+      if (!isAsciiLetter(verb.charAt(i))) return true;
+    }
     return false;
   }
-  
+
+  private static boolean isAsciiLetter(char c) {
+    return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
+  }
+
   private static char toLowerCase(char c) {
     return (char)(c | 0x20); // cheap hack
   }

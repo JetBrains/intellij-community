@@ -34,8 +34,7 @@ public class GrReferenceListWeigher extends ReferenceListWeigher {
     if (INSIDE_REFERENCE_LIST.accepts(position)) {
       GrReferenceList list = (GrReferenceList)position.getParent().getParent();
       PsiElement parent = list.getParent();
-      if (parent instanceof GrTypeDefinition) {
-        GrTypeDefinition cls = (GrTypeDefinition)parent;
+      if (parent instanceof GrTypeDefinition cls) {
         if (cls.isInterface() && list == cls.getExtendsClause() || list == cls.getImplementsClause()) {
           return Preference.Interfaces;
         }

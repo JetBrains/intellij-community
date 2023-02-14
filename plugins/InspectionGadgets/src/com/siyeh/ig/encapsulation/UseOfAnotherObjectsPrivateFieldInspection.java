@@ -96,10 +96,9 @@ public class UseOfAnotherObjectsPrivateFieldInspection
         }
       }
       final PsiElement referent = expression.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       if (ignoreSameClass) {
         final PsiClass parent = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
         final PsiClass containingClass = field.getContainingClass();

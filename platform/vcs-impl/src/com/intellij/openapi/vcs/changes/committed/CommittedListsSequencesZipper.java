@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.google.common.collect.Iterables;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -22,7 +21,9 @@ public class CommittedListsSequencesZipper {
     myVcsPartner = vcsPartner;
     myInLocations = new ArrayList<>();
     myInLists = new HashMap<>();
-    myComparator = (o1, o2) -> Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
+    myComparator = (o1, o2) -> {
+      return Long.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
+    };
   }
 
   public void add(@NotNull RepositoryLocation location, @NotNull List<? extends CommittedChangeList> lists) {

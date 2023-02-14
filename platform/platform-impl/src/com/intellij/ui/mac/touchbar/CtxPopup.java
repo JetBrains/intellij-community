@@ -24,11 +24,9 @@ final class CtxPopup {
   static private final boolean DISABLED = Boolean.getBoolean("touchbar.popups.disable");
 
   static @Nullable Disposable showPopupItems(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (DISABLED || !(popup instanceof ListPopupImpl)) {
+    if (DISABLED || !(popup instanceof @NotNull ListPopupImpl listPopup)) {
       return null;
     }
-
-    @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
 
     final TBPanel tb = createScrubberBarFromPopup(listPopup);
     TouchBarsManager.registerAndShow(popupComponent, tb);

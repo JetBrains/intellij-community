@@ -118,20 +118,20 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 renameFix, addBodyFix, fix);
+                                 LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   new RenameFix(generateName(block), false, false), fix);
+                                   LocalQuickFix.notNullElements(new RenameFix(generateName(block), false, false), fix));
           }
         }
         else {
           String className = mayIgnoreVMException(parameter, block);
           if (className != null) {
             String message = InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message", className);
-            holder.registerProblem(catchToken, message, fix);
+            holder.registerProblem(catchToken, message, LocalQuickFix.notNullElements(fix));
           }
         }
       }
@@ -331,8 +331,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection)) return;
-      final PsiCatchSection catchSection = (PsiCatchSection)parent;
+      if (!(parent instanceof PsiCatchSection catchSection)) return;
       final PsiParameter parameter = catchSection.getParameter();
       if (parameter == null) return;
       final PsiIdentifier identifier = parameter.getNameIdentifier();

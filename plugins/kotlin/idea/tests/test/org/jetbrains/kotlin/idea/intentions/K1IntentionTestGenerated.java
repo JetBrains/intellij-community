@@ -5434,6 +5434,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+            runTest("testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+        }
+
         @TestMetadata("keepComments.kt")
         public void testKeepComments() throws Exception {
             runTest("testData/intentions/convertForEachToForLoop/keepComments.kt");
@@ -10763,6 +10773,26 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods.kt");
         }
 
+        @TestMetadata("EnumSyntheticMethods10.kt")
+        public void testEnumSyntheticMethods10() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods10.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods11.kt")
+        public void testEnumSyntheticMethods11() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods11.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods12.kt")
+        public void testEnumSyntheticMethods12() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods12.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods13.kt")
+        public void testEnumSyntheticMethods13() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods13.kt");
+        }
+
         @TestMetadata("EnumSyntheticMethods2.kt")
         public void testEnumSyntheticMethods2() throws Exception {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods2.kt");
@@ -10786,6 +10816,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("EnumSyntheticMethods6.kt")
         public void testEnumSyntheticMethods6() throws Exception {
             runTest("testData/intentions/importAllMembers/EnumSyntheticMethods6.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods7.kt")
+        public void testEnumSyntheticMethods7() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods7.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods8.kt")
+        public void testEnumSyntheticMethods8() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods8.kt");
+        }
+
+        @TestMetadata("EnumSyntheticMethods9.kt")
+        public void testEnumSyntheticMethods9() throws Exception {
+            runTest("testData/intentions/importAllMembers/EnumSyntheticMethods9.kt");
         }
 
         @TestMetadata("ImportAllMembersInImport.kt")
@@ -16327,6 +16372,169 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/replaceTypeArgumentWithUnderscore")
+    public static class ReplaceTypeArgumentWithUnderscore extends AbstractK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("betweenLambdaArguments.kt")
+        public void testBetweenLambdaArguments() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/betweenLambdaArguments.kt");
+        }
+
+        @TestMetadata("blockValue.kt")
+        public void testBlockValue() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/blockValue.kt");
+        }
+
+        @TestMetadata("inGetter.kt")
+        public void testInGetter() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inGetter.kt");
+        }
+
+        @TestMetadata("inapplicableFeatureDoesntSupport.kt")
+        public void testInapplicableFeatureDoesntSupport() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableFeatureDoesntSupport.kt");
+        }
+
+        @TestMetadata("inapplicableHasAnnotation.kt")
+        public void testInapplicableHasAnnotation() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableHasAnnotation.kt");
+        }
+
+        @TestMetadata("inapplicableHasAnnotationOnNestedTypeArgument.kt")
+        public void testInapplicableHasAnnotationOnNestedTypeArgument() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableHasAnnotationOnNestedTypeArgument.kt");
+        }
+
+        @TestMetadata("inapplicableNotGeneric.kt")
+        public void testInapplicableNotGeneric() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableNotGeneric.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable.kt")
+        public void testInapplicableNotInCallable() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableNotInCallable.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable2.kt")
+        public void testInapplicableNotInCallable2() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableNotInCallable2.kt");
+        }
+
+        @TestMetadata("inapplicablePlaceholder.kt")
+        public void testInapplicablePlaceholder() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicablePlaceholder.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeInferred1.kt")
+        public void testInapplicableTypeCanNotBeInferred1() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeInferred1.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred2.kt")
+        public void testInapplicableTypeCanNotBeinferred2() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeinferred2.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred3.kt")
+        public void testInapplicableTypeCanNotBeinferred3() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeinferred3.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred4.kt")
+        public void testInapplicableTypeCanNotBeinferred4() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeinferred4.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred5.kt")
+        public void testInapplicableTypeCanNotBeinferred5() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeinferred5.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred6.kt")
+        public void testInapplicableTypeCanNotBeinferred6() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeCanNotBeinferred6.kt");
+        }
+
+        @TestMetadata("inapplicableTypeThatIsAFunItCannotBeInferred.kt")
+        public void testInapplicableTypeThatIsAFunItCannotBeInferred() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inapplicableTypeThatIsAFunItCannotBeInferred.kt");
+        }
+
+        @TestMetadata("inferredTypeFromElvis.kt")
+        public void testInferredTypeFromElvis() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inferredTypeFromElvis.kt");
+        }
+
+        @TestMetadata("inlineFun.kt")
+        public void testInlineFun() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inlineFun.kt");
+        }
+
+        @TestMetadata("inlineFunWithRefied.kt")
+        public void testInlineFunWithRefied() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/inlineFunWithRefied.kt");
+        }
+
+        @TestMetadata("insideDeepOtherCall.kt")
+        public void testInsideDeepOtherCall() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/insideDeepOtherCall.kt");
+        }
+
+        @TestMetadata("lambdaType.kt")
+        public void testLambdaType() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/lambdaType.kt");
+        }
+
+        @TestMetadata("oneFromManyTypes1.kt")
+        public void testOneFromManyTypes1() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/oneFromManyTypes1.kt");
+        }
+
+        @TestMetadata("oneFromManyTypes2.kt")
+        public void testOneFromManyTypes2() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/oneFromManyTypes2.kt");
+        }
+
+        @TestMetadata("oneFromManyTypesInDifferentOrder.kt")
+        public void testOneFromManyTypesInDifferentOrder() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/oneFromManyTypesInDifferentOrder.kt");
+        }
+
+        @TestMetadata("replaceAny.kt")
+        public void testReplaceAny() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/replaceAny.kt");
+        }
+
+        @TestMetadata("replaceClashingName.kt")
+        public void testReplaceClashingName() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/replaceClashingName.kt");
+        }
+
+        @TestMetadata("replaceFunctionType.kt")
+        public void testReplaceFunctionType() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/replaceFunctionType.kt");
+        }
+
+        @TestMetadata("replaceGenericType.kt")
+        public void testReplaceGenericType() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/replaceGenericType.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/simple.kt");
+        }
+
+        @TestMetadata("typeWithVarargs.kt")
+        public void testTypeWithVarargs() throws Exception {
+            runTest("testData/intentions/replaceTypeArgumentWithUnderscore/typeWithVarargs.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/replaceUnderscoreWithParameterName")
     public static class ReplaceUnderscoreWithParameterName extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -16376,6 +16584,149 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("triple.kt")
         public void testTriple() throws Exception {
             runTest("testData/intentions/replaceUnderscoreWithParameterName/triple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/replaceUnderscoreWithTypeArgument")
+    public static class ReplaceUnderscoreWithTypeArgument extends AbstractK1IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("betweenLambdaArguments.kt")
+        public void testBetweenLambdaArguments() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/betweenLambdaArguments.kt");
+        }
+
+        @TestMetadata("blockValue.kt")
+        public void testBlockValue() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/blockValue.kt");
+        }
+
+        @TestMetadata("importForArg.kt")
+        public void testImportForArg() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/importForArg.kt");
+        }
+
+        @TestMetadata("inGetter.kt")
+        public void testInGetter() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inGetter.kt");
+        }
+
+        @TestMetadata("inapplicableNotGeneric.kt")
+        public void testInapplicableNotGeneric() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableNotGeneric.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable.kt")
+        public void testInapplicableNotInCallable() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableNotInCallable.kt");
+        }
+
+        @TestMetadata("inapplicableNotInCallable2.kt")
+        public void testInapplicableNotInCallable2() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableNotInCallable2.kt");
+        }
+
+        @TestMetadata("inapplicableNotInPlaceholder.kt")
+        public void testInapplicableNotInPlaceholder() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableNotInPlaceholder.kt");
+        }
+
+        @TestMetadata("inapplicableNotType.kt")
+        public void testInapplicableNotType() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableNotType.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeInferred1.kt")
+        public void testInapplicableTypeCanNotBeInferred1() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeInferred1.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred2.kt")
+        public void testInapplicableTypeCanNotBeinferred2() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred2.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred3.kt")
+        public void testInapplicableTypeCanNotBeinferred3() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred3.kt");
+        }
+
+        @TestMetadata("inapplicableTypeCanNotBeinferred4.kt")
+        public void testInapplicableTypeCanNotBeinferred4() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred4.kt");
+        }
+
+        @TestMetadata("inferredTypeFromElvis.kt")
+        public void testInferredTypeFromElvis() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inferredTypeFromElvis.kt");
+        }
+
+        @TestMetadata("inlineFun.kt")
+        public void testInlineFun() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inlineFun.kt");
+        }
+
+        @TestMetadata("inlineFunWithRefied.kt")
+        public void testInlineFunWithRefied() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inlineFunWithRefied.kt");
+        }
+
+        @TestMetadata("insideDeepOtherCall.kt")
+        public void testInsideDeepOtherCall() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/insideDeepOtherCall.kt");
+        }
+
+        @TestMetadata("lambdaType.kt")
+        public void testLambdaType() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/lambdaType.kt");
+        }
+
+        @TestMetadata("oneFromManyTypes1.kt")
+        public void testOneFromManyTypes1() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/oneFromManyTypes1.kt");
+        }
+
+        @TestMetadata("oneFromManyTypes2.kt")
+        public void testOneFromManyTypes2() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/oneFromManyTypes2.kt");
+        }
+
+        @TestMetadata("oneFromManyTypesInDifferentOrder.kt")
+        public void testOneFromManyTypesInDifferentOrder() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/oneFromManyTypesInDifferentOrder.kt");
+        }
+
+        @TestMetadata("replaceWithAny.kt")
+        public void testReplaceWithAny() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/replaceWithAny.kt");
+        }
+
+        @TestMetadata("replaceWithClashingName.kt")
+        public void testReplaceWithClashingName() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/replaceWithClashingName.kt");
+        }
+
+        @TestMetadata("replaceWithFunctionType.kt")
+        public void testReplaceWithFunctionType() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/replaceWithFunctionType.kt");
+        }
+
+        @TestMetadata("replaceWithGenericType.kt")
+        public void testReplaceWithGenericType() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/replaceWithGenericType.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/simple.kt");
+        }
+
+        @TestMetadata("typeWithVarargs.kt")
+        public void testTypeWithVarargs() throws Exception {
+            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/typeWithVarargs.kt");
         }
     }
 
@@ -17825,6 +18176,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("referenceGetter1.kt")
         public void testReferenceGetter1() throws Exception {
             runTest("testData/intentions/usePropertyAccessSyntax/referenceGetter1.kt");
+        }
+
+        @TestMetadata("referenceGetterFunctionalInterface.kt")
+        public void testReferenceGetterFunctionalInterface() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterFunctionalInterface.kt");
+        }
+
+        @TestMetadata("referenceGetterNotBuiltInFunctionType.kt")
+        public void testReferenceGetterNotBuiltInFunctionType() throws Exception {
+            runTest("testData/intentions/usePropertyAccessSyntax/referenceGetterNotBuiltInFunctionType.kt");
         }
 
         @TestMetadata("referenceGetterOldLv.kt")

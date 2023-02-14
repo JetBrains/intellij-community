@@ -61,7 +61,14 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   // do not use PluginManager.processException() because it can force app to exit, but we want just to log an error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
-  public static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
+  static final boolean IMPLICIT_READ_ON_EDT_DISABLED = StartupUtil.isImplicitReadOnEDTDisabled();
+  static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
+  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
+  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
+  static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
+  static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
+
+  private static final String DOCUMENTATION_LINK = "; see https://jb.gg/ij-platform-threading for details";
 
   final ReadMostlyRWLock myLock;
 
@@ -296,7 +303,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return EDT.isCurrentThreadEdt();
+    return myLock.isWriteThread();
   }
 
   @Override
@@ -892,7 +899,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteLocked()))
+    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired()))
       return false;
     myLock.writeIntentLock();
     return true;
@@ -979,7 +986,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public <T, E extends Throwable> T runWriteIntentAction(@NotNull ThrowableComputable<T, E> computation) throws E {
+  public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     boolean wilock = acquireWriteIntentLock(computation.getClass().getName());
     try {
       return computation.compute();
@@ -994,22 +1001,19 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      LOG.error(
-        "Read access is allowed from inside read-action (or EDT) only" +
-        " (see com.intellij.openapi.application.Application.runReadAction())\n" + getThreadDetails());
+      throwThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION);
     }
   }
 
   @Override
   public void assertReadAccessNotAllowed() {
     if (isReadAccessAllowed()) {
-      LOG.error(
-        "Read access is not allowed",
-        getThreadDetails());
+      throwThreadAccessException(MUST_NOT_EXECUTE_INSIDE_READ_ACTION);
     }
   }
 
-  private static String describe(Thread o) {
+  @NotNull
+  private static String describe(@Nullable Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
 
@@ -1026,27 +1030,28 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertIsDispatchThread() {
     if (!isDispatchThread()) {
-      throwThreadAccessException("Access is allowed from event dispatch thread only");
+      throwThreadAccessException(MUST_EXECUTE_UNDER_EDT);
     }
   }
 
   @Override
   public void assertIsNonDispatchThread() {
     if (isDispatchThread()) {
-      throwThreadAccessException("Access from event dispatch thread is not allowed");
+      throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
     }
   }
 
-  private static void throwThreadAccessException(@NotNull String message) {
-    throw new RuntimeExceptionWithAttachments(message, getThreadDetails(),
+  private static void throwThreadAccessException(@NotNull @NonNls String message) {
+    throw new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
   @NotNull
   private static String getThreadDetails() {
-    return "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
-           "\nCurrent thread: " + describe(Thread.currentThread()) +
-           "\nSystemEventQueueThread: " + describe(getEventQueueThread());
+    Thread current = Thread.currentThread();
+    Thread edt = getEventQueueThread();
+    return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread()+")"+
+           "\nSystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
   }
 
   @Override
@@ -1078,8 +1083,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertTimeConsuming() {
-    if (myTestModeFlag || myHeadlessMode || ShutDownTracker.isShutdownHookRunning()) return;
-    LOG.assertTrue(!isDispatchThread(), "This operation is time consuming and must not be called on EDT");
+    assertIsNonDispatchThread();
   }
 
   @Override
@@ -1145,7 +1149,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       // - allow it,
       // - fire listeners for it (somebody can rely on having listeners fired for each write action)
       // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      if (!myLock.isWriteLocked()) {
+      if (!myLock.isWriteAcquired()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
            AppExecutorUtil.getAppScheduledExecutorService()
@@ -1272,18 +1276,19 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertWriteAccessAllowed() {
-    LOG.assertTrue(isWriteAccessAllowed(),
-                   "Write access is allowed inside write-action only (see com.intellij.openapi.application.Application.runWriteAction())");
+    if (!isWriteAccessAllowed()) {
+      throwThreadAccessException(MUST_EXECUTE_INSIDE_WRITE_ACTION);
+    }
   }
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return myLock.isWriteThread() && myLock.isWriteLocked();
+    return myLock.isWriteThread() && myLock.isWriteAcquired();
   }
 
   @Override
   public boolean isWriteActionInProgress() {
-    return myLock.isWriteLocked();
+    return myLock.isWriteAcquired();
   }
 
   /**
@@ -1294,7 +1299,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
    */
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertWriteIntentLockAcquired();
-    if (!myLock.isWriteLocked()) {
+    if (!myLock.isWriteAcquired()) {
       runModalProgress(project, title, runnable);
       return;
     }
@@ -1446,7 +1451,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     try {
       myLock.setImplicitReadAllowance(false);
       runnable.run();
-    } finally {
+    }
+    finally {
       myLock.setImplicitReadAllowance(oldVal);
     }
   }

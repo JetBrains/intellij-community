@@ -12,7 +12,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -91,7 +91,7 @@ private class GHServerVersionsCollector(private val project: Project) : Disposab
     }
   }
 
-  class Initializer : ProjectPostStartupActivity {
+  class Initializer : ProjectActivity {
     override suspend fun execute(project: Project) {
       // init service to start version checks
       project.service<GHServerVersionsCollector>()

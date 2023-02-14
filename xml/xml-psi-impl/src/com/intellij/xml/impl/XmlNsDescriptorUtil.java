@@ -106,7 +106,7 @@ public class XmlNsDescriptorUtil {
       }
       return getDefaultNSDescriptor(document, xhtmlNamespace, false);
     }
-    else if (namespace != null && namespace != XmlUtil.EMPTY_URI) {
+    else if (namespace != null && !namespace.equals(XmlUtil.EMPTY_URI)) {
       if (doctype == null || !namespace.equals(XmlUtil.getDtdUri(doctype))) {
         boolean documentIsSchemaThatDefinesNs = namespace.equals(XmlUtil.getTargetSchemaNsFromTag(document.getRootTag()));
 
@@ -136,7 +136,7 @@ public class XmlNsDescriptorUtil {
     }
 
     if (strict) return null;
-    if (namespace == XmlUtil.EMPTY_URI) {
+    if (XmlUtil.EMPTY_URI.equals(namespace)) {
       final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, namespace);
       if (xmlFile != null) {
         return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();

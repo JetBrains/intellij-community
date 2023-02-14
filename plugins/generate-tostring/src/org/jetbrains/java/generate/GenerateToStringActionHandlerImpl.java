@@ -73,7 +73,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     @Override
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
         PsiClass clazz = getSubjectClass(editor, file);
-        assert clazz != null;
+        if (clazz == null) return;
 
         doExecuteAction(project, clazz, editor);
     }

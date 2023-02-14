@@ -173,9 +173,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof HgMqUnAppliedPatchesPanel)) return false;
-
-    HgMqUnAppliedPatchesPanel panel = (HgMqUnAppliedPatchesPanel)o;
+    if (!(o instanceof HgMqUnAppliedPatchesPanel panel)) return false;
 
     if (!myRepository.equals(panel.myRepository)) return false;
 

@@ -13,26 +13,6 @@ import org.junit.Test
 
 class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   @Test
-  fun pluginJavaProject() {
-    IdePluginModuleBuilder().setupTestModule(fixture.module) {
-      language = JAVA_STARTER_LANGUAGE
-      isCreatingNewProject = true
-    }
-
-    fixture.configureFromTempProjectFile("build.gradle.kts")
-    val buildGradleText = fixture.editor.document.text
-
-    assertFalse("build.gradle.kts contains unprocessed VTL directives", buildGradleText.contains("\${context"))
-    assertFalse("build.gradle.kts contains kotlin in Java project", buildGradleText.contains("kotlin"))
-
-    expectFile("src/main/resources/META-INF/plugin.xml", PLUGIN_XML)
-
-    expectFile("settings.gradle.kts", """
-      rootProject.name = "demo"
-    """.trimIndent())
-  }
-
-  @Test
   fun pluginKotlinProject() {
     IdePluginModuleBuilder().setupTestModule(fixture.module) {
       language = KOTLIN_STARTER_LANGUAGE
@@ -113,7 +93,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11)
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
         <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="221" until-build="231.*"/>
+        <idea-version since-build="222" until-build="232.*"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.

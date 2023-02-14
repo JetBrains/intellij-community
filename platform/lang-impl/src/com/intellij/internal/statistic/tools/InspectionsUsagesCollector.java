@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -89,7 +89,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD =
     EventFields.StringValidatedByCustomRule("option_name", PluginInfoValidationRule.class);
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 12);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 13);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -260,8 +260,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
 
       Map<String, Attribute> set = new HashMap<>(options.size());
       for (Content option : options) {
-        if (option instanceof Element) {
-          Element el = (Element)option;
+        if (option instanceof Element el) {
           Attribute nameAttr = el.getAttribute("name");
           Attribute valueAttr = el.getAttribute("value");
           if (nameAttr != null && valueAttr != null) {

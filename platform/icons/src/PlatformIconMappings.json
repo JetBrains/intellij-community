@@ -612,8 +612,12 @@
       "errorOutline.svg": "ide/fatalError-read.svg",
       "failedInProgress.svg": "status/failedInProgress.svg",
       "info.svg": "general/balloonInformation.svg",
+      "infoOutline.svg": "general/showInfos.svg",
       "warning.svg": "general/balloonWarning.svg",
-      "warningOutline.svg": "general/showWarning.svg"
+      "warningOutline.svg": [
+        "general/showWarning.svg",
+        "general/warning.svg"
+      ]
     },
     "toolbar": {
       "unknown.svg": "toolbar/unknown.svg"
@@ -681,7 +685,11 @@
         "vcs/Unshelve.svg",
         "vcs/unshelveSilent.svg"
       ],
-      "update.svg": "actions/checkOut.svg"
+      "update.svg": "actions/checkOut.svg",
+      "vcs.svg": [
+        "vcs/branch.svg",
+        "vcs/branchNode.svg"
+      ]
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

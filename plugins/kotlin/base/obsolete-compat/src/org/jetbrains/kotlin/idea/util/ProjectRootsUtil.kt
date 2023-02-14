@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 
@@ -10,6 +11,7 @@ object ProjectRootsUtil {
     @JvmOverloads
     @JvmStatic
     @Suppress("DeprecatedCallableAddReplaceWith")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter.projectAndLibrarySources' instead")
     fun isInProjectOrLibSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean = false): Boolean {
         return RootKindFilter.projectAndLibrarySources

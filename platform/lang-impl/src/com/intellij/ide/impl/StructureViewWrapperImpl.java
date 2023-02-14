@@ -386,8 +386,7 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
           myFileEditor = editor;
           Disposer.register(this, myStructureView);
 
-          if (myStructureView instanceof StructureViewComposite) {
-            final StructureViewComposite composite = (StructureViewComposite)myStructureView;
+          if (myStructureView instanceof StructureViewComposite composite) {
             final StructureViewComposite.StructureViewDescriptor[] views = composite.getStructureViews();
             myPanels = new JPanel[views.length];
             names = new String[views.length];

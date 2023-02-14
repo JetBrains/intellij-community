@@ -8,15 +8,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -155,7 +155,7 @@ class CompilerModuleExtensionBridge(
     return result.toTypedArray()
   }
 
-  companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
+  class Factory : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
                                  diff: MutableEntityStorage?): CompilerModuleExtensionBridge =

@@ -788,4 +788,13 @@
   <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="control shift PERIOD"/>
   </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="control alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="control alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="control alt 0"/>
+  </action>
 </keymap>

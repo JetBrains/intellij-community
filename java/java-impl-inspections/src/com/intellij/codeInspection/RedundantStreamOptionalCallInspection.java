@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,13 +21,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
@@ -188,7 +187,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                    ? JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.parallel",
                                                         furtherCallName)
                                    : JavaBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
-                register(call, message, additionalFix);
+                register(call, message, LocalQuickFix.notNullElements(additionalFix));
               }
             }
           }
@@ -279,7 +278,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, @Nls String explanation, LocalQuickFix... additionalFixes) {
+      private void register(PsiMethodCallExpression call, @Nls String explanation, @NotNull LocalQuickFix @NotNull ... additionalFixes) {
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
@@ -316,8 +315,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
 
   private static PsiExpression skipReversed(PsiExpression comparator) {
     comparator = PsiUtil.skipParenthesizedExprDown(comparator);
-    while (comparator instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)comparator;
+    while (comparator instanceof PsiMethodCallExpression call) {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (!COMPARATOR_REVERSE.test(call) || qualifier == null) {
         break;
@@ -354,8 +352,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
           .isCallToStaticMethod((PsiMethodCallExpression)expression, CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION, "identity", 0)) {
       return true;
     }
-    if (expression instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+    if (expression instanceof PsiLambdaExpression lambda) {
       if (LambdaUtil.isIdentityLambda(lambda)) return true;
       if (!allowBoxUnbox) return false;
       PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
@@ -372,8 +369,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (args.length != 1 || !ExpressionUtils.isReferenceTo(args[0], parameter)) return false;
       return isBoxUnboxMethod(call.resolveMethod());
     }
-    if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression)) return false;
-    PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+    if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression methodRef)) return false;
     if (!BOX_UNBOX_NAMES.contains(methodRef.getReferenceName())) return false;
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
     return isBoxUnboxMethod(method);

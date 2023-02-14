@@ -165,8 +165,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof IntentionActionWithTextCaching)) return false;
-    IntentionActionWithTextCaching other = (IntentionActionWithTextCaching) o;
+    if (!(o instanceof IntentionActionWithTextCaching other)) return false;
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
   }
 

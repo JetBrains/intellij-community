@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
@@ -108,8 +108,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
                                 boolean suggestConversionWhenIfIsASingleStmtInLoop) {
       boolean isEndlessLoop = ControlFlowUtils.isEndlessLoop(loopStatement);
       if (!isEndlessLoop) {
-        if (loopStatement instanceof PsiForStatement) {
-          PsiForStatement forStatement = (PsiForStatement)loopStatement;
+        if (loopStatement instanceof PsiForStatement forStatement) {
           if ((forStatement.getInitialization() != null && !(forStatement.getInitialization() instanceof PsiEmptyStatement))
               || (forStatement.getUpdate() != null && !(forStatement.getUpdate() instanceof PsiEmptyStatement))) {
             return null;

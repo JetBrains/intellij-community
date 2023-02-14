@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -75,14 +75,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
     XDebugSessionTab tab;
     if (Registry.is("debugger.new.tool.window.layout")) {
-      tab = new XDebugSessionTab3(session, icon, environment);
+      if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      }
+      else {
+        tab = new XDebugSessionTabNewUI(session, icon, environment);
+      }
     }
     else {
-      if (DebuggerUIExperimentCollector.startExperiment()) {
-        tab = new XDebugSessionTab3(session, icon, environment);
-      } else {
-        tab = new XDebugSessionTab(session, icon, environment, true);
-      }
+      tab = new XDebugSessionTab(session, icon, environment, true);
     }
 
     tab.init(session);
@@ -147,6 +148,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected void initDebuggerTab(XDebugSessionImpl session) {
+    createDefaultTabs(session);
+    CustomActionsListener.subscribe(this, () -> initToolbars(session));
+  }
+
+  protected final void createDefaultTabs(XDebugSessionImpl session) {
     Content framesContent = createFramesContent();
     myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
 
@@ -252,7 +258,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   @NotNull
   private Content createFramesContent() {
-    XFramesView framesView = new XFramesView(myProject);
+    XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getDefaultFocusedComponent());
@@ -301,8 +307,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
-
-    CustomActionsListener.subscribe(this, () -> initToolbars(session));
 
     if (myEnvironment != null) {
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
@@ -361,7 +365,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public void detachFromSession() {
     assert mySession != null;
-    DebuggerUIExperimentCollector.stopExperiment();
     mySession = null;
   }
 

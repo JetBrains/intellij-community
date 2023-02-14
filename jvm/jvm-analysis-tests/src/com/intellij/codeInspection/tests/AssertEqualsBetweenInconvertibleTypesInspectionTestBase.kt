@@ -3,7 +3,7 @@ package com.intellij.codeInspection.tests
 import com.intellij.codeInspection.AssertBetweenInconvertibleTypesInspection
 import com.intellij.codeInspection.InspectionProfileEntry
 
-open class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : UastInspectionTestBase() {
+open class AssertEqualsBetweenInconvertibleTypesInspectionTestBase : JvmInspectionTestBase() {
 
   override val inspection: InspectionProfileEntry = AssertBetweenInconvertibleTypesInspection()
 

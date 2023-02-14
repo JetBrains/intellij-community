@@ -137,7 +137,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
         private fun CallableDescriptor.isInlineFunctionWithReifiedTypeParameters(): Boolean =
             this is FunctionDescriptor && isInline && typeParameters.any { it.isReified }
 
-        private fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
+        fun findContextToAnalyze(expression: KtExpression, bindingContext: BindingContext): Pair<KtExpression, KotlinType?> {
             for (element in expression.parentsWithSelf) {
                 if (element !is KtExpression || element is KtEnumEntry) continue
 

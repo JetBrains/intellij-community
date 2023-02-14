@@ -57,7 +57,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                   @InspectionMessage String message,
                                   final HighlightSeverity type,
-                                  LocalQuickFix @NotNull ... fixes) {
+                                  @NotNull LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
@@ -66,7 +66,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                   final HighlightSeverity type,
                                   @Nullable final TextRange textRange,
                                   ProblemHighlightType highlightType,
-                                  LocalQuickFix @NotNull ... fixes) {
+                                  @NotNull LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -104,7 +104,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  public LocalQuickFix @NotNull [] getFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getFixes() {
     return myFixes;
   }
 
@@ -190,8 +190,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
       return ((DomFileElement<?>)myDomElement).getFile();
     }
 
-    if (myDomElement instanceof GenericAttributeValue) {
-      GenericAttributeValue<?> attributeValue = (GenericAttributeValue<?>)myDomElement;
+    if (myDomElement instanceof GenericAttributeValue<?> attributeValue) {
       final XmlAttributeValue value = attributeValue.getXmlAttributeValue();
       return value != null && StringUtil.isNotEmpty(value.getText()) ? value : attributeValue.getXmlElement();
     }

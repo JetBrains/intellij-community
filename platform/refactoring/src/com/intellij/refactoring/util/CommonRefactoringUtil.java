@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -176,8 +175,7 @@ public final class CommonRefactoringUtil {
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
-      if (element instanceof PsiDirectory) {
-        final PsiDirectory dir = (PsiDirectory)element;
+      if (element instanceof PsiDirectory dir) {
         final VirtualFile vFile = dir.getVirtualFile();
         if (vFile.getFileSystem().isReadOnly()) {
           failed.add(vFile);
@@ -249,7 +247,7 @@ public final class CommonRefactoringUtil {
   /**
    * @deprecated use {@link StringUtil#capitalize(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String capitalize(@NotNull String text) {
     return StringUtil.capitalize(text);
   }

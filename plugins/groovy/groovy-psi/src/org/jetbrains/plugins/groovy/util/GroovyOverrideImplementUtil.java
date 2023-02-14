@@ -224,8 +224,7 @@ public final class GroovyOverrideImplementUtil {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();
-        if (element instanceof GrMethod) {
-          GrMethod method = (GrMethod)element;
+        if (element instanceof GrMethod method) {
           if (GrTraitUtil.isTrait(method.getContainingClass()) && !GrTraitUtil.isMethodAbstract(method)) {
             iterator.remove();
             secondary.add(candidate);

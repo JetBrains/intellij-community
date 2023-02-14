@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -43,7 +44,6 @@ public final class CellTooltipManager {
   private Dimension             popupSize;
   private boolean               isOverPopup;
   private boolean               isClosing;
-
   @ApiStatus.Experimental
   public CellTooltipManager(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
@@ -91,6 +91,12 @@ public final class CellTooltipManager {
     if (cellComponentProvider != null) {
       JComponent cellRenderer = cellComponentProvider.getCellRendererComponent(e);
       ValidationInfo info = cellRenderer != null ? (ValidationInfo)cellRenderer.getClientProperty(ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY) : null;
+      if (info==null && cellRenderer instanceof ExpandedItemRendererComponentWrapper wrapper) {
+        Component unwrapped = ExpandedItemRendererComponentWrapper.unwrap(wrapper);
+        if (unwrapped instanceof JComponent unwrappedCellRenderer) {
+          info = (ValidationInfo)unwrappedCellRenderer.getClientProperty(ValidatingTableCellRendererWrapper.CELL_VALIDATION_PROPERTY);
+        }
+      }
 
       if (info != null) {
         if (!info.equals(validationInfo)) {

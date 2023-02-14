@@ -36,8 +36,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
   public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement fieldName = descriptor.getPsiElement();
     final PsiElement parent = fieldName.getParent();
-    if (!(parent instanceof PsiField)) return;
-    final PsiField field = (PsiField)parent;
+    if (!(parent instanceof PsiField field)) return;
     if (field.getInitializer() != null) {
       return;
     }

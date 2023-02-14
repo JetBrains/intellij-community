@@ -31,8 +31,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, String executionName) {
     myTask = task;
     myExecutionName = executionName;
-    if (task instanceof UserDataHolder) {
-      UserDataHolder dataHolder = (UserDataHolder)task;
+    if (task instanceof UserDataHolder dataHolder) {
       InputStream stream = dataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
       if (stream != null) {
         LOG.warn("Unexpected stream found, closing it...");
@@ -113,8 +112,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   protected void closeInput() {
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
-    if (myTask instanceof UserDataHolder) {
-      UserDataHolder taskDataHolder = (UserDataHolder)myTask;
+    if (myTask instanceof UserDataHolder taskDataHolder) {
       InputStream inputStream = taskDataHolder.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
       taskDataHolder.putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
       StreamUtil.closeStream(inputStream);

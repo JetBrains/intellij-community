@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.clientProperties;
 
@@ -31,7 +31,7 @@ import java.util.*;
 public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JTree myClassTree;
   private JTable myPropertiesTable;
-  private Class mySelectedClass;
+  private Class<?> mySelectedClass;
   private List<ClientPropertiesManager.ClientProperty> mySelectedProperties = Collections.emptyList();
   private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
@@ -66,7 +66,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
         final TreePath leadSelectionPath = e.getNewLeadSelectionPath();
         if (leadSelectionPath == null) return;
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
-        mySelectedClass = (Class)node.getUserObject();
+        mySelectedClass = (Class<?>)node.getUserObject();
         updateSelectedProperties();
       }
     });
@@ -81,12 +81,9 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
                                         int row,
                                         boolean hasFocus) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-        if (node.getUserObject() instanceof Class) {
-          Class cls = (Class)node.getUserObject();
-          if (cls != null) {
-            @NlsSafe String name = cls.getName();
-            append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
+        if (node.getUserObject() instanceof Class<?> cls) {
+          @NlsSafe String name = cls.getName();
+          append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       }
     });
@@ -107,7 +104,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             if (dlg.getExitCode() == OK_EXIT_CODE) {
               String className = dlg.getClassName();
               if (className.isEmpty()) return;
-              final Class aClass;
+              final Class<?> aClass;
               try {
                 aClass = Class.forName(className, true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
               }
@@ -178,7 +175,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     return mySplitter;
   }
 
-  private static int getInheritanceLevel(Class aClass) {
+  private static int getInheritanceLevel(Class<?> aClass) {
     int level = 0;
     while (aClass.getSuperclass() != null) {
       level++;

@@ -107,6 +107,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 }
 
 private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+  init {
+    updateFont()
+  }
+
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
@@ -141,6 +146,24 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
     }
     return null
   }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateFont()
+  }
+
+  override fun addImpl(comp: Component, constraints: Any?, index: Int) {
+    super.addImpl(comp, constraints, index)
+    comp.font = font
+  }
+
+  private fun updateFont() {
+    font = JBUI.CurrentTheme.Toolbar.experimentalToolbarFont()
+    for (component in components) {
+      component.font = font
+    }
+  }
+
 }
 
 internal fun isToolbarInHeader(settings: UISettings = UISettings.shadowInstance) : Boolean {

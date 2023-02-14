@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
+import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.renameTemplate
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
@@ -47,7 +47,7 @@ class InplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         if (changedName != null) {
             renameTemplate(template, changedName)
         }
-        template.gotoEnd(false)
+        nextTemplateVariable(template)
         UIUtil.dispatchAllInvocationEvents()
         if (checkResult) {
             myFixture.checkResultByFile("${getTestName(false)}.after.kt")
@@ -55,11 +55,4 @@ class InplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
-
-    private fun renameTemplate(templateState: TemplateState, name: String) {
-        WriteCommandAction.runWriteCommandAction(project) {
-            val range = templateState.currentVariableRange!!
-            editor.document.replaceString(range.startOffset, range.endOffset, name)
-        }
-    }
 }

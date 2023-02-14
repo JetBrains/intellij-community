@@ -9,7 +9,6 @@ import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.lang.StringEscapeUtils
 import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
@@ -45,6 +44,10 @@ class CompletionGolfFileReportGenerator(
                 }
               }
             }
+          }
+          div("cg-perfect-line") {
+            span { +perfectLineSign }
+            label("labelText") { +" - perfect line" }
           }
           if (fileEvaluations.size > 1) {
             div("cg-evaluations") {
@@ -88,13 +91,14 @@ class CompletionGolfFileReportGenerator(
       var offset = 0
       var lineNumbers = 0
       val firstInfo = infos.first()
+      val maxLineLength = firstInfo.sessionsInfo.sessions.maxOf { it.expectedText.length }
       for (sessionIndex in firstInfo.sessionsInfo.sessions.indices) {
         val session = firstInfo.sessionsInfo.sessions[sessionIndex]
         val text = fullText.substring(offset, session.offset)
-        val tab = text.lines().last().dropWhile { it == '\n' }
-        val tail = fullText.drop(session.offset + session.expectedText.length).takeWhile { it != '\n' }
 
-        lineNumbers += defaultText(text, lineNumbers)
+        if (text.isNotEmpty()) {
+          lineNumbers += defaultText(text, lineNumbers)
+        }
 
         val curSessions = infos.map { it.sessionsInfo.sessions[sessionIndex] }
         val movesNormalizedAll = curSessions.map { MovesCountNormalised().evaluate(listOf(it)) }
@@ -108,10 +112,7 @@ class CompletionGolfFileReportGenerator(
               attributes["data-line-numbers"] = lineNumbers.toString()
             }
             td("code-line") {
-              prepareLine(curSession, tab, movesNormalised)
-              if (tail.isNotEmpty()) {
-                pre("ib") { +tail }
-              }
+              prepareLine(curSession, movesNormalised, maxLineLength)
             }
           }
         }
@@ -132,52 +133,48 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun FlowContent.prepareLine(session: Session, tab: String, movesNormalised: Double) {
+  private fun FlowContent.prepareLine(session: Session, movesNormalised: Double, maxLineLength: Int) {
     val expectedText = session.expectedText
     val lookups = session.lookups
-
     var offset = 0
 
     div("line-code") {
-      pre("ib") { +StringEscapeUtils.escapeHtml(tab) }
+      style = "min-width: calc(7.8 * ${maxLineLength}px);"
       lookups.forEachIndexed { i, lookup ->
-        val currentChar = expectedText[offset]
+        if (lookup.offset != offset) {
+          span("code-span") { +expectedText.substring(offset, lookup.offset) }
+          offset = lookup.offset
+        }
         val delimiter = mutableListOf<String>().apply {
           if (lookups.size > 1 && i != 0) {
             add("delimiter")
           }
-          if (currentChar.isWhitespace()) {
-            consumer.onTagContentUnsafe { +currentChar.toString() }
-            offset++
-            add("delimiter-pre")
-          }
         }.joinToString(" ")
         offset = prepareSpan(expectedText, lookup, session.id, i, offset, delimiter)
+      }
+      if (expectedText.length != offset) {
+        span("code-span") { +expectedText.substring(offset) }
       }
     }
 
     div("line-stats") {
       val movesCount = MovesCount().evaluate(listOf(session))
       val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
+      val isPerfectLine = PerfectLine().evaluate(listOf(session)) == 1
 
       val info = mutableListOf<String>().apply {
-        add((movesNormalised * 100).format() + "%")
+        add("${(movesNormalised * 100).format()}%".padEnd(4, ' '))
         add("$movesCount act")
-        add((totalLatency / 1000).format() + "s")
+        add("${(totalLatency / 1000).format()}s".padEnd(4, ' '))
+        add(if (isPerfectLine) perfectLineSign else "")
       }
 
-      if (info.isNotEmpty()) {
-        i {
-          style = "display: flex;"
-          pre("no-select") { +"    #  " }
-          pre("stats-value") {
-            style = "padding-inline: 4px;"
-            +StringEscapeUtils.escapeHtml(
-              info.joinToString(separator = "\t", prefix = "", postfix = "\t") {
-                it.padEnd(4, ' ')
-              }
-            )
-          }
+      i {
+        style = "display: flex;"
+        pre("no-select") { +"    #  " }
+        pre("stats-value") {
+          style = "padding-inline: 4px;"
+          +info.joinToString(separator = "\t", prefix = "", postfix = "\t")
         }
       }
     }
@@ -200,7 +197,7 @@ class CompletionGolfFileReportGenerator(
 
     val text = lookup.selectedWithoutPrefix() ?: expectedText[offset].toString()
 
-    span("completion $kindClass $delimiter") {
+    span("code-span completion $kindClass $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       +text
@@ -228,6 +225,8 @@ class CompletionGolfFileReportGenerator(
   private fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
+    const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji
+
     private enum class Threshold(val value: Double) {
       EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15),
       GOOD(System.getenv("CG_THRESHOLD_GOOD")?.toDouble() ?: 0.25),

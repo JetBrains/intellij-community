@@ -30,7 +30,10 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             ?: return null
 
         val output = origin.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
-        val dependencies = buildCompilationDependencies(importingContext, origin)
+
+        val dependencies = if (!importingContext.useKgpDependencyResolution()) buildCompilationDependencies(importingContext, origin)
+        else emptySet()
+
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
         val nativeExtensions = origin.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)

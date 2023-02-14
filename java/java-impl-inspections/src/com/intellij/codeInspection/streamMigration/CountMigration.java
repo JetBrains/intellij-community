@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
@@ -23,8 +23,7 @@ class CountMigration extends BaseStreamApiMigration {
     PsiExpression operand = StreamApiMigrationInspection.extractIncrementedLValue(expression);
     if (!(operand instanceof PsiReferenceExpression)) return null;
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
-    if (!(element instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable var = (PsiLocalVariable)element;
+    if (!(element instanceof PsiLocalVariable var)) return null;
     CommentTracker ct = new CommentTracker();
     return replaceWithOperation(tb.getStreamSourceStatement(), var, tb.generate(ct) + ".count()", PsiTypes.longType(), SUM_OPERATION, ct);
   }

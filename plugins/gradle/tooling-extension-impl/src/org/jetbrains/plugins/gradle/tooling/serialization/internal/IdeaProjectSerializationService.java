@@ -7,7 +7,6 @@ import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
-import org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
 import org.gradle.tooling.model.*;
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.util.Comparing.compare;
-import static org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects.equal;
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
 
 /**
@@ -48,8 +46,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
   @Override
   public byte[] write(IdeaProject ideaProject, Class<? extends IdeaProject> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = createIonWriter().build(out);
-    try {
+    try (IonWriter writer = createIonWriter().build(out)) {
       GradleVersion gradleVersion = getBuildGradleVersion(ideaProject);
       myWriteContext.setGradleVersion(gradleVersion);
       writer.stepIn(IonType.STRUCT);
@@ -57,25 +54,18 @@ public final class IdeaProjectSerializationService implements SerializationServi
       writer.stepOut();
       writeProject(writer, myWriteContext, ideaProject);
     }
-    finally {
-      writer.close();
-    }
     return out.toByteArray();
   }
 
   @Override
   public IdeaProject read(byte[] object, Class<? extends IdeaProject> modelClazz) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(object);
-    try {
+    try (IonReader reader = IonReaderBuilder.standard().build(object)) {
       if (reader.next() == null) return null;
       reader.stepIn();
       String gradleVersion = assertNotNull(readString(reader, "gradleVersion"));
       reader.stepOut();
       myReadContext.setGradleVersion(GradleVersion.version(gradleVersion));
       return readProject(reader, myReadContext);
-    }
-    finally {
-      reader.close();
     }
   }
 
@@ -469,7 +459,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "ideaModules");
     reader.stepIn();
-    List<InternalIdeaModule> ideaModules = new ArrayList<InternalIdeaModule>();
+    List<InternalIdeaModule> ideaModules = new ArrayList<>();
     InternalIdeaModule ideaModule;
     while ((ideaModule = readModule(reader, context)) != null) {
       ideaModule.setParent(project);
@@ -500,7 +490,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "dependencies");
     reader.stepIn();
-    List<InternalIdeaDependency> dependencies = new ArrayList<InternalIdeaDependency>();
+    List<InternalIdeaDependency> dependencies = new ArrayList<>();
     InternalIdeaDependency dependency;
     while ((dependency = readDependency(reader, context)) != null) {
       dependencies.add(dependency);
@@ -561,7 +551,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     reader.next();
     assertFieldName(reader, "contentRoots");
     reader.stepIn();
-    List<InternalIdeaContentRoot> contentRoots = new ArrayList<InternalIdeaContentRoot>();
+    List<InternalIdeaContentRoot> contentRoots = new ArrayList<>();
     InternalIdeaContentRoot child;
     while ((child = readContentRoot(reader)) != null) {
       contentRoots.add(child);
@@ -594,7 +584,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     reader.stepIn();
-    Set<InternalIdeaSourceDirectory> sourceDirectories = new LinkedHashSet<InternalIdeaSourceDirectory>();
+    Set<InternalIdeaSourceDirectory> sourceDirectories = new LinkedHashSet<>();
     InternalIdeaSourceDirectory sourceDirectory;
     while ((sourceDirectory = readSourceDirectory(reader)) != null) {
       sourceDirectories.add(sourceDirectory);
@@ -669,7 +659,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           reader.next();
           assertFieldName(reader, "children");
           reader.stepIn();
-          List<InternalGradleProject> children = new ArrayList<InternalGradleProject>();
+          List<InternalGradleProject> children = new ArrayList<>();
           InternalGradleProject child;
           while ((child = readGradleProject(reader, context, null)) != null) {
             children.add(child);
@@ -682,7 +672,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           reader.next();
           assertFieldName(reader, "tasks");
           reader.stepIn();
-          List<InternalGradleTask> tasks = new ArrayList<InternalGradleTask>();
+          List<InternalGradleTask> tasks = new ArrayList<>();
           InternalGradleTask task;
           while ((task = readGradleTask(reader, context)) != null) {
             tasks.add(task);
@@ -812,14 +802,14 @@ public final class IdeaProjectSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<InternalIdeaProject> projectsMap = new IntObjectMap<InternalIdeaProject>();
-    private final IntObjectMap<InternalIdeaJavaLanguageSettings> languageSettingsMap = new IntObjectMap<InternalIdeaJavaLanguageSettings>();
-    private final IntObjectMap<InternalGradleProject> gradleProjectsMap = new IntObjectMap<InternalGradleProject>();
-    private final IntObjectMap<InternalProjectIdentifier> projectsIdentifiersMap = new IntObjectMap<InternalProjectIdentifier>();
-    private final IntObjectMap<InternalBuildIdentifier> buildsIdentifiersMap = new IntObjectMap<InternalBuildIdentifier>();
-    private final IntObjectMap<InternalGradleTask> tasksMap = new IntObjectMap<InternalGradleTask>();
-    private final IntObjectMap<InternalIdeaCompilerOutput> compilerOutputsMap = new IntObjectMap<InternalIdeaCompilerOutput>();
-    private final IntObjectMap<InternalIdeaDependency> dependenciesMap = new IntObjectMap<InternalIdeaDependency>();
+    private final IntObjectMap<InternalIdeaProject> projectsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaJavaLanguageSettings> languageSettingsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalGradleProject> gradleProjectsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalProjectIdentifier> projectsIdentifiersMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalBuildIdentifier> buildsIdentifiersMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalGradleTask> tasksMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaCompilerOutput> compilerOutputsMap = new IntObjectMap<>();
+    private final IntObjectMap<InternalIdeaDependency> dependenciesMap = new IntObjectMap<>();
 
     private GradleVersionComparator myGradleVersionComparator;
 
@@ -836,7 +826,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
       myGradleVersionComparator = new GradleVersionComparator(gradleVersion);
     }
 
-    private final ObjectCollector<IdeaProject, IOException> ideaProjectsCollector = new ObjectCollector<IdeaProject, IOException>(
+    private final ObjectCollector<IdeaProject, IOException> ideaProjectsCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<IdeaProject>() {
         @Override
         public int computeHashCode(IdeaProject object) {
@@ -859,7 +849,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
         }
       });
 
-    private final ObjectCollector<GradleProject, IOException> gradleProjectsCollector = new ObjectCollector<GradleProject, IOException>(
+    private final ObjectCollector<GradleProject, IOException> gradleProjectsCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<GradleProject>() {
         @Override
         public int computeHashCode(GradleProject object) {
@@ -874,11 +864,11 @@ public final class IdeaProjectSerializationService implements SerializationServi
       });
 
     private final ObjectCollector<IdeaCompilerOutput, IOException> ideaCompilerOutputCollector =
-      new ObjectCollector<IdeaCompilerOutput, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaCompilerOutput>() {
           @Override
           public int computeHashCode(IdeaCompilerOutput object) {
-            return Objects.hashCode(object.getInheritOutputDirs(), object.getOutputDir(), object.getTestOutputDir());
+            return argsHashCode(object.getInheritOutputDirs(), object.getOutputDir(), object.getTestOutputDir());
           }
 
           @Override
@@ -890,7 +880,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           }
         });
 
-    private final ObjectCollector<GradleTask, IOException> gradleTasksCollector = new ObjectCollector<GradleTask, IOException>(
+    private final ObjectCollector<GradleTask, IOException> gradleTasksCollector = new ObjectCollector<>(
       new TObjectHashingStrategy<GradleTask>() {
         @Override
         public int computeHashCode(GradleTask object) {
@@ -912,7 +902,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     private final ObjectCollector<IdeaDependency, IOException> ideaDependenciesCollector =
-      new ObjectCollector<IdeaDependency, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaDependency>() {
           @Override
           public int computeHashCode(IdeaDependency object) {
@@ -937,46 +927,45 @@ public final class IdeaProjectSerializationService implements SerializationServi
           }
 
           private int computeHashCode(@NotNull final IdeaModuleDependency object) {
-            return Objects.hashCode(new TargetModuleNameGetter(object, myGradleVersionComparator).get(), object.getScope().getScope());
+            return argsHashCode(new TargetModuleNameGetter(object, myGradleVersionComparator).get(), object.getScope().getScope());
           }
 
           private int computeHashCode(@NotNull IdeaSingleEntryLibraryDependency object) {
-            return Objects.hashCode(object.getFile(), object.getScope().getScope(), hasCode(object.getGradleModuleVersion()));
+            return argsHashCode(object.getFile(), object.getScope().getScope(), hasCode(object.getGradleModuleVersion()));
           }
 
           private int hasCode(@Nullable GradleModuleVersion version) {
-            return version == null ? 0 : Objects.hashCode(version.getGroup(), version.getName(), version.getVersion());
+            return version == null ? 0 : argsHashCode(version.getGroup(), version.getName(), version.getVersion());
           }
 
           private boolean equals(@NotNull IdeaModuleDependency o1, @NotNull IdeaModuleDependency o2) {
             return o1.getExported() == o2.getExported() &&
-                   Objects
-                     .equal(new TargetModuleNameGetter(o1, myGradleVersionComparator).get(),
-                            new TargetModuleNameGetter(o2, myGradleVersionComparator).get()) &&
-                   Objects.equal(o1.getScope().getScope(), o2.getScope().getScope());
+                   nullsafeEqual(new TargetModuleNameGetter(o1, myGradleVersionComparator).get(),
+                                 new TargetModuleNameGetter(o2, myGradleVersionComparator).get()) &&
+                   nullsafeEqual(o1.getScope().getScope(), o2.getScope().getScope());
           }
 
           private boolean equals(@NotNull IdeaSingleEntryLibraryDependency o1, @NotNull IdeaSingleEntryLibraryDependency o2) {
             return o1.getExported() == o2.getExported() &&
                    equal(o1.getGradleModuleVersion(), o2.getGradleModuleVersion()) &&
-                   Objects.equal(o1.getFile().getPath(), o2.getFile().getPath()) &&
-                   Objects.equal(o1.getScope().getScope(), o2.getScope().getScope());
+                   nullsafeEqual(o1.getFile().getPath(), o2.getFile().getPath()) &&
+                   nullsafeEqual(o1.getScope().getScope(), o2.getScope().getScope());
           }
 
           private boolean equal(@Nullable GradleModuleVersion version1, @Nullable GradleModuleVersion version2) {
             return version1 == version2 || version1 != null && version2 != null &&
-                                           Objects.equal(version1.getName(), version2.getName()) &&
-                                           Objects.equal(version1.getGroup(), version2.getGroup()) &&
-                                           Objects.equal(version1.getVersion(), version2.getVersion());
+                                           nullsafeEqual(version1.getName(), version2.getName()) &&
+                                           nullsafeEqual(version1.getGroup(), version2.getGroup()) &&
+                                           nullsafeEqual(version1.getVersion(), version2.getVersion());
           }
         });
 
     private final ObjectCollector<IdeaJavaLanguageSettings, IOException> ideaJavaLanguageSettingsCollector =
-      new ObjectCollector<IdeaJavaLanguageSettings, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<IdeaJavaLanguageSettings>() {
           @Override
           public int computeHashCode(final IdeaJavaLanguageSettings object) {
-            return object == null ? 0 : Objects.hashCode(getLanguageLevel(object),
+            return object == null ? 0 : argsHashCode(getLanguageLevel(object),
                                                          nullizeUnsupported(new TargetBytecodeVersionGetter(object)),
                                                          nullizeUnsupported(new JavaHomePathGetter(object)));
           }
@@ -986,14 +975,14 @@ public final class IdeaProjectSerializationService implements SerializationServi
             return o1 == o2 ||
                    o1 != null && o2 != null &&
                    getLanguageLevel(o1) == getLanguageLevel(o2) &&
-                   equal(nullizeUnsupported(new TargetBytecodeVersionGetter(o1)),
-                         nullizeUnsupported(new TargetBytecodeVersionGetter(o2))) &&
-                   equal(nullizeUnsupported(new JavaHomePathGetter(o1)), nullizeUnsupported(new JavaHomePathGetter(o2)));
+                   nullsafeEqual(nullizeUnsupported(new TargetBytecodeVersionGetter(o1)),
+                                 nullizeUnsupported(new TargetBytecodeVersionGetter(o2))) &&
+                   nullsafeEqual(nullizeUnsupported(new JavaHomePathGetter(o1)), nullizeUnsupported(new JavaHomePathGetter(o2)));
           }
         });
 
     private final ObjectCollector<ProjectIdentifier, IOException> projectIdentifiersCollector =
-      new ObjectCollector<ProjectIdentifier, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<ProjectIdentifier>() {
           @Override
           public int computeHashCode(ProjectIdentifier object) {
@@ -1013,7 +1002,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
 
     private final ObjectCollector<BuildIdentifier, IOException> buildIdentifiersCollector =
-      new ObjectCollector<BuildIdentifier, IOException>(
+      new ObjectCollector<>(
         new TObjectHashingStrategy<BuildIdentifier>() {
           @Override
           public int computeHashCode(BuildIdentifier object) {
@@ -1177,5 +1166,15 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
     return GradleVersion.current();
   }
+
+  private static int argsHashCode(Object... objects) {
+    return Arrays.hashCode(objects);
+  }
+
+  private static boolean nullsafeEqual(Object a, Object b) {
+    return a == b || a != null && a.equals(b);
+  }
+
+
 }
 

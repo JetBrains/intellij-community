@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -39,7 +38,7 @@ class BuildOptions {
      */
     const val OS_NONE = "none"
 
-    /** Pre-builds SVG icons for all SVG resource files to speedup icons loading at runtime  */
+    /** Pre-builds SVG icons for all SVG resource files to speed up icons loading at runtime  */
     const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
 
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
@@ -87,7 +86,7 @@ class BuildOptions {
     const val WIN_SIGN_STEP = "windows_sign"
 
     @JvmField
-    @Internal
+    @ApiStatus.Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
       .splitToSequence(';')
       .filter { !it.isBlank() }
@@ -162,11 +161,6 @@ class BuildOptions {
      * Enables module structure validation, false by default
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
-
-    /**
-     * Verify whether class files have a forbidden subpaths in them, false by default
-     */
-    const val VALIDATE_CLASSFILE_SUBPATHS_PROPERTY = "intellij.verify.classfile.subpaths"
 
     /**
      * Max attempts of dependencies resolution on fault. "1" means no retries.
@@ -287,8 +281,12 @@ class BuildOptions {
    */
   var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
 
-  @Internal
-  var printFreeSpace = true
+  @ApiStatus.Internal
+  @JvmField
+  var printFreeSpace: Boolean = true
+  @ApiStatus.Internal
+  @JvmField
+  var validateImplicitPlatformModule: Boolean = true
 
   /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
@@ -303,7 +301,7 @@ class BuildOptions {
    * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
    * `none`.
    */
-  val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
+  val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
    * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
@@ -319,22 +317,20 @@ class BuildOptions {
   /**
    * Enables fastdebug runtime
    */
-  var runtimeDebug = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
+  var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
 
   /**
    * Specifies an algorithm to build distribution checksums.
    */
-  val hashAlgorithm = "SHA-384"
+  val hashAlgorithm: String = "SHA-384"
 
-  var validateModuleStructure = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
+  var validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
 
-  var validateClassFileSubpaths = parseBooleanValue(System.getProperty(VALIDATE_CLASSFILE_SUBPATHS_PROPERTY, "false"))
+  @ApiStatus.Internal
+  var skipCustomResourceGenerators: Boolean = false
 
-  @Internal
-  var skipCustomResourceGenerators = false
-
-  var resolveDependenciesMaxAttempts = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
-  var resolveDependenciesDelayMs = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
+  var resolveDependenciesMaxAttempts: Int = System.getProperty(RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY, "2").toInt()
+  var resolveDependenciesDelayMs: Long = System.getProperty(RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY, "1000").toLong()
 
   /**
    * See [GlobalOptions.BUILD_DATE_IN_SECONDS]
@@ -384,7 +380,7 @@ class BuildOptions {
 private fun parseBooleanValue(text: String): Boolean {
   return when {
     text.toBoolean() -> true
-    text.equals(java.lang.Boolean.FALSE.toString(), ignoreCase = true) -> false
+    text.equals(false.toString(), ignoreCase = true) -> false
     else -> throw IllegalArgumentException("Could not parse as boolean, accepted values are only 'true' or 'false': $text")
   }
 }

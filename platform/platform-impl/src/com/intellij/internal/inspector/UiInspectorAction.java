@@ -138,8 +138,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       }
       if (component != null) {
-        if (component instanceof JComponent) {
-          JComponent jComp = (JComponent)component;
+        if (component instanceof JComponent jComp) {
           jComp.putClientProperty(CLICK_INFO, getClickInfoNode(me, jComp));
           jComp.putClientProperty(CLICK_INFO_POINT, me.getPoint());
         }
@@ -154,10 +153,10 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
         UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
         if (inspectorInfo != null) {
-          String name = ObjectUtils.chooseNotNull(inspectorInfo.name, "Click Info");
-          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component);
-          if (inspectorInfo.component != null) inspectorInfo.component.doLayout();
-          node.setUserObject(inspectorInfo.values);
+          String name = ObjectUtils.chooseNotNull(inspectorInfo.name(), "Click Info");
+          HierarchyTree.ComponentNode node = HierarchyTree.ComponentNode.createNamedNode(name, inspectorInfo.component());
+          if (inspectorInfo.component() != null) inspectorInfo.component().doLayout();
+          node.setUserObject(inspectorInfo.values());
           return node;
         }
       }
@@ -203,8 +202,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           return Pair.create(clickInfo, rendererComponent);
         }
       }
-      if (component instanceof JTable) {
-        JTable table = (JTable)component;
+      if (component instanceof JTable table) {
         int row = table.rowAtPoint(me.getPoint());
         int column = table.columnAtPoint(me.getPoint());
         if (row != -1 && column != -1) {

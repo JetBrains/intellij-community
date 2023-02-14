@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.openapi.util.NlsSafe
+import java.util.*
 
 @GraphQLFragment("/graphql/fragment/commit.graphql")
 class GHCommit(id: String,
@@ -16,6 +17,7 @@ class GHCommit(id: String,
                @NlsSafe val messageBodyHTML: String,
                author: GHGitActor?,
                val committer: GHGitActor?,
+               val committedDate: Date,
                @JsonProperty("parents") parents: GraphQLNodesDTO<GHCommitHash>)
   : GHCommitShort(id, oid, abbreviatedOid, url, messageHeadlineHTML, author) {
 

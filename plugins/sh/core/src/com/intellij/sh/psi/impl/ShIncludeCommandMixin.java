@@ -36,8 +36,7 @@ abstract class ShIncludeCommandMixin extends ShCommandImpl implements ShIncludeC
 
   public @Nullable PsiFile getReferencingFile(@NotNull PsiElement element) {
     String relativeFilePath = element.getText();
-    if (element instanceof ShString) {
-      ShString shString = (ShString)element;
+    if (element instanceof ShString shString) {
       if (relativeFilePath.length() >= 2 &&
           (shString.getOpenQuote() != null && shString.getCloseQuote() != null) ||
           (shString.getRawString() != null && relativeFilePath.startsWith("'") && relativeFilePath.endsWith("'"))) {

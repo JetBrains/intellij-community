@@ -342,9 +342,8 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       symbols.add(((PyClassType)type).getPyClass());
     }
-    else if (type instanceof PyCallableType) {
+    else if (type instanceof PyCallableType callableType) {
       typingTypes.add("Callable");
-      final PyCallableType callableType = (PyCallableType)type;
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         collectImportTargetsFromType(parameter.getType(context), context, symbols, typingTypes);
       }
@@ -380,8 +379,7 @@ public final class PyTypeHintGenerationUtil {
     else if (type instanceof PyClassType) {
       // In this order since PyCollectionTypeImpl implements PyClassType
     }
-    else if (type instanceof PyCallableType) {
-      final PyCallableType callableType = (PyCallableType)type;
+    else if (type instanceof PyCallableType callableType) {
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
         checkPep484Compatibility(parameter.getType(context), context);
       }

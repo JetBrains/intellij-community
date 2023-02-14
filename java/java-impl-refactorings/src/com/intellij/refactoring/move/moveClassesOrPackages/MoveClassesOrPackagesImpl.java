@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -23,7 +23,10 @@ import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -71,13 +74,11 @@ public final class MoveClassesOrPackagesImpl {
         if (!isAlreadyChecked(psiElements, idx, aPackage) && !checkMovePackage(project, aPackage, (PsiDirectory)element)) return null;
         element = aPackage;
       }
-      else if (element instanceof PsiPackage) {
-        final PsiPackage psiPackage = (PsiPackage)element;
+      else if (element instanceof PsiPackage psiPackage) {
         if (!checkNesting(project, psiPackage, targetElement, true)) return null;
         if (!checkMovePackage(project, psiPackage, null)) return null;
       }
-      else if (element instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element;
+      else if (element instanceof PsiClass aClass) {
         if (aClass instanceof PsiAnonymousClass) {
           String message = JavaRefactoringBundle.message("move.class.refactoring.cannot.be.applied.to.anonymous.classes");
           CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("move.title"), message, HelpID.getMoveHelpID(element), project);
@@ -231,8 +232,7 @@ public final class MoveClassesOrPackagesImpl {
   }
 
   private static String getTargetPackageNameForMovedElement(final PsiElement psiElement) {
-    if (psiElement instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)psiElement;
+    if (psiElement instanceof PsiPackage psiPackage) {
       final PsiPackage parentPackage = psiPackage.getParentPackage();
       return parentPackage != null ? parentPackage.getQualifiedName() : "";
     }

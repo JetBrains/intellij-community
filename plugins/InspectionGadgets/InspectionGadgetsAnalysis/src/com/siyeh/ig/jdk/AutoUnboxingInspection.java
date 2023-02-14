@@ -88,8 +88,7 @@ public class AutoUnboxingInspection extends BaseInspection {
     if (location instanceof PsiReferenceExpression) {
       reference = (PsiReferenceExpression)location;
     }
-    else if (location instanceof PsiArrayAccessExpression) {
-      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)location;
+    else if (location instanceof PsiArrayAccessExpression arrayAccessExpression) {
       final PsiExpression expression = arrayAccessExpression.getArrayExpression();
       if (!(expression instanceof PsiReferenceExpression)) {
         return true;
@@ -136,12 +135,10 @@ public class AutoUnboxingInspection extends BaseInspection {
       final PsiElementFactory factory = psiFacade.getElementFactory();
       final PsiElement parent = expression.getParent();
       final String expressionText = expression.getText();
-      if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+      if (parent instanceof PsiTypeCastExpression typeCastExpression) {
         PsiReplacementUtil.replaceExpression(typeCastExpression, newExpressionText, commentTracker);
       }
-      else if (parent instanceof PsiPrefixExpression && !unboxedType.equalsToText("boolean")) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
+      else if (parent instanceof PsiPrefixExpression prefixExpression && !unboxedType.equalsToText("boolean")) {
         final IElementType tokenType = prefixExpression.getOperationTokenType();
         if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
           commentTracker.markUnchanged(expression);
@@ -154,8 +151,7 @@ public class AutoUnboxingInspection extends BaseInspection {
           PsiReplacementUtil.replaceExpression(prefixExpression, prefixExpression.getOperationSign().getText() + newExpressionText, commentTracker);
         }
       }
-      else if (parent instanceof PsiPostfixExpression) {
-        final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parent;
+      else if (parent instanceof PsiPostfixExpression postfixExpression) {
         final IElementType tokenType = postfixExpression.getOperationTokenType();
         final PsiElement grandParent = postfixExpression.getParent();
         if (grandParent instanceof PsiExpressionStatement) {
@@ -185,8 +181,7 @@ public class AutoUnboxingInspection extends BaseInspection {
           greatGrandParent.addAfter(newStatement, statement);
         }
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         final PsiExpression lExpression = assignmentExpression.getLExpression();
         if (expression.equals(lExpression)) {
           final PsiJavaToken operationSign = assignmentExpression.getOperationSign();
@@ -218,8 +213,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       }
       final String expressionText = getExpressionText(expression, new StringBuilder()).toString();
       final String boxMethodName = s_unboxingMethods.get(unboxedType.getCanonicalText());
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      if (expression instanceof PsiMethodCallExpression methodCallExpression) {
         if (isValueOfCall(methodCallExpression)) {
           final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
           final PsiExpression[] arguments = argumentList.getExpressions();
@@ -255,8 +249,7 @@ public class AutoUnboxingInspection extends BaseInspection {
         }
         out.append(')');
       }
-      else if (expression instanceof PsiConditionalExpression) {
-        final PsiConditionalExpression conditional = (PsiConditionalExpression)expression;
+      else if (expression instanceof PsiConditionalExpression conditional) {
         out.append(conditional.getCondition().getText()).append('?');
         getExpressionText(conditional.getThenExpression(), out);
         out.append(':');
@@ -299,15 +292,13 @@ public class AutoUnboxingInspection extends BaseInspection {
 
     @NonNls
     private static String computeConstantBooleanText(PsiExpression expression) {
-      if (!(expression instanceof PsiReferenceExpression)) {
+      if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiField)) {
+      if (!(target instanceof PsiField field)) {
         return null;
       }
-      final PsiField field = (PsiField)target;
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
         return null;
@@ -355,8 +346,7 @@ public class AutoUnboxingInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      if (expression instanceof PsiMethodReferenceExpression) {
-        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+      if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
         if (methodReferenceExpression.isConstructor()) {
           return;
         }
@@ -365,10 +355,9 @@ public class AutoUnboxingInspection extends BaseInspection {
           return;
         }
         final PsiElement target = methodReferenceExpression.resolve();
-        if (!(target instanceof PsiMethod)) {
+        if (!(target instanceof PsiMethod method)) {
           return;
         }
-        final PsiMethod method = (PsiMethod)target;
         final PsiType returnType = method.getReturnType();
         if (!TypeConversionUtil.isAssignableFromPrimitiveWrapper(returnType)) {
           return;

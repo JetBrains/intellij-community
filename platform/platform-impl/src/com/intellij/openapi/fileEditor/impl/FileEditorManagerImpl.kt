@@ -30,6 +30,7 @@ import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -81,6 +82,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.flow.zipWithNext
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
@@ -102,8 +104,6 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
-import java.lang.ref.Reference
-import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -178,6 +178,12 @@ open class FileEditorManagerImpl(
    * Removes invalid editor and updates "modified" status.
    */
   private val editorPropertyChangeListener = MyEditorPropertyChangeListener()
+
+  /**
+   * Updates file tooltip
+   */
+  private val editorCompositeListener = MyEditorCompositeListener()
+
   private var contentFactory: DockableEditorContainerFactory? = null
   private val openedComposites = CopyOnWriteArrayList<EditorComposite>()
   private val listenerList = MessageListenerList(project.messageBus, FileEditorManagerListener.FILE_EDITOR_MANAGER)
@@ -190,7 +196,7 @@ open class FileEditorManagerImpl(
     get() = dockable.value
 
   init {
-    val selectionFlow = splitterFlow
+    val selectionFlow: StateFlow<SelectionState?> = splitterFlow
       .flatMapLatest { it.currentCompositeFlow }
       .flatMapLatest { composite ->
         if (composite == null) {
@@ -204,32 +210,33 @@ open class FileEditorManagerImpl(
       }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
-    coroutineScope.launch {
-      val lastState = AtomicReference<Reference<SelectionState?>>()
-      selectionFlow.collectLatest { state ->
-        val oldState = lastState.getAndSet(state?.let(::WeakReference))?.get()
+    val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
 
+    // not using collectLatest() to ensure that no selection update is missed by the listeners
+    selectionFlow
+      .zipWithNext { oldState, state ->
         val oldEditorWithProvider = oldState?.fileEditorProvider
         val newEditorWithProvider = state?.fileEditorProvider
         if (oldEditorWithProvider == newEditorWithProvider) {
-          return@collectLatest
+          return@zipWithNext
         }
 
-        val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
         // expected in EDT
         withContext(Dispatchers.EDT) {
-          fireSelectionChanged(oldComposite = oldState?.composite,
-                               newComposite = state?.composite,
-                               oldEditorWithProvider = oldEditorWithProvider,
-                               newEditorWithProvider = newEditorWithProvider,
-                               publisher = publisher)
+          kotlin.runCatching {
+            fireSelectionChanged(oldComposite = oldState?.composite,
+                                 newComposite = state?.composite,
+                                 oldEditorWithProvider = oldEditorWithProvider,
+                                 newEditorWithProvider = newEditorWithProvider,
+                                 publisher = publisher)
+          }.getOrLogException(LOG)
         }
       }
-    }
+      .launchIn(coroutineScope)
 
     currentFileEditorFlow = selectionFlow
       .map { it?.fileEditorProvider?.fileEditor }
-      .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), null)
+      .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
@@ -1106,7 +1113,9 @@ open class FileEditorManagerImpl(
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
-    window.setFilePinned(composite, pinned = options.pin)
+    if (options.pin) {
+      window.setFilePinned(composite, pinned = true)
+    }
 
     if (newEditor) {
       val messageBus = project.messageBus
@@ -1141,13 +1150,11 @@ open class FileEditorManagerImpl(
       catch (e: ProcessCanceledException) {
         throw e
       }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      catch (e: AssertionError) {
+      catch (e: Throwable) {
         LOG.error(e)
       }
     }
+    if (editorsWithProviders.isEmpty()) return null
     return createComposite(file, editorsWithProviders)
   }
 
@@ -1157,7 +1164,9 @@ open class FileEditorManagerImpl(
       editor.addPropertyChangeListener(editorPropertyChangeListener)
       editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
     }
-    return createCompositeInstance(file, editorsWithProviders)
+    return createCompositeInstance(file, editorsWithProviders)?.also { composite ->
+      composite.addListener(editorCompositeListener, disposable = this)
+    }
   }
 
   @Contract("_, _ -> new")
@@ -1904,6 +1913,15 @@ open class FileEditorManagerImpl(
       coroutineScope.launch {
         withContext(Dispatchers.EDT) { getActiveSplittersAsync() }.await()?.updateFileName(null)
       }
+    }
+  }
+
+  /**
+   * Listen for preview status change to update file tooltip
+   */
+  private inner class MyEditorCompositeListener : EditorCompositeListener {
+    override fun isPreviewChanged(composite: EditorComposite, value: Boolean) {
+      updateFileName(composite.file)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -378,8 +378,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       final PsiElement usageElement = usage.getElement();
       if (usageElement == null) continue;
       final PsiElement container = ConflictsUtil.getContainer(usageElement);
-      if (!(container instanceof PsiMember)) continue;    // usage in import statement
-      PsiMember memberContainer = (PsiMember)container;
+      if (!(container instanceof PsiMember memberContainer)) continue;    // usage in import statement
       Set<PsiMember> inaccessibleReferenced = result.get(memberContainer);
       if (inaccessibleReferenced == null) {
         inaccessibleReferenced = new HashSet<>();
@@ -843,8 +842,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           assert parent != null : methodCall;
           parent = parent.getContext();
         }
-        if (parent instanceof PsiClass) {
-          PsiClass parentClass = (PsiClass)parent;
+        if (parent instanceof PsiClass parentClass) {
           final PsiClass containingClass = myMethod.getContainingClass();
           if (containingClass != null && parentClass.isInheritor(containingClass, true)) {
             String name = parentClass.getName();

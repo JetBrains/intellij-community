@@ -54,6 +54,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Edit = load("actions/edit.svg", -1253654087, 2);
     /** 16x16 */ public static final @NotNull Icon EditScheme = load("actions/editScheme.svg", 356615607, 2);
     /** 16x16 */ public static final @NotNull Icon EditSource = load("actions/editSource.svg", -1793495184, 2);
+    /** 16x16 */ public static final @NotNull Icon EnableNewUi = load("actions/enableNewUi.svg", -1797379377, 0);
     /** 16x16 */ public static final @NotNull Icon Execute = load("actions/execute.svg", -1785415525, 10);
     /** 16x16 */ public static final @NotNull Icon Exit = load("actions/exit.svg", -837971561, 2);
     /** 16x16 */ public static final @NotNull Icon Expandall = load("actions/expandall.svg", 1240410990, 2);
@@ -1004,18 +1005,19 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", 552489855, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", 1983262627, 0);
     /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", -985103458, 0);
-    /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", -2068077317, 0);
+    /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", 1252118086, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -220152162, 2);
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("providers/clickHouse.svg", -1011635017, 0);
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", -2109681782, 0);
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", -1641446753, 0);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", -1522128644, 2);
+    /** 16x16 */ public static final @NotNull Icon DocumentDB = load("providers/documentDB.svg", 2069124131, 2);
     /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", -378866188, 2);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", 145415953, 2);
     /** 16x16 */ public static final @NotNull Icon Elasticsearch = load("providers/elasticsearch.svg", 1746884495, 0);
     /** 16x16 */ public static final @NotNull Icon Exasol = load("providers/exasol.svg", 1901972329, 2);
     /** 16x16 */ public static final @NotNull Icon Firebird = load("providers/firebird.svg", 1292541438, 0);
-    /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", 1406199553, 0);
+    /** 16x16 */ public static final @NotNull Icon GoogleCloudSpanner = load("providers/googleCloudSpanner.svg", 931701135, 0);
     /** 16x16 */ public static final @NotNull Icon Greenplum = load("providers/greenplum.svg", 818698362, 0);
     /** 16x16 */ public static final @NotNull Icon H2 = load("providers/h2.svg", 771390903, 2);
     /** 16x16 */ public static final @NotNull Icon HANA = load("providers/HANA.svg", -797032814, 0);
@@ -1147,6 +1149,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon Documentation = load("toolwindows/documentation.svg", -109460896, 2);
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", -1325472331, 2);
     /** 13x13 */ public static final @NotNull Icon InfoEvents = load("toolwindows/infoEvents.svg", -1959104863, 2);
+    /** 13x13 */ public static final @NotNull Icon MeetNewUi = load("toolwindows/meetNewUi.svg", -807549423, 0);
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", -54977595, 2);
     /** 13x13 */ public static final @NotNull Icon Notifications = load("toolwindows/notifications.svg", -1680199155, 2);
     /** 13x13 */ public static final @NotNull Icon NotificationsNew = load("toolwindows/notificationsNew.svg", 919374629, 2);
@@ -1283,9 +1286,10 @@ public class AllIcons {
       /** 16x16 */ public static final @NotNull Icon Safari = load("xml/browsers/safari.svg", -1768440962, 0);
       /** 16x16 */ public static final @NotNull Icon Yandex = load("xml/browsers/yandex.svg", -1968862051, 0);
 
-      /** @deprecated use {@link #Chrome} */
+      /** @deprecated to be removed (use {@link #Chrome}) */
       @SuppressWarnings("unused")
       @Deprecated
+      @ScheduledForRemoval
       public static final @NotNull Icon Chrome16 = Chrome;
     }
 

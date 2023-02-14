@@ -8,8 +8,8 @@ public class Test {
   static void test() {
       for (int n = 1; n < 100; n++) {
           if (n > 20) {
-              Integer integer = n;
-              for (PrimitiveIterator.OfDouble it = new Random(integer).doubles(integer).iterator(); it.hasNext(); ) {
+              Integer i = n;
+              for (PrimitiveIterator.OfDouble it = new Random(i).doubles(i).iterator(); it.hasNext(); ) {
                   double v = it.next();
                   if (v < 0.01) {
                       System.out.println(v);

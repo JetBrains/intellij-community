@@ -163,16 +163,7 @@ public class ReflectionAccessMethodBuilder {
     return StreamEx.of(exceptions).map(x -> "catch(" + x + " e) { throw new java.lang.RuntimeException(e); }").joining("\n");
   }
 
-  private static class ParameterInfo {
-    public final String accessibleType;
-    public final String name;
-    public final String jvmTypeName;
-
-    ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull String jvmTypeName) {
-      this.accessibleType = accessibleType;
-      this.name = name;
-      this.jvmTypeName = jvmTypeName;
-    }
+  private record ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull String jvmTypeName) {
   }
 
   private interface MyMemberAccessor {

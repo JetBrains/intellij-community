@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
@@ -84,8 +84,7 @@ final class ParamsValue implements Value {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ParamsValue)) return false;
-    ParamsValue that = (ParamsValue)o;
+    if (!(o instanceof ParamsValue that)) return false;
     return (this.size == that.size && Arrays.equals(this.params, that.params));
   }
 
@@ -114,8 +113,7 @@ final class IParamsValue implements Value {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof IParamsValue)) return false;
-    IParamsValue that = (IParamsValue)o;
+    if (!(o instanceof IParamsValue that)) return false;
     return (this.size == that.size && this.params == that.params);
   }
 

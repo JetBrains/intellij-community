@@ -1,4 +1,4 @@
-// "Convert to atomic" "true"
+// "Convert to atomic" "true-preview"
 import java.lang.annotation.*;
 
 @Target(value = ElementType.TYPE_USE)

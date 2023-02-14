@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.ide.JavaUiBundle;
@@ -133,7 +133,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
 
     var disposable = RemoteRepositoriesConfiguration.getInstance(project);
-    LibrarySynchronizationQueue synchronizationQueue = new LibrarySynchronizationQueue(project);
+    LibrarySynchronizationQueue synchronizationQueue = project.getService(LibrarySynchronizationQueue.class);
     ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
     GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
     for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {
@@ -141,7 +141,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
     globalLibSynchronizer.installOnExistingLibraries();
     project.getMessageBus().connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer);
-    synchronizationQueue.synchronizeAllLibraries();
+    synchronizationQueue.requestAllLibrariesSynchronization();
   }
 
   public static void syncLibraries(@NotNull Project project) {
@@ -157,13 +157,9 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
 
   @NotNull
   public static Set<Library> collectLibrariesToSync(@NotNull Project project) {
-    return collectLibraries(project, library -> {
-      if (library instanceof LibraryEx) {
-        final LibraryEx libraryEx = (LibraryEx)library;
-        return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-               isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-      }
-      return false;
-    });
+    return collectLibraries(
+      project,
+      library -> library instanceof LibraryEx libraryEx && libraryEx.getProperties() instanceof RepositoryLibraryProperties properties &&
+                 isLibraryNeedToBeReloaded(libraryEx, properties));
   }
 }

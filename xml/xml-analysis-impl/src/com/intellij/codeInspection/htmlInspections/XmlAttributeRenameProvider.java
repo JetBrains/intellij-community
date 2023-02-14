@@ -15,5 +15,5 @@ import java.util.Collection;
 public interface XmlAttributeRenameProvider {
   ExtensionPointName<XmlAttributeRenameProvider> EP_NAME = ExtensionPointName.create("com.intellij.xml.xmlAttributeRenameProvider");
 
-  @NotNull Collection<LocalQuickFix> getAttributeFixes(@NotNull XmlTag tag, @NotNull String name);
+  @NotNull Collection<@NotNull LocalQuickFix> getAttributeFixes(@NotNull XmlTag tag, @NotNull String name);
 }

@@ -341,8 +341,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText();
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 
@@ -538,8 +537,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return result;
     }
 
-    LOG.error(this);
-    return JavaResolveResult.EMPTY_ARRAY;
+    throw new IllegalArgumentException("Unexpected kind: " + kind);
   }
 
   @Override
@@ -603,8 +601,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 
@@ -720,8 +717,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return true;
 
       default:
-        LOG.error(kind);
-        return true;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
 
     ASTNode qualifier = findChildByRole(ChildRole.QUALIFIER);
@@ -801,8 +797,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return false;
       default:
-        LOG.error(kind);
-        return true;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
 
     ASTNode referenceNameElement = getReferenceNameNode();
@@ -1028,8 +1023,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText(); // there cannot be any <...>
 
       default:
-        LOG.error(kind);
-        return null;
+        throw new IllegalArgumentException("Unexpected kind: " + kind);
     }
   }
 

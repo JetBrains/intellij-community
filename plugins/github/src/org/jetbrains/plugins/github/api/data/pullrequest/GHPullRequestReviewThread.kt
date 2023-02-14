@@ -13,8 +13,11 @@ class GHPullRequestReviewThread(id: String,
                                 val isOutdated: Boolean,
                                 val path: String,
                                 @JsonProperty("diffSide") val side: Side,
-                                val line: Int,
+                                val line: Int?,
+                                val originalLine: Int?,
+                                @JsonProperty("startDiffSide") val startSide: Side?,
                                 val startLine: Int?,
+                                val originalStartLine: Int?,
                                 @JsonProperty("comments") comments: GraphQLNodesDTO<GHPullRequestReviewComment>)
   : GHNode(id) {
   val comments = comments.nodes

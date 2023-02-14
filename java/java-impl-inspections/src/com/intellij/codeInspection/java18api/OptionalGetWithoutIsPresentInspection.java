@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -20,7 +20,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
@@ -47,7 +46,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         if (isOptionalProblem(qualifier, anchor) && !isPresentCallWithSameQualifierExists(qualifier)) {
           holder.registerProblem(nameElement,
                                  JavaBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),
-                                 tryCreateFix(call));
+                                 LocalQuickFix.notNullElements(tryCreateFix(call)));
         }
       }
 
@@ -74,8 +73,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
           PsiElement context = PsiTreeUtil.getParentOfType(qualifier, PsiMember.class, PsiLambdaExpression.class);
           if (context != null) {
             return !PsiTreeUtil.processElements(context, e -> {
-              if (e == qualifier || !(e instanceof PsiMethodCallExpression)) return true;
-              PsiMethodCallExpression call = (PsiMethodCallExpression)e;
+              if (e == qualifier || !(e instanceof PsiMethodCallExpression call)) return true;
               String name = call.getMethodExpression().getReferenceName();
               if ((!"isPresent".equals(name) && !"isEmpty".equals(name)) || !call.getArgumentList().isEmpty()) return true;
               PsiExpression isPresentQualifier = call.getMethodExpression().getQualifierExpression();

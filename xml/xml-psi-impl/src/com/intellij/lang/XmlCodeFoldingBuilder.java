@@ -40,8 +40,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
                                        boolean quick) {
     XmlDocument xmlDocument;
 
-    if (psiElement instanceof XmlFile) {
-      XmlFile file = (XmlFile)psiElement;
+    if (psiElement instanceof XmlFile file) {
       xmlDocument = file.getDocument();
     }
     else if (psiElement instanceof XmlDocument) {
@@ -139,8 +138,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
 
       return new UnfairTextRange(nameEnd, end);
     }
-    if (element instanceof XmlComment) {
-      final XmlComment xmlComment = (XmlComment)element;
+    if (element instanceof XmlComment xmlComment) {
       final TextRange textRange = element.getTextRange();
       int commentStartOffset = getCommentStartOffset(xmlComment);
       int commentEndOffset = getCommentStartEnd(xmlComment);
@@ -150,8 +148,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       }
       return null;
     }
-    if (element instanceof XmlConditionalSection) {
-      final XmlConditionalSection conditionalSection = (XmlConditionalSection)element;
+    if (element instanceof XmlConditionalSection conditionalSection) {
       final TextRange textRange = element.getTextRange();
       final PsiElement bodyStart = conditionalSection.getBodyStart();
       int startOffset = bodyStart != null ? bodyStart.getStartOffsetInParent() : MIN_TEXT_RANGE_LENGTH;

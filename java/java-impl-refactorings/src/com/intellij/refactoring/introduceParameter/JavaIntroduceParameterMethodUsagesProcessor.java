@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -197,8 +197,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
 
   @Override
   public boolean processChangeMethodSignature(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof PsiMethod) || !isJavaUsage(usage)) return true;
-    PsiMethod method = (PsiMethod)usage.getElement();
+    if (!(usage.getElement() instanceof PsiMethod method) || !isJavaUsage(usage)) return true;
 
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(data.getParameterName(), method.getBody());
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
@@ -259,8 +258,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
 
   @Override
   public boolean processAddDefaultConstructor(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) {
-    if (!(usage.getElement() instanceof PsiClass) || !isJavaUsage(usage)) return true;
-    PsiClass aClass = (PsiClass)usage.getElement();
+    if (!(usage.getElement() instanceof PsiClass aClass) || !isJavaUsage(usage)) return true;
     if (!(aClass instanceof PsiAnonymousClass)) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(data.getProject());
       PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "(){}", aClass);
@@ -277,9 +275,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
 
   @Override
   public boolean processAddSuperCall(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException {
-    if (!(usage.getElement() instanceof PsiMethod) || !isJavaUsage(usage)) return true;
-    PsiMethod constructor = (PsiMethod)usage.getElement();
-
+    if (!(usage.getElement() instanceof PsiMethod constructor) || !isJavaUsage(usage)) return true;
     if (!constructor.isConstructor()) return true;
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(data.getProject());

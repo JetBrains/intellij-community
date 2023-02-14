@@ -137,12 +137,10 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         @Nullable
         @Override
         protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
-            if (usage instanceof UsageInfo2UsageAdapter) {
-                final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
-                final UsageInfo usageInfo = u.getUsageInfo();
-                if (usageInfo instanceof MoveRenameUsageInfo) {
-                    final MoveRenameUsageInfo info = (MoveRenameUsageInfo)usageInfo;
-                    return buildGroup(info.getReferencedElement(), usageInfo, true);
+            if (usage instanceof UsageInfo2UsageAdapter u) {
+              final UsageInfo usageInfo = u.getUsageInfo();
+                if (usageInfo instanceof MoveRenameUsageInfo info) {
+                  return buildGroup(info.getReferencedElement(), usageInfo, true);
                 } else {
                     for (UsageTarget target : targets) {
                         UsageGroup group = target instanceof PsiElementUsageTarget ?
@@ -157,9 +155,8 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
         @Nullable
         private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
-            if (referencedElement instanceof XsltParameter) {
-                final XsltParameter parameter = (XsltParameter)referencedElement;
-                final PsiElement element = u.getElement();
+            if (referencedElement instanceof XsltParameter parameter) {
+              final PsiElement element = u.getElement();
                 if (element == null) return null;
                 final XsltTemplate template = XsltCodeInsightUtil.getTemplate(element, false);
                 if (template == null) return null;

@@ -29,7 +29,7 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
     projectDependencyArtifacts =
       dependency.getProjectDependencyArtifacts() == null
       ? new ArrayList<File>(0)
-      : new ArrayList<File>(dependency.getProjectDependencyArtifacts());
+      : new ArrayList<>(dependency.getProjectDependencyArtifacts());
   }
 
   @Override

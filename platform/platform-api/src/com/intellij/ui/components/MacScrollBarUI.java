@@ -120,8 +120,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
      */
     private static void pauseThumbAnimation(JScrollBar bar) {
       Object object = bar == null ? null : bar.getUI();
-      if (object instanceof MacScrollBarUI) {
-        MacScrollBarUI ui = (MacScrollBarUI)object;
+      if (object instanceof MacScrollBarUI ui) {
         if (0 < ui.myAnimationBehavior.getThumbFrame()) ui.myAnimationBehavior.onThumbMove();
       }
     }

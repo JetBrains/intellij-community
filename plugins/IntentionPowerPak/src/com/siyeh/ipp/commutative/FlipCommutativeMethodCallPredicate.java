@@ -26,13 +26,12 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) {
+    if (!(element instanceof PsiMethodCallExpression expression)) {
       return false;
     }
     if (ErrorUtil.containsError(element)) {
       return false;
     }
-    final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     // do it only when there is just one argument.
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     if (arguments.length != 1) {

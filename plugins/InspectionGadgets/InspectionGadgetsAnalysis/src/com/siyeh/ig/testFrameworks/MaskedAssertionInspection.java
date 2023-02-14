@@ -42,9 +42,8 @@ public class MaskedAssertionInspection extends BaseInspection {
       }
       else if (lastPsiElement instanceof PsiExpressionStatement) {
         PsiExpression psiExpr = ((PsiExpressionStatement)lastPsiElement).getExpression();
-        if (!(psiExpr instanceof PsiMethodCallExpression)) return;
+        if (!(psiExpr instanceof PsiMethodCallExpression psiMethodCallExpr)) return;
 
-        PsiMethodCallExpression psiMethodCallExpr = (PsiMethodCallExpression)psiExpr;
         while (true) {
           PsiMethodCallExpression currQualifierCall = MethodCallUtils.getQualifierMethodCall(psiMethodCallExpr);
           if (currQualifierCall == null) break;

@@ -4,9 +4,10 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.diagnostic.ThreadDumpService;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.openapi.Disposable;
+import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -68,6 +69,7 @@ final class ActionUpdater {
   private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
 
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
+  private static final List<CancellablePromise<?>> ourToolbarPromises = new CopyOnWriteArrayList<>();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
   private static boolean ourNoRulesInEDTSection;
 
@@ -91,6 +93,7 @@ final class ActionUpdater {
   private final Consumer<? super Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
 
+  private final ThreadDumpService myThreadDumpService = ThreadDumpService.getInstance();
   private int myEDTCallsCount;
   private long myEDTWaitNanos;
   private volatile long myCurEDTWaitMillis;
@@ -210,38 +213,35 @@ final class ActionUpdater {
                              boolean noRulesInEDT) {
     myCurEDTWaitMillis = myCurEDTPerformMillis = 0L;
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
-    AtomicReference<FList<Throwable>> edtTracesRef = new AtomicReference<>();
+    AtomicReference<List<Throwable>> edtTracesRef = new AtomicReference<>();
     long start0 = System.nanoTime();
     Supplier<? extends T> supplier = () -> {
-      {
-        long curNanos = System.nanoTime();
-        myEDTCallsCount++;
-        myEDTWaitNanos += curNanos - start0;
-        myCurEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(curNanos - start0);
-      }
       long start = System.nanoTime();
-      FList<String> prevStack = ourInEDTActionOperationStack;
-      ourInEDTActionOperationStack = prevStack.prepend(operationName);
+      myEDTCallsCount++;
+      myEDTWaitNanos += start - start0;
+      myCurEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0);
       return computeWithSpan(Utils.getTracer(true), "edt-op", span -> {
         span.setAttribute(Utils.OT_OP_KEY, operationName);
-
-        try {
-          return ProgressManager.getInstance().runProcess(() -> {
-            boolean prevNoRules = ourNoRulesInEDTSection;
-            try (AccessToken ignored = ProhibitAWTEvents.start(operationName)) {
-              ourNoRulesInEDTSection = noRulesInEDT;
-              return call.get();
+        return ProgressManager.getInstance().runProcess(() -> {
+          FList<String> prevStack = ourInEDTActionOperationStack;
+          boolean prevNoRules = ourNoRulesInEDTSection;
+          ThreadDumpService.Cookie traceCookie = null;
+          try (AccessToken ignored = ProhibitAWTEvents.start(operationName);
+               ThreadDumpService.Cookie cookie = myThreadDumpService.start(100, 50, 5, Thread.currentThread())) {
+            traceCookie = cookie;
+            ourInEDTActionOperationStack = prevStack.prepend(operationName);
+            ourNoRulesInEDTSection = noRulesInEDT;
+            return call.get();
+          }
+          finally {
+            ourNoRulesInEDTSection = prevNoRules;
+            ourInEDTActionOperationStack = prevStack;
+            if (traceCookie != null) {
+              myCurEDTPerformMillis = TimeoutUtil.getDurationMillis(traceCookie.getStartNanos());
+              edtTracesRef.set(traceCookie.getTraces());
             }
-            finally {
-              ourNoRulesInEDTSection = prevNoRules;
-            }
-          }, ProgressWrapper.wrap(progress));
-        }
-        finally {
-          ourInEDTActionOperationStack = prevStack;
-          myCurEDTPerformMillis = TimeoutUtil.getDurationMillis(start);
-          edtTracesRef.set(ActionUpdateEdtExecutor.ourEDTExecTraces.get());
-        }
+          }
+        }, ProgressWrapper.wrap(progress));
       });
     };
     try {
@@ -254,7 +254,7 @@ final class ActionUpdater {
       if (myCurEDTPerformMillis > 300) {
         Throwable throwable = PluginException.createByClass(
           elapsedReport(myCurEDTPerformMillis, true, operationName) + OLD_EDT_MSG_SUFFIX, null, action.getClass());
-        FList<Throwable> edtTraces = edtTracesRef.get();
+        List<Throwable> edtTraces = edtTracesRef.get();
         // do not report pauses without EDT traces (e.g. due to debugging)
         if (edtTraces != null && edtTraces.size() > 0 && edtTraces.get(0).getStackTrace().length > 0) {
           for (Throwable trace : edtTraces) {
@@ -262,7 +262,7 @@ final class ActionUpdater {
           }
           LOG.error(throwable);
         }
-        else {
+        else if (!DebugAttachDetector.isDebugEnabled()) {
           LOG.warn(throwable);
         }
       }
@@ -366,11 +366,6 @@ final class ActionUpdater {
                  Utils.operationName(group, null, myPlace) + ". Use `ActionUpdateThread.BGT`.");
       }
     });
-
-    if (myToolbarAction) {
-      cancelOnUserActivity(promise, disposableParent);
-    }
-
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
       if (myTestDelayMillis > 0) waitTheTestDelay();
@@ -386,7 +381,8 @@ final class ActionUpdater {
         return null;
       };
     };
-    ourPromises.add(promise);
+    List<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
+    targetPromises.add(promise);
     boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
     executor.execute(Context.current().wrap(() -> {
@@ -408,7 +404,7 @@ final class ActionUpdater {
         }
       }
       finally {
-        ourPromises.remove(promise);
+        targetPromises.remove(promise);
         if (!promise.isDone()) {
           cancelPromise(promise, "unknown reason");
           LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + !applyRunnableRef.isNull() + ")"));
@@ -429,11 +425,17 @@ final class ActionUpdater {
   }
 
   static void cancelAllUpdates(@NotNull String reason) {
-    if (ourPromises.isEmpty()) return;
-    CancellablePromise<?>[] copy = ourPromises.toArray(new CancellablePromise[0]);
-    ourPromises.clear();
+    String adjusted = reason + " (cancelling all updates)";
+    cancelPromises(ourToolbarPromises, adjusted);
+    cancelPromises(ourPromises, adjusted);
+  }
+
+  private static void cancelPromises(@NotNull List<CancellablePromise<?>> promises, @NotNull Object reason) {
+    if (promises.isEmpty()) return;
+    CancellablePromise<?>[] copy = promises.toArray(new CancellablePromise[0]);
+    promises.clear();
     for (CancellablePromise<?> promise : copy) {
-      cancelPromise(promise, reason + " (cancelling all updates)");
+      cancelPromise(promise, reason);
     }
   }
 
@@ -491,18 +493,14 @@ final class ActionUpdater {
     }
   }
 
-  private static void cancelOnUserActivity(@NotNull CancellablePromise<?> promise,
-                                           @NotNull Disposable disposableParent) {
-    Disposable disposable = Disposer.newDisposable("Action Update");
-    Disposer.register(disposableParent, disposable);
+  static {
     IdeEventQueue.getInstance().addPreprocessor(event -> {
       if (event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() != 0 ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
-        cancelPromise(promise, event);
+        cancelPromises(ourToolbarPromises, event);
       }
       return false;
-    }, disposable);
-    promise.onProcessed(__ -> Disposer.dispose(disposable));
+    }, ApplicationManager.getApplication());
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
@@ -664,9 +662,8 @@ final class ActionUpdater {
     return JBTreeTraverser.<AnAction>from(o -> {
       if (o == group) return null;
       if (isDumb && !o.isDumbAware()) return null;
-      if (!(o instanceof ActionGroup)) return null;
-      ActionGroup oo = (ActionGroup)o;
-      Presentation presentation = update(oo, strategy);
+      if (!(o instanceof ActionGroup oo)) return null;
+        Presentation presentation = update(oo, strategy);
       if (presentation == null || !presentation.isVisible()) {
         return null;
       }

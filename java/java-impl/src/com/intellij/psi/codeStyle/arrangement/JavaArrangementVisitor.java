@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -584,9 +584,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
         return;
       }
       PsiElement e = reference.resolve();
-      if (e instanceof PsiMethod) {
+      if (e instanceof PsiMethod m) {
         assert myBaseMethod != null;
-        PsiMethod m = (PsiMethod)e;
         if (m.getContainingClass() == myBaseMethod.getContainingClass()) {
           myInfo.registerMethodCallDependency(myBaseMethod, m);
         }

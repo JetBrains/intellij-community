@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
-import com.intellij.idea.SplashManager;
 import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,6 +69,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
+import static com.intellij.idea.SplashManagerKt.hideSplash;
 import static com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario.*;
 
 @ApiStatus.Internal
@@ -359,7 +359,7 @@ public final class ConfigImportHelper {
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
 
-    SplashManager.hide();
+    hideSplash();
     dialog.setVisible(true);
     var result = dialog.getSelectedFile();
     dialog.dispose();
@@ -977,7 +977,7 @@ public final class ConfigImportHelper {
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
       AppUIUtil.updateWindowIcon(dialog);
-      SplashManager.hide();
+      hideSplash();
       PluginDownloader.runSynchronouslyInBackground(() -> {
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
         SwingUtilities.invokeLater(() -> dialog.setVisible(false));

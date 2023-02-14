@@ -1,5 +1,6 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
@@ -11,6 +12,7 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     CompletionInvocationsCount(),
     MovesCountNormalised(),
     PerfectLine(),
+    Precision(),
     RecallAt(1),
     RecallAt(5)
   )
@@ -59,8 +61,9 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
-
+    sessions.sumOf { it.expectedLength() +
+                     it.lookups.count { it.selectedPosition >= 0 } -
+                     it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 } }
   companion object {
     const val NAME = "Typings"
   }
@@ -111,7 +114,7 @@ internal class MovesCountNormalised : Metric {
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
     val minPossibleMoves = sessions.count() * 2
-    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2 - sessions.sumOf { it.totalSkippableChars() }
+    val maxPossibleMoves = sessions.sumOf { it.expectedLength() + it.completableLength }
     movesCountTotal += movesCount
     minPossibleMovesTotal += minPossibleMoves
     maxPossibleMovesTotal += maxPossibleMoves
@@ -121,6 +124,9 @@ internal class MovesCountNormalised : Metric {
     // To reach 0%, you also need to subtract the minimum number of lookups (eq. number of sessions plus minimum amount of completion calls)
     // 0% - best scenario, every line was completed from start to end with first suggestion in list
     // >100% is possible, when navigation in completion takes too many moves
+    if (maxPossibleMoves == minPossibleMoves) {
+      return 0.0
+    }
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
 
@@ -141,6 +147,31 @@ internal class PerfectLine : CompletionGolfMetric<Int>() {
 
   companion object {
     const val NAME = "Perfect Line"
+  }
+}
+
+internal class Precision : Metric {
+  private val sample = Sample()
+  override val name = "Precision"
+  override val valueType = MetricValueType.DOUBLE
+  override val value: Double
+    get() = sample.mean()
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+
+    for (lookup in sessions.flatMap { it.lookups }) {
+      for (i in lookup.suggestions.indices) {
+        if (i == lookup.selectedPosition) {
+          fileSample.add(1.0)
+          sample.add(1.0)
+        } else {
+          fileSample.add(0.0)
+          sample.add(0.0)
+        }
+      }
+    }
+    return fileSample.mean()
   }
 }
 
@@ -172,9 +203,4 @@ internal class RecallAt(private val n: Int) : Metric {
   }
 }
 
-private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
-
-private fun Session.completedSkippableChars() = lookups.sumOf {
-  if (it.selectedPosition < 0) 0
-  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
-}
+private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)

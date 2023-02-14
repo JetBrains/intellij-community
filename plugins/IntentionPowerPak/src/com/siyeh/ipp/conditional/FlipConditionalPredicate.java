@@ -26,10 +26,9 @@ class FlipConditionalPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiConditionalExpression)) {
+    if (!(element instanceof PsiConditionalExpression conditionalExpression)) {
       return false;
     }
-    final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     final PsiExpression condition = conditionalExpression.getCondition();
     return !(PsiTreeUtil.getDeepestLast(condition) instanceof PsiErrorElement) &&
            !(PsiTreeUtil.getDeepestLast(element) instanceof PsiErrorElement) &&

@@ -24,21 +24,6 @@ public interface ConsoleHistoryModel extends ConsoleHistoryBaseModel {
     return false;
   }
 
-  final class Entry {
-    private final CharSequence text;
-    private final int offset;
-
-    public Entry(CharSequence text, int offset) {
-      this.text = text;
-      this.offset = offset;
-    }
-
-    public CharSequence getText() {
-      return text;
-    }
-
-    public int getOffset() {
-      return offset;
-    }
+  record Entry(CharSequence text, int offset) {
   }
 }

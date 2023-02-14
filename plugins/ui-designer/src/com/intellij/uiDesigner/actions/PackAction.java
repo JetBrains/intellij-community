@@ -27,11 +27,10 @@ public class PackAction extends AbstractGuiEditorAction {
   }
 
   private static RadContainer getContainerToPack(final List<? extends RadComponent> selection) {
-    if (selection.size() != 1 || !(selection.get(0) instanceof RadContainer)) {
+    if (selection.size() != 1 || !(selection.get(0) instanceof RadContainer container)) {
       return null;
     }
 
-    RadContainer container = (RadContainer)selection.get(0);
     if (!container.getParent().isXY()) {
       return null;
     }

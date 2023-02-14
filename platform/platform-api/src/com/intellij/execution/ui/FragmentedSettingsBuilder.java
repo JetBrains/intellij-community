@@ -316,7 +316,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     ArrayList<SettingsEditorFragment<Settings, ?>> result = new ArrayList<>();
     for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
       String group = fragment.getGroup();
-      int last = ContainerUtil.lastIndexOf(result, f -> f.getGroup() == group);
+      int last = ContainerUtil.lastIndexOf(result, f -> Objects.equals(f.getGroup(), group));
       result.add(last >= 0 ? last + 1 : result.size(), fragment);
     }
     return result;

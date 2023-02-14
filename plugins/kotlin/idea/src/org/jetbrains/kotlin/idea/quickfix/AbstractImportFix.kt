@@ -87,7 +87,7 @@ import java.util.*
  */
 internal abstract class ImportFixBase<T : KtExpression> protected constructor(
     expression: T,
-    val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
+    private val expressionToAnalyzePointer: SmartPsiElementPointer<KtExpression>?,
     factory: Factory
 ) : KotlinQuickFixAction<T>(expression), HintAction, HighPriorityAction {
 

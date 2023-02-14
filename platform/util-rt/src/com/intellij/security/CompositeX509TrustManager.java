@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CompositeX509TrustManager implements X509TrustManager {
-  private final List<X509TrustManager> myManagers = new ArrayList<X509TrustManager>();
+  private final List<X509TrustManager> myManagers = new ArrayList<>();
 
   public CompositeX509TrustManager(@NotNull TrustManager[]... managerSets) {
     for (TrustManager[] set : managerSets) {

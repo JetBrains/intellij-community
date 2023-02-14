@@ -53,6 +53,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -93,7 +94,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private DaemonCodeAnalyzerSettings myLastSettings;
 
   private volatile boolean myDisposed;     // the only possible transition: false -> true
-  private volatile boolean myInitialized;  // the only possible transition: false -> true
 
   private static final @NonNls String DISABLE_HINTS_TAG = "disable_hints";
   private static final @NonNls String FILE_TAG = "file";
@@ -108,7 +108,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final DaemonListener myDaemonListenerPublisher;
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project) {
-    // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
+    // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
     DependencyValidationManager.getInstance(project);
 
     myProject = project;
@@ -123,15 +123,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     //noinspection TestOnlyProblems
     DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
 
-    assert !myInitialized : "Double Initializing";
     Disposer.register(this, new StatusBarUpdater(project));
 
-    myInitialized = true;
     myDisposed = false;
     myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init");
     myUpdateRunnable = new UpdateRunnable(project);
     Disposer.register(this, () -> {
-      assert myInitialized : "Disposing not initialized component";
       assert !myDisposed : "Double dispose";
       myUpdateRunnable.clearFieldsOnDispose();
 
@@ -343,7 +340,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                         boolean canChangeDocument,
                         @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    assert myInitialized;
     assert !myDisposed;
     assertMyFile(file.getProject(), file);
     assert textEditor.getEditor().getDocument() == document : "Expected document "+document+" but one of the passed TextEditors points to a different document: "+textEditor.getEditor().getDocument();
@@ -687,20 +683,21 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // return true if the progress really was canceled
   synchronized void stopProcess(boolean toRestartAlarm, @NotNull @NonNls String reason) {
     cancelAllUpdateProgresses(toRestartAlarm, reason);
-    boolean restart = toRestartAlarm && !myDisposed && myInitialized;
+    boolean restart = toRestartAlarm && !myDisposed;
 
     // reset myScheduledUpdateStart always, but re-schedule myUpdateRunnable only rarely because of thread scheduling overhead
+    long autoReparseDelayNanos = TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
     if (restart) {
-      myScheduledUpdateTimestamp = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay());
+      myScheduledUpdateTimestamp = System.nanoTime() + autoReparseDelayNanos;
     }
     // optimisation: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
     if (restart && isDone) {
-      scheduleUpdateRunnable(TimeUnit.MILLISECONDS.toNanos(mySettings.getAutoReparseDelay()));
+      scheduleUpdateRunnable(autoReparseDelayNanos);
     }
   }
 
-  private void scheduleUpdateRunnable(long delayNanos) {
+  private synchronized void scheduleUpdateRunnable(long delayNanos) {
     Future<?> oldFuture = myUpdateRunnableFuture;
     if (oldFuture.isDone()) {
       ConcurrencyUtil.manifestExceptionsIn(oldFuture);
@@ -775,32 +772,32 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    assert editor.getProject() == null || editor.getProject() == file.getProject();
-    CaretModel caretModel = editor.getCaretModel();
-    int offset = caretModel.getOffset();
-    Project project = file.getProject();
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
     List<HighlightInfo> relevantInfos = new ArrayList<>();
-    Document document = editor.getDocument();
-    int logicalLine = caretModel.getLogicalPosition().line;
-    processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-      if (info.containsOffset(offset, true)) {
-        relevantInfos.add(info);
+    Project project = file.getProject();
+    ReadAction.run(() -> {
+      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
+      CaretModel caretModel = editor.getCaretModel();
+      int offset = caretModel.getOffset();
+      Document document = editor.getDocument();
+      int logicalLine = caretModel.getLogicalPosition().line;
+      processHighlights(document, project, null, 0, document.getTextLength(), info -> {
+        if (info.containsOffset(offset, true) && info.isUnresolvedReference()) {
+          relevantInfos.add(info);
+          return true;
+        }
+        // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
+        boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
+        if (atTheSameLine && info.isUnresolvedReference()) {
+          relevantInfos.add(info);
+        }
         return true;
-      }
-      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
-      boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
-      if (atTheSameLine) {
-        relevantInfos.add(info);
-      }
-      return true;
+      });
     });
-    for (HighlightInfo info : relevantInfos) {
-      if (info.isUnresolvedReference()) {
-        UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, file, editor);
-      }
-    }
+    UnresolvedReferenceQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(file, editor, relevantInfos);
   }
 
   static class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
@@ -1056,6 +1053,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     if (progress.isCanceled()) {
       stopProcess(true, "canceled in queuePassesCreation: "+progress.getCancellationTrace());
+      return;
+    }
+    if (myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
+      stopProcess(true, "more documents to commit: " + ReadAction.compute(() -> Arrays.toString(myPsiDocumentManager.getUncommittedDocuments())));
       return;
     }
     try {

@@ -61,10 +61,9 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiTypeCastExpression)) {
+      if (!(parent instanceof PsiTypeCastExpression typeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       if (!isUnnecessaryPrimitiveNumericCast(typeCastExpression)) {
         return;
       }
@@ -121,9 +120,8 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
-    if (parent instanceof PsiPrefixExpression) {
+    if (parent instanceof PsiPrefixExpression prefixExpression) {
       // JLS 5.6 Numeric Contexts
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType || JavaTokenType.TILDE == tokenType) {
         if (TypeUtils.isNarrowingConversion(operandType, castType)) {
@@ -139,8 +137,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
       // cast to the same type is caught by "Redundant type cast" inspection
       return false;
     }
-    if (parent instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    if (parent instanceof PsiPolyadicExpression polyadicExpression) {
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (binaryPromotionOperators.contains(tokenType)) {
         if (TypeUtils.isNarrowingConversion(operandType, castType)) {
@@ -185,13 +182,11 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
       }
       return false;
     }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       final PsiType lhsType = assignmentExpression.getType();
       if (castType.equals(lhsType) && (isLegalAssignmentConversion(operand, lhsType) || isLegalWideningConversion(operand, lhsType))) return true;
     }
-    else if (parent instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)parent;
+    else if (parent instanceof PsiVariable variable) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement == null || typeElement.isInferredType()) {
         return false;

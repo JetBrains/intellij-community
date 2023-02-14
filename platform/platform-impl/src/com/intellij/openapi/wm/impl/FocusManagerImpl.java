@@ -58,8 +58,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
     StartupUiUtil.addAwtListener(e -> {
-      if (e instanceof FocusEvent) {
-        final FocusEvent fe = (FocusEvent)e;
+      if (e instanceof FocusEvent fe) {
         final Component c = fe.getComponent();
         if (c instanceof Window || c == null) return;
 

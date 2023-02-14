@@ -93,8 +93,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   private void removeSelectedItems() {
-    if (myChooserComponent instanceof JList) {
-      JList list = (JList)myChooserComponent;
+    if (myChooserComponent instanceof JList list) {
       ListModel listModel = list.getModel();
 
       int index = list.getSelectedIndex();

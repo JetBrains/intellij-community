@@ -25,7 +25,7 @@ class RollbackFilesAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
 
-    if (!isPreferCheckboxesOverSelection()) return
+    if (!Manager.isPreferCheckboxesOverSelection()) return
     val project = e.project ?: return
     if (e.getProjectCommitMode() !is CommitMode.NonModalCommitMode) return
     if (e.getData(ChangesListView.DATA_KEY) == null) return
@@ -39,7 +39,7 @@ class RollbackFilesAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (!checkClmActive(e)) return
+    if (!Manager.checkClmActive(e)) return
 
     val project = e.project!!
     val changes = e.getRequiredData(VcsDataKeys.CHANGES).asList()
@@ -48,7 +48,7 @@ class RollbackFilesAction : DumbAwareAction() {
     RollbackChangesDialog.rollbackChanges(project, changes)
   }
 
-  companion object {
+  object Manager {
     @JvmStatic
     fun checkClmActive(e: AnActionEvent): Boolean {
       val project = e.project ?: return false

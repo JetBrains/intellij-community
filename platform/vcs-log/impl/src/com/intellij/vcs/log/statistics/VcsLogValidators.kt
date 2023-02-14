@@ -4,7 +4,9 @@ package com.intellij.vcs.log.statistics
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use com.intellij.internal.statistic.eventLog.events.EventFields.String instead")
 open class CustomStringsValidationRule(private val id: String, private val values: Collection<String>) : CustomValidationRule() {
 

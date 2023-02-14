@@ -76,10 +76,9 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
 
   private static boolean isAcceptable(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiTryStatement)) {
+    if (!(parent instanceof PsiTryStatement tryStatement)) {
       return false;
     }
-    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList == null) {
       return false;

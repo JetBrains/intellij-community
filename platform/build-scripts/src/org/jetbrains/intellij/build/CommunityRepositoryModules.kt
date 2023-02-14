@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -212,7 +214,8 @@ object CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") { spec ->
-      spec.withResource("resources/.zshenv", "")
+      spec.withResource("resources/zsh/.zshenv", "")
+      spec.withResource("resources/zsh/hooks.zsh", "")
       spec.withResource("resources/jediterm-bash.in", "")
       spec.withResource("resources/fish/init.fish", "fish")
     },
@@ -271,6 +274,7 @@ object CommunityRepositoryModules {
       "intellij.searchEverywhereMl.yaml",
       "intellij.searchEverywhereMl.vcs",
       "intellij.searchEverywhereMl.java",
+      "intellij.searchEverywhereMl.kotlin",
     )),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
@@ -311,15 +315,16 @@ object CommunityRepositoryModules {
 
       // modules:
       // design-tools.jar
-      spec.withModule("intellij.android.compose-designer", "design-tools.jar")
-      spec.withModule("intellij.android.design-plugin", "design-tools.jar")
+      spec.withModule("intellij.android.compose-designer")
+      if (mainModuleName != "intellij.android.design-plugin") {
+        spec.withModule("intellij.android.design-plugin")
+      }
       @Suppress("SpellCheckingInspection")
-      spec.withModule("intellij.android.designer.customview", "design-tools.jar")
-      spec.withModule("intellij.android.designer", "design-tools.jar")
-      spec.withModule("intellij.android.glance-designer", "design-tools.jar")
-      spec.withModule("intellij.android.layoutlib", "design-tools.jar")
-      spec.withModule("intellij.android.nav.editor", "design-tools.jar")
-
+      spec.withModule("intellij.android.designer.customview")
+      spec.withModule("intellij.android.designer")
+      spec.withModule("intellij.android.glance-designer")
+      spec.withModule("intellij.android.layoutlib")
+      spec.withModule("intellij.android.nav.editor")
 
       // libs:
       spec.withProjectLibrary("layoutlib")
@@ -433,7 +438,9 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.newProjectWizard", "android.jar")
       spec.withModule("intellij.android.observable.ui", "android.jar")
       spec.withModule("intellij.android.observable", "android.jar")
-      spec.withModule("intellij.android.plugin", "android.jar")
+      if (mainModuleName != "intellij.android.plugin") {
+        spec.withModule("intellij.android.plugin", "android.jar")
+      }
       spec.withModule("intellij.android.profilersAndroid", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.models", "android.jar")
       spec.withModule("intellij.android.projectSystem.gradle.psd", "android.jar")

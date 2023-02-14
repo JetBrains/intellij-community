@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
@@ -9,7 +9,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -391,8 +390,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (isTrackClickable()) return false;
       // redispatch current event to the view
       Container parent = myScrollBar.getParent();
-      if (parent instanceof JScrollPane) {
-        JScrollPane pane = (JScrollPane)parent;
+      if (parent instanceof JScrollPane pane) {
         Component view = pane.getViewport().getView();
         if (view != null) {
           Point point = event.getLocationOnScreen();
@@ -537,16 +535,16 @@ class DefaultScrollBarUI extends ScrollBarUI {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       String name = event.getPropertyName();
-      if ("model" == name) {
+      if ("model".equals(name)) {
         BoundedRangeModel oldModel = (BoundedRangeModel)event.getOldValue();
         BoundedRangeModel newModel = (BoundedRangeModel)event.getNewValue();
         oldModel.removeChangeListener(this);
         newModel.addChangeListener(this);
       }
-      if ("model" == name || "orientation" == name || "componentOrientation" == name) {
+      if ("model".equals(name) || "orientation".equals(name) || "componentOrientation".equals(name)) {
         repaint();
       }
-      if ("opaque" == name || "visible" == name) {
+      if ("opaque".equals(name) || "visible".equals(name)) {
         myAnimationBehavior.onReset();
         myTrack.bounds.setBounds(0, 0, 0, 0);
         myThumb.bounds.setBounds(0, 0, 0, 0);

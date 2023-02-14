@@ -101,7 +101,7 @@ public abstract class XDebuggerUtil {
   /**
    * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator();
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);

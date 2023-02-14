@@ -14,6 +14,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.util.function.BiFunction;
 
 import static com.intellij.ui.scale.ScaleType.*;
@@ -75,7 +76,7 @@ public abstract class CompositeIconPaintTestHelper {
 
     if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath(ctx));
 
-    BufferedImage goldImage = loadImage(getGoldImagePath(ctx));
+    BufferedImage goldImage = loadImage(Path.of(getGoldImagePath(ctx)));
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);

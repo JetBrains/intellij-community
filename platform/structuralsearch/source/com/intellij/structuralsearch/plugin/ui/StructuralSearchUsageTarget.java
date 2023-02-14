@@ -97,8 +97,7 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
     assert scope != null;
     final String scopeString = scope.getDisplayName();
     final String result;
-    if (myConfiguration instanceof ReplaceConfiguration) {
-      final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)myConfiguration;
+    if (myConfiguration instanceof ReplaceConfiguration replaceConfiguration) {
       final String replacement = replaceConfiguration.getReplaceOptions().getReplacement();
       result = SSRBundle.message("replace.occurrences.of.0.with.1.in.2", pattern, replacement, scopeString);
     }

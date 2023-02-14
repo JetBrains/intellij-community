@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
@@ -124,6 +125,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenWorkspaceSettings myWorkspaceSettings;
 
   private volatile MavenSyncConsole mySyncConsole;
+  private volatile MavenDownloadConsole myDownloadConsole;
   private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
   private Module myPreviewModule;
@@ -152,8 +154,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @TestOnly
-  public void setProgressListener(SyncViewManager testViewManager) {
+  public void setProgressListener(BuildProgressListener testViewManager) {
     myProgressListener = testViewManager;
+  }
+
+  @TestOnly
+  public BuildProgressListener getProgressListener() {
+    return myProgressListener;
   }
 
   @Override
@@ -352,6 +359,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       mySyncConsole = new MavenSyncConsole(myProject);
     }
     return mySyncConsole;
+  }
+
+  public synchronized MavenDownloadConsole getDownloadConsole() {
+    if (myDownloadConsole == null) {
+    myDownloadConsole = new MavenDownloadConsole(myProject);
+    }
+    return myDownloadConsole;
   }
 
 
@@ -862,6 +876,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.getIgnoredState(project);
   }
 
+  @ApiStatus.Internal
+  public void setIgnoredStateForPoms(@NotNull List<String> pomPaths, boolean ignored) {
+    if (!isInitialized()) return;
+    myProjectsTree.setIgnoredStateForPoms(pomPaths, ignored);
+  }
+
   public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
     if (!isInitialized()) return;
     myProjectsTree.setIgnoredState(projects, ignored);
@@ -990,6 +1010,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenSyncConsole console = getSyncConsole();
     console.startImport(myProgressListener, spec);
     StructuredIdeActivity activity = MavenImportStats.startImportActivity(myProject);
+    myMavenProjectResolver.clearPluginCache();
     fireImportAndResolveScheduled(spec);
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {
@@ -1173,7 +1194,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
     runWhenFullyOpen(() -> myPluginsResolvingProcessor
-      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, forceUpdateSnapshots)));
+      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree, myMavenProjectResolver,
+                                                                   forceUpdateSnapshots)));
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,

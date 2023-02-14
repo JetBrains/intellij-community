@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -71,16 +71,12 @@ public final class JavaDocColorUtil {
           }
         } else if (initializer instanceof PsiReferenceExpression) {
           final PsiReference reference = initializer.getReference();
-          if (reference != null) {
-            final PsiElement psiElement = reference.resolve();
-            if (psiElement instanceof PsiField) {
-              PsiField psiField = (PsiField)psiElement;
-              final PsiClass psiClass = psiField.getContainingClass();
-              if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
-                Color c = ReflectionUtil.getStaticFieldValue(Color.class, Color.class, psiField.getName());
-                if (c != null) {
-                  buffer.append(generatePreviewHtml(c));
-                }
+          if (reference != null && reference.resolve() instanceof PsiField psiField) {
+            final PsiClass psiClass = psiField.getContainingClass();
+            if (psiClass != null && "java.awt.Color".equals(psiClass.getQualifiedName())) {
+              Color c = ReflectionUtil.getStaticFieldValue(Color.class, Color.class, psiField.getName());
+              if (c != null) {
+                buffer.append(generatePreviewHtml(c));
               }
             }
           }

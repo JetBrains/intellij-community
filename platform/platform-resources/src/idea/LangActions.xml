@@ -664,7 +664,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="ManageTargets" class="com.intellij.execution.target.ManageTargetEnvironmentsAction"/>
       <separator/>
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
+      <reference id="Stop"/>
       <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
 
@@ -757,20 +757,6 @@
       </group>
     </group>
 
-    <group id="NewToolbarActionsXamarin">
-      <group id="LeftToolbarSideGroupXamarin">
-        <reference id="Back"/>
-        <reference id="Forward"/>
-        <reference id="SegmentedVcsControlAction"/>
-        <reference id="SearchEverywhereNewToolbarAction"/>
-      </group>
-      <group id="RightToolbarSideGroupXamarin">
-        <reference id="ToolbarRunGroup"/>
-        <!-- 6px -->
-        <reference id="SettingsEntryPoint"/>
-      </group>
-    </group>
-
     <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">
       <reference ref="RefactoringMenu"/>
     </group>
@@ -783,7 +769,7 @@
       <reference ref="Scratch.ChangeLanguage"/>
       <group id="MarkFileAs">
         <action id="OverrideFileTypeAction" class="com.intellij.openapi.file.exclude.OverrideFileTypeAction"/>
-        <action id="RevertedOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.RevertedOverrideFileTypeAction"/>
+        <action id="ReverteOverrideFileTypeAction" class="com.intellij.openapi.file.exclude.ReverteOverrideFileTypeAction"/>
       </group>
     </group>
 
@@ -1087,6 +1073,7 @@
         <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="PlatformDebuggerImplIcons.Actions.Force_run_to_cursor"/>
+        <action id="ResetFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
         <separator/>
@@ -1200,6 +1187,7 @@
       <reference ref="ShowExecutionPoint"/>
       <separator/>
       <reference ref="EvaluateExpression" />
+      <reference ref="ResetFrame" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1235,6 +1223,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
+      <reference ref="ResetFrame" />
       <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
@@ -1634,12 +1623,15 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
-    
-    <group id="RunToolbarWidgetCustomizableActionGroup">
+
+
+    <action id="NewUiRunWidget" class="com.intellij.execution.ui.RedesignedRunToolbarWrapper">
       <add-to-group group-id="MainToolbarRight" anchor="first"/>
-      <action class="com.intellij.execution.ui.RedesignedRunToolbarWrapper" id="RedesignedRunToolbarWrapper"/>
-      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
-    </group>
+    </action>
+
+    <action id="StopWithDropDown" class="com.intellij.execution.ui.StopWithDropDownAction">
+      <add-to-group group-id="MainToolbarRight" relative-to-action="NewUiRunWidget" anchor="after"/>
+    </action>
 
     <group id="ContrastRunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
@@ -1651,12 +1643,14 @@
     <group id="RunToolbarMainActionGroup">
       <reference ref="RedesignedRunConfigurationSelector"/>
       <reference ref="RunToolbarTopLevelExecutorActionGroup"/>
+      <reference ref="Stop"/>
       <reference ref="MoreRunToolbarActions"/>
+      <action id="InactiveStopActionPlaceholder" class="com.intellij.execution.ui.InactiveStopActionPlaceholder" />
     </group>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
       <reference id="ExecutionTargets"/>
-      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="RunToolbarWidgetCustomizableActionGroup"/>
+      <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
@@ -1689,7 +1683,6 @@
       <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
       <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
       <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
-      <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>

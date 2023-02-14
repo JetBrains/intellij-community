@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -13,20 +12,23 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.apache.commons.lang.StringUtils;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenImportUtil;
-import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
@@ -37,6 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +64,26 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   private Map<String, String> myPropertiesToCreateByArtifact;
 
   @Override
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, ConfigurationException, JDOMException {
+    var module = super.createModule(moduleModel);
+
+    // handle the case when a maven module was deleted / ignored, and then the same module is created again
+    // we need to remove the module from the ignored list, otherwise it will disappear during the subsequent maven import
+    unignorePom(moduleModel);
+
+    return module;
+  }
+
+  private void unignorePom(@NotNull ModifiableModuleModel moduleModel) {
+    var project = moduleModel.getProject();
+    var contentEntryPath = getContentEntryPath();
+    if (null == contentEntryPath) return;
+    var mavenProjectsTree = MavenProjectsManager.getInstance(project).getProjectsTree();
+    mavenProjectsTree.removeIgnoredFilesPaths(List.of(contentEntryPath + "/pom.xml"));
+  }
+
+  @Override
   protected void setupModule(Module module) throws ConfigurationException {
     super.setupModule(module);
     ExternalSystemUtil.markModuleAsMaven(module, true);
@@ -74,11 +97,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     rootModel.addContentEntry(root);
 
     // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null) {
-      rootModel.setSdk(myJdk);
+    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
+    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
+      rootModel.inheritSdk();
     }
     else {
-      rootModel.inheritSdk();
+      rootModel.setSdk(myJdk);
     }
 
     if (isCreatingNewProject) {
@@ -97,22 +121,19 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     });
   }
 
-  @Override
-  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
-    setMavenModuleFilePath(project, getName());
-    return super.commitModule(project, model);
+  private static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
+    if (sdk1 == null && sdk2 == null) return true;
+    if (sdk1 == null || sdk2 == null) return false;
+    return sdk1.getSdkType() == sdk2.getSdkType()
+           && StringUtils.equals(sdk1.getName(), sdk2.getName())
+           && StringUtils.equals(sdk1.getVersionString(), sdk2.getVersionString())
+           && StringUtils.equals(sdk1.getHomePath(), sdk2.getHomePath())
+      ;
   }
 
-  private void setMavenModuleFilePath(@NotNull Project project, @NotNull String moduleName) {
-    if (myParentProject == null) return;
-    if (!MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) return;
-
-    String parentModuleName = MavenImportUtil.getModuleName(myParentProject, project);
-    if (StringUtil.isNotEmpty(parentModuleName)) {
-      String moduleFilePath =
-        project.getBasePath() + File.separator + parentModuleName + "." + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
-      setModuleFilePath(moduleFilePath);
-    }
+  @Override
+  public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    return super.commitModule(project, model);
   }
 
   @Override

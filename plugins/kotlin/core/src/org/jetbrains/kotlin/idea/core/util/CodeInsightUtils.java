@@ -10,7 +10,7 @@ public final class CodeInsightUtils {
      * @deprecated Use org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset instead
      */
     @NotNull
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static PsiElement getTopmostElementAtOffset(@NotNull PsiElement element, int offset) {
         return KotlinPsiUtils.getTopmostElementAtOffset(element, offset);
     }

@@ -245,8 +245,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
   private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
     final PsiFile file = anchor.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
+    if (file instanceof PyFile pyFile) {
       return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
     }
     return false;

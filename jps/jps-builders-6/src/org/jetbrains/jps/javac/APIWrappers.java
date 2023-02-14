@@ -51,9 +51,9 @@ public final class APIWrappers {
   public static class ProcessingContext {
     private final JpsJavacFileManager myFileManager;
     private Iterable<Processor> myAllProcessors = Collections.emptyList();
-    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<ProcessingEnvironment, ProcessingEnvironment>(); // procEnv -> wrappedProcEnv
+    private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<>(); // procEnv -> wrappedProcEnv
     private String myLastProcName;
-    private final Map<String, String> myProcNamesMap = new HashMap<String, String>(); // real proc className -> wrapped proc className
+    private final Map<String, String> myProcNamesMap = new HashMap<>(); // real proc className -> wrapped proc className
     
     public ProcessingContext(@NotNull JpsJavacFileManager fileManager) {
       myFileManager = fileManager;
@@ -156,7 +156,7 @@ public final class APIWrappers {
 
     @Override
     public void report(Diagnostic<? extends T> diagnostic) {
-      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>(myProcContext, (Diagnostic<T>)diagnostic)));
+      getWrapperDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<>(myProcContext, (Diagnostic<T>)diagnostic)));
     }
   }
 

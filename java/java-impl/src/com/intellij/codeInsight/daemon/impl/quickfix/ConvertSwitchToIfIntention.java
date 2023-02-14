@@ -432,16 +432,14 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (value == null) {
       return "";
     }
-    if (!(value instanceof PsiReferenceExpression)) {
+    if (!(value instanceof PsiReferenceExpression referenceExpression)) {
       return commentTracker.text(value);
     }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)value;
     final PsiElement target = referenceExpression.resolve();
 
-    if (!(target instanceof PsiEnumConstant)) {
+    if (!(target instanceof PsiEnumConstant enumConstant)) {
       return commentTracker.text(value);
     }
-    final PsiEnumConstant enumConstant = (PsiEnumConstant)target;
     final PsiClass aClass = enumConstant.getContainingClass();
     if (aClass == null) {
       return commentTracker.text(value);
@@ -479,8 +477,8 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     for (PsiElement bodyStatement : bodyStatements) {
       if (bodyStatement instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getFirstBodyElement());
-        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getLastBodyElement());
+        PsiElement start = PsiTreeUtil.skipWhitespacesForward(codeBlock.getLBrace());
+        PsiElement end = PsiTreeUtil.skipWhitespacesBackward(codeBlock.getRBrace());
         if (start != null && end != null && start != codeBlock.getRBrace()) {
           for (PsiElement child = start; child != null; child = child.getNextSibling()) {
             out.append(commentTracker.text(child));

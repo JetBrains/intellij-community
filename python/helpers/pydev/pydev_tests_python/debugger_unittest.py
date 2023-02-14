@@ -1,6 +1,9 @@
 from collections import namedtuple
 from contextlib import contextmanager
 import json
+
+from _pydevd_bundle.pydevd_constants import GET_FRAME_NORMAL_GROUP
+
 try:
     from urllib import quote, quote_plus, unquote_plus
 except ImportError:
@@ -508,7 +511,8 @@ class AbstractWriterThread(threading.Thread):
             'warning: Debugger speedups',
             'pydev debugger: New process is launching',
             'pydev debugger: To debug that process',
-            'pydev debugger: process'
+            'pydev debugger: process',
+            'warning: PYDEVD_USE_CYTHON environment variable is set to \'NO\'',
         )):
             return True
 
@@ -926,12 +930,12 @@ class AbstractWriterThread(threading.Thread):
         self.write("%s\t%s\t%s\t%s\t%s\t%s\t%s" % (
             CMD_CHANGE_VARIABLE, self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))
 
-    def write_get_frame(self, thread_id, frame_id):
-        self.write("%s\t%s\t%s\t%s\tFRAME" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id))
+    def write_get_frame(self, thread_id, frame_id, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_FRAME, self.next_seq(), thread_id, frame_id, group_type, ))
         self.log.append('write_get_frame')
 
-    def write_get_variable(self, thread_id, frame_id, var_attrs):
-        self.write("%s\t%s\t%s\t%s\tFRAME\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, var_attrs))
+    def write_get_variable(self, thread_id, frame_id, var_attrs, group_type=GET_FRAME_NORMAL_GROUP):
+        self.write("%s\t%s\t%s\t%s\tFRAME\t%s\t%s" % (CMD_GET_VARIABLE, self.next_seq(), thread_id, frame_id, group_type, var_attrs, ))
 
     def write_step_over(self, thread_id):
         self.write("%s\t%s\t%s" % (CMD_STEP_OVER, self.next_seq(), thread_id,))

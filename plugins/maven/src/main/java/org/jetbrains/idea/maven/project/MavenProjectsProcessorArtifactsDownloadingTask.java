@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.build.SyncViewManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -42,14 +43,28 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
                       @NotNull MavenConsole console,
                       @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    MavenArtifactDownloader.DownloadResult result = myResolver.downloadSourcesAndJavadocs(project,
-                                                                                          myProjects,
-                                                                                          myArtifacts,
-                                                                                          myDownloadSources,
-                                                                                          myDownloadDocs,
-                                                                                          embeddersManager,
-                                                                                          console,
-                                                                                          indicator);
+    var progressListener = project.getService(SyncViewManager.class);
+    var downloadConsole = project.getService(MavenProjectsManager.class).getDownloadConsole();
+    MavenArtifactDownloader.DownloadResult result = null;
+    try {
+      downloadConsole.startDownload(progressListener, myDownloadSources, myDownloadDocs);
+      downloadConsole.startDownloadTask();
+      result = myResolver.downloadSourcesAndJavadocs(project,
+                                                     myProjects,
+                                                     myArtifacts,
+                                                     myDownloadSources,
+                                                     myDownloadDocs,
+                                                     embeddersManager,
+                                                     console,
+                                                     indicator);
+      downloadConsole.finishDownloadTask();
+    }
+    catch (Exception e) {
+      downloadConsole.addException(e);
+    }
+    finally {
+      downloadConsole.finishDownload();
+    }
     if (myCallbackResult != null) {
       myCallbackResult.setResult(result);
     }

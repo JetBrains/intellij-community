@@ -96,8 +96,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddSdkPanel panel = interpreterPanel.getSelectedPanel();
-    if (panel instanceof PyAddNewEnvironmentPanel) {
-      final PyAddNewEnvironmentPanel newEnvironmentPanel = (PyAddNewEnvironmentPanel)panel;
+    if (panel instanceof PyAddNewEnvironmentPanel newEnvironmentPanel) {
       return new PyLazySdk("Uninitialized environment", newEnvironmentPanel::getOrCreateSdk);
     }
     else if (panel instanceof PyAddExistingSdkPanel) {

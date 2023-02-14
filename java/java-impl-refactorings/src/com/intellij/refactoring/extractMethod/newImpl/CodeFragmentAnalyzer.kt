@@ -21,7 +21,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
-data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
+data class ExitDescription(val exitStatements: List<PsiStatement>, val numberOfExits: Int, val isNormalExit: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
 data class MemberUsage(val member: PsiMember, val reference: PsiExpression)
 
@@ -104,8 +104,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       .findExitPointsAndStatements(flow, flowRange.first, flowRange.last, IntArrayList(), *exitStatements)
       .filterNot { statement -> isExitInside(statement) }
     val exitPoints = findExitPoints()
-    val hasSpecialExits = exitPoints.singleOrNull() != lastGotoPointFrom(flowRange.last)
-    return ExitDescription(statements, maxOf(1, exitPoints.size), hasSpecialExits)
+    val isNormalExit = exitPoints.singleOrNull() == lastGotoPointFrom(flowRange.last)
+    return ExitDescription(statements, maxOf(1, exitPoints.size), isNormalExit)
   }
 
   fun findExposedLocalDeclarations(): List<PsiVariable> {

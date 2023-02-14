@@ -1,6 +1,6 @@
 repositories {
     run {
-        val publishedLibRepoPath = "$rootDir/lib/repo"
+        val publishedLibRepoPath = "$rootDir/repo"
         if (!file(publishedLibRepoPath).isDirectory) {
             logger.error(
                 "\nThis module needs the lib from `lib-and-app` to be published to $publishedLibRepoPath." +
@@ -18,11 +18,7 @@ plugins {
     id("com.android.library")
 }
 
-android {
-    compileSdkVersion({{compile_sdk_version}})
-    buildToolsVersion("{{build_tools_version}}")
-    namespace = "org.jetbrains.kotlin.mpp.tests"
-}
+{{default_android_block}}
 
 kotlin {
     android()

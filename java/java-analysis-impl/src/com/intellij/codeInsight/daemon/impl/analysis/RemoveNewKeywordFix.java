@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -39,8 +39,7 @@ final class RemoveNewKeywordFix extends LocalQuickFixAndIntentionActionOnPsiElem
     PsiJavaCodeReferenceElement reference = newDeclaration.getClassOrAnonymousClassReference();
     if (reference == null) return;
     PsiElement qualifier = reference.getQualifier();
-    if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return;
-    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement)) return;
     CommentTracker ct = new CommentTracker();
     PsiReferenceParameterList parameterList = referenceElement.getParameterList();
     if (parameterList != null) {

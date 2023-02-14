@@ -148,8 +148,7 @@ public final class SetupTaskIntrospector {
     if (value instanceof PySequenceExpression) {
       Collections.addAll(result, ((PySequenceExpression)value).getElements());
     }
-    else if (value instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)value;
+    else if (value instanceof PyBinaryExpression binaryExpression) {
       if (binaryExpression.isOperator("+")) {
         collectSequenceElements(binaryExpression.getLeftExpression(), result);
         collectSequenceElements(binaryExpression.getRightExpression(), result);

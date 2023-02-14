@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.completion.BaseCompletionService;
@@ -11,9 +11,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.FileTypeSchemaValidator;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
@@ -26,10 +25,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class LookupUsageTracker {
+import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS;
+import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_RESULT_SET_ORDER;
+import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+
+public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 10);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 12);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<FinishType> FINISH_TYPE = EventFields.Enum("finish_type", FinishType.class);
@@ -43,6 +46,10 @@ public final class LookupUsageTracker {
   private static final IntEventField QUERY_LENGTH = EventFields.Int("query_length");
   private static final ClassEventField CONTRIBUTOR = EventFields.Class("contributor");
   private static final LongEventField TIME_TO_SHOW = EventFields.Long("time_to_show");
+  private static final LongEventField TIME_TO_SHOW_CORRECT_ELEMENT = EventFields.Long("time_to_show_correct_element");
+  private static final LongEventField TIME_TO_SHOW_FIRST_ELEMENT = EventFields.Long("time_to_show_first_element");
+  private static final LongEventField TIME_TO_COMPUTE_CORRECT_ELEMENT = EventFields.Long("time_to_compute_correct_element");
+  private static final IntEventField ORDER_ADDED_CORRECT_ELEMENT = EventFields.Int("order_added_correct_element");
   private static final BooleanEventField DUMB_FINISH = EventFields.Boolean("dumb_finish");
   private static final BooleanEventField DUMB_START = EventFields.Boolean("dumb_start");
   public static final ObjectEventField ADDITIONAL = EventFields.createAdditionalDataField(GROUP.getId(), FINISHED_EVENT_ID);
@@ -62,6 +69,10 @@ public final class LookupUsageTracker {
                                                                          QUERY_LENGTH,
                                                                          CONTRIBUTOR,
                                                                          TIME_TO_SHOW,
+                                                                         TIME_TO_SHOW_CORRECT_ELEMENT,
+                                                                         TIME_TO_SHOW_FIRST_ELEMENT,
+                                                                         TIME_TO_COMPUTE_CORRECT_ELEMENT,
+                                                                         ORDER_ADDED_CORRECT_ELEMENT,
                                                                          DUMB_FINISH,
                                                                          DUMB_START,
                                                                          ADDITIONAL);
@@ -73,10 +84,19 @@ public final class LookupUsageTracker {
     lookup.addLookupListener(new MyLookupTracker(createdTimestamp, lookup));
   }
 
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
+  }
+
   private static class MyLookupTracker implements LookupListener {
     private final @NotNull LookupImpl myLookup;
     private final long myCreatedTimestamp;
     private final long myTimeToShow;
+    private @Nullable Long myTimestampFirstElementShown = null;
+    private @Nullable Long myTimestampCorrectElementShown = null;
+    private @Nullable Long myTimestampCorrectElementComputed = null;
+    private @Nullable Integer myOrderComputedCorrectElement = null;
     private final boolean myIsDumbStart;
     private final @Nullable Language myLanguage;
     private final @NotNull MyTypingTracker myTypingTracker;
@@ -92,6 +112,11 @@ public final class LookupUsageTracker {
       myLanguage = getLanguageAtCaret(lookup);
       myTypingTracker = new MyTypingTracker();
       lookup.addPrefixChangeListener(myTypingTracker, lookup);
+    }
+
+    @Override
+    public void firstElementShown() {
+      myTimestampFirstElementShown = System.currentTimeMillis();
     }
 
     @Override
@@ -114,6 +139,9 @@ public final class LookupUsageTracker {
         triggerLookupUsed(FinishType.CANCELED_BY_TYPING, null, completionChar);
       }
       else {
+        myTimestampCorrectElementShown = item.getUserData(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS);
+        myTimestampCorrectElementComputed = item.getUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS);
+        myOrderComputedCorrectElement = item.getUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER);
         if (isSelectedByTyping(item)) {
           triggerLookupUsed(FinishType.TYPED, item, completionChar);
         }
@@ -137,29 +165,26 @@ public final class LookupUsageTracker {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      FeatureUsageData featureUsageData = new FeatureUsageData();
-      getCommonUsageInfo(finishType, currentItem, completionChar).forEach(pair -> pair.addData(featureUsageData));
+      final List<EventPair<?>> data = getCommonUsageInfo(finishType, currentItem, completionChar);
 
-      ArrayList<EventPair<?>> additionalData = new ArrayList<>();
+      final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
         if (PluginInfoDetectorKt.getPluginInfo(usageDescriptor.getClass()).isSafeToReport()) {
-          List<EventPair<?>> data = usageDescriptor.getAdditionalUsageData(
-            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage));
-          if (!data.isEmpty()) {
-            additionalData.addAll(data);
-          }
-          else {
-            // it is required to support usages in Iren plugin
-            usageDescriptor.fillUsageData(myLookup, featureUsageData);
-          }
+          additionalData.addAll(usageDescriptor.getAdditionalUsageData(
+            new MyLookupResultDescriptor(myLookup, currentItem, finishType, myLanguage)));
         }
       });
 
       if (!additionalData.isEmpty()) {
-        ADDITIONAL.addData(featureUsageData, new ObjectEventData(additionalData));
+        data.add(ADDITIONAL.with(new ObjectEventData(additionalData)));
       }
 
-      FUCounterUsageLogger.getInstance().logEvent(myLookup.getProject(), GROUP.getId(), FINISHED_EVENT_ID, featureUsageData);
+      FINISHED.log(myLookup.getProject(), data);
+    }
+
+    private void convertTimestampToDuration(List<EventPair<?>> data, @NotNull LongEventField field, @Nullable Long timestamp) {
+      if (timestamp == null) return;
+      data.add(field.with(timestamp - myCreatedTimestamp));
     }
 
     private List<EventPair<?>> getCommonUsageInfo(@NotNull FinishType finishType,
@@ -202,6 +227,13 @@ public final class LookupUsageTracker {
 
       // Performance
       data.add(TIME_TO_SHOW.with(myTimeToShow));
+
+      convertTimestampToDuration(data, TIME_TO_SHOW_CORRECT_ELEMENT, myTimestampCorrectElementShown);
+      convertTimestampToDuration(data, TIME_TO_SHOW_FIRST_ELEMENT, myTimestampFirstElementShown);
+      convertTimestampToDuration(data, TIME_TO_COMPUTE_CORRECT_ELEMENT, myTimestampCorrectElementComputed);
+      if (myOrderComputedCorrectElement != null) {
+        data.add(ORDER_ADDED_CORRECT_ELEMENT.with(myOrderComputedCorrectElement));
+      }
 
       // Indexing
       data.add(DUMB_START.with(myIsDumbStart));

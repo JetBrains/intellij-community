@@ -16,7 +16,7 @@ public final class FileObjectKindFilter<T> {
 
   public FileObjectKindFilter(Function<? super T, String> toNameConverter) {
     myToNameConverter = toNameConverter;
-    final Map<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<JavaFileObject.Kind, BooleanFunction<T>>(JavaFileObject.Kind.class);
+    final Map<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<>(JavaFileObject.Kind.class);
     for (final JavaFileObject.Kind kind : JavaFileObject.Kind.values()) {
       if (kind == JavaFileObject.Kind.OTHER) {
         filterMap.put(kind, new BooleanFunction<T>() {

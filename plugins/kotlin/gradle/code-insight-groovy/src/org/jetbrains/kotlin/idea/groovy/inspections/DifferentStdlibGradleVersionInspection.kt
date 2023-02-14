@@ -75,7 +75,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
         fun getRawResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<String>): String? {
             val projectStructureNode = findGradleProjectStructure(file) ?: return null
             val module = ProjectRootManager.getInstance(file.project).fileIndex.getModuleForFile(file.virtualFile) ?: return null
-            val gradleFacade = KotlinGradleFacade.instance ?: return null
+            val gradleFacade = KotlinGradleFacade.getInstance() ?: return null
 
             for (moduleData in projectStructureNode.findAll(ProjectKeys.MODULE).filter { it.data.internalName == module.name }) {
                 gradleFacade.findLibraryVersionByModuleData(moduleData.node, groupId, libraryIds)?.let {

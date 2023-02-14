@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +57,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -853,31 +853,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return !myEditor.shouldScrollBarBeOpaque();
   }
 
-  @ApiStatus.Internal
-  ScrollBarUI createMacHorizontalScrollBarUI() {
-    return new EditorScrollBarUI();
-  }
-
-  private class EditorScrollBarUI extends ButtonlessScrollBarUI {
-    @Override
-    public boolean alwaysShowTrack() {
-      return !transparent();
-    }
-
-    @Override
-    protected int getThumbOffset(int value) {
-      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
-      return super.getThumbOffset(value);
-    }
-
-    @Override
-    protected int getThickness() {
-      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
-    }
-  }
-
   @DirtyUI
-  private class MyErrorPanel extends EditorScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
+  private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
     private @Nullable BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
@@ -885,6 +862,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public void dropCache() {
       myCachedTrack = null;
       myCachedHeight = -1;
+    }
+
+    @Override
+    public boolean alwaysShowTrack() {
+      if (scrollbar.getOrientation() == Adjustable.VERTICAL) return !transparent();
+      return super.alwaysShowTrack();
     }
 
     @Override
@@ -953,6 +936,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     @Override
+    protected int getThumbOffset(int value) {
+      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUIScale.scale(2);
+      return super.getThumbOffset(value);
+    }
+
+    @Override
     protected boolean isDark() {
       return myEditor.isDarkEnough();
     }
@@ -973,10 +962,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     @Override
+    protected int getThickness() {
+      return SCROLLBAR_WIDTH.get() + getThinGap() + getMinMarkHeight();
+    }
+
+    @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
       if (myEditor.isDisposed()) return;
       if (transparent()) {
-        doPaintTrack(g, c, trackBounds);
+        ReadAction.run(() -> doPaintTrack(g, c, trackBounds));
       }
       else {
         super.paintTrack(g, c, trackBounds);

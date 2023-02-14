@@ -801,8 +801,7 @@ public class NestedClassProcessor {
       int counter = 0;
 
       for (Object obj : stat.getSequentialObjects()) {
-        if (obj instanceof Statement) {
-          Statement st = (Statement)obj;
+        if (obj instanceof Statement st) {
 
           Statement stTemp = getDefStatement(st, classType, setStats);
 
@@ -899,9 +898,8 @@ public class NestedClassProcessor {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      if (!(o instanceof VarFieldPair)) return false;
+      if (!(o instanceof VarFieldPair pair)) return false;
 
-      VarFieldPair pair = (VarFieldPair)o;
       return fieldKey.equals(pair.fieldKey) && varPair.equals(pair.varPair);
     }
 

@@ -73,7 +73,7 @@ public final class AddAntBuildFile extends AnAction {
     if (filesAdded > 0) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD);
       if (window == null) {
-        window = ActivateAntToolWindowAction.createToolWindow(project);
+        window = ActivateAntToolWindowAction.Manager.createToolWindow(project);
       }
       window.activate(null);
     }
@@ -88,10 +88,9 @@ public final class AddAntBuildFile extends AnAction {
       if (files != null) {
         for (VirtualFile file : files) {
           final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-          if (!(psiFile instanceof XmlFile)) {
+          if (!(psiFile instanceof XmlFile xmlFile)) {
             continue;
           }
-          final XmlFile xmlFile = (XmlFile)psiFile;
           final XmlDocument document = xmlFile.getDocument();
           if (document == null) {
             continue;

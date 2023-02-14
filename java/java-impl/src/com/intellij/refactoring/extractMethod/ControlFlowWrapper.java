@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -155,12 +155,8 @@ public final class ControlFlowWrapper {
           @Override
           public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
-            final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiVariable) {
-              final PsiVariable variable = (PsiVariable)resolved;
-              if (isWrittenInside(variable)) {
-                outputVariables.add(variable);
-              }
+            if (expression.resolve() instanceof PsiVariable variable && isWrittenInside(variable)) {
+              outputVariables.add(variable);
             }
           }
 

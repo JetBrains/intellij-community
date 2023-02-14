@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.psi.*;
@@ -131,8 +131,7 @@ class ExitContext {
     if (condition instanceof PsiBinaryExpression) {
       condition = ((PsiBinaryExpression)condition).getLOperand();
     }
-    if (!(condition instanceof PsiReferenceExpression)) return false;
-    PsiReferenceExpression ref = (PsiReferenceExpression)condition;
+    if (!(condition instanceof PsiReferenceExpression ref)) return false;
     return ref.getQualifierExpression() == null &&
            (Objects.equals(myFinishedVariable, ref.getReferenceName()) ||
             Objects.equals(myReturnVariable, ref.getReferenceName()));
@@ -143,8 +142,7 @@ class ExitContext {
    * @return true if given statement is a return statement which returns registered default value, so it could be fully removed
    */
   boolean isDefaultReturn(PsiStatement statement) {
-    if (myReturnVariableDefaultValue != null && statement instanceof PsiReturnStatement) {
-      PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+    if (myReturnVariableDefaultValue != null && statement instanceof PsiReturnStatement returnStatement) {
       return EquivalenceChecker.getCanonicalPsiEquivalence()
                .expressionsAreEquivalent(myReturnVariableDefaultValue, returnStatement.getReturnValue()) &&
              !FinishMarker.mayNeedMarker(returnStatement, myBlock);

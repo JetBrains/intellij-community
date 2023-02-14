@@ -19,22 +19,22 @@ public class NameSuggestionsByExpressionTest extends LightJavaCodeInsightFixture
   public void testNameSuggestionFromLiteralArgument() {
     checkSuggestions("class A {{new Str<caret>ing(\"string with spaces\")}}",
                      VariableKind.LOCAL_VARIABLE,
-                     new String[]{"stringWithSpaces", "string_with_spaces", "withSpaces", "with_spaces", "spaces", "string", "s"});
+                     "stringWithSpaces", "string_with_spaces", "withSpaces", "with_spaces", "spaces", "string", "s");
   }
 
   public void testWordByPreposition() {
     checkSuggestions("class A {{getParent<caret>OfType()} String getParentOfType() {return null;}}",
                      VariableKind.LOCAL_VARIABLE,
-                     new String[]{"getParentOfType", "parentOfType", "ofType", "type", "parent", "s"});
+                     "getParentOfType", "parentOfType", "ofType", "type", "parent", "s", "string");
   }
 
   public void testNameByAssignmentContext() {
     checkSuggestions("class A {{String bar = \"<caret>\";}}",
                      VariableKind.PARAMETER,
-                     new String[]{"bar", "s"});
+                     "bar", "s", "string");
   }
 
-  private void checkSuggestions(String code, VariableKind variableKind, String[] expecteds) {
+  private void checkSuggestions(String code, VariableKind variableKind, String... expecteds) {
     Document fakeDocument = new DocumentImpl(code);
     EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
     assertTrue("No caret specified", caretsState.hasExplicitCaret());

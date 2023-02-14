@@ -3,16 +3,24 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import java.io.ByteArrayInputStream
 
-object KotlinJavaScriptMetaFileIndex : KotlinFileIndexBase<KotlinJavaScriptMetaFileIndex>(KotlinJavaScriptMetaFileIndex::class.java) {
+class KotlinJavaScriptMetaFileIndex : KotlinFileIndexBase() {
+    companion object {
+        val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex")
+    }
+
     private val INDEXER = indexer(FileContent::fqNameFromJsMetadata)
 
+    override fun getName() = NAME
+
     override fun getIndexer() = INDEXER
+
     override fun getVersion() = 4
 
     override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinJavaScriptMetaFileType)

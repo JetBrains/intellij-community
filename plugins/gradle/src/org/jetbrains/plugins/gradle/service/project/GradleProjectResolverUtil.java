@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -228,7 +229,7 @@ public final class GradleProjectResolverUtil {
     String compositePrefix = "";
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
     if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
-      compositePrefix = build.getName();
+      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, build.getBuildIdentifier());
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
@@ -244,12 +245,36 @@ public final class GradleProjectResolverUtil {
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
 
     if (!isRootPath && ideaProject != resolverCtx.getModels().getModel(IdeaProject.class)) {
-      compositePrefix = ideaProject.getName();
+      BuildIdentifier buildId = gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
+      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, buildId);
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
 
     return compositePrefix + getModuleId(gradlePath, gradleModule.getName());
+  }
+
+  @NotNull
+  private static String buildCompositePrefixFromBuildNames(@NotNull ProjectResolverContext resolverCtx, BuildIdentifier buildId) {
+    String compositePrefix;
+    List<String> list = Stream.iterate(
+        findIncludedBuild(resolverCtx, buildId),
+        Objects::nonNull,
+        b -> findIncludedBuild(resolverCtx, b.getParentBuildIdentifier())
+      )
+      .map(Build::getName)
+      .collect(Collectors.toList());
+    Collections.reverse(list);
+    compositePrefix = StringUtil.join(list, ".");
+    return compositePrefix;
+  }
+
+  @Nullable
+  private static Build findIncludedBuild(@NotNull ProjectResolverContext resolverCtx, @Nullable BuildIdentifier buildId) {
+    if (buildId == null) {
+      return null;
+    }
+    return ContainerUtil.find(resolverCtx.getModels().getIncludedBuilds(), b -> FileUtil.filesEqual(b.getBuildIdentifier().getRootDir(), buildId.getRootDir()));
   }
 
   @NotNull
@@ -548,7 +573,7 @@ public final class GradleProjectResolverUtil {
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
     Map<ExternalDependencyId, ExternalDependency> dependencyMap = new HashMap<>();
 
-    Queue<ExternalDependency> queue = new LinkedList<>(dependencies);
+    Queue<ExternalDependency> queue = new ArrayDeque<>(dependencies);
     while (!queue.isEmpty()) {
       final ExternalDependency dependency = queue.remove();
       DefaultExternalDependencyId key = new DefaultExternalDependencyId(dependency.getId());
@@ -638,9 +663,7 @@ public final class GradleProjectResolverUtil {
       assert ownerModule != null;
 
       DataNode<? extends ExternalEntityData> depOwnerDataNode = null;
-      if (mergedDependency instanceof ExternalProjectDependency) {
-
-        final ExternalProjectDependency projectDependency = (ExternalProjectDependency)mergedDependency;
+      if (mergedDependency instanceof ExternalProjectDependency projectDependency) {
 
         Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
         if (resolverCtx.getSettings() != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -158,8 +158,7 @@ public class TypeMigrationLabeler {
       usages[j++] = new TypeMigrationUsageInfo(element) {
         @Override
         public String getTooltipText() {
-          if (conv instanceof String) {   //todo
-            final String conversion = (String)conv;
+          if (conv instanceof String conversion) {   //todo
             return JavaBundle.message("type.migration.replaced.notification", conversion.replaceAll("\\$", element.getText()));
           }
           else {
@@ -289,8 +288,7 @@ public class TypeMigrationLabeler {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
-      if (element instanceof PsiExpression) {
-        final PsiExpression expression = (PsiExpression)element;
+      if (element instanceof PsiExpression expression) {
         if (element instanceof PsiNewExpression) {
           for (Map.Entry<TypeMigrationUsageInfo, PsiType> info : myNewExpressionTypeChange.entrySet()) {
             final PsiElement expressionToReplace = info.getKey().getElement();
@@ -453,8 +451,7 @@ public class TypeMigrationLabeler {
       return;
     }
 
-    if (expr instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression condExpr = (PsiConditionalExpression)expr;
+    if (expr instanceof PsiConditionalExpression condExpr) {
       for (PsiExpression e : new PsiExpression[]{condExpr.getThenExpression(), condExpr.getElseExpression()}) {
         if (e != null) {
           migrateExpressionType(e, migrationType, place, alreadyProcessed, false);
@@ -707,10 +704,9 @@ public class TypeMigrationLabeler {
       return null;
     }
     final PsiElement root = myCurrentRoot.getElement();
-    if (!(root instanceof PsiField)) {
+    if (!(root instanceof PsiField field)) {
       return null;
     }
-    PsiField field = (PsiField) root;
     final PsiType migrationType = myTypeEvaluator.getType(root);
     if (migrationType == null) {
       return null;

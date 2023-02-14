@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.*;
@@ -69,7 +69,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
                                new ReplaceWithMapForEachFix());
       }
 
-      private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
+      private static boolean allUsagesAllowed(@NotNull PsiParameter entry) {
         return ReferencesSearch.search(entry).allMatch(entryRef -> {
           PsiMethodCallExpression entryCall =
             ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(entryRef.getElement(), PsiExpression.class));
@@ -83,9 +83,6 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
         PsiMethodCallExpression call =
           ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue()), PsiMethodCallExpression.class);
         PsiParameter parameter = loop.getIterationParameter();
-        if (parameter == null) {
-          return;
-        }
         if (MAP_ENTRY_SET.test(call) &&
             LambdaGenerationUtil.canBeUncheckedLambda(loop.getBody()) &&
             allUsagesAllowed(parameter)) {
@@ -193,7 +190,6 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElement body = loop.getBody();
       if (body == null) return;
       PsiParameter entryParameter = loop.getIterationParameter();
-      if (entryParameter == null) return;
       CommentTracker ct = new CommentTracker();
       String replacementExpression = createReplacementExpression(entrySetCall, entryParameter, body, ct);
       ct.replaceAndRestoreComments(loop, replacementExpression + ";");

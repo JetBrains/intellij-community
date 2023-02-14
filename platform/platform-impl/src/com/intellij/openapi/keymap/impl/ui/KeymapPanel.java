@@ -777,8 +777,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     Keymap keymap() {
       if (mutable == null) {
-        if (parent instanceof KeymapPanel) {
-          KeymapPanel panel = (KeymapPanel)parent;
+        if (parent instanceof KeymapPanel panel) {
           mutable = panel.myManager.getMutableKeymap(selected);
         }
         else {
@@ -814,9 +813,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
 
     for (Shortcut sc: actionShortcuts) {
-      if (!(sc instanceof KeyboardShortcut))
+      if (!(sc instanceof KeyboardShortcut ksc))
         continue;
-      final KeyboardShortcut ksc = (KeyboardShortcut)sc;
       if (ks.equals(ksc.getFirstKeyStroke()) || ks.equals(ksc.getSecondKeyStroke())) {
         return ksc;
       }

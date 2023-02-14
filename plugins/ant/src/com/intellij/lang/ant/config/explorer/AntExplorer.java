@@ -538,8 +538,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       if (leadPath != null) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadPath.getLastPathComponent();
         if (node != null) {
-          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
-            final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
+          if (node.getUserObject() instanceof AntTargetNodeDescriptor targetNodeDescriptor) {
             final Navigatable navigatable = targetNodeDescriptor.getTarget().getOpenFileDescriptor();
             if (navigatable != null && navigatable.canNavigate()) {
               return navigatable;
@@ -605,8 +604,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
                                       int row,
                                       boolean hasFocus) {
       final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (userObject instanceof AntNodeDescriptor) {
-        final AntNodeDescriptor descriptor = (AntNodeDescriptor)userObject;
+      if (userObject instanceof AntNodeDescriptor descriptor) {
         descriptor.customize(this);
       }
       else {
@@ -720,8 +718,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
       final Object userObject = node.getUserObject();
       AntBuildTarget target = null;
-      if (userObject instanceof AntTargetNodeDescriptor) {
-        AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)userObject;
+      if (userObject instanceof AntTargetNodeDescriptor targetNodeDescriptor) {
         target = targetNodeDescriptor.getTarget();
       }
       else if (userObject instanceof AntBuildFileNodeDescriptor){
@@ -911,8 +908,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         // try to remove build file
         if (paths.length == 1) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-          if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
-            final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
+          if (node.getUserObject() instanceof AntBuildFileNodeDescriptor descriptor) {
             if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
               removeBuildFile();
               return;
@@ -950,16 +946,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         String text = AntBundle.message("remove.meta.target.action.name");
         boolean enabled = false;
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)paths[0].getLastPathComponent();
-        if (node.getUserObject() instanceof AntBuildFileNodeDescriptor) {
-          final AntBuildFileNodeDescriptor descriptor = (AntBuildFileNodeDescriptor)node.getUserObject();
+        if (node.getUserObject() instanceof AntBuildFileNodeDescriptor descriptor) {
           if (descriptor.getBuildFile().equals(getCurrentBuildFile())) {
             text = AntBundle.message("remove.selected.build.file.action.name");
             enabled = true;
           }
         }
         else {
-          if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
-            final AntTargetNodeDescriptor descr = (AntTargetNodeDescriptor)node.getUserObject();
+          if (node.getUserObject() instanceof AntTargetNodeDescriptor descr) {
             final AntBuildTargetBase target = descr.getTarget();
             if (target instanceof MetaTarget) {
               enabled = true;

@@ -44,10 +44,9 @@ public final class SmartTodoItemPointer {
   }
 
   public boolean equals(Object obj){
-    if(!(obj instanceof SmartTodoItemPointer)){
+    if(!(obj instanceof SmartTodoItemPointer pointer)){
       return false;
     }
-    SmartTodoItemPointer pointer=(SmartTodoItemPointer)obj;
     if (!(myTodoItem.getFile().equals(pointer.myTodoItem.getFile())&&
           myRangeMarker.getStartOffset()==pointer.myRangeMarker.getStartOffset()&&
           myRangeMarker.getEndOffset()==pointer.myRangeMarker.getEndOffset()&&

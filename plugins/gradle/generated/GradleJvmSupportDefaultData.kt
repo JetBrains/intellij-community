@@ -90,6 +90,8 @@ internal val DEFAULT_DATA = CompatibilityData(
     "7.3",
     "7.4",
     "7.5",
-    "7.5.1"
+    "7.5.1",
+    "7.6",
+    "8.0"
   )
 );

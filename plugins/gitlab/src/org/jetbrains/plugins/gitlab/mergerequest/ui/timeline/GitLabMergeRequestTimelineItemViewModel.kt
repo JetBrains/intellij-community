@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
   val id: String
@@ -17,10 +18,11 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
   class Discussion(
     parentCs: CoroutineScope,
     currentUser: GitLabUserDTO,
+    mr: GitLabMergeRequest,
     discussion: GitLabDiscussion
   ) : GitLabMergeRequestTimelineItemViewModel,
       GitLabMergeRequestTimelineDiscussionViewModel
-      by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, currentUser, discussion) {
+      by GitLabMergeRequestTimelineDiscussionViewModelImpl(parentCs, currentUser, mr, discussion) {
     override val id: String = discussion.id
   }
 }

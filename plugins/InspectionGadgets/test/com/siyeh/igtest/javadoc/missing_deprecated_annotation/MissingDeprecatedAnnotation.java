@@ -32,6 +32,9 @@ class <warning descr="Missing '@deprecated' Javadoc tag explanation"><caret>Two<
   @Deprecated
   void <warning descr="Missing '@deprecated' Javadoc tag explanation">b</warning>() {}
 
+  /**
+   * something
+   */
   @Deprecated
   String <warning descr="Missing '@deprecated' Javadoc tag explanation">s</warning>;
 }

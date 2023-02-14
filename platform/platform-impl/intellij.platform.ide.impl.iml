@@ -61,7 +61,6 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.dependenciesToolwindow" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
@@ -143,5 +142,6 @@
     <orderEntry type="library" name="HdrHistogram" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

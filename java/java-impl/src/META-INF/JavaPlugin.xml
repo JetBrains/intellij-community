@@ -965,7 +965,6 @@
                    implementationClass="com.intellij.util.xml.converters.ClassArrayConverterImpl"/>
 
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
-    <previewHintProvider implementation="com.intellij.codeInsight.preview.JavaPreviewHintProvider"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineStaticImportHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineConstantFieldHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineLocalHandler"/>
@@ -1110,7 +1109,7 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightRecordComponentsRecordFactory"/>
     <workspaceModel.moduleExtensionBridgeFactory
-      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Companion"/>
+      implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge$Factory"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext contextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext contextId="JAVA_STATEMENT" baseContextId="JAVA_CODE" implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
@@ -2360,6 +2359,7 @@
     <notificationGroup id="External annotations" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.external.annotations"/>
     <notificationGroup id="Test integration" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.testintegration"/>
 
+    <compiler.task execute="BEFORE" implementation="com.intellij.jarRepository.CompilationDependenciesResolutionTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
@@ -2368,6 +2368,9 @@
     <applicationService serviceInterface="com.intellij.ide.starters.local.generator.AssetsProcessor"
                         serviceImplementation="com.intellij.ide.starters.local.generator.AssetsProcessorImpl"
                         testServiceImplementation="com.intellij.ide.starters.local.generator.TestAssetsProcessorImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.ModulesConfigurator$NewProjectWizardFactory"
+                        serviceImplementation="com.intellij.openapi.roots.ui.configuration.ModulesConfigurator$NewProjectWizardFactoryImpl"/>
 
     <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
@@ -2392,7 +2395,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
-    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>
+    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="before LastResortProvider"/>
   </extensions>
 
   <actions resource-bundle="messages/JavaUiBundle">

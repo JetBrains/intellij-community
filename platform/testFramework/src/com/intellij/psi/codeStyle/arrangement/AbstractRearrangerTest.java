@@ -154,7 +154,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     for (final FoldingInfo foldingInfo : info.foldings) {
       foldingModel.runBatchFoldingOperation(() -> {
-        FoldRegion region = foldingModel.addFoldRegion(foldingInfo.start, foldingInfo.end, foldingInfo.placeholder);
+        FoldRegion region = foldingModel.addFoldRegion(foldingInfo.start(), foldingInfo.end(), foldingInfo.placeholder());
         if (region != null) region.setExpanded(false);
       });
     }
@@ -171,9 +171,9 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     Info after = parse(expected);
     assertEquals(after.text, myFixture.getEditor().getDocument().getText());
     for (FoldingInfo it : after.foldings) {
-      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(it.start);
-      assertNotNull("Expected to find fold region at offset " + it.start, foldRegion);
-      assertEquals(it.end, foldRegion.getEndOffset());
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(it.start());
+      assertNotNull("Expected to find fold region at offset " + it.start(), foldRegion);
+      assertEquals(it.end(), foldRegion.getEndOffset());
     }
   }
 

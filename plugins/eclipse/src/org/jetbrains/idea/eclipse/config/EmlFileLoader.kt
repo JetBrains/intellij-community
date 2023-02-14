@@ -7,7 +7,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.toPath
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.IdeaXml
@@ -127,7 +126,7 @@ internal class EmlFileLoader(
     }
 
     if (sdkItem != null) {
-      (module as ModuleEntity.Builder).apply {
+      module.apply {
         val newDependencies = dependencies.map {
           when (it) {
             is ModuleDependencyItem.SdkDependency -> sdkItem
@@ -167,15 +166,15 @@ internal class EmlFileLoader(
   }
 
   private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity) {
-    val entriesElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
-    if (entriesElements.isNotEmpty()) {
-      entriesElements.forEach {
-        val url = virtualFileManager.fromUrl(it.getAttributeValue(IdeaXml.URL_ATTR)!!)
+    val entryElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
+    if (entryElements.isNotEmpty()) {
+      entryElements.forEach { entryTag ->
+        val url = virtualFileManager.fromUrl(entryTag.getAttributeValue(IdeaXml.URL_ATTR)!!)
         val contentRootEntity = contentRoot.module.contentRoots.firstOrNull { it.url == url }
                                 ?: ContentRootEntity(url, emptyList(), module.entitySource) {
                                   this.module = module
                                 }
-        loadContentEntry(it, contentRootEntity)
+        loadContentEntry(entryTag, contentRootEntity)
       }
     }
     else {

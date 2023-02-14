@@ -133,7 +133,7 @@ abstract class RunManager {
    */
   abstract fun shouldSetRunConfigurationFromContext(): Boolean
 
-  abstract fun isRunWidgetActive(): Boolean
+  abstract fun isRiderRunWidgetActive(): Boolean
 
   /**
    * Creates a configuration of the specified type with the specified name. Note that you need to call

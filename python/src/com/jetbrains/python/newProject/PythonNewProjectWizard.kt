@@ -116,7 +116,7 @@ class NewPythonProjectStep<P>(parent: P)
       contentEntryPath = projectPath.toString()
       moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
     }
-    intellijModule = moduleBuilder.commit(project)?.firstOrNull()
+    intellijModule = setupProjectFromBuilder(project, moduleBuilder)
   }
 
   private fun setupSdk(project: Project) {

@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
@@ -84,9 +83,4 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
    * Method for creation facet XML tag from root type entity and root element passed as parameters
    */
   fun serialize(entity: T, rootElement: Element): Element
-
-  companion object {
-    val EP_NAME: ExtensionPointName<CustomFacetRelatedEntitySerializer<ModuleSettingsBase>> =
-      ExtensionPointName.create("com.intellij.workspaceModel.customFacetRelatedEntitySerializer")
-  }
 }

@@ -70,10 +70,9 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiLiteralExpression)) {
+      if (!(element instanceof PsiLiteralExpression literalExpression)) {
         return;
       }
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final PsiType type = literalExpression.getType();
       if (type == null) {
         return;

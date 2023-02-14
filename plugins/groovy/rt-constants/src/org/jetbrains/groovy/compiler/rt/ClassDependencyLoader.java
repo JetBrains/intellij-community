@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClassDependencyLoader {
-  private final Set<Class<?>> myVisited = new HashSet<Class<?>>();
+  private final Set<Class<?>> myVisited = new HashSet<>();
 
   /**
    * @throws ClassNotFoundException when any of the classes can't be loaded, that's referenced in aClass' fields, methods etc. recursively

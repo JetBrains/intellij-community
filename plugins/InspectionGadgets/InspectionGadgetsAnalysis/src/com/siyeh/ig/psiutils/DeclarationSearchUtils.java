@@ -65,10 +65,9 @@ public final class DeclarationSearchUtils {
     }
     else if (def instanceof PsiReferenceExpression) {
       final PsiElement parent = def.getParent();
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
         return null;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
         return null;
       }

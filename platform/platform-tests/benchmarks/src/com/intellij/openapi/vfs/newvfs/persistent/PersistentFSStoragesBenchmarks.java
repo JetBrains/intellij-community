@@ -32,6 +32,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * how much space for optimization is left.
  */
 @State(Scope.Benchmark)
+@SuppressWarnings("FieldMayBeStatic")
 public class PersistentFSStoragesBenchmarks {
   //@Param
   public static final int RECORDS_COUNT = 1 << 22;

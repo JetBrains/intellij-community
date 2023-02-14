@@ -92,8 +92,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
       if (event instanceof VFileContentChangeEvent) {
         fileToIndex = event.getFile();
       }
-      else if (event instanceof VFileCopyEvent) {
-        final VFileCopyEvent ce = (VFileCopyEvent)event;
+      else if (event instanceof VFileCopyEvent ce) {
         final VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
         if (copy != null) {
           fileToIndex = copy;
@@ -111,8 +110,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         fileToIndex = event.getFile();
         onlyContentDependent = false;
       }
-      else if (event instanceof VFilePropertyChangeEvent) {
-        final VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+      else if (event instanceof VFilePropertyChangeEvent pce) {
         String propertyName = pce.getPropertyName();
         if (propertyName.equals(VirtualFile.PROP_NAME)) {
           // indexes may depend on file name

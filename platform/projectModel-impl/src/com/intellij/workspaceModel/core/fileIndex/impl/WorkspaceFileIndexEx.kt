@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
@@ -30,30 +30,20 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
 
   /**
-   * Reset caches which cannot be updated incrementally.
+   * Holds references to the currently stored data.
    */
-  fun resetCustomContributors()
+  val indexData: WorkspaceFileIndexData
 
   /**
-   * Notifies the index about changes in files associated with the entities. 
-   * Must be called inside Write Action, and [updateDirtyEntities] must be called before that Write Action finishes.
-   * It may happen that an implementation of [com.intellij.openapi.vfs.newvfs.BulkFileListener] will try to get information about changed
-   * files synchronously during the same Write Action, in that case the index should recalculate the data to provide correct results.
-   * @param entityReferences references to entities which refer to files which were created, deleted, moved or renamed
-   * @param filesToInvalidate files which were deleted or moved to other directories and was referenced from some entities
+   * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under 
+   * [fileOrDir] directory using [processor].
+   * @param customFilter determines whether an individual file or directory should be processed;
+   * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
+   * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned 
+   * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP]. 
    */
-  fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>)
-
-  /**
-   * Forces the index to update entities marked by [markDirty]. Must be called during execution of the same Write Action as [markDirty].
-   */
-  fun updateDirtyEntities()
-
-  /**
-   * Analyzes changes in VFS and determines how the index must be updated.
-   */
-  @RequiresReadLock
-  fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? 
+  fun processContentFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
+                                     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
   /**
    * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.

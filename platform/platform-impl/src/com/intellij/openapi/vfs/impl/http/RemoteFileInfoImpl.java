@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsContexts;
@@ -128,19 +127,23 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
 
     VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), localIOFile.toString(), localFile -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
-        LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
-        synchronized (myLock) {
-          myLocalVirtualFile = localFile;
-          myPrevLocalFile = null;
-          myState = RemoteFileState.DOWNLOADED;
-          myErrorMessage = null;
-        }
-        for (FileDownloadingListener listener : myListeners) {
+      LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
+      LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
+      synchronized (myLock) {
+        myLocalVirtualFile = localFile;
+        myPrevLocalFile = null;
+        myState = RemoteFileState.DOWNLOADED;
+        myErrorMessage = null;
+      }
+
+      for (FileDownloadingListener listener : myListeners) {
+        try {
           listener.fileDownloaded(localFile);
         }
-      });
+        catch (Throwable t) {
+          LOG.error(t);
+        }
+      }
     });
   }
 

@@ -17,7 +17,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
 
   protected AbstractDependencyNode(long id) {
     this.id = id;
-    dependencies = new ArrayList<DependencyNode>(0);
+    dependencies = new ArrayList<>(0);
   }
 
   @Override

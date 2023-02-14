@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IJSwingUtilities;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
@@ -67,14 +68,14 @@ public final class PyConsoleUtil {
     for (String prompt : PROMPTS) {
       if (string.startsWith(prompt)) {
         // Process multi prompts here
-        if (prompt != HELP_PROMPT) {
+        if (!Strings.areSameInstance(prompt, HELP_PROMPT)) {
           final StringBuilder builder = new StringBuilder();
           builder.append(prompt).append(prompt);
           while (string.startsWith(builder.toString())) {
             builder.append(prompt);
           }
           final String multiPrompt = builder.substring(prompt.length());
-          if (prompt == INDENT_PROMPT) {
+          if (Strings.areSameInstance(prompt, INDENT_PROMPT)) {
             prompt = multiPrompt;
           }
           string = string.substring(multiPrompt.length());

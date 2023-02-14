@@ -382,8 +382,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     final PyKeyValueExpression[] keyValueExpressions = expression.getElements();
     for (PyKeyValueExpression keyValueExpression : keyValueExpressions) {
       PyExpression keyExpression = keyValueExpression.getKey();
-      if (keyExpression instanceof PyStringLiteralExpression) {
-        final PyStringLiteralExpression key = (PyStringLiteralExpression)keyExpression;
+      if (keyExpression instanceof PyStringLiteralExpression key) {
         if (key.getStringValue().equals(mappingKey)) {
           return Ref.create(keyValueExpression.getValue());
         }

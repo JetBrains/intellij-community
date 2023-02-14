@@ -4,13 +4,13 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
-import com.intellij.execution.ui.UIExperiment
+import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
@@ -60,6 +60,7 @@ import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
+import training.util.isToStringContains
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
 import java.awt.*
@@ -402,37 +403,27 @@ fun LessonContext.firstLessonCompletedMessage() {
 
 fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    val stopAction = getActionById("Stop")
     triggerAndBorderHighlight {
       this.highlightInside = highlightInside
       this.usePulsation = usePulsation
-    }.componentPart { ui: ActionToolbarImpl ->
-      ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let {
-        val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
-        val stop = ui.components.find { it is ActionButton && it.action == stopAction }
-        if (configurations != null && stop != null) {
-          val x = configurations.x
-          val y = configurations.y
-          val width = stop.x + stop.width - x
-          val height = stop.y + stop.height - y
-          Rectangle(x, y, width, height)
-        }
-        else null
-      }
+    }.component { toolbar: ActionToolbarImpl ->
+      val actionId = ActionManager.getInstance().getId(toolbar.actionGroup)
+      actionId == "RunToolbarMainActionGroup" || actionId == "ContrastRunToolbarMainActionGroup"
     }
   }
 }
 
 fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
+    // wait for the treads & variables tab to be become selected
+    // otherwise the incorrect toolbar can be highlighted in the next task
+    triggerUI().component { tabs: JBRunnerTabs ->
+      tabs.selectedInfo?.text.isToStringContains(XDebuggerBundle.message("xdebugger.threads.vars.tab.title"))
+    }
   }
 
   task {
-    if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
-                                 highlightInside, usePulsation, clearPreviousHighlights = false)
-    }
+    highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
 }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-
 import java.util.List;
 import java.util.function.Function;
 
@@ -67,6 +67,7 @@ public final class DocumentationHtmlUtil {
     String sectionColor = ColorUtil.toHtmlColor(SECTION_COLOR);
     String editorFontStyle = "{ font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\";" +
                              "font-size:" + getMonospaceFontSizeCorrection() + "%; }";
+    int fontSize = StartupUiUtil.getLabelFont().getSize();
 
     return List.of(
       "tt " + editorFontStyle,
@@ -75,7 +76,12 @@ public final class DocumentationHtmlUtil {
       ".pre " + editorFontStyle,
 
       "html { padding-bottom: 8px; }",
-      "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }",
+      "h5, h6 { margin-top: 8px; margin-bottom: 0 }",
+      "h4 { margin-top: 8px; margin-bottom: 0; font-size: " + fontSize + "}",
+      "h3 { margin-top: 8px; margin-bottom: 0; font-size: " + (fontSize + 3) + "}",
+      "h2 { margin-top: 8px; margin-bottom: 0; font-size: " + (fontSize + 5) + "}",
+      "h1 { margin-top: 8px; margin-bottom: 0; font-size: " + (fontSize + 9) + "}",
+      "h0 { margin-top: 8px; margin-bottom: 0; font-size: " + (fontSize + 12) + "}",
       "a { color: " + linkColor + "; text-decoration: none;}",
       ".definition { padding: " + definitionTopPadding + "px 17px 1px " + leftPadding + "px;" +
       "              border-bottom: thin solid " + borderColor + "; }",

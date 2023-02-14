@@ -3,34 +3,43 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal object GitLabMergeRequestDetailsDescriptionComponentFactory {
+  private const val VISIBLE_DESCRIPTION_LINES = 2
+
   fun create(
     scope: CoroutineScope,
-    detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel,
-    openTimeLineAction: (GitLabMergeRequestId, Boolean) -> Unit
+    detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   ): JComponent {
     val descriptionPanel = SimpleHtmlPane().apply {
       bindText(scope, detailsInfoVm.description)
     }
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
-      openTimeLineAction(GitLabMergeRequestId.Simple(detailsInfoVm.number), true)
+      detailsInfoVm.showTimeline()
     }.apply {
       border = JBUI.Borders.emptyTop(4)
     }
 
-    return VerticalListPanel().apply {
+    val layout = MigLayout(LC().emptyBorders().flowY())
+    return JPanel(layout).apply {
       name = "Review details description panel"
-      add(descriptionPanel)
-      add(timelineLink)
+      isOpaque = false
+
+      val maxHeight = UIUtil.getUnscaledLineHeight(descriptionPanel) * VISIBLE_DESCRIPTION_LINES
+      add(descriptionPanel, CC().maxHeight("$maxHeight"))
+      add(timelineLink, CC())
     }
   }
 }

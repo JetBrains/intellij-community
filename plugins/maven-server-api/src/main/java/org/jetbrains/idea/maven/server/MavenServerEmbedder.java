@@ -97,6 +97,7 @@ public interface MavenServerEmbedder extends Remote {
 
   void clearCaches(MavenToken token) throws RemoteException;
 
+  @Deprecated
   void clearCachesFor(MavenId projectId, MavenToken token) throws RemoteException;
 
   @Nullable

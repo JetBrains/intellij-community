@@ -6,8 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 
 interface ModuleDependencyProviderExtension {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use #processAdditionalDependencyModules", ReplaceWith("processAdditionalDependencyModules(module, processor)"))
     fun getAdditionalDependencyModules(module: Module): Collection<Module>
 

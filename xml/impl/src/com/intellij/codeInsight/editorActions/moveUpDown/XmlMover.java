@@ -116,11 +116,10 @@ public class XmlMover extends LineMover {
     if (down) {
       final XmlElement targetParent = getDestinationElement(file, movedParent, moveDestinationRange.getEndOffset(), false);
       if (targetParent != null) {
-        if (movedParent instanceof XmlTagChild && targetParent instanceof XmlTag) {
+        if (movedParent instanceof XmlTagChild && targetParent instanceof XmlTag tag) {
           if (targetParent == movedParent) return false;
           if (movedParent instanceof XmlTag && moveTags(info, (XmlTag)movedParent, (XmlTag)targetParent, true)) return true;
 
-          final XmlTag tag = (XmlTag)targetParent;
           final int offset = tag.isEmpty() ? tag.getTextRange().getStartOffset() : getTagContentRange(tag).getStartOffset();
           updatedMovedIntoEnd(document, info, offset);
           if (tag.isEmpty()) {
@@ -133,8 +132,7 @@ public class XmlMover extends LineMover {
     } else {
       final XmlElement targetParent = getDestinationElement(file, movedParent, moveDestinationRange.getStartOffset(), true);
       if (targetParent != null) {
-        if (movedParent instanceof XmlTagChild && targetParent instanceof XmlTag) {
-          final XmlTag tag = (XmlTag)targetParent;
+        if (movedParent instanceof XmlTagChild && targetParent instanceof XmlTag tag) {
           final TextRange tagValueRange = getTagContentRange(tag);
 
           // We need to update destination range to jump over tag start

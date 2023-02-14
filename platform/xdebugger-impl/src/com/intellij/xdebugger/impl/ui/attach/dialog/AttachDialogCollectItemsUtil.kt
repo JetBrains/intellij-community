@@ -27,7 +27,7 @@ private val logger = Logger.getInstance("AttachDialogCollectItemsUtil")
  */
 interface ProcessPredicate : Supplier<Predicate<ProcessInfo>>
 
-internal suspend fun collectAttachProcessItemsGroupByProcessInfo(
+suspend fun collectAttachProcessItemsGroupByProcessInfo(
   project: Project,
   host: XAttachHost,
   attachDebuggerProviders: List<XAttachDebuggerProvider>): AttachItemsInfo {

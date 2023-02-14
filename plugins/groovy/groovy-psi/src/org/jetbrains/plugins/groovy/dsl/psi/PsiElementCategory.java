@@ -61,8 +61,7 @@ public class PsiElementCategory implements PsiEnhancerCategory {
   }
 
   public static Object eval(PsiElement elem) {
-    if (elem instanceof GrLiteral) {
-      GrLiteral literal = (GrLiteral)elem;
+    if (elem instanceof GrLiteral literal) {
       return literal.getValue();
     }
     return elem;

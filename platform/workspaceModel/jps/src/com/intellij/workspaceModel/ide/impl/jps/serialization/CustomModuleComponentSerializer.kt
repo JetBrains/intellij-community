@@ -7,7 +7,13 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * This extension supports loading and saving additional settings from *.iml files to workspace model. 
+ * This extension supports loading and saving additional settings from *.iml files to workspace model.
+ * Implementations must be registered in the plugin.xml file:
+ * ```xml
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <workspaceModel.customModuleComponentSerializer implementation="qualified-class-name"/>
+ * </extensions>
+ * ```
  */
 @ApiStatus.Internal
 interface CustomModuleComponentSerializer {

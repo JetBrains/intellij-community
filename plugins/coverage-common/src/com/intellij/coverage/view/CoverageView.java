@@ -4,6 +4,7 @@ package com.intellij.coverage.view;
 import com.intellij.CommonBundle;
 import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -78,6 +80,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final CoverageSuitesBundle mySuitesBundle;
   private final CoverageViewExtension myViewExtension;
   private final CoverageViewTreeStructure myTreeStructure;
+  private boolean myHasVCSFilter = false;
+  private boolean myHasFullyCoveredFilter = false;
 
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
@@ -126,6 +130,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     else {
       addToTop(toolbarComponent);
     }
+    CoverageLogger.logViewOpen(project, myStateBean.isShowOnlyModified(), myHasVCSFilter, myStateBean.isHideFullyCovered(), myHasFullyCoveredFilter);
 
     setUpEmptyText(false, false);
     if (myTreeStructure.getRootElement() instanceof CoverageListRootNode root) {
@@ -189,6 +194,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void setUpShowRootNode() {
+    final var showFull = new Ref<>(false);
     myModel.addTreeModelListener(new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
@@ -212,7 +218,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       private void setUpRootVisible(TreeModelEvent e) {
         final Object root = myModel.getRoot();
         if (e.getTreePath().getLastPathComponent() == root) {
-          final boolean showRoot = myModel.getChildCount(root) > 1;
+          final int childCount = myModel.getChildCount(root);
+          final boolean showRoot = childCount > 1 || childCount == 1 && showFull.get();
+          if (showRoot && !myStateBean.isShowOnlyModified() && !myStateBean.isHideFullyCovered()) {
+            showFull.set(true);
+          }
           if (showRoot != myTable.getTree().isRootVisible()) {
             myTable.getTree().setRootVisible(showRoot);
           }
@@ -363,6 +373,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
       filtersActionGroup.add(new ShowOnlyModifiedAction());
       hasFilters = true;
+      myHasVCSFilter = true;
     }
     else {
       myStateBean.setShowOnlyModified(false);
@@ -370,6 +381,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (myViewExtension.supportFlattenPackages()) {
       filtersActionGroup.add(new HideFullyCoveredAction());
       hasFilters = true;
+      myHasFullyCoveredFilter = true;
+    }
+    else {
+      myStateBean.setHideFullyCovered(false);
     }
     if (hasFilters) {
       filtersActionGroup.setPopup(true);

@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -56,12 +56,12 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val moduleBuildScript = createBuildScriptBuilder()
-      .withJavaPlugin()
-      .withJUnit4()
-      .addPostfix("""
+    createBuildFile("module") {
+      withJavaPlugin()
+      withJUnit4()
+      addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
-            baseName = "test-${'$'}{project.archivesBaseName}"
+            archiveBaseName = "test-${'$'}{project.archivesBaseName}"
             from sourceSets.test.output
         }
 
@@ -73,13 +73,13 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
             testArtifacts  myTestsJar
         }
       """.trimIndent())
-    createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
-    createProjectSubFile("dep-module/build.gradle", buildscript {
+    }
+    createBuildFile("dep-module") {
       withJavaPlugin()
       withJUnit4()
       addImplementationDependency(project(":module"))
       addImplementationDependency(project(":module", "testArtifacts"))
-    })
+    }
     createSettingsFile("""
       rootProject.name = 'project'
       include 'module'

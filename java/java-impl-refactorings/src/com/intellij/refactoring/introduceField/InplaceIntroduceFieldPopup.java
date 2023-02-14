@@ -14,7 +14,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.JavaNameSuggestionUtil;
-import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +40,9 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                     final boolean allowInitInMethod,
                                     boolean allowInitInMethodIfAll, final PsiElement anchorElement,
                                     final PsiElement anchorElementIfAll,
-                                    final OccurrenceManager occurrenceManager, Project project) {
+                                    Project project) {
     super(project, editor, initializerExpression, localVariable, occurrences, typeSelectorManager,
-          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, occurrenceManager, anchorElementIfAll);
+          IntroduceFieldHandler.getRefactoringNameText(), parentClass, anchorElement, anchorElementIfAll);
     myStatic = aStatic;
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
@@ -210,7 +209,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
         else {
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurrenceManager,
+                                                                    myOccurrences,
                                                                     getAnchorElementIfAll(),
                                                                     getAnchorElement(), myEditor,
                                                                     getParentClass());

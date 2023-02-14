@@ -763,8 +763,7 @@ public final class PsiVFSListener implements BulkFileListener {
     }
     else {
       assert subList.size() == 1;
-      if (event instanceof VFileCopyEvent) {
-        VFileCopyEvent ce = (VFileCopyEvent)event;
+      if (event instanceof VFileCopyEvent ce) {
         VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
         if (copy != null) {
           fileCreated(copy); // no need to group file creation events

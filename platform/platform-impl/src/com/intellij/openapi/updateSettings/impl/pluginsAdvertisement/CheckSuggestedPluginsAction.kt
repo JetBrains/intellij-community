@@ -2,16 +2,16 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbAwareAction
 
 internal class CheckSuggestedPluginsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    runBlockingUnderModalProgress(title = IdeBundle.message("plugins.advertiser.check.progress"), project = project) {
+    runBlockingModal(project, IdeBundle.message("plugins.advertiser.check.progress")) {
       PluginsAdvertiserStartupActivity().checkSuggestedPlugins(project = project, includeIgnored = true)
     }
   }

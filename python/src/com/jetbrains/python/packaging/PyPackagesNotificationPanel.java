@@ -17,9 +17,7 @@ public class PyPackagesNotificationPanel extends PackagesNotificationPanel {
 
   public static void showPackageInstallationError(@NotNull @NlsContexts.DialogTitle String title,
                                                   @NotNull PackageManagementService.ErrorDescription description) {
-    if (description instanceof PyPackageManagementService.PyPackageInstallationErrorDescription) {
-      final PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription =
-        (PyPackageManagementService.PyPackageInstallationErrorDescription)description;
+    if (description instanceof PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription) {
       final PyPackageInstallationErrorDialog dialog = new PyPackageInstallationErrorDialog(title, errorDescription);
       dialog.show();
     } else {

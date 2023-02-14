@@ -27,11 +27,9 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
-    if (!(value instanceof ArrayReference)) {
+    if (!(value instanceof ArrayReference array)) {
       throw new UnexpectedValueTypeException("Array reference expected. But " + value.type().name() + " received");
     }
-
-    final ArrayReference array = (ArrayReference)value;
 
     final TraceInfo resolved = myPeekResolver.resolve(call, array.getValue(0));
     final Map<Integer, TraceElement> before = resolved.getValuesOrderBefore();

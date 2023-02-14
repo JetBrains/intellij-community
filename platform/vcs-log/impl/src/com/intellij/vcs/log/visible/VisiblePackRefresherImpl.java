@@ -478,8 +478,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   public static boolean isVisibleKeyFor(@NotNull VcsLogProgress.ProgressKey key, @NotNull String logId) {
-    if (key instanceof VisiblePackProgressKey) {
-      VisiblePackProgressKey visiblePackProgressKey = (VisiblePackProgressKey)key;
+    if (key instanceof VisiblePackProgressKey visiblePackProgressKey) {
       return visiblePackProgressKey.getLogId().equals(logId) && visiblePackProgressKey.isVisible();
     }
     return false;

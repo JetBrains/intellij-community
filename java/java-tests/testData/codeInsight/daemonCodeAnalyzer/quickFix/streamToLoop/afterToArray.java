@@ -8,8 +8,8 @@ public class Main {
   private static Object[] test(int[] numbers) {
       List<Integer> list = new ArrayList<>();
       for (int number : numbers) {
-          Integer integer = number;
-          list.add(integer);
+          Integer i = number;
+          list.add(i);
       }
       return list.toArray();
   }
@@ -27,8 +27,8 @@ public class Main {
   private static Number[] testCovariant(int[] numbers) {
       List<Integer> list = new ArrayList<>();
       for (int number : numbers) {
-          Integer integer = number;
-          list.add(integer);
+          Integer i = number;
+          list.add(i);
       }
       return list.toArray(new Integer[0]);
   }
@@ -36,8 +36,8 @@ public class Main {
   private static Number[] testCovariantLambda(int[] numbers) {
       List<Integer> list = new ArrayList<>();
       for (int number : numbers) {
-          Integer integer = number;
-          list.add(integer);
+          Integer i = number;
+          list.add(i);
       }
       return list.toArray(new Integer[0]);
   }

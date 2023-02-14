@@ -13,18 +13,10 @@ import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 /**
- * @return corresponding [com.intellij.openapi.module.Module] or null if module is unloaded
+ * @return corresponding [com.intellij.openapi.module.Module] or `null` if this entity isn't added to the project model yet.
  */
 fun ModuleEntity.findModule(snapshot: EntityStorage): ModuleBridge? {
   return snapshot.moduleMap.getDataByEntity(this)
-}
-
-/**
- * Check if the module is unloaded. **Note** even if the module is unloaded all related entities will continue store at project model
- * thus the changes with these entities will be available for listening via [com.intellij.workspaceModel.ide.WorkspaceModelChangeListener]
- */
-fun ModuleEntity.isModuleUnloaded(snapshot: EntityStorage): Boolean {
-  return this.findModule(snapshot) == null
 }
 
 /**

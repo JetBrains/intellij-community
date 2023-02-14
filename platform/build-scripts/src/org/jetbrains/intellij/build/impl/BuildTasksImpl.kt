@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
@@ -21,7 +19,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.io.FilenameUtils
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
@@ -60,6 +57,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
+import java.util.zip.Deflater
 import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
@@ -83,12 +81,13 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
-    val distributionJARsBuilder = DistributionJARsBuilder(compilePlatformAndPluginModules(pluginsToPublish, context))
-    distributionJARsBuilder.buildSearchableOptions(context)
-    distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                                                   compressPluginArchive = context.options.compressZipFiles,
-                                                   buildPlatformLibJob = null,
-                                                   context = context)
+    val state = compilePlatformAndPluginModules(pluginsToPublish, context)
+    buildSearchableOptions(state, context)
+    buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
+                           compressPluginArchive = context.options.compressZipFiles,
+                           buildPlatformLibJob = null,
+                           state = state,
+                           context = context)
   }
 
   override fun compileProjectAndTests(includingTestsInModules: List<String>) {
@@ -114,7 +113,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context = context, isUpdateFromSources = true)
+    buildDistribution(state = compileModulesForDistribution(context), context = context, isUpdateFromSources = true)
     val arch = if (SystemInfo.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
@@ -143,14 +142,9 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val pluginLayoutRoot = withContext(Dispatchers.IO) {
-    Files.createDirectories(context.paths.tempDir)
-    Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
-  }
   writeProjectStructureReport(
     entries = generateProjectStructureMapping(context = context,
-                                              state = DistributionBuilderState(pluginsToPublish = emptySet(), context = context),
-                                              pluginLayoutRoot = pluginLayoutRoot),
+                                              state = createDistributionBuilderState(pluginsToPublish = emptySet(), context = context)),
     file = targetFile,
     buildPaths = context.paths
   )
@@ -188,7 +182,7 @@ private suspend fun buildProvidedModuleList(targetFile: Path, state: Distributio
   context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
     withContext(Dispatchers.IO) {
       Files.deleteIfExists(targetFile)
-      val ideClasspath = DistributionJARsBuilder(state).createIdeClassPath(context)
+      val ideClasspath = createIdeClassPath(state, context)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
       runApplicationStarter(context = context,
                             tempDir = context.paths.tempDir.resolve("builtinModules"),
@@ -430,8 +424,8 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       val debugMapping = mutableListOf<String>()
       for (moduleName in modules) {
         val module = context.findRequiredModule(moduleName)
-        // We pack source of libraries which are included into compilation classpath for platform API modules,
-        // this way we'll get sources of all libraries useful for plugin developers and size of the archive will be reasonable
+        // We pack sources of libraries which are included in compilation classpath for platform API modules.
+        // This way we'll get sources of all libraries useful for plugin developers, and the size of the archive will be reasonable.
         if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
           val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
           includedLibraries.addAll(libraries)
@@ -444,7 +438,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
         .asSequence()
         .map { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
         .filterNotNull()
-        .filter { library -> library.getFiles(JpsOrderRootType.SOURCES).any { Files.notExists(it.toPath()) } }
+        .filter { library -> library.getPaths(JpsOrderRootType.SOURCES).any { Files.notExists(it) } }
         .toList()
       if (!librariesWithMissingSources.isEmpty()) {
         withContext(Dispatchers.IO) {
@@ -516,8 +510,8 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
-  val distState = DistributionBuilderState(pluginsToPublish, context)
+private suspend fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
+  val distState = createDistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
   compilationTasks.compileModules(
     distState.getModulesForPluginsToPublish() +
@@ -584,13 +578,8 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
     createMavenArtifactJob(context, distributionState)
 
     spanBuilder("build platform and plugin JARs").useWithScope2<Unit> {
-      val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
-
-      if (context.productProperties.buildDocAuthoringAssets) {
-        buildAdditionalAuthoringArtifacts(distributionJARsBuilder, context)
-      }
       if (context.shouldBuildDistributions()) {
-        val entries = distributionJARsBuilder.buildJARs(context)
+        val entries = buildDistribution(state = distributionState, context)
         if (context.productProperties.buildSourcesArchive) {
           buildSourcesArchive(entries, context)
         }
@@ -598,11 +587,12 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       else {
         Span.current().addEvent("skip building product distributions because " +
                                 "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-        distributionJARsBuilder.buildSearchableOptions(context)
-        distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                                                       compressPluginArchive = context.options.compressZipFiles,
-                                                       buildPlatformLibJob = null,
-                                                       context = context)
+        buildSearchableOptions(distributionState, context)
+        buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
+                               compressPluginArchive = context.options.compressZipFiles,
+                               buildPlatformLibJob = null,
+                               state = distributionState,
+                               context = context)
       }
     }
 
@@ -723,10 +713,6 @@ private fun checkProductLayout(context: BuildContext) {
   val layout = context.productProperties.productLayout
   // todo mainJarName type specified as not-null - does it work?
   val messages = context.messages
-  @Suppress("SENSELESS_COMPARISON")
-  check(layout.mainJarName != null) {
-    "productProperties.productLayout.mainJarName is not specified"
-  }
 
   val pluginLayouts = layout.pluginLayouts
   checkScrambleClasspathPlugins(pluginLayouts)
@@ -754,18 +740,15 @@ private fun checkProductLayout(context: BuildContext) {
   }
   checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules", context)
   checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
-  checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars", context)
   checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
   checkModules(layout.mainModules, "productProperties.productLayout.mainModules", context)
-  checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar,
-                        "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar", context)
   for (plugin in pluginLayouts) {
     checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
   }
 }
 
 private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
-  checkModules(layout.includedModuleNames.toList(), "moduleJars in $description", context)
+  checkModules(layout.includedModules.asSequence().map { it.moduleName }.distinct().toList(), "moduleJars in $description", context)
   checkArtifacts(layout.includedArtifacts.keys, "includedArtifacts in $description", context)
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
@@ -789,7 +772,6 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     }
   }
 
-  checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description", context)
   checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description", context)
 }
 
@@ -892,7 +874,7 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
 
 fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
-  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
+  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule), excludes = commonModuleExcludes)
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
     .productionOnly()
     .runtimeOnly()
@@ -978,16 +960,25 @@ private suspend fun checkClassFiles(targetFile: Path, context: BuildContext) {
     context.productProperties.versionCheckerConfig
   }
 
-  val forbiddenSubPaths = if (context.options.validateClassFileSubpaths) {
-    context.productProperties.forbiddenClassFileSubPaths
-  }
-  else {
+  val forbiddenSubPaths = if (context.proprietaryBuildTools.scrambleTool == null) {
     emptyList()
   }
+  else {
+    context.productProperties.forbiddenClassFileSubPaths
+  }
 
-  val classFileCheckRequired = (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
-  if (classFileCheckRequired) {
-    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile, context.messages)
+  if (forbiddenSubPaths.isNotEmpty()) {
+    require(context.productProperties.scrambleMainJar) {
+      "productProperties.scrambleMainJar is set to false, but productProperties.forbiddenClassFileSubPaths is not empty " +
+      "(forbiddenClassFileSubPaths=$forbiddenSubPaths)"
+    }
+  }
+
+  if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
+    checkClassFiles(versionCheckConfig = versionCheckerConfig,
+                    forbiddenSubPaths = forbiddenSubPaths,
+                    root = targetFile,
+                    messages = context.messages)
   }
 }
 
@@ -1152,10 +1143,9 @@ fun getModulesToCompile(buildContext: BuildContext): Set<String> {
   val productLayout = buildContext.productProperties.productLayout
   val result = LinkedHashSet<String>()
   result.addAll(productLayout.getIncludedPluginModules(java.util.Set.copyOf(productLayout.bundledPluginModules)))
-  PlatformModules.collectPlatformModules(result)
+  collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
-  result.addAll(productLayout.additionalPlatformJars.values())
   result.addAll(getToolModules())
   result.addAll(buildContext.productProperties.additionalModulesToCompile)
   result.add("intellij.idea.community.build.tasks")
@@ -1164,29 +1154,29 @@ fun getModulesToCompile(buildContext: BuildContext): Set<String> {
   return result
 }
 
-// Captures information about all available inspections in a JSON format as part of Inspectopedia project.
-// This is later used by Qodana and other tools. Keymaps are extracted as XML file and also used in help authoring.
-private suspend fun buildAdditionalAuthoringArtifacts(builder: DistributionJARsBuilder,
-                                                      context: BuildContext) {
-
+// Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
+// This is later used by Qodana and other tools. Keymaps are extracted as an XML file and also used in help authoring.
+internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>, context: BuildContext) {
   val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
                         Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
 
-  val ideClasspath = builder.createIdeClassPath(context)
   val temporaryBuildDirectory = context.paths.tempDir
+  coroutineScope {
+    for (command in commands) {
+      launch {
+        val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
+        val targetPath = temporaryStepDirectory.resolve(command.second)
+        runApplicationStarter(context = context,
+                              tempDir = temporaryStepDirectory,
+                              ideClasspath = ideClassPath,
+                              arguments = listOf(command.first, targetPath.toString()))
 
-  commands.forEach {
-    val temporaryStepDirectory = temporaryBuildDirectory.resolve(it.first)
-    val targetPath = temporaryStepDirectory.resolve(it.second)
-
-    runApplicationStarter(context = context,
-                          tempDir = temporaryStepDirectory,
-                          ideClasspath = ideClasspath,
-                          arguments = listOf(it.first, targetPath.toAbsolutePath().toString()))
-
-    val targetFile = context.paths.artifactDir.resolve("${it.second}.zip")
-
-    zipWithCompression(targetFile = targetFile, dirs = mapOf(targetPath to ""))
+        val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
+        zipWithCompression(targetFile = targetFile,
+                           dirs = mapOf(targetPath to ""),
+                           compressionLevel = if (context.options.compressZipFiles) Deflater.DEFAULT_COMPRESSION else Deflater.NO_COMPRESSION)
+      }
+    }
   }
 }
 

@@ -49,9 +49,8 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
                                            int row,
                                            int column) {
         setBorder(null);
-        if (!(value instanceof PluginDownloader)) return;
+        if (!(value instanceof PluginDownloader downloader)) return;
 
-        PluginDownloader downloader = (PluginDownloader)value;
         String pluginName = downloader.getPluginName();
         append(pluginName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
@@ -91,6 +90,8 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     Splitter splitter = new OnePixelSplitter(false);
     splitter.setFirstComponent(wrapWithPane(entryTable, 1, 0));
     splitter.setSecondComponent(wrapWithPane(myDetailsComponent, 0, 1));
+    splitter.setProportion(0.3f);
+
     add(splitter, BorderLayout.CENTER);
   }
 

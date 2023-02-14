@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
@@ -11,10 +10,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -22,6 +23,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchUtil
+import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopup
@@ -36,6 +38,7 @@ private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
+  private val widgetIcon = IconLoader.getIcon("expui/general/vcs.svg", AllIcons::class.java)
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -44,7 +47,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val repository = GitBranchUtil.guessWidgetRepository(project, event.dataContext)
 
     val popup: JBPopup = if (repository != null) {
-      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project)
+      if (GitBranchesTreePopup.isEnabled()) GitBranchesTreePopup.create(project, repository)
       else GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
     }
     else {
@@ -91,6 +94,9 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val state = getState(project, gitRepository)
 
     e.presentation.putClientProperty(projectKey, project)
+    if (gitRepository != null && gitRepository != e.presentation.getClientProperty(repositoryKey)) {
+      GitVcsSettings.getInstance(project).setRecentRoot(gitRepository.root.path)
+    }
     e.presentation.putClientProperty(repositoryKey, gitRepository)
 
     when(state) {
@@ -104,7 +110,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
         with(e.presentation) {
           isEnabledAndVisible = true
           text = placeholder ?: GitBundle.message("git.toolbar.widget.no.repo")
-          icon = if (placeholder != null ) AllIcons.Vcs.Branch else null
+          icon = if (placeholder != null ) widgetIcon else null
           description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
         }
       }
@@ -138,7 +144,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     if (state != Repository.State.NORMAL) {
       return AllIcons.General.Warning
     }
-    return AllIcons.Vcs.Branch
+    return widgetIcon
   }
 
   @Tooltip
@@ -174,15 +180,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     object OtherVcs : GitWidgetState()
   }
 
-  private fun getState(project: Project, gitRepository: GitRepository?) : GitWidgetState {
+  private fun getState(project: Project, gitRepository: GitRepository?): GitWidgetState {
     if (gitRepository != null) {
       return GitWidgetState.Repo(gitRepository)
     }
 
-    val isNonGitRepoExists = !VcsRepositoryManager.getInstance(project).repositories.isEmpty()
-    if (isNonGitRepoExists) return GitWidgetState.OtherVcs
+    val allVcss = ProjectLevelVcsManager.getInstance(project).allActiveVcss
 
-    return GitWidgetState.NoVcs
+    return when {
+      allVcss.isEmpty() -> GitWidgetState.NoVcs
+      allVcss.any { it.keyInstanceMethod != GitVcs.getKey() } -> GitWidgetState.OtherVcs
+      else -> GitWidgetState.NoVcs
+    }
   }
 }
 

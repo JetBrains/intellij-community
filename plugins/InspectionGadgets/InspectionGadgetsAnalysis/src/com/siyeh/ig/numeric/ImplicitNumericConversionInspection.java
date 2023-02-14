@@ -122,8 +122,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       }
       else {
         final PsiElement parent = expression.getParent();
-        if (parent instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        if (parent instanceof PsiAssignmentExpression assignmentExpression) {
           final PsiJavaToken sign = assignmentExpression.getOperationSign();
           if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
             replaceCompoundAssignment(assignmentExpression);
@@ -233,10 +232,9 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     }
 
     private static boolean isNegatedLiteral(PsiExpression expression) {
-      if (!(expression instanceof PsiPrefixExpression)) {
+      if (!(expression instanceof PsiPrefixExpression prefixExpression)) {
         return false;
       }
-      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       if (!JavaTokenType.MINUS.equals(tokenType)) {
         return false;
@@ -320,8 +318,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignmentExpression) {
         if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) {
           if (assignmentExpression.getLExpression() == expression) {
             final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -359,8 +356,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (expressionType.equals(convertedType)) return false;
       if (ignoreConstantConversions) {
         PsiExpression rootExpression = expression;
-        while (rootExpression instanceof PsiParenthesizedExpression) {
-          final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)rootExpression;
+        while (rootExpression instanceof PsiParenthesizedExpression parenthesizedExpression) {
           rootExpression = parenthesizedExpression.getExpression();
         }
         if (rootExpression instanceof PsiLiteralExpression || PsiUtil.isConstantExpression(rootExpression)) {

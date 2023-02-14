@@ -5,11 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.EXCLUDED
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_CONTENT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY_SOURCE_ONLY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
+import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertInModule
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -35,8 +40,9 @@ class SyntheticLibraryInProjectFileIndexTest {
     val srcFile = projectModel.baseProjectDir.newVirtualDirectory("lib/src/src.txt")
     val binaryRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/binary")
     val binaryFile = projectModel.baseProjectDir.newVirtualDirectory("lib/binary/bin.txt")
+    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("lib/excluded")
     val registration = registerSyntheticLibrary(
-      SyntheticLibrary.newImmutableLibrary(listOf(srcRoot), listOf(binaryRoot), emptySet(), null)
+      SyntheticLibrary.newImmutableLibrary(listOf(srcRoot), listOf(binaryRoot), setOf(excludedRoot), null)
     )
     fileIndex.assertScope(srcRoot, IN_LIBRARY or IN_SOURCE)
     fileIndex.assertScope(srcFile, IN_LIBRARY or IN_SOURCE)
@@ -46,13 +52,32 @@ class SyntheticLibraryInProjectFileIndexTest {
     fileIndex.assertScope(binaryFile, IN_LIBRARY)
     assertEquals(binaryRoot, fileIndex.getClassRootForFile(binaryFile))
     assertNull(fileIndex.getSourceRootForFile(binaryFile))
+    fileIndex.assertScope(excludedRoot, EXCLUDED)
     
     registration.unregister()
     
     fileIndex.assertScope(srcRoot, NOT_IN_PROJECT)
     fileIndex.assertScope(binaryRoot, NOT_IN_PROJECT)
+    fileIndex.assertScope(excludedRoot, NOT_IN_PROJECT)
   }
-  
+
+  @Test
+  fun `library roots under content roots`() {
+    val moduleRoot = projectModel.baseProjectDir.newVirtualDirectory("module")
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, moduleRoot)
+    val srcRoot = projectModel.baseProjectDir.newVirtualDirectory("module/src")
+    val binaryRoot = projectModel.baseProjectDir.newVirtualDirectory("module/binary")
+    val excludedRoot = projectModel.baseProjectDir.newVirtualDirectory("module/excluded")
+    registerSyntheticLibrary(
+      SyntheticLibrary.newImmutableLibrary(listOf(srcRoot), listOf(binaryRoot), setOf(excludedRoot), null)
+    )
+    fileIndex.assertInModule(moduleRoot, module, moduleRoot)
+    fileIndex.assertInModule(srcRoot, module, moduleRoot, IN_CONTENT or IN_LIBRARY or IN_SOURCE or IN_LIBRARY_SOURCE_ONLY)
+    fileIndex.assertInModule(binaryRoot, module, moduleRoot, IN_CONTENT or IN_LIBRARY)
+    fileIndex.assertInModule(excludedRoot, module, moduleRoot)
+  }
+
   private interface LibraryRegistration {
     fun unregister()
   }

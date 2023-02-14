@@ -2,6 +2,7 @@
 package com.intellij.ide.customize.transferSettings.ui.representation.ideVersion.sections
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.customize.transferSettings.models.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
@@ -41,8 +42,8 @@ class PluginsSection(private val ideVersion: IdeVersion) : IdeRepresentationSect
 
       comment(
         when (plugin) {
-          is BuiltInFeature -> "built-in"
-          is PluginFeature -> "plugin"
+          is BuiltInFeature -> IdeBundle.message("transfersettings.plugin.built.in")
+          is PluginFeature -> IdeBundle.message("transfersettings.plugin.plugin")
           else -> ""
         }
       )

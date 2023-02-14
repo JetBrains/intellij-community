@@ -34,8 +34,6 @@ import java.util.StringTokenizer;
 public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   protected PsiManagerImpl myPsiManager;
   protected PsiFile myFile;
-  protected PsiTestData myTestDataBefore;
-  protected PsiTestData myTestDataAfter;
   private String myDataRoot;
 
   @Override
@@ -110,6 +108,10 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     return myFile.findElementAt(offset);
   }
 
+  /**
+   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
+   */
+  @Deprecated
   protected void configure(@NotNull String path, String dataName) throws Exception {
     myDataRoot = getTestDataPath() + path;
 
@@ -150,11 +152,21 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     throw new IllegalArgumentException("Cannot find data chunk '" + dataName + "'");
   }
 
+  /**
+   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   protected PsiTestData createData() {
     return new PsiTestData();
   }
 
+  /**
+   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
+   */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @Deprecated
   protected void checkResult(String dataName) throws Exception {
     myTestDataAfter = loadData(dataName);
 
@@ -174,6 +186,11 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
 //    assertEquals(myTestDataAfter.getText(), myFile.getText());
   }
 
+  /**
+   * @deprecated printing text to {@code System.out} is discouraged, use other methods instead 
+   */
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @Deprecated
   protected static void printText(@NotNull String text) {
     final String q = "\"";
     System.out.print(q);
@@ -198,10 +215,18 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
     System.out.println();
   }
 
+  /**
+   * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
+   */
+  @Deprecated
   protected void addLibraryToRoots(@NotNull VirtualFile jarFile, @NotNull OrderRootType rootType) {
     addLibraryToRoots(myModule, jarFile, rootType);
   }
 
+  /**
+   * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
+   */
+  @Deprecated
   protected static void addLibraryToRoots(@NotNull Module module, @NotNull VirtualFile root, @NotNull OrderRootType rootType) {
     assertEquals(OrderRootType.CLASSES, rootType);
     ModuleRootModificationUtil.addModuleLibrary(module, root.getUrl());
@@ -223,4 +248,18 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   public void commitDocument(@NotNull Document document) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
   }
+
+  /**
+   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
+  protected PsiTestData myTestDataBefore;
+  
+  /**
+   * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed") 
+  @Deprecated
+  protected PsiTestData myTestDataAfter;
 }

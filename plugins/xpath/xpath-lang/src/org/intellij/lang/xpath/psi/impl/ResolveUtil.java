@@ -229,8 +229,7 @@ public final class ResolveUtil {
 
     PsiElement cur = elt;
     do {
-      if (cur instanceof XmlTag) {
-        final XmlTag tag = (XmlTag)cur;
+      if (cur instanceof XmlTag tag) {
         if (!processor.process(tag)) {
           if (processor instanceof ResolveProcessor) {
             return ((ResolveProcessor)processor).getResult();

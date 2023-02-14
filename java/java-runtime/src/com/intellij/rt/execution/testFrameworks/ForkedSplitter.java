@@ -29,7 +29,7 @@ public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
       final String modulePath = System.getProperty("jdk.module.path");
-      final List<String> moduleOptions = new ArrayList<String>();
+      final List<String> moduleOptions = new ArrayList<>();
       if (modulePath != null && modulePath.length() > 0) {
         moduleOptions.add("-p");
         moduleOptions.add(modulePath);
@@ -68,7 +68,7 @@ public abstract class ForkedSplitter<T> extends ForkedByModuleSplitter {
       return startChildFork(childArgs, new File(workingDir), classpath, moduleOptions, repeatCount);
     }
     else {
-      final List<T> children = new ArrayList<T>(getChildren(myRootDescription));
+      final List<T> children = new ArrayList<>(getChildren(myRootDescription));
       for (Iterator<T> iterator = children.iterator(); iterator.hasNext(); ) {
         if (!classNames.contains(getTestClassName(iterator.next()))) {
           iterator.remove();

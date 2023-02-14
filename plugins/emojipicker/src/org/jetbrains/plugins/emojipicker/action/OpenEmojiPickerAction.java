@@ -65,9 +65,8 @@ public class OpenEmojiPickerAction extends DumbAwareAction {
       );
     }
 
-    if (component instanceof JTextComponent) {
+    if (component instanceof JTextComponent field) {
       if (findOnly) return Context.FOUND;
-      JTextComponent field = (JTextComponent)component;
       Document doc = field.getDocument();
       return new Context(
         s -> {

@@ -8,13 +8,15 @@
     making more relevant results appear higher up the list.
     </p>
     <br>
-    <i>Note that sorting by machine learning is currently available only for the Actions tab.</i>
+    <i>Machine learning ranking is currently available and switched on by default for the Classes, Files, and Actions tabs.
+    As an experiment, some portion of users will also have it enabled in the All tab.</i>
   ]]></description>
 
   <content>
     <module name="intellij.searchEverywhereMl.yaml"/>
     <module name="intellij.searchEverywhereMl.vcs"/>
     <module name="intellij.searchEverywhereMl.java"/>
+    <module name="intellij.searchEverywhereMl.kotlin"/>
   </content>
 
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>

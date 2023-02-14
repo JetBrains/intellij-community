@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import org.intellij.lang.annotations.Language;
@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public record OptDropdown(@Language("jvm-field-name") @NotNull String bindId, 
                           @NotNull LocMessage splitLabel, 
-                          @NotNull List<@NotNull Option> options) implements OptControl {
+                          @NotNull List<@NotNull Option> options) implements OptControl, OptRegularComponent {
   
   public OptDropdown {
     Set<String> uniqueKeys = new HashSet<>();

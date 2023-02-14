@@ -18,7 +18,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -53,8 +52,8 @@ final class RestoreHiddenConfigurationsAction extends DumbAwareAction {
       return;
     }
     if (!PropertiesComponent.getInstance(project).getBoolean(ConfigurationTypeDashboardGroupingRule.NAME, true)) {
-      JBIterable<RunDashboardNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardNode.class);
-      presentation.setEnabledAndVisible(nodes.isNotEmpty() && hasHiddenConfiguration(project));
+      List<RunDashboardNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardNode.class);
+      presentation.setEnabledAndVisible(!nodes.isEmpty() && hasHiddenConfiguration(project));
       return;
     }
     Set<ConfigurationType> types = getTargetTypes(e);
@@ -97,7 +96,7 @@ final class RestoreHiddenConfigurationsAction extends DumbAwareAction {
   }
 
   private static Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
-    JBIterable<RunDashboardNode> targets = ServiceViewActionUtils.getTargets(e, RunDashboardNode.class);
+    List<RunDashboardNode> targets = ServiceViewActionUtils.getTargets(e, RunDashboardNode.class);
     if (targets.isEmpty()) return Collections.emptySet();
 
     Set<ConfigurationType> types = new HashSet<>();

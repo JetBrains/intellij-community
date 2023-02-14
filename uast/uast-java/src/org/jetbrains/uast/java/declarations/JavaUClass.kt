@@ -22,7 +22,7 @@ abstract class AbstractJavaUClass(
   @Suppress("OverridingDeprecatedMember")
   override val psi get() = javaPsi
 
-  override val uastDeclarations: List<UDeclaration> by lz {
+  override val uastDeclarations: List<UDeclaration> by lazyPub {
     mutableListOf<UDeclaration>().apply {
       addAll(fields)
       addAll(initializers)
@@ -120,9 +120,9 @@ class JavaUAnonymousClass(
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
 
-  private val fakeConstructor: JavaUMethod? by lz {
+  private val fakeConstructor: JavaUMethod? by lazyPub {
     val psiClass = this.javaPsi
-    val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@lz null
+    val physicalNewExpression = psiClass.parent.asSafely<PsiNewExpression>() ?: return@lazyPub null
     val superConstructor = physicalNewExpression.resolveMethod()
     val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
       init {

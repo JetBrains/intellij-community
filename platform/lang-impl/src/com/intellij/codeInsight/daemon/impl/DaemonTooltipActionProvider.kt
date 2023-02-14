@@ -25,7 +25,6 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
     val intention = extractMostPriorityFixFromHighlightInfo(info, editor, psiFile) ?: return null
     return wrapIntentionToTooltipAction(intention, info, editor)
   }
-
 }
 
 /**
@@ -33,8 +32,7 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
-
+private class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
   override fun getText(): String {
     return myFixText
   }

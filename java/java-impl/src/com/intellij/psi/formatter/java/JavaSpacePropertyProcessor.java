@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -641,12 +641,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean isAbstractMethod(ASTNode node) {
-    PsiElement element = node.getPsi();
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
-    }
-    return false;
+    return node.getPsi() instanceof PsiMethod method && method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   @Override

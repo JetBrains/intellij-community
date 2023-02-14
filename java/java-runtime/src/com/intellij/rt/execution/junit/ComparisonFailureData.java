@@ -149,12 +149,8 @@ public class ComparisonFailureData {
       try {
         //noinspection SSBasedInspection
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
-        OutputStream stream = new FileOutputStream(tempFile);
-        try {
+        try (OutputStream stream = new FileOutputStream(tempFile)) {
           stream.write(text.getBytes(StandardCharsets.UTF_8), 0, text.length());
-        }
-        finally {
-          stream.close();
         }
         attrs.put(expectedOrActualPrefix + "File", tempFile.getAbsolutePath());
         attrs.put(expectedOrActualPrefix + "IsTempFile", "true");

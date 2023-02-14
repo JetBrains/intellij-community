@@ -353,8 +353,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   private boolean isLeaf(TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
+    if (component instanceof DefaultMutableTreeNode node) {
       return node.isLeaf();
     }
     return myAsyncTreeModel.isLeaf(component);
@@ -365,8 +364,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (component instanceof DefaultMutableTreeNode) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
       Object userObject = node.getUserObject();
-      if (userObject instanceof FileNodeDescriptor) {
-        FileNodeDescriptor descriptor = (FileNodeDescriptor)userObject;
+      if (userObject instanceof FileNodeDescriptor descriptor) {
         return descriptor.getElement().getFile();
       }
     }

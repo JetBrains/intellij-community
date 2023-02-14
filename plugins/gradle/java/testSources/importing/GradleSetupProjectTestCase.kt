@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.ide.actions.ImportProjectAction
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
@@ -9,27 +11,26 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificat
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.importProjectAsync
 import com.intellij.openapi.externalSystem.util.performAction
+import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
+import org.jetbrains.plugins.gradle.util.awaitProjectReload
 import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runners.Parameterized
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.minutes
 import com.intellij.testFramework.useProjectAsync as useProjectAsyncImpl
 
 abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
@@ -47,7 +48,7 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
     expectedImportActionsCounter = AtomicInteger(0)
     actualImportActionsCounter = AtomicInteger(0)
 
-    whenResolveTaskStarted({ actualImportActionsCounter.incrementAndGet() }, testDisposable)
+    whenResolveTaskStarted(testDisposable) { _, _ -> actualImportActionsCounter.incrementAndGet() }
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
   }
 
@@ -67,7 +68,7 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
       includeBuild '../$name-composite'
       includeFlat '$name-module'
     """.trimIndent())
-    val buildScript = buildscript { withJavaPlugin() }
+    val buildScript = script { it.withJavaPlugin() }
     createProjectSubFile("$name-composite/build.gradle", buildScript)
     createProjectSubFile("$name-module/build.gradle", buildScript)
     createProjectSubFile("$name-project/module/build.gradle", buildScript)
@@ -116,16 +117,28 @@ abstract class GradleSetupProjectTestCase : GradleImportingTestCase() {
 
   suspend fun waitForImport(action: suspend () -> Project): Project {
     expectedImportActionsCounter.incrementAndGet()
-    val promise = getProjectDataLoadPromise()
-    val result = action()
-    withTimeout(1.minutes) {
-      promise.asDeferred().join()
+    return awaitProjectReload(action)
+  }
+
+  suspend fun openPlatformProjectAsync(projectDirectory: VirtualFile): Project {
+    return closeOpenedProjectsIfFailAsync {
+      ProjectManagerEx.getInstanceEx().openProjectAsync(
+        projectStoreBaseDir = projectDirectory.toNioPath(),
+        options = OpenProjectTask {
+          forceOpenInNewFrame = true
+          useDefaultProjectAsTemplate = false
+          isRefreshVfsNeeded = false
+        }
+      )!!
     }
-    return result
   }
 
   suspend fun importProjectAsync(projectFile: VirtualFile): Project {
-    return importProjectAsync(projectFile, SYSTEM_ID)
+    return performOpenAction(
+      action = ImportProjectAction(),
+      systemId = SYSTEM_ID,
+      selectedFile = projectFile
+    )
   }
 
   suspend fun attachProjectAsync(project: Project, projectFile: VirtualFile): Project {

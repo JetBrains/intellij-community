@@ -19,10 +19,11 @@ import java.io.DataOutput
 import java.util.*
 import java.util.jar.Manifest
 
-fun FileBasedIndexExtension<FqName, Void>.hasSomethingInPackage(fqName: FqName, scope: GlobalSearchScope): Boolean =
-    DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-        !FileBasedIndex.getInstance().processValues(name, fqName, null, { _, _ -> false }, scope)
+fun hasSomethingInPackage(indexId: ID<FqName, Void>, fqName: FqName, scope: GlobalSearchScope): Boolean {
+    return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+        !FileBasedIndex.getInstance().processValues(indexId, fqName, null, { _, _ -> false }, scope)
     })
+}
 
 @ApiStatus.Internal
 object FqNameKeyDescriptor : KeyDescriptor<FqName> {
@@ -32,12 +33,8 @@ object FqNameKeyDescriptor : KeyDescriptor<FqName> {
     override fun isEqual(val1: FqName?, val2: FqName?) = val1 == val2
 }
 
-abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExtension<FqName>() {
-    val KEY: ID<FqName, Void> = ID.create(classOfIndex.canonicalName)
-
-    protected val LOG = Logger.getInstance(classOfIndex)
-
-    override fun getName() = KEY
+abstract class KotlinFileIndexBase : ScalarIndexExtension<FqName>() {
+    protected val LOG = Logger.getInstance(javaClass)
 
     override fun dependsOnFileContent() = true
 
@@ -62,14 +59,18 @@ abstract class KotlinFileIndexBase<T>(classOfIndex: Class<T>) : ScalarIndexExten
     }
 }
 
-object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinClassFileIndex::class.java) {
+class KotlinClassFileIndex : KotlinFileIndexBase() {
+    companion object {
+        val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinClassFileIndex")
+    }
+
+    override fun getName() = NAME
+
     override fun getIndexer() = INDEXER
 
     override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
 
-    override fun getVersion() = VERSION
-
-    private const val VERSION = 3
+    override fun getVersion() = 3
 
     private val INDEXER = indexer { fileContent ->
         val headerInfo = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
@@ -77,23 +78,24 @@ object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinCl
     }
 }
 
-object KotlinStdlibIndex : KotlinFileIndexBase<KotlinStdlibIndex>(KotlinStdlibIndex::class.java) {
-    private const val LIBRARY_NAME_MANIFEST_ATTRIBUTE = "Implementation-Title"
-    private const val STDLIB_TAG_MANIFEST_ATTRIBUTE = "Kotlin-Runtime-Component"
-    val KOTLIN_STDLIB_NAME = FqName("kotlin-stdlib")
-    private val KOTLIN_STDLIB_COMMON_NAME = FqName("kotlin-stdlib-common")
+class KotlinStdlibIndex : KotlinFileIndexBase() {
+    companion object {
+        val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex")
 
-    val STANDARD_LIBRARY_DEPENDENCY_NAMES = setOf(
-        KOTLIN_STDLIB_COMMON_NAME,
-    )
+        val KOTLIN_STDLIB_NAME = FqName("kotlin-stdlib")
+        val STANDARD_LIBRARY_DEPENDENCY_NAMES = setOf(FqName("kotlin-stdlib-common"))
+
+        private const val LIBRARY_NAME_MANIFEST_ATTRIBUTE = "Implementation-Title"
+        private const val STDLIB_TAG_MANIFEST_ATTRIBUTE = "Kotlin-Runtime-Component"
+    }
+
+    override fun getName() = NAME
 
     override fun getIndexer() = INDEXER
 
     override fun getInputFilter() = FileBasedIndex.InputFilter { file -> file.fileType is ManifestFileType }
 
-    override fun getVersion() = VERSION
-
-    private val VERSION = 1
+    override fun getVersion() = 1
 
     // TODO: refactor [KotlinFileIndexBase] and get rid of FqName here, it's never a proper fully qualified name, just a String wrapper
     private val INDEXER = indexer { fileContent ->

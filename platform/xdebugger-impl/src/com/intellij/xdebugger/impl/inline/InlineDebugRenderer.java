@@ -43,7 +43,6 @@ import java.awt.*;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
-import static com.intellij.xdebugger.XSourcePosition.isOnTheSameLine;
 
 public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
@@ -81,14 +80,8 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private boolean isInExecutionPointHighlight() {
-    XSourcePosition debuggerPosition = mySession.getCurrentPosition();
-    if (debuggerPosition != null) {
-      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
-
-      return isOnTheSameLine(myPosition, debuggerPosition)
-             && debuggerManager.isFullLineHighlighter();
-    }
-    return false;
+    XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
+    return debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(myPosition);
   }
 
   private static Font getFont(@NotNull Editor editor) {

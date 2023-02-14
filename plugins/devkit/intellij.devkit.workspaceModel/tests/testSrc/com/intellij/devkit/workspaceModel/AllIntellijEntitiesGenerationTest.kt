@@ -10,9 +10,10 @@ import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
@@ -139,7 +140,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
         val javaSourceRoot = sourceRoot.javaSourceRoots.first()
         val result = storage.addEntity(
-          SourceRootEntity(virtualFileManager.fromPath(genFolderVirtualFile.path), sourceRoot.rootType, sourceRoot.entitySource) {
+          SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager), sourceRoot.rootType, sourceRoot.entitySource) {
             contentRoot = sourceRoot.contentRoot
             javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
           })
@@ -175,12 +176,14 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
   private suspend fun loadProjectIntellijProject(): Pair<MutableEntityStorage, JpsProjectSerializers> {
     val mutableEntityStorage = MutableEntityStorage.create()
-    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = createProjectConfigLocation(),
+    val configLocation = createProjectConfigLocation()
+    val context = SerializationContextForTests(virtualFileManager, CachingJpsFileContentReader(configLocation))
+    val jpsProjectSerializer = JpsProjectEntitiesLoader.loadProject(configLocation = configLocation,
                                                                     builder = mutableEntityStorage,
                                                                     orphanage = mutableEntityStorage,
                                                                     externalStoragePath = Paths.get("/tmp"),
                                                                     errorReporter = TestErrorReporter,
-                                                                    virtualFileManager = virtualFileManager)
+                                                                    context = context)
     return mutableEntityStorage to jpsProjectSerializer
   }
 

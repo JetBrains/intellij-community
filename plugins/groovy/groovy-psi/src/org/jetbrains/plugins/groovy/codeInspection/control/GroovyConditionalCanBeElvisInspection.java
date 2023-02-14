@@ -165,9 +165,8 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   private static boolean checkForNull(GrExpression condition, GrExpression then) {
-    if (!(condition instanceof GrBinaryExpression)) return false;
+    if (!(condition instanceof GrBinaryExpression binaryExpression)) return false;
 
-    GrBinaryExpression binaryExpression = (GrBinaryExpression)condition;
     if (GroovyTokenTypes.mNOT_EQUAL != binaryExpression.getOperationTokenType()) return false;
 
     GrExpression left = binaryExpression.getLeftOperand();

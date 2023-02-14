@@ -35,10 +35,9 @@ public class AddWithTagFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     DomElement element = DomUtil.getDomElement(descriptor.getPsiElement());
-    if (!(element instanceof ExtensionPoint)) {
+    if (!(element instanceof ExtensionPoint extensionPoint)) {
       return;
     }
-    ExtensionPoint extensionPoint = (ExtensionPoint)element;
     List<PsiField> fields = extensionPoint.collectMissingWithTags();
     PsiElement navTarget = null;
     for (PsiField field : fields) {

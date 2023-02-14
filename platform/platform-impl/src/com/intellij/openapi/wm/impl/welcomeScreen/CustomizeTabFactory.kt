@@ -22,7 +22,6 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.keymap.impl.keymapComparator
 import com.intellij.openapi.keymap.impl.ui.KeymapSchemeManager
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.ProjectManager
@@ -66,12 +65,12 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
-  private val syncThemeProperty = propertyGraph.graphProperty { laf.autodetect }
-  private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
-  private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
-  private val colorBlindnessProperty = propertyGraph.graphProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
-  private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
+  private val lafProperty = propertyGraph.lazyProperty { laf.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.lazyProperty { laf.autodetect }
+  private val ideFontProperty = propertyGraph.lazyProperty { getIdeFont() }
+  private val keymapProperty = propertyGraph.lazyProperty { keymapManager.activeKeymap }
+  private val colorBlindnessProperty = propertyGraph.lazyProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
+  private val adjustColorsProperty = propertyGraph.lazyProperty { settings.colorBlindness != null }
 
   private var keymapComboBox: ComboBox<Keymap>? = null
   private var colorThemeComboBox: ComboBox<LafManager.LafReference>? = null

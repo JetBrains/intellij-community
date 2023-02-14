@@ -30,6 +30,14 @@ public class BaseCompletionService extends CompletionService {
 
   @ApiStatus.Internal
   public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
+  /**
+   * Timestamp when a lookup item was added to the {@link CompletionResultSet}
+   */
+  public static final Key<Long> LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS = Key.create("lookup element add time");
+  /**
+   * The order in which the element was added to the {@link CompletionResultSet}
+   */
+  public static final Key<Integer> LOOKUP_ELEMENT_RESULT_SET_ORDER = Key.create("lookup element result set order");
 
   public static final Key<Boolean> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
@@ -91,6 +99,7 @@ public class BaseCompletionService extends CompletionService {
     protected CompletionSorter mySorter;
     @Nullable
     protected final BaseCompletionService.BaseCompletionResultSet myOriginal;
+    private int myItemCounter = 0;
 
     protected BaseCompletionResultSet(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
                                       CompletionContributor contributor, CompletionParameters parameters,
@@ -115,6 +124,9 @@ public class BaseCompletionService extends CompletionService {
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
       if (matched != null) {
         element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, myContributor);
+        element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
+        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, myItemCounter);
+        myItemCounter += 1;
         passResult(matched);
       }
     }

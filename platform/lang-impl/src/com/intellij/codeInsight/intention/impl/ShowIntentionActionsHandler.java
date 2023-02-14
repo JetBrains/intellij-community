@@ -27,8 +27,8 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -36,10 +36,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -124,10 +127,18 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   @ApiStatus.Internal
   public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-        return ShowIntentionsPass.getActionsToShow(editor, file, false);
-      });
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new IllegalStateException("must not wait for intentions inside write action");
+    String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
+    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(() ->  {
+      DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+      return ReadAction.compute(() -> ShowIntentionsPass.getActionsToShow(editor, file, false));
+    });
+    ThrowableComputable<ShowIntentionsPass.IntentionsInfo, RuntimeException> process = useAlternativeResolve ?
+      () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
+    ShowIntentionsPass.IntentionsInfo intentions =
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
 
     ShowIntentionsPass.getActionsToShowSync(editor, file, intentions);
     return intentions;
@@ -159,8 +170,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         }
       }
 
-      if (action instanceof PsiElementBaseIntentionAction) {
-        PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
+      if (action instanceof PsiElementBaseIntentionAction psiAction) {
         if (!psiAction.checkFile(psiFile)) {
           return false;
         }

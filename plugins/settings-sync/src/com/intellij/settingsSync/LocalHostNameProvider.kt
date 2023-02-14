@@ -1,20 +1,16 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.net.InetAddress
-import kotlin.coroutines.EmptyCoroutineContext
 
 @Service(Service.Level.APP)
-internal class LocalHostNameProvider: Disposable {
-  private val cs = CoroutineScope(EmptyCoroutineContext)
+internal class LocalHostNameProvider(cs: CoroutineScope) {
   private val hostName = MutableStateFlow<String?>(null)
 
   init {
@@ -31,10 +27,6 @@ internal class LocalHostNameProvider: Disposable {
 
   fun getHostName(): String {
     return hostName.value ?: defaultHostName
-  }
-
-  override fun dispose() {
-    cs.cancel()
   }
 
   companion object {

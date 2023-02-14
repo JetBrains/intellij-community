@@ -43,8 +43,7 @@ public class ClassWithTooManyDependenciesInspection extends BaseGlobalInspection
                                                            @NotNull AnalysisScope scope,
                                                            @NotNull InspectionManager manager,
                                                            @NotNull GlobalInspectionContext globalContext) {
-    if (refEntity instanceof RefClass) {
-      RefClass refClass = (RefClass)refEntity;
+    if (refEntity instanceof RefClass refClass) {
       if (!(refClass.getOwner() instanceof RefPackage)) {
         return null;
       }

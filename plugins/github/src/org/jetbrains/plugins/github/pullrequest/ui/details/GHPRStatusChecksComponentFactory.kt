@@ -4,13 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.codereview.details.ReviewState
-import com.intellij.collaboration.ui.util.bindContent
-import com.intellij.collaboration.ui.util.bindIcon
-import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
@@ -20,13 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -207,7 +207,7 @@ internal object GHPRStatusChecksComponentFactory {
       reviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(reviewer, reviewState, avatarIconsProvider))
+          panel.add(createReviewerReviewStatus(scope, reviewFlowVm, reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -218,35 +218,33 @@ internal object GHPRStatusChecksComponentFactory {
   }
 
   private fun createReviewerReviewStatus(
+    scope: CoroutineScope,
+    reviewFlowVm: GHPRReviewFlowViewModel,
     reviewer: GHPullRequestRequestedReviewer,
     reviewState: ReviewState,
     avatarIconsProvider: GHAvatarIconsProvider
   ): JComponent {
     return HorizontalListPanel(STATUS_COMPONENTS_GAP).apply {
       val reviewStatusIconLabel = JLabel().apply {
-        icon = getReviewStateIcon(reviewState)
+        icon = ReviewDetailsUIUtil.getReviewStateIcon(reviewState)
       }
       val reviewerLabel = JLabel().apply {
         icon = avatarIconsProvider.getIcon(reviewer.avatarUrl, AVATAR_SIZE)
-        text = getReviewStateText(reviewState, reviewer.shortName)
+        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.shortName)
         iconTextGap = STATUS_COMPONENTS_GAP
       }
 
       add(reviewStatusIconLabel)
       add(reviewerLabel)
+
+      if (reviewState != ReviewState.ACCEPTED) {
+        PopupHandler.installPopupMenu(
+          this,
+          DefaultActionGroup(GHPRRemoveReviewerAction(scope, reviewFlowVm, reviewer).toAnAction()),
+          "GHPRReviewerStatus"
+        )
+      }
     }
-  }
-
-  private fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
-    ReviewState.ACCEPTED -> AllIcons.RunConfigurations.TestPassed
-    ReviewState.WAIT_FOR_UPDATES -> AllIcons.RunConfigurations.TestError
-    ReviewState.NEED_REVIEW -> AllIcons.RunConfigurations.TestFailed
-  }
-
-  private fun getReviewStateText(reviewState: ReviewState, reviewer: String): @Nls String = when (reviewState) {
-    ReviewState.ACCEPTED -> CollaborationToolsBundle.message("review.details.status.reviewer.approved", reviewer)
-    ReviewState.WAIT_FOR_UPDATES -> CollaborationToolsBundle.message("review.details.status.reviewer.wait.for.updates", reviewer)
-    ReviewState.NEED_REVIEW -> CollaborationToolsBundle.message("review.details.status.reviewer.need.review", reviewer)
   }
 
   private fun getCheckStatusIcon(mergeability: GHPRMergeabilityState?): Icon? {

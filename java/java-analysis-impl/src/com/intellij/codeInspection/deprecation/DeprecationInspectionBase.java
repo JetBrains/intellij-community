@@ -76,7 +76,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     LocalQuickFix replacementQuickFix = getReplacementQuickFix(element, elementToHighlight);
 
     holder.registerProblem(elementToHighlight, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement,
-                           replacementQuickFix);
+                           LocalQuickFix.notNullElements(replacementQuickFix));
   }
 
   private static boolean isElementInsideImportStatement(@NotNull PsiElement elementToHighlight) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -131,7 +131,7 @@ public class BraceHighlightingHandler {
     else if (offset > 0 && offset < chars.length()) {
       // There is a possible case that there are paired braces nearby the caret position and the document contains only white
       // space symbols between them. We want to highlight such braces as well.
-      // Example: 
+      // Example:
       //     public void test() { <caret>
       //     }
       char c = chars.charAt(offset);

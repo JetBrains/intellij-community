@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
@@ -21,6 +21,10 @@ class KDocCopyPastePreProcessor : CopyPastePreProcessor {
         val offset = editor.selectionModel.selectionStart
         val element = file.findElementAt(offset)
         element?.parentOfType<KDoc>() ?: return text
+        if (DocumentUtil.isAtLineEnd(offset, editor.document) &&
+            text.startsWith("\n") &&
+            text.firstOrNull { it !in " \n\t" } == '*'
+        ) return text
 
         val document = editor.document
         val lineStartOffset = DocumentUtil.getLineStartOffset(offset, document)
@@ -29,6 +33,6 @@ class KDocCopyPastePreProcessor : CopyPastePreProcessor {
         if (firstNonWsLineOffset >= offset || chars[firstNonWsLineOffset] != '*') return text
 
         val lineStartReplacement = "\n" + chars.subSequence(lineStartOffset, firstNonWsLineOffset + 1) + " "
-        return text.trim('\n').replace("\n", lineStartReplacement)
+        return text.replace("\n", lineStartReplacement)
     }
 }

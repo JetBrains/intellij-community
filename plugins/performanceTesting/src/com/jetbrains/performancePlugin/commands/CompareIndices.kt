@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.concurrency.JobLauncher
-import com.intellij.diagnostic.AttachmentFactory
+import com.intellij.diagnostic.CoreAttachmentFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
@@ -603,14 +603,14 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
 
   private fun createAttachmentsForActualFile(fileDescriptor: FileDescriptor, pathPrefix: String = ""): List<Attachment> =
     findFileAndAllRelevantSiblings(fileDescriptor.currentFile).map { file ->
-      AttachmentFactory.createAttachment("${pathPrefix}actual-file/${file.name}", file)
+      CoreAttachmentFactory.createAttachment("${pathPrefix}actual-file/${file.name}", file)
     }
 
   private fun createAttachmentsForExpectedFile(fileDescriptor: FileDescriptor, pathPrefix: String = ""): List<Attachment> {
     val expectedFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(fileDescriptor.originalFilePath.originalFileUrl)
     return if (expectedFile != null) {
       findFileAndAllRelevantSiblings(expectedFile).map { file ->
-        AttachmentFactory.createAttachment("${pathPrefix}expected-file/${file.name}", file)
+        CoreAttachmentFactory.createAttachment("${pathPrefix}expected-file/${file.name}", file)
       }
     }
     else {

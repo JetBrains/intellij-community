@@ -839,7 +839,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        if (TextRange.create(highlighter).substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
+        if (highlighter.getTextRange().substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
           throw new RuntimeException("Must not remove type parameter highlighter");
         }
       }
@@ -2149,9 +2149,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          throw new RuntimeException("Must not update actions in EDT");
-        }
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
         return true;
       }
     };

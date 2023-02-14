@@ -81,7 +81,7 @@ class CompletionInvokerImpl(private val project: Project,
       CommonFeatures(features.context, features.user, features.session),
       lookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(lookup, it).features }
     )
-    val suggestions = lookup.items.map { it.asSuggestion() }
+    val suggestions = lookup.items.map { it.asSuggestion(lookup) }
 
     return com.intellij.cce.core.Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures, isNew)
   }
@@ -157,7 +157,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   override fun emulateUserSession(expectedText: String, nodeProperties: TokenProperties, offset: Int): Session {
     val editorImpl = editor as EditorImpl
-    val session = Session(offset, expectedText, null, nodeProperties)
+    val session = Session(offset, expectedText, expectedText.length, null, nodeProperties)
     val firstPrefixLen = userEmulator.firstPrefixLen()
     if (firstPrefixLen >= expectedText.length) {
       printText(expectedText)
@@ -185,19 +185,15 @@ class CompletionInvokerImpl(private val project: Project,
     return session
   }
 
-  override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
-    val document = editor!!.document
+  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<com.intellij.cce.actions.TextRange>, offset: Int): Session {
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
-    val session = Session(offset, expectedLine, null, nodeProperties)
-    val line = document.getLineNumber(offset)
-    val tail = document.getLineEndOffset(line) - offset
+    val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
     var currentString = ""
 
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
-
-      if (emulator.isSkippable(nextChar)) {
+      if (!completableRanges.any { offset + currentString.length >= it.start && offset + currentString.length < it.end }) {
         printText(nextChar)
         currentString += nextChar
         continue
@@ -209,9 +205,14 @@ class CompletionInvokerImpl(private val project: Project,
         if (invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
-        printText(it.selectedWithoutPrefix() ?: nextChar)
-        currentString = document.getText(TextRange(offset, document.getLineEndOffset(line) - tail))
-
+        val selected = it.selectedWithoutPrefix()
+        if (selected != null) {
+          printText(selected)
+          currentString += selected
+        } else {
+          printText(nextChar)
+          currentString += nextChar
+        }
         if (currentString.isNotEmpty() && !invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
@@ -272,7 +273,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   private fun hideLookup() = (LookupManager.getActiveLookup(editor) as? LookupImpl)?.hide()
 
-  private fun LookupElement.asSuggestion(): Suggestion {
+  private fun LookupElement.asSuggestion(lookup: LookupImpl): Suggestion {
     val presentation = LookupElementPresentation()
     renderElement(presentation)
     val presentationText = "${presentation.itemText}${presentation.tailText ?: ""}" +
@@ -280,7 +281,11 @@ class CompletionInvokerImpl(private val project: Project,
 
     val insertedText = if (lookupString.contains('>')) lookupString.replace(Regex("<.+>"), "")
     else lookupString
-    return Suggestion(insertedText, presentationText, sourceFromPresentation(presentation))
+    return Suggestion(insertedText,
+                      presentationText,
+                      sourceFromPresentation(presentation),
+                      scoreFromFeatures(lookup, this)
+    )
   }
 
   private fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionSource {
@@ -293,6 +298,11 @@ class CompletionInvokerImpl(private val project: Project,
       typeText == "full-line" -> SuggestionSource.INTELLIJ
       else -> SuggestionSource.STANDARD
     }
+  }
+
+  private fun scoreFromFeatures(lookup: LookupImpl, element: LookupElement): Double? {
+    val features = MLCompletionFeaturesUtil.getElementFeatures(lookup, element).features
+    return features["ml_full_line_score"]?.toDoubleOrNull()
   }
 }
 

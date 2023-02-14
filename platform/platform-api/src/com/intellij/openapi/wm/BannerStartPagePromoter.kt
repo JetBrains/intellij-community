@@ -21,9 +21,8 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 
 abstract class BannerStartPagePromoter : StartPagePromoter {
-  override fun getPromotion(isEmptyState: Boolean): JPanel? {
-    if (!canCreatePromo(isEmptyState)) return null
 
+  override fun getPromotion(isEmptyState: Boolean): JComponent {
     val vPanel: JPanel = NonOpaquePanel()
     vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
     vPanel.alignmentY = Component.TOP_ALIGNMENT
@@ -124,5 +123,5 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
   protected abstract fun runAction()
-  protected open fun canCreatePromo(isEmptyState: Boolean): Boolean = isEmptyState
+
 }

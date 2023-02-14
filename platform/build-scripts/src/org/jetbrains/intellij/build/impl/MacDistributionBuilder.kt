@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("BlockingMethodInNonBlockingContext")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope2
@@ -8,11 +6,10 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.*
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
@@ -20,7 +17,10 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateMultiPlatformProductJson
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.copyDir
+import org.jetbrains.intellij.build.io.copyFile
+import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
+import org.jetbrains.intellij.build.io.writeNewFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -244,22 +244,22 @@ class MacDistributionBuilder(override val context: BuildContext,
     properties.addAll(platformProperties)
     Files.write(macDistDir.resolve("bin/idea.properties"), properties)
 
-    val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/$it" }
-    val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/$it" }
+    val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
+    val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
 
-    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties).toMutableList()
+    val fileVmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties)
+    VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
+
+    val errorFilePath = "-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log"
+    val heapDumpPath = "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"
     val additionalJvmArgs = context.getAdditionalJvmArguments(OsFamily.MACOS, arch).toMutableList()
     if (!bootClassPath.isEmpty()) {
       //noinspection SpellCheckingInspection
-      additionalJvmArgs.add("-Xbootclasspath/a:$bootClassPath")
+      additionalJvmArgs.add("-Xbootclasspath/a:${bootClassPath}")
     }
     val predicate: (String) -> Boolean = { it.startsWith("-D") }
     val launcherProperties = additionalJvmArgs.filter(predicate)
     val launcherVmOptions = additionalJvmArgs.filterNot(predicate)
-
-    fileVmOptions.add("-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log")
-    fileVmOptions.add("-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof")
-    VmOptionsGenerator.writeVmOptions(macDistDir.resolve("bin/${executable}.vmoptions"), fileVmOptions, "\n")
 
     val urlSchemes = macCustomizer.urlSchemes
     val urlSchemesString = if (urlSchemes.isEmpty()) {
@@ -276,7 +276,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           <string>Stacktrace</string>
           <key>CFBundleURLSchemes</key>
           <array>
-            ${urlSchemes.joinToString(separator = "\n") { "          <string>$it</string>" }}
+            ${urlSchemes.joinToString(separator = "\n") { "          <string>${it}</string>" }}
           </array>
         </dict>
       </array>
@@ -299,6 +299,8 @@ class MacDistributionBuilder(override val context: BuildContext,
         Pair("bundle_identifier", macCustomizer.bundleIdentifier),
         Pair("year", todayYear),
         Pair("version", version),
+        Pair("xx_error_file", errorFilePath),
+        Pair("xx_heap_dump", heapDumpPath),
         Pair("vm_options", optionsToXml(launcherVmOptions)),
         Pair("vm_properties", propertiesToXml(launcherProperties, mapOf("idea.executable" to context.productProperties.baseFileName))),
         Pair("class_path", classPath),

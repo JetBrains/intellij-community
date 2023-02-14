@@ -41,8 +41,7 @@ public final class OwnerOptional {
       }
     }
 
-    if (owner instanceof Dialog) {
-      Dialog ownerDialog = (Dialog)owner;
+    if (owner instanceof Dialog ownerDialog) {
       if (!ownerDialog.isModal() && !UIUtil.isPossibleOwner(ownerDialog)) {
         while (owner instanceof Dialog && !((Dialog)owner).isModal()) {
           owner = owner.getOwner();
@@ -85,8 +84,7 @@ public final class OwnerOptional {
 
   public OwnerOptional ifFrame(Consumer<? super Frame> consumer) {
     if (myPermanentOwner instanceof Frame) {
-      if (myPermanentOwner instanceof IdeFrame.Child) {
-        IdeFrame.Child ideFrameChild = (IdeFrame.Child)myPermanentOwner;
+      if (myPermanentOwner instanceof IdeFrame.Child ideFrameChild) {
         myPermanentOwner = WindowManager.getInstance().getFrame(ideFrameChild.getProject());
       }
       consumer.consume((Frame)this.myPermanentOwner);

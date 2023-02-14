@@ -42,8 +42,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project != null && project.isDisposed()) return;
 
-      if (element instanceof OptionDescription) {
-        OptionDescription optionDescription = (OptionDescription)element;
+      if (element instanceof OptionDescription optionDescription) {
         if (optionDescription.hasExternalEditor()) {
           optionDescription.invokeInternalEditor();
         }

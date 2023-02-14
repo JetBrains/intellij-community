@@ -150,6 +150,11 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
       myDragOriginalRec.x -= myHoldDelta.width;
       myDragOriginalRec.y -= myHoldDelta.height;
+
+      TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
+      if (delegate != null) {
+        delegate.dragStarted(event);
+      }
     }
     else {
       if (myDragRec == null) return;
@@ -307,6 +312,11 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     myTabs.relayout(true, false);
 
     myTabs.revalidate();
+
+    TabInfo.DragDelegate delegate = myDragSource.getDragDelegate();
+    if (delegate != null) {
+      delegate.dragFinishedOrCanceled();
+    }
 
     myDragSource = null;
     myDragRec = null;

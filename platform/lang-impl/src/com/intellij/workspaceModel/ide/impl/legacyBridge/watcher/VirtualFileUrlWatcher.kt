@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
@@ -76,8 +76,8 @@ open class VirtualFileUrlWatcher(val project: Project) {
       propertyName = JavaModuleSettingsEntity::compilerOutputForTests.name,
       modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
     ),
-    EntitySourceFileWatcher(JpsFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) }),
-    EntitySourceFileWatcher(JpsFileEntitySource.FileInDirectory::class, { it.directory.url },
+    EntitySourceFileWatcher(JpsProjectFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) }),
+    EntitySourceFileWatcher(JpsProjectFileEntitySource.FileInDirectory::class, { it.directory.url },
                             { source, file -> source.copy(directory = file) })
   )
 

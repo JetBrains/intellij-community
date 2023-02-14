@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -65,7 +65,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
   override fun getWidgetPopup(project: Project, repository: GitRepository): JBPopup {
     branchWidgetClicked()
     return if (isEnabled()) {
-      create(project)
+      create(project, repository)
     }
     else {
       GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar!!.component)).asListPopup()

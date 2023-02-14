@@ -36,10 +36,9 @@ class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiLiteralExpression)) {
+    if (!(element instanceof PsiLiteralExpression literalExpression)) {
       return;
     }
-    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
     replaceWithDecimalLiteral(literalExpression);
   }
 

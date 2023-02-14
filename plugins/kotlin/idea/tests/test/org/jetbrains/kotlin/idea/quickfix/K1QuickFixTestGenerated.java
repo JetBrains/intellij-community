@@ -2684,6 +2684,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("testData/quickfix/callFromPublicInline/protected/infix.kt");
+            }
+
             @TestMetadata("protectedFunction.kt")
             public void testProtectedFunction() throws Exception {
                 runTest("testData/quickfix/callFromPublicInline/protected/protectedFunction.kt");
@@ -7642,6 +7647,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/genericFunction.kt");
             }
 
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/infix.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/publishedApi/simple.kt");
@@ -8049,6 +8059,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("infixCall.kt")
             public void testInfixCall() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/infixCall.kt");
+            }
+
+            @TestMetadata("infixCallToNonInfixCall.kt")
+            public void testInfixCallToNonInfixCall() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/infixCallToNonInfixCall.kt");
             }
 
             @TestMetadata("keepArgumentNamed.kt")
@@ -11336,6 +11351,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("copyDeprecationProperty.kt")
             public void testCopyDeprecationProperty() throws Exception {
                 runTest("testData/quickfix/override/overrideDeprecation/copyDeprecationProperty.kt");
+            }
+
+            @TestMetadata("copyDeprecationWithEscapedMessage.kt")
+            public void testCopyDeprecationWithEscapedMessage() throws Exception {
+                runTest("testData/quickfix/override/overrideDeprecation/copyDeprecationWithEscapedMessage.kt");
             }
 
             @TestMetadata("suppressWarning.kt")

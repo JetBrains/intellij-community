@@ -468,6 +468,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(changeList);
     assertEquals(myTaskManager.getActiveTask(), myTaskManager.getAssociatedTask(changeList));
     LocalTaskImpl bond = new LocalTaskImpl("007", "Bond");
+    bond.setIssue(true);
     TestRepository repository = new TestRepository();
     repository.setShouldFormatCommitMessage(true);
     bond.setRepository(repository);

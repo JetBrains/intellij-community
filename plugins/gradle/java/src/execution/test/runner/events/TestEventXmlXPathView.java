@@ -28,7 +28,7 @@ public class TestEventXmlXPathView implements TestEventXmlView {
    * @param xml            the XML content to be parsed (must be well formed)
    */
   public TestEventXmlXPathView(String xml) throws XmlParserException {
-    xpath = XPathFactory.newInstance().newXPath();
+    xpath = XPathFactory.newDefaultInstance().newXPath();
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
       InputSource is = new InputSource(new StringReader(xml));

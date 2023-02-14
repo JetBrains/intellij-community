@@ -205,8 +205,7 @@ public final class ServersTreeStructure {
               if (selectedRunConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
                 ProgramRunnerUtil.executeConfiguration((RunnerAndConfigurationSettings)selectedRunConfigOrSourceType, executor);
               }
-              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType) {
-                SingletonDeploymentSourceType sourceType = (SingletonDeploymentSourceType)selectedRunConfigOrSourceType;
+              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType sourceType) {
                 configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue(), sourceType);
               }
               else {

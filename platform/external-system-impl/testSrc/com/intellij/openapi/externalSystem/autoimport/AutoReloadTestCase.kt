@@ -30,6 +30,13 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.editor.saveToDisk
+import com.intellij.testFramework.utils.io.createFile
+import com.intellij.testFramework.utils.io.deleteRecursively
+import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.testFramework.utils.vfs.deleteRecursively
+import com.intellij.testFramework.utils.vfs.getFile
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import org.jetbrains.concurrency.AsyncPromise
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -77,7 +84,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   protected fun createIoFile(relativePath: String): VirtualFile {
     projectNioPath.refreshVfs(relativePath) // ensure that file is removed from VFS
     projectNioPath.createFile(relativePath)
-    return projectNioPath.getResolvedPath(relativePath).getVirtualFile()
+    return projectNioPath.getResolvedPath(relativePath).refreshAndGetVirtualFile()
   }
 
   private fun VirtualFile.updateIoFile(action: (Path) -> Unit) {
@@ -163,7 +170,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     replaceString("$SAMPLE_TEXT\n", "")
 
   protected fun Document.save() =
-    runWriteAction { saveDocument() }
+    runWriteAction { saveToDisk() }
 
   protected fun Document.replaceContent(content: String) =
     runWriteAction { setText(content) }

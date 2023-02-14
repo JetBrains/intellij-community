@@ -47,9 +47,9 @@ object GitHostingUrlUtil {
 
     if(!serverUri.host.equals(remoteUri.host, true)) return false
 
-    if (serverUri.path != null) {
+    if (serverUri.path != null && serverUri.path != "/") {
       val remoteUriPath = remoteUri.path ?: return false
-      if(!remoteUriPath.startsWith(serverUri.path, true)) return false
+      if (!remoteUriPath.startsWith(serverUri.path, true)) return false
     }
     return true
   }

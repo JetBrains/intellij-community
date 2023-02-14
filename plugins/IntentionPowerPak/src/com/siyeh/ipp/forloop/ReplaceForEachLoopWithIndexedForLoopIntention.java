@@ -61,9 +61,6 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       return;
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();
-    if (iterationParameter == null) {
-      return;
-    }
     final PsiType type = iterationParameter.getType();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType == null) {
@@ -144,9 +141,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
   @Nullable
   private static String getVariableName(PsiExpression expression) {
-    if (expression instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
@@ -163,30 +158,22 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         return name;
       }
     }
-    else if (expression instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression castExpression =
-        (PsiTypeCastExpression)expression;
+    else if (expression instanceof PsiTypeCastExpression castExpression) {
       final PsiExpression operand = castExpression.getOperand();
       return getVariableName(operand);
     }
-    else if (expression instanceof PsiArrayAccessExpression) {
-      final PsiArrayAccessExpression arrayAccessExpression =
-        (PsiArrayAccessExpression)expression;
+    else if (expression instanceof PsiArrayAccessExpression arrayAccessExpression) {
       final PsiExpression arrayExpression =
         arrayAccessExpression.getArrayExpression();
       final String name = getVariableName(arrayExpression);
       return (name == null) ? null : StringUtil.unpluralize(name);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression innerExpression =
         parenthesizedExpression.getExpression();
       return getVariableName(innerExpression);
     }
-    else if (expression instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)expression;
+    else if (expression instanceof PsiJavaCodeReferenceElement referenceElement) {
       final String referenceName = referenceElement.getReferenceName();
       if (referenceName == null) {
         return expression.getText();
@@ -204,16 +191,12 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       final String variableName = getVariableName(expression);
       return createVariable(variableName, expression, context);
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression =
-        (PsiParenthesizedExpression)expression;
+    else if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
       final PsiExpression innerExpression =
         parenthesizedExpression.getExpression();
       return getReferenceToIterate(innerExpression, context);
     }
-    else if (expression instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)expression;
+    else if (expression instanceof PsiJavaCodeReferenceElement referenceElement) {
       final String variableName = getVariableName(expression);
       if (referenceElement.isQualified()) {
         return createVariable(variableName, expression, context);

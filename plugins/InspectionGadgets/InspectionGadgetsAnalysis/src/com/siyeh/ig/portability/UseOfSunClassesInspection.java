@@ -44,10 +44,9 @@ public class UseOfSunClassesInspection extends BaseInspection {
       super.visitVariable(variable);
       final PsiType type = variable.getType();
       final PsiType deepComponentType = type.getDeepComponentType();
-      if (!(deepComponentType instanceof PsiClassType)) {
+      if (!(deepComponentType instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)deepComponentType;
       @NonNls final String className = classType.getCanonicalText();
       if (!className.startsWith("sun.")) {
         return;
@@ -67,10 +66,9 @@ public class UseOfSunClassesInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      if (!(type instanceof PsiClassType)) {
+      if (!(type instanceof PsiClassType classType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
       @NonNls final String className = classType.getCanonicalText();
       if (!className.startsWith("sun.")) {
         return;

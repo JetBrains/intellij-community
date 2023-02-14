@@ -46,12 +46,11 @@ public class PropertiesUastReferenceContributor extends PsiReferenceContributor 
                                                                       @NotNull PsiLanguageInjectionHost host,
                                                                       @NotNull ProcessingContext context) {
           final UElement parent = uExpression.getUastParent();
-          if (!(parent instanceof UField)) {
+          if (!(parent instanceof UField field)) {
             return PsiReference.EMPTY_ARRAY;
           }
           PsiElement elementSource = uExpression.getSourcePsi();
           if (elementSource == null) return PsiReference.EMPTY_ARRAY;
-          final UField field = (UField)parent;
           UExpression initializer = field.getUastInitializer();
           if (initializer == null) return PsiReference.EMPTY_ARRAY;
           if (!field.isFinal() ||

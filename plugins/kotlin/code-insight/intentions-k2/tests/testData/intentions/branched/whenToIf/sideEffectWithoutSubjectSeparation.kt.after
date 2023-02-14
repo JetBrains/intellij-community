@@ -1,0 +1,13 @@
+// The following example shows how it can have a side effect when we do not seperate subject from if condition
+
+object G {
+    var counter = 0
+    fun getCounter() = counter++
+}
+
+fun test(x: Int, y: Int): String {
+    val n = G.getCounter()
+    if (n == 1) return "one"
+    else if (n == 2) return "two"
+    else return "big"
+}

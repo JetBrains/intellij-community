@@ -132,7 +132,7 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
             "method should be suggested to run, but $testObject was used instead"
         }
 
-        Assert.assertNotNull(JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true))
+        Assert.assertNotNull(JunitKotlinTestFrameworkProvider.getInstance().getJavaTestEntity(element, checkMethod = true))
         if (checkConfiguration) {
             configuration.workingDirectory = FileUtil.getTempDirectory()
             configuration.checkConfiguration()

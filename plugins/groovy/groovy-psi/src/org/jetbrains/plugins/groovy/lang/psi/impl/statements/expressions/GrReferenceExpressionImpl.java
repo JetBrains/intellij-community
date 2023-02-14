@@ -218,8 +218,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return ((PsiVariable)resolved).getType();
     }
 
-    if (resolved instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)resolved;
+    if (resolved instanceof PsiMethod method) {
       if (PropertyUtilBase.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         return method.getParameterList().getParameters()[0].getType();
       }

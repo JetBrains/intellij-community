@@ -62,8 +62,7 @@ public abstract class TrelloModel {
   @Override
   public final boolean equals(Object obj) {
     if (obj == this) return true;
-    if (!(obj instanceof TrelloModel)) return false;
-    TrelloModel model = (TrelloModel) obj;
+    if (!(obj instanceof TrelloModel model)) return false;
     return !id.equals(ILLEGAL_ID) && id.equals(model.id);
   }
 

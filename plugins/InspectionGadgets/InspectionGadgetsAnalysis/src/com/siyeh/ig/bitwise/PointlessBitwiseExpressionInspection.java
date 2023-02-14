@@ -152,8 +152,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
 
   private static PsiExpression extractDecrementedValue(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiBinaryExpression) {
-      PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (expression instanceof PsiBinaryExpression binOp) {
       if (binOp.getOperationTokenType().equals(MINUS)) {
         Number right = JavaPsiMathUtil.getNumberFromLiteral(binOp.getROperand());
         if ((right instanceof Integer || right instanceof Long) && right.longValue() == 1L) {

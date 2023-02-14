@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -165,7 +165,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (targetType instanceof PsiArrayType && targetType.getAnnotations().length == 0) {
             additionalFix = new MoveAnnotationToArrayFix();
           }
-          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", additionalFix);
+          reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.primitive.type.annotation", LocalQuickFix.notNullElements(additionalFix));
         }
         if (type instanceof PsiClassType) {
           PsiElement context = ((PsiClassType)type).getPsiContext();
@@ -381,7 +381,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     reportProblem(holder, anchor, fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {fix}, messageKey, args);
   }
 
-  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, LocalQuickFix @NotNull [] fixes,
+  protected void reportProblem(@NotNull ProblemsHolder holder, @NotNull PsiElement anchor, @NotNull LocalQuickFix @NotNull [] fixes,
                                @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey, Object... args) {
     holder.registerProblem(anchor,
                            JavaAnalysisBundle.message(messageKey, args),
@@ -676,8 +676,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (annotation != null && !annotation.isPhysical() && type instanceof PsiPrimitiveType) {
       reportIncorrectLocation(holder, annotation, owner, "inspection.nullable.problems.primitive.type.annotation");
     }
-    if (owner instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)owner;
+    if (owner instanceof PsiParameter parameter) {
       Nullability expectedNullability = DfaPsiUtil.inferParameterNullability(parameter);
       if (annotated.notNull != null && expectedNullability == Nullability.NULLABLE) {
         reportParameterNullabilityMismatch(parameter, annotated.notNull, holder, "parameter.can.be.null");
@@ -703,7 +702,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void reportIncorrectLocation(ProblemsHolder holder, PsiAnnotation annotation,
                                               @Nullable PsiModifierListOwner listOwner,
                                               @NotNull @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String messageKey,
-                                              LocalQuickFix... additionalFixes) {
+                                              @NotNull LocalQuickFix @NotNull ... additionalFixes) {
     RemoveAnnotationQuickFix fix = new RemoveAnnotationQuickFix(annotation, listOwner) {
       @Override
       protected boolean shouldRemoveInheritors() {

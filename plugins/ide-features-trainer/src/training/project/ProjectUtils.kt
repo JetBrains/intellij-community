@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.project
 
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.ReopenProjectAction
+import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.util.PropertiesComponent
@@ -178,6 +175,9 @@ object ProjectUtils {
           GeneralSettings.getInstance().confirmOpenNewProject = confirmOpenNewProject
         }
       }
+
+      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
+
       postInitCallback(project)
     }
   }

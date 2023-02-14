@@ -33,8 +33,7 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final List<PyHierarchyNodeDescriptor> descriptors = new ArrayList<>();
-    if (descriptor instanceof PyHierarchyNodeDescriptor) {
-      final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
+    if (descriptor instanceof PyHierarchyNodeDescriptor pyDescriptor) {
       final PsiElement element = pyDescriptor.getPsiElement();
       final boolean isCallable = element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile;
       HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();

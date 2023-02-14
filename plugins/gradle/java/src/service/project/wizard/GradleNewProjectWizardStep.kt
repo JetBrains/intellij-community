@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Gradle.logDslChanged
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -49,6 +49,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleV
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
+import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.*
@@ -123,44 +124,44 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
       }
-      // TODO(@Pavel Porvatov) replace with visibleId and validation enableIf
-      // https://youtrack.jetbrains.com/issue/IDEA-310738/Kotlin-DSL-Cannot-disable-validation-for-invisible-components
-      placeholderGroup {
-        component(WRAPPER) {
-          row {
-            label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.npw"))
-              .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-            cell(TextCompletionComboBox(context.project, TextCompletionComboBoxConverter.Default()))
-              .columns(8)
-              .applyToComponent { bindSelectedItem(gradleVersionProperty) }
-              .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
-              .trimmedTextValidation(CHECK_NON_EMPTY)
-              .validationOnInput { validateGradleVersion(gradleVersion, withDialog = false) }
-              .validationOnApply { validateGradleVersion(gradleVersion, withDialog = true) }
-              .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
-              .enabledIf(autoSelectGradleVersionProperty.not())
-            checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
-              .bindSelected(autoSelectGradleVersionProperty)
+      row {
+        placeholderGroup {
+          component(WRAPPER) {
+            row {
+              label(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.npw"))
+                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
+              cell(TextCompletionComboBox(context.project, TextCompletionComboBoxConverter.Default()))
+                .columns(8)
+                .applyToComponent { bindSelectedItem(gradleVersionProperty) }
+                .applyToComponent { bindCompletionVariants(gradleVersionsProperty) }
+                .trimmedTextValidation(CHECK_NON_EMPTY)
+                .validationOnInput { validateGradleVersion(gradleVersion, withDialog = false) }
+                .validationOnApply { validateGradleVersion(gradleVersion, withDialog = true) }
+                .validationRequestor(WHEN_GRAPH_PROPAGATION_FINISHED(propertyGraph))
+                .enabledIf(autoSelectGradleVersionProperty.not())
+              checkBox(GradleBundle.message("gradle.project.settings.distribution.wrapper.version.auto.select"))
+                .bindSelected(autoSelectGradleVersionProperty)
+            }
           }
-        }
-        component(LOCAL) {
-          row {
-            label(GradleBundle.message("gradle.project.settings.distribution.local.location.npw"))
-              .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-              .withPathToTextConvertor(::getPresentablePath)
-              .withTextToPathConvertor(::getCanonicalPath)
-            val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
-            textFieldWithBrowseButton(title, context.project, fileChooserDescriptor)
-              .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
-              .bindText(gradleHomeProperty.toUiPathProperty())
-              .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
-              .validationOnInput { validateGradleHome(withDialog = false) }
-              .validationOnApply { validateGradleHome(withDialog = true) }
-              .align(AlignX.FILL)
+          component(LOCAL) {
+            row {
+              label(GradleBundle.message("gradle.project.settings.distribution.local.location.npw"))
+                .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
+              val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                .withPathToTextConvertor(::getPresentablePath)
+                .withTextToPathConvertor(::getCanonicalPath)
+              val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
+              textFieldWithBrowseButton(title, context.project, fileChooserDescriptor)
+                .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
+                .bindText(gradleHomeProperty.toUiPathProperty())
+                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+                .validationOnInput { validateGradleHome(withDialog = false) }
+                .validationOnApply { validateGradleHome(withDialog = true) }
+                .align(AlignX.FILL)
+            }
           }
-        }
-      }.bindSelectedComponent(distributionTypeProperty)
+        }.bindSelectedComponent(distributionTypeProperty)
+      }
       row {
         label("")
           .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
@@ -367,7 +368,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       it.configureBuildScript()
     }
 
-    builder.commit(project)
+    val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
+    builder.commit(project, model)
   }
 
   class GradleDataView(override val data: ProjectData) : DataView<ProjectData>() {

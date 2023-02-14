@@ -261,8 +261,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       myNext = null;
       while (myEnum.hasMoreElements()) {
         final Object o = myEnum.nextElement();
-        if (o instanceof FileTreeNode) {
-          final FileTreeNode treeNode = (FileTreeNode)o;
+        if (o instanceof FileTreeNode treeNode) {
           VirtualFilePointer filePointer = treeNode.getFilePointer();
 
           FilePath filePath = getFilePath(filePointer);

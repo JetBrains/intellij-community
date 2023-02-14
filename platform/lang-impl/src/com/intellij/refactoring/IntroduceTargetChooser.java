@@ -4,9 +4,14 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
@@ -27,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -67,11 +71,18 @@ public final class IntroduceTargetChooser {
                                                         @NotNull @NlsContexts.PopupTitle String title,
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
-    ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
-      .finishOnUiThread(ModalityState.NON_MODAL, targets ->
-        showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
-      .expireWhen(() -> editor.isDisposed())
-      .submit(AppExecutorUtil.getAppExecutorService());
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t)));
+      showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection);
+    }
+    else {
+      ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
+        .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+          showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection))
+        .expireWhen(() -> editor.isDisposed())
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
@@ -89,12 +100,10 @@ public final class IntroduceTargetChooser {
                                                                             @Nullable JComponent southComponent,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-    T preselection = expressions.get(selection > -1 ? selection : 0);
-    List<? extends T> sorted = ContainerUtil.sorted(expressions, Comparator.comparingInt((T t) -> t.getTextRange().getStartOffset()));
-    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
-      .<T>createPopupChooserBuilder(sorted)
+
+    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance().<T>createPopupChooserBuilder(expressions)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setSelectedValue(preselection, true)
+      .setSelectedValue(expressions.get(selection > -1 ? selection : 0), true)
       .setAccessibleName(title)
       .setTitle(title)
       .setMovable(false)

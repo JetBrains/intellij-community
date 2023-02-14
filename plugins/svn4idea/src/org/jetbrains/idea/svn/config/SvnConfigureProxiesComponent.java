@@ -145,8 +145,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
     });
     result.add(new MyDeleteAction(forAll(o -> {
-      if (o instanceof MyNode) {
-        final MyNode node = (MyNode)o;
+      if (o instanceof MyNode node) {
         if (node.getConfigurable() instanceof GroupConfigurable) {
           final ProxyGroup group = ((GroupConfigurable)node.getConfigurable()).getEditableObject();
           return !group.isDefault();

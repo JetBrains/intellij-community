@@ -214,11 +214,10 @@ class PropertiesManager extends MembersManager<PyElement> {
       }
 
       final PsiElement declaration = reference.resolve();
-      if (!(declaration instanceof PyFunction)) {
+      if (!(declaration instanceof PyFunction function)) {
         return;
       }
 
-      final PyFunction function = (PyFunction)declaration;
       final Property property = function.getProperty();
       if (property == null) {
         return;

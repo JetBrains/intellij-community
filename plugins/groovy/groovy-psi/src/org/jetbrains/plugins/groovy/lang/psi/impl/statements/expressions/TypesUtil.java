@@ -285,8 +285,7 @@ public final class TypesUtil implements TypeConstants {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiTypes.voidType().equals(result))) {
-      PsiPrimitiveType primitive = (PsiPrimitiveType)result;
+    if (result instanceof PsiPrimitiveType primitive && (boxVoid || !PsiTypes.voidType().equals(result))) {
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
         return GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(boxedTypeName, resolveScope);
@@ -347,9 +346,7 @@ public final class TypesUtil implements TypeConstants {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
     }
-    if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
-      GrTupleType tuple1 = (GrTupleType)type1;
-      GrTupleType tuple2 = (GrTupleType)type2;
+    if (type1 instanceof GrTupleType tuple1 && type2 instanceof GrTupleType tuple2) {
       List<PsiType> components1 = tuple1.getComponentTypes();
       List<PsiType> components2 = tuple2.getComponentTypes();
 
@@ -385,9 +382,7 @@ public final class TypesUtil implements TypeConstants {
     else if (checkEmptyMapAndMap(type2, type1)) {
       return genNewMapBy(type1, manager);
     }
-    else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
-      GrClosureType clType1 = (GrClosureType)type1;
-      GrClosureType clType2 = (GrClosureType)type2;
+    else if (type1 instanceof GrClosureType clType1 && type2 instanceof GrClosureType clType2) {
       List<GrSignature> signatures1 = clType1.getSignatures();
       List<GrSignature> signatures2 = clType2.getSignatures();
 

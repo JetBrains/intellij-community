@@ -141,9 +141,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof SelectorBasedResponseHandler)) return false;
-
-    SelectorBasedResponseHandler handler = (SelectorBasedResponseHandler)o;
+    if (!(o instanceof SelectorBasedResponseHandler handler)) return false;
 
     if (!mySelectors.equals(handler.mySelectors)) return false;
 

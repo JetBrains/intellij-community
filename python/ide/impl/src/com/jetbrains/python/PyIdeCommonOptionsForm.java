@@ -80,9 +80,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     updateRemoteInterpreterMode();
 
-    addInterpreterModeListener((b) ->
-                                 content.pathMappingsComponent.setVisible(b)
-    );
+    addInterpreterModeListener((b) -> content.pathMappingsRow.visible(b));
   }
 
   @Override

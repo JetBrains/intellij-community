@@ -62,8 +62,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
 
   public boolean equals(Object o){
     if (o == this) return true;
-    if (o instanceof LookupItem){
-      LookupItem item = (LookupItem)o;
+    if (o instanceof LookupItem item){
       return Comparing.equal(myObject, item.myObject)
              && Objects.equals(myLookupString, item.myLookupString)
              && Comparing.equal(myAllLookupStrings, item.myAllLookupStrings)

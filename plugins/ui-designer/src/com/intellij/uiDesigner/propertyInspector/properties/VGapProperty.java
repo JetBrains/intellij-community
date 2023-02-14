@@ -30,8 +30,7 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
       CardLayout layout = (CardLayout) component.getLayout();
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof AbstractLayout) {
-      final AbstractLayout layoutManager=(AbstractLayout)component.getLayout();
+    if (component.getLayout() instanceof AbstractLayout layoutManager) {
       return layoutManager.getVGap();
     }
     return null;

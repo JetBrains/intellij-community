@@ -140,8 +140,7 @@ public class StatsRequestBuilder {
     Proxy proxy = info.getProxy();
     if (proxy.type() == Proxy.Type.HTTP || proxy.type() == Proxy.Type.SOCKS) {
       SocketAddress proxyAddress = proxy.address();
-      if (proxyAddress instanceof InetSocketAddress) {
-        InetSocketAddress address = (InetSocketAddress)proxyAddress;
+      if (proxyAddress instanceof InetSocketAddress address) {
         String hostName = address.getHostString();
         int port = address.getPort();
         builder.proxy(ProxySelector.of(new InetSocketAddress(hostName, port)));

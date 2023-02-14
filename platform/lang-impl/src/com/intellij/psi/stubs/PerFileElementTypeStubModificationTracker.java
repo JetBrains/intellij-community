@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -171,9 +170,10 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     PsiFile psi = PsiDocumentManager.getInstance(info.project).getPsiFile(doc);
     DocumentContent content = FileBasedIndexImpl.findLatestContent(doc, psi);
-    return FileContentImpl.createByContent(info.file, () -> {
+    var file = info.file;
+    return FileContentImpl.createByContent(file, () -> {
       var text = content.getText();
-      return text.toString().getBytes(StandardCharsets.UTF_8);
+      return text.toString().getBytes(file.getCharset());
     }, info.project);
   }
 

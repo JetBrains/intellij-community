@@ -27,15 +27,6 @@ public class YouTrackWorkItem {
     return duration;
   }
 
-  private static class Duration {
-    private final int minutes;
-
-    private Duration(int minutes) {
-      this.minutes = minutes;
-    }
-
-    private int getMinutes() {
-      return minutes;
-    }
+  private record Duration(int minutes) {
   }
 }

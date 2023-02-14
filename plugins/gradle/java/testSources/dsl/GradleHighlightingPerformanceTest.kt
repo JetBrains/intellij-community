@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
-import com.intellij.openapi.externalSystem.util.runInEdtAndWait
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -25,7 +25,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
     test(gradleVersion, FIXTURE_BUILDER) {
       val file = getFile("build.gradle")
       val pos = file.readText().indexOf("a.json")
-      runInEdtAndWait {
+      invokeAndWaitIfNeeded {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos + 1)
         fixture.checkHighlighting()
@@ -49,7 +49,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = getFile("build.gradle")
       val pos = file.readText().indexOf("dependencies {") + "dependencies {".length
-      runInEdtAndWait {
+      invokeAndWaitIfNeeded {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos)
         fixture.checkHighlighting()
@@ -78,7 +78,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
       addBuildScriptRepository("mavenCentral()")
       addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
       addImport("groovyx.net.http.HttpBuilder")
-      withTask("bitbucketJenkinsTest") {
+      call("tasks.create", "bitbucketJenkinsTest") {
         call("doLast") {
           property("bitbucket", call("HttpBuilder.configure") {
             assign("request.uri", "https://127.0.0.1")

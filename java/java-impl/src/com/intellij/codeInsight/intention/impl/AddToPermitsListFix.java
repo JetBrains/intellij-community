@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
@@ -14,13 +14,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -36,6 +34,12 @@ public class AddToPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiEle
     myParentQualifiedName = Objects.requireNonNull(superClass.getQualifiedName());
     myParentName = Objects.requireNonNull(superClass.getName());
     myClassName = Objects.requireNonNull(subClass.getName());
+  }
+
+  @Override
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    if (!(getStartElement() instanceof PsiClass aClass)) return null;
+    return getSealedParent(aClass);
   }
 
   @Override

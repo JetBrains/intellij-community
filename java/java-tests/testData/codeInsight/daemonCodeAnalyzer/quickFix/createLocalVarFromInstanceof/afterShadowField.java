@@ -5,7 +5,7 @@ class C {
 
   void x() {
     if (x instanceof String) {
-        String s1 = (String) x;
+        String string = (String) x;
         <caret>
     }
   }

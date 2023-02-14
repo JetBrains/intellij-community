@@ -34,7 +34,7 @@ class KotlinCompletionEvaluationVisitor : CompletionEvaluationVisitor, KtTreeVis
   override fun visitElement(element: PsiElement) {
     val name = element.text
     if (KtTokens.KEYWORDS.contains(element.elementType) || KtTokens.SOFT_KEYWORDS.contains(element.elementType)) {
-      val token = CodeToken(name, element.textOffset, element.textLength, keywordProperties())
+      val token = CodeToken(name, element.textOffset, keywordProperties())
       _codeFragment?.addChild(token)
     }
     super.visitElement(element)
@@ -43,7 +43,7 @@ class KotlinCompletionEvaluationVisitor : CompletionEvaluationVisitor, KtTreeVis
   override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
     if (expression !is KtOperationReferenceExpression) {
       val name = expression.getReferencedName()
-      val token = CodeToken(name, expression.textOffset, name.length, createNodeProperties(expression))
+      val token = CodeToken(name, expression.textOffset, createNodeProperties(expression))
       _codeFragment?.addChild(token)
     }
     super.visitSimpleNameExpression(expression)

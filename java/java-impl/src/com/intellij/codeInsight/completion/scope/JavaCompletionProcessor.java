@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
@@ -155,16 +155,13 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       return true;
     }
 
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      if (PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
-        PsiType patchedType = PsiTypesUtil.createJavaLangClassType(myElement, myQualifierType, false);
-        if (patchedType != null) {
-          element = new LightMethodBuilder(element.getManager(), method.getName()).
-            addModifier(PsiModifier.PUBLIC).
-            setMethodReturnType(patchedType).
-            setContainingClass(method.getContainingClass());
-        }
+    if (element instanceof PsiMethod method && PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
+      PsiType patchedType = PsiTypesUtil.createJavaLangClassType(myElement, myQualifierType, false);
+      if (patchedType != null) {
+        element = new LightMethodBuilder(element.getManager(), method.getName()).
+          addModifier(PsiModifier.PUBLIC).
+          setMethodReturnType(patchedType).
+          setContainingClass(method.getContainingClass());
       }
     }
 
@@ -195,9 +192,8 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       }
     }
 
-    if (!(element instanceof PsiClass) || !PATTERNS_IN_SWITCH.isAvailable(myElement)) return true;
+    if (!(element instanceof PsiClass psiClass) || !PATTERNS_IN_SWITCH.isAvailable(myElement)) return true;
 
-    final PsiClass psiClass = (PsiClass)element;
     if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
       addSealedHierarchy(state, psiClass);
     }
@@ -249,13 +245,10 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
 
   @NotNull
   private String getCallQualifierText(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      if (myFinishedScopesMethodNames.contains(method.getName())) {
-        String className = myDeclarationHolder instanceof PsiClass ? ((PsiClass)myDeclarationHolder).getName() : null;
-        if (className != null) {
-          return className + (method.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this.");
-        }
+    if (element instanceof PsiMethod method && myFinishedScopesMethodNames.contains(method.getName())) {
+      String className = myDeclarationHolder instanceof PsiClass psiClass ? psiClass.getName() : null;
+      if (className != null) {
+        return className + (method.hasModifierProperty(PsiModifier.STATIC) ? "." : ".this.");
       }
     }
     return "";
@@ -270,8 +263,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
       return StaticProblem.none;
     }
-    if (element instanceof PsiModifierListOwner) {
-      PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+    if (element instanceof PsiModifierListOwner modifierListOwner) {
       if (myStatic) {
         if (!(element instanceof PsiClass) && !modifierListOwner.hasModifierProperty(PsiModifier.STATIC)) {
           // we don't need non-static method in static context.
@@ -324,13 +316,12 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   }
 
   private boolean isAccessibleForResolve(@Nullable PsiElement element) {
-    if (element instanceof PsiMember) {
+    if (element instanceof PsiMember member) {
       Set<PsiClass> accessObjectClasses =
         !myQualified ? Collections.singleton(null) :
         myQualifierType instanceof PsiIntersectionType ? ContainerUtil.map2Set(((PsiIntersectionType)myQualifierType).getConjuncts(),
                                                                                PsiUtil::resolveClassInClassTypeOnly) :
         Collections.singleton(PsiUtil.resolveClassInClassTypeOnly(myQualifierType));
-      PsiMember member = (PsiMember)element;
       PsiResolveHelper helper = getResolveHelper();
       PsiModifierList modifierList = member.getModifierList();
       return ContainerUtil.exists(accessObjectClasses, aoc ->

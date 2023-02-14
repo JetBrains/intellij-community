@@ -1295,4 +1295,13 @@
   <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="alt shift PERIOD"/>
   </action>
+  <action id="ZoomInIdeAction">
+    <keyboard-shortcut first-keystroke="shift alt EQUALS"/>
+  </action>
+  <action id="ZoomOutIdeAction">
+    <keyboard-shortcut first-keystroke="shift alt MINUS"/>
+  </action>
+  <action id="ResetIdeScaleAction">
+    <keyboard-shortcut first-keystroke="shift alt 0"/>
+  </action>
 </keymap>

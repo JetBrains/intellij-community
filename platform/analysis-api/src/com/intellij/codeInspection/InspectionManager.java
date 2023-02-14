@@ -29,13 +29,13 @@ public abstract class InspectionManager {
   @NotNull
   @Contract(pure = true)
   public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
-                                                                  QuickFix<?> @Nullable ... fixes);
+                                                                  @NotNull QuickFix<?> @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
   public abstract ModuleProblemDescriptor createProblemDescriptor(@NotNull @InspectionMessage String descriptionTemplate,
                                                                   @NotNull Module module,
-                                                                  QuickFix<?> @Nullable ... fixes);
+                                                                  @NotNull QuickFix<?> @Nullable ... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -58,14 +58,14 @@ public abstract class InspectionManager {
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             boolean onTheFly,
-                                                            LocalQuickFix @Nullable [] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   @NotNull
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix @Nullable [] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             boolean isAfterEndOfLine);
@@ -77,7 +77,7 @@ public abstract class InspectionManager {
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix @Nullable ... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
@@ -86,7 +86,7 @@ public abstract class InspectionManager {
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix @Nullable ... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   @NotNull
   @Contract(pure = true)
@@ -95,7 +95,7 @@ public abstract class InspectionManager {
                                                             boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
-                                                            LocalQuickFix @Nullable ... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
@@ -116,7 +116,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix @Nullable [] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   /**
@@ -127,7 +127,7 @@ public abstract class InspectionManager {
   @Contract(pure = true)
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
-                                                            LocalQuickFix @Nullable [] fixes,
+                                                            @NotNull LocalQuickFix @Nullable [] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean isAfterEndOfLine);
 
@@ -141,7 +141,7 @@ public abstract class InspectionManager {
                                                             @NotNull PsiElement endElement,
                                                             @NotNull @InspectionMessage String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
-                                                            LocalQuickFix @Nullable ... fixes);
+                                                            @NotNull LocalQuickFix @Nullable ... fixes);
 
 
   /**

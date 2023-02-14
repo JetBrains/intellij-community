@@ -56,10 +56,9 @@ public class MultipleExceptionsDeclaredOnTestMethodInspection extends BaseInspec
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceList)) {
+      if (!(element instanceof PsiReferenceList referenceList)) {
         return;
       }
-      final PsiReferenceList referenceList = (PsiReferenceList)element;
       final PsiJavaCodeReferenceElement[] referenceElements =
         referenceList.getReferenceElements();
       for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {

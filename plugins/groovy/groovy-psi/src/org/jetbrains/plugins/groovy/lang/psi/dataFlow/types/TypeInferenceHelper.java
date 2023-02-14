@@ -201,8 +201,7 @@ public final class TypeInferenceHelper {
       return ((GrAssignmentExpression)parent).getType();
     }
 
-    if (parent instanceof GrTuple) {
-      GrTuple list = (GrTuple)parent;
+    if (parent instanceof GrTuple list) {
       GrTupleAssignmentExpression assignment = list.getParent();
       if (assignment != null) {
         final GrExpression rValue = assignment.getRValue();
@@ -214,8 +213,7 @@ public final class TypeInferenceHelper {
         }
       }
     }
-    if (parent instanceof GrUnaryExpression) {
-      GrUnaryExpression unary = (GrUnaryExpression)parent;
+    if (parent instanceof GrUnaryExpression unary) {
       if (TokenSets.POSTFIX_UNARY_OP_SET.contains(unary.getOperationTokenType())) {
         return unary.getOperationType();
       }

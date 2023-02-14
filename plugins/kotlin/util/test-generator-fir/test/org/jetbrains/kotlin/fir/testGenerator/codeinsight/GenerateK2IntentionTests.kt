@@ -29,6 +29,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToConcatenatedString", pattern = pattern)
             model("${idea}intentions/convertToStringTemplate", pattern = pattern)
             model("${idea}intentions/removeExplicitType", pattern = pattern)
+            model("${idea}intentions/replaceUnderscoreWithTypeArgument", pattern = pattern)
             model("${idea}intentions/convertForEachToForLoop", pattern = pattern)
             model("${idea}intentions/joinArgumentList", pattern = pattern)
             model("${idea}intentions/joinParameterList", pattern = pattern)
@@ -41,6 +42,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToRawStringTemplate", pattern = pattern)
             model("${idea}intentions/toRawStringLiteral", pattern = pattern)
             model("${idea}intentions/movePropertyToConstructor", pattern = pattern)
+            model("${idea}intentions/branched/ifWhen/whenToIf", pattern = pattern)
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
         }
     }

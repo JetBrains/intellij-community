@@ -1,13 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.lang.documentation.psi
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
-import com.intellij.lang.documentation.*
+import com.intellij.lang.documentation.CompositeDocumentationProvider
+import com.intellij.lang.documentation.ExternalDocumentationHandler
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.platform.documentation.DocumentationLinkHandler
+import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.documentation.LinkResolveResult
 
-@Suppress("DEPRECATION")
 internal class PsiDocumentationLinkHandler : DocumentationLinkHandler {
 
   override fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {

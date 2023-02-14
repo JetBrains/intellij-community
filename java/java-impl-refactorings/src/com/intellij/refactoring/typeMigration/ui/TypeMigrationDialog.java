@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -280,8 +280,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         return "class type arguments ";
       }
 
-      if (element instanceof PsiParameter) {
-        final PsiParameter param = (PsiParameter)element;
+      if (element instanceof PsiParameter param) {
         String result = "type of parameter " + param.getName();
         if (param.getParent() instanceof PsiParameterList) {
           final PsiMethod method = PsiTreeUtil.getParentOfType(param, PsiMethod.class);
@@ -305,8 +304,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private static boolean checkType(final PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;
-      if (type instanceof PsiClassType){
-        final PsiClassType psiClassType = (PsiClassType)type;
+      if (type instanceof PsiClassType psiClassType){
         if (psiClassType.resolve() == null) return false;
         final PsiType[] types = psiClassType.getParameters();
         for (PsiType paramType : types) {

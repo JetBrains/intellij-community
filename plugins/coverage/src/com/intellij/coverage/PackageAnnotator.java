@@ -302,8 +302,7 @@ public final class PackageAnnotator {
 
       final Object[] lines = classData.getLines();
       for (Object l : lines) {
-        if (l instanceof LineData) {
-          final LineData lineData = (LineData)l;
+        if (l instanceof LineData lineData) {
           if (lineData.getStatus() == LineCoverage.FULL) {
             info.fullyCoveredLineCount++;
           }

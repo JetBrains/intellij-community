@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -94,12 +94,9 @@ public final class ExtractLightMethodObjectHandler {
 
     // expand lambda to code block if needed
     PsiElement containingMethod = PsiTreeUtil.getParentOfType(originalAnchor, PsiMember.class, PsiLambdaExpression.class);
-    if (containingMethod instanceof PsiLambdaExpression) {
-      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)containingMethod;
-      if (lambdaExpression.getBody() instanceof PsiExpression) {
-        PsiCodeBlock newBody = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
-        originalAnchor = newBody.getStatements()[0];
-      }
+    if (containingMethod instanceof PsiLambdaExpression lambdaExpression && lambdaExpression.getBody() instanceof PsiExpression) {
+      PsiCodeBlock newBody = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
+      originalAnchor = newBody.getStatements()[0];
     }
 
     PsiElement anchor = CommonJavaRefactoringUtil.getParentStatement(originalAnchor, false);

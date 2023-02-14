@@ -69,10 +69,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiComment)) {
+      if (!(element instanceof PsiComment comment)) {
         return;
       }
-      final PsiComment comment = (PsiComment)element;
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final List<PsiElement> toDelete = new ArrayList<>();
         toDelete.add(comment);
@@ -102,10 +101,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
     @Override
     public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiComment)) {
+      if (!(element instanceof PsiComment comment)) {
         return;
       }
-      final PsiComment comment = (PsiComment)element;
       if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
         final List<TextRange> ranges = new ArrayList<>();
         ranges.add(comment.getTextRange());
@@ -193,8 +191,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final PsiElement fragment;
     PsiElement parent = context.getParent();
-    if (parent instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)parent;
+    if (parent instanceof PsiMethod method) {
       if (!MethodUtils.isInsideMethodBody(context, method)) {
         parent = method.getParent();
       }
@@ -202,8 +199,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     else if (parent instanceof PsiField) {
       parent = parent.getParent();
     }
-    else if (parent instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)parent;
+    else if (parent instanceof PsiClass aClass) {
       if (!ClassUtils.isInsideClassBody(context, aClass)) {
         parent = aClass.getParent();
       }
@@ -228,10 +224,9 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   private static boolean isIfStatementWithoutElse(PsiStatement statement) {
-    if (!(statement instanceof PsiIfStatement)) {
+    if (!(statement instanceof PsiIfStatement ifStatement)) {
       return false;
     }
-    final PsiIfStatement ifStatement = (PsiIfStatement)statement;
     final PsiStatement elseBranch = ifStatement.getElseBranch();
     return elseBranch == null || isIfStatementWithoutElse(elseBranch);
   }

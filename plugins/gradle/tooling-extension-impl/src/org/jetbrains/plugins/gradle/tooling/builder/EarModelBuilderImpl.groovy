@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 
 /**
@@ -57,7 +58,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
 
     final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
                               "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
-    def earModels = []
+    List<? extends EarConfiguration.EarModel> earModels = []
 
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
@@ -72,7 +73,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
       if (task instanceof Ear) {
         final EarModelImpl earModel =
           is6OrBetter ? new EarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), appDirName, task.getLibDirName()) :
-          new EarModelImpl(task.archiveName, appDirName, task.getLibDirName())
+          new EarModelImpl(reflectiveCall(task, "getArchiveName", String), appDirName, task.getLibDirName())
 
         final List<EarConfiguration.EarResource> earResources = []
         final Ear earTask = task as Ear

@@ -8,6 +8,7 @@ import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -35,7 +36,8 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
     CloudTerminalRunner terminalRunner =
       new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
-    TerminalWidget widget = terminalRunner.createShellTerminalWidget(project, null, deferTerminalSessionUntilFirstShown);
+    TerminalWidget widget = terminalRunner.startShellTerminalWidget(project, new ShellStartupOptions.Builder().build(),
+                                                                    deferTerminalSessionUntilFirstShown);
     myTerminalWidget = Objects.requireNonNull(JBTerminalWidget.asJediTermWidget(widget));
     myTerminalPanel = myTerminalWidget.getTerminalPanel();
     myCopyActionKeyListener = new MyCopyActionKeyListener();

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -41,7 +42,8 @@ val KtSimpleNameExpression.mainReferenceCompat: KtSimpleNameReference
 val KtReferenceExpression.mainReferenceCompat: KtReference
     get() = mainReference
 
-@Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
+@get:ApiStatus.ScheduledForRemoval
+@get:Deprecated("For binary compatibility with AS, see KT-42061", replaceWith = ReplaceWith("mainReference"))
 @get:JvmName("getMainReference")
 val KDocName.mainReferenceCompat: KDocReference
     get() = mainReference

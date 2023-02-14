@@ -2,13 +2,9 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.refreshAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationPromise
@@ -18,8 +14,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.concurrency.waitForPromise
 import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.observable.waitForPromise
 import com.intellij.testFramework.openProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
@@ -28,9 +24,9 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
-import org.jetbrains.plugins.gradle.testFramework.util.withSuppressedErrors
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.waitForProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
+import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
+import kotlin.time.Duration.Companion.minutes
 
 internal class GradleProjectTestFixtureImpl private constructor(
   override val projectName: String,
@@ -59,7 +55,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
       configureProject()
       excludeFiles(".gradle", "build")
       withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
-      withFiles { runBlocking { createProjectCaches(it) } }
+      withFiles { createProjectCaches(it) }
     }
   )
 
@@ -77,8 +73,8 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   override fun tearDown() {
     runAll(
-      { fileFixture.root.refreshAndWait() },
-      { projectOperations.getOperationPromise(testDisposable).waitForPromise() },
+      { runBlocking { fileFixture.root.refreshAndWait() } },
+      { projectOperations.getOperationPromise(testDisposable).waitForPromise(1.minutes) },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
@@ -102,31 +98,10 @@ internal class GradleProjectTestFixtureImpl private constructor(
   }
 
   private fun installProjectReloadWatcher() {
-    val reloadListener = object : ExternalSystemTaskNotificationListenerAdapter() {
-      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
-        if (workingDir == fileFixture.root.path) {
-          if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-            fileFixture.addIllegalOperationError("Unexpected project reload: $workingDir")
-          }
-        }
+    whenResolveTaskStarted(testDisposable) { _, workingDir ->
+      if (workingDir == fileFixture.root.path) {
+        fileFixture.addIllegalOperationError("Unexpected project reload: $workingDir")
       }
-    }
-    val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    progressManager.addNotificationListener(reloadListener, testDisposable)
-  }
-
-  override fun reloadProject() {
-    if (fileFixture.isModified()) {
-      fileFixture.addIllegalOperationError("Unexpected reload with modified project files")
-    }
-    fileFixture.withSuppressedErrors {
-      waitForProjectReload {
-        ExternalSystemUtil.refreshProject(
-          fileFixture.root.path,
-          ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-        )
-      }
-      fileFixture.root.refreshAndWait()
     }
   }
 

@@ -81,16 +81,15 @@ final class ShTerminalRunner implements ShRunner {
   private static @Nullable Pair<Content, ShellTerminalWidget> getSuitableProcess(@NotNull Content content,
                                                                                  @NotNull String workingDirectory) {
     JBTerminalWidget widget = TerminalToolWindowManager.getWidgetByContent(content);
-    if (!(widget instanceof ShellTerminalWidget)) {
+    if (!(widget instanceof ShellTerminalWidget shellTerminalWidget)) {
       return null;
     }
 
-    ShellTerminalWidget shellTerminalWidget = (ShellTerminalWidget)widget;
     if (!shellTerminalWidget.getTypedShellCommand().isEmpty() || shellTerminalWidget.hasRunningCommands()) {
       return null;
     }
 
-    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget, null);
+    String currentWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(shellTerminalWidget.asNewWidget());
     if (!FileUtil.pathsEqual(workingDirectory, currentWorkingDirectory)) {
       return null;
     }

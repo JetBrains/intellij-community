@@ -257,27 +257,34 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static void addRunConfigurations(DefaultActionGroup allActionsGroup,
-                                          Project project,
-                                          Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
-                                          Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
+  public static int addRunConfigurations(DefaultActionGroup allActionsGroup,
+                                         Project project,
+                                         Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
+                                         Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder) {
+    int allConfigurationsNumber = 0;
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
       final DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         @NlsSafe String folderName = entry.getKey();
         DefaultActionGroup group = folderName == null ? actionGroup : createFolder.apply(folderName);
         group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
-        for (RunnerAndConfigurationSettings settings : entry.getValue()) {
+        List<RunnerAndConfigurationSettings> configurationsList = entry.getValue();
+        for (RunnerAndConfigurationSettings settings : configurationsList) {
           group.add(createAction.apply(settings));
         }
         if (group != actionGroup) {
+          allConfigurationsNumber++;
           actionGroup.add(group);
+        }
+        else {
+          allConfigurationsNumber += configurationsList.size();
         }
       }
 
       allActionsGroup.add(actionGroup);
       allActionsGroup.addSeparator();
     }
+    return allConfigurationsNumber;
   }
 
   protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {

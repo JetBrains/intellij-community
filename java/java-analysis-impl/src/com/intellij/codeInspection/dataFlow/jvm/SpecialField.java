@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.Nullability;
@@ -8,7 +8,9 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -253,8 +255,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
 
     @Override
     public @NotNull DfType fromConstant(@Nullable Object obj) {
-      if (obj instanceof PsiEnumConstant) {
-        PsiEnumConstant constant = (PsiEnumConstant)obj;
+      if (obj instanceof PsiEnumConstant constant) {
         PsiClass psiClass = constant.getContainingClass();
         if (psiClass != null) {
           int ordinal = 0;
@@ -339,8 +340,7 @@ public enum SpecialField implements DerivedVariableDescriptor {
   @Contract("null -> null")
   @Nullable
   public static SpecialField findSpecialField(PsiElement accessor) {
-    if (!(accessor instanceof PsiMember)) return null;
-    PsiMember member = (PsiMember)accessor;
+    if (!(accessor instanceof PsiMember member)) return null;
     for (SpecialField sf : VALUES) {
       if (sf.isMyAccessor(member)) {
         return sf;

@@ -40,8 +40,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
     final PsiJavaFile javaFile = (PsiJavaFile)importStatementBase.getContainingFile();
     final PsiManager manager = importStatementBase.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    if (importStatementBase instanceof PsiImportStatement) {
-      final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
+    if (importStatementBase instanceof PsiImportStatement importStatement) {
       final PsiClass[] classes = javaFile.getClasses();
       final String qualifiedName = importStatement.getQualifiedName();
       final ClassCollector visitor = new ClassCollector(qualifiedName);
@@ -100,10 +99,9 @@ public class ReplaceOnDemandImportIntention extends Intention {
         return;
       }
       final PsiElement element = reference.resolve();
-      if (!(element instanceof PsiClass)) {
+      if (!(element instanceof PsiClass aClass)) {
         return;
       }
-      final PsiClass aClass = (PsiClass)element;
       final String qualifiedName = aClass.getQualifiedName();
       final String packageName =
         ClassUtil.extractPackageName(qualifiedName);

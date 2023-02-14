@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     }
     else if (caretLineContent != null) {
       for (int i = 0; i < lineCount; i++) {
-        if (lines[i] == caretLineContent) {
+        if (Strings.areSameInstance(lines[i], caretLineContent)) {
           caret.moveToOffset(document.getLineStartOffset(startLine + i) + caretOffsetInLine);
           break;
         }

@@ -60,8 +60,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     }
 
     for (Configurable configurable : configurables) {
-      if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
+      if (configurable instanceof Configurable.Composite composite) {
         Configurable result = find(visitor, composite.getConfigurables());
         if (result != null) {
           return result;

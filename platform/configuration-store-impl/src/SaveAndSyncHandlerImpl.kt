@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdleFlow
+import com.intellij.ide.IdleTracker
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerListener
 import com.intellij.openapi.application.*
@@ -158,19 +158,6 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
     val settings = GeneralSettings.getInstance()
 
-    generalSettingFlow(settings, GeneralSettings.PropertyNames.autoSaveIfInactive) { it.isAutoSaveIfInactive }
-      .filter { it }
-      .flatMapConcat {
-        generalSettingFlow(settings, GeneralSettings.PropertyNames.inactiveTimeout) { it.inactiveTimeout.seconds }
-      }
-      .distinctUntilChanged()
-      .flatMapConcat { delay ->
-        IdleFlow.getInstance().events.debounce(delay)
-      }
-      .collect {
-        executeOnIdle()
-      }
-
     if (LISTEN_DELAY >= (settings.inactiveTimeout.seconds)) {
       executeOnIdle()
     }
@@ -192,11 +179,24 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         }
 
         override fun applicationActivated(ideFrame: IdeFrame) {
-          if (!ApplicationManager.getApplication().isDisposed && settings.isSyncOnFrameActivation) {
+          if (settings.isSyncOnFrameActivation) {
             scheduleRefresh()
           }
         }
       })
+
+    generalSettingFlow(settings, GeneralSettings.PropertyNames.autoSaveIfInactive) { it.isAutoSaveIfInactive }
+      .filter { it }
+      .flatMapConcat {
+        generalSettingFlow(settings, GeneralSettings.PropertyNames.inactiveTimeout) { it.inactiveTimeout.seconds }
+      }
+      .distinctUntilChanged()
+      .flatMapConcat { delay ->
+        IdleTracker.getInstance().events.debounce(delay)
+      }
+      .collect {
+        executeOnIdle()
+      }
   }
 
   private suspend fun executeOnIdle() {
@@ -238,11 +238,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
    * deadlock may occur because some saving activities require EDT with modality state "not modal" (by intention).
    */
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
-    if (!ApplicationManager.getApplication().isDispatchThread) {
-      throw IllegalStateException(
-        "saveSettingsUnderModalProgress is intended to be called only in EDT because otherwise wrapping into modal progress task is not required" +
-        " and `saveSettings` should be called directly")
-    }
+    //saveSettingsUnderModalProgress is intended to be called only in EDT because otherwise wrapping into modal progress task is not required and `saveSettings` should be called directly
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     var isSavedSuccessfully = true
     var isAutoSaveCancelled = false

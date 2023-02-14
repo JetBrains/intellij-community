@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,8 +18,11 @@ public final class AppMode {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String CWM_HOST_COMMAND = "cwmHost";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
+  public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  static final String HELP_OPTION = "--help";
+  static final String VERSION_OPTION = "--version";
 
   private static final String AWT_HEADLESS = "java.awt.headless";
 
@@ -69,7 +72,7 @@ public final class AppMode {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)));
+    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) || REMOTE_DEV_HOST_COMMAND.equals(args.get(0)));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -97,7 +100,7 @@ public final class AppMode {
           return false;
         }
       }
-      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) { // NON-NLS
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) {
         return true;
       }
     }
@@ -122,13 +125,13 @@ public final class AppMode {
 
     String firstArg = args.get(0);
 
-    @SuppressWarnings("SpellCheckingInspection")
-    List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-      "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "invalidateCaches", "warmup", "buildEventsScheme",
-      "inspectopedia-generator", "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler",
-      "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit", "qodanaExcludedPlugins");
-    return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
+    @SuppressWarnings("SpellCheckingInspection") List<String> headlessCommands = Arrays.asList(
+      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
+      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions",
+      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
+      "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
+      "qodanaExcludedPlugins");
+    return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   public static boolean isDevServer() {

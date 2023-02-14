@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
@@ -135,7 +134,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       return false;
     }
 
-    final Location contextLocation = context.getLocation();
+    final Location<?> contextLocation = context.getLocation();
 
     setupConfigurationParamName(configuration, contextLocation);
 
@@ -143,28 +142,26 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     PsiElement element = context.getPsiLocation();
     Integer sourceValueIndex = null;
     while (element != null) {
-      if (element instanceof PsiClass && isTestClass((PsiClass)element)) {
-        psiClass = (PsiClass)element;
+      if (element instanceof PsiClass cls && isTestClass(cls)) {
+        psiClass = cls;
         break;
       }
-      else if (element instanceof PsiMember) {
-        psiClass = contextLocation instanceof MethodLocation ? ((MethodLocation)contextLocation).getContainingClass()
-                                                             : contextLocation instanceof PsiMemberParameterizedLocation
-                                                               ? ((PsiMemberParameterizedLocation)contextLocation).getContainingClass()
-                                                               : ((PsiMember)element).getContainingClass();
+      else if (element instanceof PsiMember member) {
+        psiClass = contextLocation instanceof MethodLocation methodLoc ? methodLoc.getContainingClass() :
+                   contextLocation instanceof PsiMemberParameterizedLocation memberLoc ? memberLoc.getContainingClass() :
+                   member.getContainingClass();
         if (isTestClass(psiClass)) {
           break;
         }
       }
-      else if (element instanceof PsiClassOwner) {
-        final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+      else if (element instanceof PsiClassOwner classOwner) {
+        final PsiClass[] classes = classOwner.getClasses();
         if (classes.length == 1) {
           psiClass = classes[0];
           break;
         }
       }
-      else if (element instanceof PsiJavaToken) {
-        PsiJavaToken token = (PsiJavaToken)element;
+      else if (element instanceof PsiJavaToken token) {
         JvmAnnotationAttribute annotationArrayValue = getAnnotationValue(token);
         if (annotationArrayValue != null) {
           sourceValueIndex = getSourceValueIndex(token, annotationArrayValue);
@@ -241,8 +238,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
 
   private static Integer getSourceValueIndex(PsiJavaToken token, JvmAnnotationAttribute attribute) {
     JvmAnnotationAttributeValue annotationValues = attribute.getAttributeValue();
-    if (annotationValues instanceof JvmAnnotationArrayValue) {
-      JvmAnnotationArrayValue values = (JvmAnnotationArrayValue)annotationValues;
+    if (annotationValues instanceof JvmAnnotationArrayValue values) {
       List<JvmAnnotationAttributeValue> valuesAttr = values.getValues();
       String text = token.getText();
       JvmAnnotationAttributeValue value = ContainerUtil.find(valuesAttr, v -> {

@@ -84,9 +84,8 @@ public class PrefixBasedPropertyReference extends PropertyReference {
   private String getKeyPrefix() {
     if (!myPrefixEvaluated) {
       for(PsiElement curParent = PsiTreeUtil.getParentOfType(getElement().getParent().getParent(),XmlTag.class);
-          curParent instanceof XmlTag;
+          curParent instanceof XmlTag curParentTag;
           curParent = curParent.getParent()) {
-        final XmlTag curParentTag = (XmlTag) curParent;
 
         if ("bundle".equals(curParentTag.getLocalName()) &&
             Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS,curParentTag.getNamespace()) >= 0) {

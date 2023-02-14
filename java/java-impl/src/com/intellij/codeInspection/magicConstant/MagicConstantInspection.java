@@ -309,7 +309,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     };
     String values = StreamEx.of(allowedValues.getValues()).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
     String message = JavaBundle.message("inspection.magic.constants.should.be.one.of.values", values, allowedValues.isFlagSet() ? 1 : 0);
-    holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
+    holder.registerProblem(argument, message, LocalQuickFix.notNullElements(suggestMagicConstant(argument, allowedValues)));
   }
 
   @Nullable // null means no quickfix available

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -8,8 +8,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlace;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.codeInspection.OnTheFlyLocalFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -36,10 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
-import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
-
-public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements OnTheFlyLocalFix {
+public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements LocalQuickFix {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
   @SafeFieldForPreview
@@ -159,10 +155,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
 
     if (modifierListOwner instanceof PsiParameter && ((PsiParameter)modifierListOwner).getTypeElement() == null) {
       if (modifierListOwner.getParent() instanceof PsiParameterList &&
-          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression) {
+          modifierListOwner.getParent().getParent() instanceof PsiLambdaExpression lambda) {
         // Lambda parameter without type cannot be annotated. Check if we can specify types
         if (PsiUtil.isLanguageLevel11OrHigher(modifierListOwner)) return true;
-        PsiLambdaExpression lambda = (PsiLambdaExpression)modifierListOwner.getParent().getParent();
         return LambdaUtil.createLambdaParameterListWithFormalTypes(lambda.getFunctionalInterfaceType(), lambda, false) != null;
       }
       return false;
@@ -171,8 +166,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
     PsiModifierList modifierList = modifierListOwner.getModifierList();
     return modifierList != null
            && !(modifierList instanceof LightElement)
-           && !(modifierListOwner instanceof LightElement)
-           && !AnnotationUtil.isAnnotated(modifierListOwner, annotationFQN, CHECK_EXTERNAL | CHECK_TYPE);
+           && !(modifierListOwner instanceof LightElement);
   }
 
   @Override
@@ -215,8 +209,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         Runnable command = () -> {
           removePhysicalAnnotations(modifierListOwner, myAnnotationsToRemove);
 
-          PsiAnnotation inserted = addPhysicalAnnotationTo(myAnnotation, myPairs, target);
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
+          PsiAnnotation inserted = addPhysicalAnnotationTo(addAnnotation(target, myAnnotation), myPairs);
+          if (inserted != null) JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
         };
 
         if (!containingFile.isPhysical()) {
@@ -291,31 +285,34 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
         }
       }
     }
-    return addPhysicalAnnotationTo(fqn, pairs, owner);
+    return addPhysicalAnnotationTo(expandParameterAndAddAnnotation(owner, fqn), pairs);
   }
 
+  @SuppressWarnings("unused") // for backwards compatibility
   public static PsiAnnotation addPhysicalAnnotationTo(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {
-    if (owner instanceof PsiModifierList) {
-      owner = expandParameterIfNecessary((PsiModifierList)owner);
-    }
-    PsiAnnotation inserted;
-    try {
-      inserted = owner.addAnnotation(fqn);
-    }
-    catch (UnsupportedOperationException | IncorrectOperationException e) {
-      String message = "Cannot add annotation to "+owner.getClass();
-      if (owner instanceof PsiElement) {
-        StreamEx.iterate(((PsiElement)owner).getParent(), p -> p != null && !(p instanceof PsiFileSystemItem), PsiElement::getParent)
-          .map(p -> p.getClass().getName()).toList();
-        message += "; parents: " + message;
-      }
-      throw new RuntimeException(message, e);
-    }
+    return addPhysicalAnnotationTo(expandParameterAndAddAnnotation(owner, fqn), pairs);
+  }
+
+  public static PsiAnnotation addPhysicalAnnotationTo(PsiAnnotation inserted, PsiNameValuePair[] pairs) {
     for (PsiNameValuePair pair : pairs) {
       inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
     }
     return inserted;
   }
+
+  @Nullable
+  protected PsiAnnotation addAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
+    return expandParameterAndAddAnnotation(annotationOwner, fqn);
+  }
+
+  @NotNull
+  public static PsiAnnotation expandParameterAndAddAnnotation(PsiAnnotationOwner annotationOwner, String fqn) {
+    if (annotationOwner instanceof PsiModifierList) {
+      annotationOwner = expandParameterIfNecessary((PsiModifierList)annotationOwner);
+    }
+    return annotationOwner.addAnnotation(fqn);
+  }
+
   @NotNull
   public static PsiModifierList expandParameterIfNecessary(PsiModifierList owner) {
     PsiParameter parameter = ObjectUtils.tryCast(owner.getParent(), PsiParameter.class);

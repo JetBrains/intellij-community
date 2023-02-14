@@ -25,11 +25,7 @@ class VisualFormattingLayerHighlightingPass(editor: Editor, file: PsiFile) : Edi
   private var myVisualFormattingLayerElements: List<VisualFormattingLayerElement> = emptyList()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    //progress.start()
-
     myVisualFormattingLayerElements = service.collectVisualFormattingLayerElements(myEditor)
-
-    //progress.stop()
   }
 
   override fun doApplyInformationToEditor() {

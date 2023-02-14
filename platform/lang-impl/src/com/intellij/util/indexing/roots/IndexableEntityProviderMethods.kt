@@ -14,8 +14,7 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
-import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
@@ -37,7 +36,6 @@ object IndexableEntityProviderMethods {
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {
     if (shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      if (entity.isModuleUnloaded(entityStorage)) return emptyList()
       if (IndexableFilesIndex.isEnabled()) {
         return IndexableFilesIndex.getInstance(project).getModuleIndexingIterators(entity, entityStorage)
       }

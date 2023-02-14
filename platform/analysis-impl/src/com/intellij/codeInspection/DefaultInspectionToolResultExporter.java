@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -163,7 +164,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
                                @NotNull RefEntity refEntity,
-                               @NotNull Consumer<? super Element> problemSink,
+                               @NotNull BiConsumer<? super Element, ? super CommonProblemDescriptor> problemSink,
                                @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     final List<ProblemDescriptorKey> keys = Arrays
       .stream(descriptors)
@@ -186,8 +187,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       if (element == null) return;
       exportResult(refEntity, descriptor, element);
-      problemSink.accept(element);
+      problemSink.accept(element, descriptor);
     }
+  }
+  protected void exportResults(CommonProblemDescriptor @NotNull [] descriptors,
+                               @NotNull RefEntity refEntity,
+                               @NotNull Consumer<? super Element> problemSink,
+                               @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
+    exportResults(descriptors, refEntity, (element, problem) -> problemSink.accept(element) , isDescriptorExcluded);
+
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
@@ -547,8 +555,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       if (desc instanceof ProblemDescriptor) {
         lineNumber = ((ProblemDescriptor)desc).getLineNumber();
       }
-      if (desc instanceof ProblemDescriptorBase) {
-        final ProblemDescriptorBase descriptorBase = (ProblemDescriptorBase)desc;
+      if (desc instanceof ProblemDescriptorBase descriptorBase) {
         file = descriptorBase.getContainingFile();
         final TextRange textRange = descriptorBase.getTextRange();
         position = textRange != null ? textRange.getStartOffset() : 0;

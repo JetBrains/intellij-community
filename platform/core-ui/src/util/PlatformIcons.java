@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.IconManager;
-import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
@@ -92,12 +91,10 @@ public interface PlatformIcons {
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 
   /** @deprecated use {@link #FOLDER_ICON} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
 
   /** @deprecated use {@link #FOLDER_ICON} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

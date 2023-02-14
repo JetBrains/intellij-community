@@ -108,10 +108,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         return;
       }
       final PsiElement declaredElement = declaration.getDeclaredElements()[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
+      if (!(declaredElement instanceof PsiLocalVariable iterator)) {
         return;
       }
-      final PsiLocalVariable iterator = (PsiLocalVariable)declaredElement;
       final PsiMethodCallExpression initializer = (PsiMethodCallExpression)PsiUtil.skipParenthesizedExprDown(iterator.getInitializer());
       if (initializer == null) {
         return;

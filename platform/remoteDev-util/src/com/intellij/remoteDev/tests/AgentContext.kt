@@ -13,14 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 class AgentContext(
   val agentId: RdAgentId,
   val application: Application,
-  private val thisProject: Project?,
+  val projectOrNull: Project?,
   val protocol: IProtocol
 ) {
   val project: Project
-    get() {
-      if (thisProject != null) return thisProject
-      else {
-        error("Project shouldn't be requested for the projectless application")
-      }
-    }
+    get() = projectOrNull ?: error("Project shouldn't be requested for the projectless application")
 }

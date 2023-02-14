@@ -39,7 +39,7 @@ public class AbstractBundle {
     myBundleClassLoader = bundleClass.getClassLoader();
   }
 
-  public AbstractBundle(@NonNls @NotNull String pathToBundle) {
+  protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
     myBundleClassLoader = getClass().getClassLoader();
   }

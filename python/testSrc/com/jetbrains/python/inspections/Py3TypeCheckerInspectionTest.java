@@ -1375,4 +1375,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    f(<warning descr="Expected type 'Getter[int]', got 'Box[str]' instead">box</warning>)
                    """);
   }
+
+  // PY-53612
+  public void testLiteralStringInPlaceOrStr() {
+    doTest();
+  }
 }

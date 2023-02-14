@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsModel
@@ -24,10 +23,18 @@ internal class GHPRDetailsViewModelImpl(
   override val descriptionState: StateFlow<String> = _descriptionState.asStateFlow()
 
   private val _reviewMergeState: MutableStateFlow<GHPullRequestState> = MutableStateFlow(detailsModel.state)
-  override val reviewMergeState: StateFlow<GHPullRequestState> = _reviewMergeState.asStateFlow()
 
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
   override val isDraftState: StateFlow<Boolean> = _isDraftState.asStateFlow()
+
+  override val requestState: Flow<RequestState> = combine(_reviewMergeState, _isDraftState) { reviewMergeState, isDraft ->
+    if (isDraft) return@combine RequestState.DRAFT
+    return@combine when (reviewMergeState) {
+      GHPullRequestState.CLOSED -> RequestState.CLOSED
+      GHPullRequestState.MERGED -> RequestState.MERGED
+      GHPullRequestState.OPEN -> RequestState.OPENED
+    }
+  }
 
   override val number: String = detailsModel.number
   override val url: String = detailsModel.url

@@ -143,8 +143,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     Object userObject = node.getUserObject();
 
-    if (myDesigner != null && userObject instanceof TreeNodeDescriptor) {
-      TreeNodeDescriptor descriptor = (TreeNodeDescriptor)userObject;
+    if (myDesigner != null && userObject instanceof TreeNodeDescriptor descriptor) {
       Object element = descriptor.getElement();
 
       if (element instanceof RadComponent) {

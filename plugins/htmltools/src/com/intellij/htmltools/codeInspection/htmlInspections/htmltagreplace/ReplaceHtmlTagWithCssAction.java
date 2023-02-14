@@ -128,8 +128,7 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
       PsiElement[] elements = tag.getChildren();
       boolean started = false;
       for (PsiElement psiElement : elements) {
-        if (psiElement instanceof XmlToken) {
-          final XmlToken xmlToken = (XmlToken)psiElement;
+        if (psiElement instanceof XmlToken xmlToken) {
           IElementType type = xmlToken.getTokenType();
           if (type == XmlTokenType.XML_TAG_END) {
             started = true;

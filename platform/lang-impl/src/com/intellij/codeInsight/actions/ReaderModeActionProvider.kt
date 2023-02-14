@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
+import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettings.Companion.matchMode
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.icons.AllIcons
@@ -135,8 +136,12 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
 
-      ReaderModeSettings.getInstance(project).enabled = !ReaderModeSettings.getInstance(project).enabled
+      val newEnabled = !ReaderModeSettings.getInstance(project).enabled
+
+      ReaderModeSettings.getInstance(project).enabled = newEnabled
       project.messageBus.syncPublisher(ReaderModeSettingsListener.TOPIC).modeChanged(project)
+
+      ReaderModeStatsCollector.readerModeSwitched(newEnabled)
     }
 
     override fun update(e: AnActionEvent) {

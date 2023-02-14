@@ -195,8 +195,7 @@ final class ActionsLoader {
     ret.put(0L, result);
 
     Customizer customizer = new Customizer(null, null, (parentInfo, butt, presentation) -> {
-      if (butt.getAnAction() instanceof FNKeyAction) {
-        final FNKeyAction act = ((FNKeyAction)butt.getAnAction());
+      if (butt.getAnAction() instanceof FNKeyAction act) {
         butt.setWidth(FN_WIDTH);
         butt.setIcon(null);
         final String hint = presentation.getText() == null || presentation.getText().isEmpty() ? " " : presentation.getText();

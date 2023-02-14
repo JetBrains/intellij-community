@@ -22,7 +22,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -147,7 +146,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
-    public Builder setTitle(@NlsContexts.DialogTitle String title) {
+    public Builder setTitle(@DialogTitle String title) {
       myDialog.setTitle(title);
       return this;
     }
@@ -329,7 +328,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
         if (isValid && isExtraValid) {
           popup.closeOk(e);
-          T createdElement = (T)SlowOperations.allowSlowOperations(() -> createElement(newElementName, elementCreator));
+          //noinspection unchecked
+          T createdElement = (T)createElement(newElementName, elementCreator);
           if (createdElement != null) {
             elementConsumer.consume(createdElement);
           }

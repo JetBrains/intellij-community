@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -36,8 +36,7 @@ public final class OptionalRefactoringUtil {
                          targetType != null &&
                          (trueType instanceof PsiLambdaParameterType || Objects.requireNonNull(trueType).isAssignableFrom(targetType));
     if (!trivialMap) {
-      if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
-        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
+      if (stripped instanceof PsiTypeCastExpression castExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
         if (castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
@@ -53,8 +52,7 @@ public final class OptionalRefactoringUtil {
       if (ExpressionUtils.isLiteral(falseExpression, Boolean.TRUE) && ExpressionUtils.isLiteral(trueExpression, Boolean.FALSE)) {
         return "!" + qualifier + ".isPresent()";
       }
-      if (stripped instanceof PsiConditionalExpression) {
-        PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
+      if (stripped instanceof PsiConditionalExpression condition) {
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
         if (thenExpression != null && elseExpression != null) {

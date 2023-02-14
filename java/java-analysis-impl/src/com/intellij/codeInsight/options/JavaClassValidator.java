@@ -6,6 +6,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
@@ -75,6 +76,10 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
       return JavaBundle.message("validator.text.not.valid.class.name");
     }
     if (project == null) return null;
+    //wait for loading
+    if (DumbService.isDumb(project)) {
+      return null;
+    }
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
     if (psiClass == null) {

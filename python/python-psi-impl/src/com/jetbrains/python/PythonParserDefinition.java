@@ -62,8 +62,7 @@ public class PythonParserDefinition implements ParserDefinition {
   @NotNull
   public PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
-    if (type instanceof PyElementType) {
-      PyElementType pyElType = (PyElementType)type;
+    if (type instanceof PyElementType pyElType) {
       return pyElType.createElement(node);
     }
     else if (type instanceof PyStubElementType) {

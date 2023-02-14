@@ -18,17 +18,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static com.siyeh.ipp.integer.JavaNumberConverters.*;
 
 public class JavaNumberConversionIntention extends AbstractNumberConversionIntention {
 
   private static final class Holder {
-    static final List<NumberConverter> JAVA_1_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_1_CONVERTERS = List.of(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC);
-    static final List<NumberConverter> JAVA_5_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_5_CONVERTERS = List.of(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_OCTAL, FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
-    static final List<NumberConverter> JAVA_7_CONVERTERS = immutableList(
+    static final List<NumberConverter> JAVA_7_CONVERTERS = List.of(
       INTEGER_TO_DECIMAL, INTEGER_TO_HEX, INTEGER_TO_BINARY, INTEGER_TO_OCTAL,
       FLOAT_TO_DECIMAL, FLOAT_TO_PLAIN, FLOAT_TO_SCIENTIFIC, FLOAT_TO_HEX);
   }

@@ -1,18 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 /**
- * A set of properties which define inlay's behaviour. It should be provided at inlay's creation time (see
+ * A set of properties that define the inlay's behavior.
+ * <p>
+ * The properties should be provided when the inlay is created, see
  * {@link InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer)},
  * {@link InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer)},
- * {@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer)}).
+ * {@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer)}.
  * <p>
- * This class is mutable (and not thread-safe), setter methods return the instance on which they are invoked, to enable chained invocation.
- * Values of properties in the set are captured at the time of inlay creation, and stay constant throughout inlay's lifetime. Further
- * changes to {@code InlayProperties} instance don't have any effect on the created inlay.
+ * This class is mutable (and not thread-safe); the modifying methods return {@code this}, to enable chained invocation.
+ * At the time an inlay is created, the inlay gets an immutable snapshot of the properties,
+ * so that further changes to the {@code InlayProperties} instance don't affect the created inlay.
  * <p>
- * Some properties may have an impact only for certain types of inlays, corresponding information is provided in setter methods'
- * descriptions.
+ * Some properties may have an impact only for certain types of inlays,
+ * see the setter methods' descriptions for details.
  */
 public final class InlayProperties {
   private boolean myRelatesToPrecedingText;
@@ -22,20 +24,30 @@ public final class InlayProperties {
   private boolean myDisableSoftWrapping;
 
   /**
-   * Creates a default set of inlay properties.
+   * Creates a default set of inlay properties:
+   * <ul>
+   * <li>The inlay is related to the text that follows (rather than to the preceding text), see {@link #relatesToPrecedingText(boolean)}.
+   * <li>If it is a block inlay, it is shown below the corresponding line, see {@link #showAbove(boolean)}.
+   * <li>If the corresponding text is collapsed, the inlay is hidden, see {@link #showWhenFolded(boolean)}.
+   * <li>
+   * </ul>
    */
   public InlayProperties() {}
 
   /**
-   * This property tells whether this inlay is associated with preceding or following text. This relation defines certain aspects of inlay's
-   * behaviour with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text
-   * if the property is {@code false} and after the text, if it is {@code true}.
+   * This property tells whether this inlay is associated with preceding or following text.
+   * This relation affects the inlay's behavior with respect to changes in editor,
+   * e.g. when text is inserted at the inlay's position,
+   * the inlay will end up before the inserted text if the property is {@code false}
+   * and after the text if it is {@code true}.
    * <p>
-   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inline inlay exists at the given offset,
-   * caret will be positioned to the left of inlay if the property is {@code true}, and vice versa.
+   * Also, when {@link Caret#moveToOffset(int)} or a similar offset-based method is invoked,
+   * and an inline inlay exists at the given offset,
+   * the caret will be positioned to the left of the inlay if the property is {@code true}, and vice versa.
    * <p>
-   * For block elements this value impacts their visibility on the boundary offsets of collapsed fold region. If the value is {@code true},
-   * the inlay will be visible at the trailing boundary, and if the value is {@code false} - on the leading boundary.
+   * For a block elements, this value impacts the inlay's visibility on the boundary offsets of collapsed fold regions.
+   * If the value is {@code true}, the inlay will be visible at the trailing boundary,
+   * and if the value is {@code false}, on the leading boundary.
    */
   public InlayProperties relatesToPrecedingText(boolean value) {
     myRelatesToPrecedingText = value;
@@ -43,7 +55,8 @@ public final class InlayProperties {
   }
 
   /**
-   * This property applies only to 'block' inlays, and defines whether it will be shown above or below corresponding visual line.
+   * This property applies only to 'block' inlays
+   * and defines whether it will be shown above or below corresponding visual line.
    */
   public InlayProperties showAbove(boolean value) {
     myShowAbove = value;
@@ -51,9 +64,13 @@ public final class InlayProperties {
   }
 
   /**
-   * This property impacts the visual order in which adjacent inlays are displayed. For 'inline' and 'after line end' ones, higher priority
-   * means the inlay will be shown closer to the left, for 'block' ones - closer to the line of text (for inlays related to the same visual
-   * line).
+   * This property impacts the visual order in which adjacent inlays are displayed.
+   * <p>
+   * For 'inline' and 'after line end' inlays, higher priority means
+   * the inlay will be shown closer to the left.
+   * <p>
+   * For 'block' inlays, higher priority means closer to the line of text
+   * (for inlays related to the same visual line).
    */
   public InlayProperties priority(int value) {
     myPriority = value;
@@ -61,8 +78,9 @@ public final class InlayProperties {
   }
 
   /**
-   * If this property is {@code true}, the inlay will be shown even if corresponding offset is in collapsed (folded) area. Applies only to
-   * 'block' (inter-line) inlays.
+   * If this property is {@code true}, the inlay will be shown even if the corresponding offset is in a collapsed (folded) area.
+   * <p>
+   * Applies only to 'block' (inter-line) inlays.
    */
   public InlayProperties showWhenFolded(boolean value) {
     myShowWhenFolded = value;
@@ -70,8 +88,11 @@ public final class InlayProperties {
   }
 
   /**
-   * 'After line end' inlays with this property won't be moved to the next visual line, even if they don't fit editor visible area. They
-   * also will be displayed to the left of inlays with enabled soft wrapping, regardless of their {@link #priority(int) priorities}.
+   * 'After line end' inlays with this property won't be moved to the next visual line,
+   * even if they don't fit the editor's visible area.
+   * <p>
+   * They also will be displayed to the left of inlays with enabled soft wrapping,
+   * regardless of their {@link #priority(int) priorities}.
    */
   public InlayProperties disableSoftWrapping(boolean value) {
     myDisableSoftWrapping = value;

@@ -5,6 +5,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ResetFontSizeAction extends EditorAction {
-  private static final String FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
-  private static final String FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
+  private static final String UNSCALED_FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
+  private static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
 
   @ApiStatus.Internal
@@ -43,8 +45,6 @@ public final class ResetFontSizeAction extends EditorAction {
   }
 
   private static final class SingleEditorStrategy implements Strategy {
-    private final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
     private final EditorEx myEditorEx;
 
     SingleEditorStrategy(EditorEx editorEx) {
@@ -54,9 +54,9 @@ public final class ResetFontSizeAction extends EditorAction {
     @Override
     public float getFontSize() {
       if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
-        return globalScheme.getConsoleFontSize2D();
+        return UISettingsUtils.getInstance().getScaledConsoleFontSize();
       }
-      return globalScheme.getEditorFontSize2D();
+      return UISettingsUtils.getInstance().getScaledEditorFontSize();
     }
 
     @Override
@@ -79,11 +79,20 @@ public final class ResetFontSizeAction extends EditorAction {
 
     @Override
     public float getFontSize() {
+      return UISettingsUtils.getInstance().scaleFontSize(getUnscaledFontSize());
+    }
+
+    private float getUnscaledFontSize() {
       PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
       if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
-        return propertyComponent.getFloat(FONT_SIZE_TO_RESET_CONSOLE, -1);
+        return propertyComponent.getFloat(UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, -1);
       }
-      return propertyComponent.getFloat(FONT_SIZE_TO_RESET_EDITOR, -1);
+      return propertyComponent.getFloat(UNSCALED_FONT_SIZE_TO_RESET_EDITOR, -1);
+    }
+
+    @Override
+    public void reset() {
+      setFontSize(getUnscaledFontSize());
     }
 
     @Override
@@ -99,17 +108,14 @@ public final class ResetFontSizeAction extends EditorAction {
   }
 
   private static final class PresentationModeStrategy implements Strategy {
-    private final UISettings settings = UISettings.getInstance();
-
     @Override
     public float getFontSize() {
-      return settings.getPresentationModeFontSize();
+      return UISettingsUtils.getInstance().getPresentationModeFontSize();
     }
 
     @Override
     public void setFontSize(float fontSize) {
       int fs = (int)fontSize;
-      settings.setPresentationModeFontSize(fs);
       for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
         if (editor instanceof EditorEx) {
           ((EditorEx)editor).setFontSize(fs);
@@ -125,15 +131,11 @@ public final class ResetFontSizeAction extends EditorAction {
 
   @ApiStatus.Internal
   public static Strategy getStrategy(EditorEx editor) {
-    float globalSize = ConsoleViewUtil.isConsoleViewEditor(editor)
-                       ? EditorColorsManager.getInstance().getGlobalScheme().getConsoleFontSize2D()
-                       : EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-
     if (editor instanceof EditorImpl) {
       if (UISettings.getInstance().getPresentationMode()) {
         return new PresentationModeStrategy();
       }
-      if (((EditorImpl) editor).getFontSize2D() == globalSize) {
+      if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
         return new AllEditorsStrategy(editor);
       }
     }
@@ -148,10 +150,9 @@ public final class ResetFontSizeAction extends EditorAction {
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (e.getPlace().equals(ActionPlaces.POPUP) && editor != null) {
-      if (!(editor instanceof EditorEx)) {
+      if (!(editor instanceof EditorEx editorEx)) {
         return;
       }
-      EditorEx editorEx = (EditorEx)editor;
       Strategy strategy = getStrategy(editorEx);
       float toReset = strategy.getFontSize();
       //noinspection DialogTitleCapitalization
@@ -188,8 +189,8 @@ public final class ResetFontSizeAction extends EditorAction {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       if (force || !propertyComponent.getValue(PREVIOUS_COLOR_SCHEME, "").equals(globalScheme.getName())) {
         propertyComponent.setValue(PREVIOUS_COLOR_SCHEME, globalScheme.getName());
-        propertyComponent.setValue(FONT_SIZE_TO_RESET_CONSOLE, globalScheme.getConsoleFontSize2D(), -1);
-        propertyComponent.setValue(FONT_SIZE_TO_RESET_EDITOR, globalScheme.getEditorFontSize2D(), -1);
+        propertyComponent.setValue(UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, globalScheme.getConsoleFontSize2D(), -1);
+        propertyComponent.setValue(UNSCALED_FONT_SIZE_TO_RESET_EDITOR, globalScheme.getEditorFontSize2D(), -1);
       }
     }
   }

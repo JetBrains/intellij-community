@@ -118,8 +118,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
 
   @Override
   public void setState(@NotNull FileEditorState state) {
-    if (state instanceof LargeFileEditorState) {
-      LargeFileEditorState largeFileEditorState = (LargeFileEditorState)state;
+    if (state instanceof LargeFileEditorState largeFileEditorState) {
       editorModel.setCaretAndShow(largeFileEditorState.caretPageNumber,
                                   largeFileEditorState.caretSymbolOffsetInPage);
     }

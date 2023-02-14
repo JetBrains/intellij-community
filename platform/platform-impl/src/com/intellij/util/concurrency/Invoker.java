@@ -284,8 +284,7 @@ public abstract class Invoker implements Disposable {
         promise.setError("disposed");
         return false; // the current invoker is disposed
       }
-      if (supplier instanceof Obsolescent) {
-        Obsolescent obsolescent = (Obsolescent)supplier;
+      if (supplier instanceof Obsolescent obsolescent) {
         if (obsolescent.isObsolete()) {
           if (LOG.isTraceEnabled()) LOG.debug("Task is obsolete");
           promise.setError("obsolete");

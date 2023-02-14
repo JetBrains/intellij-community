@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
-import com.intellij.find.FindBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +52,7 @@ class GenerateTestDataPathCommon extends BaseGenerateAction {
       if (value != null) {
         final var project = owner.getProject();
         final var constantValue = value.evaluate();
-        if (constantValue instanceof String) {
-          var path = (String)constantValue;
+        if (constantValue instanceof String path) {
           if (path.contains(CONTENT_ROOT_VARIABLE)) {
             final var fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final var file = owner.getContainingFile().getVirtualFile();

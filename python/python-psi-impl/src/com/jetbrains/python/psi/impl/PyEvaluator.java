@@ -329,10 +329,9 @@ public class PyEvaluator {
       if (arguments.length > 0) {
         final Map<Object, Object> result = new HashMap<>();
         for (final PyExpression argument : arguments) {
-          if (!(argument instanceof PyKeywordArgument)) {
+          if (!(argument instanceof PyKeywordArgument keywordArgument)) {
             continue;
           }
-          final PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
           final String keyword = keywordArgument.getKeyword();
           if (keyword == null) {
             continue;

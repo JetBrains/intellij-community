@@ -75,6 +75,16 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
             runTest("testData/resolve/referenceInJava/binaryAndSource/MethodWithParameters.java");
         }
 
+        @TestMetadata("MultifileFacade1.java")
+        public void testMultifileFacade1() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade1.java");
+        }
+
+        @TestMetadata("MultifileFacade2.java")
+        public void testMultifileFacade2() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/MultifileFacade2.java");
+        }
+
         @TestMetadata("ObjectInstance.java")
         public void testObjectInstance() throws Exception {
             runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
@@ -83,6 +93,16 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
         @TestMetadata("PlatformStaticFun.java")
         public void testPlatformStaticFun() throws Exception {
             runTest("testData/resolve/referenceInJava/binaryAndSource/PlatformStaticFun.java");
+        }
+
+        @TestMetadata("SingleFileMultifileFacade.java")
+        public void testSingleFileMultifileFacade() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/SingleFileMultifileFacade.java");
+        }
+
+        @TestMetadata("TopLevelFunction.java")
+        public void testTopLevelFunction() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/TopLevelFunction.java");
         }
     }
 
@@ -116,6 +136,11 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
         @TestMetadata("DelegatedMethodFromInterfaceWithImpl.java")
         public void testDelegatedMethodFromInterfaceWithImpl() throws Exception {
             runTest("testData/resolve/referenceInJava/sourceOnly/DelegatedMethodFromInterfaceWithImpl.java");
+        }
+
+        @TestMetadata("KotlinCollection.java")
+        public void testKotlinCollection() throws Exception {
+            runTest("testData/resolve/referenceInJava/sourceOnly/KotlinCollection.java");
         }
     }
 }

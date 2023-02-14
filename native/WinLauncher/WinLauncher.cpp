@@ -267,7 +267,12 @@ static void addVMOption(int resource, std::vector<std::string> &vmOptionLines) {
   }
 }
 
-void AddPredefinedVMOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
+static void AddDumpPathVMOptions(std::vector<std::string> &vmOptionLines) {
+  addVMOption(IDS_VM_OPTION_ERRORFILE, vmOptionLines);
+  addVMOption(IDS_VM_OPTION_HEAPDUMPPATH, vmOptionLines);
+}
+
+static void AddPredefinedVMOptions(const std::string &homeDir, std::vector<std::string> &vmOptionLines) {
   std::string vmOptionsStr = LoadStdString(IDS_VM_OPTIONS);
   while (!vmOptionsStr.empty()) {
     size_t pos = vmOptionsStr.find(' ');
@@ -279,12 +284,8 @@ void AddPredefinedVMOptions(const std::string &homeDir, std::vector<std::string>
     vmOptionsStr = vmOptionsStr.substr(pos);
   }
 
-  addVMOption(IDS_VM_OPTION_ERRORFILE, vmOptionLines);
-  addVMOption(IDS_VM_OPTION_HEAPDUMPPATH, vmOptionLines);
-
   char propertiesFile[_MAX_PATH];
-  if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH))
-  {
+  if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH)) {
     vmOptionLines.push_back(std::string("-Didea.properties.file=") + propertiesFile);
   }
 }
@@ -299,6 +300,8 @@ void (JNICALL jniExitHook)(jint code) {
 static void LoadVMOptions(const std::string &homeDir) {
   char bin_vmoptions[_MAX_PATH], buffer1[_MAX_PATH], buffer2[_MAX_PATH], *vmOptionsFile = NULL;
   std::vector<std::string> lines, user_lines;
+
+  AddDumpPathVMOptions(lines);
 
   GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
   strcat_s(bin_vmoptions, ".vmoptions");

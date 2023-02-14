@@ -327,23 +327,20 @@ public final class MethodUtils {
       if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {
         continue;
       }
-      if (statement instanceof PsiReturnStatement) {
-        final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+      if (statement instanceof PsiReturnStatement returnStatement) {
         final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
         if (returnValue != null && !(returnValue instanceof PsiLiteralExpression)) {
           return false;
         }
       }
-      else if (statement instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)statement;
+      else if (statement instanceof PsiIfStatement ifStatement) {
         final PsiExpression condition = ifStatement.getCondition();
         final Object result = ExpressionUtils.computeConstantExpression(condition);
         if (result == null || !result.equals(Boolean.FALSE)) {
           return false;
         }
       }
-      else if (statement instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      else if (statement instanceof PsiExpressionStatement expressionStatement) {
         if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
@@ -376,15 +373,13 @@ public final class MethodUtils {
     for (UExpression expression : expressions) {
       ProgressManager.checkCanceled();
       if (expression instanceof UastEmptyExpression || trivialPredicate != null && trivialPredicate.test(expression)) continue;
-      if (expression instanceof UReturnExpression) {
-        final UReturnExpression returnExpression = (UReturnExpression)expression;
+      if (expression instanceof UReturnExpression returnExpression) {
         final UExpression returnedExpression = returnExpression.getReturnExpression();
         if (returnedExpression != null && !(UastUtils.skipParenthesizedExprDown(returnedExpression) instanceof ULiteralExpression)) {
           return false;
         }
       }
-      else if (expression instanceof UIfExpression) {
-        final UIfExpression ifExpression = (UIfExpression)expression;
+      else if (expression instanceof UIfExpression ifExpression) {
         final UExpression condition = ifExpression.getCondition();
         final Object result = condition.evaluate();
         if (result == null || !result.equals(Boolean.FALSE)) return false;
@@ -407,10 +402,9 @@ public final class MethodUtils {
     for (PsiJavaCodeReferenceElement reference : references) {
       ProgressManager.checkCanceled();
       final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
+      if (!(target instanceof PsiClass aClass)) {
         continue;
       }
-      final PsiClass aClass = (PsiClass)target;
       final String qualifiedName = aClass.getQualifiedName();
       if (ArrayUtil.contains(qualifiedName, exceptions)) return true;
     }
@@ -425,10 +419,9 @@ public final class MethodUtils {
       return false;
     }
     final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
-    if (!(lastStatement instanceof PsiReturnStatement)) {
+    if (!(lastStatement instanceof PsiReturnStatement returnStatement)) {
       return false;
     }
-    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
   }
@@ -512,18 +505,16 @@ public final class MethodUtils {
       return false;
     }
     if (PsiTypes.voidType().equals(returnType)) {
-      if (!(statement instanceof PsiExpressionStatement)) {
+      if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }
-      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
       final PsiExpression expression = expressionStatement.getExpression();
       return isCallToOverloadedMethod(expression, method);
     }
     else {
-      if (!(statement instanceof PsiReturnStatement)) {
+      if (!(statement instanceof PsiReturnStatement returnStatement)) {
         return false;
       }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       return isCallToOverloadedMethod(returnValue, method);
     }
@@ -531,10 +522,9 @@ public final class MethodUtils {
 
   private static boolean isCallToOverloadedMethod(PsiExpression expression, PsiMethod method) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression methodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
     final String name = methodCallExpression.getMethodExpression().getReferenceName();
     if (!method.getName().equals(name)) {
       return false;
@@ -565,8 +555,7 @@ public final class MethodUtils {
       if (element == stop) {
         return null;
       }
-      if (element instanceof PsiModifierListOwner) {
-        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
+      if (element instanceof PsiModifierListOwner modifierListOwner) {
         final PsiAnnotation annotation =
           AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
         if (annotation != null) {
@@ -574,8 +563,7 @@ public final class MethodUtils {
         }
       }
 
-      if (element instanceof PsiClassOwner) {
-        final PsiClassOwner classOwner = (PsiClassOwner)element;
+      if (element instanceof PsiClassOwner classOwner) {
         final String packageName = classOwner.getPackageName();
         final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
         if (aPackage == null) {

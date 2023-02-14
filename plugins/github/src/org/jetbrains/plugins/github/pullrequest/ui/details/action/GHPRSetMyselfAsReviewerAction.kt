@@ -2,25 +2,22 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.util.CollectionDelta
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRMetadataModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 
-internal class GHPRSetMyselfAsReviewerAction(
-  stateModel: GHPRStateModel,
-  securityService: GHPRSecurityService,
-  private val metadataModel: GHPRMetadataModel,
-) : GHPRStateChangeAction(CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer"), stateModel, securityService) {
-  override fun actionPerformed(event: ActionEvent) = stateModel.submitTask {
-    val newReviewer = securityService.currentUser as GHPullRequestRequestedReviewer
-    val newReviewers = metadataModel.reviewers.toMutableList().apply {
-      add(newReviewer)
+internal class GHPRSetMyselfAsReviewerAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
+  : AbstractAction(CollaborationToolsBundle.message("review.details.action.set.myself.as.reviewer")) {
+
+  init {
+    scope.launch {
+      reviewFlowVm.isBusy.collect { isBusy ->
+        isEnabled = !isBusy && reviewFlowVm.userCanManageReview
+      }
     }
-    val delta = CollectionDelta(metadataModel.reviewers, newReviewers)
-    metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
   }
+
+  override fun actionPerformed(event: ActionEvent) = reviewFlowVm.setMyselfAsReviewer()
 }

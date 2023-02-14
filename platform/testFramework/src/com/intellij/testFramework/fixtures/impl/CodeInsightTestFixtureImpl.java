@@ -5,7 +5,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -65,6 +64,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -155,7 +155,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -174,6 +176,7 @@ import static org.junit.Assert.*;
  */
 @TestOnly
 public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsightTestFixture {
+  private static final Logger LOG = Logger.getInstance(CodeInsightTestFixtureImpl.class);
   private static final Function<IntentionAction, String> INTENTION_NAME_FUN = intentionAction -> '"' + intentionAction.getText() + '"';
 
   private static final String RAINBOW = "rainbow";
@@ -333,16 +336,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @TestOnly
   public static List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    return ReadAction.compute(() -> doGetAvailableIntentions(editor, file));
-  }
-
-  @NotNull
-  private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
     if (current != null) {
       current.waitForHighlighting(file.getProject(), editor);
     }
     waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+    return ReadAction.compute(() -> doGetAvailableIntentions(editor, file));
+  }
+
+  @NotNull
+  private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
 
     List<IntentionAction> result = new ArrayList<>();
@@ -372,10 +375,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ActionUtil.underModalProgress(file.getProject(), CodeInsightBundle.message("progress.title.searching.for.context.actions"), () -> {
-        DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-        return null;
+      assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "must not call under write action";
+
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (!ReadAction.compute(() -> file.getProject().isDisposed() || editor.isDisposed())) {
+          DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
+        }
       });
+      try {
+        while (!future.isDone()) {
+          try {
+            future.get(10, TimeUnit.MILLISECONDS);
+          }
+          catch (TimeoutException ignored) {
+          }
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        future.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
     }
     else {
       DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
@@ -693,7 +713,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions() {
     doHighlighting();
-    return ReadAction.compute(() -> getAvailableIntentions(getHostEditor(), getHostFileAtCaret()));
+    return getAvailableIntentions(ReadAction.compute(() -> getHostEditor()), ReadAction.compute(() -> getHostFileAtCaret()));
   }
 
   @NotNull
@@ -730,8 +750,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<IntentionAction> intentions = getAvailableIntentions(filePaths);
     IntentionAction action = CodeInsightTestUtil.findIntentionByText(intentions, intentionName);
     if (action == null) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println(intentionName + " not found among " + StringUtil.join(intentions, IntentionAction::getText, ","));
+      LOG.debug(intentionName + " not found among " + StringUtil.join(intentions, IntentionAction::getText, ","));
     }
     return action;
   }
@@ -1691,7 +1710,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * Other testing methods are not affected,
    * consider using {@link PsiManagerEx#setAssertOnFileLoadingFilter(VirtualFileFilter, Disposable)}.
    * <p>
-   * Files loaded with <b>configure*</b> methods (which are called, e.g. from {@link #testHighlighting(String...)}) won't be checked
+   * Files loaded with <b>configure*</b> methods (which are called, e.g., from {@link #testHighlighting(String...)}) won't be checked
    * because their AST will be loaded before setting filter. Use {@link #copyFileToProject(String)} and similar methods.
    */
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
@@ -1866,13 +1885,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<Border> borders =
     segments.stream()
         .flatMap(region -> Stream.of(
-          new CodeInsightTestFixtureImpl.Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
-          new CodeInsightTestFixtureImpl.Border(false, region.getEndOffset(), "")))
+          new Border(true, region.getStartOffset(), attrCalculator == null ? null : attrCalculator.fun(region)),
+          new Border(false, region.getEndOffset(), "")))
       .sorted()
       .toList();
 
     StringBuilder result = new StringBuilder(text);
-    for (CodeInsightTestFixtureImpl.Border border : borders) {
+    for (Border border : borders) {
       StringBuilder info = new StringBuilder();
       info.append('<');
       if (border.isLeftBorder) {
@@ -1888,6 +1907,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       result.insert(border.offset, info);
     }
     return result.toString();
+  }
+  private record Border(boolean isLeftBorder, int offset, @Nullable String text) implements Comparable<Border> {
+    @Override
+    public int compareTo(@NotNull Border o) {
+      return offset < o.offset ? 1 : -1;
+    }
   }
 
   private void testFoldingRegions(@NotNull String verificationFileName,
@@ -2227,23 +2252,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     @NotNull
     private static SelectionAndCaretMarkupLoader fromText(@NotNull String text) {
       return new SelectionAndCaretMarkupLoader(text, null);
-    }
-  }
-
-  private static final class Border implements Comparable<Border> {
-    private final boolean isLeftBorder;
-    private final int offset;
-    private final String text;
-
-    private Border(boolean isLeftBorder, int offset, String text) {
-      this.isLeftBorder = isLeftBorder;
-      this.offset = offset;
-      this.text = text;
-    }
-
-    @Override
-    public int compareTo(@NotNull Border o) {
-      return offset < o.offset ? 1 : -1;
     }
   }
 

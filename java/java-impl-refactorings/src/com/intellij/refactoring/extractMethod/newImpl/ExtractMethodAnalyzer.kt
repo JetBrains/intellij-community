@@ -44,11 +44,6 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val expression = elements.singleOrNull() as? PsiExpression
 
-
-  fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
-    return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
-  }
-
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
     variableData is VariableOutput -> when {
@@ -110,6 +105,10 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   return ExtractMethodPipeline.withDefaultStatic(extractOptions)
 }
 
+private fun canExtractStatementsFromScope(statements: List<PsiStatement>, scope: List<PsiElement>): Boolean {
+  return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
+}
+
 private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, elements: List<PsiElement>, reservedNames: List<String>): DataOutput {
   var normalizedDataOutput = dataOutput
   if (flowOutput is ConditionalFlow && dataOutput.type is PsiPrimitiveType) {
@@ -141,9 +140,9 @@ fun findClassMember(element: PsiElement): PsiMember? {
 
 private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
   if (analyzer.hasObservableThrowExit()) return null
-  val (exitStatements, numberOfExits, hasSpecialExits) = analyzer.findExitDescription()
+  val (exitStatements, numberOfExits, isNormalExit) = analyzer.findExitDescription()
   return when (numberOfExits) {
-    1 -> if (exitStatements.isNotEmpty()) UnconditionalFlow(exitStatements, !hasSpecialExits) else EmptyFlow
+    1 -> if (exitStatements.isNotEmpty()) UnconditionalFlow(exitStatements, isNormalExit) else EmptyFlow
     2 -> if (exitStatements.isNotEmpty()) ConditionalFlow(exitStatements) else null
     else -> return null
   }
@@ -200,9 +199,9 @@ private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput)
 
 private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>): DataOutput {
   val variable = when {
+    variables.size > 1 -> throw ExtractMultipleVariablesException(variables, analyzer.elements)
     analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() ->
       throw ExtractException(JavaRefactoringBundle.message("extract.method.error.variable.in.expression"), variables)
-    variables.size > 1 -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables)
     variables.isEmpty() -> return EmptyOutput()
     else -> variables.single()
   }

@@ -63,8 +63,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   }
 
   protected boolean isAccessible(@NotNull PsiNamedElement namedElement) {
-    if (namedElement instanceof GrField) {
-      final GrField field = (GrField)namedElement;
+    if (namedElement instanceof GrField field) {
       if (PsiUtil.isAccessible(myPlace, field)) {
         return true;
       }

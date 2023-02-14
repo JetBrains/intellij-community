@@ -23,7 +23,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -48,7 +48,7 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, 
   private val loader = WordListLoader(project)
   private val adapter = WordListAdapter()
 
-  internal class SpellerLoadActivity : ProjectPostStartupActivity {
+  internal class SpellerLoadActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       // what for do we join?
       // 1. to make sure that in unit test mode speller will be fully loaded before use

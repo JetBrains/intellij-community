@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
@@ -15,7 +16,7 @@ internal abstract class SimpleAnimator {
     val duration = cycleDuration / totalFrames
     // kotlin delays has only millisecond precision
     val startTime = System.currentTimeMillis()
-    withContext(RawSwingDispatcher) {
+    withContext(Dispatchers.EDT) {
       paintCycleStart()
       var currentFrame = 0
       while (true) {

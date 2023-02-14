@@ -180,11 +180,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
    * @see #shouldBeIgnored(Iterator, String)
    */
   public boolean shouldBeIgnored(@NotNull PsiElement element) {
-    if (!(element instanceof PsiLanguageInjectionHost)) {
+    if (!(element instanceof PsiLanguageInjectionHost host)) {
       return false;
     }
-
-    PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
 
     return shouldBeIgnored(Collections.singleton(host).iterator(), null);
   }
@@ -248,9 +246,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof BaseInjection)) return false;
-
-    final BaseInjection that = (BaseInjection)o;
+    if (!(o instanceof BaseInjection that)) return false;
 
     if (!Objects.equals(getDisplayName(), that.getDisplayName())) return false;
     if (!sameLanguageParameters(that)) return false;

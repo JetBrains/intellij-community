@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -29,6 +28,8 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.popup.list.SelectablePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -49,8 +50,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.List;
+import java.util.*;
 
 public final class WelcomeScreenComponentFactory {
   static @NotNull JComponent createSmallLogo() {
@@ -255,14 +256,14 @@ public final class WelcomeScreenComponentFactory {
   }
 
   public static JComponent wrapActionLink(@NotNull ActionLink link) {
-    JPanel panel = (JPanel)wrapActionLinkWithoutArrow(link);
+    JPanel panel = wrapActionLinkWithoutArrow(link);
     if (!StringUtil.isEmptyOrSpaces(link.getText())) {
       panel.add(createArrow(link), BorderLayout.EAST);
     }
     return panel;
   }
 
-  public static JComponent wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
+  public static JActionLinkPanel wrapActionLinkWithoutArrow(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
@@ -279,35 +280,65 @@ public final class WelcomeScreenComponentFactory {
     return panel.getComponent();
   }
 
-  public static @NotNull Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, new DumbAwareAction() {
+  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+    SelectablePanel selectablePanel = new SelectablePanel();
+    ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
+      private boolean hideListenerInstalled = false;
+
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
-        if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-          ((WelcomeBalloonLayoutImpl)balloonLayout).showPopup();
+        if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
+          if (!hideListenerInstalled) {
+            welcomeBalloonLayout.setHideListener(() -> selectablePanel.setSelectionColor(null));
+            hideListenerInstalled = true;
+          }
+          welcomeBalloonLayout.showPopup();
+          selectablePanel.setSelectionColor(JBUI.CurrentTheme.ActionButton.pressedBackground());
         }
       }
     });
-    final JComponent panel = wrapActionLink(actionLink);
-    panel.setVisible(false);
+
+
+    JComponent panel = wrapActionLink(actionLink);
+    selectablePanel.setLayout(new BorderLayout());
+    selectablePanel.add(panel);
+    selectablePanel.setOpaque(false);
+    selectablePanel.setBorder(panel.getBorder());
+    selectablePanel.setSelectionArc(JBUIScale.scale(6));
+    panel.setBorder(null);
+    selectablePanel.setVisible(false);
+
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
-      if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-        WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+      if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
         if (welcomeBalloonLayout.getLocationComponent() == null) {
           welcomeBalloonLayout.setLocationComponent(actionLink);
         }
       }
       if (!types.isEmpty()) {
-        NotificationType type = Collections.max(types);
-        actionLink.setIcon(type == NotificationType.IDE_UPDATE
-                           ? AllIcons.Ide.Notification.IdeUpdate
-                           : IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
+        actionLink.setIcon(getNotificationIcon(types, selectablePanel));
       }
-      panel.setVisible(!types.isEmpty());
+      selectablePanel.setVisible(!types.isEmpty());
     });
-    return panel;
+    return selectablePanel;
+  }
+
+  private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
+    if (ExperimentalUI.isNewUI()) {
+      return IconUtil.resizeSquared(
+        notificationTypes.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew, JBUIScale.scale(16));
+    }
+    else {
+      if (notificationTypes.isEmpty()) {
+        return AllIcons.Ide.Notification.NoEvents;
+      }
+
+      NotificationType type = Collections.max(notificationTypes);
+      return type == NotificationType.IDE_UPDATE
+             ? AllIcons.Ide.Notification.IdeUpdate
+             : IdeNotificationArea.createIconWithNotificationCount(panel, type, notificationTypes.size(), false);
+    }
   }
 
   public static @Nls String getApplicationTitle() {
@@ -324,24 +355,44 @@ public final class WelcomeScreenComponentFactory {
 
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
-    panel.setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.empty(10, 0, 12, 18) :
-                    JBUI.Borders.empty(10, 0, 0, 3));
-    panel.add(createErrorsLink(parentDisposable));
-    panel.add(createEventLink("", parentDisposable));
+    JComponent errorsLink = createErrorsLink(parentDisposable);
+    JComponent eventLink = createEventLink("", parentDisposable);
+    if (ExperimentalUI.isNewUI()) {
+      panel.setBorder(JBUI.Borders.empty(10, 0, 16, 24));
+      errorsLink.setBorder(JBUI.Borders.empty(5, 5, 5, 13));
+      eventLink.setBorder(JBUI.Borders.empty(5));
+      panel.add(errorsLink);
+      panel.add(eventLink);
+    }
+    else {
+      panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
+      panel.add(errorsLink);
+      panel.add(eventLink);
+    }
     return panel;
   }
 
-  static @Nullable JPanel getSinglePromotion(boolean isEmptyState) {
+  static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
     StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-    JPanel result = null;
+    List<StartPagePromoter> promoters = new ArrayList<>();
+    int maxPriorityLevel = Integer.MIN_VALUE;
+
     for (StartPagePromoter promoter : extensions) {
-      JPanel content = promoter.getPromotion(isEmptyState);
-      if (content == null) continue;
-      if (result != null) {
-        Logger.getInstance(WelcomeScreenComponentFactory.class).error("Several welcome screen promotions are found.");
+      int priorityLevel = promoter.getPriorityLevel();
+      if (priorityLevel >= maxPriorityLevel && promoter.canCreatePromo(isEmptyState)) {
+        if (priorityLevel > maxPriorityLevel) {
+          maxPriorityLevel = priorityLevel;
+          promoters.clear();
+        }
+        promoters.add(promoter);
       }
-      result = content;
     }
-    return result;
+
+    if (promoters.isEmpty()) {
+      return null;
+    }
+
+    StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
+    return selectedPromoter.getPromotion(isEmptyState);
   }
 }

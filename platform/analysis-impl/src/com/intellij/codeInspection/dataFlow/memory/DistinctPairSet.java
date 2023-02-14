@@ -57,8 +57,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
 
   @Override
   public boolean remove(Object o) {
-    if (o instanceof DistinctPair) {
-      DistinctPair dp = (DistinctPair)o;
+    if (o instanceof DistinctPair dp) {
       return myData.remove(createPair(dp.myFirst, dp.mySecond, dp.myOrdered));
     }
     return false;
@@ -66,8 +65,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
 
   @Override
   public boolean contains(Object o) {
-    if (!(o instanceof DistinctPair)) return false;
-    DistinctPair dp = (DistinctPair)o;
+    if (!(o instanceof DistinctPair dp)) return false;
     EqClass first = dp.getFirst();
     EqClass second = dp.getSecond();
     if (first.isEmpty() || second.isEmpty()) return false;
@@ -274,8 +272,7 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
     @Override
     public boolean equals(Object obj) {
       if (obj == this) return true;
-      if (!(obj instanceof DistinctPair)) return false;
-      DistinctPair that = (DistinctPair)obj;
+      if (!(obj instanceof DistinctPair that)) return false;
       if (that.myOrdered != this.myOrdered) return false;
       return that.getFirst().equals(this.getFirst()) && that.getSecond().equals(this.getSecond()) ||
              (!myOrdered && that.getSecond().equals(this.getFirst()) && that.getFirst().equals(this.getSecond()));

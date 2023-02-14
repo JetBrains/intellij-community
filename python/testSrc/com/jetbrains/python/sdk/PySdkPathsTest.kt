@@ -15,8 +15,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
@@ -134,6 +137,8 @@ class PySdkPathsTest {
 
     val userAddedPath = createSubdir(moduleRoot)
 
+    mockPythonPluginDisposable()
+
     val pythonVersion = LanguageLevel.getDefault().toPythonVersion()
     val sdk = ProjectJdkImpl(
       "Mock ${PyNames.PYTHON_SDK_ID_NAME} $pythonVersion",
@@ -142,13 +147,11 @@ class PySdkPathsTest {
       pythonVersion
     )
       .also {
+        runWriteActionAndWait { it.getOrCreateAdditionalData() }
         registerSdk(it)
         module.pythonSdk = it
       }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
-
-    mockPythonPluginDisposable()
-    runWriteActionAndWait { sdk.getOrCreateAdditionalData() }
 
     val editableSdk = PyConfigurableInterpreterList.getInstance(projectModel.project).model.findSdk(sdk.name)
     editableSdk!!.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)

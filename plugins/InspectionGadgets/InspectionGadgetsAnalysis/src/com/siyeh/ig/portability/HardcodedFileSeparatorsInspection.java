@@ -16,7 +16,6 @@
 package com.siyeh.ig.portability;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
@@ -36,13 +35,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
@@ -161,35 +161,17 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    //noinspection InjectedReferences
     return pane(
       checkbox("m_recognizeExampleMediaType", InspectionGadgetsBundle.message(
         "hardcoded.file.separator.include.option")),
-      table(InspectionGadgetsBundle.message(
-              "hardcoded.file.separator.ignore.methods.option"),
-            stringList("myClassNames", InspectionGadgetsBundle.message("class.name"), new JavaClassValidator()),
-            stringList("myRegexMethods", InspectionGadgetsBundle.message("method.name.regex"))
-      ));
+      myMethodMatcher.getTable(InspectionGadgetsBundle.message(
+        "hardcoded.file.separator.ignore.methods.option")).prefix("myMethodMatcher"));
   }
 
   @Override
   public @NotNull OptionController getOptionController() {
     return super.getOptionController()
-      .onValue("myClassNames", getterFor(myMethodMatcher.getClassNames()), setterFor(myMethodMatcher.getClassNames()))
-      .onValue("myRegexMethods", getterFor(myMethodMatcher.getMethodNamePatterns()), setterFor(myMethodMatcher.getMethodNamePatterns()));
-  }
-
-  private static Consumer<List<String>> setterFor(List<String> patterns) {
-    return strings -> {
-      //there is a chance that strings and patterns refer to the same object
-      ArrayList<String> copy = new ArrayList<>(strings);
-      patterns.clear();
-      patterns.addAll(copy);
-    };
-  }
-
-  private static Supplier<List<String>> getterFor(List<String> list) {
-    return () -> list;
+      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
   }
 
   @Override
@@ -212,14 +194,12 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
         if (parent != null) {
           final PsiElement grandParent = parent.getParent();
-          if (grandParent instanceof PsiMethodCallExpression) {
-            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+          if (grandParent instanceof PsiMethodCallExpression methodCallExpression) {
             if (MethodCallUtils.isCallToRegexMethod(methodCallExpression) || myMethodMatcher.matches(methodCallExpression)) {
               return;
             }
           }
-          else if (grandParent instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
+          else if (grandParent instanceof PsiNewExpression newExpression) {
             if (TypeUtils.expressionHasTypeOrSubtype(newExpression, "javax.swing.ImageIcon")) {
               return;
             }

@@ -63,9 +63,8 @@ public class KotlinFindClassUsagesDialog extends FindClassUsagesDialog {
         }
 
         PsiClass javaClass;
-        if (classOrObject instanceof KtClass) {
-            KtClass klass = (KtClass) classOrObject;
-            javaClass = !klass.isInterface()
+        if (classOrObject instanceof KtClass klass) {
+          javaClass = !klass.isInterface()
                         ? factory.createClass(name)
                         : klass.isAnnotation()
                           ? factory.createAnnotationType(name)

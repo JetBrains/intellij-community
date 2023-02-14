@@ -219,9 +219,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   private void showForComponent(Component c, MouseEvent me, boolean now) {
-    if (!(c instanceof JComponent)) return;
+    if (!(c instanceof JComponent comp)) return;
 
-    JComponent comp = (JComponent)c;
     Window wnd = SwingUtilities.getWindowAncestor(comp);
     if (wnd == null) return;
 

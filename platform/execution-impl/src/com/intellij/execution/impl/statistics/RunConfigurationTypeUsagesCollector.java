@@ -134,8 +134,7 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
       PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
       if (!info.isSafeToReport()) return;
       Object state = ((RunConfigurationBase<?>)runConfiguration).getState();
-      if (state instanceof RunConfigurationOptions) {
-        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+      if (state instanceof RunConfigurationOptions runConfigurationOptions) {
         List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
         for (StoredProperty<Object> property : properties) {
           String name = property.getName();

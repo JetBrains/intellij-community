@@ -201,8 +201,7 @@ public class ConvertMapToClassIntention extends Intention {
     final GrParameter parameter = getParameterByArgument(map);
     if (parameter == null) return null;
     final PsiElement parent = parameter.getParent().getParent();
-    if (!(parent instanceof PsiMethod)) return null;
-    final PsiMethod method = (PsiMethod)parent;
+    if (!(parent instanceof PsiMethod method)) return null;
     if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(
       map.getProject(),
       GroovyBundle.message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
@@ -248,8 +247,7 @@ public class ConvertMapToClassIntention extends Intention {
 class MyPredicate implements PsiElementPredicate {
   @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
-    if (!(element instanceof GrListOrMap)) return false;
-    final GrListOrMap map = (GrListOrMap)element;
+    if (!(element instanceof GrListOrMap map)) return false;
     final GrNamedArgument[] namedArguments = map.getNamedArguments();
     final GrExpression[] initializers = map.getInitializers();
     if (initializers.length != 0) return false;

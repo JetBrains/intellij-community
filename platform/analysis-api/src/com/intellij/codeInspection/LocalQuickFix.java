@@ -7,7 +7,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -70,5 +75,21 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     if (fix == null || fix.getElementToMakeWritable(file) != file) return IntentionPreviewInfo.EMPTY;
     fix.applyFix(project, previewDescriptor);
     return IntentionPreviewInfo.DIFF;
+  }
+
+
+  /**
+   * @return an array with a single element {@code fix} or an empty array if the argument is null
+   */
+  static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix fix) {
+    return fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
+  }
+  /**
+   * @return an array containing all not-null elements from {@code fixes}
+   */
+  static @NotNull LocalQuickFix @NotNull [] notNullElements(@Nullable LocalQuickFix @NotNull... fixes) {
+    List<LocalQuickFix> result = new ArrayList<>(fixes.length);
+    ContainerUtil.addAllNotNull(result, fixes);
+    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(EMPTY_ARRAY);
   }
 }

@@ -49,8 +49,7 @@ public class CopyConcatenatedStringToClipboardIntention extends MutablyNamedInte
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final String text;
-    if (element instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+    if (element instanceof PsiLiteralExpression literalExpression) {
       final Object value = literalExpression.getValue();
       if (!(value instanceof String)) {
         return;
@@ -69,8 +68,7 @@ public class CopyConcatenatedStringToClipboardIntention extends MutablyNamedInte
   public static String buildConcatenationText(PsiPolyadicExpression polyadicExpression) {
     final StringBuilder out = new StringBuilder();
     for(PsiElement element = polyadicExpression.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if (element instanceof PsiExpression) {
-        final PsiExpression expression = (PsiExpression)element;
+      if (element instanceof PsiExpression expression) {
         final Object value = ExpressionUtils.computeConstantExpression(expression);
         out.append((value == null) ? "?" : value.toString());
       }

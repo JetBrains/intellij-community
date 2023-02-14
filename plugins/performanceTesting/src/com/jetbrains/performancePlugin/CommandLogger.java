@@ -1,23 +1,19 @@
 package com.jetbrains.performancePlugin;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner.StatusCallback;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CommandLogger implements StatusCallback {
-
+  private static final Logger LOG = Logger.getInstance(CommandLogger.class);
   @Override
   public void message(@Nullable PlaybackContext context, String text, Type type) {
     if (type == Type.error) {
-      System.err.println(text);
-      if (System.getProperty("testscript.filename") != null) {
-        ApplicationManagerEx.getApplicationEx().exit(true, true);
-      }
+      LOG.error(text);
     }
     else {
-      System.out.println(text);
+      LOG.info(text);
     }
   }
 }

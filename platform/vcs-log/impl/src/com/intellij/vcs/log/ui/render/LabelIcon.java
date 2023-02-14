@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -48,7 +49,16 @@ public class LabelIcon implements Icon {
 
   private void paintIcon(@NotNull Graphics2D g2) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
+    if (ExperimentalUI.isNewUI()) {
+      paintTagsForNewUi(g2);
+    }
+    else {
+      paintTagsForClassicUi(g2);
+    }
+    config.restore();
+  }
 
+  private void paintTagsForClassicUi(@NotNull Graphics2D g2) {
     float scale = mySize / SIZE;
 
     for (int i = myColors.size() - 1; i >= 0; i--) {
@@ -59,8 +69,20 @@ public class LabelIcon implements Icon {
       g2.setColor(myColors.get(i));
       paintTag(g2, scale, scale * 2 * i, 0);
     }
+  }
 
-    config.restore();
+  private void paintTagsForNewUi(@NotNull Graphics2D g2) {
+    float scale = mySize / SIZE;
+    int tagCount = myColors.size();
+    for (int i = 0; i < tagCount; i++) {
+      Color color = myColors.get(tagCount - 1 - i);
+      TagPainter.paintTag(g2, scale * 2 * i, i == tagCount - 1, myBgColor, color, mySize);
+
+      if (i != tagCount - 1) {
+        float x0 = scale * 2 * i + 2 * scale - JBUIScale.scale((float)Math.sqrt(2.0));
+        TagPainter.paintTag(g2, x0, false, myBgColor, myBgColor,  mySize);
+      }
+    }
   }
 
   public void paintTag(Graphics2D g2, float scale, float x, float y) {

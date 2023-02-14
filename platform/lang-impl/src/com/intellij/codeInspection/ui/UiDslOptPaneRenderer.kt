@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintManager
@@ -23,7 +23,7 @@ import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.layout.selected
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.applyIf
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
@@ -35,7 +35,7 @@ import kotlin.math.max
 
 class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
 
-  private data class RendererContext(val controller: OptionController, val project: Project?)
+  private data class RendererContext(val controller: OptionController, val parent: Disposable?, val project: Project?)
 
   override fun render(tool: InspectionProfileEntry,
                       pane: OptPane,
@@ -43,7 +43,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                       project: Project?): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, project), i == 0, component.hasBottomGap)
+        render(component, RendererContext(tool.optionController, parent, project), i == 0, component.hasBottomGap)
       }
     }
       .apply { if (parent != null) registerValidators(parent) }
@@ -116,9 +116,12 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             context.setOption(component.children[index].bindId, value)
           })
             .apply {
+              installCellRenderer {
+                it.apply { border = JBUI.Borders.empty(0, 4) }
+              }
               // Add checkboxes
               component.children.forEach { checkbox ->
-                addItem(checkbox.bindId, "${checkbox.label.label()} ", context.getOption(checkbox.bindId) == true)
+                addItem(checkbox.bindId, checkbox.label.label(), context.getOption(checkbox.bindId) == true)
               }
               // Show correct panel on checkbox selection
               addListSelectionListener {
@@ -169,29 +172,43 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
       // Split label with null suffix
       splitLabel?.prefix != null -> row(splitLabel.prefix) { cell = renderOptCell(component, context) }
       // No row label (align left, control handles the label)
-      else -> row {
-        cell = renderOptCell(component, context)
-
-        nestedInRow?.let { nested ->
-          renderOptCell(nested, context)
-            .enabledIf((cell.component as JBCheckBox).selected)
-        }
-      }
+      else -> row { cell = renderOptCell(component, context) }
     }
       .layout(RowLayout.PARENT_GRID)
       .applyIf(withBottomGap) { bottomGap(BottomGap.SMALL) }
       .applyIf(component.hasResizableRow) { resizableRow() }
+      .applyIf(component is OptNumber || component is OptString || component is OptCheckbox) {
+        (component as OptDescribedComponent).description()?.let {
+          cell.gap(RightGap.SMALL)
+          contextHelp (HtmlBuilder().append(it).toString())
+        }
+        this
+      }
+      .apply {
+        nestedInRow?.let { nested ->
+          val checkbox = cell.component as JBCheckBox
+          renderOptCell(nested, context)
+            .enabledIf(checkboxPredicate(checkbox))
+        }
+      }
 
     // Nested components
     component.nestedControls?.let { nested ->
+      val controlsToRender = nested.drop(if (nestedInRow != null) 1 else 0)
       val group = indent {
-        nested
-          .drop(if (nestedInRow != null) 1 else 0)
+        controlsToRender
           .forEachIndexed { i, component -> render(component, context, i == 0) }
       }
-      if (cell.component is JBCheckBox) {
-        group.enabledIf((cell.component as JBCheckBox).selected)
+      if (controlsToRender.isNotEmpty() && cell.component is JBCheckBox) {
+        group.enabledIf(checkboxPredicate(cell.component as JBCheckBox))
       }
+    }
+  }
+
+  private fun checkboxPredicate(checkbox: JBCheckBox) = object : ComponentPredicate() {
+    override fun invoke(): Boolean = checkbox.isSelected && checkbox.isEnabled
+    override fun addListener(listener: (Boolean) -> Unit) {
+      checkbox.addChangeListener { listener(invoke()) }
     }
   }
 
@@ -203,10 +220,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
               isSelected = context.getOption(component.bindId) as Boolean
             }
             .onChanged { context.setOption(component.bindId, it.isSelected) }
-            .apply { component.description?.let {
-              gap(RightGap.SMALL)
-              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
-            } }
         }
 
         is OptString -> {
@@ -221,10 +234,6 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
             .onChanged {
               context.setOption(component.bindId, it.text)
             }
-            .apply { component.description?.let {
-              gap(RightGap.SMALL)
-              this@renderOptCell.contextHelp (HtmlBuilder().append(it).toString())
-            } }
         }
 
         is OptNumber -> {
@@ -268,7 +277,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
         }
 
         is OptSettingLink -> {
-          val label = HyperlinkLabel(component.displayName)
+          val label = HyperlinkLabel(component.displayName.label())
           label.addHyperlinkListener {
             val dataContext = DataManager.getInstance().getDataContext(label)
 
@@ -302,7 +311,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
           val form = when (val validator = component.validator) {
             is StringValidatorWithSwingSelector -> ListEditForm("", component.label.label(), listWithListener, "", validator::select)
             else -> ListEditForm("", component.label.label(), listWithListener)
-          }
+          }.also { addColumnValidators(it.table, listOf(component.validator), context.parent, context.project) }
           cell(form.contentPanel)
             .align(Align.FILL)
             .resizableColumn()
@@ -311,15 +320,17 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                 if (it.propertyName == "enabled") setEnabledRecursively(this, isEnabled)
               }
             }
+            .comment(component.description?.toString(), 50)
         }
-        
+
         is OptTable -> {
           val columns = component.children.map { stringList ->
             @Suppress("UNCHECKED_CAST") val list = context.getOption(stringList.bindId) as MutableList<String>
             ListWithListener(list) { context.setOption(stringList.bindId, list) }
           }
-          val columnNames = component.children.map { stringList -> stringList.label.label() }
+          val columnNames = component.children.map { column -> column.name.label() }
           val table = ListTable(ListWrappingTableModel(columns, *columnNames.toTypedArray()))
+            .also { addColumnValidators(it, component.children.map(OptTableColumn::validator), context.parent, context.project) }
           val panel = ToolbarDecorator.createDecorator(table)
             .setToolbarPosition(ActionToolbarPosition.LEFT)
             .setAddAction { _ ->
@@ -339,6 +350,7 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
                    .resizeY(true)
                    .createPanel()
                })
+            .comment(component.description()?.toString(), 40)
             .align(Align.FILL)
         }
 
@@ -359,9 +371,9 @@ class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
   private fun addRowWithSwingSelectors(table: ListTable, component: OptTable, project: Project?) {
     val tableModel = table.model
     val row = mutableListOf<String>()
-    for (child in component.children) {
+    for ((index, child) in component.children.withIndex()) {
       val validator = child.validator
-      if (project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
+      if (index != 0 || project == null || validator == null || validator !is StringValidatorWithSwingSelector) {
         row.add("")
         continue
       }

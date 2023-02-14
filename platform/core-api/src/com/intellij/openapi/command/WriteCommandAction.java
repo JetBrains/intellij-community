@@ -115,8 +115,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       boolean dispatchThread = application.isDispatchThread();
 
       if (!dispatchThread && application.isReadAccessAllowed()) {
-        LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-        throw new IllegalStateException();
+        throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
       }
 
       AtomicReference<E> thrown = new AtomicReference<>();
@@ -252,8 +251,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     boolean dispatchThread = application.isDispatchThread();
 
     if (!dispatchThread && application.isReadAccessAllowed()) {
-      LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
-      throw new IllegalStateException();
+      throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
     final RunResult<T> result = new RunResult<>(this);

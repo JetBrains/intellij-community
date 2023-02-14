@@ -23,7 +23,7 @@ fun gatherProjectFilesDependedOnByFragment(fragment: KtCodeFragment, bindingCont
     val resolutionFacade = getResolutionFacadeForCodeFragment(fragment)
     val result = mutableSetOf<KtFile>()
 
-    analyzeInlinedFunctions(resolutionFacade, fragment, false, bindingContext).let { (_, files) ->
+    analyzeInlinedFunctions(resolutionFacade, fragment, false).let { files ->
         for (file in files) {
             result.add(file)
         }

@@ -3,11 +3,19 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
+import org.jetbrains.kotlin.name.FqName
 
-object KotlinBuiltInsMetadataIndex : KotlinFileIndexBase<KotlinBuiltInsMetadataIndex>(KotlinBuiltInsMetadataIndex::class.java) {
+class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
+    companion object {
+        val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinBuiltInsMetadataIndex")
+    }
+
+    override fun getName() = NAME
+
     override fun getIndexer() = INDEXER
 
     override fun getInputFilter() = FileBasedIndex.InputFilter { file -> FileTypeRegistry.getInstance().isFileOfType(file, KotlinBuiltInFileType) }

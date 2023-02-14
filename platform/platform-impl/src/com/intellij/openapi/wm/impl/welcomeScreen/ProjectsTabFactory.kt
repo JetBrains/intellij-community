@@ -99,9 +99,9 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
 
       val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
       WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
-      val promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
-      if (promoPanel != null) {
-        val borderPanel = JBUI.Panels.simplePanel(promoPanel).andTransparent().apply {
+      val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
+      if (promo != null) {
+        val borderPanel = JBUI.Panels.simplePanel(promo).andTransparent().apply {
           border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)
         }
 

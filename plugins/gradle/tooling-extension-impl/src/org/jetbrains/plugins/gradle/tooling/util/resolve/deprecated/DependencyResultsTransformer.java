@@ -28,6 +28,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.findArtifactSources;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.toComponentIdentifier;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.*;
@@ -48,10 +49,10 @@ public class DependencyResultsTransformer {
   private final Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap;
   private final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies;
   private final String scope;
-  private final Set<File> resolvedDepsFiles = new HashSet<File>();
+  private final Set<File> resolvedDepsFiles = new HashSet<>();
 
-  private final Set<DependencyResult> handledDependencyResults = new HashSet<DependencyResult>();
-  private final Set<ComponentResultKey> myVisitedComponentResults = new HashSet<ComponentResultKey>();
+  private final Set<DependencyResult> handledDependencyResults = new HashSet<>();
+  private final Set<ComponentResultKey> myVisitedComponentResults = new HashSet<>();
 
   public DependencyResultsTransformer(@NotNull final Project project,
                                @NotNull final SourceSetCachedFinder sourceSetFinder,
@@ -74,7 +75,7 @@ public class DependencyResultsTransformer {
 
   Set<ExternalDependency> buildExternalDependencies(Collection<? extends DependencyResult> gradleDependencies) {
 
-    Set<ExternalDependency> dependencies = new LinkedHashSet<ExternalDependency>();
+    Set<ExternalDependency> dependencies = new LinkedHashSet<>();
     for (DependencyResult dependencyResult : gradleDependencies) {
 
       // dependency cycles check
@@ -104,7 +105,7 @@ public class DependencyResultsTransformer {
   }
 
   private Set<ExternalDependency> processResolvedResult(ResolvedDependencyResult dependencyResult) {
-    Set<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
+    Set<ExternalDependency> result = new LinkedHashSet<>();
 
     final ResolvedComponentResult componentResult = dependencyResult.getSelected();
 
@@ -158,7 +159,7 @@ public class DependencyResultsTransformer {
         }
       }
       else {
-        dependencyConfigurations = new ArrayList<Configuration>();
+        dependencyConfigurations = new ArrayList<>();
         for (ProjectDependency dependency : projectDependencies) {
           Configuration targetConfiguration = getTargetConfiguration(dependency);
           if(targetConfiguration != null) {
@@ -180,7 +181,7 @@ public class DependencyResultsTransformer {
         resolvedDepsFiles.addAll(dependency.getProjectDependencyArtifacts());
 
         if (!it.getName().equals(Dependency.DEFAULT_CONFIGURATION)) {
-          List<File> files = new ArrayList<File>();
+          List<File> files = new ArrayList<>();
           PublishArtifactSet artifacts = it.getArtifacts();
           if (!artifacts.isEmpty()) {
             PublishArtifact artifact = artifacts.iterator().next();
@@ -188,7 +189,8 @@ public class DependencyResultsTransformer {
             if (taskProperty != null && (taskProperty.getProperty(artifact) instanceof AbstractArchiveTask)) {
 
               AbstractArchiveTask archiveTask = (AbstractArchiveTask)taskProperty.getProperty(artifact);
-              resolvedDepsFiles.add(new File(archiveTask.getDestinationDir(), archiveTask.getArchiveName()));
+              resolvedDepsFiles.add(new File(reflectiveCall(archiveTask, "getDestinationDir", File.class),
+                                             reflectiveCall(archiveTask, "getArchiveName", String.class)));
 
 
               try {
@@ -262,7 +264,7 @@ public class DependencyResultsTransformer {
             dDep.setConfigurationName(Dependency.DEFAULT_CONFIGURATION);
 
             Collection<ResolvedArtifact> resolvedArtifacts = artifactMap.get(componentResult.getModuleVersion());
-            List<File> files = new ArrayList<File>(resolvedArtifacts.size());
+            List<File> files = new ArrayList<>(resolvedArtifacts.size());
             for (ResolvedArtifact resolvedArtifact : resolvedArtifacts) {
               files.add(resolvedArtifact.getFile());
             }
@@ -312,12 +314,16 @@ public class DependencyResultsTransformer {
     return result;
   }
 
-  private static ComponentResultKey getKey(ResolvedComponentResult result) {
+  private ComponentResultKey getKey(ResolvedComponentResult result) {
     if (is46rBetter) {
-      return new AttributesBasedKey(result.getId(), result.getVariant().getAttributes());
-    } else {
-      return new ComponentIdKey(result.getId());
+      try {
+        ResolvedVariantResult variant = reflectiveCall(result, "getVariant", ResolvedVariantResult.class);
+        return new AttributesBasedKey(result.getId(), variant.getAttributes());
+      } catch (Exception e) {
+        myProject.getLogger().lifecycle("Error getting variant", e);
+      }
     }
+    return new ComponentIdKey(result.getId());
   }
 
   private interface ComponentResultKey{}
@@ -406,7 +412,7 @@ public class DependencyResultsTransformer {
     dependency.setSelectionReason(selectionReason);
     dependency.setProjectPath(projectPath);
     dependency.setConfigurationName(it.getName());
-    Set<File> artifactsFiles = new LinkedHashSet<File>(it.getAllArtifacts().getFiles().getFiles());
+    Set<File> artifactsFiles = new LinkedHashSet<>(it.getAllArtifacts().getFiles().getFiles());
     dependency.setProjectDependencyArtifacts(artifactsFiles);
     dependency.setProjectDependencyArtifactsSources(findArtifactSources(artifactsFiles, mySourceSetFinder));
 

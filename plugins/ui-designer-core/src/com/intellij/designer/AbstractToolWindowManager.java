@@ -19,8 +19,7 @@ public abstract class AbstractToolWindowManager extends LightToolWindowManager {
   @Nullable
   @Override
   protected DesignerEditorPanelFacade getDesigner(FileEditor editor) {
-    if (editor instanceof DesignerEditor) {
-      DesignerEditor designerEditor = (DesignerEditor)editor;
+    if (editor instanceof DesignerEditor designerEditor) {
       return designerEditor.getDesignerPanel();
     }
     return null;

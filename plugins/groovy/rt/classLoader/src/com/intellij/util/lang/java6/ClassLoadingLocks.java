@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentMap;
  * so when they become unreachable the corresponding entries are removed from the map, so class names won't waste the memory.
  */
 final class ClassLoadingLocks {
-  private final ConcurrentMap<String, WeakLockReference> myMap = new ConcurrentHashMap<String, WeakLockReference>();
-  private final ReferenceQueue<Object> myQueue = new ReferenceQueue<Object>();
+  private final ConcurrentMap<String, WeakLockReference> myMap = new ConcurrentHashMap<>();
+  private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
 
   @NotNull Object getOrCreateLock(@NotNull String className) {
     WeakLockReference lockReference = myMap.get(className);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.uncheckedWarnings;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -289,7 +289,6 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       super.visitForeachStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
       final PsiParameter parameter = statement.getIterationParameter();
-      if (parameter == null) return;
       final PsiType parameterType = parameter.getType();
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return;
@@ -461,10 +460,9 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Nullable
-    private @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
+    private static @InspectionMessage String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
-      if (!(element instanceof PsiMethod)) return null;
-      final PsiMethod method = (PsiMethod)element;
+      if (!(element instanceof PsiMethod method)) return null;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (!PsiUtil.isRawSubstitutor(method, substitutor)) {
         if (JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_8)) {

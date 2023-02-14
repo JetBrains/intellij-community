@@ -48,8 +48,7 @@ public class PropertiesAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!(element instanceof Property)) return;
-    final Property property = (Property)element;
+    if (!(element instanceof Property property)) return;
     PropertiesFile propertiesFile = property.getPropertiesFile();
     final String key = property.getUnescapedKey();
     if (key == null) return;

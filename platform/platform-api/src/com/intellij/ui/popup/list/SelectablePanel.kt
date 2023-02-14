@@ -60,6 +60,12 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   var selectionArc: Int = 0
   var selectionArcCorners = SelectionArcCorners.ALL
   var selectionColor: Color? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        repaint()
+      }
+    }
   var selectionInsets: Insets = JBUI.emptyInsets()
   var preferredHeight: Int? = null
     set(value) {

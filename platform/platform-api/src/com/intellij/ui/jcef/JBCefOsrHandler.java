@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
@@ -17,9 +18,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
+import java.awt.image.VolatileImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -58,10 +63,11 @@ class JBCefOsrHandler implements CefRenderHandler {
     component.setRenderHandler(this);
     myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
 
-    myComponent.addComponentListener(new ComponentAdapter() {
+    myComponent.addAncestorListener(new AncestorListenerAdapter() {
       @Override
-      public void componentShown(ComponentEvent e) {
-        updateLocation();
+      public void ancestorAdded(AncestorEvent event) {
+        // track got visible event
+        if (myComponent.isShowing()) updateLocation();
       }
     });
 

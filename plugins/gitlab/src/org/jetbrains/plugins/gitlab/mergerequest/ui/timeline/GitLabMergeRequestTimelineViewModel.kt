@@ -13,8 +13,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel.LoadingState
+import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModelImpl
+import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
+import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.util.concurrent.ConcurrentLinkedQueue
 
 interface GitLabMergeRequestTimelineViewModel {
@@ -28,7 +30,10 @@ interface GitLabMergeRequestTimelineViewModel {
   sealed interface LoadingState {
     object Loading : LoadingState
     class Error(val exception: Throwable) : LoadingState
-    class Result(val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>) : LoadingState
+    class Result(
+      val mr: GitLabMergeRequest,
+      val items: Flow<List<GitLabMergeRequestTimelineItemViewModel>>
+    ) : LoadingState
   }
 }
 
@@ -52,10 +57,11 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineLoadingFlow: Flow<LoadingState> = channelFlow {
     send(LoadingState.Loading)
 
-    mergeRequestFlow.collectLatest { mr ->
+    mergeRequestFlow.collectLatest { mrResult ->
       coroutineScope {
         val result = try {
-          LoadingState.Result(createItemsFlow(this, mr.getOrThrow()).mapToVms(this).stateIn(this))
+          val mr = mrResult.getOrThrow()
+          LoadingState.Result(mr, createItemsFlow(mr).mapToVms(mr).stateIn(this))
         }
         catch (ce: CancellationException) {
           throw ce
@@ -81,7 +87,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       val discussions = it.getOrNull()
       if (discussions != null && discussions.canAddNotes) {
         coroutineScope {
-          val editVm = NewGitLabNoteViewModelImpl(this, currentUser, discussions)
+          val cs = this
+          val editVm = DelegatingGitLabNoteEditingViewModel(cs, "", discussions::addNote).forNewNote(currentUser).apply {
+            onDoneIn(cs) {
+              text.value = ""
+            }
+          }
           emit(editVm)
           awaitCancellation()
         }
@@ -94,8 +105,8 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   /**
    * Load all simple events and discussions and subscribe to user discussions changes
    */
-  private suspend fun createItemsFlow(cs: CoroutineScope, mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
-    val simpleEventsRequest = cs.async(Dispatchers.IO) {
+  private fun CoroutineScope.createItemsFlow(mr: GitLabMergeRequest): Flow<List<GitLabMergeRequestTimelineItem>> {
+    val simpleEventsRequest = async(Dispatchers.IO) {
       val vms = ConcurrentLinkedQueue<GitLabMergeRequestTimelineItem>()
       launch {
         mr.systemDiscussions.first()
@@ -128,18 +139,19 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
     }
   }
 
-  private suspend fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(cs: CoroutineScope) =
+  private fun Flow<List<GitLabMergeRequestTimelineItem>>.mapToVms(mr: GitLabMergeRequest) =
     mapCaching(
       GitLabMergeRequestTimelineItem::id,
-      { createVm(cs, it) },
+      { cs, item -> createVm(cs, mr, item) },
       { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
     )
 
-  private fun createVm(cs: CoroutineScope, item: GitLabMergeRequestTimelineItem): GitLabMergeRequestTimelineItemViewModel =
+  private fun createVm(cs: CoroutineScope, mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+    : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
         GitLabMergeRequestTimelineItemViewModel.Immutable(item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, item.discussion)
+        GitLabMergeRequestTimelineItemViewModel.Discussion(cs, currentUser, mr, item.discussion)
     }
 }

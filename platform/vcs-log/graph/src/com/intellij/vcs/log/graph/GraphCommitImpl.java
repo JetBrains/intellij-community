@@ -23,8 +23,7 @@ abstract class AbstractGraphCommit<CommitId> extends ImmutableList<CommitId> imp
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GraphCommit)) return false;
-    GraphCommit commit = (GraphCommit)o;
+    if (!(o instanceof GraphCommit commit)) return false;
     return getId().equals(commit.getId());
   }
 
@@ -74,8 +73,7 @@ public final class GraphCommitImpl<CommitId> extends AbstractGraphCommit<CommitI
   @SuppressWarnings("unchecked")
   @Override
   public CommitId get(int index) {
-    if (myParents instanceof Object[]) {
-      Object[] array = (Object[])myParents;
+    if (myParents instanceof Object[] array) {
       if (index < 0 || index >= array.length) {
         throw new ArrayIndexOutOfBoundsException(index);
       }

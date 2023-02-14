@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.Job;
@@ -145,6 +145,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction1 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         application.runReadAction(() -> {
           read1Acquired.set(true);
           LOG.debug("read lock1 acquired");
@@ -172,9 +174,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.writeRequested) checkTimeout();
+        while (!application.myLock.isWriteRequested()) checkTimeout();
         assertTrue(application.isWriteActionPending());
         //assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
         application.runReadAction(() -> {
@@ -194,10 +198,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> checkThread = ApplicationManager.getApplication().executeOnPooledThread(()->{
       try {
         assertFalse(application.isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         while (!aboutToAcquireWrite.get()) checkTimeout();
         while (!read1Acquired.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.writeRequested) checkTimeout();
+        while (!application.myLock.isWriteRequested()) checkTimeout();
 
         doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
@@ -376,6 +382,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       try {
         assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
+        ApplicationManager.getApplication().assertIsNonDispatchThread();
+
         for (int i=0; i<100;i++) {
           SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> TimeoutUtil.sleep(20)));
           ApplicationManager.getApplication().runReadAction(() -> TimeoutUtil.sleep(20));
@@ -398,6 +406,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           try {
             assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
             assertFalse(ApplicationManager.getApplication().isDispatchThread());
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
           }
           catch (Exception e) {
             exception = e;
@@ -565,7 +574,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       try {
         // wait for write action attempt to start - i.e. app.myLock.writeLock() started to execute
-        while (!app.myLock.writeRequested) checkTimeout();
+        while (!app.myLock.isWriteRequested()) checkTimeout();
         app.executeByImpatientReader(() -> {
           try {
             assertFalse(app.isReadAccessAllowed());
@@ -623,7 +632,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
-      while (!app.myLock.writeRequested) {
+      while (!app.myLock.isWriteRequested()) {
         try {
           checkTimeout();
         }

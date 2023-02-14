@@ -178,8 +178,7 @@ final class AntDomDocumentationProvider implements DocumentationProvider {
       final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
       if (pomTarget instanceof DomTarget) {
         final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
-        if (domElement instanceof AntDomTarget) {
-          final AntDomTarget antTarget = (AntDomTarget)domElement;
+        if (domElement instanceof AntDomTarget antTarget) {
           final String description = antTarget.getDescription().getRawText();
           if (description != null && description.length() > 0) {
             final String targetName = antTarget.getName().getRawText();

@@ -59,9 +59,9 @@ class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Di
             {
                 scratchFile.ktScratchFile?.takeIf { it.isValid && !scratchFile.hasErrors() }?.let {
                     if (scratchFile.options.isRepl) {
-                        RunScratchFromHereAction.doAction(scratchFile)
+                        RunScratchFromHereAction.Handler.doAction(scratchFile)
                     } else {
-                        RunScratchAction.doAction(scratchFile, true)
+                        RunScratchAction.Handler.doAction(scratchFile, true)
                     }
                 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -128,11 +128,8 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     result.add(node);
     for (int i = 0; i < node.getChildCount(); i++){
       final TreeNode child = node.getChildAt(i);
-      if (child instanceof PackageNode){
-        final PackageNode packNode = (PackageNode)child;
-        if (!result.contains(packNode)){
-          getPackageNodesHierarchy(packNode, result);
-        }
+      if (child instanceof PackageNode packNode && !result.contains(packNode)) {
+        getPackageNodesHierarchy(packNode, result);
       }
     }
   }
@@ -373,8 +370,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
         node = (PackageDependenciesNode)value;
         if (myLeftTree && !mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES) {
           final PsiElement element = node.getPsiElement();
-          if (element instanceof PsiPackage) {
-            final PsiPackage aPackage = (PsiPackage)element;
+          if (element instanceof PsiPackage aPackage) {
             final Set<List<PsiPackage>> packageDependencies = myDependencies.get(aPackage);
             if (packageDependencies != null && !packageDependencies.isEmpty()) {
                 attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;

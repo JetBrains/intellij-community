@@ -168,8 +168,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider,
 
   public static Document @NotNull [] getDocuments(@NotNull FileEditor editor) {
     Document[] result;
-    if (editor instanceof DocumentsEditor) {
-      DocumentsEditor documentsEditor = (DocumentsEditor)editor;
+    if (editor instanceof DocumentsEditor documentsEditor) {
       result = documentsEditor.getDocuments();
     }
     else if (editor instanceof TextEditor) {

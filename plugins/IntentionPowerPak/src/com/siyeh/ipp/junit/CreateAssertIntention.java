@@ -172,19 +172,17 @@ public class CreateAssertIntention extends Intention {
 
   private static boolean hasStaticImports(PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return false;
     }
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
     final PsiImportList importList = javaFile.getImportList();
     return importList != null && importList.getImportStaticStatements().length > 0;
   }
 
   private static boolean isEqualsExpression(PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
+    if (!(expression instanceof PsiMethodCallExpression call)) {
       return false;
     }
-    final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();
     if (!"equals".equals(methodName)) {
@@ -200,10 +198,9 @@ public class CreateAssertIntention extends Intention {
   }
 
   private static boolean isEqualityComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
+    if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return JavaTokenType.EQEQ.equals(tokenType);
   }

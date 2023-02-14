@@ -125,8 +125,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
       final PsiElement parent = expression.getParent();
       if (!(parent instanceof PsiReferenceExpression)) return;
       final PsiElement parentCall = parent.getParent();
-      if (parentCall instanceof PsiMethodCallExpression && myDetector.isStreamCall((PsiMethodCallExpression)parentCall)) {
-        final PsiMethodCallExpression parentCallExpression = (PsiMethodCallExpression)parentCall;
+      if (parentCall instanceof PsiMethodCallExpression parentCallExpression && myDetector.isStreamCall((PsiMethodCallExpression)parentCall)) {
         myPreviousCalls.put(parentCallExpression, expression);
         updateCallTree(parentCallExpression);
       }

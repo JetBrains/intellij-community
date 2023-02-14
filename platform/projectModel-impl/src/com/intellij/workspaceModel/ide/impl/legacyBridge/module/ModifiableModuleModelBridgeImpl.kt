@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
-import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
@@ -18,7 +18,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
@@ -78,12 +78,12 @@ internal class ModifiableModuleModelBridgeImpl(
       return existingModule
     }
 
-    val moduleName = getModuleNameByFilePath(canonicalPath)
+    val moduleName = ModulePath.getModuleNameByFilePath(canonicalPath)
     if (findModuleByName(moduleName) != null) {
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
-    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
+    val entitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
@@ -137,7 +137,7 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
 
   override fun loadModule(filePath: String): Module {
-    val moduleName = getModuleNameByFilePath(filePath)
+    val moduleName = ModulePath.getModuleNameByFilePath(filePath)
     if (findModuleByName(moduleName) != null) {
       error("Module name '$moduleName' already exists. Trying to load module: $filePath")
     }

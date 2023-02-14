@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
@@ -96,10 +97,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
     myDataMapper = dataMapper;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> {
+    myEditor.getScrollingModel().addVisibleAreaListener(e -> ReadAction.run(() -> {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
-    });
+    }));
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -204,7 +205,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
     if (myInProgress) {
       LOG.error("Detected race condition at soft wraps recalculation", new Throwable(),
-                AttachmentFactory.createContext(myEditor.dumpState(), event));
+                AttachmentFactory.createContext(myEditor.dumpState() + "\n" + event));
     }
     myInProgress = true;
     try {

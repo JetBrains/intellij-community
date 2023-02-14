@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -31,9 +31,7 @@ public final class Util {
     if (expr instanceof PsiQualifiedExpression) {
       classMemberRefs.add(new ClassMemberInExprUsageInfo(expr));
     }
-    else if (expr instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression refExpr = (PsiReferenceExpression)expr;
-
+    else if (expr instanceof PsiReferenceExpression refExpr) {
       PsiElement subj = refExpr.resolve();
 
       if (subj instanceof PsiParameter) {
@@ -77,18 +75,10 @@ public final class Util {
 
   public static boolean anyFieldsWithGettersPresent(List<? extends UsageInfo> classMemberRefs) {
     for (UsageInfo usageInfo : classMemberRefs) {
-
-      if (usageInfo.getElement() instanceof PsiReferenceExpression) {
-        PsiElement e = ((PsiReferenceExpression)usageInfo.getElement()).resolve();
-
-        if (e instanceof PsiField) {
-          PsiField psiField = (PsiField)e;
-          PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(psiField);
-
-          PsiMethod getter = psiField.getContainingClass().findMethodBySignature(getterPrototype, true);
-
-          if (getter != null) return true;
-        }
+      if (usageInfo.getElement() instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiField psiField) {
+        PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(psiField);
+        PsiMethod getter = psiField.getContainingClass().findMethodBySignature(getterPrototype, true);
+        if (getter != null) return true;
       }
     }
 

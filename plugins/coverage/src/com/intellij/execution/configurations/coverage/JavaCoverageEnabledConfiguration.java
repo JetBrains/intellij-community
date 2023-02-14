@@ -65,7 +65,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
 
   public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
-    if (runner instanceof JavaCoverageRunner) {
+    if (runner instanceof JavaCoverageRunner javaCoverageRunner) {
       final String path = getCoverageFilePath();
       assert path != null; // cannot be null here if runner != null
 
@@ -74,7 +74,6 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
         sourceMapPath = getSourceMapPath(path);
       }
 
-      final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
       final String[] patterns = getPatterns();
       final String[] excludePatterns = getExcludePatterns();
       final Project project = configuration.getProject();

@@ -3,26 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <style>
-    /*::-webkit-scrollbar {*/
-    /*  width: 10px;*/
-    /*  height: 10px;*/
-    /*}*/
-    /*!* Track *!*/
-    /*::-webkit-scrollbar-track {*/
-    /*  background: #404244;*/
-    /*}*/
-    /*!* Handle *!*/
-    /*::-webkit-scrollbar-thumb {*/
-    /*  background: #555758;*/
-    /*}*/
-    /*!* Handle on hover *!*/
-    /*::-webkit-scrollbar-thumb:hover {*/
-    /*  background: #555;*/
-    /*}*/
-    /*::-webkit-scrollbar-corner {*/
-    /*  background: #404244;*/
-    /*}*/
-
     #zoom_anchor_cross_on_canvas {
       background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' preserveAspectRatio='none' viewBox='0 0 100 100'><path d='M100 0 L0 100 ' stroke='black' stroke-width='1'/><path d='M0 0 L100 100 ' stroke='black' stroke-width='1'/></svg>") no-repeat center center;
       background-size: 100% 100%, auto;
@@ -33,7 +13,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     #zoom_anchor_cross_in_viewport {
@@ -46,7 +25,6 @@
       position: absolute;
       left: 0;
       top: 0;
-      z-index: 50;
     }
 
     body {
@@ -61,7 +39,6 @@
       position: absolute;
       top: 0;
       left: 0;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -72,7 +49,6 @@
       right: 0;
       font-family: monospace;
       white-space: pre;
-      z-index: 30;
       opacity: 0.5;
     }
 
@@ -108,21 +84,14 @@
       position: absolute;
       display: block;
       transform-origin: 0 0;
-      z-index: 10;
     }
 
     #chessboard {
       position: absolute;
       width: 100%;
       height: 100%;
-      background-color: #ffffff;
-      background-image: linear-gradient(45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(-45deg, #C0C0C0 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #C0C0C0 75%),
-      linear-gradient(-45deg, transparent 75%, #C0C0C0 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
-      z-index: 5;
+      background: repeating-conic-gradient(#808080 0% 25%, #FFFFFF 0% 50%) 50% / 30px 30px;
+      background-position: 0 0;
     }
 
     #pixel_grid {
@@ -130,7 +99,6 @@
       width: 100%;
       height: 100%;
       margin: 0;
-      z-index: 15;
       background-image: linear-gradient(to right, grey 1px, transparent 1px),
       linear-gradient(to bottom, grey 1px, transparent 1px);
       background-size: 1px 1px;
@@ -143,14 +111,15 @@
       height: 100%;
       border: 1px solid gray;
       mix-blend-mode: difference;
-      z-index: 20;
     }
   </style>
+  <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
+  <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
   <title>Image viewer</title>
 </head>
 
 <body>
-<div id="control_panel" style="display: none">
+<div id="control_panel" style="display: none; z-index: 30">
   <input type="text" style="width: 100%;" id="url_input">
   <button onclick="zoomIn()">+</button>
   <button onclick="zoomOut()">-</button>
@@ -161,29 +130,29 @@
   <button onclick="toggleChessboard()">♔</button>
   <button onclick="toggleGrid()">▦</button>
   <button onclick="toggleBorder()">Borders</button>
+  <button onclick="reloadStyles()">Reload styles</button>
 </div>
 
 <div id="container">
-  <div id="zoom_anchor_cross_in_viewport"></div>
+  <div id="zoom_anchor_cross_in_viewport" style="display: none; z-index: 50;"></div>
   <div id="view_port">
     <div id="svg_canvas">
-      <object id="image"></object>
-      <div id="chessboard" style="display: none"></div>
-      <div id="pixel_grid" style="display: none"></div>
-      <div id="image_border" style="display: none"></div>
-      <div id="zoom_anchor_cross_on_canvas"></div>
+      <object id="image" style="z-index: 10"></object>
+      <div id="chessboard" class="chessboard_base chessboard_style" style="display: none; z-index: 5;"></div>
+      <div id="pixel_grid" style="display: none; z-index: 15;"></div>
+      <div id="image_border" style="display: none; z-index: 20;"></div>
+      <div id="zoom_anchor_cross_on_canvas" style="display: none; z-index: 50;"></div>
     </div>
   </div>
 </div>
 
-<div id="info_panel" style="display: none">No data</div>
+<div id="info_panel" style="display: none; z-index: 30">No data</div>
 
 <!--Place the script at the end to make sure that the DOM is ready at this point-->
 <script>
   const gIsDebug = (new URL(window.location.href).searchParams.get('debug') != null)
-  const MIN_GRID_ZOOM = 10
 
-  // TODO: calculate max zoom to fit screen
+  const MIN_GRID_ZOOM = 10
   const MAX_ZOOM = 150
   const MIN_IMAGE_SIZE = 5
   const ViewerStatus = {
@@ -211,18 +180,22 @@
     'info_panel': document.getElementById('info_panel'),
     'image_border': document.getElementById('image_border'),
   }
-  let send_info = function (info_string) {
-  }
 
-  function _set_error() {
+  const gStyles = {
+    'scrollbars': document.getElementById('scrollbars_style'),
+    'chessboard': document.getElementById('chessboard_style')
+  }
+  let sendInfo = function (info_string) {}
+
+  function _setError() {
     gState.status = ViewerStatus.ERROR
   }
 
-  function _set_image_ready() {
+  function _setImageReady() {
     gState.status = ViewerStatus.OK
   }
 
-  function _update_info() {
+  function _updateInfo() {
     let canvas_bbox = gUI.canvas.getBoundingClientRect()
     let info = {
       'status': gState.status,
@@ -244,10 +217,10 @@
     if (gIsDebug) {
       gUI.info_panel.textContent = JSON.stringify(info, null, 2)
     }
-    send_info(JSON.stringify(info))
+    sendInfo(JSON.stringify(info))
   }
 
-  function _set_up_grid() {
+  function _setupGrid() {
     if (gState.grid_visible && gState.zoom > MIN_GRID_ZOOM) {
       gUI.pixel_grid.style.backgroundSize = `${gState.zoom}px ${gState.zoom}px`
       gUI.pixel_grid.style.display = ''
@@ -258,26 +231,29 @@
   }
 
   // Fixes the image, if not possible sets the error message
-  function _verify_image() {
+  function _sanitizeImage() {
     let image = gUI.image.contentDocument
     if (!image) {
       return
     }
     for (let e of image.getElementsByTagName('svg')) {
-      if (e.getAttribute('height') || e.getAttribute('width')) continue
+      let heightAttribute = e.getAttribute('height')
+      let widthAttribute = e.getAttribute('width')
+      if ((heightAttribute || widthAttribute) && !(heightAttribute?.endsWith('%') || widthAttribute?.endsWith('%'))) continue
 
       let vb = e.viewBox
       if (!vb || !vb.baseVal) {
-        _set_error()
+        _setError()
       }
       e.setAttribute('width', vb.baseVal.width + 'px')
+      e.setAttribute('height', vb.baseVal.height + 'px')
     }
 
     if (image.getElementsByTagName('parsererror').length > 0) {
-      _set_error()
+      _setError()
     }
     else {
-      _set_image_ready()
+      _setImageReady()
     }
   }
 
@@ -287,17 +263,17 @@
     document.getElementById('zoom_anchor_cross_on_canvas').style.display = gIsDebug ? '' : 'none'
     document.getElementById('zoom_anchor_cross_in_viewport').style.display = gIsDebug ? '' : 'none'
 
-    gUI.view_port.addEventListener('scroll', () => _update_info())
+    gUI.view_port.addEventListener('scroll', () => _updateInfo())
 
     gUI.image.addEventListener('load', () => {
-      _verify_image()
+      _sanitizeImage()
       setZoom(gState.zoom)
     })
 
     new ResizeObserver(() => setZoom(gState.zoom)).observe(gUI.view_port)
     window.removeEventListener('load', _init)
 
-    _update_info()
+    _updateInfo()
   }
 
   window.addEventListener('load', _init)
@@ -336,7 +312,7 @@
     }
 
     gUI.image.style.transform = 'scale(' + zoom + ')'
-    _set_up_canvas(Math.round(zoomed_width), Math.round(zoomed_height))
+    _setupCanvas(Math.round(zoomed_width), Math.round(zoomed_height))
 
     let scroll_to_x = anchor_on_canvas_scaled.x - anchor_on_viewport.x
     let scroll_to_y = anchor_on_canvas_scaled.y - anchor_on_viewport.y
@@ -345,8 +321,8 @@
 
     gState.zoom = zoom
 
-    _set_up_grid()
-    _update_info()
+    _setupGrid()
+    _updateInfo()
 
     if (gIsDebug) {
       let cross_on_canvas = document.getElementById('zoom_anchor_cross_on_canvas')
@@ -359,7 +335,7 @@
     }
   }
 
-  function _set_up_canvas(canvas_width, canvas_height) {
+  function _setupCanvas(canvas_width, canvas_height) {
     let translate_x
     let left_pos
     if (canvas_width > gUI.view_port.clientWidth) {
@@ -431,8 +407,8 @@
   function setGridVisible(value) {
     if (gState.grid_visible === value) return
     gState.grid_visible = value
-    _set_up_grid()
-    _update_info()
+    _setupGrid()
+    _updateInfo()
   }
 
   function toggleChessboard() {
@@ -442,7 +418,7 @@
   function setChessboardVisible(value) {
     gState.chessboard_visible = value
     gUI.chessboard.style.display = value ? '' : "none"
-    _update_info()
+    _updateInfo()
   }
 
   function setBorderVisible(value) {
@@ -455,6 +431,25 @@
 
   function toggleBorder() {
     setBorderVisible(!isBorderVisible())
+  }
+
+  function loadScrollbarsStyle(url) {
+    gStyles.scrollbars.href = _setTimestamp(url)
+  }
+
+  function loadChessboardStyle(url) {
+    gStyles.chessboard.href = _setTimestamp(url)
+  }
+
+  function _setTimestamp(url) {
+    let patched_url = new URL(url)
+    patched_url.searchParams.set('timestamp', new Date().getTime().toString())
+    return patched_url.toString()
+  }
+
+  function reloadStyles() {
+    loadScrollbarsStyle(gStyles.scrollbars.href)
+    loadScrollbarsStyle(gStyles.chessboard.href)
   }
 </script>
 

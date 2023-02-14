@@ -211,8 +211,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
       Map<SourceFolder, Pair<JpsModuleSourceRootPropertiesSerializer<?>, Element>> foldersToUpdate = new HashMap<>();
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (SourceFolder folder : contentEntry.getSourceFolders()) {
-          if (folder.getRootType() instanceof UnknownSourceRootType) {
-            UnknownSourceRootType type = (UnknownSourceRootType)folder.getRootType();
+          if (folder.getRootType() instanceof UnknownSourceRootType type) {
             JpsModuleSourceRootPropertiesSerializer<?> serializer = serializers.get(type.getUnknownTypeId());
             if (serializer != null) {
               UnknownSourceRootTypeProperties<?> properties = folder.getJpsElement().getProperties(type);

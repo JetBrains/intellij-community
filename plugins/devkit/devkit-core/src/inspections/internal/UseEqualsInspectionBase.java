@@ -113,8 +113,7 @@ abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase implemen
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) return;
-      PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
+      if (!(element instanceof PsiBinaryExpression binaryExpression)) return;
       PsiExpression lOperand = binaryExpression.getLOperand();
       PsiExpression rOperand = binaryExpression.getROperand();
       if (rOperand == null) return;

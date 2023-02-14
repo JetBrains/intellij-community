@@ -268,11 +268,9 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private static void flashUsageScriptaculously(@NotNull Usage usage) {
-    if (!(usage instanceof UsageInfo2UsageAdapter)) {
+    if (!(usage instanceof UsageInfo2UsageAdapter usageInfo)) {
       return;
     }
-
-    UsageInfo2UsageAdapter usageInfo = (UsageInfo2UsageAdapter)usage;
 
     Editor editor = usageInfo.openTextEditor(true);
     if (editor == null) return;

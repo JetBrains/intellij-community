@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -1028,7 +1027,8 @@ public final class IncProjectBuilder {
       Tracer.Span prioritisationSpan = Tracer.start("IncProjectBuilder.prioritisation");
       // bitset stores indexes of transitively dependant tasks
       HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
-      for (BuildChunkTask task : Lists.reverse(myTasks)) {
+      for (int i = myTasks.size() - 1; i >= 0; i--) {
+        BuildChunkTask task = myTasks.get(i);
         List<BuildChunkTask> dependantTasks = task.myTasksDependsOnThis;
         Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks);
         BitSet transitiveDependants = new BitSet();

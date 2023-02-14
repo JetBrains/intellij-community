@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
-object GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
+internal class GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
     override fun createManipulator(file: PsiFile, preferNewSyntax: Boolean): GroovyBuildScriptManipulator? {
         if (file !is GroovyFile) {
             return null
@@ -84,7 +84,7 @@ class GroovyBuildScriptManipulator(
                 .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '${version.artifactVersion}'")
             scriptFile.getRepositoriesBlock().apply {
                 val repository = getRepositoryForVersion(version)
-                val gradleFacade = KotlinGradleFacade.instance
+                val gradleFacade = KotlinGradleFacade.getInstance()
                 if (repository != null && gradleFacade != null) {
                     scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
                         with(GradleBuildScriptSupport.getManipulator(it)) {
@@ -126,9 +126,8 @@ class GroovyBuildScriptManipulator(
             )
         }
 
-        if (jvmTarget != null) {
-            changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
-            changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
+        jvmTarget?.let {
+            configureJvmTarget(it, version)
         }
 
         return scriptFile.text != oldText
@@ -273,6 +272,23 @@ class GroovyBuildScriptManipulator(
                     }
                 """.trimIndent()
             )
+    }
+
+    override fun configureJvmTarget(jvmTarget: String, version: IdeKotlinVersion) {
+        addJdkSpec(jvmTarget, version, gradleVersion) { useToolchain, useToolchainHelper, targetVersionNumber ->
+            when {
+                useToolchainHelper -> scriptFile.getKotlinBlock()
+                    .addFirstExpressionInBlockIfNeeded("jvmToolchain($targetVersionNumber)")
+
+                useToolchain -> scriptFile.getKotlinBlock().getBlockOrCreate("jvmToolchain")
+                    .addFirstExpressionInBlockIfNeeded("languageVersion = JavaLanguageVersion.of($targetVersionNumber)")
+
+                else -> {
+                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = false)
+                    changeKotlinTaskParameter(scriptFile, "jvmTarget", jvmTarget, forTests = true)
+                }
+            }
+        }
     }
 
     private fun GrClosableBlock.addParameterAssignment(

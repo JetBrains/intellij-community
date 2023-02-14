@@ -40,8 +40,7 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
   public boolean isLeaf(Object object) {
     if (object == myRoot) return false;
 
-    if (object instanceof ServiceModel.ServiceNode) {
-      ServiceModel.ServiceNode node = (ServiceModel.ServiceNode)object;
+    if (object instanceof ServiceModel.ServiceNode node) {
       if (!node.isChildrenInitialized() && !node.isLoaded()) {
         return false;
       }

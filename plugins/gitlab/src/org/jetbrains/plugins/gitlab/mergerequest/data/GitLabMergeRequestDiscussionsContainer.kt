@@ -10,17 +10,25 @@ import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDiffNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequestDiscussions
 
-interface GitLabMergeRequestDiscussionsContainer: GitLabNotesContainer {
+interface GitLabMergeRequestDiscussionsContainer {
   val userDiscussions: Flow<Collection<GitLabDiscussion>>
   val systemDiscussions: Flow<Collection<GitLabDiscussionDTO>>
+
+  val canAddNotes: Boolean
+
+  suspend fun addNote(body: String)
+
+  // not a great idea to pass a dto, but otherwise it's a pain in the neck to calc positions
+  suspend fun addNote(position: GitLabDiffPositionInput, body: String)
 }
 
 private val LOG = logger<GitLabMergeRequestDiscussionsContainer>()
@@ -63,7 +71,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapFiltered { !it.notes.first().system }
       .mapCaching(
         GitLabDiscussionDTO::id,
-        { LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, it) },
+        { cs, disc -> LoadedGitLabDiscussion(cs, api, project, { discussionEvents.emit(it) }, mr, disc) },
         LoadedGitLabDiscussion::destroy
       )
       .modelFlow(cs, LOG)
@@ -84,6 +92,18 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
         api.addNote(project, mr.id, body).getResultOrThrow()
+      }.also {
+        withContext(NonCancellable) {
+          discussionEvents.emit(GitLabDiscussionEvent.Added(it))
+        }
+      }
+    }
+  }
+
+  override suspend fun addNote(position: GitLabDiffPositionInput, body: String) {
+    withContext(cs.coroutineContext) {
+      withContext(Dispatchers.IO) {
+        api.addDiffNote(project, mr.id, position, body).getResultOrThrow()
       }.also {
         withContext(NonCancellable) {
           discussionEvents.emit(GitLabDiscussionEvent.Added(it))

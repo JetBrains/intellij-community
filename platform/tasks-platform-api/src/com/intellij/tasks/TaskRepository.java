@@ -276,9 +276,8 @@ public abstract class TaskRepository {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof TaskRepository)) return false;
+    if (!(o instanceof TaskRepository that)) return false;
 
-    TaskRepository that = (TaskRepository)o;
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;

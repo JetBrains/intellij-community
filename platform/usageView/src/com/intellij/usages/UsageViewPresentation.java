@@ -251,7 +251,7 @@ public class UsageViewPresentation {
   /**
    * @deprecated Use {@link #getReplaceString()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Pattern getReplacePattern() {
     return null;
   }

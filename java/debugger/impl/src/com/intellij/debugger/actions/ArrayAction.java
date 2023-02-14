@@ -118,8 +118,7 @@ public abstract class ArrayAction extends DebuggerAction {
             ((JavaValue)container).setRenderer(newRenderer, node);
             node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
-          else if (lastRenderer instanceof CompoundReferenceRenderer) {
-            final CompoundReferenceRenderer compoundRenderer = (CompoundReferenceRenderer)lastRenderer;
+          else if (lastRenderer instanceof CompoundReferenceRenderer compoundRenderer) {
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
               ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);

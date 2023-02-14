@@ -106,7 +106,7 @@ object UastFacade : UastLanguagePlugin {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, object: DynamicPluginListener {
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // avoid Language mem-leak on its plugin unload
-        cachedLastPlugin = this@UastFacade
+        clearCachedPlugin()
       }
     })
     UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
@@ -131,6 +131,9 @@ object UastFacade : UastLanguagePlugin {
 
     }.also { exposedListeners.add(it) }
 
+  fun clearCachedPlugin() {
+    cachedLastPlugin = this
+  }
 }
 
 

@@ -71,13 +71,19 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
 
   CoverageListRootNode getRoot() {
     if (myRoot == null) {
-      var node = this;
-      while (true) {
-        var parent = (CoverageListNode)node.getParent();
-        if (parent == null) break;
-        node = parent;
+      var parent = (CoverageListNode)getParent();
+      if (parent == null) {
+        if (this instanceof CoverageListRootNode root) {
+          myRoot = root;
+        }
+        else {
+          throw new RuntimeException("Coverage node unexpectedly has no parent " + this +
+                                     ". Each coverage node is supposed to have a parent or to be CoverageListRootNode instance.");
+        }
       }
-      myRoot = (CoverageListRootNode)node;
+      else {
+        myRoot = parent.getRoot();
+      }
     }
     return myRoot;
   }
@@ -134,8 +140,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object object = getValue();
-      if (object instanceof PsiNamedElement) {
-        final PsiNamedElement value = (PsiNamedElement)object;
+      if (object instanceof PsiNamedElement value) {
         if (value instanceof PsiQualifiedNamedElement &&
             (myStateBean.myFlattenPackages && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());

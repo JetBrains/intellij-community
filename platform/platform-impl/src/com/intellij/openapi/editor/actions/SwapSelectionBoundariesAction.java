@@ -43,8 +43,7 @@ public class SwapSelectionBoundariesAction extends EditorAction {
       final int end = caret.getSelectionEnd();
       boolean moveToEnd = caret.getOffset() == start;
       
-      if (editor instanceof EditorEx) {
-        EditorEx editorEx = (EditorEx)editor;
+      if (editor instanceof EditorEx editorEx) {
         if (editorEx.isStickySelection()) {
           editorEx.setStickySelection(false);
           editorEx.setStickySelection(true);

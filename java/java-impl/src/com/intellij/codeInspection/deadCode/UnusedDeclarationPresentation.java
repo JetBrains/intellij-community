@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -424,8 +424,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
       getContext().getRefManager().iterate(new RefJavaVisitor() {
         @Override public void visitElement(@NotNull RefEntity refEntity) {
-          if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
-          RefJavaElement refElement = (RefJavaElement)refEntity;
+          if (!(refEntity instanceof RefJavaElement refElement)) return;//dead code doesn't work with refModule | refPackage
           if (!compareVisibilities(refElement, localInspectionTool)) return;
           if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
                 (myFixedElements.containsKey(refElement) ||

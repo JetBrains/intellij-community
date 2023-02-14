@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
@@ -20,7 +21,7 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
 
   override fun decorate(change: Change, renderer: SimpleColoredComponent, isShowFlatten: Boolean) {
     if (project.isDisposed) return
-    if (isVisible()) appendPartialCommitState(change, renderer)
+    if (isVisible()) runReadAction { appendPartialCommitState(change, renderer) }
     baseDecorator.decorate(change, renderer, isShowFlatten)
   }
 

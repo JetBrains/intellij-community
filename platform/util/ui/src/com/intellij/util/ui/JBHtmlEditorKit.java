@@ -294,8 +294,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     private static void setUnderlined(boolean underlined, @NotNull Element element) {
       AttributeSet attributes = element.getAttributes();
       Object attribute = attributes.getAttribute(HTML.Tag.A);
-      if (attribute instanceof MutableAttributeSet) {
-        MutableAttributeSet a = (MutableAttributeSet)attribute;
+      if (attribute instanceof MutableAttributeSet a) {
 
         Object href = a.getAttribute(HTML.Attribute.HREF);
         Pair<Integer, Integer> aRange = findRangeOfParentTagWithGivenAttribute(element, href, HTML.Tag.A, HTML.Attribute.HREF);

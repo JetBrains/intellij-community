@@ -102,8 +102,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
         }
       }
       if (ignoreSelfTypes) {
-        if (qualifier instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)qualifier;
+        if (qualifier instanceof PsiMethodCallExpression methodCallExpression) {
           final PsiMethod qualifierMethod = methodCallExpression.resolveMethod();
           if (qualifierMethod == null) {
             return;

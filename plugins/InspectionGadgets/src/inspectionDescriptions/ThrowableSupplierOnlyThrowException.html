@@ -1,7 +1,6 @@
 <html>
 <body>
-Reports lambda in <code>Optional.orElseThrow(Supplier&lt;? extends X&gt; exceptionSupplier)</code>,
-which doesn't return any exception.
+Reports <code>Supplier</code> lambdas in <code>Optional.orElseThrow()</code> calls that throw an exception, instead of returning it.
 <p><b>Example:</b></p>
 <pre><code>
 optional.orElseThrow(() -> {

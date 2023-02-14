@@ -8,15 +8,15 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.util.ui.UIUtil
 
 internal class HideToolWindowAction : AnAction(), DumbAware {
   companion object {
     internal fun shouldBeHiddenByShortCut(window: ToolWindow): Boolean {
-      return window.isVisible && window.type != ToolWindowType.WINDOWED && window.type != ToolWindowType.FLOATING
+      return window.isVisible && window.type.isInternal
     }
   }
 

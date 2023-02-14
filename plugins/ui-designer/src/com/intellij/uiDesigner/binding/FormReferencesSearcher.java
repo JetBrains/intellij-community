@@ -80,8 +80,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
   }
 
   private static boolean scopeCanContainForms(SearchScope scope) {
-    if (!(scope instanceof LocalSearchScope)) return true;
-    LocalSearchScope localSearchScope = (LocalSearchScope) scope;
+    if (!(scope instanceof LocalSearchScope localSearchScope)) return true;
     final PsiElement[] elements = localSearchScope.getScope();
     for (final PsiElement element : elements) {
       if (element instanceof PsiDirectory) return true;

@@ -89,7 +89,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         val libraryScope = LibraryScope(project, libraryInfo.library.getFiles(OrderRootType.CLASSES).toSet())
         return names.any { name ->
             DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
-                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.KEY, name, libraryScope).hasNext()
+                FileBasedIndex.getInstance().getContainingFilesIterator(KotlinStdlibIndex.NAME, name, libraryScope).hasNext()
             })
         }
     }
@@ -114,7 +114,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     override fun dispose() = Unit
 
     private sealed class BaseStdLibCache(project: Project) :
-        SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
+        SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, doSelfInitialization = false, cleanOnLowMemory = true),
         LibraryInfoListener {
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
@@ -161,7 +161,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun dispose() = Unit
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
-            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, doSelfInitialization = false, cleanOnLowMemory = true),
             LibraryInfoListener {
             override fun subscribe() {
                 val connection = project.messageBus.connect(this)
@@ -235,9 +235,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
                 val stdLib = moduleSourceInfo?.module?.moduleWithLibrariesScope?.let index@{ scope ->
                     val stdlibManifests = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
                         FileBasedIndex.getInstance().getContainingFiles(
-                            KotlinStdlibIndex.KEY,
-                            KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
-                            scope
+                          KotlinStdlibIndex.NAME,
+                          KotlinStdlibIndex.KOTLIN_STDLIB_NAME,
+                          scope
                         )
                     })
 

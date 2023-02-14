@@ -22,7 +22,7 @@ fun zipWithCompression(targetFile: Path,
                        fileFilter: ((name: String) -> Boolean)? = null) {
   Files.createDirectories(targetFile.parent)
   ZipFileWriter(channel = FileChannel.open(targetFile, if (overwrite) W_OVERWRITE else W_CREATE_NEW),
-                deflater = Deflater(compressionLevel, true)).use { zipFileWriter ->
+                deflater = if (compressionLevel == Deflater.NO_COMPRESSION) null else Deflater(compressionLevel, true)).use { zipFileWriter ->
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
       doArchive(zipFileWriter = zipFileWriter, fileAdded = fileFilter, dirs = dirs)
     }
@@ -50,7 +50,7 @@ fun zipWithCompression(targetFile: Path,
   }
 }
 
-// symlinks not supported but can be easily implemented - see CollectingVisitor.visitFile
+// symlinks are not supported but can be easily implemented - see CollectingVisitor.visitFile
 fun zip(targetFile: Path,
         dirs: Map<Path, String>,
         addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY,

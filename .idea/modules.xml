@@ -722,11 +722,9 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests/intellij.jvm.analysis.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" filepath="$PROJECT_DIR$/plugins/keymaps/eclipse-keymap/intellij.keymap.eclipse.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" filepath="$PROJECT_DIR$/plugins/keymaps/emacs-keymap/intellij.keymap.emacs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" filepath="$PROJECT_DIR$/plugins/keymaps/netbeans5.6-keymap/intellij.keymap.netbeans.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" filepath="$PROJECT_DIR$/plugins/keymaps/qtcreator-keymap/intellij.keymap.qtcreator.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" filepath="$PROJECT_DIR$/plugins/keymaps/resharper-keymap/intellij.keymap.resharper.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" filepath="$PROJECT_DIR$/plugins/keymaps/sublime-keymap/intellij.keymap.sublime.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-assist-keymap/intellij.keymap.visualAssist.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio-keymap/intellij.keymap.visualStudio.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" filepath="$PROJECT_DIR$/plugins/keymaps/visual-studio2022-keymap/intellij.keymap.visualStudio2022.iml" />
@@ -792,7 +790,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/code-style-impl/intellij.platform.codeStyle.impl.iml" filepath="$PROJECT_DIR$/platform/code-style-impl/intellij.platform.codeStyle.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/collaboration-tools/intellij.platform.collaborationTools.iml" filepath="$PROJECT_DIR$/platform/collaboration-tools/intellij.platform.collaborationTools.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/collaboration-tools/auth/intellij.platform.collaborationTools.auth.iml" filepath="$PROJECT_DIR$/platform/collaboration-tools/auth/intellij.platform.collaborationTools.auth.iml" />
-      <module fileurl="file://$PROJECT_DIR$/colorSchemes/intellij.platform.colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/intellij.platform.colorSchemes.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/intellij.platform.concurrency.iml" filepath="$PROJECT_DIR$/platform/util/intellij.platform.concurrency.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/intellij.platform.configurationStore.tests.iml" />
@@ -1001,6 +998,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" filepath="$PROJECT_DIR$/plugins/repository-search/intellij.repository.search.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/intellij.searchEverywhereMl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/java/intellij.searchEverywhereMl.java.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/java/intellij.searchEverywhereMl.java.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/kotlin/intellij.searchEverywhereMl.kotlin.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/kotlin/intellij.searchEverywhereMl.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/vcs/intellij.searchEverywhereMl.vcs.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/vcs/intellij.searchEverywhereMl.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/search-everywhere-ml/yaml/intellij.searchEverywhereMl.yaml.iml" filepath="$PROJECT_DIR$/plugins/search-everywhere-ml/yaml/intellij.searchEverywhereMl.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/intellij.settingsRepository.iml" />

@@ -97,9 +97,8 @@ public class HtmlTabledDescriptorRenderer extends TabledDescriptorRenderer {
                 tdSpace(result);
                 tdRightBoldColspan(result, 2, DESCRIPTOR_IN_TABLE.render(((DescriptorRow) row).descriptor, context));
             }
-            if (row instanceof FunctionArgumentsRow) {
-                FunctionArgumentsRow functionArgumentsRow = (FunctionArgumentsRow) row;
-                renderFunctionArguments(functionArgumentsRow.receiverType, functionArgumentsRow.argumentTypes, functionArgumentsRow.isErrorPosition, result, context);
+            if (row instanceof FunctionArgumentsRow functionArgumentsRow) {
+              renderFunctionArguments(functionArgumentsRow.receiverType, functionArgumentsRow.argumentTypes, functionArgumentsRow.isErrorPosition, result, context);
             }
             result.append("</tr>");
         }

@@ -544,7 +544,6 @@
                     dynamic="true"/>
 
     <extensionPoint name="elementPreviewProvider" interface="com.intellij.codeInsight.preview.ElementPreviewProvider" dynamic="true"/>
-    <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider" dynamic="true"/>
 
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider" dynamic="true"/>
 
@@ -640,14 +639,14 @@
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint name="lang.documentationLinkHandler" dynamic="true"
-                    interface="com.intellij.lang.documentation.DocumentationLinkHandler"/>
-    <extensionPoint name="lang.documentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.DocumentationTargetProvider"/>
-    <extensionPoint name="lang.symbolDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetProvider"/>
-    <extensionPoint name="lang.psiDocumentation" dynamic="true"
-                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.documentation.targetProvider" dynamic="true"
+                    interface="com.intellij.platform.documentation.DocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.documentation.symbolTargetProvider" dynamic="true"
+                    interface="com.intellij.platform.documentation.SymbolDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.documentation.psiTargetProvider" dynamic="true"
+                    interface="com.intellij.platform.documentation.PsiDocumentationTargetProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.documentation.linkHandler" dynamic="true"
+                    interface="com.intellij.platform.documentation.DocumentationLinkHandler"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
     <extensionPoint name="safeDeleteTargetProvider" interface="com.intellij.refactoring.safeDelete.api.SafeDeleteTargetProvider" dynamic="true"/>

@@ -11,8 +11,9 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import kotlin.math.abs
 
-class DuplicateLesson(private val sample: LessonSample) :
-  KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name")) {
+class DuplicateLesson(private val sample: LessonSample,
+                      private val helpUrl: String = "working-with-source-code.html#editor_lines_code_blocks")
+  : KLesson("Duplicate", LessonsBundle.message("duplicate.and.delete.lines.lesson.name")) {
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
 
@@ -63,7 +64,7 @@ class DuplicateLesson(private val sample: LessonSample) :
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("help.lines.of.code"),
-         LessonUtil.getHelpLink("working-with-source-code.html#editor_lines_code_blocks")),
+    Pair(LessonsBundle.message("help.code.duplicate"),
+         LessonUtil.getHelpLink(helpUrl)),
   )
 }

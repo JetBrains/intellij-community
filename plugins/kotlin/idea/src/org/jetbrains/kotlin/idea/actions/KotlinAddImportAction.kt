@@ -327,8 +327,12 @@ internal class Prioritizer(
                 return if (isDeprecated) +1 else -1
             }
 
-            val c1 = other.callExpressionWeigh.compareTo(callExpressionWeigh)
-            if (c1 != 0) return c1
+            val c1 = callExpressionWeigh.compareTo(other.callExpressionWeigh)
+            if (c1 != 0) {
+                // callExpressionWeigh is non-negative number
+                // Comparator contract says that if `a.compareTo(b)` returns -1 then `a` appears earlier than `b`
+                return -c1
+            }
 
             val c2 = classification.compareTo(other.classification)
             if (c2 != 0) return c2

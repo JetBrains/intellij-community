@@ -62,6 +62,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
         }
 
+        @TestMetadata("InternalFacadeClass.kt")
+        public void testInternalFacadeClass() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/InternalFacadeClass.kt"));
+        }
+
         @TestMetadata("MultiFile.kt")
         public void testMultiFile() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/MultiFile.kt"));
@@ -368,6 +373,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("OnlySecondaryConstructors.kt")
         public void testOnlySecondaryConstructors() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/OnlySecondaryConstructors.kt"));
+        }
+
+        @TestMetadata("PrivateObject.kt")
+        public void testPrivateObject() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PrivateObject.kt"));
         }
 
         @TestMetadata("PublishedApi.kt")

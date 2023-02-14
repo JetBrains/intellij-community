@@ -26,5 +26,5 @@ inspections:
     enabled: true
     severity: ERROR
     ignore:
-      - "!file:*.*"
-      - "file:*.java"
+      - "!scope#file:*.*"
+      - "scope#file:*.java"

@@ -89,7 +89,7 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val INNER_CELL_TOOLBAR_HEIGHT = 25
   override val CELL_BORDER_HEIGHT = 20
   override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
-  override val EXECUTION_TIME_HEIGHT = SPACER_HEIGHT * 3
+  override val EXECUTION_TIME_HEIGHT = SPACER_HEIGHT + 6
   override val SPACE_BELOW_CELL_TOOLBAR = 12
   override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
   override val PROGRESS_STATUS_HEIGHT = 2

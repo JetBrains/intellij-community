@@ -29,12 +29,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
     if (project == null) {
       return;
     }
-    if (NavBarIdeUtil.isNavbarV2Enabled()) {
-      showNavBarV2(e, project);
-    }
-    else {
-      showNavBar(e, project);
-    }
+    showNavBar(e, project);
   }
 
   private static void showNavBar(@NotNull AnActionEvent e, @NotNull Project project) {
@@ -44,6 +39,10 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
       && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){SelectInNavBarTarget.selectInNavBar(true);
     }
     else {
+      if (NavBarIdeUtil.isNavbarV2Enabled()) {
+        NavBarService.getInstance(project).showFloatingNavbar(e.getDataContext());
+        return;
+      }
       final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
       if (!isInsideNavBar(component)) {
         IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
@@ -52,11 +51,6 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
         toolbarPanel.showHint(editor, context);
       }
     }
-  }
-
-  private static void showNavBarV2(@NotNull AnActionEvent e, @NotNull Project project) {
-    DataContext context = e.getDataContext();
-    NavBarService.getInstance(project).jumpToNavbar(context);
   }
 
   private static boolean isInsideNavBar(Component c) {

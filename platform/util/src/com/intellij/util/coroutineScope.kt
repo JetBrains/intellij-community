@@ -27,6 +27,9 @@ fun CoroutineScope.namedChildScope(
   context: CoroutineContext = EmptyCoroutineContext,
   supervisor: Boolean = true,
 ): CoroutineScope {
+  require(context[Job] == null) {
+    "Found Job in context: $context"
+  }
   // `launch` allows to see actual coroutine with its context (and name!)
   // in the coroutine dump instead of "SupervisorJobImpl{Active}@598294b2"
   // https://github.com/Kotlin/kotlinx.coroutines/issues/3428

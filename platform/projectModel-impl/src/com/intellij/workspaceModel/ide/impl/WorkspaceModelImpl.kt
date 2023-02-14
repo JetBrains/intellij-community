@@ -27,7 +27,6 @@ import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -275,7 +274,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.MAIN)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change, EntityStorageKind.MAIN)
     }
 
     logErrorOnEventHandling {
@@ -292,7 +291,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
   private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.onEntitiesChanged(change, EntityStorageKind.UNLOADED)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change, EntityStorageKind.UNLOADED)
     }
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)

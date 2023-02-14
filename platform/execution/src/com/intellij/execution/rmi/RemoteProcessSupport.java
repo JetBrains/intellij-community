@@ -187,8 +187,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
     RunningInfo info = ref.get();
-    if (info instanceof FailedInfo) {
-      FailedInfo o = (FailedInfo)info;
+    if (info instanceof FailedInfo o) {
       String message = o.cause != null && StringUtil.isEmptyOrSpaces(o.stderr) ? o.cause.getMessage() : o.stderr;
       throw new ExecutionException(message, o.cause);
     }
@@ -443,8 +442,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         info = null;
       }
     }
-    if (info instanceof PendingInfo) {
-      PendingInfo pendingInfo = (PendingInfo)info;
+    if (info instanceof PendingInfo pendingInfo) {
       if (error != null || pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
         pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
       }

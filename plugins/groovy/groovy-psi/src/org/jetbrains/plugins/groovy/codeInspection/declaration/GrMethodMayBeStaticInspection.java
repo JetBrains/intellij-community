@@ -176,9 +176,8 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       if (myHaveInstanceRefs) return;
 
       final PsiElement resolvedElement = refElement.resolve();
-      if (!(resolvedElement instanceof PsiClass)) return;
+      if (!(resolvedElement instanceof PsiClass aClass)) return;
 
-      final PsiClass aClass = (PsiClass)resolvedElement;
       final PsiElement scope = aClass.getScope();
 
       if (!(scope instanceof PsiClass)) return;

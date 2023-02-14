@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -135,7 +135,7 @@ public final class AnnotationDocGenerator {
     boolean highlightNonCodeAnnotations = format == AnnotationFormat.ToolTip && isNonCodeAnnotation;
     if (highlightNonCodeAnnotations) buffer.append("<b>");
     if (isInferred) buffer.append("<i>");
-    if (red) buffer.append("<font color=red>");
+    if (red) buffer.append(JavaDocInfoGenerator.getSpanForUnresolvedItem());
 
     boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
 
@@ -159,7 +159,7 @@ public final class AnnotationDocGenerator {
     else if (name != null) {
       appendStyledSpan(doSyntaxHighlighting, isForRenderedDoc, buffer, JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES, name);
     }
-    if (red) buffer.append("</font>");
+    if (red) buffer.append("</span>");
 
     generateAnnotationAttributes(buffer, generateLink, isForRenderedDoc, doSyntaxHighlighting);
     if (isInferred) buffer.append("</i>");
@@ -251,8 +251,7 @@ public final class AnnotationDocGenerator {
         LOG.debug(e);
       }
 
-      if (resolve instanceof PsiField) {
-        PsiField field = (PsiField)resolve;
+      if (resolve instanceof PsiField field) {
         PsiClass aClass = field.getContainingClass();
 
         if (generateLink) {

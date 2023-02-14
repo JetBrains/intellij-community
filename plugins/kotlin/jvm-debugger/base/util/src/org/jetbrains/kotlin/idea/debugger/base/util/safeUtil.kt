@@ -23,6 +23,10 @@ fun StackFrameProxyImpl.safeVisibleVariables(): List<LocalVariableProxyImpl> {
     return wrapEvaluateException { visibleVariables() } ?: emptyList()
 }
 
+fun StackFrameProxyImpl.safeArgumentValues(): List<Value> {
+    return wrapEvaluateException { argumentValues } ?: emptyList()
+}
+
 fun StackFrameProxyImpl.safeVisibleVariableByName(name: String): LocalVariableProxyImpl? {
     return wrapEvaluateException { visibleVariableByName(name) }
 }

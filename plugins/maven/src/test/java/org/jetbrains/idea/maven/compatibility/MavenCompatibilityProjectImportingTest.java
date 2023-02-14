@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.compatibility;
 
 import com.intellij.maven.testFramework.MavenImportingTestCase;
 import com.intellij.maven.testFramework.MavenWrapperTestFixture;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -14,6 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,6 +27,8 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   @Parameterized.Parameters(name = "with Maven-{0}")
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
+      new String[]{"3.9.0"},
+      new String[]{"3.8.6"},
       new String[]{"3.8.6"},
       new String[]{"3.8.5"},
       new String[]{"3.8.4"},
@@ -68,8 +72,8 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     Assume.assumeTrue("Version should be more than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
   }
 
-  protected void assumeVersionLessThan(String version) {
-    Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
+  protected void assumeVersionLessOrEqualsThan(String version) {
+    Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) >= 0);
   }
 
   protected void assumeVersionNot(String version) {
@@ -107,8 +111,56 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     assertModules("project");
   }
 
+  @Test
+  public void testSmokeImportWithUnknownExtension() throws IOException {
+    assertCorrectVersion();
+    createProjectSubFile(".mvn/extensions.xml", """
+      <extensions>
+        <extension>
+          <groupId>org.example</groupId>
+          <artifactId>some-never-existed-extension</artifactId>
+          <version>1</version>
+        </extension>
+      </extensions>
+      """);
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
+
+    createModulePom("m1", """
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <artifactId>m1</artifactId>
+                         """);
+
+    createModulePom("m2", """
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       <artifactId>m2</artifactId>
+                         """);
+
+    importProject();
+
+    assertModules("m2", "m1", "project");
+  }
+
+
   private void assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()).getMavenDistribution().getVersion());
+    assertEquals(myMavenVersion,
+                 MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath()).getMavenDistribution().getVersion());
   }
 
   @Test

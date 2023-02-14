@@ -11,7 +11,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +27,9 @@ import java.util.stream.Stream;
  * Such contract can be created from {@link org.jetbrains.annotations.Contract} annotation.
  */
 public final class StandardMethodContract extends MethodContract {
-  private final ValueConstraint @NotNull [] myParameters;
+  private final @NotNull ValueConstraint @NotNull [] myParameters;
 
-  public StandardMethodContract(ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
+  public StandardMethodContract(@NotNull ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
     super(returnValue);
     myParameters = parameters;
   }
@@ -44,7 +43,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   public List<ValueConstraint> getConstraints() {
-    return ContainerUtil.immutableList(myParameters);
+    return List.of(myParameters);
   }
 
   public @NotNull StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {

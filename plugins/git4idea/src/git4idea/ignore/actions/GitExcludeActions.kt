@@ -54,7 +54,7 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
     val selectedFiles = getSelectedFiles(e)
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project)
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project)
     return isEnabled(project, selectedFiles, unversionedFiles.toList())
   }
 

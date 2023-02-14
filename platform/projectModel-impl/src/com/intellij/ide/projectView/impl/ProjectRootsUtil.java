@@ -128,7 +128,7 @@ public final class ProjectRootsUtil {
   /**
    * @deprecated use {@link #getModuleSourceRoot} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
     return getModuleSourceRoot(root, module.getProject());

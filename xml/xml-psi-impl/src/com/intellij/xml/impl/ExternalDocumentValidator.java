@@ -70,16 +70,7 @@ public class ExternalDocumentValidator {
   @NonNls
   private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
-  private static final class ValidationInfo {
-    final PsiElement element;
-    final @InspectionMessage String message;
-    final Validator.ValidationHost.ErrorType type;
-
-    private ValidationInfo(PsiElement element, @InspectionMessage String message, Validator.ValidationHost.ErrorType type) {
-      this.element = element;
-      this.message = message;
-      this.type = type;
-    }
+  private record ValidationInfo(PsiElement element, @InspectionMessage String message, Validator.ValidationHost.ErrorType type) {
   }
 
   private WeakReference<List<ValidationInfo>> myInfos; // last jaxp validation result

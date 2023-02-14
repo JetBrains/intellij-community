@@ -82,8 +82,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       else if (assignedValue instanceof PyNumericLiteralExpression || assignedValue instanceof PyNoneLiteralExpression) {
         return 1;
       }
-      else if (assignedValue instanceof PyCallExpression) {
-        final PyCallExpression call = (PyCallExpression)assignedValue;
+      else if (assignedValue instanceof PyCallExpression call) {
         if (call.isCalleeText("dict")) {
           return call.getArguments().length;
         }

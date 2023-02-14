@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -34,8 +34,7 @@ public final class CompositeScope extends ExportableUserDataHolderBase implement
   }
 
   private void addScope(@NotNull CompileScope scope) {
-    if (scope instanceof CompositeScope) {
-      final CompositeScope compositeScope = (CompositeScope)scope;
+    if (scope instanceof CompositeScope compositeScope) {
       for (CompileScope childScope : compositeScope.myScopes) {
         addScope(childScope);
       }

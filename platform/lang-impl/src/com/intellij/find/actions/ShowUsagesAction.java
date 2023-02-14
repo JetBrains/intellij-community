@@ -27,6 +27,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -378,8 +379,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       public @NotNull List<EventPair<?>> getEventData() {
         return List.of(UsageViewStatisticsCollector.PRIMARY_TARGET.with(handler.getPsiElement().getClass()),
                        EventFields.Language.with(handler.getPsiElement().getLanguage()),
-                       UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(
-                         handler.getPrimaryElements().length + handler.getSecondaryElements().length));
+                       UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(primaryElements.length + secondaryElements.length));
       }
     };
   }
@@ -790,15 +790,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     });
 
-    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
-      filteringGroup.add(createScopeChooser(project, contentDisposable, actionHandler.getSelectedScope(), scope -> {
-        UsageViewStatisticsCollector.logScopeChanged(project, usageView, actionHandler.getSelectedScope(), scope,
-                                                     actionHandler.getTargetClass());
-        cancel(popupRef.get());
-        showElementUsages(parameters, actionHandler.withScope(scope));
-      }));
-    }
-
     JPanel northPanel = new JPanel(new GridBagLayout());
     GridBag gc = new GridBag().nextLine();
 
@@ -807,11 +798,26 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
+    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+      DefaultActionGroup scopeChooserGroup = new DefaultActionGroup(createScopeChooser(project, contentDisposable, usageView, showUsagesPopupData));
+      ActionToolbar scopeChooserToolbar =
+        ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
+      scopeChooserToolbar.setTargetComponent(table);
+      scopeChooserToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+      ((ActionToolbarImpl) scopeChooserToolbar).setForceMinimumSize(true);
+      JComponent component = scopeChooserToolbar.getComponent();
+      component.setBorder(JBUI.Borders.empty());
+      component.setOpaque(false);
+      northPanel.add(component, gc.next());
+    }
+
+    Dimension fillerSize = JBUI.size(8, 0);
+    northPanel.add(new Box.Filler(fillerSize, fillerSize, fillerSize), gc.next().weightx(1.0));
 
     DefaultActionGroup settingsGroup = new DefaultActionGroup(
       new SettingsAction(project, () -> cancel(popupRef.get()), showDialogAndRestartRunnable(parameters, actionHandler)));
     actionToolbar = createActionToolbar(table, settingsGroup);
+    ((ActionToolbarImpl) actionToolbar).setForceMinimumSize(true);
     JComponent settingsToolbarComponent = actionToolbar.getComponent();
     settingsToolbarComponent.setOpaque(false);
 
@@ -892,8 +898,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
-            if (usage instanceof UsageInfoAdapter) {
-              UsageInfoAdapter adapter = (UsageInfoAdapter)usage;
+            if (usage instanceof UsageInfoAdapter adapter) {
               file = adapter.getPath();
               if (adapter.isValid()) {
                 selectedUsagePromises.add(adapter.getMergedInfosAsync());
@@ -962,7 +967,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       northPanel.setBackground(background);
       table.setBackground(background);
       northPanel.setBorder(createComplexPopupToolbarBorder());
-      toolbarComponent.setBorder(JBUI.Borders.emptyRight(16));
+      toolbarComponent.setBorder(JBUI.Borders.empty());
       settingsToolbarComponent.setBorder(JBUI.Borders.emptyLeft(8));
       if (contentSplitter != null) {
         contentSplitter.setBackground(background);
@@ -1026,11 +1031,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static @NotNull ScopeChooserGroup createScopeChooser(
     @NotNull Project project,
     @NotNull Disposable parentDisposable,
-    @NotNull SearchScope initialScope,
-    @NotNull Consumer<SearchScope> scopeConsumer
+    @NotNull UsageViewImpl usageView,
+    @NotNull ShowUsagesPopupData showUsagesPopupData
   ) {
-    ScopeChooserGroup result = new ScopeChooserGroup(project, parentDisposable, initialScope);
-    result.addChangeListener(scopeConsumer);
+    ShowUsagesActionHandler actionHandler = showUsagesPopupData.actionHandler;
+    ScopeChooserGroup result = new ScopeChooserGroup(project, parentDisposable, actionHandler.getSelectedScope());
+    result.addChangeListener(scope -> {
+      UsageViewStatisticsCollector.logScopeChanged(project, usageView, actionHandler.getSelectedScope(), scope,
+                                                   actionHandler.getTargetClass());
+      cancel(showUsagesPopupData.popupRef.get());
+      showElementUsages(showUsagesPopupData.parameters, actionHandler.withScope(scope));
+    });
 
     return result;
   }
@@ -1053,10 +1064,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
-  @Nullable
-  private static UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
-    Object selectedNode = table.getModel().getValueAt(table.getSelectedRow(), 0);
-    return ObjectUtils.tryCast(selectedNode, UsageNode.class);
+  private static @Nullable UsageNode getSelectedUsageNode(@NotNull ShowUsagesTable table) {
+    int selectedRowNumber = table.getSelectedRow();
+    if (selectedRowNumber != -1) {
+      Object selectedNode = table.getModel().getValueAt(selectedRowNumber, 0);
+      return ObjectUtils.tryCast(selectedNode, UsageNode.class);
+    }
+    else {
+      return null;
+    }
   }
 
   private static int getRowNumber(@Nullable UsageNode node, @NotNull ShowUsagesTable table) {

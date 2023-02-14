@@ -35,10 +35,10 @@ public class RemoteObject implements Remote, Unreferenced {
 
   private final WeakReference<RemoteObject> myWeakRef;
   private RemoteObject myParent;
-  private final Map<RemoteObject, Remote> myChildren = new ConcurrentHashMap<RemoteObject, Remote>();
+  private final Map<RemoteObject, Remote> myChildren = new ConcurrentHashMap<>();
 
   public RemoteObject() {
-    myWeakRef = new WeakReference<RemoteObject>(this);
+    myWeakRef = new WeakReference<>(this);
   }
 
   public WeakReference<RemoteObject> getWeakRef() {
@@ -62,7 +62,7 @@ public class RemoteObject implements Remote, Unreferenced {
 
   public synchronized void unexportChildren() throws RemoteException {
     if (IN_PROCESS) return;
-    final ArrayList<RemoteObject> childrenRefs = new ArrayList<RemoteObject>(myChildren.keySet());
+    final ArrayList<RemoteObject> childrenRefs = new ArrayList<>(myChildren.keySet());
     myChildren.clear();
     for (RemoteObject child : childrenRefs) {
       child.unreferenced();
@@ -72,7 +72,7 @@ public class RemoteObject implements Remote, Unreferenced {
   public synchronized void unexportChildren(@NotNull Collection<? extends WeakReference<RemoteObject>> children) throws RemoteException {
     if (IN_PROCESS) return;
     if (children.isEmpty()) return;
-    final ArrayList<RemoteObject> list = new ArrayList<RemoteObject>(children.size());
+    final ArrayList<RemoteObject> list = new ArrayList<>(children.size());
     for (WeakReference<? extends RemoteObject> child : children) {
       RemoteObject element = child.get();
       if (element != null) {

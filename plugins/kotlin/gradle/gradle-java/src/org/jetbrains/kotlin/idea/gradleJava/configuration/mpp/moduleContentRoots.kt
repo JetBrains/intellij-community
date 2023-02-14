@@ -11,11 +11,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.gradle.tooling.model.idea.IdeaContentRoot
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.resourceType
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.sourceType
-import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
+import org.jetbrains.kotlin.idea.gradleJava.configuration.resourceType
+import org.jetbrains.kotlin.idea.gradleJava.configuration.sourceType
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
@@ -25,14 +25,8 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
-internal fun populateContentRoots(
-    gradleModule: IdeaModule,
-    ideModule: DataNode<ModuleData>,
-    resolverCtx: ProjectResolverContext
+internal fun KotlinMppGradleProjectResolver.Context.populateContentRoots(
 ) {
-    val mppModel = resolverCtx.getMppModel(gradleModule) ?: return
-
-    val extensionContext = KotlinMppGradleProjectResolverExtension.Context(mppModel, resolverCtx, gradleModule, ideModule)
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     val sourceSetToPackagePrefix = mppModel.targets.flatMap { it.compilations }
@@ -41,11 +35,11 @@ internal fun populateContentRoots(
         }
         .toMap()
     if (resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) == null) return
-    processSourceSets(gradleModule, mppModel, ideModule, resolverCtx) { dataNode, sourceSet ->
+    processSourceSets(gradleModule, mppModel, moduleDataNode, resolverCtx) { dataNode, sourceSet ->
         if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
 
         /* Execute all registered extension points and skip population of content roots if instructed by extensions */
-        if (extensionInstance.beforePopulateContentRoots(extensionContext, dataNode, sourceSet) == Skip) {
+        if (extensionInstance.beforePopulateContentRoots(this, dataNode, sourceSet) == Skip) {
             return@processSourceSets
         }
 
@@ -62,7 +56,7 @@ internal fun populateContentRoots(
             dataNode
         )
 
-        extensionInstance.afterPopulateContentRoots(extensionContext, dataNode, sourceSet)
+        extensionInstance.afterPopulateContentRoots(this, dataNode, sourceSet)
     }
 
     for (gradleContentRoot in gradleModule.contentRoots ?: emptySet<IdeaContentRoot?>()) {
@@ -74,14 +68,14 @@ internal fun populateContentRoots(
                 ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, file.absolutePath)
             }
         }
-        ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot)
+        moduleDataNode.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot)
     }
 
     val mppModelPureKotlinSourceFolders = mppModel.targets.flatMap { it.compilations }
         .flatMap { it.kotlinTaskProperties.pureKotlinSourceFolders ?: emptyList() }
         .map { it.absolutePath }
 
-    ideModule.kotlinGradleProjectDataOrFail.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
+    moduleDataNode.kotlinGradleProjectDataOrFail.pureKotlinSourceFolders.addAll(mppModelPureKotlinSourceFolders)
 }
 
 private fun processSourceSets(

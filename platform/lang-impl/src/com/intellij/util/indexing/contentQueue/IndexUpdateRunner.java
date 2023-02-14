@@ -422,14 +422,7 @@ public final class IndexUpdateRunner {
     }
   }
 
-  private static final class ContentLoadingResult {
-    final @NotNull CachedFileContent cachedFileContent;
-    final long fileLength;
-
-    private ContentLoadingResult(@NotNull CachedFileContent cachedFileContent, long fileLength) {
-      this.cachedFileContent = cachedFileContent;
-      this.fileLength = fileLength;
-    }
+  private record ContentLoadingResult(@NotNull CachedFileContent cachedFileContent, long fileLength) {
   }
 
   private static void waitForFreeMemoryToLoadFileContent(@NotNull ProgressIndicator indicator,
@@ -517,20 +510,13 @@ public final class IndexUpdateRunner {
     return indicator;
   }
 
-  private static class FileIndexingJob {
-    final VirtualFile file;
-    final FileSet fileSet;
-
-    private FileIndexingJob(VirtualFile file, FileSet fileSet) {
-      this.file = file;
-      this.fileSet = fileSet;
-    }
+  private record FileIndexingJob(VirtualFile file, FileSet fileSet) {
   }
 
   private static class IndexingJob {
     final Project myProject;
     final CachedFileContentLoader myContentLoader;
-    final ConcurrentLinkedQueue<FileIndexingJob> myQueueOfFiles;
+    final ArrayBlockingQueue<FileIndexingJob> myQueueOfFiles; // for Community sources the size is about 615K entries
     final ProgressIndicator myIndicator;
     final int myTotalFiles;
     final AtomicBoolean myNoMoreFilesInQueue = new AtomicBoolean();
@@ -547,7 +533,8 @@ public final class IndexUpdateRunner {
                 @Nullable ProgressSuspender originalProgressSuspender) {
       myProject = project;
       myIndicator = indicator;
-      myQueueOfFiles = new ConcurrentLinkedQueue<>();
+      int maxFilesCount = fileSets.stream().mapToInt(fileSet -> fileSet.files.size()).sum();
+      myQueueOfFiles = new ArrayBlockingQueue<>(maxFilesCount);
       // UnindexedFilesIndexer may produce duplicates during merging.
       // E.g. Indexer([origin:someFiles]) + Indexer[anotherOrigin:someFiles] => Indexer([origin:someFiles, anotherOrigin:someFiles])
       // Don't touch UnindexedFilesIndexer.tryMergeWith now, because eventually we want UnindexedFilesIndexer to process the queue itself

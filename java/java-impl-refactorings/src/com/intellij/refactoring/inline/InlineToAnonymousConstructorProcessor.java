@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -123,8 +123,7 @@ class InlineToAnonymousConstructorProcessor {
         }
         child = anonymousClass.addBefore(child, token);
       }
-      else if (child instanceof PsiField) {
-        PsiField field = (PsiField) child;
+      else if (child instanceof PsiField field) {
         replaceReferences(field, substitutedParameters, outerClassLocal);
         PsiExpression initializer = myFieldInitializers.get(field.getName());
         field = (PsiField) anonymousClass.addBefore(field, token);
@@ -172,8 +171,7 @@ class InlineToAnonymousConstructorProcessor {
     PsiCodeBlock body = myConstructor.getBody();
     assert body != null;
     for(PsiElement child: body.getChildren()) {
-      if (child instanceof PsiStatement) {
-        PsiStatement stmt = (PsiStatement) child;
+      if (child instanceof PsiStatement stmt) {
         ProcessingContext context = new ProcessingContext();
         if (ourAssignmentPattern.accepts(stmt, context)) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
@@ -196,13 +194,11 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private boolean processAssignmentInConstructor(final PsiAssignmentExpression expression) {
-    if (expression.getLExpression() instanceof PsiReferenceExpression) {
-      PsiReferenceExpression lExpr = (PsiReferenceExpression) expression.getLExpression();
+    if (expression.getLExpression() instanceof PsiReferenceExpression lExpr) {
       final PsiExpression rExpr = expression.getRExpression();
       if (rExpr == null) return false;
       final PsiElement psiElement = lExpr.resolve();
-      if (psiElement instanceof PsiField) {
-        PsiField field = (PsiField) psiElement;
+      if (psiElement instanceof PsiField field) {
         if (myClass.getManager().areElementsEquivalent(field.getContainingClass(), myClass)) {
           final List<PsiReferenceExpression> localVarRefs = new ArrayList<>();
           final PsiExpression initializer;
@@ -358,16 +354,12 @@ class InlineToAnonymousConstructorProcessor {
   private PsiElement replaceParameterReferences(PsiElement argument,
                                                 @Nullable final List<? super PsiReferenceExpression> localVarRefs,
                                                 final boolean replaceFieldsWithInitializers) throws IncorrectOperationException {
-    if (argument instanceof PsiReferenceExpression) {
-      PsiElement element = ((PsiReferenceExpression)argument).resolve();
-      if (element instanceof PsiParameter) {
-        PsiParameter parameter = (PsiParameter)element;
-        if (myLocalsForParameters.containsKey(parameter)) {
-          return argument.replace(getParameterReference(parameter));
-        }
-        int index = myConstructorParameters.getParameterIndex(parameter);
-        return argument.replace(myConstructorArguments[index]);
+    if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiParameter parameter) {
+      if (myLocalsForParameters.containsKey(parameter)) {
+        return argument.replace(getParameterReference(parameter));
       }
+      int index = myConstructorParameters.getParameterIndex(parameter);
+      return argument.replace(myConstructorArguments[index]);
     }
 
     final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<>();
@@ -469,12 +461,8 @@ class InlineToAnonymousConstructorProcessor {
 
       @Override public void visitTypeElement(final @NotNull PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
-        if (typeElement.getType() instanceof PsiClassType) {
-          PsiClassType classType = (PsiClassType) typeElement.getType();
-          PsiClass psiClass = classType.resolve();
-          if (psiClass instanceof PsiTypeParameter) {
-            checkReplaceTypeParameter(typeElement, (PsiTypeParameter) psiClass);
-          }
+        if (typeElement.getType() instanceof PsiClassType classType && classType.resolve() instanceof PsiTypeParameter typeParameter) {
+          checkReplaceTypeParameter(typeElement, typeParameter);
         }
       }
 

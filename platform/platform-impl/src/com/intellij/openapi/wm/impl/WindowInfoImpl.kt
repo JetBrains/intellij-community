@@ -113,7 +113,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   }
 
   internal fun setType(type: ToolWindowType) {
-    if (ToolWindowType.DOCKED == type || ToolWindowType.SLIDING == type) {
+    if (type.isInternal) {
       internalType = type
     }
     setTypeAndCheck(type)

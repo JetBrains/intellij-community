@@ -98,8 +98,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
   void getInjectedLanguage(final PsiElement place,
                            final Ref<? super Boolean> unparsableRef,
                            final PairProcessor<? super Language, ? super List<InjectionInfo>> processor) {
-    if (place instanceof XmlTag) {
-      final XmlTag xmlTag = (XmlTag)place;
+    if (place instanceof XmlTag xmlTag) {
 
       List<BaseInjection> injections = getConfiguration().getInjections(XmlLanguageInjectionSupport.XML_SUPPORT_ID);
       for (int i = 0, injectionsSize = injections.size(); i < injectionsSize; i++) {
@@ -150,9 +149,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
         }
       }
     }
-    else if (place instanceof XmlAttributeValue && place.getParent() instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)place.getParent();
-      final XmlAttributeValue value = (XmlAttributeValue)place;
+    else if (place instanceof XmlAttributeValue value && place.getParent() instanceof XmlAttribute attribute) {
       //if (value == null) return;
       // Check that we don't inject anything into embedded (e.g. JavaScript) content:
       // XmlToken: "
@@ -207,8 +204,7 @@ final class XmlLanguageInjector implements MultiHostInjector {
     final XmlIndex index = getXmlAnnotatedElementsValue();
     if (xmlElement instanceof XmlAttributeValue) xmlElement = (XmlElement)xmlElement.getParent();
     final XmlTag tag;
-    if (xmlElement instanceof XmlAttribute) {
-      final XmlAttribute attribute = (XmlAttribute)xmlElement;
+    if (xmlElement instanceof XmlAttribute attribute) {
       if (areThereInjectionsWithText(attribute.getLocalName(), index)) return true;
       if (areThereInjectionsWithText(attribute.getValue(), index)) return true;
       //if (areThereInjectionsWithText(attribute.getNamespace(), index)) return false;

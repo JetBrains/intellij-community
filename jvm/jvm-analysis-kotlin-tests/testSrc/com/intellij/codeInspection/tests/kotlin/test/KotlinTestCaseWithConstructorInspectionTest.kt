@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.ULanguage
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.test.TestCaseWithConstructorInspectionTestBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
@@ -20,7 +20,7 @@ class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspe
   }
 
   fun `test no highlighting parameterized test case`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import org.junit.Test
       import org.junit.runner.RunWith
       import org.junit.runners.Parameterized
@@ -41,7 +41,7 @@ class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspe
   }
 
   fun `test no highlighting trivial constructor`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
       class TestCaseWithConstructorInspection2() : TestCase() {
@@ -55,7 +55,7 @@ class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspe
   }
 
   fun `test highlighting simple non-trivial constructor`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
 
       class TestCaseWithConstructorInspection1() : TestCase() {
@@ -67,7 +67,7 @@ class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspe
   }
 
   fun `test highlighting Junit 4`() {
-    myFixture.testHighlighting(ULanguage.KOTLIN, """
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       public class JUnit4TestCaseWithConstructor {
         <warning descr="Initialization logic in constructor 'constructor()' instead of 'setup()' life cycle method">constructor</warning>() {
           println()

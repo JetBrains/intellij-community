@@ -1085,7 +1085,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiArrayType iteratedValueType = tryCast(iteratedValue.getType(), PsiArrayType.class);
       PsiParameter parameter = statement.getIterationParameter();
 
-      if (parameter != null && iteratedValueType != null && StreamApiUtil.isSupportedStreamElement(iteratedValueType.getComponentType()) &&
+      if (iteratedValueType != null && StreamApiUtil.isSupportedStreamElement(iteratedValueType.getComponentType()) &&
           (!(parameter.getType() instanceof PsiPrimitiveType) || parameter.getType().equals(iteratedValueType.getComponentType()))) {
         return new ArrayStream(statement, parameter, iteratedValue);
       }
@@ -1121,8 +1121,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
         JavaPsiFacade.getInstance(statement.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
       PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
       PsiParameter parameter = statement.getIterationParameter();
-      if (parameter == null ||
-          collectionClass == null ||
+      if (collectionClass == null ||
           !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
           isRawSubstitution(iteratedValueType, collectionClass) ||
           !StreamApiUtil.isSupportedStreamElement(parameter.getType())) {

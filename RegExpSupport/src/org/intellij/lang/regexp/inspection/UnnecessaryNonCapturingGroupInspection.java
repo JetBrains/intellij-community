@@ -87,10 +87,9 @@ public class UnnecessaryNonCapturingGroupInspection extends LocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof RegExpGroup)) {
+      if (!(element instanceof RegExpGroup group)) {
         return;
       }
-      final RegExpGroup group = (RegExpGroup)element;
       RegExpReplacementUtil.replaceInContext(group, group.getPattern().getUnescapedText());
     }
   }

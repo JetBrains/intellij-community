@@ -28,7 +28,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.SwingUndoUtil;
@@ -675,7 +674,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   private void updateBindings(@NotNull DefaultActionGroup group, @NotNull JComponent shortcutHolder) {
-    updateBindings(ContainerUtil.immutableList(group.getChildActionsOrStubs()), shortcutHolder);
+    updateBindings(List.of(group.getChildActionsOrStubs()), shortcutHolder);
   }
 
   private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {

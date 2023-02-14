@@ -41,7 +41,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       return
     }
 
-    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project).toList()
+    val unversionedFiles = ScheduleForAdditionAction.Manager.getUnversionedFiles(e, project).toList()
     if (unversionedFiles.isEmpty()) {
       presentation.isVisible = false
       return

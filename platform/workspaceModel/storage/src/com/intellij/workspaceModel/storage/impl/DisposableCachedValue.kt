@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
 
 class DisposableCachedValue<R : Disposable>(
   private val entityStorage: () -> VersionedEntityStorage,
@@ -28,16 +28,18 @@ class DisposableCachedValue<R : Disposable>(
         if (storageModificationCount != latestStorageModificationCount) {
           currentValue = storage.cachedValue(cachedValue)
           latestStorageModificationCount = storageModificationCount
-        } else {
+        }
+        else {
           currentValue = latestValue!!
         }
-      } else {
+      }
+      else {
         currentValue = storage.cachedValue(cachedValue)
       }
 
       val oldValue = latestValue
       if (oldValue !== currentValue && oldValue != null) {
-        log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}" }
+        log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Version change from $oldValue to $currentValue" }
         Disposer.dispose(oldValue)
       }
       latestValue = currentValue

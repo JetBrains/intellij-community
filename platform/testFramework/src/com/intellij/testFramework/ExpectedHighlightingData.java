@@ -673,7 +673,7 @@ public class ExpectedHighlightingData {
         if (byStarts != 0) return byStarts;
       }
       else {
-        int byEOL = Comparing.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
+        int byEOL = Boolean.compare(i2.isAfterEndOfLine(), i1.isAfterEndOfLine());
         if (byEOL != 0) return byEOL;
       }
 
@@ -934,7 +934,7 @@ public class ExpectedHighlightingData {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path == path);
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path.equals(path));
     }
 
     @Override

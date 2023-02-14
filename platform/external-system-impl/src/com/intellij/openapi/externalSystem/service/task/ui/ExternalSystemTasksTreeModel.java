@@ -69,8 +69,7 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       ExternalSystemNode<?> child = root.getChildAt(i);
       ExternalSystemNodeDescriptor<?> descriptor = child.getDescriptor();
       Object element = descriptor.getElement();
-      if (element instanceof ExternalProjectPojo) {
-        ExternalProjectPojo pojo = (ExternalProjectPojo)element;
+      if (element instanceof ExternalProjectPojo pojo) {
         if (pojo.getPath().equals(project.getPath())) {
           if (!pojo.getName().equals(project.getName())) {
             pojo.setName(project.getName());

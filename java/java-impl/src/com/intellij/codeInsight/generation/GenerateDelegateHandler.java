@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -99,8 +99,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     }
 
     boolean isMethodStatic = methodCandidate.getElement().hasModifierProperty(PsiModifier.STATIC);
-    if (target instanceof PsiField) {
-      PsiField field = (PsiField)target;
+    if (target instanceof PsiField field) {
       modifierList = field.getModifierList();
       if (isMethodStatic) {
         call.append(methodCandidate.getContainingClass().getQualifiedName());
@@ -119,8 +118,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       }
       call.append(".");
     }
-    else if (target instanceof PsiMethod) {
-      PsiMethod m = (PsiMethod)target;
+    else if (target instanceof PsiMethod m) {
       modifierList = m.getModifierList();
       if (isMethodStatic) {
         call.append(methodCandidate.getContainingClass().getQualifiedName()).append(".");

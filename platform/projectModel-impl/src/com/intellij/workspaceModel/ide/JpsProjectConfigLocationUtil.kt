@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl

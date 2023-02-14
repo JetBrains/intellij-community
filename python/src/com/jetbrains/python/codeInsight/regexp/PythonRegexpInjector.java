@@ -69,8 +69,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   private PsiElement resolvePossibleRegexpCall(@NotNull PyCallExpression call) {
     final PyExpression callee = call.getCallee();
 
-    if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
-      final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
+    if (callee instanceof PyReferenceExpression referenceExpression && canBeRegexpCall(callee)) {
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
       return referenceExpression.getReference(PyResolveContext.defaultContext(context)).resolve();
     }
@@ -102,16 +101,14 @@ public class PythonRegexpInjector implements MultiHostInjector {
   }
 
   private static boolean isVerbose(@Nullable PyExpression expression) {
-    if (expression instanceof PyKeywordArgument) {
-      final PyKeywordArgument keywordArgument = (PyKeywordArgument)expression;
+    if (expression instanceof PyKeywordArgument keywordArgument) {
       return "flags".equals(keywordArgument.getName()) && isVerbose(keywordArgument.getValueExpression());
     }
     if (expression instanceof PyReferenceExpression) {
       final String flagName = ((PyReferenceExpression)expression).getReferencedName();
       return "VERBOSE".equals(flagName) || "X".equals(flagName);
     }
-    if (expression instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
+    if (expression instanceof PyBinaryExpression binaryExpression) {
       return isVerbose(binaryExpression.getLeftExpression()) || isVerbose(binaryExpression.getRightExpression());
     }
     return false;

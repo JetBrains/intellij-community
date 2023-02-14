@@ -631,7 +631,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
     TransformerHandler handler = transformerFactory.newTransformerHandler();
     handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
     handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
@@ -668,7 +668,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
-    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
     TransformerHandler handler = transformerFactory.newTransformerHandler();
     handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
     handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");

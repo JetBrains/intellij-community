@@ -225,8 +225,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public boolean saveSchemeAs(@NotNull EditorColorsScheme editorScheme, @NotNull String name) {
-    if (editorScheme instanceof MyColorScheme) {
-      MyColorScheme scheme = (MyColorScheme)editorScheme;
+    if (editorScheme instanceof MyColorScheme scheme) {
       EditorColorsScheme clone = (EditorColorsScheme)scheme.getParentScheme().clone();
       scheme.apply(clone);
       if (clone instanceof AbstractColorsScheme) {

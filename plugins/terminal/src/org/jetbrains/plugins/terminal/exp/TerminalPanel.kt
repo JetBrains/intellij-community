@@ -48,6 +48,7 @@ import java.awt.event.MouseWheelListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
+import javax.swing.border.Border
 import kotlin.math.max
 
 class TerminalPanel(private val project: Project,
@@ -58,9 +59,6 @@ class TerminalPanel(private val project: Project,
   private val editor: EditorImpl
 
   private val runningDisposable: Disposable = Disposer.newDisposable()
-
-  val charSize: Dimension
-    get() = Dimension(editor.charHeight, editor.lineHeight)
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
@@ -76,9 +74,7 @@ class TerminalPanel(private val project: Project,
     setupEventDispatcher()
     setupMouseListener()
 
-    val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
-    val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-    border = JBUI.Borders.compound(outerBorder, innerBorder)
+    border = createBorder(isFullScreen = false)
 
     layout = BorderLayout()
     add(editor.component, BorderLayout.CENTER)
@@ -92,12 +88,25 @@ class TerminalPanel(private val project: Project,
     Disposer.dispose(runningDisposable)
   }
 
+  fun toggleFullScreen(isFullScreen: Boolean) {
+    border = createBorder(isFullScreen)
+  }
+
+  private fun createBorder(isFullScreen: Boolean): Border {
+    return if (!isFullScreen) {
+      val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
+      val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+      JBUI.Borders.compound(outerBorder, innerBorder)!!
+    }
+    else JBUI.Borders.empty()
+  }
+
   private fun setupContentListener() {
     model.addContentListener(object : TerminalModel.ContentListener {
       override fun onContentChanged() {
         updateEditorContent()
       }
-    })
+    }, runningDisposable)
   }
 
   private fun updateEditorContent() {
@@ -147,7 +156,7 @@ class TerminalPanel(private val project: Project,
       model.processScreenLines(0, model.screenLinesCount, consumer)
     }
     else {
-      model.processHistoryAndScreenLines(-model.historyLinesCount, model.historyLinesCount + model.screenLinesCount, consumer)
+      model.processHistoryAndScreenLines(-model.historyLinesCount, model.historyLinesCount + model.cursorY, consumer)
     }
 
     while (builder.lastOrNull() == '\n') {
@@ -288,10 +297,6 @@ class TerminalPanel(private val project: Project,
   }
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
-
-  fun getContentSize(): Dimension {
-    return Dimension(editor.component.width, editor.contentComponent.height)
-  }
 
   override fun getPreferredSize(): Dimension {
     val baseSize = super.getPreferredSize()

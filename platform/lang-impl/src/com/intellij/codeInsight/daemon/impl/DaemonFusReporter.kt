@@ -12,10 +12,9 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import kotlin.math.log10
-import kotlin.math.pow
+import kotlin.math.max
 
-class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
+private class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   private var daemonStartTime = -1L
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
@@ -42,7 +41,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val warningIndex = registrar.getSeverityIdx(HighlightSeverity.WARNING)
     val errorCount = errorCounts?.getOrNull(errorIndex) ?: -1
     val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
-    val lines = document?.lineCount?.roundToOneSignificantDigit() ?: -1
+    val lines = if (document == null) -1 else roundToThreeMostSignificantBits(document.lineCount)
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
 
@@ -56,11 +55,9 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     )
   }
 
-  private fun Int.roundToOneSignificantDigit(): Int {
-    if (this == 0) return 0
-    val l = log10(toDouble()).toInt()          // 623 -> 2
-    val p = 10.0.pow(l.toDouble()).toInt()     // 623 -> 100
-    return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
+  private fun roundToThreeMostSignificantBits(i: Int): Int {
+    val norm = if (i == 0) 0 else max(i, 8)
+    return norm and (Int.MIN_VALUE shr Integer.numberOfLeadingZeros(norm)+2)
   }
 
   companion object {

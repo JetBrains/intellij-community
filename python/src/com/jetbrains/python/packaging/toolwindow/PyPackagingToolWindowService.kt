@@ -11,6 +11,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -27,8 +30,8 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
@@ -37,18 +40,18 @@ import com.jetbrains.python.run.applyHelperPackageToPythonPath
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
-import kotlin.Comparator
 
 @Service
 class PyPackagingToolWindowService(val project: Project) : Disposable {
 
-  private lateinit var toolWindowPanel: PyPackagingToolWindowPanel
+  private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   lateinit var manager: PythonPackageManager
   private var installedPackages: List<InstalledPackage> = emptyList()
   internal var currentSdk: Sdk? = null
@@ -87,7 +90,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
         if (isActive) {
           withContext(Dispatchers.Main) {
-            toolWindowPanel.showSearchResult(installed, packagesFromRepos + invalidRepositories)
+            toolWindowPanel?.showSearchResult(installed, packagesFromRepos + invalidRepositories)
           }
         }
       }
@@ -98,7 +101,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
         PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
       }.toList()
 
-      toolWindowPanel.resetSearch(installedPackages, packagesByRepository + invalidRepositories)
+      toolWindowPanel?.resetSearch(installedPackages, packagesByRepository + invalidRepositories)
     }
   }
 
@@ -112,7 +115,7 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
-  private suspend fun initForSdk(sdk: Sdk?) {
+  internal suspend fun initForSdk(sdk: Sdk?) {
     val previousSdk = currentSdk
     currentSdk = sdk
     if (currentSdk != null) {
@@ -125,9 +128,9 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       }
     }
     withContext(Dispatchers.Main) {
-      toolWindowPanel.contentVisible = currentSdk != null
+      toolWindowPanel?.contentVisible = currentSdk != null
       if (currentSdk == null || currentSdk != previousSdk) {
-        toolWindowPanel.setEmpty()
+        toolWindowPanel?.setEmpty()
       }
     }
   }
@@ -148,6 +151,17 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       override fun rootsChanged(event: ModuleRootEvent) {
         serviceScope.launch(Dispatchers.IO) {
           initForSdk(project.modules.firstOrNull()?.pythonSdk)
+        }
+      }
+    })
+
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(event: FileEditorManagerEvent) {
+        val newFile = event.newFile ?: return
+        val module = ModuleUtilCore.findModuleForFile(newFile, project)
+        val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
+        serviceScope.launch(Dispatchers.IO) {
+          initForSdk(sdk)
         }
       }
     })
@@ -315,6 +329,10 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
       .take(PACKAGES_LIMIT)
       .map { pkg -> installedPackages.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
       .toList()
+  }
+
+  internal suspend fun moduleAttached() {
+    toolWindowPanel?.recreateModulePanel()
   }
 
   companion object {

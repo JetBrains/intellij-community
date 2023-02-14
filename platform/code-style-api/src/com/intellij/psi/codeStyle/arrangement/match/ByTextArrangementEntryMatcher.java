@@ -47,11 +47,10 @@ public class ByTextArrangementEntryMatcher implements ArrangementEntryMatcher {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof ByTextArrangementEntryMatcher)) {
+    if (!(o instanceof ByTextArrangementEntryMatcher matcher)) {
       return false;
     }
 
-    ByTextArrangementEntryMatcher matcher = (ByTextArrangementEntryMatcher)o;
     if (!myText.equals(matcher.myText)) {
       return false;
     }

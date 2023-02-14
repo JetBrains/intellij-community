@@ -41,19 +41,17 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression reference)) {
         return;
       }
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
       if (rhs == null) {
         return;
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
       final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
+      if (!(referent instanceof PsiField field)) {
         return;
       }
-      final PsiField field = (PsiField)referent;
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
@@ -65,10 +63,9 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       }
       final PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(statement, PsiCodeBlock.class, PsiBlockStatement.class);
-      if (!(parent instanceof PsiIfStatement)) {
+      if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;
       }
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
       final PsiExpression condition = ifStatement.getCondition();
       if (!ComparisonUtils.isNullComparison(condition, field, true)) {
         return;

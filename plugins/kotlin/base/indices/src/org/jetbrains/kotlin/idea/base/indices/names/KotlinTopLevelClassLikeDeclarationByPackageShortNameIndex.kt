@@ -15,10 +15,12 @@ import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.jetbrains.kotlin.serialization.deserialization.getName
 
 @ApiStatus.Internal
-object KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageShortNameIndex() {
-    val KEY = ID.create<FqName, List<Name>>(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex::class.java.name)
+class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageShortNameIndex() {
+    companion object {
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex::class.java.name)
+    }
 
-    override fun getName(): ID<FqName, List<Name>> = KEY
+    override fun getName(): ID<FqName, List<Name>> = NAME
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {

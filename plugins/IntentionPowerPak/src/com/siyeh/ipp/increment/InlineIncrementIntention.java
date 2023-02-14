@@ -125,13 +125,6 @@ public class InlineIncrementIntention extends MutablyNamedIntention {
     }
   }
 
-  private static final class Occurrence {
-    @NotNull final PsiReferenceExpression referenceExpression;
-    final boolean isPrevious;
-
-    private Occurrence(@NotNull PsiReferenceExpression referenceExpression, boolean isPrevious) {
-      this.referenceExpression = referenceExpression;
-      this.isPrevious = isPrevious;
-    }
+  private record Occurrence(@NotNull PsiReferenceExpression referenceExpression, boolean isPrevious) {
   }
 }

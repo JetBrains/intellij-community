@@ -29,6 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -189,6 +191,10 @@ public class RemoteConnectionBuilder {
             Path agentArtifactPath;
 
             Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            // isDirectory(classesRoot) is used instead of `PluginManagerCore.isRunningFromSources()`
+            // because we want to use installer's layout when running "IDEA (dev build)" run configuration
+            // where the layout is quite the same as in installers.
+            // but `PluginManagerCore.isRunningFromSources()` still returns `true` in this case
             if (Files.isDirectory(classesRoot)) {
               // Code runs from IDEA run configuration (code from .class file in out/ directory)
               try {
@@ -199,7 +205,11 @@ public class RemoteConnectionBuilder {
 
                 Path communityRoot = Path.of(PathManager.getCommunityHomePath());
                 Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(iml, "debugger-agent");
+                Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(
+                  iml,
+                  "debugger-agent",
+                  BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
+                  new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
 
                 Files.copy(downloadedAgent, agentArtifactPath);
               }

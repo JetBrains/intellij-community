@@ -125,12 +125,11 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
         return null;
       }
       final PsiType type1 = lastParameter.getType();
-      if (!(type1 instanceof PsiEllipsisType)) {
+      if (!(type1 instanceof PsiEllipsisType ellipsisType)) {
         return null;
       }
 
-      final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
-      final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
+        final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
       final PsiType componentType = arrayType.getComponentType();
       if (checkArray) {
         if (!componentType.equals(TypeUtils.getObjectType(call))) {

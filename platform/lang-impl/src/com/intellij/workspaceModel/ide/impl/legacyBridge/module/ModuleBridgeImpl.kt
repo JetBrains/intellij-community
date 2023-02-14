@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -71,7 +72,7 @@ internal class ModuleBridgeImpl(
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePluginDescriptor = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
                                ?: error("Core plugin with id: ${PluginManagerCore.CORE_ID} should be available")
-    if (TestModuleProperties.testModulePropertiesBridgeEnabled()) {
+    if (isModulePropertiesBridgeEnabled) {
       registerService(TestModuleProperties::class.java, TestModulePropertiesBridge::class.java, corePluginDescriptor, false)
     } else {
       val classLoader = javaClass.classLoader

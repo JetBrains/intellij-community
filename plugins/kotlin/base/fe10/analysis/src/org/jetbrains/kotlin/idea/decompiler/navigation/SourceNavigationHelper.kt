@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
@@ -60,7 +61,7 @@ object SourceNavigationHelper {
 
         val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
         val additionalScope = binaryModuleInfos.flatMap {
-            it.associatedCommonLibraries()
+            it.associatedCommonLibraries() + it.sourcesOnlyDependencies()
         }.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
 
         return if (binaryModuleInfos.any { it is ScriptDependenciesInfo }) {
@@ -112,6 +113,12 @@ object SourceNavigationHelper {
             }
         }
         return result
+    }
+
+    private fun BinaryModuleInfo.sourcesOnlyDependencies(): List<BinaryModuleInfo> {
+        if (this !is LibraryInfo) return emptyList()
+
+        return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this).sourcesOnlyDependencies
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =

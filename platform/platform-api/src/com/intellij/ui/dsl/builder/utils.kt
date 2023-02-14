@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.UINumericRange
 import com.intellij.ui.SimpleListCellRenderer
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
@@ -116,4 +117,20 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): Simpl
       }
     }
   }
+}
+
+/**
+ * Kotlin UI DSL doesn't allow to use some tags like <html> so all resource strings should be cleared up manually. Sometimes strings are
+ * received from outside, in such cases this method can be useful
+ *
+ * Example: `cleanupHtml("<html>Some string</html>")` returns `"Some string"`
+ */
+fun cleanupHtml(@Nls s: String): @Nls String {
+  val regex = Regex("\\s*<html>(?<body>.*)</html>\\s*", RegexOption.IGNORE_CASE)
+  val result = regex.matchEntire(s)
+  if (result == null) {
+    return s
+  }
+  @Suppress("HardCodedStringLiteral")
+  return result.groups["body"]!!.value
 }

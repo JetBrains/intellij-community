@@ -123,12 +123,10 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (AbstractTreeNode child : children) {
       Pair<VirtualFile, PsiDirectoryNode> parentNodePair = null;
-      if (child instanceof ProjectViewModuleGroupNode) {
-        final ProjectViewModuleGroupNode groupNode = (ProjectViewModuleGroupNode)child;
+      if (child instanceof ProjectViewModuleGroupNode groupNode) {
         final Collection<AbstractTreeNode<?>> groupNodeChildren = groupNode.getChildren();
         for (final AbstractTreeNode node : groupNodeChildren) {
-          if (node instanceof PsiDirectoryNode) {
-            final PsiDirectoryNode psiDirectoryNode = (PsiDirectoryNode)node;
+          if (node instanceof PsiDirectoryNode psiDirectoryNode) {
             final PsiDirectory psiDirectory = psiDirectoryNode.getValue();
             if (psiDirectory == null) {
               parentNodePair = null;

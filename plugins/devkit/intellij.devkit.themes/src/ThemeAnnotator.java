@@ -16,10 +16,9 @@ public class ThemeAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (!(element instanceof JsonProperty)) return;
+    if (!(element instanceof JsonProperty property)) return;
     if (!ThemeJsonUtil.isThemeFilename(holder.getCurrentAnnotationSession().getFile().getName())) return;
 
-    JsonProperty property = (JsonProperty)element;
     if (property.getValue() instanceof JsonObject) return;  // do not check intermediary keys
 
     if (!ThemeJsonUtil.isInsideUiProperty(property)) return;

@@ -29,7 +29,7 @@ public final class GlobalSearchScopes {
   /**
    * @deprecated Please use ExecutionSearchScopes.executionScope
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
     return ExecutionSearchScopes.executionScope(modules);
   }

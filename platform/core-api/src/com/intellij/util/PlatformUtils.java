@@ -189,6 +189,7 @@ public final class PlatformUtils {
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
 

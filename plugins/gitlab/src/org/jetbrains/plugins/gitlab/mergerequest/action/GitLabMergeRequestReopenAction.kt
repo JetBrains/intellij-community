@@ -1,28 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
+import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.ui.codereview.details.RequestState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 
 internal class GitLabMergeRequestReopenAction(
   scope: CoroutineScope,
   private val reviewFlowVm: GitLabMergeRequestReviewFlowViewModel
-) : GitLabMergeRequestAction(GitLabBundle.message("merge.request.details.action.review.reopen.text"), scope, reviewFlowVm) {
+) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.reopen.text")) {
   init {
     scope.launch {
-      reviewFlowVm.state.collect {
-        update()
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
+        isEnabled = !isBusy && requestState == RequestState.CLOSED
       }
     }
   }
 
   override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.reopen()
-
-  override fun enableCondition(): Boolean {
-    return reviewFlowVm.state.value == GitLabMergeRequestState.CLOSED
-  }
 }

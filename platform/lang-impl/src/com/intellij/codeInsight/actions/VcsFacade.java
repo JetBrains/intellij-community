@@ -3,7 +3,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -17,7 +16,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +85,7 @@ public class VcsFacade {
   }
 
   public boolean hasChanges(@NotNull final Project project) {
-    final List<VirtualFile> directories = ReadAction.compute(() -> 
-      SequencesKt.toList(BaseProjectDirectories.getBaseDirectories(project))
-    );
+    final Set<VirtualFile> directories = BaseProjectDirectories.getBaseDirectories(project);
     return ContainerUtil.exists(directories, it -> hasChanges(it, project));
   }
 

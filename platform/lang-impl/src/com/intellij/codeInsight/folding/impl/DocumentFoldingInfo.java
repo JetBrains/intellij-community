@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,10 +64,10 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       if (!region.isValid() || region.shouldNeverExpand()) continue;
       boolean expanded = region.isExpanded();
       String signature = region.getUserData(UpdateFoldRegionsOperation.SIGNATURE);
-      if (signature == UpdateFoldRegionsOperation.NO_SIGNATURE) continue;
+      if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) continue;
       Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
-                                  !FoldingUtil.caretInsideRange(editor, TextRange.create(region));
+                                  !FoldingUtil.caretInsideRange(editor, region.getTextRange());
       if (collapseByDefault == expanded || signature == null) {
         if (signature != null) {
           myInfos.add(new Info(signature, expanded));

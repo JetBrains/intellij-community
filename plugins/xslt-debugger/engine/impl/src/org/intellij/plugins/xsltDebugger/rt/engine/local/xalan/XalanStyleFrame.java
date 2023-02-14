@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.rt.engine.local.xalan;
 
 import org.apache.xalan.templates.ElemLiteralResult;
@@ -178,7 +178,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     final String name = node.getNodeName();
     if (node instanceof ElemLiteralResult) {
       return name;
-    } else if (name != null && name.indexOf(':') == -1) {
+    } else if (name.indexOf(':') == -1) {
       return "xsl:" + name;
     }
     return name;

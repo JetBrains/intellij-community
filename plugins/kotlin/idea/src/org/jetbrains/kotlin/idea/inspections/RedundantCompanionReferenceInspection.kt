@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -36,8 +36,9 @@ import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
-
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.util.hasNotReceiver
 
 class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -59,7 +60,7 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         if (reference == selectorExpression && grandParent !is KtDotQualifiedExpression) return false
         if (parent.getStrictParentOfType<KtImportDirective>() != null) return false
 
-        val objectDeclaration = reference.mainReference.resolve() as? KtObjectDeclaration ?: return false
+        val objectDeclaration = reference.resolveMainReference() as? KtObjectDeclaration ?: return false
         if (!objectDeclaration.isCompanion()) return false
         val referenceText = reference.text
         if (referenceText != objectDeclaration.name) return false
@@ -67,7 +68,8 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
 
         val containingClass = objectDeclaration.containingClass() ?: return false
         if (reference.containingClass() != containingClass && reference == parent.receiverExpression) return false
-        if (parent.isReferenceToBuildInEnumFunctionInEnumClass(containingClass)) return false
+        val qualifiedExpression = if (parent.hasNotReceiver() && grandParent is KtDotQualifiedExpression) grandParent else parent
+        if (qualifiedExpression.isReferenceToBuildInEnumFunctionInEnumClass(containingClass)) return false
 
         val context = reference.analyze()
         if (grandParent.isReferenceToClassOrObject(context)) return false
@@ -99,9 +101,11 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         return true
     }
 
+    /**
+     * 'Companion.(values/valueOf/ect)' pattern as KtDotQualifiedExpression is passed to the function
+     */
     private fun KtDotQualifiedExpression.isReferenceToBuildInEnumFunctionInEnumClass(containingClass: KtClass): Boolean {
-        return containingClass.isEnum()
-                && (isReferenceToBuiltInEnumFunction() || (parent as? KtElement)?.isReferenceToBuiltInEnumFunction() == true)
+        return containingClass.isEnum() && this.canBeReferenceToBuiltInEnumFunction()
     }
 
     private fun KtElement?.isReferenceToClassOrObject(context: BindingContext): Boolean {

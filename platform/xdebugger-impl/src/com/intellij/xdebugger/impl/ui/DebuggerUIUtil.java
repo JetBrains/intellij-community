@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +36,7 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -55,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -125,27 +128,45 @@ public final class DebuggerUIUtil {
     }
   }
 
-  public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
-    EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
+  public static void showValuePopup(@NotNull XFullValueEvaluator evaluator,
+                                    @NotNull MouseEvent event,
+                                    @NotNull Project project,
+                                    @Nullable Editor editor) {
+    if (evaluator instanceof CustomComponentEvaluator) {
+      JPanel panel = new JPanel(new CardLayout());
+      final MultiContentTypeCallback callback = new MultiContentTypeCallback(panel, (CustomComponentEvaluator)evaluator, project);
+      showValuePopup(event, project, editor, panel, callback::setObsolete);
+      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    }
+    else {
+      EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
+      final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
+      showValuePopup(event, project, editor, textArea, callback::setObsolete);
+      evaluator.startEvaluation(callback); /*to make it really cancellable*/
+    }
+  }
 
-    final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
-    evaluator.startEvaluation(callback);
+   static void showValuePopup(@NotNull MouseEvent event,
+                                    @NotNull Project project,
+                                    @Nullable Editor editor,
+                                    JComponent component,
+                                    @Nullable Runnable cancelCallback) {
 
     Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
     if (size == null) {
-      Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
+      Dimension frameSize = Objects.requireNonNull(WindowManager.getInstance().getFrame(project)).getSize();
       size = new Dimension(frameSize.width / 2, frameSize.height / 2);
     }
 
-    textArea.setPreferredSize(size);
+    component.setPreferredSize(size);
 
-    JBPopup popup = createValuePopup(project, textArea, callback);
+    JBPopup popup = createValuePopup(project, component, cancelCallback);
     if (editor == null) {
       Rectangle bounds = new Rectangle(event.getLocationOnScreen(), size);
       ScreenUtil.fitToScreenVertical(bounds, 5, 5, true);
       if (size.width != bounds.width || size.height != bounds.height) {
         size = bounds.getSize();
-        textArea.setPreferredSize(size);
+        component.setPreferredSize(size);
       }
       popup.showInScreenCoordinates(event.getComponent(), bounds.getLocation());
     }
@@ -207,8 +228,7 @@ public final class DebuggerUIUtil {
 
   public static JBPopup createValuePopup(Project project,
                                          JComponent component,
-                                         @Nullable final FullValueEvaluationCallbackImpl callback) {
-    Runnable cancelCallback = callback == null ? null : () -> callback.setObsolete();
+                                         @Nullable Runnable cancelCallback) {
     return createCancelablePopupBuilder(project, component, null, cancelCallback, FULL_VALUE_POPUP_DIMENSION_KEY).createPopup();
   }
 
@@ -427,6 +447,66 @@ public final class DebuggerUIUtil {
     }
   }
 
+  private static class MultiContentTypeCallback implements XFullValueEvaluator.XFullValueEvaluationCallback {
+    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
+    private final JPanel myPanel;
+    private CustomComponentEvaluator myEvaluator;
+
+    private Project myProject;
+
+    MultiContentTypeCallback(final JPanel panel, CustomComponentEvaluator evaluator, Project project) {
+      myPanel = panel;
+      myEvaluator = evaluator;
+      myProject = project;
+    }
+
+    @Override
+    public void evaluated(@NotNull final String fullValue) {
+      evaluated(fullValue, null);
+    }
+
+    @Override
+    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
+      AppUIUtil.invokeOnEdt(() -> {
+        try {
+          myPanel.removeAll();
+          JComponent component = myEvaluator.createComponent(fullValue);
+          if (component == null) {
+            EditorTextField textArea = createTextViewer(fullValue, myProject);
+            if (font != null) {
+              textArea.setFont(font);
+            }
+            component = textArea;
+          }
+          myPanel.add(component);
+          myPanel.revalidate();
+          myPanel.repaint();
+        } catch (Exception e) {
+          errorOccurred(e.toString());
+        }
+      });
+    }
+
+    @Override
+    public void errorOccurred(@NotNull final String errorMessage) {
+      AppUIUtil.invokeOnEdt(() -> {
+        myPanel.removeAll();
+        EditorTextField textArea = createTextViewer(errorMessage, myProject);
+        textArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
+        myPanel.add(textArea);
+      });
+    }
+
+    private void setObsolete() {
+      myObsolete.set(true);
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return myObsolete.get();
+    }
+  }
+
   @Nullable
   public static String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
@@ -568,6 +648,16 @@ public final class DebuggerUIUtil {
     if (editor != null) {
       editor.getContentComponent().revalidate();
       editor.getContentComponent().repaint();
+    }
+  }
+
+  public static void setActionEnabled(AnActionEvent e, boolean enable) {
+    String place = e.getPlace();
+    if (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.DEBUGGER_TOOLBAR.equals(place)) {
+      e.getPresentation().setEnabled(enable);
+    }
+    else {
+      e.getPresentation().setVisible(enable);
     }
   }
 }

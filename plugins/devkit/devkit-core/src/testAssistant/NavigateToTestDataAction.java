@@ -116,8 +116,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final UAnnotation annotation = UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(uClass.getJavaPsi(), Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
     if (annotation == null) return null;
     UExpression value = annotation.findAttributeValue("value");
-    if (!(value instanceof UClassLiteralExpression)) return null;
-    UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
+    if (!(value instanceof UClassLiteralExpression classLiteralExpression)) return null;
     PsiType type = classLiteralExpression.getType();
     return type != null && type.equalsToText(TestFrameworkConstants.PARAMETERIZED_ANNOTATION_QUALIFIED_NAME) ? uClass.getJavaPsi() : null;
   }

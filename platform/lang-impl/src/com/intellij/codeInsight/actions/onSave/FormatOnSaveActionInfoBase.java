@@ -206,9 +206,8 @@ public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOpt
     return new CheckboxTree.CheckboxTreeCellRenderer() {
       @Override
       public void customizeRenderer(JTree t, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focus) {
-        if (!(value instanceof CheckedTreeNode)) return;
+        if (!(value instanceof CheckedTreeNode node)) return;
 
-        final CheckedTreeNode node = (CheckedTreeNode)value;
         final Object userObject = node.getUserObject();
 
         if (userObject instanceof String) {

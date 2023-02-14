@@ -34,6 +34,7 @@ public final class StatisticsStringUtil {
   }
 
   public static boolean equals(@Nullable String s1, @Nullable String s2) {
+    //noinspection StringEquality
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
 

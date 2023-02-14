@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -57,7 +58,9 @@ class VcsLogIndexProjectStatisticsCollector : ProjectUsagesCollector() {
     private val INDEX_DISABLED = GROUP.registerEvent("index.disabled.in.project", EventFields.Boolean("value"))
   }
 
-  override fun getMetrics(project: Project): MutableSet<MetricEvent> {
+  override fun getMetrics(project: Project): Set<MetricEvent> {
+    if (!project.isTrusted()) return emptySet()
+
     val usages = mutableSetOf<MetricEvent>()
 
     getIndexCollector(project)?.state?.let { indexCollectorState ->

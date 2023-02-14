@@ -51,8 +51,7 @@ public final class ScriptSupportUtil {
               PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
                 @Override
                 public boolean execute(@NotNull final PsiElement element1) {
-                  if (element1 instanceof XmlTag) {
-                    final XmlTag tag = (XmlTag)element1;
+                  if (element1 instanceof XmlTag tag) {
 
                     if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
                       final XmlElementDescriptor descriptor = tag.getDescriptor();

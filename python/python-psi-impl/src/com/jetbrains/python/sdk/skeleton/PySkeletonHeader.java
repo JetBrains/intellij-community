@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +42,7 @@ public class PySkeletonHeader {
 
   @Nullable
   public static PySkeletonHeader readSkeletonHeader(@NotNull File file) {
-    try (LineNumberReader reader = new LineNumberReader(new FileReader(file))) {
+    try (LineNumberReader reader = new LineNumberReader(new FileReader(file, StandardCharsets.UTF_8))) {
       String line = null;
       // Read 3 lines, skip first 2: encoding, module name
       for (int i = 0; i < 3; i++) {

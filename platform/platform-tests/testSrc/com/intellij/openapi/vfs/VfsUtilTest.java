@@ -277,7 +277,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
-    assertFalse(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     File testFile = tempDir.newFile("test/child.txt");
     VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile.getParentFile());
@@ -357,7 +357,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     File x = new File(d1, "x.txt");
     assertTrue(x.createNewFile());
 
-    assertFalse(ApplicationManager.getApplication().isDispatchThread());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     VfsUtil.markDirty(true, false, vTemp);
     CountDownLatch refreshed = new CountDownLatch(1);
     LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(vTemp), false, true, refreshed::countDown);
@@ -379,7 +379,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+          ApplicationManager.getApplication().assertIsNonDispatchThread();
 
           Semaphore semaphore = new Semaphore(1);
           vTemp.refresh(true, true, semaphore::up);
@@ -432,7 +432,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       ProgressManager.getInstance().run(new Task.Modal(null, "", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+          ApplicationManager.getApplication().assertIsNonDispatchThread();
 
           Semaphore local = new Semaphore(1);
           vDir2.refresh(true, true, () -> {

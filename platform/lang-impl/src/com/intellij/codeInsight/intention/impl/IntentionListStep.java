@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -97,12 +96,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return  !(a instanceof AbstractEmptyIntentionAction) || !hasSubstep(value);
   }
 
-  private static void closeIntentionPreviewPopup() {
-    ApplicationManager.getApplication().invokeLater(() ->
-       StackingPopupDispatcher.getInstance().getPopupStream()
-         .filter(popup -> popup.getUserData(IntentionPreviewPopupUpdateProcessor.IntentionPreviewPopupKey.class) != null)
-         .toList()
-         .forEach(popup -> popup.cancel()));
+  private void closeIntentionPreviewPopup() {
+    if (myPopup != null) {
+      myPopup.hidePreview();
+    }
   }
 
   @Override

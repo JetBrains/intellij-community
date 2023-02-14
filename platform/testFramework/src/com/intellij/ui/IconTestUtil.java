@@ -36,8 +36,7 @@ public final class IconTestUtil {
   }
 
   public static @NotNull Icon unwrapIcon(@NotNull Icon icon) {
-    while (icon instanceof CompositeIcon) {
-      CompositeIcon compositeIcon = (CompositeIcon)icon;
+    while (icon instanceof CompositeIcon compositeIcon) {
       if (compositeIcon.getIconCount() == 0) {
         break;
       }

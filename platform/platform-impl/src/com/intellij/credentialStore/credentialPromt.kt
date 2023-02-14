@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
@@ -95,7 +96,7 @@ object RememberCheckBoxState {
     PasswordSafe.instance.isRememberPasswordByDefault = component.isSelected
   }
 
-  fun createCheckBox(toolTip: String?): JCheckBox {
+  fun createCheckBox(@Tooltip toolTip: String?): JCheckBox {
     return CheckBox(
       UIBundle.message("auth.remember.cb"),
       selected = isSelected,

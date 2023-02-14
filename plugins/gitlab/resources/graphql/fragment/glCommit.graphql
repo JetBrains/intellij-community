@@ -4,4 +4,9 @@ fragment glCommit on Commit {
   shortId
   title
   description
+
+  author {
+    ...user
+  }
+  authoredDate
 }

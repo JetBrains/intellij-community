@@ -179,10 +179,9 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     final Set<PsiElement> checked = new HashSet<>();
     for (PsiReferenceExpression expression : expressions) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-      if (!(parent instanceof PsiAssignmentExpression)) {
+      if (!(parent instanceof PsiAssignmentExpression assignmentExpression)) {
         continue;
       }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       if (JavaTokenType.EQ != assignmentExpression.getOperationTokenType()) {
         continue;
       }

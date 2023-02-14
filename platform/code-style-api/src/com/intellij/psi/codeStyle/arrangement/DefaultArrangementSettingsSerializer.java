@@ -57,11 +57,10 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
 
   @Override
   public void serialize(@NotNull ArrangementSettings s, @NotNull Element holder) {
-    if (!(s instanceof StdArrangementSettings)) {
+    if (!(s instanceof StdArrangementSettings settings)) {
       return;
     }
 
-    StdArrangementSettings settings = (StdArrangementSettings)s;
     if (settings instanceof ArrangementExtendableSettings && myDefaultSettings instanceof ArrangementExtendableSettings) {
       final Set<StdArrangementRuleAliasToken> tokensDefinition = ((ArrangementExtendableSettings)settings).getRuleAliases();
       final boolean isDefault = tokensDefinition.equals(((ArrangementExtendableSettings)myDefaultSettings).getRuleAliases());

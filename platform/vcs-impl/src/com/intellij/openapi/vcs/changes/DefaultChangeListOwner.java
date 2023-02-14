@@ -25,6 +25,6 @@ public class DefaultChangeListOwner implements ChangeListOwner {
 
   @Override
   public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcsInBackground(myProject, list, unversionedFiles);
+    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcsInBackground(myProject, list, unversionedFiles);
   }
 }

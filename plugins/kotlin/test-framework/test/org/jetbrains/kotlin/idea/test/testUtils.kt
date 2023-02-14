@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.facet.FacetManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -15,6 +17,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.indexing.IndexingFlag
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -24,6 +27,8 @@ import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import java.io.File
 
 @JvmField
@@ -117,5 +122,19 @@ fun checkPluginIsCorrect(isFirPlugin: Boolean){
         checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
     } else {
         checkKotlinPluginKind(KotlinPluginKind.FE10_PLUGIN)
+    }
+}
+
+fun Module.setupKotlinFacet(configure: KotlinFacetConfiguration.() -> Unit) = apply {
+    runWriteAction {
+        val facet = FacetManager.getInstance(this).addFacet(KotlinFacetType.INSTANCE, KotlinFacetType.NAME, null)
+        val configuration = facet.configuration
+
+        // this is actually needed so facet settings object is in a valid state
+        configuration.settings.compilerArguments = K2JVMCompilerArguments()
+        // make sure module-specific settings are used
+        configuration.settings.useProjectSettings = false
+
+        configuration.configure()
     }
 }

@@ -97,21 +97,8 @@ public class InjectedLanguageUtilBase {
     return sb.toString();
   }
 
-  public static class TokenInfo {
-    @NotNull public final IElementType type;
-    @NotNull public final ProperTextRange rangeInsideInjectionHost;
-    public final int shredIndex;
-    public final TextAttributesKey @NotNull [] textAttributesKeys;
-
-    public TokenInfo(@NotNull IElementType type,
-                     @NotNull ProperTextRange rangeInsideInjectionHost,
-                     int shredIndex,
-                     TextAttributesKey @NotNull [] textAttributesKeys) {
-      this.type = type;
-      this.rangeInsideInjectionHost = rangeInsideInjectionHost;
-      this.shredIndex = shredIndex;
-      this.textAttributesKeys = textAttributesKeys;
-    }
+  public record TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex,
+                          TextAttributesKey @NotNull [] textAttributesKeys) {
   }
   static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
     file.putUserData(HIGHLIGHT_TOKENS, tokens);
@@ -123,8 +110,7 @@ public class InjectedLanguageUtilBase {
   }
 
   public static Place getShreds(@NotNull FileViewProvider viewProvider) {
-    if (!(viewProvider instanceof InjectedFileViewProvider)) return null;
-    InjectedFileViewProvider myFileViewProvider = (InjectedFileViewProvider)viewProvider;
+    if (!(viewProvider instanceof InjectedFileViewProvider myFileViewProvider)) return null;
     return getShreds(myFileViewProvider.getDocument());
   }
 
@@ -268,8 +254,7 @@ public class InjectedLanguageUtilBase {
             }
           }
         }
-        if (result.references != null && visitor instanceof InjectedReferenceVisitor) {
-          InjectedReferenceVisitor refVisitor = (InjectedReferenceVisitor)visitor;
+        if (result.references != null && visitor instanceof InjectedReferenceVisitor refVisitor) {
           for (Pair<ReferenceInjector, Place> pair : result.references) {
             Place place = pair.getSecond();
             if (place.isValid()) {

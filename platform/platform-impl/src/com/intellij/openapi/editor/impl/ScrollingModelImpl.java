@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -537,18 +538,20 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     @DirtyUI
     @Override
     public void stateChanged(ChangeEvent event) {
-      Rectangle viewRect = getVisibleArea();
-      VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(mySupplier.getEditor(), myLastViewRect, viewRect);
-      if (!myViewportPositioned && viewRect.height > 0) {
-        myViewportPositioned = true;
-        if (adjustVerticalOffsetIfNecessary()) {
-          return;
+      ReadAction.run(() -> {
+        Rectangle viewRect = getVisibleArea();
+        VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(mySupplier.getEditor(), myLastViewRect, viewRect);
+        if (!myViewportPositioned && viewRect.height > 0) {
+          myViewportPositioned = true;
+          if (adjustVerticalOffsetIfNecessary()) {
+            return;
+          }
         }
-      }
-      myLastViewRect = viewRect;
-      for (VisibleAreaListener listener : myVisibleAreaListeners) {
-        listener.visibleAreaChanged(visibleAreaEvent);
-      }
+        myLastViewRect = viewRect;
+        for (VisibleAreaListener listener : myVisibleAreaListeners) {
+          listener.visibleAreaChanged(visibleAreaEvent);
+        }
+      });
     }
   }
 

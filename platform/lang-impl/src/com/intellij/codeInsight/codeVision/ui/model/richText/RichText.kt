@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.codeVision.ui.model.richText
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -13,19 +15,20 @@ data class RichString(val textRange: TextRange, var attributes: SimpleTextAttrib
   val text: String get() = richText.text.substring(textRange.startOffset, textRange.endOffset)
 }
 
-open class RichText(text: String, parts: Collection<RichString>) : Cloneable {
+open class RichText(@Nls text: String, parts: Collection<RichString>) : Cloneable {
+  @Nls
   private var myString: String = text
   private var myParts = ArrayList<RichString>(parts)
   val parts: List<RichString> get() = myParts
-  val text: String get() = myString
+  val text: String @Nls get() = myString
   val length: Int get() = text.length
 
   constructor() : this("", emptyList())
-  constructor(text: String) : this() {
+  constructor(@Nls text: String) : this() {
     append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
   }
 
-  fun append(text: String, style: SimpleTextAttributes) {
+  fun append(@Nls text: String, style: SimpleTextAttributes) {
     val range = TextRange(myString.length, myString.length + text.length)
     myString += text
     myParts.add(RichString(range, style, this))
@@ -78,61 +81,58 @@ open class RichText(text: String, parts: Collection<RichString>) : Cloneable {
 
   @Nls
   override fun toString(): String {
-    val acc = StringBuilder()
-    for (p in myParts) {
-      val (r, a) = p
-      acc.apply {
-        append("<span styles=\"")
-        val bgColor = a.bgColor
-        if (bgColor != null) {
-          append("background-color:")
-          dumpColor(bgColor)
-        }
-        val fgColor = a.fgColor
-        if (fgColor != null) {
-          append("color:")
-          dumpColor(fgColor)
-        }
-        val waveColor = a.waveColor
-        if (waveColor != null) {
-          append("wave-color:")
-          dumpColor(fgColor)
-        }
-        dumpStyleAndFont(a)
-        append("")
-        append("\">")
-
-        append(p.text)
-        append("</span>")
-      }
+    val htmlBuilder = HtmlBuilder()
+    for(p in myParts){
+      val (_, a) = p
+      val style = calculateStyle(a)
+      htmlBuilder.append(HtmlChunk.span(style).addText(p.text))
     }
-    return acc.toString()
+
+    return htmlBuilder.toString()
   }
 
-  private fun StringBuilder.dumpStyleAndFont(a: SimpleTextAttributes) {
-    when (a.fontStyle) {
-      Font.PLAIN -> append("font-style: plain;")
-      Font.ITALIC -> append("font-style: italic;")
-      Font.BOLD -> append("font-weight: bold;")
+  private fun calculateStyle(textAttributes: SimpleTextAttributes): String {
+    val styleBuilder = StringBuilder()
+    val bgColor = textAttributes.bgColor
+    if (bgColor != null) {
+      styleBuilder.append("background-color:${bgColor.dumpColor()}")
     }
-    when {
-      a.isSearchMatch -> append("text-decoration: searchMatch;")
-      a.isStrikeout -> append("text-decoration: strikeout;")
-      a.isWaved -> append("text-decoration: waved;")
-      a.isUnderline -> append("text-decoration: underline;")
-      a.isBoldDottedLine -> append("text-decoration: boldDottedLine;")
-      a.isOpaque -> append("text-decoration: opaque;")
-      a.isSmaller -> append("text-decoration: smaller;")
+    val fgColor = textAttributes.fgColor
+    if (fgColor != null) {
+      styleBuilder.append("color:${fgColor.dumpColor()}")
     }
+    val waveColor = textAttributes.waveColor
+    if (waveColor != null) {
+      styleBuilder.append("wave-color:${waveColor.dumpColor()}")
+    }
+    styleBuilder.append(textAttributes.dumpStyleAndFont())
+    return styleBuilder.toString()
   }
 
-  private fun StringBuilder.dumpColor(bgColor: Color) {
-    append("rgb(")
-    append(bgColor.red)
-    append(",")
-    append(bgColor.green)
-    append(",")
-    append(bgColor.blue)
-    append(");")
+
+  private fun SimpleTextAttributes.dumpStyleAndFont() : String {
+    val font = when (fontStyle) {
+      Font.PLAIN -> "font-style: plain;"
+      Font.ITALIC -> "font-style: italic;"
+      Font.BOLD -> "font-weight: bold;"
+      else -> ""
+    }
+
+    val decoration = when {
+      isSearchMatch -> "text-decoration: searchMatch;"
+      isStrikeout -> "text-decoration: strikeout;"
+      isWaved -> "text-decoration: waved;"
+      isUnderline -> "text-decoration: underline;"
+      isBoldDottedLine -> "text-decoration: boldDottedLine;"
+      isOpaque -> "text-decoration: opaque;"
+      isSmaller -> "text-decoration: smaller;"
+      else -> ""
+    }
+
+    return "$font$decoration"
+  }
+
+  private fun Color.dumpColor() :String{
+    return "rgb(${red},${green},${blue});"
   }
 }

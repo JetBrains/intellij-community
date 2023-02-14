@@ -20,7 +20,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil

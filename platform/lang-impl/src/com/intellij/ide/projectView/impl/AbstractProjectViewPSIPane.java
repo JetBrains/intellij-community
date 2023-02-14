@@ -89,8 +89,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       Disposer.register(this, new TreeUpdater<>(painter, treePaneScroll, myTree) {
         @Override
         protected void update(ErrorStripePainter painter, int index, Object object) {
-          if (object instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+          if (object instanceof DefaultMutableTreeNode node) {
             object = node.getUserObject();
           }
           super.update(painter, index, getStripe(object, myTree.isExpanded(index)));
@@ -299,8 +298,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
    */
   protected ErrorStripe getStripe(Object object, boolean expanded) {
     if (expanded && object instanceof PsiDirectoryNode) return null;
-    if (object instanceof PresentableNodeDescriptor) {
-      PresentableNodeDescriptor node = (PresentableNodeDescriptor)object;
+    if (object instanceof PresentableNodeDescriptor node) {
       TextAttributesKey key = node.getPresentation().getTextAttributesKey();
       TextAttributes attributes = key == null ? null : EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getAttributes(key);
       Color color = attributes == null ? null : attributes.getErrorStripeColor();

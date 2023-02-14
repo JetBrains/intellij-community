@@ -18,6 +18,6 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

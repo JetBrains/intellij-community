@@ -5,7 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -1028,7 +1028,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                 @NotNull String externalName,
                                 @NotNull String text) {
     String message = text + "; for signature: '" + externalName + "' in the file " + virtualFile.getName();
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(virtualFile));
+    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(virtualFile));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {

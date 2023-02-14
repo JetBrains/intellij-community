@@ -46,8 +46,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     assert methodName != null;
     final String postfix = methodName.substring("assert".length());
     final PsiExpression lastArgument = arguments[arguments.length - 1];
-    if (lastArgument instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)lastArgument;
+    if (lastArgument instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
@@ -105,8 +104,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
-    if (lastArgument instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)lastArgument;
+    if (lastArgument instanceof PsiBinaryExpression binaryExpression) {
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {

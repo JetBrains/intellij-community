@@ -115,15 +115,13 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
         return true;
       }
       final Object value = ExpressionUtils.computeConstantExpression(expression);
-      if (value instanceof Number) {
-        final Number number = (Number)value;
+      if (value instanceof Number number) {
         final int l = number.intValue();
         if (l >= -128 && l <= 127) {
           return true;
         }
       }
-      else if (value instanceof Character) {
-        final Character character = (Character)value;
+      else if (value instanceof Character character) {
         final char c = character.charValue();
         if (c <= 127) {
           return true;

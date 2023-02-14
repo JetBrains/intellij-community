@@ -51,14 +51,9 @@ fun getAllScriptDependenciesSourcesScope(project: Project): GlobalSearchScope =
     // calculation based on WS model is inefficient and leads to freezes
     ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()
 
-fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFile> {
-    return if (scriptsAsEntities) {
-        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
-        entityStorage.listDependenciesOfAllScriptEntities(project, KotlinScriptLibraryRootTypeId.COMPILED)
-    } else {
-        ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
-    }
-}
+fun getAllScriptsDependenciesClassFiles(project: Project): Collection<VirtualFile> =
+    // calculation based on WS model is inefficient and leads to delays
+    ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFiles()
 
 fun getAllScriptDependenciesSources(project: Project): Collection<VirtualFile> =
     // calculation based on WS model is inefficient and leads to freezes

@@ -131,15 +131,13 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
   private StringDescriptor stringDescriptorFromValue(final RadComponent component, final JComponent delegee) {
     final StringDescriptor result;
-    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel)){
-      final JLabel label = (JLabel)delegee;
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof JLabel label)){
       result = StringDescriptor.create(
         mergeTextAndMnemonic(label.getText(), label.getDisplayedMnemonic(), label.getDisplayedMnemonicIndex())
       );
     }
     else
-    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton)){
-      final AbstractButton button = (AbstractButton)delegee;
+    if(SwingProperties.TEXT.equals(getName()) && (delegee instanceof AbstractButton button)){
       result = StringDescriptor.create(
         mergeTextAndMnemonic(button.getText(), button.getMnemonic(), button.getDisplayedMnemonicIndex())
       );
@@ -195,8 +193,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
 
     if(SwingProperties.TEXT.equals(getName())) {
       final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(resolvedValue);
-      if (delegee instanceof JLabel) {
-        final JLabel label = (JLabel)delegee;
+      if (delegee instanceof JLabel label) {
         @NlsSafe String text = textWithMnemonic.myText;
         label.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){
@@ -207,8 +204,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
           label.setDisplayedMnemonic(0);
         }
       }
-      else if (delegee instanceof AbstractButton) {
-        final AbstractButton button = (AbstractButton)delegee;
+      else if (delegee instanceof AbstractButton button) {
         @NlsSafe String text = textWithMnemonic.myText;
         button.setText(text);
         if(textWithMnemonic.myMnemonicIndex != -1){

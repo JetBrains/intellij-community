@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.isAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
@@ -28,10 +28,9 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.EventListener
 
 @VisibleForTesting
-class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
+class UnlinkedProjectStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     loadProjectIfSingleUnlinkedProjectFound(project)
@@ -243,7 +242,8 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
   private class ProjectRoots : Iterable<String> {
 
     private val projectRoots = ArrayList<String>()
-    private val listeners = DisposableWrapperList<Listener>()
+    private val addListeners = DisposableWrapperList<suspend (String) -> Unit>()
+    private val removeListeners = DisposableWrapperList<suspend (String) -> Unit>()
 
     override fun iterator(): Iterator<String> {
       return projectRoots.iterator()
@@ -251,12 +251,20 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
 
     suspend fun addProjectRoot(projectRoot: String) {
       projectRoots.add(projectRoot)
-      listeners.forEach { it.onAdd(projectRoot) }
+      addListeners.forEach { it(projectRoot) }
     }
 
     suspend fun removeProjectRoot(projectRoot: String) {
       projectRoots.remove(projectRoot)
-      listeners.forEach { it.onRemove(projectRoot) }
+      removeListeners.forEach { it(projectRoot) }
+    }
+
+    fun whenProjectRootAdded(parentDisposable: Disposable, action: suspend (String) -> Unit) {
+      addListeners.add(action, parentDisposable)
+    }
+
+    fun whenProjectRootRemoved(parentDisposable: Disposable, action: suspend (String) -> Unit) {
+      removeListeners.add(action, parentDisposable)
     }
 
     suspend fun withProjectRoot(parentDisposable: Disposable, action: suspend (String) -> Unit) {
@@ -266,29 +274,6 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
       whenProjectRootAdded(parentDisposable) { projectRoot ->
         action(projectRoot)
       }
-    }
-
-    fun whenProjectRootAdded(parentDisposable: Disposable, action: suspend (String) -> Unit) {
-      listeners.add(object : Listener {
-        override suspend fun onAdd(projectRoot: String) {
-          action(projectRoot)
-        }
-      }, parentDisposable)
-    }
-
-    fun whenProjectRootRemoved(parentDisposable: Disposable, action: suspend (String) -> Unit) {
-      listeners.add(object : Listener {
-        override suspend fun onRemove(projectRoot: String) {
-          action(projectRoot)
-        }
-      }, parentDisposable)
-    }
-
-    private interface Listener : EventListener {
-
-      suspend fun onAdd(projectRoot: String) {}
-
-      suspend fun onRemove(projectRoot: String) {}
     }
   }
 

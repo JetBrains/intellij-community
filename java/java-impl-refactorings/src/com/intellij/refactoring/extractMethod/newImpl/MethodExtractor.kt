@@ -2,15 +2,14 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -18,10 +17,9 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiEditorUtil
-import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
@@ -33,8 +31,10 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.find
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodPopupProvider
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceMethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.extractInDialog
+import com.intellij.refactoring.extractMethod.newImpl.parameterObject.ParameterObjectExtractor
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
@@ -78,10 +78,14 @@ class MethodExtractor {
       }
       return selectOptionWithTargetClass(editor, allOptionsToExtract)
     }
-    catch (e: ExtractException) {
-      val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
-      CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
-      showError(editor, e.problems)
+    catch (exception: ExtractException) {
+      if (exception is ExtractMultipleVariablesException && Registry.`is`("refactorings.extract.method.introduce.object")){
+        val variables = exception.variables.sortedBy { variable -> variable.textRange.startOffset }
+        invokeLater { ParameterObjectExtractor.run(editor, variables, exception.scope) }
+      }
+      else {
+        InplaceExtractUtils.showExtractErrorHint(editor, exception)
+      }
       return null
     }
   }
@@ -213,17 +217,6 @@ class MethodExtractor {
       extractMethod(options)
     }
     return true
-  }
-
-  fun showError(editor: Editor, ranges: List<TextRange>) {
-    val project = editor.project ?: return
-    if (ranges.isEmpty()) return
-    val highlightManager = HighlightManager.getInstance(project)
-    ranges.forEach { textRange ->
-      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset,
-                                         EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null)
-    }
-    WindowManager.getInstance().getStatusBar(project).info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
   }
 
   fun prepareRefactoringElements(extractOptions: ExtractOptions): ExtractedElements {

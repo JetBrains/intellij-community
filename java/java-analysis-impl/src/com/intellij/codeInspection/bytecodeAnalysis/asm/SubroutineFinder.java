@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -35,16 +35,14 @@ abstract class SubroutineFinder implements Opcodes {
           findSubroutine(insns.indexOf(jNode.label), sub, calls);
         }
       }
-      else if (node instanceof TableSwitchInsnNode) {
-        TableSwitchInsnNode tsNode = (TableSwitchInsnNode)node;
+      else if (node instanceof TableSwitchInsnNode tsNode) {
         findSubroutine(insns.indexOf(tsNode.dflt), sub, calls);
         for (int i = tsNode.labels.size() - 1; i >= 0; --i) {
           LabelNode l = tsNode.labels.get(i);
           findSubroutine(insns.indexOf(l), sub, calls);
         }
       }
-      else if (node instanceof LookupSwitchInsnNode) {
-        LookupSwitchInsnNode lsNode = (LookupSwitchInsnNode)node;
+      else if (node instanceof LookupSwitchInsnNode lsNode) {
         findSubroutine(insns.indexOf(lsNode.dflt), sub, calls);
         for (int i = lsNode.labels.size() - 1; i >= 0; --i) {
           LabelNode l = lsNode.labels.get(i);

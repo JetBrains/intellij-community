@@ -6,7 +6,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.ide.IdleFlow;
+import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
@@ -508,7 +508,7 @@ public class CompilerManagerImpl extends CompilerManager {
           manager.start(listenPort);
           myExternalJavacManager = manager;
           IdleTask task = new IdleTask(manager);
-          task.removeIdleListener = IdleFlow.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
+          task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
         }
       }
     }
@@ -518,9 +518,6 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public @Nullable File getJavacCompilerWorkingDir() {
     final File projectBuildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-    if (projectBuildDir == null) {
-      return null;
-    }
     projectBuildDir.mkdirs();
     return projectBuildDir;
   }

@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.ide.actions.IdeScaleTransformer;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -85,7 +85,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     // We have to wrap the colorsScheme into a scheme delegate in order to avoid editing the global scheme
     colorsScheme = editor.createBoundColorSchemeDelegate(colorsScheme);
-    colorsScheme.setEditorFontSize(IdeScaleTransformer.getInstance().getCurrentEditorFontSize());
+    colorsScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
 
     return colorsScheme;
   }

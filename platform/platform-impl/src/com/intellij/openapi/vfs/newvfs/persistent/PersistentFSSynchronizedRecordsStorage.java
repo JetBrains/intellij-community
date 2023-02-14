@@ -13,7 +13,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApiStatus.Internal
-final class PersistentFSSynchronizedRecordsStorage extends PersistentFSRecordsStorage {
+final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
   private static final int NAME_OFFSET = PARENT_OFFSET + PARENT_SIZE;

@@ -273,8 +273,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                                          @NotNull PsiElement beingChecked,
                                          boolean allowed,
                                          @NotNull @InspectionMessage String message) {
-      if (callable instanceof PyFunction) {
-        final PyFunction function = (PyFunction)callable;
+      if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;

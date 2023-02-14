@@ -187,8 +187,7 @@ public abstract class GithubIssueBase {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof GithubIssueBase)) return false;
-    GithubIssueBase base = (GithubIssueBase)o;
+    if (!(o instanceof GithubIssueBase base)) return false;
     return number.equals(base.number);
   }
 

@@ -10,15 +10,12 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 
-open class KotlinMetadataFileIndexBase<T>(classOfIndex: Class<T>, indexFunction: (ClassId) -> FqName) :
-    KotlinFileIndexBase<T>(classOfIndex) {
+abstract class KotlinMetadataFileIndexBase(indexFunction: (ClassId) -> FqName) : KotlinFileIndexBase() {
     override fun getIndexer() = INDEXER
 
     override fun getInputFilter() = DefaultFileTypeSpecificInputFilter(KotlinBuiltInFileType)
 
-    override fun getVersion() = VERSION
-
-    private val VERSION = 1
+    override fun getVersion() = 1
 
     private val INDEXER = indexer { fileContent ->
         if (fileContent.fileType == KotlinBuiltInFileType &&

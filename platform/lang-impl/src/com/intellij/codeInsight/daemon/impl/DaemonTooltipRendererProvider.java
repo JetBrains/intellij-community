@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +39,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     for (RangeHighlighter marker : highlighters) {
       Object tooltipObject = marker.getErrorStripeTooltip();
       if (tooltipObject == null) continue;
-      if (tooltipObject instanceof HighlightInfo) {
-        HighlightInfo info = (HighlightInfo)tooltipObject;
+      if (tooltipObject instanceof HighlightInfo info) {
         if (info.getToolTip() != null && tooltips.add(info.getToolTip())) {
           infos.add(info);
         }
@@ -62,7 +62,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       ContainerUtil.quickSort(infos, (o1, o2) -> {
         int i = SeverityRegistrar.getSeverityRegistrar(myProject).compare(o2.getSeverity(), o1.getSeverity());
         if (i != 0) return i;
-        return o1.getToolTip().compareTo(o2.getToolTip());
+        return StringUtil.compare(o1.getToolTip(), o2.getToolTip(), false);
       });
       HighlightInfoComposite composite = HighlightInfoComposite.create(infos);
       String toolTip = composite.getToolTip();

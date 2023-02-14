@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("RAW_RUN_BLOCKING")
+
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.diagnostic.telemetry.useWithScope2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.TracerProviderManager
-import org.jetbrains.intellij.build.closeKtorClient
 
 object DevIdeaBuilder {
   @JvmStatic
@@ -26,17 +25,6 @@ object DevIdeaBuilder {
       finally {
         TracerProviderManager.flush()
       }
-    }
-  }
-}
-
-suspend fun buildProductInProcess(request: BuildRequest) {
-  spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
-    BuildServer(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
-      .buildProductInProcess(isServerMode = false, request = request)
-    // otherwise, thread leak in tests
-    if (!request.keepHttpClient) {
-      closeKtorClient()
     }
   }
 }

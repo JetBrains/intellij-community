@@ -51,8 +51,7 @@ class AntReferenceInjector implements DomReferenceInjector {
 
   @Override
   public PsiReference @NotNull [] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
-    if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)element;
+    if (element instanceof XmlAttributeValue xmlAttributeValue) {
       final List<PsiReference> refs = new ArrayList<>();
       addPropertyReferences(context, xmlAttributeValue, refs);
       addMacrodefParameterRefs(xmlAttributeValue, refs);

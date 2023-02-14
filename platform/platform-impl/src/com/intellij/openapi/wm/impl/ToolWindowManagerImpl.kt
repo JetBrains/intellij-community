@@ -564,6 +564,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     dispatcher.addListener(listener)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR,
               replaceWith = ReplaceWith("project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)",
                                                     "com.intellij.openapi.wm.ex.ToolWindowManagerListener"))
@@ -571,6 +572,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     project.messageBus.connect(parentDisposable).subscribe(ToolWindowManagerListener.TOPIC, listener)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   override fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
     dispatcher.removeListener(listener)
@@ -1260,7 +1262,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
       var toShowWindow = false
 
-      if (item.old.isSplit != item.new.isSplit) {
+      if (item.old.isSplit != item.new.isSplit && item.old.type.isInternal && item.new.type.isInternal) {
         val wasVisible = item.old.isVisible
         // we should hide the window and show it in a 'new place'
         // to automatically hide a possible window that is already located in a 'new place'
@@ -1274,7 +1276,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       }
 
       if (item.old.type != item.new.type) {
-        val dirtyMode = item.old.type == ToolWindowType.DOCKED || item.old.type == ToolWindowType.SLIDING
+        val dirtyMode = item.old.type.isInternal
         updateStateAndRemoveDecorator(item.old, item.entry, dirtyMode)
         if (item.new.isVisible) {
           toShowWindow = true
@@ -1528,9 +1530,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   @RequiresEdt
   override fun closeBalloons() {
     for (entry in idToEntry.values) {
-      entry.balloon?.let {
-        it.hideImmediately()
-      }
+      entry.balloon?.hideImmediately()
     }
   }
 
@@ -1761,10 +1761,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
-    val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
+    val dirtyMode = entry.readOnlyWindowInfo.type.isInternal
     updateStateAndRemoveDecorator(info, entry, dirtyMode)
     info.type = type
-    if (type != ToolWindowType.FLOATING && type != ToolWindowType.WINDOWED) {
+    if (type.isInternal) {
       info.internalType = type
     }
 

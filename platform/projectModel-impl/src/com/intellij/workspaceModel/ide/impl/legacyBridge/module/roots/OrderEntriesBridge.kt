@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
+import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import java.util.*
 
 internal abstract class OrderEntryBridge(
   private val rootModel: ModuleRootModelBridge,
@@ -70,6 +71,11 @@ internal abstract class OrderEntryBridge(
     result = 31 * result + item.hashCode()
     return result
   }
+
+  override fun toString(): String = "${shortClassName}: $presentableName"
+
+  protected val shortClassName: String 
+    get() = javaClass.name.substringAfterLast(".").removeSuffix("Bridge")
 }
 
 internal abstract class ExportableOrderEntryBridge(
@@ -93,6 +99,23 @@ internal abstract class ExportableOrderEntryBridge(
     if (getScope() == scope) return
     updater(index) { (it as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope()) }
     item = (item as ModuleDependencyItem.Exportable).withScope(scope.toEntityDependencyScope())
+  }
+
+  override fun toString(): String {
+    return buildString {
+      append(shortClassName)
+      append(": ")
+      append(ownerModule.name)
+      append(" -> ")
+      append(presentableName)
+      if (exportableItem.scope != ModuleDependencyItem.DependencyScope.COMPILE) {
+        append(", scope=")
+        append(exportableItem.scope.name.lowercase(Locale.US))
+      }
+      if (exportableItem.exported) {
+        append(", exported")
+      }
+    }
   }
 }
 

@@ -54,8 +54,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
     final PsiStatement body = whileStatement.getBody();
     final PsiStatement ifStatement = factory.createStatementFromText("if (" + conditionText + ") break;", whileStatement);
     final PsiElement newElement;
-    if (body instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+    if (body instanceof PsiBlockStatement blockStatement) {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       newElement = codeBlock.addBefore(ifStatement, codeBlock.getFirstBodyElement());
     }

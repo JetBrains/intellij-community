@@ -21,17 +21,12 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
 
 class ProductModulesLayout {
   /**
-   * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
-   */
-  lateinit var mainJarName: String
-
-  /**
    * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
    */
   var productApiModules: List<String> = emptyList()
 
   /**
-   * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   * Names of the additional product-specific modules which need to be included in the product's 'lib' directory
    */
   var productImplementationModules: List<String> = emptyList()
 
@@ -75,16 +70,6 @@ class ProductModulesLayout {
     }
 
   /**
-   * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
-   */
-  var projectLibrariesToUnpackIntoMainJar: PersistentList<String> = persistentListOf()
-
-  /**
-   * Maps names of JARs to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
-   */
-  val additionalPlatformJars: MultiMap<String, String> = MultiMap.createLinkedSet()
-
-  /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
@@ -94,16 +79,16 @@ class ProductModulesLayout {
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutSpec = persistentListOf<(PlatformLayout.Spec, BuildContext) -> Unit>()
+  internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
 
   @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutSpec = platformLayoutSpec.add { spec, context ->
-      customizer.accept(spec.layout, context)
+    platformLayoutSpec = platformLayoutSpec.add { layout, context ->
+      customizer.accept(layout, context)
     }
   }
 
-  fun addPlatformSpec(customizer: (PlatformLayout.Spec, BuildContext) -> Unit) {
+  fun addPlatformSpec(customizer: (PlatformLayout, BuildContext) -> Unit) {
     platformLayoutSpec = platformLayoutSpec.add(customizer)
   }
 
@@ -159,19 +144,8 @@ class ProductModulesLayout {
     result.addAll(enabledPluginModules)
     pluginLayouts.asSequence()
       .filter { enabledPluginModules.contains(it.mainModule) }
-      .flatMapTo(result) { it.includedModuleNames }
+      .flatMapTo(result) { it.includedModules.map { it.moduleName }.distinct() }
     return result
-  }
-
-  /**
-   * Map name of JAR to names of the modules; these modules will be packed into these JARs and copied to the product's 'lib' directory.
-   */
-  fun withAdditionalPlatformJar(jarName: String, vararg moduleNames: String) {
-    additionalPlatformJars.putValues(jarName, moduleNames.asList())
-  }
-
-  fun withoutAdditionalPlatformJar(jarName: String, moduleName: String) {
-    additionalPlatformJars.remove(jarName, moduleName)
   }
 }
 

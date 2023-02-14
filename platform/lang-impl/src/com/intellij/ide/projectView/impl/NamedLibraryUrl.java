@@ -50,8 +50,7 @@ public class NamedLibraryUrl extends AbstractUrl {
 
   @Override
   public AbstractUrl createUrlByElement(Object element) {
-    if (element instanceof NamedLibraryElement) {
-      NamedLibraryElement libraryElement = (NamedLibraryElement)element;
+    if (element instanceof NamedLibraryElement libraryElement) {
 
       Module context = libraryElement.getModule();
       

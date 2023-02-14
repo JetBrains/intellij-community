@@ -348,10 +348,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof ModuleData)) return false;
+    if (!(o instanceof ModuleData that)) return false;
     if (!super.equals(o)) return false;
-
-    ModuleData that = (ModuleData)o;
 
     if (!id.equals(that.id)) return false;
     if (!externalConfigPath.equals(that.externalConfigPath)) return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -80,7 +80,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
           UseCompareMethodInspection.this, "suggestFloatingCompare",
           JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false) : null;
         holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
-                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating);
+                               LocalQuickFix.notNullElements(new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating));
       }
     };
   }
@@ -208,8 +208,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
   private static Pair<PsiExpression, PsiExpression> getOperands(PsiExpression expression, IElementType expectedToken) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (!(expression instanceof PsiBinaryExpression)) return null;
-    PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
+    if (!(expression instanceof PsiBinaryExpression binOp)) return null;
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
     PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
     if (left == null || right == null) return null;
@@ -262,8 +261,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (primitiveType.equals(expression.getType())) {
       return expression;
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+    if (expression instanceof PsiMethodCallExpression call) {
       if (!"valueOf".equals(call.getMethodExpression().getReferenceName())) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1) return null;
@@ -271,13 +269,11 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       if (method == null || type.resolve() != method.getContainingClass()) return null;
       return checkPrimitive(args[0]);
     }
-    if (expression instanceof PsiTypeCastExpression) {
-      PsiTypeCastExpression cast = (PsiTypeCastExpression)expression;
+    if (expression instanceof PsiTypeCastExpression cast) {
       if (!type.equals(cast.getType())) return null;
       return checkPrimitive(cast.getOperand());
     }
-    if (expression instanceof PsiNewExpression) {
-      PsiNewExpression newExpression = (PsiNewExpression)expression;
+    if (expression instanceof PsiNewExpression newExpression) {
       if (!type.equals(newExpression.getType())) return null;
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) return null;

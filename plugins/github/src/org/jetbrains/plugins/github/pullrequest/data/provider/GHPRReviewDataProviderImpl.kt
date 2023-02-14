@@ -6,7 +6,10 @@ import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.diff.util.Side
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -25,6 +28,7 @@ import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
+                                 private val changesProvider: GHPRChangesDataProvider,
                                  private val pullRequestId: GHPRIdentifier,
                                  override val messageBus: MessageBus)
   : GHPRReviewDataProvider, Disposable {
@@ -91,12 +95,16 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
                           body: String,
                           commitSha: String,
                           fileName: String,
-                          diffLine: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    val future =
-      reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, diffLine)
-
-    pendingReviewRequestValue.overrideProcess(future.successOnEdt { it.pullRequestReview })
-    return future.dropReviews().notifyReviews()
+                          side: Side,
+                          line: Int): CompletableFuture<out GHPullRequestReviewComment> {
+    return changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
+      .thenComposeAsync({ patch ->
+                          check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
+                          val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
+                                         ?: error("Can't map file line to diff")
+                          reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
+                        }, ProcessIOExecutorService.INSTANCE)
+      .dropReviews().notifyReviews()
   }
 
   override fun addComment(progressIndicator: ProgressIndicator,
@@ -138,7 +146,17 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
         if (comments.isEmpty())
           null
         else
-          GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine, GraphQLNodesDTO(comments))
+          GHPullRequestReviewThread(it.id,
+                                    it.isResolved,
+                                    it.isOutdated,
+                                    it.path,
+                                    it.side,
+                                    it.line,
+                                    it.originalLine,
+                                    it.startSide,
+                                    it.startLine,
+                                    it.originalStartLine,
+                                    GraphQLNodesDTO(comments))
       }
     }
 
@@ -150,7 +168,16 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
     val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
     reviewThreadsRequestValue.combineResult(future) { list, newComment ->
       list.map {
-        GHPullRequestReviewThread(it.id, it.isResolved, it.isOutdated, it.path, it.side, it.line, it.startLine,
+        GHPullRequestReviewThread(it.id,
+                                  it.isResolved,
+                                  it.isOutdated,
+                                  it.path,
+                                  it.side,
+                                  it.line,
+                                  it.originalLine,
+                                  it.startSide,
+                                  it.startLine,
+                                  it.originalStartLine,
                                   GraphQLNodesDTO(it.comments.map { comment ->
                                     if (comment.id == commentId)
                                       GHPullRequestReviewComment(comment.id, comment.databaseId, comment.url, comment.author,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -385,8 +385,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public void setModel(@NotNull TableModel model) {
     super.setModel(model);
 
-    if (model instanceof SortableColumnModel) {
-      final SortableColumnModel sortableModel = (SortableColumnModel)model;
+    if (model instanceof SortableColumnModel sortableModel) {
       if (sortableModel.isSortable()) {
         final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
         rowSorter.setSortsOnUpdates(isSortOnUpdates());
@@ -725,8 +724,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (result instanceof JComponent && !isCellSelected(row, column)) {
-      JComponent component = (JComponent)result;
+    if (result instanceof JComponent component && !isCellSelected(row, column)) {
       if (isStriped()) {
         if (isTableDecorationSupported()) {
           setRendererBackground(component, row % 2 == 1 ? getBackground() : ObjectUtils.chooseNotNull(getStripeColor(), getBackground()));
@@ -1047,9 +1045,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
                                                        int row,
                                                        int column) {
           Component delegate = renderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-          if (!(delegate instanceof JLabel)) return delegate;
+          if (!(delegate instanceof JLabel cmp)) return delegate;
 
-          JLabel cmp = (JLabel)delegate;
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
           JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
@@ -1548,7 +1545,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
       for (int row : rows) {
         if (myTable.editCellAt(row, myColumnIndex)) {
-          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor && 
+          if (myTable.getCellEditor() instanceof DefaultCellEditor defaultCellEditor &&
               defaultCellEditor.getComponent() instanceof JCheckBox checkBox) {
             checkBox.setSelected(!checkBox.isSelected());
           }

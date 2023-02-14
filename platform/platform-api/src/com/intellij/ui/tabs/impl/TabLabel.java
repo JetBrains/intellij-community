@@ -165,7 +165,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
   }
 
-  private void setHovered(boolean value) {
+  protected void setHovered(boolean value) {
     if (isHovered() == value) return;
     if (value) {
       myTabs.setHovered(this);
@@ -367,7 +367,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     return false;
   }
 
-  private void handlePopup(final MouseEvent e) {
+  protected void handlePopup(final MouseEvent e) {
     if (e.getClickCount() != 1 || !e.isPopupTrigger() || PopupUtil.getPopupContainerFor(this) != null) return;
 
     if (e.getX() < 0 || e.getX() >= e.getComponent().getWidth() || e.getY() < 0 || e.getY() >= e.getComponent().getHeight()) return;

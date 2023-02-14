@@ -239,6 +239,7 @@
     "DefaultTabs.hoverBackground": "Grey12",
 
     "EditorTabs": {
+      "underlineArc": "4",
       "tabInsets": "-3,12,-4,8",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -414,6 +415,7 @@
     },
     "ToolBar.verticalToolbarInsets": "7,4,7,4",
     "ToolBar.horizontalToolbarInsets": "4,7,4,7",
+    "ToolBar.separatorColor": "Grey11",
 
     "SearchField": {
       "errorForeground": "Red4",
@@ -540,6 +542,8 @@
         "leftRightInsets": "0,12,0,12"
       },
       "Button": {
+        "selectedForeground": "Grey14",
+        "selectedBackground": "Blue4",
         "hoverBackground": "Grey12",
         "DragAndDrop" : {
           "stripeBackground" : "Grey13",
@@ -609,12 +613,20 @@
       "Log.Commit": {
         "currentBranchBackground": "#e8eefa",
         "unmatchedForeground": "Grey7",
-        "hoveredBackground": "#000000F1"
+        "hoveredBackground": "#E9EAEC",
+        "Reference.foreground": "Grey6"
       },
       "FileHistory.Commit.selectedBranchBackground": "Blue11",
       "MarkerPopup": {
         "borderInsets": "6,8,6,10",
         "borderColor": "Grey11"
+      },
+      "GitLog": {
+        "headIconColor": "Yellow4",
+        "localBranchIconColor": "Green5",
+        "otherIconColor": "Grey6",
+        "remoteBranchIconColor": "Purple4",
+        "tagIconColor": "Grey6"
       }
     },
 
@@ -626,6 +638,15 @@
 
     "Lesson": {
       "shortcutBackground": "Grey11"
+    },
+
+    "Tooltip.Learning": {
+      "background": "Blue4",
+      "borderColor": "Blue4",
+      "spanBackground": "Blue2",
+      "spanForeground": "Grey14",
+      "foreground": "Grey14",
+      "stepNumberForeground": "Blue11"
     },
 
     "PackageSearch": {
@@ -685,7 +706,7 @@
     },
 
     "RunWidget" : {
-      "foreground": "Grey14",
+      "foreground": "Grey12",
       "disabledForeground": "#FFFFFF66",
       "background": "#3369D6",
       "runningBackground": "#599E5E",

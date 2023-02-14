@@ -80,11 +80,10 @@ public final class CommandLineDocumentationProvider implements DocumentationProv
    */
   @Nullable
   private static Help findHelp(@NotNull final PsiElement element) {
-    if (!(element instanceof CommandLinePart)) {
+    if (!(element instanceof CommandLinePart commandLinePart)) {
       return null;
     }
 
-    final CommandLinePart commandLinePart = (CommandLinePart)element;
     final Command realCommand = commandLinePart.findRealCommand();
     if (realCommand == null) {
       return null;

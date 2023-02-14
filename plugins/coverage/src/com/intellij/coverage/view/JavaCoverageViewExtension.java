@@ -255,8 +255,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       if (val instanceof PsiClass) return Collections.emptyList();
 
       //append package classes
-      if (val instanceof PsiPackage) {
-        final PsiPackage psiPackage = (PsiPackage)val;
+      if (val instanceof PsiPackage psiPackage) {
         final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
         if (ReadAction.compute(() -> isInCoverageScope(psiPackage))) {
           if (!myStateBean.myFlattenPackages) {
@@ -354,8 +353,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   private boolean isInCoverageScope(PsiElement element) {
-    if (element instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)element;
+    if (element instanceof PsiPackage psiPackage) {
       final String qualifiedName = psiPackage.getQualifiedName();
       for (CoverageSuite suite : mySuitesBundle.getSuites()) {
         if (((JavaCoverageSuite)suite).isPackageFiltered(qualifiedName)) return true;

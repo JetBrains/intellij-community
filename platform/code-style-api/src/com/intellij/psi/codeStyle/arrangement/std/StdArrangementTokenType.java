@@ -47,10 +47,9 @@ public class StdArrangementTokenType {
   @Override
   public boolean equals(Object o) {
     if (this == o) {return true;}
-    if (!(o instanceof StdArrangementTokenType)) {
+    if (!(o instanceof StdArrangementTokenType oType)) {
       return false;
     }
-    StdArrangementTokenType oType = (StdArrangementTokenType) o;
     return oType.myId.equals(myId) && myUiRole == oType.myUiRole;
   }
 

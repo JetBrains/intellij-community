@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
+import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.actions.NavBarActionHandler
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
-import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.Disposable
+import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
@@ -19,74 +18,70 @@ import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.childScope
+import com.intellij.util.flow.throttle
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import java.awt.Window
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
 
 @Service(PROJECT)
-internal class NavBarService(private val project: Project) : Disposable {
+internal class NavBarService(private val project: Project, cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): NavBarService = project.service()
   }
 
-  @Suppress("DEPRECATION")
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope(
+  private val cs: CoroutineScope = cs.childScope(
     Dispatchers.Default.limitedParallelism(1) // allows reasoning about the ordering
   )
 
-  override fun dispose() {
-    coroutineScope.cancel()
+  private val visible: MutableStateFlow<Boolean> = MutableStateFlow(UISettings.getInstance().isNavbarShown())
+  private val updateRequests: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = DROP_OLDEST)
+
+  init {
+    cs.launch {
+      visible.collectLatest { visible ->
+        if (visible) {
+          // If [visible] is `true`, then at least 1 nav bar is shown
+          // => subscribe to activityFlow once and share events between all models.
+          activityFlow(project)
+            .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
+            .collect(updateRequests)
+        }
+      }
+    }
   }
 
-  private val staticNavBarVm = StaticNavBarVmImpl(coroutineScope = coroutineScope,
-                                                  project = project,
-                                                  initiallyVisible = UISettings.getInstance().isNavbarShown())
   private var floatingBarJob: Job? = null
 
   fun uiSettingsChanged(uiSettings: UISettings) {
     if (uiSettings.isNavbarShown()) {
       floatingBarJob?.cancel()
     }
-    staticNavBarVm.isVisible = uiSettings.isNavbarShown()
+    visible.value = uiSettings.isNavbarShown()
   }
 
-  val staticNavBarPanel: JComponent by lazy(LazyThreadSafetyMode.NONE) {
+  fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    StaticNavBarPanel(coroutineScope, staticNavBarVm, project)
+    return StaticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
   }
 
-  fun jumpToNavbar(dataContext: DataContext) {
-    val navBarVm = staticNavBarVm.vm.value
-    if (navBarVm != null) {
-      navBarVm.selectTail()
-      navBarVm.showPopup()
-    }
-    else {
-      showFloatingNavbar(dataContext)
-    }
-  }
-
-  fun selectTail() {
-    staticNavBarVm.vm.value?.selectTail()
-  }
-
-  private fun showFloatingNavbar(dataContext: DataContext) {
+  fun showFloatingNavbar(dataContext: DataContext) {
     if (floatingBarJob != null) {
       return
     }
 
-    val job = coroutineScope.launch(ModalityState.current().asContextElement()) {
+    val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
         defaultModel(project)
       }
       val barScope = this@launch
-      val vm = NavBarVmImpl(cs = barScope, project, model, activityFlow = emptyFlow())
+      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow(), ::requestNavigation)
       withContext(Dispatchers.EDT) {
         val component = NewNavBarPanel(barScope, vm, project, true)
         while (component.componentCount == 0) {
@@ -105,28 +100,39 @@ internal class NavBarService(private val project: Project) : Disposable {
       floatingBarJob = null
     }
   }
+
+  private fun requestNavigation(item: NavBarVmItem) {
+    cs.launch {
+      navigateTo(item)
+      updateRequests.emit(Unit)
+    }
+  }
+
+  private suspend fun navigateTo(item: NavBarVmItem) {
+    val navigationRequest = item.fetch(NavBarItem::navigationRequest)
+                            ?: return
+    withContext(Dispatchers.EDT) {
+      navigateRequest(project, navigationRequest)
+    }
+  }
 }
 
-internal suspend fun focusModel(project: Project): List<NavBarVmItem> {
-  val ctx = focusDataContext()
-  if (ctx.getData(NavBarActionHandler.NAV_BAR_ACTION_HANDLER) != null) {
-    // ignore updates while nav bar has focus
-    return emptyList()
-  }
-  val window: Window? = WindowManager.getInstance().getFrame(project)
-  if (window != null && !window.isFocused) {
-    // IDEA-307406, IDEA-304798 Skip event when window is out of focus (user is in a popup)
-    return emptyList()
-  }
-  return contextModel(ctx, project)
+/**
+ * Use this API to dump current state of navigation bar in tests
+ * Currently used in Rider
+ */
+@TestOnly
+@Internal
+suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
+  return contextModel(ctx, project).map { it.presentation.text }
 }
 
-private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {
+internal suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {
   if (CommonDataKeys.PROJECT.getData(ctx) != project) {
     return emptyList()
   }
-  try {
-    return readAction {
+  return try {
+    readAction {
       contextModelInner(ctx)
     }
   }
@@ -138,7 +144,7 @@ private suspend fun contextModel(ctx: DataContext, project: Project): List<NavBa
   }
   catch (t: Throwable) {
     LOG.error(t)
-    return emptyList()
+    emptyList()
   }
 }
 
@@ -146,13 +152,6 @@ private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
                     ?: return emptyList()
   return contextItem.pathToItem().toVmItems()
-}
-
-internal fun List<NavBarItem>.toVmItems(): List<NavBarVmItem> {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-  return map {
-    NavBarVmItem(it.createPointer(), it.presentation(), it.isModuleContentRoot(), it.javaClass)
-  }
 }
 
 internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {

@@ -2,7 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.google.common.graph.Traverser
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.impl.patch.FilePatch
+import com.intellij.openapi.progress.ProgressIndicator
+import git4idea.changes.filePath
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
@@ -49,15 +53,25 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
 
     detailsData.loadDetails()
       .thenCompose {
-        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
-      }.thenCompose { mergeBase ->
-        commitsRequest.thenCompose {
-          changesService.createChangesProvider(indicator, mergeBase, it)
+        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid).thenCombine(commitsRequest) { mergeBaseRef, commits ->
+          mergeBaseRef to commits
+        }.thenCompose { (mergeBaseRef, commits) ->
+          changesService.createChangesProvider(indicator, it.baseRefOid, mergeBaseRef, it.headRefOid, commits)
         }
       }
   }
 
   override fun loadChanges() = changesProviderValue.value
+
+  override fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String)
+    : CompletableFuture<FilePatch?> {
+    // cache merge base
+    return detailsData.loadDetails().thenCompose {
+      changesService.loadMergeBaseOid(progressIndicator, it.baseRefOid, it.headRefOid)
+    }.thenCompose {
+      changesService.loadPatch(it, commitSha)
+    }.thenApplyAsync({ it.find { it.filePath == filePath } }, ProcessIOExecutorService.INSTANCE)
+  }
 
   override fun reloadChanges() {
     baseBranchFetchRequestValue.drop()

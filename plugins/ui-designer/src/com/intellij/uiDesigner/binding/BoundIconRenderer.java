@@ -31,8 +31,7 @@ public class BoundIconRenderer extends GutterIconRenderer {
 
   public BoundIconRenderer(@NotNull final PsiElement element) {
     myElement = element;
-    if (myElement instanceof PsiField) {
-      final PsiField field = (PsiField)myElement;
+    if (myElement instanceof PsiField field) {
       final PsiType type = field.getType();
       if (type instanceof PsiClassType) {
         PsiClass componentClass = ((PsiClassType)type).resolve();

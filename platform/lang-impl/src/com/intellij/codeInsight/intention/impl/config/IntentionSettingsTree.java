@@ -166,8 +166,7 @@ public abstract class IntentionSettingsTree {
 
   private boolean resetCheckMark(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData metaData) {
       Boolean b = myIntentionToCheckStatus.get(metaData);
       boolean enabled = b == Boolean.TRUE;
       root.setChecked(enabled);
@@ -246,8 +245,7 @@ public abstract class IntentionSettingsTree {
 
   private void refreshCheckStatus(final CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       myIntentionToCheckStatus.put(actionMetaData, root.isChecked());
     }
     else {
@@ -263,8 +261,7 @@ public abstract class IntentionSettingsTree {
 
   private static void apply(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       IntentionManagerSettings.getInstance().setEnabled(actionMetaData, root.isChecked());
     }
     else {
@@ -283,8 +280,7 @@ public abstract class IntentionSettingsTree {
 
   private static boolean isModified(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
-    if (userObject instanceof IntentionActionMetaData) {
-      IntentionActionMetaData actionMetaData = (IntentionActionMetaData)userObject;
+    if (userObject instanceof IntentionActionMetaData actionMetaData) {
       boolean enabled = IntentionManagerSettings.getInstance().isEnabled(actionMetaData);
       return enabled != root.isChecked();
     }
@@ -383,11 +379,10 @@ public abstract class IntentionSettingsTree {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (!(value instanceof CheckedTreeNode)) {
+      if (!(value instanceof CheckedTreeNode node)) {
         return;
       }
 
-      CheckedTreeNode node = (CheckedTreeNode)value;
       SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
                                         ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                                         : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;

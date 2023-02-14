@@ -278,8 +278,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
 
     for (PrintElement printElement : printElements) {
-      if (printElement instanceof EdgePrintElement) {
-        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+      if (printElement instanceof EdgePrintElement edgePrintElement) {
         float lineThickness = PaintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
           if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(),

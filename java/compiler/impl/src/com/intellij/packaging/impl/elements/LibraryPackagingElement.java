@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.module.Module;
@@ -90,7 +90,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    if (!(element instanceof LibraryPackagingElement)) {
+    if (!(element instanceof LibraryPackagingElement packagingElement)) {
       return false;
     }
     String level;
@@ -109,8 +109,6 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       libraryName = getMyLibraryName(entity);
       moduleName = getMyModuleName(entity);
     }
-
-    LibraryPackagingElement packagingElement = (LibraryPackagingElement)element;
 
     return level != null && libraryName != null && level.equals(packagingElement.getLevel())
            && libraryName.equals(packagingElement.getLibraryName())
@@ -271,13 +269,10 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     final Module module = modulesProvider.getModule(moduleName);
     if (module != null) {
       for (OrderEntry entry : modulesProvider.getRootModel(module).getOrderEntries()) {
-        if (entry instanceof LibraryOrderEntry) {
-          final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
-          if (libraryEntry.isModuleLevel()) {
-            final String libraryName = libraryEntry.getLibraryName();
-            if (libraryName != null && libraryName.equals(myLibraryName)) {
-              return libraryEntry.getLibrary();
-            }
+        if (entry instanceof LibraryOrderEntry libraryEntry && libraryEntry.isModuleLevel()) {
+          final String libraryName = libraryEntry.getLibraryName();
+          if (libraryName != null && libraryName.equals(myLibraryName)) {
+            return libraryEntry.getLibrary();
           }
         }
       }

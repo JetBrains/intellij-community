@@ -5,17 +5,16 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 
 /**
  * Orphanage - storage that contains content roots/source roots/excludes that currently don't have an associated parent in the storage.
  * These components will be added to the storage in the corresponding parents will appear there.
  * Also, if the parents are already exist in storage, they'll be immediately moved to the original storage.
  *
- * All entities that have the role of temporal parent (it's [ModuleEntity] usually) should have [OrphanageWorkerEntitySource] entity source.
+ * All entities that have the role of temporal parent (it's [ModuleEntity] usually) should have [com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource] entity source.
  *
  * This storage is actively used to store the custom content roots of the modules in case the module is not yet added to the storage.
  *
@@ -28,11 +27,11 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
  *     cons: iml file may disappear temporally if the import is not yet finished.
  * - Custom content roots and other elements are saved under AdditionalModuleElements component.
  *   - Orphan storage DOES NOT save entities to this component. However, it's loaded from this component on start.
- * - If we create a custom *source root*, the created content root has [OrphanageWorkerEntitySource] entity source in orphan storage and
+ * - If we create a custom *source root*, the created content root has [com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource] entity source in orphan storage and
  *     have `dumb="true"` tag in iml file.
  */
 interface EntitiesOrphanage {
-  val entityStorage: VersionedEntityStorageImpl
+  val currentSnapshot: EntityStorageSnapshot
 
   @RequiresWriteLock
   fun update(updater: (MutableEntityStorage) -> Unit)
@@ -46,4 +45,3 @@ interface EntitiesOrphanage {
   }
 }
 
-object OrphanageWorkerEntitySource : EntitySource

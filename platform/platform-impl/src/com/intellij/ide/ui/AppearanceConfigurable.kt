@@ -6,6 +6,7 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
@@ -20,7 +21,6 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -38,10 +38,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.editableValueMatches
 import com.intellij.ui.layout.not
-import com.intellij.ui.layout.or
-import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -130,8 +127,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   private var shouldUpdateLaF = false
 
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { lafManager.lookAndFeelReference }
-  private val syncThemeProperty = propertyGraph.graphProperty { lafManager.autodetect }
+  private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
 
   override fun createPanel(): DialogPanel {
     lafProperty.afterChange(disposable!!) {
@@ -144,35 +141,80 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
-      row(message("combobox.look.and.feel")) {
-        val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
-          .bindItem(lafProperty)
-          .accessibleName(message("combobox.look.and.feel"))
+      panel {
+        row(message("combobox.look.and.feel")) {
+          val theme = comboBox(lafManager.lafComboBoxModel, lafManager.lookAndFeelCellRenderer)
+            .bindItem(lafProperty)
+            .accessibleName(message("combobox.look.and.feel"))
 
-        val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
-          .bindSelected(syncThemeProperty)
-          .visible(lafManager.autodetectSupported)
-          .gap(RightGap.SMALL)
+          val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"))
+            .bindSelected(syncThemeProperty)
+            .visible(lafManager.autodetectSupported)
 
-        theme.enabledIf(syncCheckBox.selected.not())
-        cell(lafManager.settingsToolbar)
-          .visibleIf(syncCheckBox.selected)
-      }.layout(RowLayout.INDEPENDENT)
+          theme.enabledIf(syncCheckBox.selected.not())
+          cell(lafManager.settingsToolbar)
+            .visibleIf(syncCheckBox.selected)
 
-      row {
-        link(message("link.get.more.themes")) {
-          val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
-          settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+          link(message("link.get.more.themes")) {
+            val settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(it.source as ActionLink))
+            settings?.select(settings.find("preferences.pluginManager"), "/tag:theme")
+          }
         }
+
+        row(message("combobox.ide.scale.percent")) {
+          val defaultScale = UISettingsUtils.defaultScale(false)
+          var resetZoom: Cell<ActionLink>? = null
+
+          val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
+          val zoomComboBox = comboBox(model, SimpleListCellRenderer.create("") { it })
+            .bindItem({ settings.ideScale.percentStringValue }, { })
+            .onChanged {
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
+                resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
+                settings.ideScale = scale
+                settings.fireUISettingsChanged()
+              }
+            }.gap(RightGap.SMALL)
+
+          val zoomInString = KeymapUtil.getShortcutTextOrNull("ZoomInIdeAction")
+          val zoomOutString = KeymapUtil.getShortcutTextOrNull("ZoomOutIdeAction")
+          val resetScaleString = KeymapUtil.getShortcutTextOrNull("ResetIdeScaleAction")
+
+          if (zoomInString != null && zoomOutString != null && resetScaleString != null) {
+            zoomComboBox.comment(message("combobox.ide.scale.comment.format", zoomInString, zoomOutString, resetScaleString))
+          }
+
+          resetZoom = link(message("ide.scale.reset.link")) {
+            model.selectedItem = defaultScale.percentStringValue
+          }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
+        }.topGap(TopGap.SMALL)
       }
 
       row {
+        var resetCustomFont: (() -> Unit)? = null
+
+        val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
+          .gap(RightGap.SMALL)
+          .bindSelected(settings::overrideLafFonts) {
+            settings.overrideLafFonts = it
+            if (!it) {
+              getDefaultFont().let { defaultFont ->
+                settings.fontFace = defaultFont.family
+                settings.fontSize = defaultFont.size
+              }
+            }
+          }
+          .onChanged { checkbox ->
+            if (!checkbox.isSelected) resetCustomFont?.invoke()
+          }
+          .shouldUpdateLaF()
+
         val fontFace = cell(FontComboBox())
-          .label(message("label.font.name"))
           .bind({ it.fontName }, { it, value -> it.fontName = value },
                 MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else getDefaultFont().family },
                                 { settings.fontFace = it }))
           .shouldUpdateLaF()
+          .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.name"))
           .component
 
@@ -181,25 +223,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                          settings.fontSize)
           .label(message("label.font.size"))
           .shouldUpdateLaF()
+          .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.size"))
           .component
 
-        lateinit var resetCustomFont: Cell<ActionLink>
-        resetCustomFont = link(message("font.reset.link")) {
+        resetCustomFont = {
           val defaultFont = getDefaultFont()
           fontFace.fontName = defaultFont.family
           val fontSizeValue = defaultFont.size.toString()
           fontSize.selectedItem = fontSizeValue
           fontSize.editor.item = fontSizeValue
-          resetCustomFont.enabled(false)
-        }.enabledIf(fontFace.selectedValueMatches { value -> value?.toString() != getDefaultFont().family }
-                      or fontSize.editableValueMatches { value -> value != getDefaultFont().size.toString() })
+        }
       }.topGap(TopGap.SMALL)
-
-      onApply {
-        val defaultFont = getDefaultFont()
-        settings.overrideLafFonts = settings.fontFace != defaultFont.family || settings.fontSize != defaultFont.size
-      }
 
       group(message("title.accessibility")) {
         row {
@@ -417,10 +452,23 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       }
 
       group(message("group.presentation.mode")) {
-        row(message("presentation.mode.fon.size")) {
-          fontSizeComboBox({ settings.presentationModeFontSize },
-                           { settings.presentationModeFontSize = it },
-                           settings.presentationModeFontSize)
+        row(message("presentation.mode.ide.scale")) {
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), SimpleListCellRenderer.create("") { it })
+            .bindItem( { settings.presentationModeIdeScale.percentStringValue }, { })
+            .applyToComponent {
+              isEditable = true
+            }
+            .validationOnInput(IdeScaleTransformer.Settings::validatePresentationModePercentScaleInput)
+            .onChanged {
+              if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
+
+              IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
+                settings.presentationModeIdeScale = scale
+                if (settings.presentationMode) {
+                  settings.fireUISettingsChanged()
+                }
+              }
+            }
             .shouldUpdateLaF()
         }
       }

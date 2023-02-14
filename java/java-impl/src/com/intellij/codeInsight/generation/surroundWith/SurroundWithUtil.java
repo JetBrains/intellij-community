@@ -1,5 +1,5 @@
 
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.ASTNode;
@@ -33,55 +33,52 @@ public final class SurroundWithUtil {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       ArrayList<PsiElement> array = new ArrayList<>();
       for (PsiElement statement : statements) {
-        if (statement instanceof PsiDeclarationStatement) {
-          PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-          if (needToDeclareOut(statements, declaration)) {
-            PsiElement[] elements = declaration.getDeclaredElements();
-            for (PsiElement element : elements) {
-              PsiVariable var = (PsiVariable)element;
-              PsiExpression initializer = var.getInitializer();
-              if (initializer != null) {
-                String name = var.getName();
-                PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
-                assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
-                PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
-                expr.getRExpression().replace(CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
-                assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
-                array.add(assignment);
-              }
+        if (statement instanceof PsiDeclarationStatement declaration && needToDeclareOut(statements, declaration)) {
+          PsiElement[] elements = declaration.getDeclaredElements();
+          for (PsiElement element : elements) {
+            PsiVariable var = (PsiVariable)element;
+            PsiExpression initializer = var.getInitializer();
+            if (initializer != null) {
+              String name = var.getName();
+              PsiExpressionStatement assignment = (PsiExpressionStatement)factory.createStatementFromText(name + "=x;", null);
+              assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(assignment);
+              PsiAssignmentExpression expr = (PsiAssignmentExpression)assignment.getExpression();
+              expr.getRExpression().replace(CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType()));
+              assignment = (PsiExpressionStatement)block.addAfter(assignment, declaration);
+              array.add(assignment);
             }
-            PsiDeclarationStatement newDeclaration;
-            if (!array.isEmpty()) {
-              PsiElement firstStatement = array.get(0);
-              newDeclaration = (PsiDeclarationStatement)block.addBefore(declaration, firstStatement);
-              declaration.delete();
-            }
-            else {
-              newDeclaration = declaration;
-            }
-            elements = newDeclaration.getDeclaredElements();
-            for (PsiElement element1 : elements) {
-              PsiVariable var = (PsiVariable)element1;
-              PsiExpression initializer = var.getInitializer();
-              if (initializer != null) {
-                PsiTypeElement typeElement = var.getTypeElement();
-                if (typeElement != null &&
-                    typeElement.isInferredType() &&
-                    PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
-                  continue;
-                }
-                if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
-                  initializer.delete();
-                }
-                else {
-                  String defaultValue = PsiTypesUtil.getDefaultValueOfType(var.getType());
-                  PsiExpression expr = factory.createExpressionFromText(defaultValue, null);
-                  initializer.replace(expr);
-                }
-              }
-            }
-            continue;
           }
+          PsiDeclarationStatement newDeclaration;
+          if (!array.isEmpty()) {
+            PsiElement firstStatement = array.get(0);
+            newDeclaration = (PsiDeclarationStatement)block.addBefore(declaration, firstStatement);
+            declaration.delete();
+          }
+          else {
+            newDeclaration = declaration;
+          }
+          elements = newDeclaration.getDeclaredElements();
+          for (PsiElement element1 : elements) {
+            PsiVariable var = (PsiVariable)element1;
+            PsiExpression initializer = var.getInitializer();
+            if (initializer != null) {
+              PsiTypeElement typeElement = var.getTypeElement();
+              if (typeElement != null &&
+                  typeElement.isInferredType() &&
+                  PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+                continue;
+              }
+              if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
+                initializer.delete();
+              }
+              else {
+                String defaultValue = PsiTypesUtil.getDefaultValueOfType(var.getType());
+                PsiExpression expr = factory.createExpressionFromText(defaultValue, null);
+                initializer.replace(expr);
+              }
+            }
+          }
+          continue;
         }
         array.add(statement);
       }

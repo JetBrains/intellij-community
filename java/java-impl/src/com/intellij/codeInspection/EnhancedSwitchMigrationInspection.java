@@ -321,16 +321,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     if (returnAfterSwitch == null && !isExhaustive) return null;
     List<SwitchBranch> newBranches = new ArrayList<>();
     boolean hasReturningBranch = false;
-    boolean forceNextDefaultBranch = false;
     for (int i = 0, size = branches.size(); i < size; i++) {
       OldSwitchStatementBranch branch = branches.get(i);
       if (!isConvertibleBranch(branch, false, i != size - 1)) return null;
-      if (branch.isFallthrough()) {
-        if (branch.isDefault() && i < size - 1) {
-          forceNextDefaultBranch = true;
-        }
-        continue;
-      }
+      if (branch.isFallthrough()) continue;
       PsiStatement[] statements = branch.getStatements();
       if (statements.length != 1) return null;
       PsiReturnStatement returnStmt = tryCast(statements[0], PsiReturnStatement.class);
@@ -346,18 +340,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         result = new SwitchRuleExpressionResult(returnExpr);
         hasReturningBranch = true;
       }
-      if (forceNextDefaultBranch) {
-        newBranches.add(  new SwitchBranch(true,
-                         Collections.emptyList(),
-                         result,
-                         branch.getUsedElements()));
-      } else {
-        newBranches.add(new SwitchBranch(branch.isDefault(),
-                                         branch.getCaseLabelElements(),
-                                         result,
-                                         branch.getUsedElements()));
-      }
-      forceNextDefaultBranch = false;
+      newBranches.add(new SwitchBranch(branch.isDefault(),
+                                       branch.getCaseLabelElements(),
+                                       result,
+                                       branch.getUsedElements()));
     }
     if (!hasReturningBranch) return null;
     if (!isExhaustive) {
@@ -657,7 +643,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
   private static final class SwitchRuleExpressionResult implements SwitchRuleResult {
     private final PsiExpression myExpression;
 
-    private SwitchRuleExpressionResult(@NotNull PsiExpression expression) {myExpression = expression;}
+    private SwitchRuleExpressionResult(@NotNull PsiExpression expression) { myExpression = expression; }
 
     @Override
     public String generate(CommentTracker ct) {
@@ -676,9 +662,27 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                          SwitchRuleResult ruleResult,
                          @NotNull List<? extends PsiElement> usedElements) {
       myIsDefault = isDefault;
-      myCaseExpressions = caseExpressions;
+      if (isDefault) {
+        //if preview is disabled, only default can be used
+        //in preview 20, we can combine default with null only
+        PsiCaseLabelElement nullLabel = findNullLabel(caseExpressions);
+        if (nullLabel != null) {
+          myCaseExpressions = List.of(nullLabel);
+        }
+        else {
+          myCaseExpressions = List.of();
+        }
+      }
+      else {
+        myCaseExpressions = caseExpressions;
+      }
       myRuleResult = ruleResult;
       myUsedElements = usedElements;
+    }
+
+    @Nullable
+    private static PsiCaseLabelElement findNullLabel(@NotNull List<? extends PsiCaseLabelElement> expressions) {
+      return ContainerUtil.find(expressions, label -> label instanceof PsiLiteralExpression literal && literal.textMatches("null"));
     }
 
     private String generate(CommentTracker ct) {
@@ -741,7 +745,8 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     private boolean isDefault() {
-      return myLabelStatement.isDefaultCase();
+      List<OldSwitchStatementBranch> branches = getWithFallthroughBranches();
+      return ContainerUtil.or(branches, branch -> branch.myLabelStatement.isDefaultCase());
     }
 
     private boolean isFallthrough() {

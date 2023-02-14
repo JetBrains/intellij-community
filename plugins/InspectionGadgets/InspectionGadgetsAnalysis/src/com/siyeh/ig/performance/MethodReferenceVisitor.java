@@ -64,8 +64,7 @@ class MethodReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
           m_referencesStaticallyAccessible = false;
           return;
         }
-        if (!(element instanceof PsiMember)) return;
-        PsiMember member = (PsiMember)element;
+        if (!(element instanceof PsiMember member)) return;
         if (member == m_method || member.hasModifierProperty(PsiModifier.STATIC) ||
             member instanceof PsiClass && member.getContainingClass() == null) {
           return;

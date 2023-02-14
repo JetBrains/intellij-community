@@ -16,8 +16,7 @@ import java.util.stream.Stream;
 public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    if (element instanceof PsiMethod method) {
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().isEmpty()) {

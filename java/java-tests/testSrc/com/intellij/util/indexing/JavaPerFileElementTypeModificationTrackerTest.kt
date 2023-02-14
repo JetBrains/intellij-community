@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
@@ -89,5 +91,24 @@ class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTest
     helper.checkModCountHasChanged(JAVA)
     runWriteAction { VfsUtil.saveText(psi.containingFile.virtualFile, src2); }
     helper.checkModCountHasChanged(JAVA)
+  }
+
+  fun `test tracker does not modify file line separator data`() {
+    val psi = myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Predicate {
+        boolean test(int x) {
+          return true;
+        }
+        <caret>
+      }
+    """.trimIndent())
+    helper.initModCounts(JAVA)
+    helper.ensureStubIndexUpToDate(project)
+    runWriteAction { LoadTextUtil.changeLineSeparators(project, psi.virtualFile, "\r\n", this) }
+    helper.checkModCountIsSame(JAVA)
+    assertEquals("\r\n", psi.virtualFile.detectedLineSeparator)
+    myFixture.type("int smth() { return 239; }\n")
+    helper.checkModCountHasChanged(JAVA)
+    assertEquals("\r\n", psi.virtualFile.detectedLineSeparator)
   }
 }

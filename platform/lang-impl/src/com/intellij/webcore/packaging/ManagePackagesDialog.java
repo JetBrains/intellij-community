@@ -208,8 +208,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof RepoPackage) {
-          RepoPackage repoPackage = (RepoPackage)pyPackage;
+        if (pyPackage instanceof RepoPackage repoPackage) {
 
           String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {

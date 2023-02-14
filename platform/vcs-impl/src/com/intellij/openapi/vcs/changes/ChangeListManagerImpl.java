@@ -371,7 +371,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void freeze(@NotNull String reason) {
-    assert ApplicationManager.getApplication().isHeadlessEnvironment() || !ApplicationManager.getApplication().isDispatchThread();
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
+    }
 
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore(1);
@@ -1237,7 +1239,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
-    ScheduleForAdditionAction.addUnversionedFilesToVcs(myProject, list, files);
+    ScheduleForAdditionAction.Manager.addUnversionedFilesToVcs(myProject, list, files);
   }
 
   @Override

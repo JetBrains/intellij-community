@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * All plugins which still use this class must be updated to use {@link com.intellij.openapi.roots.ProjectFileIndex} and other APIs instead.
  */
 @ApiStatus.Internal
+@ApiStatus.Obsolete
 public abstract class DirectoryInfo {
 
   /**

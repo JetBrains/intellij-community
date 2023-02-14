@@ -118,7 +118,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     isDragOut(DevicePoint(event))
 
   private fun isDragOut(devicePoint: DevicePoint): Boolean {
-    if (!isNewUi && isPointInVisibleDockedToolWindow(devicePoint)) {
+    if (isPointInVisibleDockedToolWindow(devicePoint)) {
       return false
     }
 
@@ -238,7 +238,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
     val preferredStripe = getSourceStripe(toolWindow.anchor, toolWindow.isSplitMode)
     val targetStripe = getTargetStripeByDropLocation(eventDevicePoint, preferredStripe)
-                       ?: if (!isNewUi && isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
+                       ?: if (isPointInVisibleDockedToolWindow(eventDevicePoint)) preferredStripe else null
     lastStripe?.let {
       if (it != targetStripe) {
         removeDropTargetHighlighter(toolWindow.toolWindowManager.getToolWindowPane(it.paneId))
@@ -284,17 +284,18 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         // it's inside the bounds of the tool window (and the tool window is visible), then use the tool window bounds. Note that when
         // docked, the tool window's screen coordinate system will be the same as the mouse event's. But if it's floating, it might be on
         // another screen (although if it's floating, we don't get bounds)
-        val toolWindowBounds = getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow)?.takeIf {
-          getTargetStripeByDropLocation(eventDevicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
+        val bounds = if (isNewUi) {
+          targetStripe.getToolWindowDropAreaScreenBounds()
         }
-        val bounds = toolWindowBounds ?: getDropTargetScreenBounds(lastDropTargetPane!!, targetStripe.anchor)
-
+        else {
+          val toolWindowBounds = getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow)?.takeIf {
+            getTargetStripeByDropLocation(eventDevicePoint, preferredStripe) == null && it.contains(event.locationOnScreen)
+          }
+          toolWindowBounds ?: getDropTargetScreenBounds(lastDropTargetPane!!, targetStripe.anchor)
+        }
         bounds.location = bounds.location.also { SwingUtilities.convertPointFromScreen(it, lastDropTargetPane!!.rootPane.layeredPane) }
 
-        var dropToSide = targetStripe.getDropToSide()
-        if (dropToSide == null && isNewUi) {
-          dropToSide = false
-        }
+        val dropToSide = targetStripe.getDropToSide()
         if (dropToSide != null) {
           val half = if (targetStripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
           if (!targetStripe.anchor.isHorizontal) {
@@ -334,7 +335,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
       // If the drop point is not inside a stripe bounds, but is inside the visible tool window bounds, do nothing - we're not moving.
       // Note that we must check the stripe because we might be moving from top to bottom or left to right
-      if (!isNewUi && getTargetStripeByDropLocation(devicePoint, preferredStripe) == null && isPointInVisibleDockedToolWindow(devicePoint)) {
+      if (getTargetStripeByDropLocation(devicePoint, preferredStripe) == null && isPointInVisibleDockedToolWindow(devicePoint)) {
         return
       }
 
@@ -486,7 +487,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
 
   private fun getToolWindowScreenBoundsIfVisibleAndDocked(toolWindow: ToolWindowImpl): Rectangle? {
-    if (!toolWindow.isVisible || toolWindow.type == ToolWindowType.FLOATING || toolWindow.type == ToolWindowType.WINDOWED) return null
+    if (!toolWindow.isVisible || !toolWindow.type.isInternal) return null
 
     // We can't just use toolWindow.component.bounds, as this doesn't include headers, etc.
     return getAdjustedPaneContentsScreenBounds(dragSourcePane, toolWindow.anchor,

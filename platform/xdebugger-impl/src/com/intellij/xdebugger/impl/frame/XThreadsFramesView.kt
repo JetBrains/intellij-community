@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.frame
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.ui.ListSpeedSearch
@@ -140,7 +139,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val actionManager = ActionManager.getInstance()
         val group = actionManager.getAction(XDebuggerActions.THREADS_TREE_POPUP_GROUP) as? ActionGroup ?: return
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+        actionManager.createActionPopupMenu("XDebuggerThreadsList", group).component.show(comp, x, y)
       }
     })
 
@@ -173,7 +172,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         val actionManager = ActionManager.getInstance()
         val group = actionManager.getAction(XDebuggerActions.FRAMES_TREE_POPUP_GROUP) as ActionGroup
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).component.show(comp, x, y)
+        actionManager.createActionPopupMenu("XDebuggerFramesList", group).component.show(comp, x, y)
       }
     })
 

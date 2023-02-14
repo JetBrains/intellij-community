@@ -59,8 +59,8 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME && element.getParent() instanceof XmlTag) {
-      final XmlTag tag = (XmlTag)element.getParent();
+    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME &&
+        element.getParent() instanceof XmlTag tag) {
       for (XmlTag xmlTag : tag.getSubTags()) {
         if (xmlTag.getAttribute(FxmlConstants.FX_VALUE) == null) return false;
       }

@@ -15,6 +15,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.nio.file.Path;
@@ -107,7 +108,7 @@ public class WizardContext extends UserDataHolderBase {
     return myProject;
   }
 
-  public @NotNull String getProjectFileDirectory() {
+  public @NotNull @SystemDependent String getProjectFileDirectory() {
     return getProjectDirectory().toString();
   }
 

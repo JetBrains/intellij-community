@@ -4,17 +4,17 @@ package com.intellij.ide.impl
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.util.io.getResolvedNioPath
-import com.intellij.openapi.util.io.toNioPath
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.getResolvedPath
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.createDirectory
+import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.openapi.vfs.getVirtualDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -23,12 +23,14 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.ide.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -47,7 +49,7 @@ abstract class TrustedProjectsHeavyTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath().getVirtualDirectory()
+    testRoot = fileFixture.tempDirPath.toNioPath().refreshAndGetVirtualDirectory()
   }
 
   @AfterEach
@@ -158,7 +160,7 @@ abstract class TrustedProjectsHeavyTestCase {
   ) {
     val locatedProject = TrustedProjectsLocator.locateProject(project)
     Assertions.assertEquals(
-      relativeRoots.map { testRoot.path.getResolvedNioPath(it) }.toSet(),
+      relativeRoots.map { testRoot.toNioPath().getResolvedPath(it) }.toSet(),
       locatedProject.projectRoots.toSet()
     )
   }

@@ -45,7 +45,7 @@ internal data class EntityReferenceImpl<E : WorkspaceEntity>(private val id: Ent
   }
 }
 
-internal class EntityStorageSnapshotImpl constructor(
+internal class EntityStorageSnapshotImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: StorageIndexes
@@ -147,15 +147,15 @@ internal class MutableEntityStorageImpl(
       .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun <E : WorkspaceEntityWithSymbolicId> resolve(id: SymbolicEntityId<E>): E? {
     val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity> ?: return null
-    @Suppress("UNCHECKED_CAST")
     return entityData.wrapAsModifiable(this) as E?
   }
 
   // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
-  @Suppress("USELESS_CAST")
+  @Suppress("USELESS_CAST", "UNCHECKED_CAST")
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
       indexes.entitySourceIndex
@@ -172,6 +172,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  @Suppress("UNCHECKED_CAST")
   override fun <T : WorkspaceEntity> addEntity(entity: T): T {
     try {
       lockWrite()
@@ -347,12 +348,7 @@ internal class MutableEntityStorageImpl(
   }
 
   private fun getRbsEngine(): ReplaceBySourceOperation {
-    if (useNewRbs) {
-      return ReplaceBySourceAsTree()
-    }
-    else {
-      return ReplaceBySourceAsGraph()
-    }
+    return if (useNewRbs) ReplaceBySourceAsTree() else ReplaceBySourceAsGraph()
   }
 
   /**
@@ -429,7 +425,7 @@ internal class MutableEntityStorageImpl(
     original as AbstractEntityStorage
     val adds = ArrayList<WorkspaceEntityData<*>>()
     val removes = CollectionFactory.createSmallMemoryFootprintMap<WorkspaceEntityData<out WorkspaceEntity>, MutableList<WorkspaceEntityData<out WorkspaceEntity>>>()
-    changeLog.changeLog.forEach { _, value ->
+    changeLog.changeLog.forEach { (_, value) ->
       if (value is ChangeEntry.AddEntity) {
         adds.add(value.entityData)
       }
@@ -518,7 +514,7 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
       diff as MutableEntityStorageImpl
-      applyDiffProtection(diff, "addDiff")
+      applyDiffProtection(diff)
       val addDiffOperation = AddDiffOperation(this, diff)
       upgradeAddDiffEngine?.invoke(addDiffOperation)
       addDiffOperation.addDiff()
@@ -559,14 +555,14 @@ internal class MutableEntityStorageImpl(
                                 ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
   }
 
-  private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
-    LOG.trace { "Applying $method. Builder: $diff" }
+  private fun applyDiffProtection(diff: AbstractEntityStorage) {
+    LOG.trace { "Applying addDiff. Builder: $diff" }
     if (diff.storageIsAlreadyApplied) {
       LOG.error("Builder is already applied.\n Info: \n${diff.applyInfo}")
     }
     else {
       diff.storageIsAlreadyApplied = true
-      var info = "Applying builder using $method. Previous stack trace >>>>\n"
+      var info = "Applying builder using addDiff. Previous stack trace >>>>\n"
       if (LOG.isTraceEnabled) {
         val currentStackTrace = ExceptionUtil.currentStackTrace()
         info += "\n$currentStackTrace"
@@ -586,6 +582,7 @@ internal class MutableEntityStorageImpl(
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
+    @Suppress("UNCHECKED_CAST")
     val originals = accumulator.associateWith {
       this.getOriginalEntityData(it) as WorkspaceEntityData<WorkspaceEntity> to this.getOriginalParents(it.asChild())
     }
@@ -779,7 +776,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
     return entityDataById(entityIds)?.createEntity(this) as E?
   }
 
-  operator override fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
+  override operator fun <E : WorkspaceEntityWithSymbolicId> contains(id: SymbolicEntityId<E>): Boolean {
     return indexes.symbolicIdIndex.getIdsByEntry(id) != null
   }
 

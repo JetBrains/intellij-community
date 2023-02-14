@@ -90,7 +90,7 @@ class MixedResultsSearcher implements SESearcher {
       CountDownLatch latch = new CountDownLatch(contributors.size());
       ProgressIndicatorWithCancelListener indicatorWithCancelListener = new ProgressIndicatorWithCancelListener();
       accumulator = accumulatorSupplier.apply(indicatorWithCancelListener);
-      accumulator.searchStarted();
+      accumulator.searchStarted(pattern);
 
       for (SearchEverywhereContributor<?> contributor : contributors) {
         Runnable task = createSearchTask(pattern, accumulator,
@@ -109,7 +109,7 @@ class MixedResultsSearcher implements SESearcher {
     else {
       indicator = new ProgressIndicatorBase();
       accumulator = accumulatorSupplier.apply(indicator);
-      accumulator.searchStarted();
+      accumulator.searchStarted(pattern);
     }
 
     indicator.start();
@@ -261,8 +261,8 @@ class MixedResultsSearcher implements SESearcher {
            contributorsAndLimits, equalityProvider, listener, notificationExecutor, progressIndicator);
     }
 
-    public void searchStarted() {
-      runInNotificationExecutor(() -> myListener.searchStarted(sectionsLimits.keySet()));
+    public void searchStarted(@NotNull String pattern) {
+      runInNotificationExecutor(() -> myListener.searchStarted(pattern, sectionsLimits.keySet()));
     }
 
     ResultsAccumulator(Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> alreadyFound,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
@@ -24,11 +24,7 @@ import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.ParallelRunner;
+import org.jetbrains.idea.maven.utils.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
@@ -37,12 +33,15 @@ import java.util.*;
 public class MavenProjectResolver {
   public static final Key<Collection<MavenArtifact>> UNRESOLVED_ARTIFACTS = new Key<>("Unresolved Artifacts");
 
+  private @NotNull MavenResolvedPluginsCache myCacheResolver;
+
   private final MavenProjectsTree myTree;
   private final Project myProject;
 
   public MavenProjectResolver(@Nullable MavenProjectsTree tree) {
     myTree = tree;
     myProject = tree == null ? null : tree.getProject();
+    myCacheResolver = new MavenResolvedPluginsCache();
   }
 
   @TestOnly
@@ -94,8 +93,12 @@ public class MavenProjectResolver {
         embeddersManager.release(embedder);
       }
 
-      MavenUtil.restartConfigHighlightning(project, mavenProjects);
+      MavenUtil.restartConfigHighlighting(mavenProjects);
     }
+  }
+
+  public void clearPluginCache() {
+    myCacheResolver = new MavenResolvedPluginsCache();
   }
 
 
@@ -199,7 +202,6 @@ public class MavenProjectResolver {
                                          boolean forceUpdateSnapshots) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, MavenEmbeddersManager.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process, forceUpdateSnapshots);
-    embedder.clearCachesFor(mavenProject.getMavenId());
 
     Set<Path> filesToRefresh = new HashSet<>();
     Set<MavenPlugin> unresolvedPlugins = new HashSet<>();
@@ -209,16 +211,18 @@ public class MavenProjectResolver {
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
 
-        Collection<MavenArtifact> artifacts = embedder.resolvePlugin(each, mavenProject.getRemoteRepositories(), nativeMavenProject, false);
-
-        for (MavenArtifact artifact : artifacts) {
-          Path pluginJar = artifact.getFile().toPath();
-          Path pluginDir = pluginJar.getParent();
-          if (pluginDir != null) {
-            filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
+        MavenResolvedPluginsCache.PluginResolvedResult result =
+          myCacheResolver.resolveCached(embedder, each, mavenProject.getRemoteRepositories(), nativeMavenProject);
+        if (!result.fromCache()) {
+          for (MavenArtifact artifact : result.artifacts()) {
+            Path pluginJar = artifact.getFile().toPath();
+            Path pluginDir = pluginJar.getParent();
+            if (pluginDir != null) {
+              filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
+            }
           }
         }
-        if (artifacts.isEmpty() && myProject != null) {
+        if (result.artifacts().isEmpty() && myProject != null) {
           unresolvedPlugins.add(each);
         }
       }
@@ -324,7 +328,6 @@ public class MavenProjectResolver {
                                   @NotNull EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(mavenProject, embedderKind);
     embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, false);
-    embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);
     }

@@ -91,9 +91,8 @@ private class KeyboardTwoShortcuts private constructor(private val shortcut: Pai
     }
   }
 
-  private fun getKeyLabel(@Nls txt: String): JLabel {
-    return JLabel(txt).apply {
-      text = txt
+  private fun getKeyLabel(txt: String): JLabel {
+    return JLabel(txt).apply { // NON-NLS
       font = font.deriveFont(11.0f)
       border = CompoundBorder(
         RoundedLineBorder(JBColor.border(), 6, 1),

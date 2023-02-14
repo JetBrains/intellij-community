@@ -4,9 +4,9 @@ package com.intellij.openapi.fileTypes.impl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-private class ApproveRemovedMappingsActivity : ProjectPostStartupActivity {
+private class ApproveRemovedMappingsActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val fileTypeManager = FileTypeManager.getInstance() as FileTypeManagerImpl
     DumbService.getInstance(project).unsafeRunWhenSmart {

@@ -366,8 +366,7 @@ public final class CheckRegExpForm {
     PsiElement element = regExpFile.findElementAt(offset);
     RegExpGroup group = null;
     while (element != null) {
-      if (element instanceof RegExpGroup) {
-        final RegExpGroup g = (RegExpGroup)element;
+      if (element instanceof RegExpGroup g) {
         if (g.isCapturing()) {
           group = g;
           break;

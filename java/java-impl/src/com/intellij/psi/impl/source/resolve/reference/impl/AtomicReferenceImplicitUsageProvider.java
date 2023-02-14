@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -41,12 +41,9 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
-        return CachedValuesManager.getCachedValue(field, () ->
-          new CachedValueProvider.Result<>(isAtomicWrite(field), PsiModificationTracker.MODIFICATION_COUNT));
-      }
+    if (element instanceof PsiField field && field.hasModifierProperty(PsiModifier.VOLATILE)) {
+      return CachedValuesManager.getCachedValue(field, () ->
+        new CachedValueProvider.Result<>(isAtomicWrite(field), PsiModificationTracker.MODIFICATION_COUNT));
     }
     return false;
   }
@@ -84,19 +81,15 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     }
     PsiElement callParent = skipParenthesizedExprUp(methodCall.getParent());
     PsiVariable updaterVariable = null;
-    if (callParent instanceof PsiVariable && skipParenthesizedExprDown(((PsiVariable)callParent).getInitializer()) == methodCall) {
-      updaterVariable = (PsiVariable)callParent;
+    if (callParent instanceof PsiVariable var && skipParenthesizedExprDown(var.getInitializer()) == methodCall) {
+      updaterVariable = var;
     }
-    else if (callParent instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression)callParent;
-      if (assignment.getOperationTokenType() == JavaTokenType.EQ && skipParenthesizedExprDown(assignment.getRExpression()) == methodCall) {
-        PsiExpression lExpression = skipParenthesizedExprDown(assignment.getLExpression());
-        if (lExpression instanceof PsiReferenceExpression) {
-          PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
-          if (resolved instanceof PsiVariable) {
-            updaterVariable = (PsiVariable)resolved;
-          }
-        }
+    else if (callParent instanceof PsiAssignmentExpression assignment) {
+      if (assignment.getOperationTokenType() == JavaTokenType.EQ &&
+          skipParenthesizedExprDown(assignment.getRExpression()) == methodCall &&
+          skipParenthesizedExprDown(assignment.getLExpression()) instanceof PsiReferenceExpression refExpr &&
+          refExpr.resolve() instanceof PsiVariable var) {
+        updaterVariable = var;
       }
     }
     if (updaterVariable != null && InheritanceUtil.isInheritor(updaterVariable.getType(), updaterName)) {

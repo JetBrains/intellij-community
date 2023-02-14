@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
@@ -24,6 +23,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   companion object {
     val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
+      "intellij.idea.community.build.tasks",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
@@ -43,8 +43,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = listOf("intellij.platform.main")
-    productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
+    productLayout.productImplementationModules = listOf("intellij.platform.main", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
       .add("intellij.javaFX.community")
       .toMutableList()

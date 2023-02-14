@@ -280,8 +280,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (!(progressIndicator instanceof ProgressIndicatorWithDelayedPresentation)) {
       throw new IncorrectOperationException("Must be run under ProgressWindow");
     }
-    if (!isOfflineInspections && ApplicationManager.getApplication().isDispatchThread()) {
-      throw new IncorrectOperationException("Must not start inspections from within EDT");
+    if (!isOfflineInspections) {
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IncorrectOperationException("Must not start inspections from within write action");
@@ -387,10 +387,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           progressIndicator.checkCanceled();
           // PCE may be thrown from inside wrapper when write action started.
           // Go on with the write action and then resume processing the rest of the queue.
-          assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
-            : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
-          assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
-            : "Must be outside EDT. PCE=\n" + ExceptionUtil.getThrowableText(e);
+          if (!isOfflineInspections) {
+            ApplicationManager.getApplication().assertReadAccessNotAllowed();
+            ApplicationManager.getApplication().assertIsNonDispatchThread();
+          }
 
           // wait for write action to complete
           ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
@@ -727,8 +727,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     refManager.iterate(new RefVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity elem) {
-        if (elem instanceof RefElement) {
-          RefElement refElement = (RefElement)elem;
+        if (elem instanceof RefElement refElement) {
           entitiesWithParents.put(refElement, refElement.getInReferences());
           if (refElement.getInReferences().isEmpty() || refElement.getInReferences().contains(refElement)) {
             roots.add(refElement);

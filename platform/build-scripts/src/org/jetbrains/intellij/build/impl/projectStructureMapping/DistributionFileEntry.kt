@@ -75,5 +75,5 @@ class ModuleOutputEntry(
   override val type: String
     get() = "module-output"
 
-  override fun changePath(newFile: Path) = ModuleOutputEntry(newFile, moduleName, size, reason)
+  override fun changePath(newFile: Path) = ModuleOutputEntry(path = newFile, moduleName = moduleName, size = size, reason = reason)
 }

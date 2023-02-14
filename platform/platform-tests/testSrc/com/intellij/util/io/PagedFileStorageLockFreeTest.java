@@ -409,8 +409,7 @@ public class PagedFileStorageLockFreeTest {
           }
           catch (ExecutionException e) {
             final Throwable cause = e.getCause();
-            if (cause instanceof IOException) {
-              IOException exception = (IOException)cause;
+            if (cause instanceof IOException exception) {
               if (exception.getMessage().contains("already closed")) {
                 //ok, executable
                 continue;

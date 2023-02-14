@@ -11,9 +11,10 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readText
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
@@ -167,7 +168,7 @@ class ImlCreationPropertyTest {
       val moduleName = env.generateValue(moduleNamesGenerator, null)
       env.logMessage("Generate module: $moduleName")
 
-      var entitySource: EntitySource = JpsFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
+      var entitySource: EntitySource = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       if (env.generateValue(Generator.booleans(), null)) {
         entitySource = entitySource.external()
       }

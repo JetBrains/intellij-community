@@ -69,8 +69,6 @@
 
     <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
 
-    <preloadingActivity implementation="com.intellij.grazie.jlanguage.LangTool$Preloader"/>
-
     <additionalTextAttributes scheme="Default" file="colorSchemes/GrazieDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GrazieDarcula.xml"/>
 

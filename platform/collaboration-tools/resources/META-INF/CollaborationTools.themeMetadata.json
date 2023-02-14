@@ -31,6 +31,11 @@
       "key": "Review.ChatItem.BubblePanel.Border",
       "description": "Border of the rounded panel for wrapping diffs",
       "since": "[2023.1]"
+    },
+    {
+      "key": "Review.Timeline.Thread.Diff.AnchorLine",
+      "description": "Background of an anchor line in thread diff",
+      "since": "[2023.1]"
     }
   ]
 }

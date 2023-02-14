@@ -158,11 +158,32 @@ fun Action.bindEnabled(scope: CoroutineScope, enabledFlow: Flow<Boolean>) {
   }
 }
 
-fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent>) {
+fun Wrapper.bindContent(scope: CoroutineScope, contentFlow: Flow<JComponent?>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     contentFlow.collect {
       setContent(it)
       repaint()
+    }
+  }
+}
+
+fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
+                            componentFactory: (CoroutineScope, D) -> JComponent?) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    dataFlow.collectLatest {
+      coroutineScope {
+        val component = componentFactory(this, it) ?: return@coroutineScope
+        setContent(component)
+        repaint()
+
+        try {
+          awaitCancellation()
+        }
+        finally {
+          setContent(null)
+          repaint()
+        }
+      }
     }
   }
 }

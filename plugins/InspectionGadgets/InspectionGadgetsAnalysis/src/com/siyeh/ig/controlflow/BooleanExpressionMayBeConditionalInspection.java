@@ -62,17 +62,14 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
     @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)  {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiBinaryExpression)) {
+      if (!(element instanceof PsiBinaryExpression binaryExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)element;
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
-      if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
+      if (!(lhs instanceof PsiBinaryExpression lBinaryExpression) || !(rhs instanceof PsiBinaryExpression rBinaryExpression)) {
         return;
       }
-      final PsiBinaryExpression lBinaryExpression = (PsiBinaryExpression)lhs;
-      final PsiBinaryExpression rBinaryExpression = (PsiBinaryExpression)rhs;
       final PsiExpression llhs = PsiUtil.skipParenthesizedExprDown(lBinaryExpression.getLOperand());
       final PsiExpression lrhs = PsiUtil.skipParenthesizedExprDown(rBinaryExpression.getLOperand());
       if (llhs == null || lrhs == null) {
@@ -117,11 +114,9 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
-      if (!(lhs instanceof PsiBinaryExpression) || !(rhs instanceof PsiBinaryExpression)) {
+      if (!(lhs instanceof PsiBinaryExpression lBinaryExpression) || !(rhs instanceof PsiBinaryExpression rBinaryExpression)) {
         return;
       }
-      final PsiBinaryExpression lBinaryExpression = (PsiBinaryExpression)lhs;
-      final PsiBinaryExpression rBinaryExpression = (PsiBinaryExpression)rhs;
       final IElementType lTokenType = lBinaryExpression.getOperationTokenType();
       final IElementType rTokenType = rBinaryExpression.getOperationTokenType();
       if (!JavaTokenType.ANDAND.equals(lTokenType) || !JavaTokenType.ANDAND.equals(rTokenType)) {

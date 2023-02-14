@@ -91,10 +91,9 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       if (statement == null) {
         return false;
       }
-      if (!(statement instanceof PsiReturnStatement)) {
+      if (!(statement instanceof PsiReturnStatement returnStatement)) {
         return true; // incomplete code
       }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
       final Object constant = ExpressionUtils.computeConstantExpression(returnValue);
       if (Boolean.FALSE.equals(constant)) {
@@ -110,10 +109,9 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     }
 
     private static boolean isIdentityEquals(PsiExpression expression, PsiParameter parameter) {
-      if (!(expression instanceof PsiBinaryExpression)) {
+      if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;
       }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       return isIdentityEquals(lhs, rhs, parameter) || isIdentityEquals(rhs, lhs, parameter);

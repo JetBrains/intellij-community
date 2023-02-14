@@ -19,8 +19,8 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
-import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
+import com.intellij.workspaceModel.ide.virtualFile
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -144,11 +144,11 @@ internal class OldRootsChangeWatcher(private val project: Project) {
     if (WorkspaceFileIndexEx.IS_ENABLED && affectedEntities.isNotEmpty()) {
       val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
       if (beforeRootsChanged) {
-        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+        workspaceFileIndex.indexData.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
       }
       else {
-        workspaceFileIndex.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
-        workspaceFileIndex.updateDirtyEntities()
+        workspaceFileIndex.indexData.markDirty(affectedEntities, entityChangesStorage.filesToInvalidate)
+        workspaceFileIndex.indexData.updateDirtyEntities()
       }
     }
     // Keep old behaviour for global libraries

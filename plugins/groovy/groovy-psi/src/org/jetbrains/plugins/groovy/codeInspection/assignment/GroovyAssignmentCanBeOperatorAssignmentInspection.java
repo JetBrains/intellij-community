@@ -142,11 +142,9 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
                       @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof GrAssignmentExpression)) {
+      if (!(element instanceof GrAssignmentExpression expression)) {
         return;
       }
-      final GrAssignmentExpression expression =
-          (GrAssignmentExpression) element;
       final String newExpression =
           calculateReplacementExpression(expression);
       replaceExpression(expression, newExpression);
@@ -164,10 +162,9 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       }
       final GrExpression lhs = assignment.getLValue();
       final GrExpression rhs = (GrExpression)PsiUtil.skipParentheses(assignment.getRValue(), false);
-      if (!(rhs instanceof GrBinaryExpression)) {
+      if (!(rhs instanceof GrBinaryExpression binaryRhs)) {
         return;
       }
-      final GrBinaryExpression binaryRhs = (GrBinaryExpression) rhs;
       if (binaryRhs.getRightOperand() == null) {
         return;
       }

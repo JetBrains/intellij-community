@@ -6,37 +6,31 @@ import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.util.io.getResolvedPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.openapi.vfs.getVirtualDirectory
-import com.intellij.openapi.vfs.getDirectory
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import com.intellij.testFramework.utils.vfs.getDirectory
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.gradle.util.GradleVersion
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.testFramework.util.openProjectAsyncAndWait
-import org.jetbrains.plugins.gradle.util.getProjectDataLoadPromise
+import org.jetbrains.plugins.gradle.util.awaitProjectReload
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 abstract class GradleUntrustedProjectTestCase {
@@ -59,7 +53,7 @@ abstract class GradleUntrustedProjectTestCase {
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory()
       .createTempDirTestFixture()
     fileFixture.setUp()
-    testRoot = fileFixture.tempDirPath.toNioPath().getVirtualDirectory()
+    testRoot = fileFixture.tempDirPath.toNioPath().refreshAndGetVirtualDirectory()
 
     gradleVersion = GradleVersion.current()
     gradleJvmFixture = GradleTestFixtureFactory.getFixtureFactory()
@@ -84,11 +78,11 @@ abstract class GradleUntrustedProjectTestCase {
   }
 
   suspend fun initGradleProject(relativePath: String) {
-    val projectRoot = writeAction {
-      testRoot.findOrCreateDirectory(relativePath)
-    }
-    projectRoot.createSettingsFile {
-      setProjectName(projectRoot.name)
+    writeAction {
+      val projectRoot = testRoot.findOrCreateDirectory(relativePath)
+      projectRoot.createSettingsFile {
+        setProjectName(projectRoot.name)
+      }
     }
   }
 
@@ -100,13 +94,9 @@ abstract class GradleUntrustedProjectTestCase {
   }
 
   suspend fun linkProjectAsyncAndWait(project: Project, relativePath: String) {
-    val deferred = getProjectDataLoadPromise()
     val externalProjectPath = rootPath.getResolvedPath(relativePath).toCanonicalPath()
-    linkAndRefreshGradleProject(externalProjectPath, project)
-    withContext(Dispatchers.EDT) {
-      withTimeout(10.minutes) {
-        deferred.asDeferred().join()
-      }
+    awaitProjectReload {
+      linkAndRefreshGradleProject(externalProjectPath, project)
     }
   }
 

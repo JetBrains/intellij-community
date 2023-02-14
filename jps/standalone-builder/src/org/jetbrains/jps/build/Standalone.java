@@ -129,10 +129,6 @@ public class Standalone {
     else {
       dataStorageRoot = Utils.getDataStorageRoot(projectPath);
     }
-    if (dataStorageRoot == null) {
-      System.err.println("Error: Cannot determine build data storage root for project " + projectPath);
-      return 1;
-    }
 
     ConsoleMessageHandler consoleMessageHandler = new ConsoleMessageHandler();
     long start = System.nanoTime();

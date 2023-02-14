@@ -225,8 +225,7 @@ class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.Acti
                                                 boolean cellHasFocus) {
     if (value != null) {
       final var action = value.getAction();
-      if (action instanceof HighlightAction) {
-        final HighlightAction highlightAction = (HighlightAction)action;
+      if (action instanceof HighlightAction highlightAction) {
         final TextAttributes attributes = highlightAction.getTextAttributes();
         myTextComponent.setText(action.getTemplateText(), attributes, false);
         myTextComponent.setSize(myTextComponent.getPreferredSize());

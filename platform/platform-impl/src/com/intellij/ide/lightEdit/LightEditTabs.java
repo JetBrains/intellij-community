@@ -304,7 +304,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
     EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -35,8 +35,7 @@ public class ForEachCollectionTraversal extends IterableTraversal {
   @Override
   public boolean isRemoveCall(PsiExpression candidate) {
     candidate = PsiUtil.skipParenthesizedExprDown(candidate);
-    if (!(candidate instanceof PsiMethodCallExpression)) return false;
-    PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
+    if (!(candidate instanceof PsiMethodCallExpression call)) return false;
     if (!COLLECTION_REMOVE.test(call)) return false;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, myIterable)) return false;
@@ -51,7 +50,6 @@ public class ForEachCollectionTraversal extends IterableTraversal {
     PsiType collectionElement = PsiUtil.substituteTypeParameter(collection.getType(), JAVA_UTIL_COLLECTION, 0, false);
     if (collectionElement == null) return null;
     PsiParameter parameter = loop.getIterationParameter();
-    if (parameter == null) return null;
     if (!parameter.getType().equals(collectionElement)) return null;
     return new ForEachCollectionTraversal(collection, parameter);
   }

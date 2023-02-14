@@ -132,9 +132,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   public TimeStampedIndentOptions getValidCachedIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, Document document) {
     IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(document);
-    if (options instanceof TimeStampedIndentOptions) {
+    if (options instanceof TimeStampedIndentOptions cachedInDocument) {
       final IndentOptions defaultIndentOptions = getDefaultIndentOptions(project, virtualFile, document);
-      final TimeStampedIndentOptions cachedInDocument = (TimeStampedIndentOptions)options;
       if (!cachedInDocument.isOutdated(document, defaultIndentOptions)) {
         return cachedInDocument;
       }

@@ -64,7 +64,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   @NotNull
   public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
                                                    @Nullable @InspectionMessage String message,
-                                                   LocalQuickFix... fixes) {
+                                                   @NotNull LocalQuickFix @NotNull ... fixes) {
     return createProblem(domElement, HighlightSeverity.ERROR, message, fixes);
   }
 
@@ -86,7 +86,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    @InspectionMessage String message,
-                                                   final LocalQuickFix... fixes) {
+                                                   final @NotNull LocalQuickFix @NotNull ... fixes) {
     return createProblem(domElement, highlightType, message, null, fixes);
   }
 
@@ -95,7 +95,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
                                                    final HighlightSeverity highlightType,
                                                    @InspectionMessage String message,
                                                    final TextRange textRange,
-                                                   final LocalQuickFix... fixes) {
+                                                   final @NotNull LocalQuickFix @NotNull ... fixes) {
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, highlightType, textRange, null, fixes));
   }
 
@@ -104,7 +104,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
                                                    ProblemHighlightType highlightType,
                                                    @InspectionMessage String message,
                                                    @Nullable TextRange textRange,
-                                                   LocalQuickFix... fixes) {
+                                                   @NotNull LocalQuickFix @NotNull ... fixes) {
     return addProblem(new DomElementProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, textRange, highlightType, fixes));
   }
 
@@ -128,13 +128,12 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return size();
   }
 
-  private LocalQuickFix[] getQuickFixes(final GenericDomValue element, PsiReference reference) {
+  private @NotNull LocalQuickFix @NotNull [] getQuickFixes(final GenericDomValue element, PsiReference reference) {
     if (!myOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
 
     final List<LocalQuickFix> result = new SmartList<>();
     final Converter converter = WrappingConverter.getDeepestConverter(element.getConverter(), element);
-    if (converter instanceof ResolvingConverter) {
-      final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+    if (converter instanceof ResolvingConverter resolvingConverter) {
       ContainerUtil
         .addAll(result, resolvingConverter.getQuickFixes(ConvertContextFactory.createConvertContext(DomManagerImpl.getDomInvocationHandler(element))));
     }

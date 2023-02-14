@@ -3,6 +3,7 @@ package com.intellij.execution.ui
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
@@ -14,7 +15,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,18 +22,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.IconReplacer
-import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.*
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
+import com.intellij.util.TextIcon
+import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.geom.Area
@@ -43,12 +41,12 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-val isContrastRunWidget: Boolean get() = AdvancedSettings.getBoolean("contrast.run.widget")
+val isContrastRunWidget: Boolean get() = Registry.`is`("ide.experimental.ui.contrast.run.widget")
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val toolbarId = if (isContrastRunWidget) "ContrastRunToolbarMainActionGroup" else "RunToolbarMainActionGroup"
   return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.MAIN_TOOLBAR,
+    ActionPlaces.NEW_UI_RUN_TOOLBAR,
     ActionManager.getInstance().getAction(toolbarId) as ActionGroup,
     true
   ).apply {
@@ -61,12 +59,12 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(isContrastRunWidget), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
       if (isContrastRunWidget) {
+        setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
         setActionButtonBorder(JBUI.Borders.empty())
       }
       else {
         setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
       }
-      setSeparatorCreator { RunToolbarSeparator(isCurrentConfigurationRunning) }
       setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
     }
@@ -87,13 +85,14 @@ private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
     val toolbar = createRunActionToolbar {
       presentation.getClientProperty(runToolbarDataKey) ?: false
     }
-    return if (isContrastRunWidget) {
-      DynamicBorderWrapper(toolbar.component) {
-        JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
-                           JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
-      }
+    toolbar.component.border = if (isContrastRunWidget) {
+      JBUI.Borders.empty(JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 12,
+                         JBUI.CurrentTheme.RunWidget.toolbarBorderHeight(), 2)
     }
-    else toolbar.component
+    else {
+      JBUI.Borders.emptyRight(16)
+    }
+    return toolbar.component
   }
 
   override fun update(e: AnActionEvent) {
@@ -174,13 +173,15 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
 
 private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
-    if (!isContrastRunWidget) {
+    val isStopButton = (component as? ActionButton)?.action is StopAction
+    if (!isContrastRunWidget && !isStopButton) {
       if (!buttonIsRunning(component)) {
         return getHeaderBackgroundColor(component, state)
       }
     }
 
-    val color = getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
+    val color = if (!isContrastRunWidget && isStopButton) JBUI.CurrentTheme.RunWidget.STOP_BACKGROUND
+    else getRunWidgetBackgroundColor(isCurrentConfigurationRunning())
 
     return when (state) {
       ActionButtonComponent.NORMAL -> color
@@ -244,7 +245,23 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
 
-    val toStrokeIcon = if (icon is PreparedIcon) icon else {
+    var resultIcon = icon
+
+    if (icon is LayeredIcon && icon.allLayers.size == 2) {
+      val textIcon = icon.allLayers[1]
+      if (textIcon is TextIcon) {
+        val text = textIcon.text
+        val provider = object : BadgeRectProvider() {
+          override fun getTop() = 0.45
+          override fun getLeft() = if (text.length == 1) 0.75 else 0.3
+          override fun getBottom() = 1.2
+          override fun getRight() = 1.2
+        }
+        resultIcon = TextHoledIcon(icon.allLayers[0], text, JBUIScale.scale(12.0f), JBUI.CurrentTheme.RunWidget.FOREGROUND, provider)
+      }
+    }
+
+    if (resultIcon !is PreparedIcon) {
       val resultColor = if (!isContrastRunWidget &&
                             (actionButton as? ActionButton)?.action is ExecutorRegistryImpl.ExecutorAction &&
                             !buttonIsRunning(actionButton)) {
@@ -253,10 +270,10 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       else {
         JBUI.CurrentTheme.RunWidget.FOREGROUND
       }
-      IconUtil.toStrokeIcon(icon, resultColor)
+      resultIcon = IconUtil.toStrokeIcon(resultIcon, resultColor)
     }
 
-    super.paintIcon(g, actionButton, toStrokeIcon, x, y)
+    super.paintIcon(g, actionButton, resultIcon, x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
@@ -294,6 +311,21 @@ private abstract class TogglePopupAction : ToggleAction {
     null, actionGroup, e.dataContext, false, false, false, disposeCallback, 30, null)
 
   abstract fun getActionGroup(e: AnActionEvent): ActionGroup?
+}
+
+private class InactiveStopActionPlaceholder : DecorativeElement(), DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.icon = EmptyIcon.ICON_16
+    if (StopAction.getActiveStoppableDescriptors(e.project).isEmpty()) {
+      e.presentation.isEnabled = false
+      e.presentation.isVisible = true
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 private class MoreRunToolbarActions : TogglePopupAction(
@@ -345,7 +377,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
-    return createRunConfigurationsActionGroup(project, addHeader = false)
+    return createRunConfigurationsActionGroup(project)
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup =
@@ -378,16 +410,30 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButtonWithText(this, presentation, place, {
-      JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      if (isContrastRunWidget)
+        JBUI.size(JBUI.CurrentTheme.RunWidget.configurationSelectorWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+      else JBUI.size(16, JBUI.CurrentTheme.RunWidget.toolbarHeight())
     }) {
-      override fun getMargins(): Insets = JBInsets.create(0, 10)
+
+      override fun getMargins(): Insets = JBInsets.create(0, 8)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
       override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
+
+      override fun updateUI() {
+        super.updateUI()
+        updateFont()
+      }
+
+      fun updateFont() {
+        font = JBUI.CurrentTheme.RunWidget.configurationSelectorFont()
+      }
+
     }.also {
       it.foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
       it.setHorizontalTextAlignment(SwingConstants.LEFT)
+      it.updateFont()
     }
   }
 }

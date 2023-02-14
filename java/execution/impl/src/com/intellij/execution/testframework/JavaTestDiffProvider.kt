@@ -12,10 +12,6 @@ import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.UParameter
 
 class JavaTestDiffProvider : JvmTestDiffProvider() {
-  override fun isCompiled(file: PsiFile): Boolean {
-    return file is PsiCompiledFile
-  }
-
   override fun failedCall(file: PsiFile, startOffset: Int, endOffset: Int, method: UMethod?): PsiElement? {
     val failedCalls = findCallsInRange(file, startOffset, endOffset)
     if (failedCalls.isEmpty()) return null

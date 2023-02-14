@@ -117,11 +117,11 @@ class IdeaResolverForProject(
     override fun createResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): ResolverForModule {
         val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), moduleInfo.moduleContentScope)
 
-        val languageVersionSettings =
-            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
+        val project = projectContext.project
+        val languageVersionSettings = project.service<LanguageSettingsProvider>().getLanguageVersionSettings(moduleInfo, project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
-        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
+        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(project, descriptor, moduleInfo)
 
         val resolverForModule = resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
@@ -132,7 +132,7 @@ class IdeaResolverForProject(
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
             resolveOptimizingOptions = optimizingOptions,
         )
-        ResolverForModuleComputationTrackerEx.getInstance(projectContext.project)?.onCreateResolverForModule(descriptor, moduleInfo)
+        ResolverForModuleComputationTrackerEx.getInstance(project)?.onCreateResolverForModule(descriptor, moduleInfo)
         return resolverForModule
     }
 

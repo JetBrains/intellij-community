@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.openapi.vfs.getPsiFile
+import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.testFramework.findReferenceByText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase

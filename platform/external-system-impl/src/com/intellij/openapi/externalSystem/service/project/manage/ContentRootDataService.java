@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource;
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;

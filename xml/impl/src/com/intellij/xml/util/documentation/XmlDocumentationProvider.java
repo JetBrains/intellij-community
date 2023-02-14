@@ -58,8 +58,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    if (element instanceof XmlTag tag) {
 
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       XmlUtil.processXmlElements(tag,processor, true);
@@ -86,14 +85,12 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         return formatDocFromComment(curElement, ((XmlElementDecl)element).getNameElement().getText());
       }
     }
-    else if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag)element;
+    else if (element instanceof XmlTag tag) {
       MyPsiElementProcessor processor = new MyPsiElementProcessor();
       String name = tag.getAttributeValue(NAME_ATTR_NAME);
       String typeName = null;
 
-      if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue) {
-        XmlAttributeValue value = (XmlAttributeValue)originalElement.getParent();
+      if (originalElement != null && originalElement.getParent() instanceof XmlAttributeValue value) {
         String toSearch = value.getValue();
         XmlTag enumerationTag;
 
@@ -157,8 +154,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
       }
 
       return findDocRightAfterElement(parent, referenceName);
-    } else if (element instanceof XmlEntityDecl) {
-      final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+    } else if (element instanceof XmlEntityDecl entityDecl) {
 
       return findDocRightAfterElement(element, entityDecl.getName());
     }
@@ -469,10 +465,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
     @Override
     public boolean execute(@NotNull PsiElement element) {
-      if (element instanceof XmlTag &&
+      if (element instanceof XmlTag tag &&
           ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
-        final XmlTag tag = ((XmlTag)element);
         result = tag.getValue().getText().trim();
         boolean withCData = false;
 

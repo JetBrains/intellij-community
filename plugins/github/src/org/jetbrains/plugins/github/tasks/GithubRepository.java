@@ -355,9 +355,8 @@ final class GithubRepository extends BaseRepository {
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
-    if (!(o instanceof GithubRepository)) return false;
+    if (!(o instanceof GithubRepository that)) return false;
 
-    GithubRepository that = (GithubRepository)o;
     if (!Objects.equals(getRepoAuthor(), that.getRepoAuthor())) return false;
     if (!Objects.equals(getRepoName(), that.getRepoName())) return false;
     if (!Comparing.equal(isAssignedIssuesOnly(), that.isAssignedIssuesOnly())) return false;
