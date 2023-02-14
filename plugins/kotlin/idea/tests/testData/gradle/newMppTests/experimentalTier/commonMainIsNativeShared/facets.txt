@@ -30,6 +30,7 @@ project.linuxX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
+    additionalVisibleModuleNames = project:commonMain, project:linuxX64Main
     targetPlatform = Native (linux_x64)
 
 project.macosX64Main
@@ -46,4 +47,5 @@ project.macosX64Test
     apiLevel = 1.8
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
+    additionalVisibleModuleNames = project:commonMain, project:macosX64Main
     targetPlatform = Native (macos_x64)

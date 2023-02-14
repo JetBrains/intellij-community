@@ -21,13 +21,13 @@ project.consumer.commonMain
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.6.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.6.2 (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
 project.consumer.commonTest
     consumer.commonMain (friend, TEST)
     consumer.jvmAndAndroidMain (TEST)
-    consumer.jvmMain (RUNTIME)
-    consumer.jvmMain (TEST)
     org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
@@ -42,6 +42,8 @@ project.consumer.jvmAndAndroidMain
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.6.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.6.2 (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
 project.consumer.jvmMain
@@ -58,7 +60,6 @@ project.consumer.jvmTest
     consumer.commonMain (friend, TEST)
     consumer.commonTest (refines, TEST)
     consumer.jvmAndAndroidMain (friend, TEST)
-    consumer.jvmMain (friend, RUNTIME)
     consumer.jvmMain (friend, TEST)
     org.jetbrains.kotlin.mpp.tests:producer-jvm:1.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
@@ -111,17 +112,13 @@ project.producer.commonTest
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-    org.jetbrains:annotations:13.0 (TEST)
     producer.commonMain (friend, TEST)
     producer.jvmAndAndroidMain (TEST)
-    producer.jvmMain (RUNTIME)
-    producer.jvmMain (TEST)
 
 project.producer.jvmAndAndroidMain
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains:annotations:13.0 (COMPILE)
     producer.commonMain (refines, COMPILE)
 
 project.producer.jvmMain
@@ -140,7 +137,6 @@ project.producer.jvmTest
     producer.commonMain (friend, TEST)
     producer.commonTest (refines, TEST)
     producer.jvmAndAndroidMain (friend, TEST)
-    producer.jvmMain (friend, RUNTIME)
     producer.jvmMain (friend, TEST)
 
 project.producer.main

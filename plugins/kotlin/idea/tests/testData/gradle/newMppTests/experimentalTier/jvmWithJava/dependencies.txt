@@ -25,7 +25,6 @@ project.jvmWithJavaProducer.jvmMain
 project.jvmWithJavaProducer.jvmTest
     jvmWithJavaProducer.commonMain (friend, TEST)
     jvmWithJavaProducer.commonTest (refines, TEST)
-    jvmWithJavaProducer.jvmMain (friend, RUNTIME)
     jvmWithJavaProducer.jvmMain (friend, TEST)
 
 project.jvmWithJavaProducer.main
