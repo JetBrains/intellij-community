@@ -46,7 +46,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.xmlb.annotations.XCollection;
 import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -700,8 +699,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   static final class State {
-    @XCollection
-    final List<ServiceViewState> viewStates = new ArrayList<>();
+    public List<ServiceViewState> viewStates = new ArrayList<>();
 
     public boolean showServicesTree = true;
   }

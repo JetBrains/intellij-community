@@ -7,7 +7,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 
 import javax.swing.tree.TreePath;
@@ -30,7 +29,6 @@ final class ServiceViewState {
   public boolean isSelected;
 
   public String viewType = "";
-  @XCollection
   public List<ServiceState> roots = new SmartList<>();
   public int parentView = -1;
 
@@ -51,7 +49,6 @@ final class ServiceViewState {
   }
 
   public static final class ServiceState {
-    @XCollection
     public List<String> path;
     public String contributor;
   }
