@@ -106,7 +106,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private final RowIcon myInactiveIcon;
 
-  private static final int DELAY = 500;
   private final MyComponentHint myComponentHint;
   private boolean myDisposed; // accessed in EDT only
   private final JPanel myPanel = new JPanel() {
@@ -530,7 +529,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myVisible = true;
       if (myShouldDelay) {
         ourAlarm.cancelAllRequests();
-        ourAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), DELAY);
+        ourAlarm.addRequest(() -> showImpl(parentComponent, x, y, focusBackComponent), 500);
       }
       else {
         showImpl(parentComponent, x, y, focusBackComponent);
