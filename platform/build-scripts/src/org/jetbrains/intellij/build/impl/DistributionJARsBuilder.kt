@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
@@ -861,9 +861,13 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
+  if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
     if (!withEphemeral) return false
     else return osFamily == null && arch == null
+  }
+
+  if (bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {
+    return false
   }
 
   return when {
