@@ -2,13 +2,19 @@
 package com.intellij.collaboration.auth
 
 import com.intellij.collaboration.auth.services.OAuthService
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Computable
 import com.intellij.util.Url
+import com.intellij.util.concurrency.AppExecutorUtil
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import org.jetbrains.io.send
+import java.util.concurrent.CompletableFuture
 
 /**
  * The base class of the callback handler for authorization services
@@ -21,18 +27,45 @@ abstract class OAuthCallbackHandlerBase : RestService() {
   override fun getServiceName(): String = service.name
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val isCodeAccepted = service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
+    val channel = context.channel()
 
-    when (val handleResult = handleAcceptCode(isCodeAccepted)) {
-      is AcceptCodeHandleResult.Page -> {
-        response(
-          "text/html",
-          Unpooled.wrappedBuffer(handleResult.html.toByteArray(Charsets.UTF_8))
-        ).send(context.channel(), request)
-      }
-      is AcceptCodeHandleResult.Redirect -> sendRedirect(request, context, handleResult.url)
+    val indicator = EmptyProgressIndicator()
+    channel.closeFuture().addListener {
+      indicator.cancel()
     }
 
+    fun handle(indicator: EmptyProgressIndicator): AcceptCodeHandleResult? =
+      ProgressManager.getInstance().runProcess(Computable {
+        val isCodeAccepted = service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
+        handleAcceptCode(isCodeAccepted)
+      }, indicator)
+
+    val executor = AppExecutorUtil.getAppExecutorService()
+    CompletableFuture.supplyAsync({ handle(indicator) }, executor).handle { res, err ->
+      if (err != null) {
+        if (err is ProcessCanceledException) {
+          channel.close()
+        }
+        else {
+          LOG.warn(err)
+          sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
+        }
+      }
+      else if (res != null) {
+        when (res) {
+          is AcceptCodeHandleResult.Page -> {
+            response("text/html", Unpooled.wrappedBuffer(res.html.toByteArray(Charsets.UTF_8)))
+              .send(context.channel(), request)
+          }
+          is AcceptCodeHandleResult.Redirect -> {
+            sendRedirect(request, context, res.url)
+          }
+        }
+      }
+      else {
+        sendStatus(HttpResponseStatus.NO_CONTENT, false, channel)
+      }
+    }
     return null
   }
 
