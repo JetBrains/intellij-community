@@ -262,7 +262,6 @@ object TimelineDiffComponentFactory {
 
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      isOpaque = false
       add(createFileNameComponent(filePath, expandCollapseButton, onFileNameClick))
       CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
@@ -320,7 +319,10 @@ object TimelineDiffComponentFactory {
     }
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
-      isOpaque = false
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
+
       add(createFileNameComponent(filePath, expandCollapseButton, onFileClick))
       add(diffComponent)
     }.also {
