@@ -58,8 +58,7 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
           FileSessionsInfo(fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
         )
       }
-      workspace2.sessionsStorage.saveEvaluationInfo()
-      workspace2.featuresStorage.saveFeaturesInfo()
+      workspace2.sessionsStorage.saveMetadata()
     }
 
     private fun compareByMultipleFeatures(): Comparator<Pair<Suggestion, Map<String, Any>>> {

@@ -8,21 +8,18 @@ import java.io.FileReader
 import java.io.FileWriter
 import java.nio.file.Paths
 
-class FeaturesStorageImpl(private val storageDir: String) : FeaturesStorage {
+class FeaturesStorageImpl(storageDir: String) : StorageWithMetadataBase(storageDir), FeaturesStorage {
   companion object {
-    private const val FILES_FEATURES_FILE = "files.json"
     private val gson: Gson = Gson()
   }
 
-  private var filesCounter: Int = 0
   private val fileFeaturesStorages: MutableMap<String, FileArchivesStorage> = mutableMapOf()
   private val fileMapping: MutableMap<String, String> = mutableMapOf()
   private val featuresInfo: FeaturesInfo = FeaturesInfo()
 
   init {
-    val featuresListFile = Paths.get(storageDir, FILES_FEATURES_FILE).toFile()
-    if (featuresListFile.exists()) {
-      val json = FileReader(featuresListFile).use { it.readText() }
+    if (metadataFile.exists()) {
+      val json = metadataFile.readText()
       val result = gson.fromJson(json, FilesFeaturesInfo::class.java)
       featuresInfo.addAllFeatures(result.features)
       fileFeaturesStorages.putAll(result.files.mapValues {
@@ -39,9 +36,9 @@ class FeaturesStorageImpl(private val storageDir: String) : FeaturesStorage {
     session.clearFeatures()
   }
 
-  override fun saveFeaturesInfo() {
+  override fun saveMetadata() {
     val filesFeaturesJson = gson.toJson(FilesFeaturesInfo(fileMapping, featuresInfo))
-    FileWriter(Paths.get(storageDir, FILES_FEATURES_FILE).toString()).use { it.write(filesFeaturesJson) }
+    metadataFile.writeText(filesFeaturesJson)
   }
 
   override fun getSessions(filePath: String): List<String> {
@@ -55,10 +52,9 @@ class FeaturesStorageImpl(private val storageDir: String) : FeaturesStorage {
   }
 
   private fun addFileFeaturesStorage(filePath: String) {
-    val targetDir = "${Paths.get(filePath).fileName}($filesCounter)"
+    val targetDir = toFileName(filePath)
     fileMapping[filePath] = targetDir
     fileFeaturesStorages[filePath] = FileArchivesStorage(Paths.get(storageDir, targetDir).toString())
-    filesCounter++
   }
 
   private class FeaturesInfo {
