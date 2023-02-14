@@ -16,7 +16,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDownloadConsole(private val myProject: Project) {
   private var started = false
-  private var finished = false
   private var hasErrors = false
 
   private var myTaskId = createTaskId()
@@ -32,7 +31,6 @@ class MavenDownloadConsole(private val myProject: Project) {
       return
     }
     started = true
-    finished = false
     hasErrors = false
     myProgressListener = progressListener
     shownIssues.clear()
@@ -92,7 +90,6 @@ class MavenDownloadConsole(private val myProject: Project) {
     myProgressListener.onEvent(myTaskId, FinishBuildEventImpl(myTaskId, null, System.currentTimeMillis(), "",
                                                               if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
 
-    finished = true
     started = false
   }
 
