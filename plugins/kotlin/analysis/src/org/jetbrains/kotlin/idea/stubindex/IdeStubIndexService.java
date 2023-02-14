@@ -34,7 +34,7 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexFile(@NotNull KotlinFileStub stub, @NotNull IndexSink sink) {
         FqName packageFqName = stub.getPackageFqName();
 
-        sink.occurrence(KotlinExactPackagesIndex.INSTANCE.getKey(), packageFqName.asString());
+        sink.occurrence(KotlinExactPackagesIndex.NAME, packageFqName.asString());
 
         if (stub.isScript()) return;
 
