@@ -192,7 +192,7 @@ class EnumEntryNameInspection : NamingConventionInspection(
     KotlinBundle.message("enum.entry"),
     "[A-Z]([A-Za-z\\d]*|[A-Z_\\d]*)"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_UPPER, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_UPPER, NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return enumEntryVisitor { enumEntry -> verifyName(enumEntry, holder) }
@@ -233,7 +233,7 @@ class TestFunctionNameInspection : NamingConventionInspection(
     KotlinBundle.message("test.function"),
     "[a-z][A-Za-z_\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_LOWER, NO_BAD_CHARACTERS)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { function ->
@@ -322,7 +322,7 @@ class ObjectPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("object.or.top.level.property"),
     "[A-Za-z][_A-Za-z\\d]*",
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_BAD_CHARACTERS)
 }
 
 class ObjectPrivatePropertyNameInspection : PropertyNameInspectionBase(
@@ -339,7 +339,7 @@ class PrivatePropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("private.property"),
     "_?[a-z][A-Za-z\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_MIDDLE_UNDERSCORES, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_MIDDLE_UNDERSCORES, NO_START_UPPER, NO_BAD_CHARACTERS_OR_UNDERSCORE)
 }
 
 class ConstPropertyNameInspection : PropertyNameInspectionBase(
@@ -347,7 +347,7 @@ class ConstPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("const.property"),
     "[A-Z][_A-Z\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf()
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_BAD_CHARACTERS)
 }
 
 class LocalVariableNameInspection : PropertyNameInspectionBase(
