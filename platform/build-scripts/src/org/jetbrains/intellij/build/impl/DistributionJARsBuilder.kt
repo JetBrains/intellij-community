@@ -795,8 +795,12 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
+  if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
     return if (withEphemeral) osFamily == null && arch == null else false
+  }
+
+  if (bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {
+    return false
   }
 
   return when {

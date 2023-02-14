@@ -11,8 +11,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -197,37 +195,7 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
     /**
      * Returns {@link PluginBundlingRestrictions} instance which can be used to exclude the plugin from some distributions.
      */
-    val bundlingRestrictions: PluginBundlingRestrictionBuilder = PluginBundlingRestrictionBuilder()
-
-    class PluginBundlingRestrictionBuilder {
-      /**
-       * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
-       */
-      var supportedOs: PersistentList<OsFamily> = OsFamily.ALL
-
-      /**
-       * Change this value if the plugin works on some architectures only and
-       * therefore don't need to be bundled with distributions for other architectures.
-       */
-      var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
-
-      /**
-       * Set to {@code true} if the plugin should be included in distribution for EAP builds only.
-       */
-      var includeInEapOnly: Boolean = false
-
-      var ephemeral: Boolean = false
-
-      internal fun build(): PluginBundlingRestrictions {
-        if (ephemeral) {
-          check(supportedOs == OsFamily.ALL)
-          check(supportedArch == JvmArchitecture.ALL)
-          check(!includeInEapOnly)
-          return PluginBundlingRestrictions.EPHEMERAL
-        }
-        return PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly)
-      }
-    }
+    val bundlingRestrictions: PluginBundlingRestrictions.Builder = PluginBundlingRestrictions.Builder()
 
     var mainJarName: String
       get() = layout.mainJarName

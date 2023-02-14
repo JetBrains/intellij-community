@@ -40,7 +40,8 @@ fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildCo
   val moreThanOneLayoutSubstitutors = HashMap<PluginLayout, PluginLayout>()
   for ((module, layouts) in moreThanOneLayoutMap) {
     context.messages.info("Module '$module' have ${layouts.size} layouts: $layouts")
-    val substitutor = layouts.firstOrNull  { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
+    val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
+                      ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
     if (substitutor != null) {
       layouts.forEach { if (it != substitutor) moreThanOneLayoutSubstitutors.put(it, substitutor) }
     }
