@@ -122,8 +122,8 @@ enum class VMOptionKind {
 
   fun icon(): Icon? = when (this) {
     Standard -> null
-    Product -> AllIcons.Actions.ArrowExpand
+    Product -> null
     Diagnostic -> AllIcons.General.ShowInfos
-    Experimental -> AllIcons.General.Warning
+    Experimental -> AllIcons.General.ShowWarning
   }
 }
