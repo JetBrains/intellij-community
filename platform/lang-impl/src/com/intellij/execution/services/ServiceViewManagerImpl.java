@@ -694,6 +694,10 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   public void loadState(@NotNull State state) {
     myState = state;
     for (ServiceViewState viewState : myState.viewStates) {
+      if (viewState == null) {
+        myState.viewStates = new SmartList<>();
+        break;
+      }
       viewState.treeState = TreeState.createFrom(viewState.treeStateElement);
     }
   }
