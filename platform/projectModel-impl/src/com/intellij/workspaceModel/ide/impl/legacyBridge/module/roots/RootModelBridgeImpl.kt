@@ -35,6 +35,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
   private val module: ModuleBridge = rootModel.moduleBridge
 
   private val extensions by lazy {
+    if (this.isDisposed.get()) throwDisposed()
     loadExtensions(storage = storage, module = module, writable = false, diff = null, parentDisposable = this)
   }
 
@@ -131,6 +132,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
+      if (parentDisposable is RootModelBridgeImpl && parentDisposable.isDisposed.get()) parentDisposable.throwDisposed()
       for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
