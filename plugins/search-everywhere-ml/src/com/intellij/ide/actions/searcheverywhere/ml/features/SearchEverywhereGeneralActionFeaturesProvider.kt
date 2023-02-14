@@ -2,7 +2,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
-import com.intellij.ide.util.gotoByName.GotoActionItemProvider
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -40,11 +40,20 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     }
 
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
-    val actionText = GotoActionItemProvider.getActionText(value)
-    actionText?.let {
+    val valueName = getValueName(value)
+    valueName?.let {
       data.addAll(getNameMatchingFeatures(it, searchQuery))
     }
     return data
+  }
+
+  private fun getValueName(value: Any): String? {
+    return when (value) {
+      is String -> value
+      is OptionDescription -> value.hit
+      is GotoActionModel.ActionWrapper -> value.presentation.text
+      else -> null
+    }
   }
 
   private fun isHighPriority(priority: Int): Boolean = priority >= 11001
