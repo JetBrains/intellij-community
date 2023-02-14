@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -197,8 +197,7 @@ public interface IntentionPreviewInfo {
     return new Html(fragment.wrapWith("p"));
   }
 
-  @NotNull
-  private static HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
+  private static @NotNull HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
     if (icon instanceof DeferredIcon) {
       icon = ((DeferredIcon)icon).evaluate();
     }
@@ -291,7 +290,7 @@ public interface IntentionPreviewInfo {
    * @return a presentation describing that the action will add the specified option to the options list
    */
   static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
-                                            @NotNull @Nls String title, 
+                                            @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);
     HtmlChunk select = HtmlChunk.tag("select").attr("multiple", "multiple").attr("size", maxToList)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -47,13 +33,12 @@ public interface FileModifier extends WriteActionAware {
    *
    * @param currentFile the same file where intention would be invoked (for {@link com.intellij.codeInspection.LocalQuickFix} it would be the containing file of {@link com.intellij.codeInspection.ProblemDescriptor#getPsiElement})
    */
-  @Nullable
-  default PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  default @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return startInWriteAction() ? currentFile : null;
   }
 
   /**
-   * Returns the equivalent file modifier that could be applied to the 
+   * Returns the equivalent file modifier that could be applied to the
    * non-physical copy of the file used to preview the modification.
    * May return itself if the action doesn't depend on the file.
    * <p>
@@ -64,7 +49,7 @@ public interface FileModifier extends WriteActionAware {
    * or have safe type. Safe types are primitives, enums, strings, primitive wrappers,
    * types annotated with {@link SafeTypeForPreview}, or arrays of any of these types.
    *
-   * @param target target non-physical file 
+   * @param target target non-physical file
    * @return the action that could be applied to the non-physical copy of the file.
    * Returns null if operation is not supported.
    */
@@ -80,8 +65,8 @@ public interface FileModifier extends WriteActionAware {
           type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
           type.equals(Long.class) || type.equals(Double.class) || type.equals(Float.class) ||
           type.equals(Short.class) || type.equals(Byte.class) || type.equals(Character.class) ||
-          // Back-link to the parent inspection looks safe, as inspection should not depend on the file 
-          (field.isSynthetic() && field.getName().equals("this$0") && 
+          // Back-link to the parent inspection looks safe, as inspection should not depend on the file
+          (field.isSynthetic() && field.getName().equals("this$0") &&
            LocalInspectionTool.class.isAssignableFrom(type))) {
         continue;
       }
