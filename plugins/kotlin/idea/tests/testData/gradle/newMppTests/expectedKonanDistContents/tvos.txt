@@ -1,102 +1,102 @@
-Kotlin/Native {{KGP_VERSION}} - AVFAudio
-Kotlin/Native {{KGP_VERSION}} - AVFoundation
-Kotlin/Native {{KGP_VERSION}} - AVKit
-Kotlin/Native {{KGP_VERSION}} - Accelerate
-Kotlin/Native {{KGP_VERSION}} - Accessibility
-Kotlin/Native {{KGP_VERSION}} - AdSupport
-Kotlin/Native {{KGP_VERSION}} - AppTrackingTransparency
-Kotlin/Native {{KGP_VERSION}} - AudioToolbox
-Kotlin/Native {{KGP_VERSION}} - AuthenticationServices
-Kotlin/Native {{KGP_VERSION}} - BackgroundTasks
-Kotlin/Native {{KGP_VERSION}} - CFCGTypes
-Kotlin/Native {{KGP_VERSION}} - CFNetwork
-Kotlin/Native {{KGP_VERSION}} - CloudKit
-Kotlin/Native {{KGP_VERSION}} - ColorSync
-Kotlin/Native {{KGP_VERSION}} - CommonCrypto
-Kotlin/Native {{KGP_VERSION}} - CoreAudio
-Kotlin/Native {{KGP_VERSION}} - CoreAudioTypes
-Kotlin/Native {{KGP_VERSION}} - CoreBluetooth
-Kotlin/Native {{KGP_VERSION}} - CoreData
-Kotlin/Native {{KGP_VERSION}} - CoreFoundation
-Kotlin/Native {{KGP_VERSION}} - CoreFoundationBase
-Kotlin/Native {{KGP_VERSION}} - CoreGraphics
-Kotlin/Native {{KGP_VERSION}} - CoreHaptics
-Kotlin/Native {{KGP_VERSION}} - CoreImage
-Kotlin/Native {{KGP_VERSION}} - CoreLocation
-Kotlin/Native {{KGP_VERSION}} - CoreMIDI
-Kotlin/Native {{KGP_VERSION}} - CoreML
-Kotlin/Native {{KGP_VERSION}} - CoreMedia
-Kotlin/Native {{KGP_VERSION}} - CoreServices
-Kotlin/Native {{KGP_VERSION}} - CoreSpotlight
-Kotlin/Native {{KGP_VERSION}} - CoreText
-Kotlin/Native {{KGP_VERSION}} - CoreVideo
-Kotlin/Native {{KGP_VERSION}} - CryptoTokenKit
-Kotlin/Native {{KGP_VERSION}} - DataDetection
-Kotlin/Native {{KGP_VERSION}} - DeviceCheck
-Kotlin/Native {{KGP_VERSION}} - DeviceDiscoveryUI
-Kotlin/Native {{KGP_VERSION}} - EAGL
-Kotlin/Native {{KGP_VERSION}} - ExtensionFoundation
-Kotlin/Native {{KGP_VERSION}} - ExtensionKit
-Kotlin/Native {{KGP_VERSION}} - ExternalAccessory
-Kotlin/Native {{KGP_VERSION}} - Foundation
-Kotlin/Native {{KGP_VERSION}} - GLKit
-Kotlin/Native {{KGP_VERSION}} - GameController
-Kotlin/Native {{KGP_VERSION}} - GameKit
-Kotlin/Native {{KGP_VERSION}} - GameplayKit
-Kotlin/Native {{KGP_VERSION}} - HomeKit
-Kotlin/Native {{KGP_VERSION}} - IOSurface
-Kotlin/Native {{KGP_VERSION}} - ImageIO
-Kotlin/Native {{KGP_VERSION}} - Intents
-Kotlin/Native {{KGP_VERSION}} - IntentsUI
-Kotlin/Native {{KGP_VERSION}} - JavaScriptCore
-Kotlin/Native {{KGP_VERSION}} - LinkPresentation
-Kotlin/Native {{KGP_VERSION}} - MLCompute
-Kotlin/Native {{KGP_VERSION}} - MapKit
-Kotlin/Native {{KGP_VERSION}} - MediaAccessibility
-Kotlin/Native {{KGP_VERSION}} - MediaPlayer
-Kotlin/Native {{KGP_VERSION}} - MediaToolbox
-Kotlin/Native {{KGP_VERSION}} - Metal
-Kotlin/Native {{KGP_VERSION}} - MetalKit
-Kotlin/Native {{KGP_VERSION}} - MetalPerformanceShaders
-Kotlin/Native {{KGP_VERSION}} - MetalPerformanceShadersGraph
-Kotlin/Native {{KGP_VERSION}} - MetricKit
-Kotlin/Native {{KGP_VERSION}} - MobileCoreServices
-Kotlin/Native {{KGP_VERSION}} - ModelIO
-Kotlin/Native {{KGP_VERSION}} - MultipeerConnectivity
-Kotlin/Native {{KGP_VERSION}} - NaturalLanguage
-Kotlin/Native {{KGP_VERSION}} - Network
-Kotlin/Native {{KGP_VERSION}} - OpenAL
-Kotlin/Native {{KGP_VERSION}} - OpenGLES
-Kotlin/Native {{KGP_VERSION}} - OpenGLES2
-Kotlin/Native {{KGP_VERSION}} - OpenGLES3
-Kotlin/Native {{KGP_VERSION}} - OpenGLESCommon
-Kotlin/Native {{KGP_VERSION}} - PHASE
-Kotlin/Native {{KGP_VERSION}} - Photos
-Kotlin/Native {{KGP_VERSION}} - PhotosUI
-Kotlin/Native {{KGP_VERSION}} - QuartzCore
-Kotlin/Native {{KGP_VERSION}} - ReplayKit
-Kotlin/Native {{KGP_VERSION}} - SceneKit
-Kotlin/Native {{KGP_VERSION}} - Security
-Kotlin/Native {{KGP_VERSION}} - SharedWithYou
-Kotlin/Native {{KGP_VERSION}} - SharedWithYouCore
-Kotlin/Native {{KGP_VERSION}} - ShazamKit
-Kotlin/Native {{KGP_VERSION}} - SoundAnalysis
-Kotlin/Native {{KGP_VERSION}} - SpriteKit
-Kotlin/Native {{KGP_VERSION}} - StoreKit
-Kotlin/Native {{KGP_VERSION}} - SystemConfiguration
-Kotlin/Native {{KGP_VERSION}} - TVMLKit
-Kotlin/Native {{KGP_VERSION}} - TVServices
-Kotlin/Native {{KGP_VERSION}} - TVUIKit
-Kotlin/Native {{KGP_VERSION}} - UIKit
-Kotlin/Native {{KGP_VERSION}} - UniformTypeIdentifiers
-Kotlin/Native {{KGP_VERSION}} - UserNotifications
-Kotlin/Native {{KGP_VERSION}} - VideoSubscriberAccount
-Kotlin/Native {{KGP_VERSION}} - VideoToolbox
-Kotlin/Native {{KGP_VERSION}} - Vision
-Kotlin/Native {{KGP_VERSION}} - _CoreData_CloudKit
-Kotlin/Native {{KGP_VERSION}} - builtin
-Kotlin/Native {{KGP_VERSION}} - darwin
-Kotlin/Native {{KGP_VERSION}} - iconv
-Kotlin/Native {{KGP_VERSION}} - objc
-Kotlin/Native {{KGP_VERSION}} - posix
-Kotlin/Native {{KGP_VERSION}} - zlib
+Kotlin/Native: platform.AVFAudio
+Kotlin/Native: platform.AVFoundation
+Kotlin/Native: platform.AVKit
+Kotlin/Native: platform.Accelerate
+Kotlin/Native: platform.Accessibility
+Kotlin/Native: platform.AdSupport
+Kotlin/Native: platform.AppTrackingTransparency
+Kotlin/Native: platform.AudioToolbox
+Kotlin/Native: platform.AuthenticationServices
+Kotlin/Native: platform.BackgroundTasks
+Kotlin/Native: platform.CFCGTypes
+Kotlin/Native: platform.CFNetwork
+Kotlin/Native: platform.CloudKit
+Kotlin/Native: platform.ColorSync
+Kotlin/Native: platform.CommonCrypto
+Kotlin/Native: platform.CoreAudio
+Kotlin/Native: platform.CoreAudioTypes
+Kotlin/Native: platform.CoreBluetooth
+Kotlin/Native: platform.CoreData
+Kotlin/Native: platform.CoreFoundation
+Kotlin/Native: platform.CoreFoundationBase
+Kotlin/Native: platform.CoreGraphics
+Kotlin/Native: platform.CoreHaptics
+Kotlin/Native: platform.CoreImage
+Kotlin/Native: platform.CoreLocation
+Kotlin/Native: platform.CoreMIDI
+Kotlin/Native: platform.CoreML
+Kotlin/Native: platform.CoreMedia
+Kotlin/Native: platform.CoreServices
+Kotlin/Native: platform.CoreSpotlight
+Kotlin/Native: platform.CoreText
+Kotlin/Native: platform.CoreVideo
+Kotlin/Native: platform.CryptoTokenKit
+Kotlin/Native: platform.DataDetection
+Kotlin/Native: platform.DeviceCheck
+Kotlin/Native: platform.DeviceDiscoveryUI
+Kotlin/Native: platform.EAGL
+Kotlin/Native: platform.ExtensionFoundation
+Kotlin/Native: platform.ExtensionKit
+Kotlin/Native: platform.ExternalAccessory
+Kotlin/Native: platform.Foundation
+Kotlin/Native: platform.GLKit
+Kotlin/Native: platform.GameController
+Kotlin/Native: platform.GameKit
+Kotlin/Native: platform.GameplayKit
+Kotlin/Native: platform.HomeKit
+Kotlin/Native: platform.IOSurface
+Kotlin/Native: platform.ImageIO
+Kotlin/Native: platform.Intents
+Kotlin/Native: platform.IntentsUI
+Kotlin/Native: platform.JavaScriptCore
+Kotlin/Native: platform.LinkPresentation
+Kotlin/Native: platform.MLCompute
+Kotlin/Native: platform.MapKit
+Kotlin/Native: platform.MediaAccessibility
+Kotlin/Native: platform.MediaPlayer
+Kotlin/Native: platform.MediaToolbox
+Kotlin/Native: platform.Metal
+Kotlin/Native: platform.MetalKit
+Kotlin/Native: platform.MetalPerformanceShaders
+Kotlin/Native: platform.MetalPerformanceShadersGraph
+Kotlin/Native: platform.MetricKit
+Kotlin/Native: platform.MobileCoreServices
+Kotlin/Native: platform.ModelIO
+Kotlin/Native: platform.MultipeerConnectivity
+Kotlin/Native: platform.NaturalLanguage
+Kotlin/Native: platform.Network
+Kotlin/Native: platform.OpenAL
+Kotlin/Native: platform.OpenGLES
+Kotlin/Native: platform.OpenGLES2
+Kotlin/Native: platform.OpenGLES3
+Kotlin/Native: platform.OpenGLESCommon
+Kotlin/Native: platform.PHASE
+Kotlin/Native: platform.Photos
+Kotlin/Native: platform.PhotosUI
+Kotlin/Native: platform.QuartzCore
+Kotlin/Native: platform.ReplayKit
+Kotlin/Native: platform.SceneKit
+Kotlin/Native: platform.Security
+Kotlin/Native: platform.SharedWithYou
+Kotlin/Native: platform.SharedWithYouCore
+Kotlin/Native: platform.ShazamKit
+Kotlin/Native: platform.SoundAnalysis
+Kotlin/Native: platform.SpriteKit
+Kotlin/Native: platform.StoreKit
+Kotlin/Native: platform.SystemConfiguration
+Kotlin/Native: platform.TVMLKit
+Kotlin/Native: platform.TVServices
+Kotlin/Native: platform.TVUIKit
+Kotlin/Native: platform.UIKit
+Kotlin/Native: platform.UniformTypeIdentifiers
+Kotlin/Native: platform.UserNotifications
+Kotlin/Native: platform.VideoSubscriberAccount
+Kotlin/Native: platform.VideoToolbox
+Kotlin/Native: platform.Vision
+Kotlin/Native: platform._CoreData_CloudKit
+Kotlin/Native: platform.builtin
+Kotlin/Native: platform.darwin
+Kotlin/Native: platform.iconv
+Kotlin/Native: platform.objc
+Kotlin/Native: platform.posix
+Kotlin/Native: platform.zlib

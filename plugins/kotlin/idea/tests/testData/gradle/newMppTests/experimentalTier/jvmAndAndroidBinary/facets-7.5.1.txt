@@ -48,6 +48,7 @@ project.consumer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonTest
+    additionalVisibleModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain, :consumer:jvmMain
     targetPlatform = JVM (1.8)
 
 project.consumer.main
@@ -113,6 +114,7 @@ project.producer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
+    additionalVisibleModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain, :producer:jvmMain
     targetPlatform = JVM (1.8)
 
 project.producer.main

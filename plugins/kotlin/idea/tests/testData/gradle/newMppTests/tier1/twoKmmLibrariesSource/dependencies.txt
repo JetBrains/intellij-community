@@ -39,11 +39,9 @@ project.kmmConsumer.iosX64Test
 
 project.kmmConsumer.jvmMain
     kmmLib.commonMain (COMPILE)
-    kmmLib.commonMain (COMPILE)
     kmmLib.jvmMain (COMPILE)
 
 project.kmmConsumer.jvmTest
-    kmmLib.commonMain (TEST)
     kmmLib.commonMain (TEST)
     kmmLib.jvmMain (TEST)
 

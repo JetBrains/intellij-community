@@ -25,13 +25,13 @@ project.commonTest
 
 project.iosArm64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
     iosMain (refines, COMPILE)
 
 project.iosArm64Test
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     iosArm64Main (friend, TEST)
@@ -40,29 +40,25 @@ project.iosArm64Test
 
 project.iosMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
 
 project.iosTest
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     iosMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
 
 project.iosX64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
     iosMain (refines, COMPILE)
 
 project.iosX64Test
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
+    Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     iosMain (friend, TEST)
