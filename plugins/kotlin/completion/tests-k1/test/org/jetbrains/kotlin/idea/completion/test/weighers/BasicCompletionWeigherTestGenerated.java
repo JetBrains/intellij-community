@@ -485,6 +485,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver2.kt");
         }
 
+        @TestMetadata("MethodsFromAnyImplicitReceivers.kt")
+        public void testMethodsFromAnyImplicitReceivers() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyImplicitReceivers.kt");
+        }
+
         @TestMetadata("MethodsFromIntersectionType.kt")
         public void testMethodsFromIntersectionType() throws Exception {
             runTest("../testData/weighers/basic/MethodsFromIntersectionType.kt");

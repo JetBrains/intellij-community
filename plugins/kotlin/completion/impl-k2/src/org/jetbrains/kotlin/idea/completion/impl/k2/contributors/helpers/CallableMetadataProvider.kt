@@ -187,6 +187,8 @@ internal object CallableMetadataProvider {
         returnCastRequiredOnReceiverTypeMismatch: Boolean
     ): CallableMetadata? {
         if (expectedReceiverType is KtFunctionType) return null
+
+        var allReceiverTypesMatch = true
         var bestMatchIndex: Int? = null
         var bestMatchWeightKind: CallableKind? = null
 
@@ -197,17 +199,21 @@ internal object CallableMetadataProvider {
                     bestMatchWeightKind = weightKind
                     bestMatchIndex = i
                 }
+            } else {
+                allReceiverTypesMatch = false
             }
         }
 
-        // TODO: FE1.0 has logic that uses `null` for receiverIndex if the symbol matches every actual receiver in order to "prevent members
-        //  of `Any` to show up on top". But that seems hacky and can cause collateral damage if the implicit receivers happen to implement
-        //  some common interface. So that logic is left out here for now. We can add it back in future if needed.
         if (bestMatchWeightKind == null) {
             return if (returnCastRequiredOnReceiverTypeMismatch)
                 CallableMetadata(CallableKind.ReceiverCastRequired, null)
             else null
         }
+
+        // use `null` for the receiver index if the symbol matches every actual receiver in order to prevent members of common super
+        // classes such as `Any` from appearing on top
+        if (allReceiverTypesMatch && actualReceiverTypes.size > 1) bestMatchIndex = null
+
         return CallableMetadata(bestMatchWeightKind, bestMatchIndex)
     }
 
