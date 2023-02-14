@@ -82,6 +82,12 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private fun presentationFlowFor(sourceKind: XSourceKind): Flow<PositionPresentation?> {
     return executionPointState
       .onCompletion { emit(null) }
+      .mapLatest {
+        if (it == null) {
+          delay(25.milliseconds)
+        }
+        it
+      }
       .transformLatest { executionPoint ->
         kotlin.runCatching {
           val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
