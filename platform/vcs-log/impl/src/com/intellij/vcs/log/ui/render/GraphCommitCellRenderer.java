@@ -69,7 +69,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       if (myComponent.getReferencePainter().isLeftAligned()) {
-        double distance = point.getX() - myTemplateComponent.getGraphWidth(cell.getPrintElements());
+        double distance = point.getX() - MyComponent.getGraphWidth(myGraphTable, cell.getPrintElements());
         if (distance > 0 && distance <= getReferencesWidth(row, cell)) {
           return new TooltipReferencesPanel(myLogData, refs);
         }
@@ -104,7 +104,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private int getGraphWidth(int row) {
     GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, Commit.INSTANCE));
-    return myTemplateComponent.getGraphWidth(cell.getPrintElements());
+    return MyComponent.getGraphWidth(myGraphTable, cell.getPrintElements());
   }
 
   private int getTooltipXCoordinate(int row) {
@@ -214,8 +214,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       getCellState().updateRenderer(this);
 
       myPrintElements = cell.getPrintElements();
-      double maxIndex = getMaxGraphElementIndex(myPrintElements);
-      myGraphWidth = (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
+      myGraphWidth = getGraphWidth(myGraphTable, myPrintElements);
 
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
@@ -288,12 +287,16 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       return myHeight;
     }
 
-    private int getGraphWidth(@NotNull Collection<? extends PrintElement> printElements) {
-      double maxIndex = getMaxGraphElementIndex(printElements);
-      return (int)(maxIndex * PaintParameters.getNodeWidth(myGraphTable.getRowHeight()));
+    public @NotNull VcsLogLabelPainter getReferencePainter() {
+      return myReferencePainter;
     }
 
-    private double getMaxGraphElementIndex(@NotNull Collection<? extends PrintElement> printElements) {
+    @Override
+    public FontMetrics getFontMetrics(Font font) {
+      return myGraphTable.getFontMetrics(font);
+    }
+
+    private static int getGraphWidth(@NotNull VcsLogGraphTable table, @NotNull Collection<? extends PrintElement> printElements) {
       if (printElements.isEmpty()) return 0;
 
       double maxIndex = 0;
@@ -305,18 +308,9 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         }
       }
       maxIndex++;
+      maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, table.getVisibleGraph().getRecommendedWidth()));
 
-      maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, myGraphTable.getVisibleGraph().getRecommendedWidth()));
-      return maxIndex;
-    }
-
-    public @NotNull VcsLogLabelPainter getReferencePainter() {
-      return myReferencePainter;
-    }
-
-    @Override
-    public FontMetrics getFontMetrics(Font font) {
-      return myGraphTable.getFontMetrics(font);
+      return (int)(maxIndex * PaintParameters.getNodeWidth(table.getRowHeight()));
     }
   }
 
