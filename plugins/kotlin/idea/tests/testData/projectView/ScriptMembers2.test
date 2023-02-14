@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// FILE: settings.gradle.kts
+// PATH: settings.gradle.kts
+// SHOW_MEMBERS: TRUE
+rootProject.name = "simple2"
+
+include()
