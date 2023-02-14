@@ -1,118 +1,91 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.externalSystem.test;
+@file:JvmName("JavaCompileTestUtil")
 
-import com.intellij.compiler.artifacts.ArtifactsTestUtil;
-import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.task.ProjectTaskManager;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ExceptionUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-import org.junit.jupiter.api.Assertions;
+package com.intellij.openapi.externalSystem.test
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import com.intellij.compiler.impl.ModuleCompileScope
+import com.intellij.openapi.compiler.CompileScope
+import com.intellij.openapi.compiler.CompilerMessageCategory
+import com.intellij.openapi.externalSystem.util.runReadAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.packaging.artifacts.ArtifactManager
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope
+import com.intellij.task.ProjectTaskManager
+import com.intellij.testFramework.CompilerTester
+import com.intellij.testFramework.concurrency.waitForPromise
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlin.time.Duration.Companion.minutes
 
 
-public class JavaCompileTestUtil {
-
-  public static void compileModules(@NotNull Project project, boolean useProjectTaskManager, String... moduleNames) {
-    if (useProjectTaskManager) {
-      Module[] modules = Arrays.stream(moduleNames).map(moduleName -> getModule(project, moduleName)).toArray(Module[]::new);
-      build(project, modules);
-    }
-    else {
-      compile(project, createModulesCompileScope(project, moduleNames));
-    }
+fun compileModules(project: Project, useProjectTaskManager: Boolean, vararg moduleNames: String) {
+  val modules = runReadAction { collectModules(project, *moduleNames) }
+  if (useProjectTaskManager) {
+    val projectTaskManager = ProjectTaskManager.getInstance(project)
+    val promise = projectTaskManager.build(*modules.toTypedArray())
+    promise.waitForPromise(2.minutes)
   }
-
-  public static void buildArtifacts(@NotNull Project project, boolean useProjectTaskManager, String... artifactNames) {
-    if (useProjectTaskManager) {
-      Artifact[] artifacts = Arrays.stream(artifactNames)
-        .map(artifactName -> findArtifact(project, artifactName)).toArray(Artifact[]::new);
-      build(project, artifacts);
-    }
-    else {
-      compile(project, createArtifactsScope(project, artifactNames));
-    }
+  else {
+    compile(project, ModuleCompileScope(project, modules.toTypedArray(), false))
   }
+}
 
-  private static void build(@NotNull Project project, Object @NotNull [] buildableElements) {
-    Promise<ProjectTaskManager.Result> promise;
-    if (buildableElements instanceof Module[]) {
-      promise = ProjectTaskManager.getInstance(project).build((Module[])buildableElements);
-    }
-    else if (buildableElements instanceof Artifact[]) {
-      promise = ProjectTaskManager.getInstance(project).build((Artifact[])buildableElements);
-    }
-    else {
-      throw new AssertionError("Unsupported buildableElements: " + Arrays.toString(buildableElements));
-    }
-    runInEdtAndWait(() -> PlatformTestUtil.waitForPromise(promise));
+fun buildArtifacts(project: Project, useProjectTaskManager: Boolean, vararg artifactNames: String) {
+  val artifacts = runReadAction { collectArtifacts(project, *artifactNames) }
+  if (useProjectTaskManager) {
+    val projectTaskManager = ProjectTaskManager.getInstance(project)
+    val promise = projectTaskManager.build(*artifacts.toTypedArray())
+    promise.waitForPromise(2.minutes)
   }
+  else {
+    compile(project, ArtifactCompileScope.createArtifactsScope(project, artifacts))
+  }
+}
 
-  private static void compile(@NotNull Project project, @NotNull CompileScope scope) {
-    try {
-      CompilerTester tester = new CompilerTester(project, Arrays.asList(scope.getAffectedModules()), null);
-      try {
-        List<CompilerMessage> messages = tester.make(scope);
-        for (CompilerMessage message : messages) {
-          switch (message.getCategory()) {
-            case ERROR:
-              Assertions.fail("Compilation failed with error: " + message.getMessage());
-              break;
-            case WARNING:
-              System.out.println("Compilation warning: " + message.getMessage());
-              break;
-            case INFORMATION, STATISTICS:
-              break;
-          }
-        }
+private fun compile(project: Project, scope: CompileScope) {
+  val tester = CompilerTester(project, scope.affectedModules.toList(), null)
+  try {
+    val messages = tester.make(scope)
+    for (message in messages) {
+      if (message.category == CompilerMessageCategory.ERROR) {
+        throw AssertionError("Compilation failed with error: " + message.message)
       }
-      finally {
-        tester.tearDown();
+      if (message.category == CompilerMessageCategory.WARNING) {
+        println("Compilation warning: " + message.message)
       }
     }
-    catch (Exception e) {
-      ExceptionUtil.rethrow(e);
+  }
+  finally {
+    tester.tearDown()
+  }
+}
+
+@RequiresReadLock
+private fun collectModules(project: Project, vararg moduleNames: String): List<Module> {
+  val moduleManager = ModuleManager.getInstance(project)
+  val modules = ArrayList<Module>()
+  for (moduleName in moduleNames) {
+    val module = moduleManager.findModuleByName(moduleName)
+    if (module == null) {
+      throw AssertionError("Cannot find $moduleName module")
     }
+    modules.add(module)
   }
+  return modules
+}
 
-  private static CompileScope createModulesCompileScope(@NotNull Project project, String[] moduleNames) {
-    final List<Module> modules = new ArrayList<>();
-    for (String name : moduleNames) {
-      modules.add(getModule(project, name));
+@RequiresReadLock
+private fun collectArtifacts(project: Project, vararg artifactNames: String): List<Artifact> {
+  val artifactManager = ArtifactManager.getInstance(project)
+  val artifacts = ArrayList<Artifact>()
+  for (artifactName in artifactNames) {
+    val artifact = artifactManager.findArtifact(artifactName)
+    if (artifact == null) {
+      throw AssertionError("Cannot find $artifactName artifact")
     }
-    return new ModuleCompileScope(project, modules.toArray(Module.EMPTY_ARRAY), false);
+    artifacts.add(artifact)
   }
-
-  private static CompileScope createArtifactsScope(@NotNull Project project, String[] artifactNames) {
-    List<Artifact> artifacts = new ArrayList<>();
-    for (String name : artifactNames) {
-      artifacts.add(findArtifact(project, name));
-    }
-    return ArtifactCompileScope.createArtifactsScope(project, artifacts);
-  }
-
-  private static Artifact findArtifact(Project project, String artifactName) {
-    return ReadAction.compute(() -> ArtifactsTestUtil.findArtifact(project, artifactName));
-  }
-
-  private static Module getModule(Project project, String name) {
-    Module m = ReadAction.compute(() -> ModuleManager.getInstance(project).findModuleByName(name));
-    Assertions.assertNotNull(m, "Module " + name + " not found");
-    return m;
-  }
+  return artifacts
 }
