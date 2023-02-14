@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -22,7 +22,7 @@ import java.util.List;
 public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
                           @NotNull LocMessage label,
                           @NotNull List<@NotNull OptRegularComponent> children,
-                          @Nullable HtmlChunk description) implements OptControl, OptDescribedComponent {
+                          @Nullable HtmlChunk description) implements OptControl, OptDescribedComponent, OptRegularComponent {
   /**
    * @param description textual description
    * @return an equivalent checkbox but with a description

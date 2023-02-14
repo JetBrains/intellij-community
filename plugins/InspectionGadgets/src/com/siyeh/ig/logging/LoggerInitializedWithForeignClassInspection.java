@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -78,9 +78,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public @NotNull OptPane getOptionsPane() {
     return pane(
       table("",
-            stringList("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
+            column("loggerFactoryClassNames", InspectionGadgetsBundle.message("logger.factory.class.name"),
                        new JavaClassValidator()),
-            stringList("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
+            column("loggerFactoryMethodNames", InspectionGadgetsBundle.message("logger.factory.method.name"),
                        new JavaIdentifierValidator())),
       checkbox("ignoreSuperClass", InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.ignore.super.class.option")),
       checkbox("ignoreNonPublicClasses",

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui
 
-import com.intellij.codeInspection.options.OptStringList
 import com.intellij.codeInspection.options.StringValidator
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.Disposable
@@ -94,12 +93,12 @@ private class BackgroundValidationsHolder(val context: Disposable, val project: 
 
 private data class ValidationResult(val isDumbMode: Boolean = false, val value: String = "", var errorMessage: String?)
 
-internal fun addColumnValidators(table: ListTable, components: List<OptStringList>, parent: Disposable?, project: Project?) {
+internal fun addColumnValidators(table: ListTable, components: List<StringValidator?>, parent: Disposable?, project: Project?) {
   if (project == null || parent == null) return
   var hasInstalledValidators = false
   val validationHolder = BackgroundValidationsHolder(parent, project, table)
-  for ((index, child) in components.withIndex()) {
-    val validator = child.validator ?: continue
+  for ((index, validator) in components.withIndex()) {
+    validator ?: continue
     hasInstalledValidators = true
     validationHolder.setValidator(index, validator)
     val cellEditor = ExtendableTextField()
