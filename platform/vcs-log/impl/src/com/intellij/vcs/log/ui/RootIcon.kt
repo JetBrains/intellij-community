@@ -18,9 +18,7 @@ object RootIcon {
     color: Color,
   ): ColorIcon {
     val size = iconSize
-    val arc = if (ExperimentalUI.isNewUI()) arcSize else 0
-
-    return ColorIcon(size, size, size, size, color, false, arc)
+    return ColorIcon(size, size, size, size, color, false, arcSize)
   }
 
   @JvmStatic
@@ -45,7 +43,8 @@ object RootIcon {
     init {
       val icon = if (ExperimentalUI.isNewUI()) {
         IconUtil.resizeSquared(LafIconLookup.getIcon("checkmark", true), checkMarkSize)
-      } else {
+      }
+      else {
         PlatformIcons.CHECK_ICON_SMALL
       }
       mySizedIcon = SizedIcon(icon, checkMarkSize, checkMarkSize)
@@ -62,8 +61,9 @@ object RootIcon {
 
     override fun paintIcon(component: Component, g: Graphics, i: Int, j: Int) {
       super.paintIcon(component, g, i, j)
-      val offset = (iconWidth - mySizedIcon.iconWidth) / 2
+
       if (mySelected) {
+        val offset = (iconWidth - mySizedIcon.iconWidth) / 2
         mySizedIcon.paintIcon(component, g, i + offset, j + offset)
       }
     }
