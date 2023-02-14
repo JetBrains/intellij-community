@@ -10,12 +10,13 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
+public class JavaCodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testSuggestSemanticNameEnumConstantVariable() {
     @Language("JAVA") String source = """
@@ -93,7 +94,26 @@ public class CodeStyleManagerTest extends LightJavaCodeInsightFixtureTestCase {
                           """, VariableKind.PARAMETER, "compareTo", "compare", "i");
   }
 
-  private void checkSuggestedNames(@NotNull @Language("JAVA") String code, @NotNull VariableKind kind, String @NotNull ... expected) {
+  public void testNameSuggestionFromLiteralArgument() {
+    checkSuggestedNames("class A {{new Str<caret>ing(\"string with spaces\")}}",
+                        VariableKind.LOCAL_VARIABLE,
+                        "stringWithSpaces", "string_with_spaces", "withSpaces", "with_spaces", "spaces", "string", "s");
+  }
+
+  public void testWordByPreposition() {
+    checkSuggestedNames("class A {{getParent<caret>OfType()} String getParentOfType() {return null;}}",
+                        VariableKind.LOCAL_VARIABLE,
+                        "getParentOfType", "parentOfType", "ofType", "type", "parent", "s", "string");
+  }
+
+  public void testNameByAssignmentContext() {
+    checkSuggestedNames("class A {{String bar = \"<caret>\";}}",
+                        VariableKind.PARAMETER,
+                        "bar", "s", "string");
+  }
+
+  private void checkSuggestedNames(@NotNull String code, @NotNull VariableKind kind, String @NotNull ... expected) {
+    assert EditorTestUtil.getCaretPosition(code) >= 0 : "No <caret> specified";
     PsiFile file = myFixture.configureByText("Test.java", code);
     PsiElement element = PsiUtilCore.getElementAtOffset(file, myFixture.getCaretOffset());
     PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
