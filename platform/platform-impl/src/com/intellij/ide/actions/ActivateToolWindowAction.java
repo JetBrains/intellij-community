@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,7 @@ import java.awt.event.KeyEvent;
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-public class ActivateToolWindowAction extends DumbAwareAction {
+public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware {
   private final String myToolWindowId;
 
   protected ActivateToolWindowAction(@NotNull String toolWindowId) {
@@ -38,6 +39,11 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
   public @NotNull String getToolWindowId() {
     return myToolWindowId;
+  }
+
+  @Override
+  public boolean alwaysShowIconInMainMenu() {
+    return true;
   }
 
   public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow, @NotNull ActionManager actionManager) {
