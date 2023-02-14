@@ -879,6 +879,7 @@ public final class FSRecordsImpl {
 
   public @NotNull AttributeOutputStream writeAttribute(final int fileId,
                                                        final @NotNull FileAttribute attribute) {
+    //TODO RC: we need to check fileId here, and throw exception if it is not valid
     return attributeAccessor.writeAttribute(fileId, attribute);
   }
 

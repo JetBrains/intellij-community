@@ -443,6 +443,7 @@ public final class FSRecords {
 
   public static @NotNull AttributeOutputStream writeAttribute(final int fileId,
                                                               final @NotNull FileAttribute attribute) {
+    //TODO RC: we need to check fileId here, and throw exception if it is not valid
     return implOrFail().writeAttribute(fileId, attribute);
   }
 
