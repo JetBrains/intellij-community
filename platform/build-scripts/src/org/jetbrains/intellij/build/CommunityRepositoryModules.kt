@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build
@@ -44,6 +44,12 @@ object CommunityRepositoryModules {
     },
     plugin("intellij.webp") { spec ->
       spec.bundlingRestrictions.ephemeral = true
+    },
+    plugin("intellij.webp") { spec ->
+      spec.bundlingRestrictions.marketplace = true
+      spec.withResource("lib/libwebp/linux", "lib/libwebp/linux")
+      spec.withResource("lib/libwebp/mac", "lib/libwebp/mac")
+      spec.withResource("lib/libwebp/win", "lib/libwebp/win")
     },
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
