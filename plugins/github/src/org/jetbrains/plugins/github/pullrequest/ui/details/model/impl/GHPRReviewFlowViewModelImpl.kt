@@ -128,10 +128,11 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
+    val reviewers = (reviewerAndReviewState.value.keys + metadataModel.reviewers).toList()
     GHUIUtil.showChooserPopup(
       parentComponent,
       GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
-      metadataModel.reviewers,
+      reviewers,
       metadataModel.loadPotentialReviewers()
     ).thenAccept { selectedReviewers ->
       metadataModel.adjustReviewers(EmptyProgressIndicator(), selectedReviewers)
