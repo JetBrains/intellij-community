@@ -522,7 +522,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       if (state) {
         setLayout(myActionLayout);
       }
-      else if (!isShowActionsInTabs()) {
+      else {
         if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
           mySplitter.setOrientation(!myIsVerticalSplit);
           myIsVerticalSplit = !myIsVerticalSplit;
