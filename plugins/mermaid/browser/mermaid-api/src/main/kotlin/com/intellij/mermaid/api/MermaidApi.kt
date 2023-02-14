@@ -22,6 +22,13 @@ external interface MermaidApi {
 
 inline fun MermaidApi.renderAsync(
   id: String,
+  text: String
+): Promise<String?> {
+  return renderAsync(id, text, element = undefined, callback = undefined)
+}
+
+inline fun MermaidApi.renderAsync(
+  id: String,
   text: String,
   element: Element?,
   noinline callback: RenderCallback?

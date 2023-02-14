@@ -1,12 +1,11 @@
 package com.intellij.mermaid.jcef
 
 import com.intellij.mermaid.api.Mermaid
+import com.intellij.mermaid.api.MermaidApi
 import com.intellij.mermaid.api.renderAsync
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
-import kotlinx.coroutines.async
 import kotlinx.coroutines.await
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.w3c.dom.Element
 import org.w3c.dom.HTMLElement
@@ -14,38 +13,50 @@ import org.w3c.dom.Node
 import org.w3c.dom.asList
 import org.w3c.dom.parsing.XMLSerializer
 
-val nodeToLastValidHTML = mutableMapOf<Element, String>()
+val nodeToLastValidHtml = mutableMapOf<Element, String>()
+
+private suspend fun MermaidApi.render(id: String, text: String): Result<String?> {
+  return runCatching {
+    Mermaid.api.renderAsync(id, text).await()
+  }
+}
+
+private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
+  val blockParent = block.findCodeBlockContainer()
+  val lastValidRenderResult = nodeToLastValidHtml[blockParent] ?: ""
+  // language=HTML
+  val html = """<div class="error-text">${exception.message}</div>$lastValidRenderResult"""
+  block.innerHTML = html
+  block.findSvgElement()?.setAttribute("opacity", "50%")
+}
 
 suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): Node? {
   val id = "mermaid-generated-$cacheId"
-  var node: Node? = null
-  try {
-    Mermaid.api.renderAsync(id, content, block) { svg ->
-      block.innerHTML = svg
-      node = block.getSvgElement()
-      addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
-    }.await()
-
-    nodeToLastValidHTML[block.getLanguageMermaidCodeBlockParent()] = block.innerHTML
-  } catch (exception: Throwable) {
+  val renderResult = Mermaid.api.render(id, content)
+  val svg = renderResult.getOrNull()
+  if (svg == null) {
+    val exception = renderResult.exceptionOrNull()
+    if (exception == null) {
+      console.error("Failed to generate block without exception for\n$content")
+      return null
+    }
     console.error("Error while generating blocks:\n", exception)
-
-    block.innerHTML = "<div class=\"error-text\">${exception.message}</div>"
-      .plus(nodeToLastValidHTML.getOrElse(block.getLanguageMermaidCodeBlockParent()) { "" })
-
-    block.getSvgElement()?.setAttribute("opacity", "50%")
-
-    node = null
+    handleFailedRender(block, exception)
+    return null
   }
+  block.innerHTML = svg
+  val node = block.findSvgElement()
+  checkNotNull(node) { "Failed to find svg node after append" }
+  addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
+  nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
   return node
 }
 
-private fun HTMLElement.getSvgElement(): Element? {
-  return childNodes.asList().filterIsInstance<Element>()
-    .firstOrNull { it.nodeName == "svg" }
+private fun HTMLElement.findSvgElement(): Element? {
+  return childNodes.asList().filterIsInstance<Element>().firstOrNull { it.nodeName == "svg" }
 }
 
-private fun HTMLElement.getLanguageMermaidCodeBlockParent(): Element {
+private fun HTMLElement.findCodeBlockContainer(): Element {
   val parentElement = parentElement
   checkNotNull(parentElement)
   check(parentElement.className == "language-mermaid")
@@ -76,7 +87,6 @@ suspend fun processBlock(block: HTMLElement): Node? {
   val content = block.getAttribute("data-actual-fence-content")
   checkNotNull(content) { "data-actual-fence-content was not set for block" }
   val actualContent = decode(content)
-  // TODO: Validate result
   val generated = renderBlock(block, cacheId, actualContent) ?: return null
   cacheBlock(cacheId, generated)
   return generated
@@ -84,7 +94,10 @@ suspend fun processBlock(block: HTMLElement): Node? {
 
 suspend fun renderBlocks(blocks: List<HTMLElement>) {
   coroutineScope {
-    val jobs = blocks.map { async { processBlock(it) } }
-    jobs.awaitAll()
+    for (block in blocks) {
+      // renderAsync for some reason depends on some global state,
+      // so it is not possible to run it in parallel
+      processBlock(block)
+    }
   }
 }
