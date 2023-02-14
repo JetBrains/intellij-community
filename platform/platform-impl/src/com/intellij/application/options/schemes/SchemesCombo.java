@@ -6,7 +6,6 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Predicates;
 import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -37,6 +36,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
       @Nullable
       @Override
       public ListSeparator separatorFor(MySchemeListItem<T> value) {
+        if (!supportsProjectSchemes()) return null;
         if (firstProjectScheme != null && firstProjectScheme.equals(value.getScheme()))
           return new ListSeparator(IdeBundle.message("separator.scheme.stored.in", PROJECT_LEVEL.get()));
         if (firstIDEScheme != null && firstIDEScheme.equals(value.getScheme()))
@@ -53,11 +53,11 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     firstProjectScheme = null;
     firstIDEScheme = null;
     if (supportsProjectSchemes()) {
-      addItems(schemes, scheme -> isProjectScheme(scheme));
-      addItems(schemes, scheme -> !isProjectScheme(scheme));
+      addItems(schemes, scheme -> scheme != null && isProjectScheme(scheme));
+      addItems(schemes, scheme -> scheme != null && !isProjectScheme(scheme));
     }
     else {
-      addItems(schemes, Predicates.alwaysTrue());
+      addItems(schemes, scheme -> scheme != null);
     }
   }
 
