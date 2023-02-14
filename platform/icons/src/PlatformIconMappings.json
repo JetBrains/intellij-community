@@ -614,10 +614,7 @@
       "info.svg": "general/balloonInformation.svg",
       "infoOutline.svg": "general/showInfos.svg",
       "warning.svg": "general/balloonWarning.svg",
-      "warningOutline.svg": [
-        "general/showWarning.svg",
-        "general/warning.svg"
-      ]
+      "warningOutline.svg": "general/showWarning.svg"
     },
     "toolbar": {
       "unknown.svg": "toolbar/unknown.svg"
