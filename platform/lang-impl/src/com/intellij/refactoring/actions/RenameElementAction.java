@@ -49,7 +49,7 @@ public class RenameElementAction extends AnAction {
     if (editor != null && InplaceRefactoringContinuation.hasInplaceContinuation(editor, RenameElementAction.class)) {
       return true;
     }
-    return SlowOperations.allowSlowOperations(() -> getAvailableRenamers(dataContext).findAny().isPresent());
+    return getAvailableRenamers(dataContext).findAny().isPresent();
   }
 
   @Override
