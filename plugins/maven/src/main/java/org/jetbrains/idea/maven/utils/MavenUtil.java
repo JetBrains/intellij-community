@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -57,7 +57,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -106,13 +105,13 @@ import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class MavenUtil {
 
-  private static List<String> settingsListNamespaces = List.of(
+  private static final List<String> settingsListNamespaces = List.of(
     "http://maven.apache.org/SETTINGS/1.0.0",
     "http://maven.apache.org/SETTINGS/1.1.0",
     "http://maven.apache.org/SETTINGS/1.2.0"
   );
 
-  private static List<String> extensionListNamespaces = List.of(
+  private static final List<String> extensionListNamespaces = List.of(
     "http://maven.apache.org/EXTENSIONS/1.0.0",
     "http://maven.apache.org/EXTENSIONS/1.1.0",
     "http://maven.apache.org/EXTENSIONS/1.2.0"
@@ -485,7 +484,7 @@ public class MavenUtil {
     }
     allProperties.putAll(conditions);
     String text = fileTemplate.getText(allProperties);
-    Pattern pattern = Pattern.compile("\\$\\{(.*)\\}");
+    Pattern pattern = Pattern.compile("\\$\\{(.*)}");
     Matcher matcher = pattern.matcher(text);
     StringBuilder builder = new StringBuilder();
     while (matcher.find()) {
@@ -1199,7 +1198,7 @@ public class MavenUtil {
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        public void startElement(String uri, String localName, String qName, Attributes attributes) {
           textContentOccur = false;
 
           crc.update(1);
@@ -1212,7 +1211,7 @@ public class MavenUtil {
         }
 
         @Override
-        public void endElement(String uri, String localName, String qName) throws SAXException {
+        public void endElement(String uri, String localName, String qName) {
           textContentOccur = false;
 
           crc.update(2);
@@ -1243,28 +1242,28 @@ public class MavenUtil {
         }
 
         @Override
-        public void characters(char[] ch, int start, int length) throws SAXException {
+        public void characters(char[] ch, int start, int length) {
           processTextOrSpaces(ch, start, length);
         }
 
         @Override
-        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+        public void ignorableWhitespace(char[] ch, int start, int length) {
           processTextOrSpaces(ch, start, length);
         }
 
         @Override
-        public void processingInstruction(String target, String data) throws SAXException {
+        public void processingInstruction(String target, String data) {
           putString(target);
           putString(data);
         }
 
         @Override
-        public void skippedEntity(String name) throws SAXException {
+        public void skippedEntity(String name) {
           putString(name);
         }
 
         @Override
-        public void error(SAXParseException e) throws SAXException {
+        public void error(SAXParseException e) {
           crc.update(100);
         }
       });
@@ -1276,12 +1275,6 @@ public class MavenUtil {
     }
     catch (SAXException e) {
       return -1;
-    }
-  }
-
-  public static int crcWithoutSpaces(@NotNull VirtualFile xmlFile) throws IOException {
-    try (InputStream inputStream = xmlFile.getInputStream()) {
-      return crcWithoutSpaces(inputStream);
     }
   }
 
@@ -1323,14 +1316,15 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static <K, V extends Map> V getOrCreate(Map map, K key) {
-    Map res = (Map)map.get(key);
+  public static <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
+    V res = (V)map.get(key);
     if (res == null) {
-      res = new HashMap();
+      //noinspection unchecked
+      res = (V)new HashMap<>();
       map.put(key, res);
     }
 
-    return (V)res;
+    return res;
   }
 
   public static boolean isMavenModule(@Nullable Module module) {
@@ -1386,8 +1380,8 @@ public class MavenUtil {
     try {
 
       Element extensions = getDomRootElement(extensionFile);
-      if (!extensions.getName().equals("extensions")) return false;
       if (extensions == null) return false;
+      if (!extensions.getName().equals("extensions")) return false;
       for (Element extension : getElementsWithRegardToNamespace(extensions, "extension", extensionListNamespaces)) {
         Element groupId = getElementWithRegardToNamespace(extension, "groupId", extensionListNamespaces);
         Element artifactId = getElementWithRegardToNamespace(extension, "artifactId", extensionListNamespaces);
@@ -1411,7 +1405,7 @@ public class MavenUtil {
 
   public static boolean isPomFileIgnoringName(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null || !project.isInitialized()) {
-      if (!FileUtil.extensionEquals(file.getName(), "xml")) return false;
+      if (!FileUtilRt.extensionEquals(file.getName(), "xml")) return false;
       try {
         try (InputStream in = file.getInputStream()) {
           Ref<Boolean> isPomFile = Ref.create(false);
@@ -1449,7 +1443,7 @@ public class MavenUtil {
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 
-  public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
+  public static void restartConfigHighlighting(Collection<MavenProject> projects) {
     VirtualFile[] configFiles = getConfigFiles(projects);
     ApplicationManager.getApplication().invokeLater(() -> {
       FileContentUtilCore.reparseFiles(configFiles);
@@ -1555,7 +1549,7 @@ public class MavenUtil {
   @NotNull
   public static String getCompilerPluginVersion(@NotNull MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
-    return plugin != null ? plugin.getVersion() : StringUtils.EMPTY;
+    return plugin != null ? plugin.getVersion() : EMPTY;
   }
 
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
