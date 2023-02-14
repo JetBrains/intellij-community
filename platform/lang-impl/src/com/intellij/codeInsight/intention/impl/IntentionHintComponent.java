@@ -86,38 +86,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
-  private static final int NORMAL_BORDER_SIZE = 6;
-  private static final int SMALL_BORDER_SIZE = 4;
-
-  private static final Border INACTIVE_BORDER =
-    BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
-  private static final Border INACTIVE_BORDER_SMALL =
-    BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
-
   @TestOnly
   public CachedIntentions getCachedIntentions() {
     return myPopup.myCachedIntentions;
   }
 
   private final IntentionPopup myPopup;
-
-  private static Border createActiveBorder() {
-    return BorderFactory.createCompoundBorder(
-      BorderFactory.createLineBorder(getBorderColor(), 1),
-      BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1)
-    );
-  }
-
-  private static Border createActiveBorderSmall() {
-    return BorderFactory.createCompoundBorder(
-      BorderFactory.createLineBorder(getBorderColor(), 1),
-      BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1)
-    );
-  }
-
-  private static Color getBorderColor() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
-  }
 
   public boolean isVisible() {
     return myPanel.isVisible();
@@ -142,26 +116,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   };
 
-  private static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
-    boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
-      cachedIntentions.getInspectionFixes(),
-      descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
-    );
-    if (showRefactoring) {
-      return AllIcons.Actions.RefactoringBulb;
-    }
-
-    boolean showQuickFix = ContainerUtil.exists(
-      cachedIntentions.getErrorFixes(),
-      descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction())
-    );
-    if (showQuickFix) {
-      return AllIcons.Actions.QuickfixBulb;
-    }
-
-    return AllIcons.Actions.IntentionBulb;
-  }
-
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
                                                                   @NotNull PsiFile file,
                                                                   @NotNull Editor editor,
@@ -169,7 +123,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull CachedIntentions cachedIntentions) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, getIcon(cachedIntentions), intentionPopup);
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulb.getIcon(cachedIntentions), intentionPopup);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -222,77 +176,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
-      Point position = getHintPosition();
+      Point position = LightBulb.getPosition(myEditor);
       if (position != null) {
         hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
       }
     }
-  }
-
-  private @Nullable Point getHintPosition() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
-
-    Editor editor = myEditor;
-    LOG.assertTrue(editor.getComponent().isDisplayable());
-
-    return editor.isOneLineMode()
-           ? getHintPositionOneLine(editor)
-           : getHintPositionMultiLine(editor);
-  }
-
-  private static @NotNull Point getHintPositionOneLine(Editor editor) {
-    JComponent convertComponent = editor.getContentComponent();
-
-    // place bulb at the corner of the surrounding component
-    JComboBox<?> ancestorCombo = findAncestorCombo(editor);
-    if (ancestorCombo != null) {
-      convertComponent = ancestorCombo;
-    }
-    else {
-      JTextField ancestorTextField = (JTextField)SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
-      if (ancestorTextField != null) {
-        convertComponent = ancestorTextField;
-      }
-    }
-
-    Point realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
-    Point p = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
-    return new Point(p.x, p.y);
-  }
-
-  private static @Nullable Point getHintPositionMultiLine(Editor editor) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
-    Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
-    if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
-
-    // try to place bulb on the same line
-    int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
-    if (canPlaceBulbOnTheSameLine(editor)) {
-      yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
-    }
-    else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
-      yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
-    }
-
-    int xShift = EmptyIcon.ICON_16.getIconWidth();
-
-    Point realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
-    Point p = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
-    return new Point(p.x, p.y);
-  }
-
-  private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
-    if (Registry.is("always.show.intention.above.current.line", false)) return false;
-
-    int visualCaretLine = editor.offsetToVisualPosition(editor.getCaretModel().getOffset()).line;
-    int textColumn = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, visualCaretLine);
-    if (textColumn == -1) return false;
-
-    int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
-    int borderWidth = editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
-    return textX > borderWidth + EmptyIcon.ICON_16.getIconWidth() + borderWidth;
   }
 
   private IntentionHintComponent(@NotNull Project project,
@@ -317,7 +205,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     myPanel.add(myIconLabel, BorderLayout.CENTER);
 
-    myPanel.setBorder(editor.isOneLineMode() ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
+    myPanel.setBorder(LightBulb.getInactiveBorder(editor.isOneLineMode()));
 
     myIconLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -369,13 +257,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myPopup.isVisible()) {
       myIconLabel.setIcon(myInactiveIcon);
-      myPanel.setBorder(small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER);
+      myPanel.setBorder(LightBulb.getInactiveBorder(small));
     }
   }
 
   private void onMouseEnter(boolean small) {
     myIconLabel.setIcon(myHighlightedIcon);
-    myPanel.setBorder(small ? createActiveBorderSmall() : createActiveBorder());
+    myPanel.setBorder(LightBulb.getActiveBorder(small));
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -399,8 +287,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     RelativePoint positionHint = null;
     if (mouseClick && myPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
-      int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 :
-                    myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
+      int yOffset = LightBulb.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
+                    myEditor.getLineHeight() - LightBulb.getBorderSize(myEditor.isOneLineMode());
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
     }
     myPopup.show(this, positionHint);
@@ -675,6 +563,130 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return !isDisposed()
            && isVisible()
            && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  /** The light bulb icon, optionally surrounded by a border. */
+  private static class LightBulb {
+
+    private static final int NORMAL_BORDER_SIZE = 6;
+    private static final int SMALL_BORDER_SIZE = 4;
+
+    private static final Border INACTIVE_BORDER =
+      BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
+    private static final Border INACTIVE_BORDER_SMALL =
+      BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
+
+    static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
+      boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
+        cachedIntentions.getInspectionFixes(),
+        descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
+      );
+      if (showRefactoring) return AllIcons.Actions.RefactoringBulb;
+
+      boolean showQuickFix = ContainerUtil.exists(
+        cachedIntentions.getErrorFixes(),
+        descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction())
+      );
+      if (showQuickFix) return AllIcons.Actions.QuickfixBulb;
+
+      return AllIcons.Actions.IntentionBulb;
+    }
+
+    static Border getInactiveBorder(boolean small) {
+      return small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER;
+    }
+
+    private static Border createActiveBorder() {
+      return BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(getBorderColor(), 1),
+        BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1)
+      );
+    }
+
+    static Border getActiveBorder(boolean small) {
+      return small ? createActiveBorderSmall() : createActiveBorder();
+    }
+
+    private static Border createActiveBorderSmall() {
+      return BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(getBorderColor(), 1),
+        BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1)
+      );
+    }
+
+    static int getBorderSize(boolean small) {
+      return small ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
+    }
+
+    private static Color getBorderColor() {
+      return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+    }
+
+    /** Returns the position of the light bulb, relative to {@link Editor#getComponent()}. */
+    static @Nullable Point getPosition(Editor editor) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return new Point();
+
+      LOG.assertTrue(editor.getComponent().isDisplayable());
+
+      return editor.isOneLineMode()
+             ? getPositionOneLine(editor)
+             : getPositionMultiLine(editor);
+    }
+
+    private static @NotNull Point getPositionOneLine(Editor editor) {
+      JComponent convertComponent = editor.getContentComponent();
+
+      // place the light bulb at the corner of the surrounding component
+      JComboBox<?> ancestorCombo = findAncestorCombo(editor);
+      if (ancestorCombo != null) {
+        convertComponent = ancestorCombo;
+      }
+      else {
+        JTextField ancestorTextField = (JTextField)SwingUtilities.getAncestorOfClass(JTextField.class, editor.getContentComponent());
+        if (ancestorTextField != null) {
+          convertComponent = ancestorTextField;
+        }
+      }
+
+      Point realPoint = new Point(-(EmptyIcon.ICON_16.getIconWidth() / 2) - 4, -(EmptyIcon.ICON_16.getIconHeight() / 2));
+      Point p = SwingUtilities.convertPoint(convertComponent, realPoint, editor.getComponent().getRootPane().getLayeredPane());
+      return new Point(p.x, p.y);
+    }
+
+    private static @Nullable Point getPositionMultiLine(Editor editor) {
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
+      Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
+      if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
+
+      // try to place bulb on the same line
+      int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
+      if (canPlaceBulbOnTheSameLine(editor)) {
+        yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+      }
+      else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
+        yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
+      }
+
+      int xShift = EmptyIcon.ICON_16.getIconWidth();
+
+      Point realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
+      Point p = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
+      return new Point(p.x, p.y);
+    }
+
+    private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
+      if (Registry.is("always.show.intention.above.current.line", false)) return false;
+
+      int visualCaretLine = editor.offsetToVisualPosition(editor.getCaretModel().getOffset()).line;
+      int textColumn = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, visualCaretLine);
+      if (textColumn == -1) return false;
+
+      int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
+      int borderWidth = editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
+      return textX > borderWidth + EmptyIcon.ICON_16.getIconWidth() + borderWidth;
+    }
   }
 
   static class IntentionPopup implements Disposable.Parent {
