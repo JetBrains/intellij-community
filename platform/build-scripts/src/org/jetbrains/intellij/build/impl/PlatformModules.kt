@@ -316,6 +316,7 @@ private suspend fun computeImplicitRequiredModules(explicit: List<String>,
       !it.startsWith("intellij.python.") &&
       !it.startsWith("intellij.codeServer.") &&
       !it.startsWith("intellij.clion.") &&
+      !it.startsWith("intellij.cidr.") &&
       !it.startsWith("intellij.appcode.") &&
       it != "fleet.backend" &&
       it != "intellij.codeServer" &&
