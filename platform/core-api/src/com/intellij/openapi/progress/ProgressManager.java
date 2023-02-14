@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,6 +222,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @see ProgressIndicator#checkCanceled()
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @RequiresBlockingContext
   public static void checkCanceled() throws ProcessCanceledException {
     ProgressManager instance = ourInstance.getValueIfInitialized();
     if (instance != null) {
