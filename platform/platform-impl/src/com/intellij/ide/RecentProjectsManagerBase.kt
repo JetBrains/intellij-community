@@ -394,7 +394,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   fun getRecentPaths(): List<String> {
     synchronized(stateLock) {
       validateRecentProjects(modCounter, state.additionalInfo)
-      return state.additionalInfo.keys.reversed()
+      return state.additionalInfo.filter { !it.value.hidden }.keys.reversed()
     }
   }
 
@@ -424,7 +424,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     }
 
     synchronized(stateLock) {
-      return state.additionalInfo.values.any { it.opened }
+      return state.additionalInfo.values.any { canReopenProject(it) }
     }
   }
 
@@ -555,9 +555,26 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     return true
   }
 
+  private fun canReopenProject(info: RecentProjectMetaInfo): Boolean {
+    return info.opened && !info.hidden
+  }
+
+  /**
+   * Do not reopen project on restart and do not show it in the recent projects list
+   */
+  fun setProjectHidden(project: Project, hidden: Boolean) {
+    val path = getProjectPath(project) ?: return
+    val info = state.additionalInfo.get(path) ?: return
+    val oldHidden = info.hidden
+    info.hidden = hidden
+    if (oldHidden != hidden) {
+      modCounter.increment()
+    }
+  }
+
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return state.additionalInfo.entries.filter { it.value.opened }
+      return state.additionalInfo.entries.filter { canReopenProject(it.value) }
     }
 
   override val groups: List<ProjectGroup>
