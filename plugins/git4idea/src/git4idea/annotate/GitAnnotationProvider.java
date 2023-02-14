@@ -246,7 +246,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   /**
-   * Read missing tooltip information without waiting for slow async {@link #loadFileHistoryInBackground}.
+   * Read missing tooltip information without waiting for optional async callback in {@link #loadFileHistoryInBackground}.
    * <p>
    * This can't fully replace slow git request, as we do not read {@link GitFileAnnotation#setRevisions(List)} from {@link VcsLogData}.
    */
@@ -260,6 +260,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
     Set<GitRevisionNumber> revisions = ContainerUtil.map2Set(annotation.getLines(), it -> it.getRevisionNumber());
     for (GitRevisionNumber revision : revisions) {
+      // non-null if info was already loaded by fast synchronous path in 'loadFileHistoryInBackground'
       if (annotation.getCommitMessage(revision) == null) {
         int commitIndex = dataManager.getCommitIndex(HashImpl.build(revision.asString()), root);
         String commitMessage = getter.getFullMessage(commitIndex);
