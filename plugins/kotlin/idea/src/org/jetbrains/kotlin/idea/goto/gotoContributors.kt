@@ -115,4 +115,4 @@ class KotlinGotoJvmNameSymbolContributor: AbstractKotlinGotoSymbolContributor<Kt
         }
 }
 
-class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)
+class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.indexKey)

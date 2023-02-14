@@ -99,7 +99,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
 
         if (prime) {
-            sink.occurrence(KotlinPrimeSymbolNameIndex.INSTANCE.getKey(), name);
+            sink.occurrence(KotlinPrimeSymbolNameIndex.Helper.getIndexKey(), name);
         }
     }
 
