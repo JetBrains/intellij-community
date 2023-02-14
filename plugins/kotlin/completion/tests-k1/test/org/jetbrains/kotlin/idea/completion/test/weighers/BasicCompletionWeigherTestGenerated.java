@@ -475,6 +475,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/LocalsPropertiesKeywords.kt");
         }
 
+        @TestMetadata("MethodsFromAnyExplicitReceiver.kt")
+        public void testMethodsFromAnyExplicitReceiver() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver.kt");
+        }
+
+        @TestMetadata("MethodsFromAnyExplicitReceiver2.kt")
+        public void testMethodsFromAnyExplicitReceiver2() throws Exception {
+            runTest("../testData/weighers/basic/MethodsFromAnyExplicitReceiver2.kt");
+        }
+
         @TestMetadata("NamedArgumentNonTypableVariables.kt")
         public void testNamedArgumentNonTypableVariables() throws Exception {
             runTest("../testData/weighers/basic/NamedArgumentNonTypableVariables.kt");
