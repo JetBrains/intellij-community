@@ -20,6 +20,8 @@ interface EdtBgtTreeVisitor : TreeVisitor {
 
   fun preVisitEDT(path: TreePath): Action?
 
+  override fun visit(path: TreePath): Action // overridden for readability
+
   fun postVisitEDT(path: TreePath, visitResult: Action): Action
 
 }
