@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.collections.immutable.*
@@ -114,7 +113,7 @@ class ProductModulesLayout {
    *
    * @see #setPluginModulesToPublish
    */
-  var prepareCustomPluginRepositoryForPublishedPlugins = true
+  var prepareCustomPluginRepositoryForPublishedPlugins: Boolean = true
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
@@ -122,7 +121,7 @@ class ProductModulesLayout {
    * <br>
    * If {@code false} only plugins from {@link #setPluginModulesToPublish} will be considered.
    */
-  var buildAllCompatiblePlugins = true
+  var buildAllCompatiblePlugins: Boolean = true
 
   /**
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true

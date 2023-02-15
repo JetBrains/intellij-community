@@ -39,7 +39,7 @@ internal fun generateMultiPlatformProductJson(relativePathToBin: String,
     productVendor = appInfo.shortCompanyName,
     launch = launch,
     customProperties = context.productProperties.generateCustomPropertiesForProductInfo(),
-    bundledPlugins = builtinModules?.bundledPlugins ?: emptyList(),
+    bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
     modules = builtinModules?.modules ?: emptyList(),
   )
