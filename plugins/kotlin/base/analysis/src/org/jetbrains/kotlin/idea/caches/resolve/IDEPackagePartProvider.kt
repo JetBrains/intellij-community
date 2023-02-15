@@ -20,7 +20,7 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
         getPackageParts(packageFqName).flatMap(PackageParts::metadataParts).distinct()
 
     private fun getPackageParts(packageFqName: String): MutableList<PackageParts> =
-        FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.KEY, packageFqName, scope)
+        FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.NAME, packageFqName, scope)
 
     // Note that in case of several modules with the same name, we return all annotations on all of them, which is probably incorrect
     override fun getAnnotationsOnBinaryModule(moduleName: String): List<ClassId> =
@@ -36,6 +36,6 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
 
     // NB: It's ok even to return a little more than actual packages for non-class entities
     override fun computePackageSetWithNonClassDeclarations(): Set<String> = buildSet {
-        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.KEY, { name -> add(name); true }, scope, null)
+        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)
     }
 }
