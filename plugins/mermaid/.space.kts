@@ -18,7 +18,7 @@ fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
   }
 }
 
-job("Mermaid / Build for 231") {
+job("Mermaid / Build for 232") {
   startOn {
     gitPush {
       enabled = true
@@ -29,7 +29,7 @@ job("Mermaid / Build for 231") {
   }
   container("openjdk:17") {
     productionBuild()
-    platformVersion("231-SNAPSHOT")
+    platformVersion("232-SNAPSHOT")
     shellScript {
       content = "./gradlew build"
     }
