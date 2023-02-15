@@ -86,7 +86,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> = runReadAction {
-        KotlinScriptFqnIndex.get(childName(name), project, searchScope)
+        KotlinScriptFqnIndex[childName(name), project, searchScope]
             .map(::KtScriptInfo)
     }
 

@@ -141,9 +141,8 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        return KotlinScriptFqnIndex.get(scriptFqName.asString(), project, scope).mapNotNull {
-            getLightClassForScript(it)
-        }
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
+            .mapNotNull(::getLightClassForScript)
     }
 
     override fun getKotlinInternalClasses(fqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
