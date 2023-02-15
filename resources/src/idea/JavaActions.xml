@@ -484,13 +484,13 @@
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ResetFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="ResetFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
@@ -608,7 +608,7 @@
       <reference ref="Debugger.ResumeThread"/>
       <reference ref="Debugger.FreezeThread"/>
       <reference ref="Debugger.InterruptThread"/>
-      <reference ref="ResetFrame"/>
+      <reference ref="Debugger.PopFrame"/>
       <separator/>
       <reference ref="ExportThreads"/>
       <reference ref="Debugger.AddSteppingFilter"/>
