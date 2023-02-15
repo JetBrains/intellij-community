@@ -175,29 +175,6 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
   return if (root == null) Path.of(".m2/repository") else Path.of(root, ".m2/repository")
 }
 
-/**
- * Building a list of modules that the IDE will provide for plugins.
- */
-private suspend fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilderState, context: BuildContext) {
-  context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
-    withContext(Dispatchers.IO) {
-      Files.deleteIfExists(targetFile)
-      val ideClasspath = createIdeClassPath(state, context)
-      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      runApplicationStarter(context = context,
-                            tempDir = context.paths.tempDir.resolve("builtinModules"),
-                            ideClasspath = ideClasspath,
-                            arguments = listOf("listBundledPlugins", targetFile.toString()))
-      check(Files.exists(targetFile)) {
-        "Failed to build provided modules list: $targetFile doesn\'t exist"
-      }
-    }
-    context.productProperties.customizeBuiltinModules(context, targetFile)
-    context.builtinModule = readBuiltinModulesFile(targetFile)
-    context.notifyArtifactWasBuilt(targetFile)
-  }
-}
-
 private fun patchIdeaPropertiesFile(buildContext: BuildContext): Path {
   val builder = StringBuilder(Files.readString(buildContext.paths.communityHomeDir.resolve("bin/idea.properties")))
   for (it in buildContext.productProperties.additionalIDEPropertiesFilePaths) {
@@ -547,7 +524,25 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
       val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-      buildProvidedModuleList(targetFile = providedModuleFile, state = state, context = context)
+      spanBuilder("build provided module list").useWithScope2 {
+        val ideClasspath = createIdeClassPath(state = state, context = context)
+
+        Files.deleteIfExists(providedModuleFile)
+        // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+        runApplicationStarter(context = context,
+                              tempDir = context.paths.tempDir.resolve("builtinModules"),
+                              ideClasspath = ideClasspath,
+                              arguments = listOf("listBundledPlugins", providedModuleFile.toString()))
+        context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
+        try {
+          context.builtinModule = readBuiltinModulesFile(file = providedModuleFile)
+        }
+        catch (e: NoSuchFileException) {
+          throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn\'t exist")
+        }
+      }
+
+      context.notifyArtifactWasBuilt(artifactPath = providedModuleFile)
       if (!productProperties.productLayout.buildAllCompatiblePlugins) {
         return state
       }

@@ -6,6 +6,7 @@ import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.serialization.Serializable
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -74,7 +75,10 @@ interface BuildContext : CompilationContext {
    * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean = false, isPortableDist: Boolean = false): List<String>
+  fun getAdditionalJvmArguments(os: OsFamily,
+                                arch: JvmArchitecture,
+                                isScript: Boolean = false,
+                                isPortableDist: Boolean = false): List<String>
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
@@ -110,10 +114,11 @@ suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: St
   }
 }
 
-data class BuiltinModulesFileData(
-  val bundledPlugins: List<String>,
-  val modules: List<String>,
-  val fileExtensions: List<String>,
+@Serializable
+class BuiltinModulesFileData(
+  @JvmField val plugins: List<String>,
+  @JvmField val modules: List<String>,
+  @JvmField val fileExtensions: List<String>,
 )
 
 data class DistFile(@JvmField val file: Path,
