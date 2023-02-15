@@ -2,7 +2,6 @@
   <xi:include href="/META-INF/extensions/compiler.xml" /> <!-- extensions/compiler.xml comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin-idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlin-core-fe10.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
