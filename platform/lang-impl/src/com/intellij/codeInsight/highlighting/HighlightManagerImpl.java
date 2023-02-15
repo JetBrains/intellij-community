@@ -52,9 +52,7 @@ public final class HighlightManagerImpl extends HighlightManager {
         Document document = event.getDocument();
         for (Editor editor : EditorFactory.getInstance().getEditors(document)) {
           Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
-          if (map == null) {
-            return;
-          }
+          if (map == null) continue;
 
           List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
           for (RangeHighlighter highlighter : map.keySet()) {
