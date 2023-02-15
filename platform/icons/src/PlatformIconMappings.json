@@ -634,7 +634,6 @@
         "icons/com/jetbrains/python/pythonPackages.svg"
       ],
       "documentation.svg": "toolwindows/documentation.svg",
-      "endpoints.svg": "icons/toolWindowEndpoints.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
