@@ -5,7 +5,9 @@ import com.intellij.ProjectTopics
 import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -48,6 +50,7 @@ private val LOG = logger<ProjectRootManagerComponent>()
 private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationManager.getApplication().isInternal && !ApplicationManager.getApplication().isUnitTestMode
 }
+private val WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.WatchRoots")
 private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProvider>("com.intellij.roots.watchedRootsProvider")
 
 /**
@@ -248,15 +251,19 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val recursivePathsToWatch = CollectionFactory.createFilePathSet()
     val flatPaths = CollectionFactory.createFilePathSet()
+    WATCH_ROOTS_LOG.trace { "watch roots for ${myProject}}" }
+
     val store = myProject.stateStore
     val projectFilePath = store.projectFilePath
     if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
       flatPaths.add(projectFilePath.systemIndependentPath)
       flatPaths.add(store.workspacePath.systemIndependentPath)
+      WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }
     }
     for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
       val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
+        WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (file in toWatch) {
           recursivePathsToWatch.add(file.path)
         }
@@ -265,6 +272,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     for (extension in WATCHED_ROOTS_PROVIDER_EP_NAME.extensionList) {
       val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
+        WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (path in toWatch) {
           recursivePathsToWatch.add(FileUtilRt.toSystemIndependentName(path))
         }
@@ -285,30 +293,41 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    collectModuleWatchRoots(recursivePaths = recursivePathsToWatch, flatPaths = flatPaths)
+    collectModuleWatchRoots(recursivePathsToWatch, flatPaths, true)
+
     return Pair(recursivePathsToWatch, flatPaths)
   }
 
-  private fun collectModuleWatchRoots(recursivePaths: MutableSet<in String>, flatPaths: MutableSet<in String>) {
-    val urls = CollectionFactory.createFilePathSet()
+  private fun collectModuleWatchRoots(recursivePaths: MutableSet<String>, flatPaths: MutableSet<String>, logRoots: Boolean) {
+    fun collectUrls(urls: Array<String>, logDescriptor: String) {
+      val recursive = if (logRoots) CollectionFactory.createFilePathSet() else recursivePaths
+      val flat = if (logRoots) CollectionFactory.createFilePathSet() else flatPaths
+
+      for (url in urls) {
+        when (VirtualFileManager.extractProtocol(url)) {
+          null, StandardFileSystems.FILE_PROTOCOL, StandardFileSystems.JRT_PROTOCOL -> recursive += extractLocalPath(url)
+          StandardFileSystems.JAR_PROTOCOL -> flat += extractLocalPath(url)
+        }
+      }
+
+      if (logRoots) {
+        LOG.trace { "    ${logDescriptor}: ${recursive}, ${flat}" }
+        recursivePaths += recursive
+        flatPaths += flat
+      }
+    }
+
     for (module in ModuleManager.getInstance(myProject).modules) {
+      if (logRoots) LOG.trace { "  module ${module}" }
       val rootManager = ModuleRootManager.getInstance(module)
-      urls.addAll(rootManager.contentRootUrls)
+      collectUrls(rootManager.contentRootUrls, "content")
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
         if (entry is LibraryOrSdkOrderEntry) {
           for (type in OrderRootType.getAllTypes()) {
-            urls.addAll(entry.getRootUrls(type))
+            collectUrls(entry.getRootUrls(type), "${entry} [${type}]")
           }
         }
         true
-      }
-    }
-    for (url in urls) {
-      val protocol = VirtualFileManager.extractProtocol(url)
-      when {
-        protocol == null || StandardFileSystems.FILE_PROTOCOL == protocol -> recursivePaths.add(extractLocalPath(url))
-        StandardFileSystems.JAR_PROTOCOL == protocol -> flatPaths.add(extractLocalPath(url))
-        StandardFileSystems.JRT_PROTOCOL == protocol -> recursivePaths.add(extractLocalPath(url))
       }
     }
   }
@@ -329,7 +348,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
 
   override fun markRootsForRefresh() {
     val paths = CollectionFactory.createFilePathSet()
-    collectModuleWatchRoots(paths, paths)
+    collectModuleWatchRoots(paths, paths, false)
     val fs = LocalFileSystem.getInstance()
     for (path in paths) {
       val root = fs.findFileByPath(path)
