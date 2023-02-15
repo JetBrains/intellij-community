@@ -176,7 +176,7 @@ public class IdeStubIndexService extends StubIndexService {
             }
 
             if (stub.mayHaveContract()) {
-                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.INSTANCE.getKey(), name);
+                sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
             indexPrime(stub, sink);
