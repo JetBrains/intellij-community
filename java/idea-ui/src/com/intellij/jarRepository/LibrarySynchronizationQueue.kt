@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
@@ -24,19 +24,24 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
     private val log = logger<LibrarySynchronizationQueue>()
   }
 
-  private val synchronizationRequests = MutableSharedFlow<Request>(extraBufferCapacity = Int.MAX_VALUE)
+  private val synchronizationRequests = Channel<Request>(capacity = Channel.UNLIMITED).apply {
+    scope.coroutineContext.job.invokeOnCompletion {
+      close()
+    }
+  }
+
   private val toSynchronize = mutableSetOf<LibraryEx>()
 
   init {
     scope.launch(Dispatchers.IO) {
-      synchronizationRequests.collect {
+      for (request in synchronizationRequests) {
         try {
-          when (it) {
+          when (request) {
             is Request.QueueSynchronization -> {
-              toSynchronize.add(it.library)
+              toSynchronize.add(request.library)
             }
             is Request.RevokeSynchronization -> {
-              toSynchronize.remove(it.library)
+              toSynchronize.remove(request.library)
             }
             is Request.Flush -> {
               val newLibrariesToSync = readAction {
@@ -61,19 +66,19 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   }
 
   fun requestAllLibrariesSynchronization() {
-    synchronizationRequests.tryEmit(Request.Flush)
+    synchronizationRequests.trySend(Request.Flush)
   }
 
   fun requestSynchronization(library: LibraryEx) {
-    synchronizationRequests.tryEmit(Request.QueueSynchronization(library))
+    synchronizationRequests.trySend(Request.QueueSynchronization(library))
   }
 
   fun revokeSynchronization(library: LibraryEx) {
-    synchronizationRequests.tryEmit(Request.RevokeSynchronization(library))
+    synchronizationRequests.trySend(Request.RevokeSynchronization(library))
   }
 
   fun flush() {
-    synchronizationRequests.tryEmit(Request.Flush)
+    synchronizationRequests.trySend(Request.Flush)
   }
 
   private suspend fun synchronizeLibraries(libraries: Collection<LibraryEx>) {
