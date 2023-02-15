@@ -46,6 +46,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -106,13 +107,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   };
 
+  @RequiresEdt
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull Icon smartTagIcon,
                                  @NotNull IntentionPopup popup) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     myEditor = editor;
     myPopup = popup;
     Disposer.register(this, popup);
@@ -136,12 +136,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
   }
 
+  @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
                                                                   @NotNull PsiFile file,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulb.getIcon(cachedIntentions), intentionPopup);
 
@@ -168,8 +168,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @Override
+  @RequiresEdt
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myDisposed = true;
     myComponentHint.hide();
     myPanel.hide();
@@ -235,8 +235,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
+  @RequiresEdt
   private void onMouseExit() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myPopup.isVisible()) {
       myIconLabel.setIcon(myInactiveIcon);
       myPanel.setBorder(LightBulb.getInactiveBorder(myEditor.isOneLineMode()));
@@ -259,13 +259,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return myComponentHint;
   }
 
+  @RequiresEdt
   private void closePopup() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myPopup.close();
   }
 
+  @RequiresEdt
   private void showPopup(boolean mouseClick) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     RelativePoint positionHint = null;
     if (mouseClick && myPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
@@ -276,8 +276,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup.show(this, positionHint);
   }
 
+  @RequiresEdt
   private static void recreateMyPopup(@NotNull IntentionPopup that, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (that.myListPopup != null) {
       Disposer.dispose(that.myListPopup);
     }
@@ -418,8 +418,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return null;
   }
 
+  @RequiresEdt
   private static void updatePreviewPopup(@NotNull IntentionHintComponent.IntentionPopup that, @NotNull IntentionAction action, int index) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     that.myPreviewPopupUpdateProcessor.setup(that.myListPopup, index);
     that.myPreviewPopupUpdateProcessor.updatePopup(action);
   }
@@ -452,8 +452,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
+  @RequiresEdt
   private static void registerShowPreviewAction(@NotNull IntentionHintComponent.IntentionPopup that) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     AbstractAction action = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -759,8 +759,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myPopupShown = false;
     }
 
+    @RequiresEdt
     void cancelled(@NotNull IntentionListStep step) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myListPopup.getListStep() == step && !myDisposed) {
         Disposer.dispose(myHint);
       }
