@@ -64,7 +64,14 @@ object ParameterObjectExtractor {
           .onSuccess { invokeLater { MethodExtractor ().doExtract(file, extractRange.textRange) } }
           .disposeWithTemplate(disposable)
           .createTemplate(file, createTemplateFields(editor, introducedClass, declaration, introducedVariableReferences))
-        HintManager.getInstance().showInformationHint(editor, JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs"))
+        val objectType = if (HighlightingFeature.RECORDS.isAvailable(variables.first())) {
+          JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.record")
+        }
+        else {
+          JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs.class")
+        }
+        val message = JavaRefactoringBundle.message("extract.method.error.wrap.many.outputs", objectType)
+        HintManager.getInstance().showInformationHint(editor, message)
       } catch (e: Throwable) {
         editorState.revert()
         throw e
