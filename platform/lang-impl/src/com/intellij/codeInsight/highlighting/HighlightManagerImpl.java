@@ -29,7 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.BitUtil;
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import org.jetbrains.annotations.Contract;
@@ -37,8 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
 
 public final class HighlightManagerImpl extends HighlightManager {
   public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
@@ -54,20 +54,7 @@ public final class HighlightManagerImpl extends HighlightManager {
       public void documentChanged(@NotNull DocumentEvent event) {
         Document document = event.getDocument();
         for (Editor editor : EditorFactory.getInstance().getEditors(document)) {
-          var map = getHighlightInfoMap(editor, false);
-          if (map == null) continue;
-
-          List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
-          for (RangeHighlighter highlighter : map.keySet()) {
-            byte flags = map.getByte(highlighter);
-            if (BitUtil.isSet(flags, HIDE_BY_TEXT_CHANGE)) {
-              highlightersToRemove.add(highlighter);
-            }
-          }
-
-          for (RangeHighlighter highlighter : highlightersToRemove) {
-            removeSegmentHighlighter(editor, highlighter);
-          }
+          hideHighlights(editor, HIDE_BY_TEXT_CHANGE);
         }
       }
     };
