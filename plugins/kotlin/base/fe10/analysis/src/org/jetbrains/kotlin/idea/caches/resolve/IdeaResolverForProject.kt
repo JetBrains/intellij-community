@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -58,7 +59,7 @@ class IdeaResolverForProject(
     fallbackModificationTracker,
     delegateResolver,
     projectContext.project.service<IdePackageOracleFactory>(),
-) {
+), Disposable {
 
     companion object {
         val PLATFORM_ANALYSIS_SETTINGS = ModuleCapability<PlatformAnalysisSettings>("PlatformAnalysisSettings")
@@ -250,5 +251,17 @@ class IdeaResolverForProject(
         }
 
         return resolverForProjectFromAnchorModule.tryGetResolverForModule(targetModuleInfo)
+    }
+
+    override fun dispose() = Unit
+
+    fun checkIsValid() {
+        if (disposed) {
+            reportInvalidResolver()
+        }
+    }
+
+    override fun reportInvalidResolver() {
+        throw ProcessCanceledException(InvalidResolverException("$name is invalidated"))
     }
 }
