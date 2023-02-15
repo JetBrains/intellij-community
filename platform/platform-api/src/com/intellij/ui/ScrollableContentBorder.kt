@@ -31,6 +31,7 @@ class ScrollableContentBorder private constructor(
 
   companion object {
     @JvmStatic
+    @JvmOverloads
     fun setup(scrollPane: JScrollPane,
               side: Side,
               targetComponent: JComponent = scrollPane) {
@@ -38,6 +39,7 @@ class ScrollableContentBorder private constructor(
     }
 
     @JvmStatic
+    @JvmOverloads
     fun setup(scrollPane: JScrollPane,
               sides: Set<Side>,
               targetComponent: JComponent = scrollPane) {

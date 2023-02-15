@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
 import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
@@ -114,6 +111,9 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     hideViewerBorder();
+    JScrollPane scrollPane = getViewerScrollPane();
+    ScrollableContentBorder.setup(scrollPane, Side.TOP);
+
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"));
     myViewer.rebuildTree();
   }
