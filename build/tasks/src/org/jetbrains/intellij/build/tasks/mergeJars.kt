@@ -119,9 +119,13 @@ fun buildJar(targetFile: Path,
 
           is ZipSource -> {
             val sourceFile = source.file
+            val sourceFileName = sourceFile.fileName.toString()
+            val isPresigned = sourceFileName.startsWith("jna-") ||
+                              sourceFileName.startsWith("pty4j-") ||
+                              sourceFileName.startsWith("native-")
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (nativeFiles != null && isNative(name)) {
+              if (nativeFiles != null && isPresigned && isNative(name)) {
                 if (isDuplicated(uniqueNames, name, sourceFile)) {
                   return@readZipFile
                 }
