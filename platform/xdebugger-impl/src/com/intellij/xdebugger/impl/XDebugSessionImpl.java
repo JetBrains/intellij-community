@@ -872,7 +872,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (!dependentBreakpointManager.isMasterOrSlave(breakpoint)) return;
 
     List<XBreakpoint<?>> breakpoints = dependentBreakpointManager.getSlaveBreakpoints(breakpoint);
-    myInactiveSlaveBreakpoints.removeAll(breakpoints);
+    breakpoints.forEach(myInactiveSlaveBreakpoints::remove);
     for (XBreakpoint<?> slaveBreakpoint : breakpoints) {
       processAllHandlers(slaveBreakpoint, true);
     }
