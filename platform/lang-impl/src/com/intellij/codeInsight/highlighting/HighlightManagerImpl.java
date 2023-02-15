@@ -41,6 +41,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class HighlightManagerImpl extends HighlightManager {
+  public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
+
   public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
   private static final Key<Object2ByteMap<RangeHighlighter>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 
@@ -149,8 +151,6 @@ public final class HighlightManagerImpl extends HighlightManager {
                                      Collection<? super RangeHighlighter> outHighlighters) {
     addOccurrenceHighlight(editor, start, end, null, attributesKey, flags, outHighlighters, null);
   }
-
-  public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
 
   private void addOccurrenceHighlight(@NotNull Editor editor,
                                       int start,
