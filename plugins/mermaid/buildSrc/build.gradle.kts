@@ -1,7 +1,11 @@
 plugins {
-    `kotlin-dsl`
+  `kotlin-dsl`
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
+}
+
+dependencies {
+  implementation("org.jetbrains.intellij:plugin-repository-rest-client:2.0.30")
 }

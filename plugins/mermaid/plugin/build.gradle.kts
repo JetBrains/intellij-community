@@ -13,9 +13,6 @@ plugins {
     id("org.jetbrains.grammarkit") version "2021.2.2"
 }
 
-group = properties("pluginGroup")
-version = properties("pluginVersion")
-
 repositories {
     mavenCentral()
 }
@@ -40,7 +37,7 @@ intellij {
 }
 
 changelog {
-    version.set(properties("pluginVersion"))
+    version.set(project.version as String)
     groups.set(emptyList())
 }
 
@@ -142,7 +139,9 @@ tasks {
     }
 
    patchPluginXml {
-       version.set(properties("pluginVersion"))
+       val projectVersion = project.version as String
+       check(projectVersion != Project.DEFAULT_VERSION) { "Version was not set for plugin subproject" }
+       version.set(projectVersion)
        sinceBuild.set(properties("pluginSinceBuild"))
        untilBuild.set(properties("pluginUntilBuild"))
 
@@ -191,9 +190,10 @@ tasks {
 
     publishPlugin {
         dependsOn("patchChangelog")
-        token.set(System.getenv("MARKETPLACE_TOKEN") ?: "NONE")
-        System.getenv("MARKETPLACE_CHANNEL")?.let {
-            channels.set(listOf(it))
+        token.set(marketplaceToken)
+        val channel = project.publishChannel.takeIf { it != PublishChannel.STABLE }
+        if (channel != null) {
+          channels.set(listOf(channel.actualName))
         }
     }
 }

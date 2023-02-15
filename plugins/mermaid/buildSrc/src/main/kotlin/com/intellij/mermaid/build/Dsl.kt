@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.util.internal.VersionNumber
 
 fun DependencyHandler.project(path: String, configuration: Configuration): Dependency {
   return project(mapOf(
@@ -29,5 +30,14 @@ fun Project.findBooleanProperty(name: String): Boolean {
   return property.toBoolean()
 }
 
-val Project.isAutomatedProductionBuild: Boolean
+val Project.isAutomatedBuild: Boolean
   get() = findBooleanProperty("automatedProductionBuild") || System.getenv("AUTOMATED_PRODUCTION_BUILD") != null
+
+val Project.mainVersion: VersionNumber
+  get() = VersionNumber.parse(properties("pluginVersion"))
+
+val Project.publishChannel: PublishChannel
+  get() = PublishChannel.parse(System.getenv("MARKETPLACE_CHANNEL"))
+
+val Project.marketplaceToken: String
+  get() = System.getenv("MARKETPLACE_TOKEN") ?: "NONE"
