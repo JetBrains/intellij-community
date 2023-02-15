@@ -82,9 +82,10 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
 
     myFixture.checkResult("""
       import com.intellij.openapi.progress.ProgressManager.checkCanceled
+      import com.intellij.openapi.progress.checkCancelled
       
       suspend fun myFun() {
-          com.intellij.openapi.progress.checkCanceled()
+        checkCancelled()
       }
     """.trimIndent())
   }
@@ -196,11 +197,11 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     myFixture.checkResult("""
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
       import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
+      import com.intellij.openapi.progress.checkCancelled
       
       fun myFun() {
         suspend fun myInnerFun() {
-          checkCanceled()
+          checkCancelled()
         }
       }
     """.trimIndent())
@@ -232,14 +233,14 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     myFixture.checkResult("""
       @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
       import com.intellij.openapi.progress.ProgressManager
-      import com.intellij.openapi.progress.checkCanceled
+      import com.intellij.openapi.progress.checkCancelled
       
       fun callSuspendFunction(function: suspend () -> Unit) {
       }
       
       val myLambda: () -> Unit = {
         callSuspendFunction {
-          checkCanceled()
+          checkCancelled()
         }
       }
     """.trimIndent())
@@ -364,7 +365,7 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
       package com.intellij.openapi.progress
       
       @Suppress("RedundantSuspendModifier")
-      suspend fun checkCanceled(): Unit = Unit
+      suspend fun checkCancelled(): Unit = Unit
     """.trimIndent())
   }
 }

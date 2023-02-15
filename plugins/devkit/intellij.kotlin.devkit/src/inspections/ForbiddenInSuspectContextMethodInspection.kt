@@ -34,7 +34,7 @@ private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
 private val progressManagerCheckedCanceledName = FqName(PROGRESS_MANAGER_CHECKED_CANCELED)
 private val restrictsSuspensionName = FqName(RESTRICTS_SUSPENSION)
 
-private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCanceled"
+private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCancelled"
 
 @Internal
 class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
