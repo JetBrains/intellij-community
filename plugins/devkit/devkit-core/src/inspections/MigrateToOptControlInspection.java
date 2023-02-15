@@ -78,9 +78,8 @@ public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
               qualRef.getReceiver() instanceof USimpleNameReferenceExpression callRef &&
               var.equals(UastContextKt.toUElement(callRef.resolve())) &&
               qualRef.getSelector() instanceof UCallExpression call) {
-            String methodName = call.getMethodName();
             // TODO: support addDependentCheckBox
-            if (methodName != null && (methodName.equals("addCheckbox") || methodName.equals("addCheckboxEx"))) {
+            if (call.isMethodNameOneOf(List.of("addCheckbox", "addCheckboxEx"))) {
               List<UExpression> arguments = call.getValueArguments();
               if (arguments.size() == 2) {
                 String bindId = getExpressionText(arguments.get(1));

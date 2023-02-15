@@ -194,4 +194,9 @@ class KotlinUFunctionCallExpression(
             else -> result
         }
     }
+
+    override fun isMethodNameOneOf(names: Collection<String>): Boolean {
+        // TODO implement the optimized check for IDEA-313303
+        return names.contains(methodName)
+    }
 }

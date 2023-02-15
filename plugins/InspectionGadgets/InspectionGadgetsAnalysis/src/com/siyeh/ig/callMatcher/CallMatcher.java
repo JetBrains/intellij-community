@@ -360,8 +360,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     @Contract(value = "null -> false", pure = true)
     public boolean uCallMatches(@Nullable UCallExpression call) {
       if (call == null) return false;
-      String name = call.getMethodName();
-      if (name == null || !myNames.contains(name)) return false;
+      if (!call.isMethodNameOneOf(myNames)) return false;
       return methodMatches(call.resolve());
     }
 

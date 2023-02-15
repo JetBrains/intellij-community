@@ -12,6 +12,7 @@ import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,12 +34,10 @@ public class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase 
 
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression node) {
-        if (!hasMethodIdentifierEqualTo(node, CREATE_ACTION_TOOLBAR_METHOD_NAME, CREATE_ACTION_POPUP_MENU_METHOD_NAME)) {
-          return SKIP_CHILDREN;
-        }
-        PsiMethod method = node.resolve();
+        PsiMethod method = node.isMethodNameOneOf(List.of(CREATE_ACTION_TOOLBAR_METHOD_NAME,
+                                                          CREATE_ACTION_POPUP_MENU_METHOD_NAME)) ? node.resolve() : null;
+        String methodName = method == null ? null : method.getName();
         if (method != null && requiresSpecifiedActionPlace(method) && node.getValueArgumentCount() > 0) {
-          String methodName = method.getName();
           UExpression parameter = node.getArgumentForParameter(0);
           if (parameter != null && actionPlaceIsUnspecified(parameter)) {
             PsiElement reportedElement = parameter.getSourcePsi();
