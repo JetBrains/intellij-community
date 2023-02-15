@@ -308,7 +308,9 @@ public abstract class Compressor implements Closeable {
   }
 
   private void addRecursively(String prefix, Path root, long timestampMs) throws IOException {
-    if (LOG.isTraceEnabled()) LOG.trace("dir=" + root + " prefix=" + prefix);
+    boolean traceEnabled = LOG.isTraceEnabled();
+    if (traceEnabled) LOG.trace("dir=" + root + " prefix=" + prefix);
+
     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -317,7 +319,7 @@ public abstract class Compressor implements Closeable {
           return FileVisitResult.CONTINUE;
         }
         else if (accept(name, dir)) {
-          if (LOG.isTraceEnabled()) LOG.trace("  " + dir + " -> " + name + '/');
+          if (traceEnabled) LOG.trace("  " + dir + " -> " + name + '/');
           writeDirectoryEntry(name, timestampMs == -1 ? attrs.lastModifiedTime().toMillis() : timestampMs);
           return FileVisitResult.CONTINUE;
         }
@@ -330,7 +332,7 @@ public abstract class Compressor implements Closeable {
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         String name = entryName(file);
         if (accept(name, file)) {
-          if (LOG.isTraceEnabled()) LOG.trace("  " + file + " -> " + name + (attrs.isSymbolicLink() ? " symlink" : " size=" + attrs.size()));
+          if (traceEnabled) LOG.trace("  " + file + " -> " + name + (attrs.isSymbolicLink() ? " symlink" : " size=" + attrs.size()));
           addFile(file, attrs, name, timestampMs);
         }
         return FileVisitResult.CONTINUE;
@@ -341,6 +343,7 @@ public abstract class Compressor implements Closeable {
         return prefix.isEmpty() ? relativeName : prefix + '/' + relativeName;
       }
     });
+
     LOG.trace(".");
   }
 
