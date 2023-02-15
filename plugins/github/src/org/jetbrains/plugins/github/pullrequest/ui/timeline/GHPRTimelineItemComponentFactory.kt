@@ -18,6 +18,7 @@ import com.intellij.collaboration.ui.codereview.setHtmlBody
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
@@ -285,11 +286,10 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val textFlow = MutableStateFlow<@Nls String>("")
     firstComment.addAndInvokeChangesListener { textFlow.value = firstComment.body }
 
-    val panelHandle = GHEditableHtmlPaneHandle(project, bodyPanel, firstComment::body) { newText ->
+    val panelHandle = GHEditableHtmlPaneHandle(project, bodyPanel, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH,
+                                               firstComment::body) { newText ->
       reviewDataProvider.updateComment(EmptyProgressIndicator(), firstComment.id, newText)
         .successOnEdt { firstComment.update(it) }
-    }.apply {
-      maxEditorWidth = CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH
     }
 
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
@@ -378,9 +378,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
           if (collapsed) {
             val textPane = HtmlEditorPane(text).apply {
               foreground = UIUtil.getContextHelpForeground()
-            }.let {
+            }.let { pane ->
               CollaborationToolsUIUtil
-                .wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH, UIUtil.getUnscaledLineHeight(bodyPanel) * 2)
+                .wrapWithLimitedSize(pane, DimensionRestrictions.LinesHeight(pane, 2, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH))
             }
 
             bodyPanel.setContent(textPane)

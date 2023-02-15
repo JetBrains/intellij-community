@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindText
-import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -11,13 +13,9 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal object GHPRDetailsDescriptionComponentFactory {
   private const val VISIBLE_DESCRIPTION_LINES = 2
@@ -25,6 +23,8 @@ internal object GHPRDetailsDescriptionComponentFactory {
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
     val descriptionPanel = HtmlEditorPane().apply {
       bindText(scope, reviewDetailsVM.descriptionState)
+    }.let { editor ->
+      CollaborationToolsUIUtil.wrapWithLimitedSize(editor, DimensionRestrictions.LinesHeight(editor, VISIBLE_DESCRIPTION_LINES))
     }
 
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
@@ -34,14 +34,11 @@ internal object GHPRDetailsDescriptionComponentFactory {
       border = JBUI.Borders.emptyTop(4)
     }
 
-    val layout = MigLayout(LC().emptyBorders().flowY())
-    return JPanel(layout).apply {
+    return VerticalListPanel().apply {
       name = "Review details description panel"
-      isOpaque = false
 
-      val maxHeight = UIUtil.getUnscaledLineHeight(descriptionPanel) * VISIBLE_DESCRIPTION_LINES
-      add(descriptionPanel, CC().maxHeight("$maxHeight"))
-      add(timelineLink, CC())
+      add(descriptionPanel)
+      add(timelineLink)
     }
   }
 }

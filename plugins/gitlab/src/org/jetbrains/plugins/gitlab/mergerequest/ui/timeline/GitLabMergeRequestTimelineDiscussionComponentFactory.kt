@@ -274,11 +274,11 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
           vm.collapsed.collect {
             if (it) {
               textPane.foreground = UIUtil.getContextHelpForeground()
-              maxHeight = UIUtil.getUnscaledLineHeight(textPane) * 2
+              maxSize = DimensionRestrictions.LinesHeight(textPane, 2)
             }
             else {
               textPane.foreground = UIUtil.getLabelForeground()
-              maxHeight = null
+              maxSize = DimensionRestrictions.None
             }
             revalidate()
             repaint()
