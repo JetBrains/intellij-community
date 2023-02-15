@@ -67,57 +67,46 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   private @Nullable JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    if (!refs.isEmpty()) {
-      if (myComponent.getReferencePainter().isLeftAligned()) {
-        double distance = point.getX() - MyComponent.getGraphWidth(myGraphTable, cell.getPrintElements());
-        if (distance > 0 && distance <= getReferencesWidth(row, cell)) {
-          return new TooltipReferencesPanel(myLogData, refs);
-        }
+    if (refs.isEmpty()) return null;
+
+    prepareTemplateComponent(row, cell);
+    if (myTemplateComponent.getReferencePainter().isLeftAligned()) {
+      double distance = point.getX() - myTemplateComponent.getGraphWidth();
+      if (distance > 0 && distance <= myTemplateComponent.getReferencesWidth()) {
+        return new TooltipReferencesPanel(myLogData, refs);
       }
-      else {
-        if (getColumnWidth() - point.getX() <= getReferencesWidth(row, cell)) {
-          return new TooltipReferencesPanel(myLogData, refs);
-        }
+    }
+    else {
+      if (getColumnWidth() - point.getX() <= myTemplateComponent.getReferencesWidth()) {
+        return new TooltipReferencesPanel(myLogData, refs);
       }
     }
     return null;
   }
 
-  public int getPreferredHeight() {
-    return myComponent.getPreferredHeight();
-  }
-
-  private int getReferencesWidth(int row) {
-    return getReferencesWidth(row, getValue(myGraphTable.getModel().getValueAt(row, Commit.INSTANCE)));
-  }
-
-  private int getReferencesWidth(int row, @NotNull GraphCommitCell cell) {
-    Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    if (!refs.isEmpty()) {
-      myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
-                                    row, VcsLogColumnManager.getInstance().getModelIndex(Commit.INSTANCE));
-      return myTemplateComponent.getReferencePainter().getSize().width;
-    }
-
-    return 0;
-  }
-
-  private int getGraphWidth(int row) {
-    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, Commit.INSTANCE));
-    return MyComponent.getGraphWidth(myGraphTable, cell.getPrintElements());
-  }
-
   private int getTooltipXCoordinate(int row) {
-    int referencesWidth = getReferencesWidth(row);
-    if (referencesWidth != 0) {
-      if (myComponent.getReferencePainter().isLeftAligned()) return getGraphWidth(row) + referencesWidth / 2;
-      return getColumnWidth() - referencesWidth / 2;
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, Commit.INSTANCE));
+    if (cell.getRefsToThisCommit().isEmpty()) return getColumnWidth() / 2;
+
+    prepareTemplateComponent(row, cell);
+    int referencesWidth = myTemplateComponent.getReferencesWidth();
+    if (myTemplateComponent.getReferencePainter().isLeftAligned()) {
+      return myTemplateComponent.getGraphWidth() + referencesWidth / 2;
     }
-    return getColumnWidth() / 2;
+    return getColumnWidth() - referencesWidth / 2;
+  }
+
+  private void prepareTemplateComponent(int row, @NotNull GraphCommitCell cell) {
+    myTemplateComponent.customize(cell, myGraphTable.isRowSelected(row), myGraphTable.hasFocus(),
+                                  row, VcsLogColumnManager.getInstance().getModelIndex(Commit.INSTANCE));
   }
 
   private int getColumnWidth() {
     return myGraphTable.getCommitColumn().getWidth();
+  }
+
+  public int getPreferredHeight() {
+    return myComponent.getPreferredHeight();
   }
 
   public void setCompactReferencesView(boolean compact) {
@@ -294,6 +283,14 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @Override
     public FontMetrics getFontMetrics(Font font) {
       return myGraphTable.getFontMetrics(font);
+    }
+
+    private int getGraphWidth() {
+      return myGraphWidth;
+    }
+
+    private int getReferencesWidth() {
+      return myReferencePainter.getSize().width;
     }
 
     private static int getGraphWidth(@NotNull VcsLogGraphTable table, @NotNull Collection<? extends PrintElement> printElements) {
