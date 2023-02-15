@@ -345,7 +345,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     return !highlightersToRemove.isEmpty();
   }
 
-  boolean hasHighlightersToHide(@NotNull Editor editor, @HideFlags int mask) {
+  boolean hasHighlightersToHide(@NotNull Editor editor, @SuppressWarnings("SameParameterValue") @HideFlags int mask) {
     var map = getHighlightInfoMap(editor, false);
     if (map != null) {
       for (byte flags : map.values()) {
