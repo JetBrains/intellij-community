@@ -385,6 +385,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     addCheckerAnnotations(myFixture);
     doTest();
   }
+  public void testSpotBugsDefaultAnnotation() {
+    doTest();
+  }
   public void testConstructorMethodReferenceNullability() { doTest(); }
   public void testCustomStreamImplementation() { doTest(); }
   public void testEmptyCollection() { doTest(); }
