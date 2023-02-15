@@ -6,6 +6,18 @@ fun Container.platformVersion(version: String) {
   env["PLATFORM_VERSION"] = version
 }
 
+object PublishChannels {
+  const val NIGHTLY: String = "nightly"
+  const val STABLE: String = ""
+}
+
+fun Container.publishingEnvironment(channel: String = PublishChannels.STABLE) {
+  env["MARKETPLACE_TOKEN"] = marketplaceToken
+  if (channel != PublishChannels.STABLE) {
+    env["MARKETPLACE_CHANNEL"] = channel
+  }
+}
+
 job("Mermaid / Build for 231") {
   startOn {
     gitPush {
@@ -53,7 +65,7 @@ job("Mermaid / Release / Stable") {
   }
   container("openjdk:17") {
     productionBuild()
-    env["MARKETPLACE_TOKEN"] = marketplaceToken
+    publishingEnvironment(channel = PublishChannels.STABLE)
     shellScript {
       content = "./gradlew test publishPlugin"
     }
@@ -68,8 +80,7 @@ job("Mermaid / Release / Nightly") {
   }
   container("openjdk:17") {
     productionBuild()
-    env["MARKETPLACE_TOKEN"] = marketplaceToken
-    env["MARKETPLACE_CHANNEL"] = "Nightly"
+    publishingEnvironment(channel = PublishChannels.NIGHTLY)
     shellScript {
       content = "./gradlew test publishPlugin"
     }
