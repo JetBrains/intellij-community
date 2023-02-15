@@ -31,6 +31,7 @@ import git4idea.ui.branch.GitBranchPopupActions
 import training.dsl.*
 import training.git.GitFeaturesTrainerIcons
 import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.resetGitLogWindow
@@ -107,7 +108,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerAndBorderHighlight().treeItem { _, path ->
         (path.lastPathComponent as? GitLocalBranch)?.name == main
       }
-      test { actions(it) }
+      test {
+        val widget = previous.ui ?: error("Not found VCS widget")
+        ideFrame { jComponent(widget).click() }
+      }
     }
 
     task {
@@ -121,7 +125,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
                                    delayMillis = 2 * defaultRestoreDelay, restoreId = firstShowBranchesTaskId)
       test {
         ideFrame {
-          jList(main).clickItem(main)
+          clickTreeRow { item -> (item as? GitLocalBranch)?.name == main }
           jList(checkoutItemText).clickItem(checkoutItemText)
         }
       }
@@ -181,7 +185,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerAndBorderHighlight().treeItem { _, path ->
         (path.lastPathComponent as? GitLocalBranch)?.name == branchName
       }
-      test { actions(it) }
+      test {
+        val widget = previous.ui ?: error("Not found VCS widget")
+        ideFrame { jComponent(widget).click() }
+      }
     }
 
     task {
@@ -197,7 +204,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
                                    delayMillis = defaultRestoreDelay, secondShowBranchesTaskId)
       test {
         ideFrame {
-          jList(branchName).clickItem(branchName)
+          clickTreeRow { item -> (item as? GitLocalBranch)?.name == branchName }
           jList(checkoutAndRebaseText).clickItem(checkoutAndRebaseText)
         }
       }

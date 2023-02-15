@@ -91,7 +91,10 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       openCommitWindow(GitLessonsBundle.message("git.commit.open.commit.window"))
-      test { actions("CheckinProject") }
+      test {
+        val stripe = previous.ui ?: error("Not found Commit stripe button")
+        ideFrame { jComponent(stripe).click() }
+      }
     }
 
     prepareRuntimeTask {
