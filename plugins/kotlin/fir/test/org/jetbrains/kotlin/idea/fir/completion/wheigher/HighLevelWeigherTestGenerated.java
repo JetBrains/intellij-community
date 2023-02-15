@@ -274,6 +274,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/expectedType/ifConditionQualified.kt");
         }
 
+        @TestMetadata("MatchingNullableType.kt")
+        public void testMatchingNullableType() throws Exception {
+            runTest("../completion/testData/weighers/basic/expectedType/MatchingNullableType.kt");
+        }
+
         @TestMetadata("returnFromFunction.kt")
         public void testReturnFromFunction() throws Exception {
             runTest("../completion/testData/weighers/basic/expectedType/returnFromFunction.kt");
@@ -588,11 +593,6 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("SuperMembers.kt")
         public void testSuperMembers() throws Exception {
             runTest("../completion/testData/weighers/basic/SuperMembers.kt");
-        }
-
-        @TestMetadata("SyntheticJavaProperties.kt")
-        public void testSyntheticJavaProperties() throws Exception {
-            runTest("../completion/testData/weighers/basic/SyntheticJavaProperties.kt");
         }
 
         @TestMetadata("TopLevelKeywordWithClassName.kt")

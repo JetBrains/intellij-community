@@ -274,6 +274,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
         }
 
+        @TestMetadata("MatchingNullableType.kt")
+        public void testMatchingNullableType() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
+        }
+
         @TestMetadata("returnFromFunction.kt")
         public void testReturnFromFunction() throws Exception {
             runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
