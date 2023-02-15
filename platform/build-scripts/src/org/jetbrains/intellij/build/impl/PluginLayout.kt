@@ -147,12 +147,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
       layout.withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
     }
 
-    fun withGeneratedResources(generator: BiConsumer<Path, BuildContext>) {
-      layout.resourceGenerators += { path, context ->
-        generator.accept(path, context)
-      }
-    }
-
     fun withGeneratedResources(generator: ResourceGenerator) {
       layout.resourceGenerators += generator
     }
