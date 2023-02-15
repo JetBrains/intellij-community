@@ -2,19 +2,17 @@
 package training.git.lesson
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsNotificationIdsHolder
-import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
@@ -24,10 +22,8 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
-import com.intellij.vcs.commit.CommitOptionsPanel
 import com.intellij.vcs.commit.restoreState
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
@@ -38,23 +34,23 @@ import org.assertj.swing.fixture.JCheckBoxFixture
 import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.clickChangeElement
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
-import training.git.GitLessonsUtil.openCommitWindowText
+import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
+import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnNotification
+import training.git.GitLessonsUtil.triggerOnOneChangeIncluded
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
-import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import javax.swing.JCheckBox
 import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.tree.TreePath
@@ -88,10 +84,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     showWarningIfStagingAreaEnabled()
 
     task {
-      openCommitWindowText(GitLessonsBundle.message("git.commit.open.commit.window"))
-      stateCheck {
-        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Commit")
       }
+    }
+
+    task {
+      openCommitWindow(GitLessonsBundle.message("git.commit.open.commit.window"))
       test { actions("CheckinProject") }
     }
 
@@ -110,21 +109,16 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      triggerUI().componentPart l@{ ui: ChangesListView ->
-        val path = TreeUtil.treePathTraverser(ui).find { it.getPathComponent(it.pathCount - 1).toString().contains(firstFileName) }
-                   ?: return@l null
-        val rect = ui.getPathBounds(path) ?: return@l null
-        Rectangle(rect.x, rect.y, 20, rect.height)
-      }
+      triggerOnChangeCheckboxShown(firstFileName)
     }
 
     val commitWindowName = VcsBundle.message("commit.dialog.configurable")
     task {
       text(GitLessonsBundle.message("git.commit.choose.files", strong(commitWindowName), strong(firstFileName)))
       text(GitLessonsBundle.message("git.commit.choose.files.balloon"),
-           LearningBalloonConfig(Balloon.Position.below, 300, cornerToPointerDistance = 55))
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       highlightVcsChange(firstFileName)
-      triggerOnOneChangeIncluded(secondFileName)
+      triggerOnOneChangeIncluded(firstFileName)
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         clickChangeElement(firstFileName)
@@ -137,25 +131,21 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       }
     }
 
+    val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
     lateinit var showOptionsTaskId: TaskContext.TaskId
     task {
       showOptionsTaskId = taskId
       text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerUI().component { _: CommitOptionsPanel -> true }
+      triggerAndFullHighlight().component { ui: JBCheckBox ->
+        ui.text?.contains(reformatCodeButtonText) == true
+      }
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
           actionButton(ActionsBundle.actionText("ChangesView.ShowCommitOptions")).click()
         }
-      }
-    }
-
-    val reformatCodeButtonText = VcsBundle.message("checkbox.checkin.options.reformat.code").dropMnemonic()
-    task {
-      triggerAndFullHighlight().component { ui: JBCheckBox ->
-        ui.text?.contains(reformatCodeButtonText) == true
       }
     }
 
@@ -255,11 +245,11 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
     task {
       text(GitLessonsBundle.message("git.commit.select.file"))
-      highlightVcsChange(firstFileName)
-      triggerOnOneChangeIncluded(firstFileName)
+      highlightVcsChange(secondFileName)
+      triggerOnOneChangeIncluded(secondFileName)
       showWarningIfCommitWindowClosed()
       test {
-        clickChangeElement(firstFileName)
+        clickChangeElement(secondFileName)
       }
     }
 
@@ -301,15 +291,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
   }
 
-  private fun TaskContext.triggerOnOneChangeIncluded(changeFileName: String) {
-    triggerUI().component l@{ ui: ChangesListView ->
-      val includedChanges = ui.includedSet
-      if (includedChanges.size != 1) return@l false
-      val change = includedChanges.first() as? ChangeListChange ?: return@l false
-      change.virtualFile?.name == changeFileName
-    }
-  }
-
   private fun TaskContext.triggerOnTopCommitSelected() {
     highlightSubsequentCommitsInGitLog(0)
     triggerUI().component { ui: VcsLogGraphTable ->
@@ -333,20 +314,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val document = FileDocumentManager.getInstance().getDocument(file)!! // it's not directory or binary file and it isn't large
     document.insertString(document.textLength, text)
     FileDocumentManager.getInstance().saveDocument(document)
-  }
-
-  private fun TaskTestContext.clickChangeElement(partOfText: String) {
-    val checkPath: (TreePath) -> Boolean = { p -> p.getPathComponent(p.pathCount - 1).toString().contains(partOfText) }
-    ideFrame {
-      val fixture = jTree(checkPath = checkPath)
-      val tree = fixture.target()
-      val pathRect = invokeAndWaitIfNeeded {
-        val path = TreeUtil.treePathTraverser(tree).find(checkPath)
-        tree.getPathBounds(path)
-      } ?: error("Failed to find path with text '$partOfText'")
-      val offset = JCheckBox().preferredSize.width / 2
-      robot.click(tree, Point(pathRect.x + offset, pathRect.y + offset))
-    }
   }
 
   override val helpLinks: Map<String, String>

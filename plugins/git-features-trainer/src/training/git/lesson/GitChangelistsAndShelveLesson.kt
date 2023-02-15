@@ -3,9 +3,11 @@ package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -25,16 +27,15 @@ import com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
-import training.git.GitLessonsUtil.openCommitWindowText
+import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
@@ -145,11 +146,14 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       HintManager.getInstance().hideAllHints()  // to close the context menu of line marker
     }
 
-    task("CheckinProject") {
-      openCommitWindowText(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
-      stateCheck {
-        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Commit")
       }
+    }
+
+    task("CheckinProject") {
+      openCommitWindow(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
       test { actions(it) }
     }
 
@@ -332,7 +336,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val line = editor.offsetToVisualLine(offset, true)
       editor.visualLineToY(line)
     }
-    return Rectangle(this.x + this.width - 15, y, 10, editor.lineHeight)
+    return Rectangle(this.x + JBUI.scale(5), y, JBUI.scale(8), editor.lineHeight)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(
