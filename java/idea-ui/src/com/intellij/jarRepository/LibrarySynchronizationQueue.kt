@@ -43,7 +43,11 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
             is Request.RevokeSynchronization -> {
               toSynchronize.remove(request.library)
             }
-            is Request.Flush -> {
+            Request.Flush -> {
+              synchronizeLibraries(toSynchronize)
+              toSynchronize.clear()
+            }
+            Request.AllLibrariesSynchronization -> {
               val newLibrariesToSync = readAction {
                 removeDuplicatedUrlsFromRepositoryLibraries(project)
                 RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
@@ -97,6 +101,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   private sealed interface Request {
     class QueueSynchronization(val library: LibraryEx) : Request
     class RevokeSynchronization(val library: LibraryEx) : Request
+    object AllLibrariesSynchronization : Request
     object Flush : Request
   }
 }
