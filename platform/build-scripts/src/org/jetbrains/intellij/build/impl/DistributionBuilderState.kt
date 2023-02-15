@@ -3,14 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.util.*
 
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val pluginsToPublishFiltered = filterPluginsToPublish(pluginsToPublish, context)
@@ -76,46 +71,6 @@ private fun filterPluginsToPublish(plugins: Set<PluginLayout>, context: BuildCon
   }
 
   result.removeIf { !toInclude.contains(it.directoryName) }
-  return result
-}
-
-suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
-  val productLayout = context.productProperties.productLayout
-  val enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context.productProperties)
-  val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules, context)
-  return createPlatformLayout(productLayout = productLayout,
-                              hasPlatformCoverage = hasPlatformCoverage(productLayout, enabledPluginModules, context),
-                              additionalProjectLevelLibraries = projectLibrariesUsedByPlugins,
-                              context = context)
-}
-
-private fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, productProperties: ProductProperties): Set<String> {
-  val result = LinkedHashSet<String>()
-  result.addAll(productProperties.productLayout.bundledPluginModules)
-  pluginsToPublish.mapTo(result) { it.mainModule }
-  return result
-}
-
-private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
-  val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
-
-  for (plugin in getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)) {
-    for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      val dependencies = JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
-      dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).processLibraries(com.intellij.util.Consumer {library ->
-        if (!isProjectLibraryUsedByPlugin(library = library, plugin = plugin)) {
-          return@Consumer
-        }
-
-        val name = library.name
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(name, LibraryPackMode.MERGED)
-        result.addOrGet(ProjectLibraryData(name, packMode))
-          .dependentModules
-          .computeIfAbsent(plugin.directoryName) { ArrayList<String>() }
-          .add(moduleName)
-      })
-    }
-  }
   return result
 }
 
