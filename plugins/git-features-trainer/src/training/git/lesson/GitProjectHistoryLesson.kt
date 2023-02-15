@@ -74,7 +74,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      highlightLatestCommitsFromBranch(branchName, highlightInside = false)
+      highlightLatestCommitsFromBranch(branchName)
     }
 
     task {
@@ -104,7 +104,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       text(GitLessonsBundle.message("git.project.history.click.head.tooltip", choice),
            LearningBalloonConfig(Balloon.Position.above, 250))
       triggerUI().component { ui: BranchFilterPopupComponent ->
-        ui.currentText?.contains("HEAD") == true
+        ui.currentText.contains("HEAD")
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
@@ -138,7 +138,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       text(GitLessonsBundle.message("git.project.history.select.me", strong(meFilterText)))
       triggerUI().component { ui: UserFilterPopupComponent ->
-        ui.currentText?.contains(meFilterText) == true
+        ui.currentText.contains(meFilterText)
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
       test {
@@ -169,7 +169,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.select.commit"))
-      highlightSubsequentCommitsInGitLog(0, highlightInside = false)
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0)
       triggerUI().component { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }

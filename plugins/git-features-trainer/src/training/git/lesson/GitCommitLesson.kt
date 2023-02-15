@@ -213,7 +213,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     resetGitLogWindow()
 
     task {
-      highlightSubsequentCommitsInGitLog(startCommitRow = 0, highlightInside = false)
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0)
     }
 
     task {
@@ -305,7 +305,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      highlightSubsequentCommitsInGitLog(startCommitRow = 0, highlightInside = false)
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0)
     }
 
     task {
@@ -335,7 +335,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     restoreCommitWindowStateInformer()
   }
 
-  private fun TaskContext.highlightVcsChange(changeFileName: String, highlightBorder: Boolean = true) {
+  private fun TaskContext.highlightVcsChange(changeFileName: String) {
     triggerAndBorderHighlight().treeItem { _: JTree, path: TreePath ->
       path.pathCount > 2 && path.getPathComponent(2).toString().contains(changeFileName)
     }
