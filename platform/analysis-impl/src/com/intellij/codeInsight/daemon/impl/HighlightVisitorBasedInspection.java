@@ -11,8 +11,6 @@ import com.intellij.diagnostic.telemetry.IJTracer;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -32,8 +30,11 @@ import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
 
 public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean highlightErrorElements = true;
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean runAnnotators = true;
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean runVisitors = false;
 
   @Override
@@ -110,7 +111,6 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();
-    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, ProperTextRange.create(file.getTextRange()));
     TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
@@ -135,7 +135,7 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {
         span.setAttribute("file", fileName);
 
-        pass.doCollectInformation(progress);
+        pass.doCollectInformation(daemonProgressIndicator);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
           if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
