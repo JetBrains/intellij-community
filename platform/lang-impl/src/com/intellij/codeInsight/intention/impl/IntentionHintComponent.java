@@ -88,16 +88,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static final Alarm ourAlarm = new Alarm();
 
-  @TestOnly
-  public CachedIntentions getCachedIntentions() {
-    return myPopup.myCachedIntentions;
-  }
-
   private final IntentionPopup myPopup;
-
-  public boolean isVisible() {
-    return myPanel.isVisible();
-  }
 
   private final Editor myEditor;
 
@@ -114,73 +105,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       // avoid this (transparent) panel consuming mouse click events
     }
   };
-
-  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
-                                                                  @NotNull PsiFile file,
-                                                                  @NotNull Editor editor,
-                                                                  boolean showExpanded,
-                                                                  @NotNull CachedIntentions cachedIntentions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulb.getIcon(cachedIntentions), intentionPopup);
-
-    if (editor.getSettings().isShowIntentionBulb()) {
-      component.showIntentionHintImpl(!showExpanded);
-    }
-    if (showExpanded) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
-          component.showPopup(false);
-        }
-      }, project.getDisposed());
-    }
-
-    return component;
-  }
-
-  public boolean isDisposed() {
-    return myDisposed;
-  }
-
-  @Override
-  public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myDisposed = true;
-    myComponentHint.hide();
-    myPanel.hide();
-  }
-
-  @Override
-  public void editorScrolled() {
-    closePopup();
-  }
-
-  private void showIntentionHintImpl(boolean delay) {
-    int offset = myEditor.getCaretModel().getOffset();
-
-    myComponentHint.setShouldDelay(delay);
-
-    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-
-    QuestionAction action = new PriorityQuestionAction() {
-      @Override
-      public boolean execute() {
-        showPopup(false);
-        return true;
-      }
-
-      @Override
-      public int getPriority() {
-        return -10;
-      }
-    };
-    if (hintManager.canShowQuestionAction(action)) {
-      Point position = LightBulb.getPosition(myEditor);
-      if (position != null) {
-        hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
-      }
-    }
-  }
 
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -235,6 +159,50 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
   }
 
+  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull Editor editor,
+                                                                  boolean showExpanded,
+                                                                  @NotNull CachedIntentions cachedIntentions) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulb.getIcon(cachedIntentions), intentionPopup);
+
+    if (editor.getSettings().isShowIntentionBulb()) {
+      component.showIntentionHintImpl(!showExpanded);
+    }
+    if (showExpanded) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!editor.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+          component.showPopup(false);
+        }
+      }, project.getDisposed());
+    }
+
+    return component;
+  }
+
+  public boolean isVisible() {
+    return myPanel.isVisible();
+  }
+
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
+  @Override
+  public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myDisposed = true;
+    myComponentHint.hide();
+    myPanel.hide();
+  }
+
+  @Override
+  public void editorScrolled() {
+    closePopup();
+  }
+
   public void hide() {
     myDisposed = true;
     Disposer.dispose(this);
@@ -250,6 +218,44 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (isDisposed() || !isVisible() || editor != myEditor) return false;
     hide();
     return true;
+  }
+
+  public boolean hasVisibleLightBulbOrPopup() {
+    return !isDisposed()
+           && isVisible()
+           && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  @TestOnly
+  public CachedIntentions getCachedIntentions() {
+    return myPopup.myCachedIntentions;
+  }
+
+  private void showIntentionHintImpl(boolean delay) {
+    int offset = myEditor.getCaretModel().getOffset();
+
+    myComponentHint.setShouldDelay(delay);
+
+    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+
+    QuestionAction action = new PriorityQuestionAction() {
+      @Override
+      public boolean execute() {
+        showPopup(false);
+        return true;
+      }
+
+      @Override
+      public int getPriority() {
+        return -10;
+      }
+    };
+    if (hintManager.canShowQuestionAction(action)) {
+      Point position = LightBulb.getPosition(myEditor);
+      if (position != null) {
+        hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
+      }
+    }
   }
 
   private void onMouseExit(boolean small) {
@@ -556,12 +562,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private void setShouldDelay(boolean shouldDelay) {
       myShouldDelay = shouldDelay;
     }
-  }
-
-  public boolean hasVisibleLightBulbOrPopup() {
-    return !isDisposed()
-           && isVisible()
-           && (myComponentHint.isVisible() || myPopup.isVisible() || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   /** The light bulb icon, optionally surrounded by a border. */
