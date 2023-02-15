@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtTypeProjection
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
-import org.jetbrains.kotlin.types.Variance
 
 internal object CallableMetadataProvider {
 
@@ -55,7 +53,7 @@ internal object CallableMetadataProvider {
         object BaseTypeExtension : CallableKind(4)
         object GlobalOrStatic : CallableKind(5) // global non_extension
         object TypeParameterExtension : CallableKind(6)
-        class ReceiverCastRequired(val fullyQualifiedCastType: String) : CallableKind(7)
+        object ReceiverCastRequired : CallableKind(7)
 
         override fun compareTo(other: CallableKind): Int = this.index - other.index
     }
@@ -180,7 +178,7 @@ internal object CallableMetadataProvider {
         //  some common interface. So that logic is left out here for now. We can add it back in future if needed.
         if (bestMatchWeightKind == null) {
             return if (returnCastRequiredOnReceiverTypeMismatch)
-                CallableMetadata(CallableKind.ReceiverCastRequired(expectedReceiverType.render(position = Variance.INVARIANT)), null)
+                CallableMetadata(CallableKind.ReceiverCastRequired, null)
             else null
         }
         return CallableMetadata(bestMatchWeightKind, bestMatchIndex)

@@ -998,6 +998,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/ClassWithClassObject.kt");
         }
 
+        @TestMetadata("DoNotInsertReceiverCast.kt")
+        public void testDoNotInsertReceiverCast() throws Exception {
+            runTest("../testData/handlers/basic/DoNotInsertReceiverCast.kt");
+        }
+
         @TestMetadata("DoNotUseParenthesisOnNextLine.kt")
         public void testDoNotUseParenthesisOnNextLine() throws Exception {
             runTest("../testData/handlers/basic/DoNotUseParenthesisOnNextLine.kt");
