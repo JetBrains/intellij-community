@@ -172,7 +172,7 @@ public class IdeStubIndexService extends StubIndexService {
 
             KtTypeReference typeReference = stub.getPsi().getTypeReference();
             if (typeReference != null && KotlinPsiHeuristics.isProbablyNothing(typeReference)) {
-                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.INSTANCE.getKey(), name);
+                sink.occurrence(KotlinProbablyNothingFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
             if (stub.mayHaveContract()) {
