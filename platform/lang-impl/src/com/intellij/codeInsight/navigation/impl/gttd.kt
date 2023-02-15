@@ -72,7 +72,7 @@ internal class GTTDActionData(
   }
 
   fun result(): NavigationActionResult? {
-    return result(typeSymbols().navigationTargets(project).toCollection(SmartList()))
+    return result(typeSymbols().navigationTargets(project).toCollection(LinkedHashSet()))
   }
 }
 
