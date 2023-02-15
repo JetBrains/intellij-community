@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -31,10 +31,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), varName);
   }
 
-  protected boolean createConstantField() {
-    return false;
-  }
-
   @NotNull
   @Override
   protected List<PsiClass> getTargetClasses(PsiElement element) {
@@ -43,7 +39,10 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       if (canModify(psiClass) &&
           (!psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord()
            || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
-        targetClasses.add(psiClass);
+        PsiElement target = myReferenceExpression.resolve();
+        if (!(target instanceof PsiField field) || field.getContainingClass() != psiClass) {
+          targetClasses.add(psiClass);
+        }
       }
     }
     return targetClasses;
@@ -80,23 +79,18 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     PsiField field = factory.createField(fieldName, PsiTypes.intType());
 
-    if (createConstantField()) {
+    if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+    }
+    if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-    } else {
-      if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-      }
-      if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
-        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-      }
     }
 
     field = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
-    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression);
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, false, myReferenceExpression);
   }
 
   public static void createFieldFromUsageTemplate(final PsiClass targetClass,
