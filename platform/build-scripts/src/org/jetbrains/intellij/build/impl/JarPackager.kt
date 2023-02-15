@@ -21,7 +21,6 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.channels.FileChannel
@@ -273,12 +272,13 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
     for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
-      if (element !is JpsLibraryDependency || element.libraryReference.parentReference!!.resolve() !is JpsModule) {
+      val libraryReference = (element as? JpsLibraryDependency)?.libraryReference ?: continue
+      if (libraryReference.parentReference !is JpsModuleReference) {
         continue
       }
 
       if (JpsJavaExtensionService.getInstance().getDependencyExtension(element)?.scope
-          ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+            ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
         continue
       }
 

@@ -514,13 +514,14 @@ private suspend fun compilePlatformAndPluginModules(pluginsToPublish: Set<Plugin
   val distState = createDistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
   compilationTasks.compileModules(
-    distState.getModulesForPluginsToPublish() +
-    listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"))
+    moduleNames = distState.getModulesForPluginsToPublish() +
+                  listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"),
+  )
   compilationTasks.buildProjectArtifacts(distState.getIncludedProjectArtifacts())
   return distState
 }
 
-private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
+private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val productProperties = context.productProperties
   val mavenArtifacts = productProperties.mavenArtifacts
 
@@ -536,18 +537,21 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
   toCompile.addAll(productProperties.modulesToCompileTests)
   CompilationTasks.create(context).compileModules(toCompile)
 
-  if (context.shouldBuildDistributions()) {
-    val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-    val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-    buildProvidedModuleList(targetFile = providedModuleFile, state = state, context = context)
-    if (!productProperties.productLayout.buildAllCompatiblePlugins) {
-      return state
-    }
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
+                                                          productLayout = context.productProperties.productLayout)
 
+  if (context.shouldBuildDistributions()) {
     if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
       Span.current().addEvent("skip collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
     }
     else {
+      val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
+      val state = compilePlatformAndPluginModules(pluginsToPublish, context)
+      buildProvidedModuleList(targetFile = providedModuleFile, state = state, context = context)
+      if (!productProperties.productLayout.buildAllCompatiblePlugins) {
+        return state
+      }
+
       return compilePlatformAndPluginModules(
         pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModuleFile, context),
         context = context
@@ -555,14 +559,6 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
     }
   }
   return compilePlatformAndPluginModules(pluginsToPublish, context)
-}
-
-private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  return compileModulesForDistribution(
-    pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
-                                                        productLayout = context.productProperties.productLayout),
-    context = context
-  )
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope2 {
