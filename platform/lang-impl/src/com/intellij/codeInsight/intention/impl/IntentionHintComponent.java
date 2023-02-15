@@ -112,6 +112,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                  @NotNull Icon smartTagIcon,
                                  @NotNull IntentionPopup popup) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
     myEditor = editor;
     myPopup = popup;
     Disposer.register(this, popup);
@@ -125,34 +126,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     myIconLabel = new JLabel(myInactiveIcon);
     myIconLabel.setOpaque(false);
+    myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
 
     myPanel.add(myIconLabel, BorderLayout.CENTER);
-
     myPanel.setBorder(LightBulb.getInactiveBorder(editor.isOneLineMode()));
-
-    myIconLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(@NotNull MouseEvent e) {
-        if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
-          AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
-          DataContext projectContext = SimpleDataContext.getProjectContext(project);
-          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.MOUSE_SHORTCUT, null, projectContext);
-          ActionsCollector.getInstance().record(project, action, event, file.getLanguage());
-
-          showPopup(true);
-        }
-      }
-
-      @Override
-      public void mouseEntered(@NotNull MouseEvent e) {
-        onMouseEnter(editor.isOneLineMode());
-      }
-
-      @Override
-      public void mouseExited(@NotNull MouseEvent e) {
-        onMouseExit(editor.isOneLineMode());
-      }
-    });
 
     myComponentHint = new MyComponentHint(myPanel);
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -258,17 +235,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  private void onMouseExit(boolean small) {
+  private void onMouseExit() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myPopup.isVisible()) {
       myIconLabel.setIcon(myInactiveIcon);
-      myPanel.setBorder(LightBulb.getInactiveBorder(small));
+      myPanel.setBorder(LightBulb.getInactiveBorder(myEditor.isOneLineMode()));
     }
   }
 
-  private void onMouseEnter(boolean small) {
+  private void onMouseEnter() {
     myIconLabel.setIcon(myHighlightedIcon);
-    myPanel.setBorder(LightBulb.getActiveBorder(small));
+    myPanel.setBorder(LightBulb.getActiveBorder(myEditor.isOneLineMode()));
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -685,6 +662,41 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
       int borderWidth = editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
       return textX > borderWidth + EmptyIcon.ICON_16.getIconWidth() + borderWidth;
+    }
+  }
+
+  private class LightBulbMouseListener extends MouseAdapter {
+    private final @NotNull Project myProject;
+    private final @NotNull PsiFile myFile;
+
+    LightBulbMouseListener(@NotNull Project project, @NotNull PsiFile file) {
+      this.myProject = project;
+      this.myFile = file;
+    }
+
+    @Override
+    public void mousePressed(@NotNull MouseEvent e) {
+      if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
+        logMousePressed(e);
+        showPopup(true);
+      }
+    }
+
+    @Override
+    public void mouseEntered(@NotNull MouseEvent e) {
+      onMouseEnter();
+    }
+
+    @Override
+    public void mouseExited(@NotNull MouseEvent e) {
+      onMouseExit();
+    }
+
+    private void logMousePressed(@NotNull MouseEvent e) {
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+      DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
+      AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.MOUSE_SHORTCUT, null, projectContext);
+      ActionsCollector.getInstance().record(myProject, action, event, myFile.getLanguage());
     }
   }
 
