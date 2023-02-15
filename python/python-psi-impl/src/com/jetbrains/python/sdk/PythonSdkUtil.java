@@ -143,7 +143,7 @@ public final class PythonSdkUtil {
 
   @Nullable
   public static Sdk findPythonSdk(@Nullable Module module) {
-    if (module == null) return null;
+    if (module == null || module.isDisposed()) return null;
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     if (sdk != null && isPythonSdk(sdk)) return sdk;
     return PyModuleService.getInstance().findPythonSdk(module);
