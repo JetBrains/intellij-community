@@ -44,14 +44,15 @@ import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.beans.PropertyChangeListener
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -81,38 +82,52 @@ class JCefImageViewer(private val myFile: VirtualFile,
   private val myUIComponent: JCefImageViewerUI
   private val myViewerStateJSQuery: JBCefJSQuery
 
-  private val myInitializer: AtomicReference<() -> Unit> = AtomicReference()
   private var myState = ViewerState()
+  private var myEditorState: ImageFileEditorState = ImageFileEditorState(
+    OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault,
+    OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault,
+    1.0,
+    false
+  )
 
   override fun getComponent(): JComponent = myUIComponent
   override fun getPreferredFocusedComponent(): JComponent = myBrowser.cefBrowser.uiComponent as JComponent
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String = NAME
 
   override fun isModified(): Boolean = false
-  override fun isValid(): Boolean = myState.status == ViewerState.Status.OK
-
+  override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
   override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
   override fun getFile(): VirtualFile = myFile
-  override fun getState(level: FileEditorStateLevel): FileEditorState = ImageFileEditorState(myState.chessboardEnabled, myState.gridEnabled,
-                                                                                             myState.zoom, !myState.realSize)
 
-  // TODO: Simplify initialization
+  override fun getState(level: FileEditorStateLevel): FileEditorState =
+    ImageFileEditorState(myState.chessboardEnabled, myState.gridEnabled, myState.zoom, !myState.realSize)
   override fun setState(state: FileEditorState) {
     if (!SwingUtilities.isEventDispatchThread()) {
       SwingUtilities.invokeLater { setState(state) }
       return
     }
-    val initializer = myInitializer.get()
-
-    if (initializer != null && myInitializer.compareAndSet(initializer) { initializer(); setState(state) }) {
-      return
-    }
 
     if (state is ImageFileEditorState) {
+      val options = OptionsManager.getInstance().options.editorOptions.zoomOptions
       isTransparencyChessboardVisible = state.isBackgroundVisible
       isGridVisible = state.isGridVisible
-      execute("setZoom(${state.zoomFactor});")
+      if (myState.status == ViewerState.Status.INIT) {
+        myEditorState = state
+        return
+      }
+
+      if (options.isSmartZooming) {
+        val zoomFactor = options.getSmartZoomFactor(
+          Rectangle(Point(0, 0), Dimension(myState.imageSize.width, myState.imageSize.height)),
+          Dimension(myState.viewportSize.width, myState.viewportSize.height),
+          5
+        )
+        execute("setZoom(${zoomFactor});")
+      }
+      else {
+        execute("setZoom(${state.zoomFactor});")
+      }
     }
   }
 
@@ -128,12 +143,12 @@ class JCefImageViewer(private val myFile: VirtualFile,
   }
 
   override fun setTransparencyChessboardVisible(visible: Boolean) {
-    if (myState.status != ViewerState.Status.OK) return
+    if (myState.status == ViewerState.Status.ERROR) return
     execute("setChessboardVisible(" + (if (visible) "true" else "false") + ");")
   }
 
   override fun setGridVisible(visible: Boolean) {
-    if (myState.status != ViewerState.Status.OK) return
+    if (myState.status == ViewerState.Status.ERROR) return
     execute("setGridVisible(${if (visible) "true" else "false"});")
   }
 
@@ -210,6 +225,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     @Suppress("DEPRECATION")
     myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
     myViewerStateJSQuery.addHandler { s: String ->
+      val oldStatus = myState.status
       try {
         myState = jsonParser.decodeFromString(s)
       }
@@ -218,9 +234,15 @@ class JCefImageViewer(private val myFile: VirtualFile,
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
+      // Init the viewer zoom factor
+      if (oldStatus == ViewerState.Status.INIT && oldStatus != myState.status) setState(myEditorState)
+
       SwingUtilities.invokeLater {
-        myUIComponent.setInfo(ImagesBundle.message("image.info.svg", myState.imageSize.width, myState.imageSize.height,
-                                                   StringUtil.formatFileSize(myFile.length)))
+        if (myState.status == ViewerState.Status.OK) {
+          myUIComponent.setInfo(ImagesBundle.message("image.info.svg", myState.imageSize.width, myState.imageSize.height,
+                                                     StringUtil.formatFileSize(myFile.length)))
+        }
+
         if (myState.status == ViewerState.Status.ERROR) {
           myUIComponent.showError()
         }
@@ -231,18 +253,14 @@ class JCefImageViewer(private val myFile: VirtualFile,
       JBCefJSQuery.Response(null)
     }
 
-    myInitializer.set {
-      reloadStyles()
-      execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
-      execute("setImageUrl('$IMAGE_URL');")
-      isGridVisible = OptionsManager.getInstance().options.editorOptions.gridOptions.isShowDefault
-      isTransparencyChessboardVisible = OptionsManager.getInstance().options.editorOptions.transparencyChessboardOptions.isShowDefault
-      setBorderVisible(ShowBorderAction.isBorderVisible())
-    }
-
     myCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        SwingUtilities.invokeLater { myInitializer.getAndSet(null).invoke() }
+        reloadStyles()
+        execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
+        execute("setImageUrl('$IMAGE_URL');")
+        isGridVisible = myEditorState.isGridVisible
+        isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
+        setBorderVisible(ShowBorderAction.isBorderVisible())
       }
     }, myBrowser.cefBrowser)
 
@@ -260,7 +278,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   }
 
   @Serializable
-  private data class ViewerState(val status: Status = Status.OK,
+  private data class ViewerState(val status: Status = Status.INIT,
                                  val zoom: Double = 0.0,
                                  val viewportSize: Size = Size(0, 0),
                                  val imageSize: Size = Size(0, 0),
@@ -271,7 +289,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
                                  val gridEnabled: Boolean = false,
                                  val chessboardEnabled: Boolean = false) {
     @Serializable
-    enum class Status { OK, ERROR }
+    enum class Status { OK, ERROR, INIT }
 
     @Serializable
     data class Size(val width: Int, val height: Int)

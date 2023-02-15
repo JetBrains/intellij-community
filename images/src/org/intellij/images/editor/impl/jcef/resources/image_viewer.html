@@ -156,6 +156,7 @@
   const MAX_ZOOM = 150
   const MIN_IMAGE_SIZE = 5
   const ViewerStatus = {
+    INIT: 'INIT',
     OK: 'OK',
     ERROR: 'ERROR'
   }
@@ -165,7 +166,7 @@
     'url': '',
     'grid_visible': false,
     'chessboard_visible': false,
-    'status': ViewerStatus.OK
+    'status': ViewerStatus.INIT
   }
 
   let gUrl = ''
@@ -232,11 +233,18 @@
 
   // Fixes the image, if not possible sets the error message
   function _sanitizeImage() {
-    let image = gUI.image.contentDocument
-    if (!image) {
+    let imageDocument = gUI.image.contentDocument
+    if (!imageDocument) {
+      _setError()
       return
     }
-    for (let e of image.getElementsByTagName('svg')) {
+    let images = imageDocument.getElementsByTagName('svg')
+    if (images.length === 0) {
+      _setError()
+      return
+    }
+
+    for (let e of images) {
       let heightAttribute = e.getAttribute('height')
       let widthAttribute = e.getAttribute('width')
       if ((heightAttribute || widthAttribute) && !(heightAttribute?.endsWith('%') || widthAttribute?.endsWith('%'))) continue
@@ -249,7 +257,7 @@
       e.setAttribute('height', vb.baseVal.height + 'px')
     }
 
-    if (image.getElementsByTagName('parsererror').length > 0) {
+    if (imageDocument.getElementsByTagName('parsererror').length > 0) {
       _setError()
     }
     else {
@@ -449,7 +457,7 @@
 
   function reloadStyles() {
     loadScrollbarsStyle(gStyles.scrollbars.href)
-    loadScrollbarsStyle(gStyles.chessboard.href)
+    loadChessboardStyle(gStyles.chessboard.href)
   }
 </script>
 

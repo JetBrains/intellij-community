@@ -43,6 +43,32 @@ public interface ZoomOptions extends Cloneable {
         return isWheelZooming();
     }
 
+  default Double getSmartZoomFactor(Rectangle imageSize, Dimension viewPort, int inset) {
+    if (imageSize == null) return null;
+    if (imageSize.getWidth() == 0 || imageSize.getHeight() == 0) return null;
+    int width = imageSize.width;
+    int height = imageSize.height;
+
+    Dimension preferredMinimumSize = getPrefferedSize();
+    if (width < preferredMinimumSize.width &&
+        height < preferredMinimumSize.height) {
+      double factor = (preferredMinimumSize.getWidth() / (double)width +
+                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
+      return Math.ceil(factor);
+    }
+
+    viewPort.height -= inset * 2;
+    viewPort.width -= inset * 2;
+    if (viewPort.width <= 0 || viewPort.height <= 0) return null;
+
+    if (viewPort.width < width || viewPort.height < height) {
+      return Math.min((double)viewPort.height / height,
+                      (double)viewPort.width / width);
+    }
+
+    return 1.0d;
+  }
+
     Dimension getPrefferedSize();
 
     void inject(ZoomOptions options);
