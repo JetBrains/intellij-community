@@ -24,7 +24,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
     private val log = logger<LibrarySynchronizationQueue>()
   }
 
-  private val synchronizationRequests = MutableSharedFlow<Request>()
+  private val synchronizationRequests = MutableSharedFlow<Request>(extraBufferCapacity = Int.MAX_VALUE)
   private val toSynchronize = mutableSetOf<LibraryEx>()
 
   init {
@@ -39,7 +39,11 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
               toSynchronize.remove(it.library)
             }
             is Request.Flush -> {
-              toSynchronize.addAll(it.newLibraries)
+              val newLibrariesToSync = readAction {
+                removeDuplicatedUrlsFromRepositoryLibraries(project)
+                RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
+              }
+              toSynchronize.addAll(newLibrariesToSync.map { lib -> lib as LibraryEx })
               synchronizeLibraries(toSynchronize)
               toSynchronize.clear()
             }
@@ -57,31 +61,19 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   }
 
   fun requestAllLibrariesSynchronization() {
-    scope.launch(Dispatchers.IO) {
-      removeDuplicatedUrlsFromRepositoryLibraries(project)
-      val libraries = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
-      synchronizationRequests.emit(Request.Flush(libraries.map { it as LibraryEx }))
-    }
+    synchronizationRequests.tryEmit(Request.Flush)
   }
 
   fun requestSynchronization(library: LibraryEx) {
-    scope.launch(Dispatchers.IO) {
-      if (readAction { library.needToReload() }) {
-        synchronizationRequests.emit(Request.QueueSynchronization(library))
-      }
-    }
+    synchronizationRequests.tryEmit(Request.QueueSynchronization(library))
   }
 
   fun revokeSynchronization(library: LibraryEx) {
-    scope.launch(Dispatchers.IO) {
-      synchronizationRequests.emit(Request.RevokeSynchronization(library))
-    }
+    synchronizationRequests.tryEmit(Request.RevokeSynchronization(library))
   }
 
   fun flush() {
-    scope.launch(Dispatchers.IO) {
-      synchronizationRequests.emit(Request.Flush(emptyList()))
-    }
+    synchronizationRequests.tryEmit(Request.Flush)
   }
 
   private suspend fun synchronizeLibraries(libraries: Collection<LibraryEx>) {
@@ -100,7 +92,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   private sealed interface Request {
     class QueueSynchronization(val library: LibraryEx) : Request
     class RevokeSynchronization(val library: LibraryEx) : Request
-    class Flush(val newLibraries: Collection<LibraryEx>) : Request
+    object Flush : Request
   }
 }
 
