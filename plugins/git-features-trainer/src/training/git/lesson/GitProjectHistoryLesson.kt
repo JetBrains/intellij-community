@@ -2,13 +2,16 @@
 package training.git.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -18,6 +21,7 @@ import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import git4idea.i18n.GitBundle
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import org.assertj.swing.fixture.JPanelFixture
@@ -29,7 +33,6 @@ import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
-import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import java.util.regex.Pattern
@@ -44,8 +47,16 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val testScriptProperties = TaskTestContext.TestScriptProperties(40)
 
   override val lessonContent: LessonContext.() -> Unit = {
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
+      }
+    }
+
     task("ActivateVersionControlToolWindow") {
-      text(GitLessonsBundle.message("git.project.history.open.git.window", action(it)))
+      text(GitLessonsBundle.message("git.project.history.open.git.window", action(it), icon(AllIcons.Toolwindows.ToolWindowChanges)))
+      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(GitBundle.message("git4idea.vcs.name"))),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -63,15 +74,20 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
+      highlightLatestCommitsFromBranch(branchName, highlightInside = false)
+    }
+
+    task {
       text(GitLessonsBundle.message("git.project.history.commits.tree.explanation"))
-      highlightLatestCommitsFromBranch(branchName)
+      gotItStep(Balloon.Position.above, width = 0,
+                GitLessonsBundle.message("git.project.history.commits.tree.got.it"),
+                duplicateMessage = false)
       showWarningIfGitWindowClosed()
-      proceedLink()
     }
 
     task {
       var selectionCleared = false
-      triggerAndFullHighlight().treeItem { tree, path ->
+      triggerAndBorderHighlight().treeItem { tree, path ->
         (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE").also {
           if (!selectionCleared) {
             tree.clearSelection()
@@ -99,7 +115,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
-      triggerAndFullHighlight().component { _: UserFilterPopupComponent -> true }
+      triggerAndBorderHighlight().component { _: UserFilterPopupComponent -> true }
     }
 
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
@@ -134,7 +150,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.apply.message.filter", code(textToFind), LessonUtil.rawEnter()))
-      triggerAndFullHighlight().component { ui: SearchTextField ->
+      triggerAndBorderHighlight().component { ui: SearchFieldWithExtension ->
         (UIUtil.getParentOfType(MainFrame::class.java, ui) != null).also {
           if (it) IdeFocusManager.getInstance(project).requestFocus(ui, true)
         }
@@ -153,7 +169,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task {
       text(GitLessonsBundle.message("git.project.history.select.commit"))
-      highlightSubsequentCommitsInGitLog(0)
+      highlightSubsequentCommitsInGitLog(0, highlightInside = false)
       triggerUI().component { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }
@@ -171,20 +187,27 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     }
 
     task {
+      triggerAndBorderHighlight().component { _: CommitDetailsListPanel -> true }
+    }
+
+    task {
       text(GitLessonsBundle.message("git.project.history.commit.details.explanation"))
-      proceedLink()
-      triggerAndBorderHighlight { usePulsation = true }.component { _: CommitDetailsListPanel -> true }
+      gotItStep(Balloon.Position.atLeft, width = 0,
+                GitLessonsBundle.message("git.project.history.commit.details.got.it"),
+                duplicateMessage = false)
       showWarningIfGitWindowClosed()
     }
 
     task {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
-      }
-      text(GitLessonsBundle.message("git.project.history.click.changed.file"))
-      triggerAndFullHighlight().treeItem { _, path ->
+      triggerAndBorderHighlight().treeItem { _, path ->
         path.getPathComponent(path.pathCount - 1).toString().contains(".yml")
       }
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.project.history.click.changed.file"))
+      text(GitLessonsBundle.message("git.project.history.click.changed.file.popup"),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerUI().component { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
       test {

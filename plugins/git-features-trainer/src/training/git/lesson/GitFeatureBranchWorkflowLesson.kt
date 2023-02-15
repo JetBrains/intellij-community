@@ -4,8 +4,10 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -71,8 +73,18 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   override val lessonContent: LessonContext.() -> Unit = {
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
+      }
+    }
+
     task("ActivateVersionControlToolWindow") {
-      text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))
+      val gitWindowName = GitBundle.message("git4idea.vcs.name")
+      text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName),
+                                    strong(main), action(it), strong(gitWindowName)))
+      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       illustration(illustration1)
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
@@ -88,9 +100,15 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      text(GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main)))
-      highlightLatestCommitsFromBranch(branchName, sequenceLength = 2)
-      proceedLink()
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 2, highlightInside = false)
+    }
+
+    task {
+      val introText = GitLessonsBundle.message("git.feature.branch.introduction.2", strong(main))
+      val gotItText = GitLessonsBundle.message("git.feature.branch.introduction.got.it", strong(branchName))
+      val checkText = GitLessonsBundle.message("git.feature.branch.introduction.check", strong(main))
+      text("$introText $checkText")
+      gotItStep(Balloon.Position.above, width = 0, "$gotItText $checkText", duplicateMessage = false)
       showWarningIfGitWindowClosed()
     }
 
@@ -150,10 +168,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.feature.branch.confirm.update", strong(CommonBundle.getOkButtonText())))
-      triggerAndFullHighlight().component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text == CommonBundle.getOkButtonText()
       }
-      highlightSubsequentCommitsInGitLog { commit ->
+      highlightSubsequentCommitsInGitLog(highlightInside = false) { commit ->
         commit.fullMessage == commitMessage
       }
       restoreByUiAndBackgroundTask(ActionsBundle.actionText("Vcs.UpdateProject").dropMnemonic(), delayMillis = defaultRestoreDelay)
@@ -165,7 +183,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
       illustration(illustration2)
-      proceedLink(4)
+      gotItStep(Balloon.Position.above, width = 0,
+                GitLessonsBundle.message("git.feature.branch.new.commits.got.it", strong(main)),
+                duplicateMessage = false)
     }
 
     task {
@@ -221,7 +241,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task {
       text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
                                     strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
-      triggerAndFullHighlight { usePulsation = true }.component { _: BasicOptionButtonUI.ArrowButton -> true }
+      triggerAndBorderHighlight().component { _: BasicOptionButtonUI.ArrowButton -> true }
       val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
       triggerUI().component { ui: JDialog ->
         ui.title?.contains(forcePushDialogTitle) == true

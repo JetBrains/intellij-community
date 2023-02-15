@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
@@ -47,7 +48,6 @@ import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnNotification
 import training.git.GitLessonsUtil.triggerOnOneChangeIncluded
 import training.project.ProjectUtils
-import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -129,7 +129,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      triggerAndFullHighlight { usePulsation = true }.component { ui: ActionButton ->
+      triggerAndBorderHighlight().component { ui: ActionButton ->
         ActionManager.getInstance().getId(ui.action) == "ChangesView.ShowCommitOptions"
       }
     }
@@ -141,7 +141,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.open.before.commit.options", icon(AllIcons.General.Gear)))
       text(GitLessonsBundle.message("git.commit.open.options.tooltip", strong(commitWindowName)),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerAndFullHighlight().component { ui: JBCheckBox ->
+      triggerAndBorderHighlight().component { ui: JBCheckBox ->
         ui.text?.contains(reformatCodeButtonText) == true
       }
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
@@ -179,7 +179,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     val commitButtonText = GitBundle.message("commit.action.name").dropMnemonic()
     task {
       text(GitLessonsBundle.message("git.commit.perform.commit", strong(commitButtonText)))
-      triggerAndFullHighlight { usePulsation = true }.component { ui: JBOptionButton ->
+      triggerAndBorderHighlight().component { ui: JBOptionButton ->
         ui.text?.contains(commitButtonText) == true
       }
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
@@ -191,11 +191,18 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       }
     }
 
-    task("ActivateVersionControlToolWindow") {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
       }
-      text(GitLessonsBundle.message("git.commit.open.git.window", action(it)))
+    }
+
+    task("ActivateVersionControlToolWindow") {
+      val gitWindowName = GitBundle.message("git4idea.vcs.name")
+      text(GitLessonsBundle.message("git.commit.open.git.window", action(it),
+                                    icon(AllIcons.Toolwindows.ToolWindowChanges), strong(gitWindowName)))
+      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -206,7 +213,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     resetGitLogWindow()
 
     task {
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0, highlightInside = false)
+    }
+
+    task {
       text(GitLessonsBundle.message("git.commit.select.top.commit"))
+      text(GitLessonsBundle.message("git.commit.select.top.commit.balloon"),
+           LearningBalloonConfig(Balloon.Position.below, width = JBUI.scale(300)))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
       test {
@@ -218,22 +231,31 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      text(GitLessonsBundle.message("git.commit.committed.file.explanation"))
-      triggerAndBorderHighlight { usePulsation = true }.component { _: VcsLogChangesBrowser -> true }
-      proceedLink()
-      showWarningIfGitWindowClosed()
+      triggerAndBorderHighlight().component { _: VcsLogChangesBrowser -> true }
     }
 
     task {
-      before { LearningUiHighlightingManager.clearHighlights() }
-      val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
+      text(GitLessonsBundle.message("git.commit.committed.file.explanation", strong(GitBundle.message("git4idea.vcs.name"))))
+      gotItStep(Balloon.Position.atLeft, width = 0,
+                GitLessonsBundle.message("git.commit.committed.file.got.it"),
+                cornerToPointerDistance = JBUI.scale(20), duplicateMessage = false)
+      showWarningIfGitWindowClosed()
+    }
+
+    val amendCheckboxText = VcsBundle.message("checkbox.amend").dropMnemonic()
+    task {
+      triggerAndBorderHighlight().component { ui: JBCheckBox ->
+        ui.text?.contains(amendCheckboxText) == true
+      }
+    }
+
+    task {
       text(GitLessonsBundle.message("git.commit.select.amend.checkbox",
                                     strong(amendCheckboxText),
                                     LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)),
                                     strong(commitWindowName)))
-      triggerAndFullHighlight { usePulsation = true }.component { ui: JBCheckBox ->
-        ui.text?.contains(amendCheckboxText) == true
-      }
+      text(GitLessonsBundle.message("git.commit.select.amend.checkbox.balloon", strong(amendCheckboxText)),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
       triggerUI().component { ui: JBCheckBox ->
         ui.text?.contains(amendCheckboxText) == true && ui.isSelected
       }
@@ -247,7 +269,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
+      triggerOnChangeCheckboxShown(secondFileName)
+    }
+
+    task {
       text(GitLessonsBundle.message("git.commit.select.file"))
+      text(GitLessonsBundle.message("git.commit.select.file.balloon"),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
       highlightVcsChange(secondFileName)
       triggerOnOneChangeIncluded(secondFileName)
       showWarningIfCommitWindowClosed()
@@ -257,11 +285,16 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      val amendButtonText = VcsBundle.message("amend.action.name", commitButtonText)
-      text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
-      triggerAndFullHighlight().component { ui: JBOptionButton ->
+      triggerAndBorderHighlight().component { ui: JBOptionButton ->
         UIUtil.getParentOfType(CommitActionsPanel::class.java, ui) != null
       }
+    }
+
+    task {
+      val amendButtonText = VcsBundle.message("amend.action.name", commitButtonText)
+      text(GitLessonsBundle.message("git.commit.amend.commit", strong(amendButtonText)))
+      text(GitLessonsBundle.message("git.commit.amend.commit.balloon"),
+           LearningBalloonConfig(Balloon.Position.above, width = 0))
       triggerOnNotification { it.displayId == VcsNotificationIdsHolder.COMMIT_FINISHED }
       showWarningIfCommitWindowClosed()
       test {
@@ -272,7 +305,13 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     }
 
     task {
-      text(GitLessonsBundle.message("git.commit.select.top.commit.again"))
+      highlightSubsequentCommitsInGitLog(startCommitRow = 0, highlightInside = false)
+    }
+
+    task {
+      text(GitLessonsBundle.message("git.commit.select.top.commit.again", GitBundle.message("git4idea.vcs.name")))
+      text(GitLessonsBundle.message("git.commit.select.top.commit.again.balloon"),
+           LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
       test {
@@ -283,7 +322,15 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       }
     }
 
-    text(GitLessonsBundle.message("git.commit.two.committed.files.explanation"))
+    task {
+      triggerAndBorderHighlight().component { _: VcsLogChangesBrowser -> true }
+    }
+
+    task {
+      gotItStep(Balloon.Position.atLeft, width = 0,
+                GitLessonsBundle.message("git.commit.two.committed.files.explanation"),
+                cornerToPointerDistance = JBUI.scale(20))
+    }
 
     restoreCommitWindowStateInformer()
   }
@@ -295,7 +342,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   }
 
   private fun TaskContext.triggerOnTopCommitSelected() {
-    highlightSubsequentCommitsInGitLog(0)
     triggerUI().component { ui: VcsLogGraphTable ->
       ui.isCellSelected(0, 1)
     }
