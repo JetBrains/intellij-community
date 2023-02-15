@@ -187,8 +187,9 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       }
 
       // sort because projectStructureMapping is a concurrent collection
+      // call Path::toString because the result of Path ordering is platform-dependent
       return list +
-             packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
+             packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path.toString() }, { it.type }, { it.libraryFile?.toString() }) }
     }
 
     private suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, MutableList<String>>, context: BuildContext) {
