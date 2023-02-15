@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.versions
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -13,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.ScalarIndexExtension
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -38,11 +38,11 @@ fun getLibraryRootsWithIncompatibleAbi(module: Module): Collection<BinaryVersion
 }
 
 fun getLibraryRootsWithIncompatibleAbiJvm(module: Module): Collection<BinaryVersionedFile<JvmMetadataVersion>> {
-    return getLibraryRootsWithAbiIncompatibleVersion(module, JvmMetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex)
+    return getLibraryRootsWithAbiIncompatibleVersion(module, JvmMetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex.NAME)
 }
 
 fun getLibraryRootsWithIncompatibleAbiJavaScript(module: Module): Collection<BinaryVersionedFile<JsMetadataVersion>> {
-    return getLibraryRootsWithAbiIncompatibleVersion(module, JsMetadataVersion.INSTANCE, KotlinJsMetadataVersionIndex)
+    return getLibraryRootsWithAbiIncompatibleVersion(module, JsMetadataVersion.INSTANCE, KotlinJsMetadataVersionIndex.NAME)
 }
 
 fun Project.forEachAllUsedLibraries(processor: (Library) -> Boolean) {
@@ -54,25 +54,23 @@ data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val
 private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
     module: Module,
     supportedVersion: T,
-    index: ScalarIndexExtension<T>
+    indexId: ID<T, *>
 ): Collection<BinaryVersionedFile<T>> {
-    val id = index.name
-
     val moduleWithAllDependencies = setOf(module) + ModuleUtil.getAllDependentModules(module)
     val moduleWithAllDependentLibraries = GlobalSearchScope.union(
         moduleWithAllDependencies.map { it.moduleWithLibrariesScope }.toTypedArray()
     )
 
-    val allVersions = FileBasedIndex.getInstance().getAllKeys(id, module.project)
+    val allVersions = FileBasedIndex.getInstance().getAllKeys(indexId, module.project)
     val badVersions = allVersions.filterNot(BinaryVersion::isCompatible).toHashSet()
     val badRoots = hashSetOf<BinaryVersionedFile<T>>()
     val fileIndex = ProjectFileIndex.getInstance(module.project)
 
     for (version in badVersions) {
-        val indexedFiles = FileBasedIndex.getInstance().getContainingFiles(id, version, moduleWithAllDependentLibraries)
+        val indexedFiles = FileBasedIndex.getInstance().getContainingFiles(indexId, version, moduleWithAllDependentLibraries)
         for (indexedFile in indexedFiles) {
             val libraryRoot = fileIndex.getClassRootForFile(indexedFile) ?: error(
-                "Only library roots were requested, and only class files should be indexed with the $id key. " +
+                "Only library roots were requested, and only class files should be indexed with the $indexId key. " +
                         "File: ${indexedFile.path}"
             )
             badRoots.add(BinaryVersionedFile(VfsUtil.getLocalFile(libraryRoot), version, supportedVersion))
@@ -84,8 +82,6 @@ private fun <T : BinaryVersion> getLibraryRootsWithAbiIncompatibleVersion(
 
 const val MAVEN_JS_STDLIB_ID = PathUtil.JS_LIB_NAME
 const val MAVEN_JS_TEST_ID = PathUtil.KOTLIN_TEST_JS_NAME
-
-val LOG = Logger.getInstance("org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt")
 
 data class LibInfo(
     val groupId: String,
