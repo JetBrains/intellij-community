@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
@@ -54,8 +56,17 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
 
   override val lessonContent: LessonContext.() -> Unit = {
+    task {
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
+      }
+    }
+
     task("ActivateVersionControlToolWindow") {
-      text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it)))
+      val gitWindowName = GitBundle.message("git4idea.vcs.name")
+      text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it), strong(gitWindowName)))
+      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -67,7 +78,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
-      highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false, usePulsation = true)
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false)
       proceedLink()
       showWarningIfGitWindowClosed()
     }
@@ -81,7 +92,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         val vcsData = VcsProjectLog.getInstance(project).dataManager
         commitHashToHighlight = vcsData?.findFirstCommitInBranch(branchName)
       }
-      highlightSubsequentCommitsInGitLog {
+      highlightSubsequentCommitsInGitLog(highlightInside = false) {
         it.id == commitHashToHighlight
       }
     }
@@ -93,7 +104,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.open.context.menu"))
       text(GitLessonsBundle.message("git.interactive.rebase.click.commit.tooltip"),
            LearningBalloonConfig(Balloon.Position.above, 0))
-      triggerAndFullHighlight().component { ui: ActionMenuItem ->
+      triggerAndBorderHighlight().component { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
@@ -151,7 +162,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       val moveUpShortcut = CommonShortcuts.MOVE_UP.shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.move.commit", LessonUtil.rawKeyStroke(moveUpShortcut.firstKeyStroke)))
-      triggerAndFullHighlight().componentPart { ui: JBTable ->
+      triggerAndBorderHighlight().componentPart { ui: JBTable ->
         if (isInsideRebaseDialog(ui)) {
           ui.getCellRect(1, 1, false).apply { height = 1 }
         }
@@ -170,7 +181,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val fixupShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
-      triggerAndFullHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
       test(waitEditorToBeReady = false) {
         invokeActionViaShortcut("ALT F")
@@ -197,7 +208,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       val squashShortcut = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_DOWN_MASK)
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
-      triggerAndFullHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false
@@ -225,7 +236,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     task {
       val startRebasingButtonText = GitBundle.message("rebase.interactive.dialog.start.rebase")
       text(GitLessonsBundle.message("git.interactive.rebase.start.rebasing", strong(startRebasingButtonText)))
-      triggerAndFullHighlight { usePulsation = true }.component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text?.contains(startRebasingButtonText) == true
       }
       triggerOnNotification {
@@ -250,7 +261,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   }
 
   private fun TaskContext.highlightCommitInRebaseDialog(rowInd: Int) {
-    highlightSubsequentCommitsInRebaseDialog(rowInd, rowInd + 1, highlightInside = true)
+    highlightSubsequentCommitsInRebaseDialog(rowInd, rowInd + 1)
   }
 
   private fun TaskContext.highlightSubsequentCommitsInRebaseDialog(startRowIncl: Int,

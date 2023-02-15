@@ -185,7 +185,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     task {
       val newBranchActionText = DvcsBundle.message("new.branch.action.text.with.ellipsis")
       text(GitLessonsBundle.message("git.quick.start.choose.new.branch.item", strong(newBranchActionText)))
-      triggerAndFullHighlight().component { ui: JButton ->
+      triggerAndBorderHighlight().component { ui: JButton ->
         ui.text?.contains(createButtonText) == true
       }
       restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
