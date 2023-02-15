@@ -113,7 +113,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         }
 
         return StubIndex.getInstance().processElements(
-            KotlinFileFacadeShortNameIndex.key,
+            KotlinFileFacadeShortNameIndex.indexKey,
             name,
             project,
             effectiveScope,
