@@ -82,7 +82,8 @@ internal class WeighingContext private constructor(
 }
 
 internal object Weighers {
-    fun KtAnalysisSession.applyWeighsToLookupElement(
+    context(KtAnalysisSession)
+    fun applyWeighsToLookupElement(
         context: WeighingContext,
         lookupElement: LookupElement,
         symbol: KtSymbol?,

@@ -590,6 +590,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/SuperMembers.kt");
         }
 
+        @TestMetadata("SyntheticJavaProperties.kt")
+        public void testSyntheticJavaProperties() throws Exception {
+            runTest("../completion/testData/weighers/basic/SyntheticJavaProperties.kt");
+        }
+
         @TestMetadata("TopLevelKeywordWithClassName.kt")
         public void testTopLevelKeywordWithClassName() throws Exception {
             runTest("../completion/testData/weighers/basic/TopLevelKeywordWithClassName.kt");
