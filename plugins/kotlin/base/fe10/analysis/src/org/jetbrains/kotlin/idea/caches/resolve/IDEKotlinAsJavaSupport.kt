@@ -70,7 +70,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
-        KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, searchScope).platformSourcesFirst()
+        KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, searchScope].platformSourcesFirst()
     }
 
     override fun findClassOrObjectDeclarationsInPackage(
