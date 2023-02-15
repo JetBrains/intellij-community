@@ -369,30 +369,11 @@ private fun validatePlugin(path: Path, context: BuildContext) {
       }
     }
     if (problems.isNotEmpty()) {
-      val message = problems.joinToString(
+      reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",
         transform = PluginProblem::message
-      )
-      @Suppress("SpellCheckingInspection")
-      when (id) {
-        // https://youtrack.jetbrains.com/issue/IDEA-308174
-        "androidx.compose.plugins.idea",
-          // https://youtrack.jetbrains.com/issue/IDEA-312410
-        "com.intellij.tasks",
-          // https://youtrack.jetbrains.com/issue/IDEA-312409
-        "org.jetbrains.plugins.sass",
-          // https://youtrack.jetbrains.com/issue/IDEA-312408
-        "org.toml.lang",
-          // https://youtrack.jetbrains.com/issue/IDEA-312407
-        "com.intellij.plugins.webcomponents",
-          // https://youtrack.jetbrains.com/issue/IDEA-312406
-        "cucumber-javascript",
-          // https://youtrack.jetbrains.com/issue/IDEA-312405
-        "com.jetbrains.plugins.yeoman"
-        -> context.messages.warning(message)
-        else -> reportBuildProblem(message, identity = "${id ?: path}")
-      }
+      ), identity = "${id ?: path}")
     }
   }
 }
