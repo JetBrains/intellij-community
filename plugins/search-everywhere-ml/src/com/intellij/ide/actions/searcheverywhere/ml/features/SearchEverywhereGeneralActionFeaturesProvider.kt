@@ -50,7 +50,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
   private fun getValueName(value: Any): String? {
     return when (value) {
       is String -> value
-      is OptionDescription -> value.hit
+      is OptionDescription -> GotoActionModel.GotoActionListCellRenderer.calcHit(value)
       is GotoActionModel.ActionWrapper -> value.presentation.text
       else -> null
     }
