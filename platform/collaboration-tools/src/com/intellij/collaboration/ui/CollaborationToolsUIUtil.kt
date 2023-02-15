@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui
 import com.intellij.application.subscribe
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManagerListener
@@ -224,9 +225,17 @@ object CollaborationToolsUIUtil {
   }
 
   fun wrapWithLimitedSize(component: JComponent, maxWidth: Int? = null, maxHeight: Int? = null): JComponent {
+    val layout = SizeRestrictedSingleComponentLayout.constant(maxWidth, maxHeight)
+    return JPanel(layout).apply {
+      name = "Size limit wrapper"
+      isOpaque = false
+      add(component)
+    }
+  }
+
+  fun wrapWithLimitedSize(component: JComponent, maxSize: DimensionRestrictions): JComponent {
     val layout = SizeRestrictedSingleComponentLayout().apply {
-      this.maxWidth = maxWidth
-      this.maxHeight = maxHeight
+      this.maxSize = maxSize
     }
     return JPanel(layout).apply {
       name = "Size limit wrapper"

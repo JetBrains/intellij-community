@@ -58,10 +58,8 @@ object GHPRReviewCommentComponent {
                showResolvedMarker,
                maxTextWidth)
 
-    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, comment::body) {
+    val editablePaneHandle = GHEditableHtmlPaneHandle(project, commentWrapper, maxTextWidth, comment::body) {
       reviewDataProvider.updateComment(EmptyProgressIndicator(), comment.id, it)
-    }.apply {
-      maxEditorWidth = maxTextWidth
     }
 
     val editButton = CodeReviewCommentUIUtil.createEditButton {
