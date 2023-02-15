@@ -58,7 +58,7 @@ class StubBasedPackageMemberDeclarationProvider(
 
     private val declarationNames_: Set<Name> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         FileBasedIndex.getInstance()
-            .getValues(KotlinPackageSourcesMemberNamesIndex.KEY, fqName.asString(), searchScope)
+            .getValues(KotlinPackageSourcesMemberNamesIndex.NAME, fqName.asString(), searchScope)
             .flatMapTo(hashSetOf()) {
                 it.map { stringName -> Name.identifier(stringName).safeNameForLazyResolve() }
             }

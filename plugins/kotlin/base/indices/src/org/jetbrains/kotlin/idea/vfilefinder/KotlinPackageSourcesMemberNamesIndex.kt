@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.DataInput
 import java.io.DataOutput
 
-object KotlinPackageSourcesMemberNamesIndex : FileBasedIndexExtension<String, Collection<String>>() {
-    val KEY: ID<String, Collection<String>> = ID.create(KotlinPackageSourcesMemberNamesIndex::class.java.canonicalName)
+class KotlinPackageSourcesMemberNamesIndex internal constructor() : FileBasedIndexExtension<String, Collection<String>>() {
+    companion object {
+        val NAME: ID<String, Collection<String>> = ID.create(KotlinPackageSourcesMemberNamesIndex::class.java.canonicalName)
+    }
 
     private val KEY_DESCRIPTOR = EnumeratorStringDescriptor()
 
-    override fun getName() = KEY
+    override fun getName() = NAME
 
     override fun dependsOnFileContent() = true
 
