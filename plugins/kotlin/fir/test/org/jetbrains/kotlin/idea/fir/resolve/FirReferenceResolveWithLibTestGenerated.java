@@ -23,9 +23,19 @@ public class FirReferenceResolveWithLibTestGenerated extends AbstractFirReferenc
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("dataClassSyntheticMethods.kt")
+    public void testDataClassSyntheticMethods() throws Exception {
+        runTest("../idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods.kt");
+    }
+
     @TestMetadata("delegatedPropertyWithTypeParameters.kt")
     public void testDelegatedPropertyWithTypeParameters() throws Exception {
         runTest("../idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters.kt");
+    }
+
+    @TestMetadata("enumSyntheticMethods.kt")
+    public void testEnumSyntheticMethods() throws Exception {
+        runTest("../idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods.kt");
     }
 
     @TestMetadata("fakeOverride.kt")
