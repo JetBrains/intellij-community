@@ -12,6 +12,8 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume
@@ -201,8 +203,10 @@ abstract class LibraryTableTestCase {
     eventsCount = 0
 
     edit { model ->
+      val mutableEntityStorage = (model as LegacyBridgeModifiableBase).diff
       libraryNames.forEach { libraryName ->
-        val library = model.getLibraryByName(libraryName)!!
+        val library = model.getLibraryByName(libraryName) as LibraryBridgeImpl
+        library.setTargetBuilder(mutableEntityStorage)
         val libModifiableModel = library.modifiableModel
         libModifiableModel.addRoot("/a/b/c.jar", OrderRootType.CLASSES)
         libModifiableModel.commit()

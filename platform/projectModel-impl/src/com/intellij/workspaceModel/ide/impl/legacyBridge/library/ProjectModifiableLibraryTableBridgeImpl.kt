@@ -32,11 +32,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   private val librariesArrayValue = CachedValue<Array<Library>> { storage ->
     storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
-      .mapNotNull { entity ->
-        val libraryBridge = storage.libraryMap.getDataByEntity(entity)
-        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-        libraryBridge
-      }
+      .mapNotNull { entity -> storage.libraryMap.getDataByEntity(entity) }
       .toList().toTypedArray()
   }
 
@@ -126,9 +122,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
-    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity) ?: return null
-    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
-    return libraryBridge
+    return diff.libraryMap.getDataByEntity(libraryEntity)
   }
 
   override fun getLibraries(): Array<Library> = librariesArray
