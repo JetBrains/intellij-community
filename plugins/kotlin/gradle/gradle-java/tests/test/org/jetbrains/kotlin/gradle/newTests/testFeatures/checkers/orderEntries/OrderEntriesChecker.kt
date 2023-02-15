@@ -66,7 +66,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
                     render(
                         orderEntry = entry,
                         isDependsOn = orderEntryModule in dependsOnModules,
-                        isFriend = friendModules.containsAll(moduleInfos)
+                        isFriend = moduleInfos.isNotEmpty() && friendModules.containsAll(moduleInfos)
                     )
                 )
             }
