@@ -69,7 +69,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    abstract fun KtAnalysisSession.complete(positionContext: C)
+    abstract fun KtAnalysisSession.complete(positionContext: C, weighingContext: WeighingContext)
 
     protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
@@ -190,9 +190,10 @@ internal var LookupElement.availableWithoutImport: Boolean by NotNullableUserDat
 internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributorBase<C>,
     positionContext: C,
+    weighingContext: WeighingContext
 ) {
     with(contextContributor) {
-        complete(positionContext)
+        complete(positionContext, weighingContext)
     }
 }
 

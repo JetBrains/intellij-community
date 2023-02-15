@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookup
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createEmptyWeighingContext
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -42,7 +41,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
         val variableOrParameter: KtCallableDeclaration = when (positionContext) {
             is FirValueParameterPositionContext -> positionContext.ktParameter.takeIf { NameWithTypeCompletion.shouldCompleteParameter(it) }
             is FirTypeNameReferencePositionContext ->
@@ -58,7 +57,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         val scopes = originalKtFile.getScopeContextForPosition(variableOrParameter).scopes
 
         completeFromParametersInFile(variableOrParameter, visibilityChecker, lookupNamesAdded, scopes)
-        completeClassesFromIndexes(variableOrParameter, visibilityChecker, lookupNamesAdded, scopes)
+        completeClassesFromIndexes(variableOrParameter, visibilityChecker, lookupNamesAdded, scopes, weighingContext)
     }
 
     private fun KtAnalysisSession.completeFromParametersInFile(
@@ -109,9 +108,9 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
         variableOrParameter: KtCallableDeclaration,
         visibilityChecker: CompletionVisibilityChecker,
         lookupNamesAdded: MutableSet<String>,
-        scopes: KtScope
+        scopes: KtScope,
+        weighingContext: WeighingContext
     ) {
-        val weighingContext = createEmptyWeighingContext(variableOrParameter.containingKtFile)
         val matchersWithUserPrefixes = getMatchersWithUserPrefixes()
 
         for ((index, matcherWithUserPrefix) in matchersWithUserPrefixes.withIndex()) {

@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.*
 
@@ -62,9 +61,11 @@ internal open class FirCallableCompletionContributor(
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
         get() = prefixMatcher.prefix.isNotEmpty()
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext): Unit = with(positionContext) {
+    override fun KtAnalysisSession.complete(
+        positionContext: FirNameReferencePositionContext,
+        weighingContext: WeighingContext
+    ): Unit = with(positionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val expectedType = nameExpression.getExpectedType()
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
         val extensionChecker = object : ExtensionApplicabilityChecker {
@@ -75,8 +76,6 @@ internal open class FirCallableCompletionContributor(
         }
 
         val receiver = explicitReceiver
-        val weighingContext = createWeighingContext(receiver, expectedType, scopesContext.implicitReceivers, basicContext.fakeKtFile)
-
         when {
             receiver != null -> {
                 collectDotCompletion(

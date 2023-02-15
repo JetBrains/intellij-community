@@ -10,17 +10,16 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createEmptyWeighingContext
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCompletionContributorBase<FirImportDirectivePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirImportDirectivePositionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirImportDirectivePositionContext, weighingContext: WeighingContext) {
         val reference = positionContext.explicitReceiver?.reference() ?: return
         val scope = getStaticScope(reference) ?: return
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val weighingContext = createEmptyWeighingContext(basicContext.fakeKtFile)
 
         scope.getClassifierSymbols(scopeNameFilter)
             .filter { visibilityChecker.isVisible(it) }
@@ -30,7 +29,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             .filter { visibilityChecker.isVisible(it) }
             .forEach {
                 addCallableSymbolToCompletion(
-                    createEmptyWeighingContext(basicContext.fakeKtFile),
+                    weighingContext,
                     it,
                     CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier)
                 )
