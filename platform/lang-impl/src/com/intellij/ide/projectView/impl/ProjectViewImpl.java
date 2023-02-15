@@ -524,7 +524,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
-  private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<>();
+  private final Map<String, MySelectInTarget> mySelectInTargets = new ConcurrentHashMap<>();
+  private record MySelectInTarget(SelectInTarget target, int weight) {}
+  private static final Comparator<MySelectInTarget> TARGET_WEIGHT_COMPARATOR = Comparator.comparingInt(MySelectInTarget::weight);
   private ContentManager myContentManager;
 
   public ProjectViewImpl(@NotNull Project project) {
@@ -706,7 +708,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     SelectInTarget selectInTarget = pane.createSelectInTarget();
     String id = selectInTarget.getMinorViewId();
     if (pane.getId().equals(id)) {
-      mySelectInTargets.put(id, selectInTarget);
+      mySelectInTargets.put(id, new MySelectInTarget(selectInTarget, pane.getWeight()));
     }
     else {
       try {
@@ -1189,7 +1191,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private SelectInTarget getSelectInTarget(String id) {
-    return mySelectInTargets.get(id);
+    return mySelectInTargets.get(id).target();
   }
 
   private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
@@ -1892,9 +1894,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @NotNull
   @Override
+  @CalledInAny
   public Collection<SelectInTarget> getSelectInTargets() {
     ensurePanesLoaded();
-    return mySelectInTargets.values();
+    return mySelectInTargets.values().stream().sorted(TARGET_WEIGHT_COMPARATOR).map(MySelectInTarget::target).toList();
   }
 
   @NotNull
