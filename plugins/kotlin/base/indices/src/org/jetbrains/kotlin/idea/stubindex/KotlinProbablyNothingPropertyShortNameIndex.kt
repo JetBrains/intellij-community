@@ -4,17 +4,20 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtProperty
 
-object KotlinProbablyNothingPropertyShortNameIndex : StringStubIndexExtension<KtProperty>() {
-    private val KEY: StubIndexKey<String, KtProperty> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex")
+@ApiStatus.Internal
+class KotlinProbablyNothingPropertyShortNameIndex internal constructor() : StringStubIndexExtension<KtProperty>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtProperty>(KtProperty::class.java) {
+        override val indexKey: StubIndexKey<String, KtProperty> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtProperty> = KEY
+    override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
-        return StubIndex.getElements(KEY, s, project, scope, KtProperty::class.java)
+    override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
+        return Helper[shortName, project, scope]
     }
 }
