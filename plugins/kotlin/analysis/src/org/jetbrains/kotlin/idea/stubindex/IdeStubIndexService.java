@@ -56,7 +56,7 @@ public class IdeStubIndexService extends StubIndexService {
                     continue;
                 }
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
-                sink.occurrence(KotlinMultiFileClassPartIndex.INSTANCE.getKey(), multiFileClassPartFqName.asString());
+                sink.occurrence(KotlinMultiFileClassPartIndex.Helper.getIndexKey(), multiFileClassPartFqName.asString());
             }
         }
     }

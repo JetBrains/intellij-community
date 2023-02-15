@@ -155,7 +155,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     private fun findPackageParts(fqName: FqName, scope: GlobalSearchScope): List<KtLightClassForDecompiledDeclaration> {
-        val facadeKtFiles = runReadAction { KotlinMultiFileClassPartIndex.get(fqName.asString(), project, scope) }
+        val facadeKtFiles = runReadAction { KotlinMultiFileClassPartIndex[fqName.asString(), project, scope] }
         val partShortName = fqName.shortName().asString()
         val partClassFileShortName = "$partShortName.class"
 
