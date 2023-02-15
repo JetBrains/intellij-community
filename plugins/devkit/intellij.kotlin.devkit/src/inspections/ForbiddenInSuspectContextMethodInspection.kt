@@ -8,23 +8,24 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
-import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.types.KotlinType
 
 private const val REQUIRES_SUSPEND_CONTEXT_ANNOTATION = "com.intellij.util.concurrency.annotations.RequiresBlockingContext"
 private const val PROGRESS_MANAGER_CHECKED_CANCELED = "com.intellij.openapi.progress.ProgressManager.checkCanceled"
@@ -59,12 +60,12 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       }
 
       override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        val bindingContext = lambdaExpression.safeAnalyze()
-        val typeInfo = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, lambdaExpression]
-        val type = typeInfo?.type
-        if (type != null && type.isSuspendFunctionType && !isSuspensionRestricted(type)) {
-          lambdaExpression.bodyExpression?.accept(blockingContextCallsVisitor)
-          return
+        analyze(lambdaExpression) {
+          val type = lambdaExpression.getKtType()
+          if (type?.isSuspendFunctionType == true && !isSuspensionRestricted(type)) {
+            lambdaExpression.bodyExpression?.accept(blockingContextCallsVisitor)
+            return
+          }
         }
 
         super.visitLambdaExpression(lambdaExpression)
@@ -76,30 +77,30 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
     private val holder: ProblemsHolder,
   ) : KtTreeVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
-      val resolutionFacade = expression.getResolutionFacade()
-      val resolvedCall = expression.resolveToCall(resolutionFacade) ?: return
+      analyze(expression) {
+        val calledSymbol = expression.resolveCall().singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
 
-      val callDescriptor = resolvedCall.resultingDescriptor
-      val hasAnnotation = callDescriptor.annotations
-        .hasAnnotation(FqName(REQUIRES_SUSPEND_CONTEXT_ANNOTATION))
+        if (calledSymbol !is KtNamedSymbol) return
+        val hasAnnotation = calledSymbol.hasAnnotation(ClassId.topLevel(FqName(REQUIRES_SUSPEND_CONTEXT_ANNOTATION)))
 
-      if (!hasAnnotation) return
+        if (!hasAnnotation) return
 
-      when (callDescriptor.fqNameOrNull()) {
-        progressManagerCheckedCanceledName -> {
-          holder.registerProblem(
-            expression.getCallNameExpression() ?: expression,
-            DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.check.canceled.text"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            ReplaceProgressManagerCheckCanceledQuickFix
-          )
-        }
-        else -> {
-          holder.registerProblem(
-            expression.getCallNameExpression() ?: expression,
-            DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.text", callDescriptor.name.asString()),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          )
+        when (calledSymbol.callableIdIfNonLocal?.asSingleFqName()) {
+          progressManagerCheckedCanceledName -> {
+            holder.registerProblem(
+              expression.getCallNameExpression() ?: expression,
+              DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.check.canceled.text"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+              ReplaceProgressManagerCheckCanceledQuickFix
+            )
+          }
+          else -> {
+            holder.registerProblem(
+              expression.getCallNameExpression() ?: expression,
+              DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.text", calledSymbol.name.asString()),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            )
+          }
         }
       }
     }
@@ -126,40 +127,35 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       else {
         callExpression.replace(suspendAwareCheckCanceled)
       }
-      ShortenReferences.DEFAULT.process(resultExpression as KtElement)
+      ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
     }
   }
 }
 
 private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
-  val resolutionFacade = function.getResolutionFacade()
-
-  val declaringClass = function.containingClass()
-  if (declaringClass != null) {
-    val classDescriptor = declaringClass.safeAnalyze(resolutionFacade)[BindingContext.CLASS, declaringClass]
-    if (classDescriptor?.restrictsSuspension() == true) {
+  analyze(function) {
+    val declaringClass = function.containingClass()
+    val declaringClassSymbol = declaringClass?.getClassOrObjectSymbol()
+    if (declaringClassSymbol != null && restrictsSuspension(declaringClassSymbol)) {
       return true
     }
-  }
 
-  val receiver = function.receiverTypeReference
-  if (receiver != null) {
-    val typeDescriptor = receiver.safeAnalyze(resolutionFacade)[BindingContext.TYPE, receiver]
-    if (typeDescriptor != null && typeDescriptor.constructor.declarationDescriptor?.restrictsSuspension() == true) {
+    val receiverType = function.receiverTypeReference
+    val receiverTypeSymbol = receiverType?.getKtType()?.expandedClassSymbol
+    if (receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)) {
       return true
     }
-  }
 
-  return false
+    return false
+  }
 }
 
-private fun isSuspensionRestricted(lambdaType: KotlinType): Boolean {
+private fun KtAnalysisSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
-  if (!lambdaType.annotations.any { it.fqName == StandardNames.FqNames.extensionFunctionType }) return false
-  val extensionType = lambdaType.arguments.firstOrNull() ?: return false
-  return extensionType.type.constructor.declarationDescriptor?.restrictsSuspension() == true
+  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedClassSymbol
+  return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
 }
 
-private fun ClassifierDescriptor.restrictsSuspension(): Boolean =
-  annotations.any { it.fqName == restrictsSuspensionName }
+private fun KtAnalysisSession.restrictsSuspension(symbol: KtClassOrObjectSymbol): Boolean =
+  symbol.hasAnnotation(ClassId.topLevel(restrictsSuspensionName))
