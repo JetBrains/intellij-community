@@ -173,7 +173,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
                                                         @Nullable Collection<String> recursiveRootsToAdd,
                                                         @Nullable Collection<String> flatRootsToAdd) {
     if (myDisposed) return Collections.emptySet();
-    Collection<WatchRequest> nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
+
+    var nonNullWatchRequestsToRemove = ContainerUtil.skipNulls(watchRequestsToRemove);
     LOG.assertTrue(nonNullWatchRequestsToRemove.size() == watchRequestsToRemove.size(), "watch requests collection should not contain `null` elements");
 
     if ((recursiveRootsToAdd != null || flatRootsToAdd != null) && WATCH_ROOTS_LOG.isTraceEnabled()) {
@@ -188,7 +189,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   }
 
   @Override
-  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+  public void refreshWithoutFileWatcher(boolean asynchronous) {
     Runnable heavyRefresh = () -> {
       for (VirtualFile root : myManagingFS.getRoots(this)) {
         ((NewVirtualFile)root).markDirtyRecursively();
