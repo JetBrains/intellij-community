@@ -100,7 +100,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task {
-      highlightLatestCommitsFromBranch(branchName, sequenceLength = 2, highlightInside = false)
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 2)
     }
 
     task {
@@ -171,7 +171,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       triggerAndBorderHighlight().component { ui: JButton ->
         ui.text == CommonBundle.getOkButtonText()
       }
-      highlightSubsequentCommitsInGitLog(highlightInside = false) { commit ->
+      highlightSubsequentCommitsInGitLog { commit ->
         commit.fullMessage == commitMessage
       }
       restoreByUiAndBackgroundTask(ActionsBundle.actionText("Vcs.UpdateProject").dropMnemonic(), delayMillis = defaultRestoreDelay)

@@ -86,7 +86,7 @@ object GitLessonsUtil {
 
   fun TaskContext.highlightSubsequentCommitsInGitLog(startCommitRow: Int,
                                                      sequenceLength: Int = 1,
-                                                     highlightInside: Boolean = true,
+                                                     highlightInside: Boolean = false,
                                                      usePulsation: Boolean = false) {
     triggerAndBorderHighlight {
       this.highlightInside = highlightInside
@@ -97,7 +97,7 @@ object GitLessonsUtil {
   }
 
   fun TaskContext.highlightSubsequentCommitsInGitLog(sequenceLength: Int = 1,
-                                                     highlightInside: Boolean = true,
+                                                     highlightInside: Boolean = false,
                                                      usePulsation: Boolean = false,
                                                      startCommitPredicate: (VcsCommitMetadata) -> Boolean) {
     triggerAndBorderHighlight {
@@ -115,7 +115,7 @@ object GitLessonsUtil {
 
   fun TaskContext.highlightLatestCommitsFromBranch(branchName: String,
                                                    sequenceLength: Int = 1,
-                                                   highlightInside: Boolean = true,
+                                                   highlightInside: Boolean = false,
                                                    usePulsation: Boolean = false) {
     highlightSubsequentCommitsInGitLog(sequenceLength, highlightInside, usePulsation) l@{ commit ->
       val vcsData = VcsProjectLog.getInstance(project).dataManager ?: return@l false

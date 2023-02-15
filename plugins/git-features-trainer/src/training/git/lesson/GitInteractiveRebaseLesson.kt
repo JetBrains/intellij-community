@@ -78,7 +78,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
     task {
       text(GitLessonsBundle.message("git.interactive.rebase.introduction"))
-      highlightLatestCommitsFromBranch(branchName, sequenceLength = 5, highlightInside = false)
+      highlightLatestCommitsFromBranch(branchName, sequenceLength = 5)
       proceedLink()
       showWarningIfGitWindowClosed()
     }
@@ -92,7 +92,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         val vcsData = VcsProjectLog.getInstance(project).dataManager
         commitHashToHighlight = vcsData?.findFirstCommitInBranch(branchName)
       }
-      highlightSubsequentCommitsInGitLog(highlightInside = false) {
+      highlightSubsequentCommitsInGitLog {
         it.id == commitHashToHighlight
       }
     }
