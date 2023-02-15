@@ -81,8 +81,12 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
-    val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-    buildSearchableOptions(state, context)
+    val state = compilePlatformAndPluginModules(
+      pluginsToPublish = pluginsToPublish,
+      context = context,
+      extraModules = listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"),
+    )
+    buildSearchableOptions(state.platform, context)
     buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
                            compressPluginArchive = context.options.compressZipFiles,
                            buildPlatformLibJob = null,
@@ -143,8 +147,8 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
   writeProjectStructureReport(
-    entries = generateProjectStructureMapping(context = context,
-                                              state = createDistributionBuilderState(pluginsToPublish = emptySet(), context = context)),
+    entries = generateProjectStructureMapping(context = context, platform = createPlatformLayout(pluginsToPublish = emptySet(),
+                                                                                                 context = context)),
     file = targetFile,
     buildPaths = context.paths
   )
@@ -370,8 +374,8 @@ private fun copyDependenciesFile(context: BuildContext): Path {
 
 private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
   val unknownLibraries = names.filter { context.project.libraryCollection.findLibrary(it) == null }
-  if (!unknownLibraries.isEmpty()) {
-    context.messages.error("The following libraries from $fieldName aren\'t found in the project: $unknownLibraries")
+  check(unknownLibraries.isEmpty()) {
+    "The following libraries from $fieldName aren\'t found in the project: $unknownLibraries"
   }
 }
 
@@ -487,12 +491,13 @@ private inline fun filterSourceFilesOnly(name: String, context: BuildContext, co
   return sourceFiles
 }
 
-private suspend fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
+private suspend fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>,
+                                                    context: BuildContext,
+                                                    extraModules: List<String> = emptyList()): DistributionBuilderState {
   val distState = createDistributionBuilderState(pluginsToPublish, context)
   val compilationTasks = CompilationTasks.create(context)
   compilationTasks.compileModules(
-    moduleNames = distState.getModulesForPluginsToPublish() +
-                  listOf("intellij.idea.community.build.tasks", "intellij.platform.images.build", "intellij.tools.launcherGenerator"),
+    moduleNames = distState.getModulesForPluginsToPublish() + extraModules,
   )
   compilationTasks.buildProjectArtifacts(distState.getIncludedProjectArtifacts())
   return distState
@@ -512,10 +517,14 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   toCompile.addAll(mavenArtifacts.squashedModules)
   toCompile.addAll(mavenArtifacts.proprietaryModules)
   toCompile.addAll(productProperties.modulesToCompileTests)
-  CompilationTasks.create(context).compileModules(toCompile)
+  toCompile.add("intellij.tools.launcherGenerator")
+
+  val compilationTasks = CompilationTasks.create(context)
+  compilationTasks.compileModules(toCompile)
 
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
                                                           productLayout = context.productProperties.productLayout)
+  filterPluginsToPublish(pluginsToPublish, context)
 
   if (context.shouldBuildDistributions()) {
     if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -523,9 +532,10 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
     }
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-      val state = compilePlatformAndPluginModules(pluginsToPublish, context)
-      spanBuilder("build provided module list").useWithScope2 {
-        val ideClasspath = createIdeClassPath(state = state, context = context)
+      val platform = createPlatformLayout(pluginsToPublish, context)
+      compilationTasks.compileModules(moduleNames = getModulesForPluginsToPublish(platform, pluginsToPublish))
+      val builtinModuleData = spanBuilder("build provided module list").useWithScope2 {
+        val ideClasspath = createIdeClassPath(platform = platform, context = context)
 
         Files.deleteIfExists(providedModuleFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
@@ -535,7 +545,9 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
                               arguments = listOf("listBundledPlugins", providedModuleFile.toString()))
         context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
-          context.builtinModule = readBuiltinModulesFile(file = providedModuleFile)
+          val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
+          context.builtinModule = builtinModuleData
+          builtinModuleData
         }
         catch (e: NoSuchFileException) {
           throw IllegalStateException("Failed to build provided modules list: $providedModuleFile doesn\'t exist")
@@ -544,16 +556,19 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
 
       context.notifyArtifactWasBuilt(artifactPath = providedModuleFile)
       if (!productProperties.productLayout.buildAllCompatiblePlugins) {
-        return state
+        return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
       }
 
-      return compilePlatformAndPluginModules(
-        pluginsToPublish = pluginsToPublish + collectCompatiblePluginsToPublish(providedModuleFile, context),
-        context = context
-      )
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, context = context, result = pluginsToPublish)
+      filterPluginsToPublish(pluginsToPublish, context)
     }
   }
-  return compilePlatformAndPluginModules(pluginsToPublish, context)
+
+  val platform = createPlatformLayout(pluginsToPublish, context = context)
+  val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
+  compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
+  compilationTasks.buildProjectArtifacts(distState.getIncludedProjectArtifacts())
+  return distState
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope2 {
@@ -578,7 +593,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
       else {
         Span.current().addEvent("skip building product distributions because " +
                                 "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
-        buildSearchableOptions(distributionState, context)
+        buildSearchableOptions(distributionState.platform, context)
         buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
                                compressPluginArchive = context.options.compressZipFiles,
                                buildPlatformLibJob = null,

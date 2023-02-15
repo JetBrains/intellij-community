@@ -8,9 +8,15 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
-  val pluginsToPublishFiltered = filterPluginsToPublish(pluginsToPublish, context)
-  val platform = createPlatformLayout(pluginsToPublishFiltered, context)
-  return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishFiltered, context = context)
+  val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
+  filterPluginsToPublish(pluginsToPublishEffective, context)
+  val platform = createPlatformLayout(pluginsToPublishEffective, context)
+  return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishEffective, context = context)
+}
+
+suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
+  val platform = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+  return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 
 class DistributionBuilderState(@JvmField val platform: PlatformLayout,
@@ -27,10 +33,7 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout,
     get() = (platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()).toList()
 
   fun getModulesForPluginsToPublish(): Set<String> {
-    val result = LinkedHashSet<String>()
-    result.addAll(platformModules)
-    pluginsToPublish.flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-    return result
+    return getModulesForPluginsToPublish(platform, pluginsToPublish)
   }
 
   fun getIncludedProjectArtifacts(): Set<String> {
@@ -45,33 +48,39 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout,
   }
 }
 
-private fun filterPluginsToPublish(plugins: Set<PluginLayout>, context: BuildContext): Set<PluginLayout> {
+internal fun getModulesForPluginsToPublish(platform: PlatformLayout, pluginsToPublish: Set<PluginLayout>): Set<String> {
+  val result = LinkedHashSet<String>()
+  result.addAll((platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()))
+  pluginsToPublish.flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
+  return result
+}
+
+internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: BuildContext) {
   if (plugins.isEmpty()) {
-    return plugins
+    return
   }
 
-  val result = LinkedHashSet(plugins)
   // Kotlin Multiplatform Mobile plugin is excluded since:
   // * is compatible with Android Studio only;
   // * has release cycle of its
   // * shadows IntelliJ utility modules included via Kotlin Compiler;
   // * breaks searchable options index and jar order generation steps.
-  result.removeIf { it.mainModule == "kotlin-ultimate.kmm-plugin" }
-  if (result.isEmpty()) {
-    return emptySet()
+  plugins.removeIf { it.mainModule == "kotlin-ultimate.kmm-plugin" }
+  if (plugins.isEmpty()) {
+    return
   }
 
   val toInclude = context.options.nonBundledPluginDirectoriesToInclude
   if (toInclude.isEmpty()) {
-    return result
+    return
   }
 
   if (toInclude.size == 1 && toInclude.contains("none")) {
-    return emptySet()
+    plugins.clear()
+    return
   }
 
-  result.removeIf { !toInclude.contains(it.directoryName) }
-  return result
+  plugins.removeIf { !toInclude.contains(it.directoryName) }
 }
 
 /**
