@@ -42,6 +42,7 @@ import java.util.List;
 
 public final class HighlightManagerImpl extends HighlightManager {
   public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
+  private static final Key<Object2ByteMap<RangeHighlighter>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 
   private final Project myProject;
 
@@ -62,7 +63,7 @@ public final class HighlightManagerImpl extends HighlightManager {
   }
 
   @Contract("_,true -> !null")
-  private Object2ByteMap<RangeHighlighter> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
+  private static Object2ByteMap<RangeHighlighter> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
@@ -361,6 +362,4 @@ public final class HighlightManagerImpl extends HighlightManager {
       hideHighlights(editor, HIDE_BY_ANY_KEY);
     }
   }
-
-  private final Key<Object2ByteMap<RangeHighlighter>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 }
