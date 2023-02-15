@@ -10836,6 +10836,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ktij-10623.kt");
         }
 
+        @TestMetadata("ktij-24539.kt")
+        public void testKtij_24539() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ktij-24539.kt");
+        }
+
         @TestMetadata("overloads.kt")
         public void testOverloads() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/overloads.kt");
