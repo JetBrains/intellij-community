@@ -1073,7 +1073,7 @@
         <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
         <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
         <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="PlatformDebuggerImplIcons.Actions.Force_run_to_cursor"/>
-        <action id="ResetFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
+        <action id="Debugger.PopFrame" class="com.intellij.xdebugger.impl.actions.ResetFrameAction" icon="AllIcons.Actions.InlineDropFrame"/>
         <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="AllIcons.Actions.Pause"/>
         <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="AllIcons.Actions.Resume"/>
         <separator/>
@@ -1187,7 +1187,7 @@
       <reference ref="ShowExecutionPoint"/>
       <separator/>
       <reference ref="EvaluateExpression" />
-      <reference ref="ResetFrame" />
+      <reference ref="Debugger.PopFrame" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
@@ -1223,7 +1223,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
-      <reference ref="ResetFrame" />
+      <reference ref="Debugger.PopFrame" />
       <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" icon="AllIcons.Actions.Copy"/>
     </group>
 
