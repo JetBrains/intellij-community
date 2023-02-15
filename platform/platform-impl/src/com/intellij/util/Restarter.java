@@ -209,16 +209,16 @@ public final class Restarter {
   }
 
   private static void runRestarter(Path restarter, List<String> restarterArgs) throws IOException {
-    var processBuilder = new ProcessBuilder(restarterArgs);
-
     var doNotLock = SystemProperties.getBooleanProperty(DO_NOT_LOCK_INSTALL_FOLDER_PROPERTY, false);
     if (doNotLock || restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
       var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
       restarter = Files.copy(restarter, tempDir.resolve(restarter.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-      processBuilder.directory(tempDir.toFile());
     }
     restarterArgs.add(0, restarter.toString());
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
+
+    var processBuilder = new ProcessBuilder(restarterArgs)
+      .directory(Path.of(SystemProperties.getUserHome()).toFile());
 
     if (SystemInfo.isXWindow) setDesktopStartupId(processBuilder);
 
