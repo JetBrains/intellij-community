@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
@@ -158,8 +159,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     val missing = artifactNames.filter { name ->
       artifacts.none { it.name == name }
     }
-    if (missing.isNotEmpty()) {
-      context.messages.error("Artifacts aren't configured in the project: " + missing.joinToString())
+    check(missing.isEmpty()) {
+      "Artifacts aren't configured in the project: " + missing.joinToString()
     }
     artifacts.forEach {
       if (context.compilationData.builtArtifacts.contains(it.name) &&
@@ -176,12 +177,14 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         val outputDir = context.getModuleOutputDir(module)
         if (outputDir.exists() &&
             outputDir.isDirectory() &&
-            outputDir.listDirectoryEntries().isNotEmpty()) false
+            outputDir.listDirectoryEntries().isNotEmpty()) {
+          false
+        }
         else {
           /**
            * See [compileMissingArtifactsModules]
            */
-          context.messages.warning("Compilation output of module $it is missing: $outputDir")
+          Span.current().addEvent("Compilation output of module $it is missing: $outputDir")
           true
         }
       }
@@ -193,11 +196,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              resolveProjectDependencies = false)
     val failedToBeBuilt = artifacts.filter {
       if (it.outputFilePath?.let(Path::of)?.let(Files::exists) == true) {
-        context.messages.info("${it.name} was successfully built at ${it.outputFilePath}")
+        Span.current().addEvent("${it.name} was successfully built at ${it.outputFilePath}")
         false
       }
       else {
-        context.messages.warning("${it.name} is expected to be built at ${it.outputFilePath}")
+        Span.current().addEvent("${it.name} is expected to be built at ${it.outputFilePath}")
         true
       }
     }
@@ -256,8 +259,9 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     try {
       val factory = Log4jFileLoggerFactory(buildLogFile.toFile(), categoriesWithDebugLevel)
       JpsLoggerFactory.fileLoggerFactory = factory
-      context.messages.info("Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
-                            "will be written to $buildLogFile")
+      context.messages.info(
+        "Build log (${if (categoriesWithDebugLevel.isEmpty()) "info" else "debug level for $categoriesWithDebugLevel"}) " +
+        "will be written to $buildLogFile")
     }
     catch (t: Throwable) {
       context.messages.warning("Cannot setup additional logging to $buildLogFile: ${t.message}")
@@ -442,9 +446,13 @@ private class JpsMessageHandler(private val context: CompilationContext) : Messa
     }
     val buildMessages = context.messages
     buildMessages.info("Compilation time per target:")
-    val compilationTimeForTarget = compilationFinishTimeForTarget.entries.map { it.key to (it.value - compilationStartTimeForTarget.getValue(it.key)) }
+    val compilationTimeForTarget = compilationFinishTimeForTarget.entries.map {
+      it.key to (it.value - compilationStartTimeForTarget.getValue(it.key))
+    }
 
-    buildMessages.info(" average: ${String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)}ms")
+    buildMessages.info(" average: ${
+      String.format("%.2f", ((compilationTimeForTarget.sumOf { it.second }.toDouble()) / compilationTimeForTarget.size) / 1000000)
+    }ms")
     val topTargets = compilationTimeForTarget.sortedBy { it.second }.asReversed().take(10)
     buildMessages.info(" top ${topTargets.size} targets by compilation time:")
     for (entry in topTargets) {
@@ -516,6 +524,7 @@ private class BackedLogger(category: String?, private val fileLogger: Logger?) :
 }
 
 private lateinit var messageHandler: JpsMessageHandler
+
 @Nls
 private const val COMPILER_NAME = "build runner"
 
