@@ -382,6 +382,15 @@
     <tipAndTrick file="Kotlin_Java_convert.html"/>
   </extensions>
 
+  <!-- Advanced Settings -->
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting
+            id="kotlin.mpp.experimental"
+            default="false"
+            groupKey="group.advanced.settings.kotlin"
+            bundle="messages.KotlinBundle"/>
+  </extensions>
+
   <!-- Notifications -->
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup
