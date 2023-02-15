@@ -42,7 +42,7 @@ fun indexTypeAliasExpansion(stub: KotlinTypeAliasStub, sink: IndexSink) {
     val typeReference = declaration.getTypeReference() ?: return
     val typeElement = typeReference.typeElement ?: return
     typeElement.index(declaration, typeReference) { typeName ->
-        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.KEY, typeName)
+        sink.occurrence(KotlinTypeAliasByExpansionShortNameIndex.indexKey, typeName)
     }
 }
 

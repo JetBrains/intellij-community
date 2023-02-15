@@ -5,34 +5,22 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-object KotlinTypeAliasByExpansionShortNameIndex : StringStubIndexExtension<KtTypeAlias>() {
-    val KEY: StubIndexKey<String, KtTypeAlias> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex")
+class KotlinTypeAliasByExpansionShortNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
+        @JvmField
+        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        val INSTANCE: KotlinTypeAliasByExpansionShortNameIndex = KotlinTypeAliasByExpansionShortNameIndex()
 
-    override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
+        override val indexKey: StubIndexKey<String, KtTypeAlias> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex")
+    }
+
+    override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return StubIndex.getElements(KEY, key, project, scope, KtTypeAlias::class.java)
-    }
-
-    @JvmField
-    @Suppress("REDECLARATION")
-    val Companion: Companion = getJavaClass<Companion>().getField("INSTANCE").get(null) as Companion
-
-    @Suppress("REDECLARATION")
-    object Companion {
-        @Deprecated(
-            "Use KotlinTypeAliasByExpansionShortNameIndex as object instead.",
-            ReplaceWith("KotlinTypeAliasByExpansionShortNameIndex"),
-            DeprecationLevel.ERROR
-        )
-        @JvmStatic
-        fun getINSTANCE() = KotlinTypeAliasByExpansionShortNameIndex
+        return Helper[key, project, scope]
     }
 }
-
-private inline fun <reified T: Any> getJavaClass(): Class<T> = T::class.java

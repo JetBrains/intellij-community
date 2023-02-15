@@ -40,12 +40,12 @@ class HLIndexHelper(val project: Project, private val scope: GlobalSearchScope) 
         )
 
     fun getPossibleTypeAliasExpansionNames(originalTypeName: String): Set<String> {
-        val index = KotlinTypeAliasByExpansionShortNameIndex
         val out = mutableSetOf<String>()
 
         fun searchRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            index[typeName, project, scope].asSequence()
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
+                .asSequence()
                 .mapNotNull { it.name }
                 .filter { out.add(it) }
                 .forEach(::searchRecursively)
