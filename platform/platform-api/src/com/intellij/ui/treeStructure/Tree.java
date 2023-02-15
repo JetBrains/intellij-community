@@ -880,6 +880,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   /**
+   * @see com.intellij.ui.table.JBTable#getScrollableUnitIncrement(Rectangle, int, int)
+   */
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+      return visibleRect.y; // BasicTreeUI.getPathBounds includes insets, not allowing to reach 0 with mouse wheel.
+    }
+    return increment;
+  }
+
+  /**
    * Returns the deepest visible component
    * that will be rendered at the specified location.
    *
