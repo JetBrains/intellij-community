@@ -3,27 +3,23 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import java.io.IOException
 import java.net.URL
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildContext): List<PluginLayout> {
-  val parse = JSON.std.mapFrom(Files.readString(providedModuleFile))
-
-  @Suppress("UNCHECKED_CAST")
-  val availableModulesAndPlugins = HashSet(parse.get("modules") as Collection<String>)
-  @Suppress("UNCHECKED_CAST")
-  availableModulesAndPlugins.addAll(parse.get("plugins") as Collection<String>)
+fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
+  val availableModulesAndPlugins = HashSet<String>(builtinModuleData.modules.size + builtinModuleData.plugins.size)
+  availableModulesAndPlugins.addAll(builtinModuleData.plugins)
+  availableModulesAndPlugins.addAll(builtinModuleData.modules)
 
   val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true,
                                                skipBundledPlugins = true,
@@ -34,21 +30,23 @@ fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildCo
                                                           honorCompatiblePluginsToIgnore = true,
                                                           context = context)
 
-  // While collecting PluginDescriptor maps above we may have chosen incorrect PluginLayout.
+  // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
   // Let's check that and substitute incorrectly chosen one with more suitable one or report error.
   val moreThanOneLayoutMap = context.productProperties.productLayout.pluginLayouts.groupBy { it.mainModule }.filterValues { it.size > 1 }
   val moreThanOneLayoutSubstitutors = HashMap<PluginLayout, PluginLayout>()
   for ((module, layouts) in moreThanOneLayoutMap) {
-    context.messages.info("Module '$module' have ${layouts.size} layouts: $layouts")
+    Span.current().addEvent("Module '$module' have ${layouts.size} layouts: $layouts")
     val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
                       ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
-    if (substitutor != null) {
-      layouts.forEach { if (it != substitutor) moreThanOneLayoutSubstitutors.put(it, substitutor) }
+                      ?: continue
+    layouts.forEach {
+      if (it != substitutor) {
+        moreThanOneLayoutSubstitutors.put(it, substitutor)
+      }
     }
   }
 
   val errors = ArrayList<List<PluginLayout>>()
-  val result = ArrayList<PluginLayout>(descriptorMap.size)
   for (descriptor in descriptorMap.values) {
     if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorMapWithBundled)) {
       val layout = descriptor.pluginLayout
@@ -57,20 +55,21 @@ fun collectCompatiblePluginsToPublish(providedModuleFile: Path, context: BuildCo
         check(suspicious.size == 1) { "May have only one element: $suspicious" }
         val substitutor = moreThanOneLayoutSubstitutors.get(layout)
         if (substitutor != null) {
-          context.messages.info("Substituting plugin layout $layout with Marketplace-ready $substitutor")
+          Span.current().addEvent("Substituting plugin layout $layout with Marketplace-ready $substitutor")
           result.add(substitutor)
-        } else {
+        }
+        else {
           errors.add(suspicious.first())
         }
-      } else {
+      }
+      else {
         result.add(layout)
       }
     }
   }
-  if (errors.isNotEmpty()) {
-    context.messages.error("Attempt to publish plugins which have more than one layout and none of them are Marketplace-ready: $errors")
+  check(errors.isEmpty()) {
+    "Attempt to publish plugins which have more than one layout and none of them are Marketplace-ready: $errors"
   }
-  return result
 }
 
 private fun isPluginCompatible(plugin: PluginDescriptor,
@@ -130,9 +129,8 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
 
     val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.plugin(moduleName)
     val xml = JDOMUtil.load(pluginXml)
-    if (JDOMUtil.isEmpty(xml)) {
-      // throws an exception
-      throw IllegalStateException("Module '$moduleName': '$pluginXml' is empty")
+    check(!xml.isEmpty) {
+      "Module '$moduleName': '$pluginXml' is empty"
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
@@ -143,10 +141,8 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml, SourcesBasedXIncludeResolver(pluginLayout, context))
 
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-    if (id == null || id.isEmpty()) {
-      // throws an exception
-      context.messages.error("Module '$moduleName': '$pluginXml' does not contain <id/> element")
-      continue
+    check(!id.isNullOrEmpty()) {
+      "Module '$moduleName': '$pluginXml' does not contain <id/> element"
     }
 
     val declaredModules = HashSet<String>()
@@ -240,8 +236,6 @@ private class SourcesBasedXIncludeResolver(
 }
 
 private object JDOMXIncluder {
-  private val LOG = Logger.getInstance(JDOMXIncluder::class.java)
-
   /**
    * The original element will be mutated in place.
    */
@@ -355,7 +349,7 @@ private object JDOMXIncluder {
       if (fallbackElement != null) {
         return mutableListOf()
       }
-      LOG.info("${remote.toExternalForm()} include ignored: ${e.message}")
+      Span.current().addEvent("${remote.toExternalForm()} include ignored: ${e.message}")
       return mutableListOf()
     }
     finally {
