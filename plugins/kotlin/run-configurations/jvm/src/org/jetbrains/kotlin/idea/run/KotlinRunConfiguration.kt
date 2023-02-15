@@ -451,8 +451,8 @@ fun findMainClassFile(
     }
 
     return project.runReadActionInSmartMode {
-        val candidates = KotlinFileFacadeFqNameIndex.get(dotNotationFqName, project, scope).takeIf { it.isNotEmpty() }
-            ?: KotlinFullClassNameIndex.get(dotNotationFqName, project, scope)
+        val candidates = KotlinFileFacadeFqNameIndex[dotNotationFqName, project, scope].takeIf { it.isNotEmpty() }
+            ?: KotlinFullClassNameIndex[dotNotationFqName, project, scope]
                 .flatMap { it.findMainFunCandidates() }
                 .map { it.containingKtFile }
 

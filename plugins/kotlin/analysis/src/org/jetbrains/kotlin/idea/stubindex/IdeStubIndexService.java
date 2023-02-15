@@ -39,7 +39,7 @@ public class IdeStubIndexService extends StubIndexService {
 
         FqName facadeFqName = ((KotlinFileStubImpl) stub).getFacadeFqName();
         if (facadeFqName != null) {
-            sink.occurrence(KotlinFileFacadeFqNameIndex.INSTANCE.getKey(), facadeFqName.asString());
+            sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
             sink.occurrence(KotlinFileFacadeShortNameIndex.INSTANCE.getKey(), facadeFqName.shortName().asString());
             sink.occurrence(KotlinFileFacadeClassByPackageIndex.INSTANCE.getKey(), packageFqName.asString());
         }
