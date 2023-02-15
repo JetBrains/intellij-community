@@ -259,6 +259,10 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
       }
     }
 
+    // There can be no selected editor at this moment, because of closing diffs from the previous task
+    // and internal recalculation inside FileEditorManager, so wait little bit
+    waitBeforeContinue(500)
+
     if (isAnnotateShortcutSet()) {
       task("Annotate") {
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
