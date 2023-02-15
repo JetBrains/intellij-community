@@ -12,10 +12,8 @@ import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
 
 object CommunityRepositoryModules {
   /**
@@ -140,7 +138,7 @@ object CommunityRepositoryModules {
         "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31",
         "intellij.maven.server.indexer"
       ))
-      spec.withGeneratedResources(BiConsumer { targetDir, context ->
+      spec.withGeneratedResources { targetDir, context ->
         val targetLib = targetDir.resolve("lib")
 
         val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
@@ -148,7 +146,7 @@ object CommunityRepositoryModules {
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
         copyDir(mavenDist, targetLib.resolve("maven3"))
-      })
+      }
     },
     plugin(listOf(
       "intellij.gradle",
