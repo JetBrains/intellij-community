@@ -35,6 +35,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
@@ -154,7 +155,10 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     task("CheckinProject") {
       openCommitWindow(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
-      test { actions(it) }
+      test {
+        val stripe = previous.ui ?: error("Not found Commit stripe button")
+        ideFrame { jComponent(stripe).click() }
+      }
     }
 
     task {
@@ -189,8 +193,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       showWarningIfCommitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
-          val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
-          tree.rightClickPath(newChangeListName)
+          clickTreeRow(rightClick = true) { item -> item.toString() == newChangeListName }
         }
       }
     }
@@ -262,8 +265,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       showWarningIfCommitWindowClosed()
       test {
         ideFrame {
-          val tree = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == newChangeListName }
-          tree.rightClickPath(newChangeListName)
+          clickTreeRow(rightClick = true) { item -> item.toString() == newChangeListName }
           jMenuItem { item: ActionMenuItem -> item.anAction is UnshelveWithDialogAction }.click()
         }
       }

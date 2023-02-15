@@ -2,7 +2,6 @@
 package training.git.lesson
 
 import com.intellij.diff.tools.util.SimpleDiffPanel
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
@@ -25,6 +24,7 @@ import org.assertj.swing.fixture.JPanelFixture
 import org.assertj.swing.fixture.JTableFixture
 import training.dsl.*
 import training.git.GitLessonsBundle
+import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.git.GitLessonsUtil.resetGitLogWindow
@@ -93,8 +93,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       showWarningIfGitWindowClosed(restoreTaskWhenResolved = true)
       test {
         ideFrame {
-          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString() == "HEAD_NODE" }
-          fixture.doubleClickPath("HEAD_NODE")
+          clickTreeRow(doubleClick = true) { item -> item.toString() == "HEAD_NODE" }
         }
       }
     }
@@ -189,15 +188,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       triggerUI().component { _: SimpleDiffPanel -> true }
       showWarningIfGitWindowClosed()
       test {
-        ideFrame {
-          val treeNodeText = sampleFilePath
-          val fixture = jTree { path -> path.getPathComponent(path.pathCount - 1).toString().contains(treeNodeText) }
-          val row = invokeAndWaitIfNeeded {
-            val tree = fixture.target()
-            (0 until tree.rowCount).find { fixture.valueAt(it).toString().contains(treeNodeText) }
-          } ?: error("Failed to find row with text '$treeNodeText'")
-          fixture.doubleClickRow(row)
-        }
+        clickTreeRow(doubleClick = true) { item -> item.toString().contains(sampleFilePath) }
       }
     }
 

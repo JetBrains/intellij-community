@@ -32,6 +32,7 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickChangeElement
+import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
@@ -174,7 +175,10 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
         val action = (path.lastPathComponent as? PopupFactoryImpl.ActionItem)?.action
         action is GitNewBranchAction
       }
-      test { actions(it) }
+      test {
+        val widget = previous.ui ?: error("Not found VCS widget")
+        ideFrame { jComponent(widget).click() }
+      }
     }
 
     val createButtonText = GitBundle.message("new.branch.dialog.operation.create.name")
@@ -186,7 +190,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
       test {
-        ideFrame { jList(newBranchActionText).clickItem(newBranchActionText) }
+        clickTreeRow { item -> (item as? PopupFactoryImpl.ActionItem)?.action is GitNewBranchAction }
       }
     }
 
@@ -257,7 +261,10 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
         }
         else null
       }
-      test { actions(it) }
+      test {
+        val stripe = previous.ui ?: error("Not found Commit stripe button")
+        ideFrame { jComponent(stripe).click() }
+      }
     }
 
     task {
@@ -295,7 +302,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
     }
 
-    val pushButtonText = DvcsBundle.message("action.push").dropMnemonic()
+    val pushButtonText = DvcsBundle.message("action.complex.push").dropMnemonic()
     task {
       before {
         LearningUiHighlightingManager.clearHighlights()
@@ -318,7 +325,8 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       restoreByUiAndBackgroundTask(DvcsBundle.message("push.process.pushing"), delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame {
-          button { b: JBOptionButton -> b.text == pushButtonText }.click()
+          val pushAnywayText = DvcsBundle.message("action.push.anyway").dropMnemonic()
+          button { b: JBOptionButton -> b.text == pushButtonText || b.text == pushAnywayText }.click()
         }
       }
     }

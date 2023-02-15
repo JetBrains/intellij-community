@@ -302,4 +302,19 @@ object GitLessonsUtil {
       robot.click(tree, Point(pathRect.x + offset, pathRect.y + offset))
     }
   }
+
+  fun TaskTestContext.clickTreeRow(doubleClick: Boolean = false, rightClick: Boolean = false, rowItemPredicate: (Any) -> Boolean) {
+    ideFrame {
+      val tree = jTree { path -> rowItemPredicate(path.lastPathComponent) }
+      val rowToClick = invokeAndWaitIfNeeded {
+        val path = TreeUtil.treePathTraverser(tree.target()).find { path -> rowItemPredicate(path.lastPathComponent) }
+        tree.target().getRowForPath(path)
+      }
+      when {
+        doubleClick -> tree.doubleClickRow(rowToClick)
+        rightClick -> tree.rightClickRow(rowToClick)
+        else -> tree.clickRow(rowToClick)
+      }
+    }
+  }
 }
