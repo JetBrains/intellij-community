@@ -8,6 +8,8 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
@@ -20,7 +22,11 @@ import java.io.File
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
-    fun testExpectClassWithTests() = doTest()
+    fun testExpectClassWithTests() {
+        //enable experimental MPP features to import K/JS run tasks
+        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        doTest()
+    }
 
     @Test
     fun preferredConfigurations() = doTest()
