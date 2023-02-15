@@ -116,7 +116,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     if (stub.isTopLevel()) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.key, name)
+        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.indexKey, name)
     }
 }
 
