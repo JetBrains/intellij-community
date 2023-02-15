@@ -7,7 +7,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UIdentifier;
 
 
 public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInspectionTool {
@@ -42,5 +44,16 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
       return new ProblemsHolder(manager, sourcePsi.getContainingFile(), isOnTheFly);
     }
     throw new IllegalStateException("Could not create problems holder");
+  }
+
+  protected static boolean hasMethodIdentifierEqualTo(@NotNull UCallExpression expression, String @NotNull ... methodNames) {
+    UIdentifier identifier = expression.getMethodIdentifier();
+    String methodName = identifier != null ? identifier.getName() : null;
+    for (String checkedName : methodNames) {
+      if (checkedName.equals(methodName)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -39,16 +39,14 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
-        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-          if (isAwtRgbColorConstructor(expression)) {
-            Integer grayValue = getGrayValue(expression);
-            if (grayValue != null) {
-              PsiElement sourcePsi = expression.getSourcePsi();
-              if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
-                holder.registerProblem(sourcePsi,
-                                       DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
-                                       new ConvertToGrayQuickFix(grayValue));
-              }
+        if (isAwtRgbColorConstructor(expression)) {
+          Integer grayValue = getGrayValue(expression);
+          if (grayValue != null) {
+            PsiElement sourcePsi = expression.getSourcePsi();
+            if (sourcePsi != null && grayClassAccessible(sourcePsi)) {
+              holder.registerProblem(sourcePsi,
+                                     DevKitBundle.message("inspections.use.gray.awt.color.used.name"),
+                                     new ConvertToGrayQuickFix(grayValue));
             }
           }
         }
@@ -57,11 +55,11 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     }, HINTS);
   }
 
-  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression constructorCall) {
-    List<UExpression> constructorParams = constructorCall.getValueArguments();
-    if (constructorParams.size() != 3) return false;
-    PsiMethod constructor = constructorCall.resolve();
-    if (constructor == null) return false;
+  private static boolean isAwtRgbColorConstructor(@NotNull UCallExpression call) {
+    List<UExpression> callParams = call.getValueArguments();
+    if (callParams.size() != 3) return false;
+    PsiMethod constructor = call.resolve();
+    if (constructor == null || !constructor.isConstructor()) return false;
     PsiClass constructorClass = constructor.getContainingClass();
     if (constructorClass == null) return false;
     return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
