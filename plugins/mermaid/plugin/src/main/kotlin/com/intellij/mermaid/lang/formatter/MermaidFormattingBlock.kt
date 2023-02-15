@@ -3,7 +3,8 @@ package com.intellij.mermaid.lang.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -24,17 +25,18 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun getIndent(): Indent? {
-    if (node.elementType in DIAGRAM_BODIES) {
+    if (node.elementType in STATEMENTS && node.treeParent.elementType in DIAGRAM_BODIES_AND_BLOCKS) {
       return Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
   }
 
   override fun buildChildren(): List<Block> {
-    if (node.elementType == MermaidElements.MINDMAP_BODY) {
-      return node.children().map { MermaidFormattingBlock(it, settings, spacing) }.toList()
+    val children = node.children()
+    if (children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }.any() || node.elementType == MermaidElements.MINDMAP_BODY) {
+      return children.map { MermaidFormattingBlock(it, settings, spacing) }.toList()
     }
-    return filterFromWhitespaces(node.children()).map { MermaidFormattingBlock(it, settings, spacing) }.toList()
+    return filterFromWhitespaces(children).map { MermaidFormattingBlock(it, settings, spacing) }.toList()
   }
 
   private fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {

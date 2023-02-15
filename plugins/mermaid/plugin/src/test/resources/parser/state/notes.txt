@@ -1,9 +1,9 @@
 FILE
   MermaidStateHeaderImpl(STATE_HEADER)
     PsiElement(StateDiagram.STATE_DIAGRAM)('stateDiagram-v2')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidStateBodyImpl(STATE_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidStateDiagramStatementImpl(STATE_DIAGRAM_STATEMENT)
       MermaidStateDeclarationImpl(STATE_DECLARATION)
         MermaidIdentifierImpl(IDENTIFIER)

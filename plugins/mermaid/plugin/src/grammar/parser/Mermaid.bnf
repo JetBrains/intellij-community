@@ -10,6 +10,7 @@
   tokenTypeClass="com.intellij.mermaid.lang.lexer.MermaidToken"
   parserImports=[
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Frontmatter.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Journey.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Flowchart.*'
@@ -28,21 +29,23 @@
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
 }
 
-file ::= [FRONTMATTER EOL] start
+file ::= [frontmatter EOL] start
 private start ::= EOL start | directive start | diagram
 
-private diagram ::= pieHeader [pieBody]
-  | journeyHeader [journeyBody]
-  | flowchartHeader [flowchartBody]
-  | sequenceHeader [sequenceBody]
-  | classDiagramHeader classBody
-  | stateHeader [stateBody]
-  | erHeader [erBody]
-  | ganttHeader [ganttBody]
-  | requirementDiagramHeader [requirementDiagramBody]
-  | gitGraphHeader [gitGraphBody]
-  | c4Header c4Body
-  | mindmapHeader mindmapBody
+frontmatter ::= FRONTMATTER_START FRONTMATTER_VALUE FRONTMATTER_END
+
+private diagram ::= pieHeader EOL* [pieBody]
+  | journeyHeader EOL* [journeyBody]
+  | flowchartHeader EOL* [flowchartBody]
+  | sequenceHeader EOL* [sequenceBody]
+  | classDiagramHeader EOL* classBody
+  | stateHeader EOL* [stateBody]
+  | erHeader EOL* [erBody]
+  | ganttHeader EOL* [ganttBody]
+  | requirementDiagramHeader EOL* [requirementDiagramBody]
+  | gitGraphHeader EOL* [gitGraphBody]
+  | c4Header EOL* c4Body
+  | mindmapHeader EOL* mindmapBody
   | (TIMELINE EOL*)+
 
 titleStatement ::= TITLE complexTitleValue
@@ -52,7 +55,7 @@ complexTitleValue ::= TITLE_VALUE+
 pieHeader ::= PIE [showDataRec]
 private showDataRec ::= EOL showDataRec | SHOW_DATA
 
-pieBody ::= pieLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+pieBody ::= pieLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private pieLines ::= pieLine [pieLines]
 private pieLine ::= pieStatement [EOL] | EOL
 pieStatement ::= string COLON VALUE
@@ -63,7 +66,7 @@ pieStatement ::= string COLON VALUE
 
 journeyHeader ::= JOURNEY
 
-journeyBody ::= journeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+journeyBody ::= journeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private journeyLines ::= (journeyLine | IGNORED) [journeyLines]
 private journeyLine ::= journeyStatement [EOL] | EOL
 journeyStatement ::= journeyDataStatement
@@ -74,8 +77,9 @@ journeyStatement ::= journeyDataStatement
 
 journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData [COLON journeyNamedData? (COLON journeyTaskData?)*])
 
-journeySectionStatement ::= SECTION complexSectionTitle [journeySectionBody]
-journeySectionBody ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+journeySectionStatement ::= journeySectionHeader EOL* [journeySectionBlock]
+journeySectionHeader ::= SECTION complexSectionTitle
+journeySectionBlock ::= journeySectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private journeySectionLines ::= (journeySectionLine | IGNORED) [journeySectionLines]
 private journeySectionLine ::= journeySectionInnerStatement [EOL] | EOL
 journeySectionInnerStatement ::= journeyDataStatement
@@ -93,7 +97,7 @@ journeyNamedData ::= recNamedData
 
 flowchartHeader ::= FLOWCHART [DIR]
 
-flowchartBody ::= flowchartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+flowchartBody ::= flowchartLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private flowchartLines ::= (flowchartLine | IGNORED) [flowchartLines]
 private flowchartLine ::= flowchartStatement [separator] | separator
 flowchartStatement ::= vertexStatement (SEMICOLON vertexStatement)*
@@ -128,10 +132,10 @@ vertexText ::= OPEN_SQUARE nodeText CLOSE_SQUARE
 nodeText ::= ALIAS+ | DOUBLE_QUOTE ALIAS+ DOUBLE_QUOTE
 complexLinkText ::= LINK_TEXT+
 
-subgraphStatement ::= subgraphHeader separator subgraphBody? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+subgraphStatement ::= subgraphHeader separator EOL* subgraphBlock? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 subgraphHeader ::= SUBGRAPH subgraphName
 subgraphName ::= complexIdentifier [OPEN_SQUARE nodeText CLOSE_SQUARE]
-subgraphBody ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+subgraphBlock ::= subgraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private subgraphLines ::= (subgraphLine | IGNORED) [subgraphLines]
 private subgraphLine ::= subgraphInnerStatement [separator] | separator
 private subgraphInnerStatement ::= flowchartStatement
@@ -151,7 +155,7 @@ styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
 
 sequenceHeader ::= SEQUENCE
 
-sequenceBody ::= sequenceLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+sequenceBody ::= sequenceLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private sequenceLines ::= (sequenceLine | IGNORED) [sequenceLines]
 private sequenceLine ::= sequenceStatement [separator] | separator
 sequenceStatement ::= actorStatement
@@ -213,7 +217,7 @@ complexMessage ::= MESSAGE+
 
 classDiagramHeader ::= CLASS_DIAGRAM
 
-classBody ::= classLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+classBody ::= classLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private classLines ::= classLine [classLines]
 private classLine ::= classDiagramStatement [EOL] | EOL
 classDiagramStatement ::= directionStatement
@@ -230,11 +234,9 @@ classDiagramIdentifier ::= CLASS_ID {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-classStatement ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] [classBlock] {
-  implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder"
-}
-
-classBlock ::= OPEN_CURLY EOL? classMembersBody? CLOSE_CURLY
+classStatement ::= classHeader [classBlock]
+classHeader ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+classBlock ::= OPEN_CURLY EOL* classMembers? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 
 memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 
@@ -246,7 +248,7 @@ complexLabel ::= LABEL+
 annotationStatement ::= annotation classDiagramIdentifier [generic] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 annotation ::= ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
 
-classMembersBody ::= memberLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
+private classMembers ::= memberLines
 private memberLines ::= memberLine [memberLines]
 private memberLine ::= classMemberStatement [EOL] | EOL
 classMemberStatement ::= attribute | annotation | directive
@@ -297,7 +299,7 @@ classDiagramNoteText ::= string
 
 stateHeader ::= STATE_DIAGRAM
 
-stateBody ::= stateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+stateBody ::= stateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private stateLines ::= stateLine [stateLines]
 private stateLine ::= stateDiagramStatement [EOL] | EOL
 stateDiagramStatement ::= stateDeclaration
@@ -312,10 +314,13 @@ stateDiagramStatement ::= stateDeclaration
 
 stateDeclaration ::= stateId COLON complexLabel
   | STATE description AS stateId
-  | STATE stateId OPEN_CURLY innerStateBody CLOSE_CURLY
-  | STATE stateId ANNOTATION_START ANNOTATION_VALUE ANNOTATION_END
+  | stateDeclarationHeader stateBlock
+  | stateDeclarationHeader annotation
 
-innerStateBody ::= innerStateLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
+stateDeclarationHeader ::= STATE stateId
+
+stateBlock ::= OPEN_CURLY EOL* innerStateBody CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private innerStateBody ::= innerStateLines
 private innerStateLines ::= innerStateLine [innerStateLines]
 private innerStateLine ::= innerStateDiagramStatement [EOL] | EOL
 private innerStateDiagramStatement ::= stateDiagramStatement | dividerStatement
@@ -326,9 +331,9 @@ private stateId ::= identifier [STYLE_SEPARATOR identifier] | specialState [STYL
 specialState ::= OPEN_SQUARE STAR CLOSE_SQUARE
 description ::= string
 
-stateNote ::= noteHeader noteContent { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+stateNote ::= noteHeader EOL* noteContent { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 noteHeader ::= NOTE (RIGHT_OF | LEFT_OF) stateId
-private noteContent ::= EOL complexNoteContent? END
+private noteContent ::= complexNoteContent? END
   | COLON [simpleNoteContent]
 
 simpleNoteContent ::= NOTE_CONTENT+
@@ -344,7 +349,7 @@ cssClassStatement ::= CLASS CLASS_ENTITY_IDS STYLE_CLASS
 
 erHeader ::= ENTITY_RELATIONSHIP
 
-erBody ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+erBody ::= erLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private erLines ::= erLine [erLines]
 private erLine ::= erStatement [EOL] | EOL
 erStatement ::= erIdentifier relationship erIdentifier COLON (complexLabel | maybeEmptyString)
@@ -357,12 +362,13 @@ erIdentifier ::= ID | string {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 
-entityDeclaration ::= erIdentifier OPEN_CURLY EOL erAttributesBody? CLOSE_CURLY
+entityDeclaration ::= erIdentifier erEntityBlock
 
 relationship ::= erCardinality (IDENTIFYING | NON_IDENTIFYING) erCardinality
 private erCardinality ::= ZERO_OR_ONE | ONE_OR_MORE | ZERO_OR_MORE | ONLY_ONE
 
-erAttributesBody ::= erAttributesLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
+erEntityBlock ::= OPEN_CURLY EOL* erAttributes? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private erAttributes ::= erAttributesLines
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
 erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [maybeEmptyString]
@@ -373,7 +379,7 @@ attrName ::= ATTRIBUTE_WORD
 
 ganttHeader ::= GANTT
 
-ganttBody ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+ganttBody ::= ganttLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private ganttLines ::= ganttLine [ganttLines]
 private ganttLine ::= ganttStatement [IGNORED] [EOL] | [IGNORED] EOL
 ganttStatement ::= DATE_FORMAT
@@ -391,8 +397,9 @@ ganttStatement ::= DATE_FORMAT
 
 ganttDataStatement ::= complexTaskName COLON recTaskData
 
-ganttSectionStatement ::= SECTION complexSectionTitle ganttSectionBody
-ganttSectionBody ::= ganttSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+ganttSectionStatement ::= ganttSectionHeader [EOL+ ganttSectionBlock]
+ganttSectionHeader ::= SECTION complexSectionTitle
+ganttSectionBlock ::= ganttSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private ganttSectionLines ::= (ganttSectionLine | IGNORED) [ganttSectionLines]
 private ganttSectionLine ::= ganttSectionInnerStatement [EOL] | EOL
 ganttSectionInnerStatement ::= ganttDataStatement
@@ -400,7 +407,7 @@ ganttSectionInnerStatement ::= ganttDataStatement
 
 requirementDiagramHeader ::= REQUIREMENT_DIAGRAM
 
-requirementDiagramBody ::= requirementLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+requirementDiagramBody ::= requirementLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private requirementLines ::= requirementLine [requirementLines]
 private requirementLine ::= requirementStatement [EOL] | EOL
 requirementStatement ::= requirementDef
@@ -409,19 +416,20 @@ requirementStatement ::= requirementDef
   | directive
   | accStatement
 
-requirementDef ::= requirementType identifier OPEN_CURLY EOL requirementBody? CLOSE_CURLY
+requirementDef ::= requirementHeader requirementBlock
 requirementType ::= REQUIREMENT
   | FUNCTIONAL_REQUIREMENT
   | INTERFACE_REQUIREMENT
   | PERFORMANCE_REQUIREMENT
   | PHYSICAL_REQUIREMENT
   | DESIGN_CONSTRAINT
+requirementHeader ::= requirementType identifier
 private requirementValue ::= complexLabel | string
 
-requirementBody ::= requirementBodyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
-private requirementBodyLines ::= requirementBodyLine [requirementBodyLines]
-private requirementBodyLine ::= requirementBodyStatement [EOL] | EOL
-requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
+requirementBlock ::= OPEN_CURLY EOL+ requirementBlockLines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private requirementBlockLines ::= requirementBlockLine [requirementBlockLines]
+private requirementBlockLine ::= requirementBlockStatement [EOL] | EOL
+requirementBlockStatement ::= ID_KEYWORD COLON requirementValue
   | TEXT COLON requirementValue
   | RISK COLON riskLevel
   | VERIFY_METHOD COLON verifyType
@@ -429,12 +437,13 @@ requirementBodyStatement ::= ID_KEYWORD COLON requirementValue
 riskLevel ::= LOW | MEDIUM | HIGH
 verifyType ::= ANALYSIS | DEMONSTRATION | INSPECTION | TEST
 
-elementDef ::= ELEMENT identifier OPEN_CURLY EOL elementBody? CLOSE_CURLY
+elementDef ::= elementHeader elementBlock
+elementHeader ::= ELEMENT identifier
 
-elementBody ::= elementBodyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
-private elementBodyLines ::= elementBodyLine [elementBodyLines]
-private elementBodyLine ::= elementBodyStatement [EOL] | EOL
-elementBodyStatement ::= TYPE COLON requirementValue
+elementBlock ::= OPEN_CURLY EOL+ elementBlockLines? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private elementBlockLines ::= elementBlockLine [elementBlockLines]
+private elementBlockLine ::= elementBlockStatement [EOL] | EOL
+elementBlockStatement ::= TYPE COLON requirementValue
   | DOCREF COLON requirementValue
 
 relationshipDef ::= identifier ARROW_LEFT reqRelationship REQ_LINE identifier
@@ -445,7 +454,7 @@ reqRelationship ::= CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES
 
 gitGraphHeader ::= GIT_GRAPH [DIR] COLON | GIT_GRAPH
 
-gitGraphBody ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+gitGraphBody ::= gitGraphLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private gitGraphLines ::= gitGraphLine [gitGraphLines]
 private gitGraphLine ::= gitGraphStatement [IGNORED] [EOL] | [IGNORED] EOL
 gitGraphStatement ::= commitStatement
@@ -592,7 +601,7 @@ c4Header ::= C4_CONTEXT
   | C4_DYNAMIC
   | C4_DEPLOYMENT
 
-c4Body ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+c4Body ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private c4Lines ::= c4Line [c4Lines]
 private c4Line ::= c4Statement [EOL] | EOL
 c4Statement ::= PERSON c4Attributes
@@ -637,10 +646,10 @@ private c4AttributesRec ::= [c4Attr] [COMMA c4AttributesRec]
 c4Attr ::= DOLLAR C4_ATTRIBUTE EQUALITY string | c4AttrComplexName | maybeEmptyString
 c4AttrComplexName ::= (C4_ATTRIBUTE | DOLLAR | EQUALITY)+
 
-boundaryStatement ::= boundaryStart OPEN_CURLY boundaryBody? CLOSE_CURLY
-boundaryBody ::= c4Lines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramInBracesDocument" }
+boundaryStatement ::= boundaryHeader boundaryBlock
+boundaryBlock ::= OPEN_CURLY EOL+ c4Lines CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 
-boundaryStart ::= ENTERPRISE_BOUNDARY c4Attributes
+boundaryHeader ::= ENTERPRISE_BOUNDARY c4Attributes
   | SYSTEM_BOUNDARY c4Attributes
   | BOUNDARY c4Attributes
   | CONTAINER_BOUNDARY c4Attributes
@@ -651,7 +660,7 @@ boundaryStart ::= ENTERPRISE_BOUNDARY c4Attributes
 
 mindmapHeader ::= MINDMAP
 
-mindmapBody ::= mindmapLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBody" }
+mindmapBody ::= mindmapLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
 private mindmapLines ::= mindmapLine [mindmapLines]
 private mindmapLine ::= mindmapStatement [EOL] | EOL
 mindmapStatement ::= mindmapNodeStatement

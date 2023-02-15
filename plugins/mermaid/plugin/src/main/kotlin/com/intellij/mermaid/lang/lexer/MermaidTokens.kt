@@ -218,13 +218,21 @@ object MermaidTokens {
   val ATTRIBUTE_WORD = MermaidToken("ATTRIBUTE_WORD")
 
   @JvmField
-  val FRONTMATTER = MermaidToken("FRONTMATTER")
-
-  @JvmField
   val DEFAULT = MermaidToken("DEFAULT")
 
   @JvmField
   val CLASS_DEF = MermaidToken("CLASS_DEF")
+
+  object Frontmatter {
+    @JvmField
+    val FRONTMATTER_START = MermaidToken("FRONTMATTER_START")
+
+    @JvmField
+    val FRONTMATTER_VALUE = MermaidToken("FRONTMATTER_VALUE")
+
+    @JvmField
+    val FRONTMATTER_END = MermaidToken("FRONTMATTER_END")
+  }
 
   object Pie {
     @JvmField

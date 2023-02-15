@@ -46,6 +46,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %state acc_descr_value
 %state acc_descr_multiline_value
 
+%state frontmatter
+
 %states pie, pie_title, pie_title_value, value
 
 %states journey, title,title_value,journey_task, section, section_title
@@ -101,7 +103,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
 
-  ---\s*[\n\r](.|[\n\r])*[\n\r]--- { return FRONTMATTER; }
+  --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
   ";" { return SEMICOLON; }
   [^\s%;{]+ { return BAD_CHARACTER; }
@@ -123,6 +125,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //  [^\"]* { return STRING_VALUE; }
 //  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 //}
+<frontmatter> {
+  \s*[\n\r](.|[\n\r])*[\n\r]/--- { return Frontmatter.FRONTMATTER_VALUE; }
+  --- { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
+}
 
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }

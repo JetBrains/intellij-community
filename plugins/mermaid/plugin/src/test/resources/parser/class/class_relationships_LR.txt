@@ -1,9 +1,9 @@
 FILE
   MermaidClassDiagramHeaderImpl(CLASS_DIAGRAM_HEADER)
     PsiElement(ClassDiagram.CLASS_DIAGRAM)('classDiagram')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidClassBodyImpl(CLASS_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidClassDiagramStatementImpl(CLASS_DIAGRAM_STATEMENT)
       MermaidRelationStatementImpl(RELATION_STATEMENT)
         MermaidLeftIdImpl(LEFT_ID)

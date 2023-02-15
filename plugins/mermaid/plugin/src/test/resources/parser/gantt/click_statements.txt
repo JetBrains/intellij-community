@@ -1,9 +1,9 @@
 FILE
   MermaidGanttHeaderImpl(GANTT_HEADER)
     PsiElement(Gantt.GANTT)('gantt')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidGanttBodyImpl(GANTT_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidGanttStatementImpl(GANTT_STATEMENT)
       MermaidGanttDataStatementImpl(GANTT_DATA_STATEMENT)
         MermaidComplexTaskNameImpl(COMPLEX_TASK_NAME)

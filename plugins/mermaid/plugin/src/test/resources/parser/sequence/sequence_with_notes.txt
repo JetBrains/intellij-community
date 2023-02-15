@@ -1,9 +1,9 @@
 FILE
   MermaidSequenceHeaderImpl(SEQUENCE_HEADER)
     PsiElement(Sequence.SEQUENCE)('sequenceDiagram')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidSequenceBodyImpl(SEQUENCE_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidSequenceStatementImpl(SEQUENCE_STATEMENT)
       MermaidActorStatementImpl(ACTOR_STATEMENT)
         PsiElement(Sequence.PARTICIPANT)('participant')

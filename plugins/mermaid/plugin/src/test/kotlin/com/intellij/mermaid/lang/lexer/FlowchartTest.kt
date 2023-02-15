@@ -196,4 +196,16 @@ class FlowchartTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+
+  fun `test frontmatter`() {
+    val content = """
+    ---
+    title: Node
+    ---
+    flowchart LR
+      id
+    """.trimIndent()
+    doTest(content)
+  }
 }

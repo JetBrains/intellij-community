@@ -32,7 +32,7 @@ class ClassDiagramAnnotator : Annotator {
 
     val classStatementIdentifiers = prevSiblings
       .filterIsInstance<MermaidClassStatement>()
-      .map { it.classDiagramIdentifier }
+      .map { it.classHeader.classDiagramIdentifier }
     val mermaidStatementIdentifiers = prevSiblings
       .filterIsInstance<MermaidRelationStatement>()
       .flatMap { listOf(it.leftId.classDiagramIdentifier, it.rightId.classDiagramIdentifier) }

@@ -154,9 +154,11 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.ClassDiagram.NOTE_FOR, MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
       .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.CLASS_DIAGRAM_NOTE_TEXT).spaces(1)
       .after(MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
+      .after(MermaidElements.CLASS_HEADER).spaces(1)
       // State diagram
       .after(MermaidTokens.StateDiagram.STATE).spaces(1)
       .after(MermaidElements.SPECIAL_STATE).spaces(1)
+      .after(MermaidElements.STATE_DECLARATION_HEADER).spaces(1)
       .after(MermaidTokens.ARROW).spaces(1)
       .between(MermaidTokens.NOTE_CONTENT, MermaidTokens.NOTE_CONTENT).spaces(1)
       .between(MermaidTokens.LABEL, MermaidTokens.LABEL).spaces(1)
@@ -166,6 +168,7 @@ internal object MermaidSpacingBuilder {
       .before(MermaidElements.ATTR_NAME).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidElements.STRING).spaces(1)
+      .after(MermaidElements.ER_IDENTIFIER).spaces(1)
       // User Journey
       .after(MermaidTokens.TASK_NAME).spaces(1)
       .after(MermaidTokens.SECTION).spaces(1)
@@ -178,6 +181,8 @@ internal object MermaidSpacingBuilder {
       // Requirement
       .after(MermaidElements.REQUIREMENT_TYPE).spaces(1)
       .after(MermaidTokens.Requirement.ELEMENT).spaces(1)
+      .after(MermaidElements.REQUIREMENT_HEADER).spaces(1)
+      .after(MermaidElements.ELEMENT_HEADER).spaces(1)
       .around(MermaidTokens.Requirement.ARROW_LEFT).spaces(1)
       .around(MermaidTokens.Requirement.ARROW_RIGHT).spaces(1)
       .around(MermaidTokens.Requirement.REQ_LINE).spaces(1)
@@ -194,6 +199,7 @@ internal object MermaidSpacingBuilder {
       // C4
       .after(C4_KEYWORDS_SPACE_AFTER).spaceIf(false)
       .around(MermaidTokens.C4.EQUALITY).spacing(0, 1, 0, false, 0)
+      .after(MermaidElements.BOUNDARY_HEADER).spaces(1)
       // Mindmap
       .between(MermaidTokens.Mindmap.NODE_DESCR, MermaidTokens.Mindmap.NODE_DESCR).spaces(1)
       .around(MermaidTokens.Mindmap.NODE_DESCR_START).spaceIf(false)
@@ -202,7 +208,7 @@ internal object MermaidSpacingBuilder {
       .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
       // indent
       .between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
-      .between(MermaidElements.SUBGRAPH_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+      .between(MermaidElements.SUBGRAPH_BLOCK, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.COMPLEX_NOTE_CONTENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
   }
 }

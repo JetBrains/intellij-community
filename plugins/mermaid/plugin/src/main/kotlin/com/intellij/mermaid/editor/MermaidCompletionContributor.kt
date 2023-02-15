@@ -133,14 +133,14 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Class Diagram
     extend(
       CompletionType.BASIC,
-      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.CLASS_DIAGRAM_HEADER)),
+      psiElement().atTopLevelOfDiagram(psiElement().isClassDiagramHeader()),
       ClassDiagramSimpleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       and(
         psiElement().afterLeaf(psiElement(MermaidTokens.ANNOTATION_START)),
-        psiElement().insideDiagram(psiElement(MermaidElements.CLASS_DIAGRAM_HEADER))
+        psiElement().insideDiagram(psiElement().isClassDiagramHeader())
       ),
       ClassDiagramAnnotationCompletionProvider()
     )
@@ -297,12 +297,12 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region C4
     extend(
       CompletionType.BASIC,
-      psiElement().atTopLevelOfDiagram(psiElement(MermaidElements.C_4_HEADER)),
+      psiElement().atTopLevelOfDiagram(psiElement().isC4Header()),
       TitleCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.C_4_HEADER)),
+      psiElement().insideDiagramAndNotAtStatement(psiElement().isC4Header()),
       C4CompletionProvider()
     )
     //endregion
@@ -382,7 +382,9 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().whitespaceCommentEmptyOrError(),
       psiElement(MermaidTokens.EOL),
       psiElement(MermaidDirective::class.java),
-      psiElement(MermaidTokens.FRONTMATTER)
+      psiElement(MermaidTokens.Frontmatter.FRONTMATTER_START),
+      psiElement(MermaidTokens.Frontmatter.FRONTMATTER_VALUE),
+      psiElement(MermaidTokens.Frontmatter.FRONTMATTER_END),
     )
   }
 
@@ -414,7 +416,7 @@ class MermaidCompletionContributor : CompletionContributor() {
           .filter { it !is PsiErrorElement && it.elementType !in MermaidTokenTypeSets.WHITE_SPACES }
           .firstOrNull()
 
-        return sibling?.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES
+        return sibling?.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS || diagramPattern.accepts(sibling)
       }
     })
   }
@@ -425,7 +427,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     return with(object : PatternCondition<PsiElement>("withLastDocumentLine") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
         for (child in psiElement.containingFile.children) {
-          if (child.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES) {
+          if (child.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS) {
             val lastLine = child.lastChild
             val lastElement = lastLine.lastChild
             return documentLinePattern.accepts(lastElement)
@@ -440,5 +442,23 @@ class MermaidCompletionContributor : CompletionContributor() {
     statementPattern: ElementPattern<in PsiElement>
   ): PsiElementPattern.Capture<PsiElement> {
     return withLastDocumentLine(statementPattern).and(not(psiElement().afterLeaf(psiElement(MermaidTokens.COLON))))
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.isC4Header(): PsiElementPattern.Capture<PsiElement> {
+    return andOr(
+      psiElement(MermaidElements.C_4_HEADER),
+      psiElement(MermaidTokens.C4.C4_CONTEXT),
+      psiElement(MermaidTokens.C4.C4_CONTAINER),
+      psiElement(MermaidTokens.C4.C4_COMPONENT),
+      psiElement(MermaidTokens.C4.C4_DYNAMIC),
+      psiElement(MermaidTokens.C4.C4_DEPLOYMENT),
+    )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.isClassDiagramHeader(): PsiElementPattern.Capture<PsiElement> {
+    return andOr(
+      psiElement(MermaidElements.CLASS_DIAGRAM_HEADER),
+      psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM),
+    )
   }
 }

@@ -16,7 +16,7 @@ class MermaidElementFactory {
       val file = createFile(project, text)
 
       val element = file.findElementAt("classDiagram\n  ".length)?.parent?.parent
-      return element as? MermaidClassDiagramStatement
+      return (element as? MermaidClassStatement)?.parentOfType()
     }
 
     fun createGenericElement(project: Project, name: String): MermaidGeneric? {

@@ -10,6 +10,7 @@ object MermaidTokenTypeSets {
 
   val STATEMENTS = TokenSet.create(
     MermaidTokens.EOL,
+    MermaidElements.DIRECTION_STATEMENT,
     MermaidElements.PIE_STATEMENT,
     MermaidElements.JOURNEY_STATEMENT,
     MermaidElements.JOURNEY_SECTION_INNER_STATEMENT,
@@ -25,35 +26,35 @@ object MermaidTokenTypeSets {
     MermaidElements.GANTT_STATEMENT,
     MermaidElements.GANTT_SECTION_INNER_STATEMENT,
     MermaidElements.REQUIREMENT_STATEMENT,
-    MermaidElements.REQUIREMENT_BODY_STATEMENT,
-    MermaidElements.ELEMENT_BODY_STATEMENT,
+    MermaidElements.REQUIREMENT_BLOCK_STATEMENT,
+    MermaidElements.ELEMENT_BLOCK_STATEMENT,
     MermaidElements.GIT_GRAPH_STATEMENT,
     MermaidElements.C_4_STATEMENT,
     MermaidElements.MINDMAP_STATEMENT
   )
 
-  val DIAGRAM_BODIES = TokenSet.create(
+  val DIAGRAM_BODIES_AND_BLOCKS = TokenSet.create(
     MermaidElements.PIE_BODY,
     MermaidElements.JOURNEY_BODY,
-    MermaidElements.JOURNEY_SECTION_BODY,
+    MermaidElements.JOURNEY_SECTION_BLOCK,
     MermaidElements.FLOWCHART_BODY,
-    MermaidElements.SUBGRAPH_BODY,
+    MermaidElements.SUBGRAPH_BLOCK,
     MermaidElements.SEQUENCE_BODY,
     MermaidElements.CLASS_BODY,
-    MermaidElements.CLASS_MEMBERS_BODY,
+    MermaidElements.CLASS_BLOCK,
     MermaidElements.STATE_BODY,
-    MermaidElements.INNER_STATE_BODY,
+    MermaidElements.STATE_BLOCK,
     MermaidElements.COMPLEX_NOTE_CONTENT,
     MermaidElements.ER_BODY,
-    MermaidElements.ER_ATTRIBUTES_BODY,
+    MermaidElements.ER_ENTITY_BLOCK,
     MermaidElements.GANTT_BODY,
-    MermaidElements.GANTT_SECTION_BODY,
+    MermaidElements.GANTT_SECTION_BLOCK,
     MermaidElements.REQUIREMENT_DIAGRAM_BODY,
-    MermaidElements.REQUIREMENT_BODY,
-    MermaidElements.ELEMENT_BODY,
+    MermaidElements.REQUIREMENT_BLOCK,
+    MermaidElements.ELEMENT_BLOCK,
     MermaidElements.GIT_GRAPH_BODY,
     MermaidElements.C_4_BODY,
-    MermaidElements.BOUNDARY_BODY
+    MermaidElements.BOUNDARY_BLOCK
   )
 
   val EXPAND_INDENT_AFTER = TokenSet.create(

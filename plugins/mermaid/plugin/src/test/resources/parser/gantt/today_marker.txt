@@ -1,9 +1,9 @@
 FILE
   MermaidGanttHeaderImpl(GANTT_HEADER)
     PsiElement(Gantt.GANTT)('gantt')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidGanttBodyImpl(GANTT_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidGanttStatementImpl(GANTT_STATEMENT)
       PsiElement(Gantt.TODAY_MARKER)('todayMarker off')
     PsiElement(EOL)('\n')

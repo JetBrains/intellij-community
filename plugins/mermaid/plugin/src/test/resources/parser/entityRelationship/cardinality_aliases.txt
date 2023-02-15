@@ -1,9 +1,9 @@
 FILE
   MermaidErHeaderImpl(ER_HEADER)
     PsiElement(EntityRelationship.ENTITY_RELATIONSHIP)('erDiagram')
+  PsiElement(EOL)('\n')
+  PsiWhiteSpace('  ')
   MermaidErBodyImpl(ER_BODY)
-    PsiElement(EOL)('\n')
-    PsiWhiteSpace('  ')
     MermaidErStatementImpl(ER_STATEMENT)
       MermaidErIdentifierImpl(ER_IDENTIFIER)
         PsiElement(ID)('CUSTOMER')
