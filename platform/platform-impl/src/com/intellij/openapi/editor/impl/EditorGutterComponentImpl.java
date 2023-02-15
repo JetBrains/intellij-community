@@ -718,8 +718,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return editorFont.deriveFont(Math.max(1f, editorFontSize - 1f));
   }
 
-  private int calcLineNumbersAreaWidth(int maxLineNumber) {
-    return FontLayoutService.getInstance().stringWidth(getFontMetrics(getFontForLineNumbers()), Integer.toString(maxLineNumber));
+  private int calcLineNumbersAreaWidth(@NotNull String maxLineNumberText) {
+    return FontLayoutService.getInstance().stringWidth(getFontMetrics(getFontForLineNumbers()), maxLineNumberText);
   }
 
   private void doPaintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine, int offset,
@@ -746,7 +746,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         if (!visLinesIterator.isCustomFoldRegionLine() &&
             (!visLinesIterator.startsWithSoftWrap() || visLinesIterator.getY() <= viewportStartY)) {
           int logicalLine = visLinesIterator.getDisplayedLogicalLine();
-          Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
+          String lineToDisplay = converter.convertToText(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
             int y = visLinesIterator.getY();
             if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
@@ -783,12 +783,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             }
 
             if (iconOnTheLine == null && hoverIcon == null) {
-              String s = String.valueOf(lineToDisplay);
               int textOffset = isMirrored() ?
                                offset - getLineNumberAreaWidth() - 1 :
-                               offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
+                               offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), lineToDisplay);
 
-              g.drawString(s, textOffset,y + myEditor.getAscent());
+              g.drawString(lineToDisplay, textOffset,y + myEditor.getAscent());
             } else if (hoverIcon != null && iconOnTheLine == null) {
               Icon icon = scaleIcon(hoverIcon);
               int iconX = offset - icon.getIconWidth();
@@ -1751,12 +1750,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void calcLineNumberAreaWidth() {
     if (!isLineNumbersShown()) return;
 
-    Integer maxLineNumber = myLineNumberConverter.getMaxLineNumber(myEditor);
+    String maxLineNumber = myLineNumberConverter.getMaxLineNumberText(myEditor);
     myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConverter != null) {
-      Integer maxAdditionalLineNumber = myAdditionalLineNumberConverter.getMaxLineNumber(myEditor);
+      String maxAdditionalLineNumber = myAdditionalLineNumberConverter.getMaxLineNumberText(myEditor);
       myAdditionalLineNumberAreaWidth = maxAdditionalLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxAdditionalLineNumber);
     }
   }
