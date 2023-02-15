@@ -91,6 +91,7 @@ class CompletionGolfFileReportGenerator(
       var offset = 0
       var lineNumbers = 0
       val firstInfo = infos.first()
+      if (firstInfo.sessionsInfo.sessions.isEmpty()) return@tbody
       val maxLineLength = firstInfo.sessionsInfo.sessions.maxOf { it.expectedText.length }
       for (sessionIndex in firstInfo.sessionsInfo.sessions.indices) {
         val session = firstInfo.sessionsInfo.sessions[sessionIndex]
