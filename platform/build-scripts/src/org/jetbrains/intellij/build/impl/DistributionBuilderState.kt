@@ -35,17 +35,6 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout,
   fun getModulesForPluginsToPublish(): Set<String> {
     return getModulesForPluginsToPublish(platform, pluginsToPublish)
   }
-
-  fun getIncludedProjectArtifacts(): Set<String> {
-    val result = LinkedHashSet<String>()
-    result.addAll(platform.includedArtifacts.keys)
-
-    getPluginLayoutsByJpsModuleNames(modules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish,
-                                                                       productProperties = context.productProperties),
-                                     productLayout = context.productProperties.productLayout)
-      .flatMapTo(result) { it.includedArtifacts.keys }
-    return result
-  }
 }
 
 internal fun getModulesForPluginsToPublish(platform: PlatformLayout, pluginsToPublish: Set<PluginLayout>): Set<String> {

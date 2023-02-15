@@ -36,15 +36,11 @@ class ProductModulesLayout {
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
+   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
    * Layouts of the plugins are specified in {@link [pluginLayouts]} list.
    */
-  var pluginModulesToPublish: Collection<String> = LinkedHashSet()
-    get() = java.util.Set.copyOf(field)
-    set(value) {
-      field = LinkedHashSet(value)
-    }
+  var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
    * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -134,18 +130,6 @@ class ProductModulesLayout {
    * This API is experimental, use with care
    */
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
-
-  /**
-   * @return list of all modules which output is included into the plugin's JARs
-   */
-  fun getIncludedPluginModules(enabledPluginModules: Collection<String>): Collection<String> {
-    val result = LinkedHashSet<String>()
-    result.addAll(enabledPluginModules)
-    pluginLayouts.asSequence()
-      .filter { enabledPluginModules.contains(it.mainModule) }
-      .flatMapTo(result) { it.includedModules.map { it.moduleName }.distinct() }
-    return result
-  }
 }
 
 internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {

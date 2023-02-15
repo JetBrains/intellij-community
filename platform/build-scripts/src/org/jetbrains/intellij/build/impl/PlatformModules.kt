@@ -18,9 +18,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.Path
 import java.util.*
 
 private const val UTIL_JAR = "util.jar"
@@ -113,9 +112,9 @@ internal fun collectPlatformModules(to: MutableCollection<String>) {
   to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
 }
 
-private fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
-  val modules = LinkedHashSet<String>()
-  modules.addAll(productLayout.getIncludedPluginModules(enabledPluginModules))
+internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
+  val modules = HashSet<String>()
+  collectIncludedPluginModules(enabledPluginModules = enabledPluginModules, product = productLayout, result = modules)
   modules.addAll(PLATFORM_API_MODULES)
   modules.addAll(PLATFORM_IMPLEMENTATION_MODULES)
   modules.addAll(productLayout.productApiModules)
@@ -126,18 +125,17 @@ private fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPlug
     return true
   }
 
+  val javaExtensionService = JpsJavaExtensionService.getInstance()
   for (moduleName in modules) {
-    var contains = false
-    JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
-      .productionOnly()
-      .processModules { module ->
-        if (!contains && module.name == coverageModuleName) {
-          contains = true
-        }
+    for (element in context.findRequiredModule(moduleName).dependenciesList.dependencies) {
+      if (element !is JpsModuleDependency ||
+          javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+        continue
       }
 
-    if (contains) {
-      return true
+      if (element.moduleReference.moduleName == coverageModuleName) {
+        return true
+      }
     }
   }
 
@@ -154,9 +152,22 @@ private fun addModule(relativeJarPath: String,
 }
 
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
-  val productLayout = context.productProperties.productLayout
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
-  val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
+  val productLayout = context.productProperties.productLayout
+  return createPlatformLayout(
+    addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
+                          hasPlatformCoverage(productLayout = productLayout,
+                                              enabledPluginModules = enabledPluginModules,
+                                              context = context),
+    projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
+    context = context,
+  )
+}
+
+internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
+                                          projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
+                                          context: BuildContext): PlatformLayout {
+  val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
   // used only in modules that packed into Java
   layout.withoutProjectLibrary("jps-javac-extension")
@@ -231,8 +242,7 @@ suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: B
   explicit.addAll(
     toModuleItemSequence(PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES"))
   explicit.addAll(toModuleItemSequence(productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules"))
-  if (hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context) &&
-      !productLayout.excludedModuleNames.contains("intellij.platform.coverage")) {
+  if (addPlatformCoverage) {
     explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
   }
   val implicit = computeImplicitRequiredModules(
@@ -269,7 +279,7 @@ suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: B
   return layout
 }
 
-private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
+internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
   val jpsJavaExtensionService = JpsJavaExtensionService.getInstance()
   val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules,
@@ -320,7 +330,7 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
   }
 
   return sourceRoots.any { moduleSourceRoot ->
-    !Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)).startsWith(context.paths.communityHomeDir)
+    !moduleSourceRoot.path.startsWith(context.paths.communityHomeDir)
   }
 }
 
