@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Temporary utility class for migration to the new UI.
@@ -47,8 +47,7 @@ public abstract class ExperimentalUI {
   public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
   public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
 
-  private static final String FIRST_PROMOTION_DATE_FORMAT = "yyyy/MM/dd";
-  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.date";
+  private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
 
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
@@ -82,21 +81,20 @@ public abstract class ExperimentalUI {
   public static int getPromotionDaysCount() {
     PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
     String value = propertyComponent.getValue(FIRST_PROMOTION_DATE_PROPERTY);
-    SimpleDateFormat dateFormat = new SimpleDateFormat(FIRST_PROMOTION_DATE_FORMAT);
-    Date now = new Date();
+    LocalDate now = LocalDate.now();
 
     if (value == null) {
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
 
     try {
-      Date firstDate = dateFormat.parse(value);
-      return (int)TimeUnit.DAYS.convert(now.getTime() - firstDate.getTime(), TimeUnit.MILLISECONDS);
+      LocalDate firstDate = LocalDate.parse(value);
+      return (int)DAYS.between(firstDate, now);
     }
-    catch (ParseException e) {
+    catch (DateTimeParseException e) {
       LOG.warn("Invalid stored date " + value);
-      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, dateFormat.format(now));
+      propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
   }
