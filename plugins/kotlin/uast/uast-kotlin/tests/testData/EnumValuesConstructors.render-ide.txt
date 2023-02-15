@@ -7,5 +7,5 @@ public enum Style {
     public final fun getValue() : java.lang.String = UastEmptyExpression
     private fun Style(@org.jetbrains.annotations.Nullable value: java.lang.String) = UastEmptyExpression
     public static fun values() : Style[] = UastEmptyExpression
-    public static fun valueOf(name: java.lang.String) : Style = UastEmptyExpression
+    public static fun valueOf(value: java.lang.String) : Style = UastEmptyExpression
 }
