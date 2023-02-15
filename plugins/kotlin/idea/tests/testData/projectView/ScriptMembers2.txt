@@ -11,5 +11,6 @@ Navigation item file #0: src/settings.gradle.kts
 -Project
  -PsiDirectory: src
   -[settings.gradle.kts]
+   <expression>
    include
  +External Libraries

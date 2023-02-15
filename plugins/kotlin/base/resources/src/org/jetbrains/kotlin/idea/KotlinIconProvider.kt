@@ -134,6 +134,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
         fun PsiElement.getBaseIcon(): Icon? = when (this) {
             is KtPackageDirective -> AllIcons.Nodes.Package
             is KtFile, is KtLightClassForFacade -> FILE
+            is KtScript -> (parent as? KtFile)?.scriptIcon()
             is KtLightClassForSourceDeclaration -> navigationElement.getBaseIcon()
             is KtNamedFunction -> when {
                 receiverTypeReference != null ->

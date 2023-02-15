@@ -11,6 +11,7 @@ Navigation item file #0: src/build.gradle.kts
 -Project
  -PsiDirectory: src
   -[build.gradle.kts]
+   <expression>
    application
    dependencies
    plugins
