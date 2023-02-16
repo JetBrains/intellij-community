@@ -169,7 +169,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
+        public void documentChanged(@NotNull DocumentEvent e) {
           documentManager.commitDocument(document);
           validateButtons();
         }
@@ -200,7 +200,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       panel.add(myToTypeEditor, gc);
     }
 
-    private String @Nullable [] getValidTypes(final Project project, final PsiElement root) {
+    private String @Nullable [] getValidTypes(Project project, PsiElement root) {
       if (root instanceof PsiField || root instanceof PsiMethod) {
         final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
@@ -299,7 +299,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return false;
     }
 
-    private static boolean checkType(final PsiType type) {
+    private static boolean checkType(PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;
       if (type instanceof PsiClassType psiClassType){
