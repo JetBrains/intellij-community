@@ -43,7 +43,7 @@ import java.util.List;
 public final class HighlightManagerImpl extends HighlightManager {
   public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
 
-  public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
+  private static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
   private static final Key<Object2ByteMap<RangeHighlighter>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 
   private final Project myProject;
@@ -166,6 +166,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
         var map = getHighlightInfoMap(editor, true);
         map.put(highlighter, (byte)flags);
+        setHideFlags(highlighter, flags);
 
         highlighter.setVisibleIfFolded(true);
         if (outHighlighters != null) {
@@ -179,8 +180,6 @@ public final class HighlightManagerImpl extends HighlightManager {
         if (scrollMarkColor != null) {
           highlighter.setErrorStripeMarkColor(scrollMarkColor);
         }
-
-        highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
       });
   }
 
@@ -343,6 +342,21 @@ public final class HighlightManagerImpl extends HighlightManager {
       }
     }
     return false;
+  }
+
+  /**
+   * @return the {@link HighlightManager.HideFlags} mask used when creating the occurrence highlighter,
+   * or null if the given highlighter isn't one of those created using a method from the {@link #addOccurrenceHighlight} family.
+   */
+  @Contract(pure = true)
+  @HideFlags
+  public @Nullable Integer getHideFlags(@NotNull RangeHighlighter highlighter) {
+    //noinspection MagicConstant
+    return highlighter.getUserData(HIGHLIGHT_FLAGS_KEY);
+  }
+
+  private static void setHideFlags(@NotNull RangeHighlighter highlighter, @HideFlags @Nullable Integer flags) {
+    highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
   }
 
   private class MyAnActionListener implements AnActionListener {
