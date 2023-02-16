@@ -257,13 +257,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader) throws IOException {
+  public Class<?> consumeClassData(@NotNull String name, byte[] data) throws IOException {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, 0, data.length, null);
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data) {
     definePackageIfNeeded(name);
     return super.defineClass(name, data, null);
   }

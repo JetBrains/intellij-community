@@ -20,7 +20,6 @@ import kotlin.coroutines.EmptyCoroutineContext
 fun enableCoroutineDump() {
   runCatching {
     DebugProbes.enableCreationStackTraces = false
-    DebugProbes.install()
   }
 }
 

@@ -109,7 +109,7 @@ final class ZipResourceFile implements ResourceFile {
       }
 
       try {
-        return classConsumer.consumeClassData(className, buffer, jarLoader);
+        return classConsumer.consumeClassData(className, buffer);
       }
       finally {
         zipFile.releaseBuffer(buffer);
@@ -120,7 +120,7 @@ final class ZipResourceFile implements ResourceFile {
       if (data == null) {
         return null;
       }
-      return classConsumer.consumeClassData(className, data, jarLoader);
+      return classConsumer.consumeClassData(className, data);
     }
   }
 
@@ -172,6 +172,11 @@ final class ZipResourceFile implements ResourceFile {
     @Override
     public byte @NotNull [] getBytes() throws IOException {
       return entry.getData();
+    }
+
+    @Override
+    public @NotNull ByteBuffer getByteBuffer() throws IOException {
+      return entry.getByteBuffer();
     }
   }
 

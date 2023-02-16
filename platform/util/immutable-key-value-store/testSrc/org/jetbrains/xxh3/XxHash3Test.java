@@ -94,6 +94,7 @@ public class XxHash3Test {
     checkPackage("org.jetbrains.xxh3", 4571982292824530778L);
     checkPackage("org.jetbrains.ikv", -1976620678582843062L);
     checkPackage("com.intellij.idea", -635775336887217634L);
+    checkPackage("kotlin.coroutines.jvm.internal", -3930079881136890558L);
   }
 
   @Test

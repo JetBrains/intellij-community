@@ -5,6 +5,7 @@ package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
@@ -41,6 +42,12 @@ fun main(rawArgs: Array<String>) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
       val busyThread = Thread.currentThread()
+
+      if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+        launch(CoroutineName("coroutine debug probes init")) {
+          enableCoroutineDump()
+        }
+      }
 
       launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
         IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())

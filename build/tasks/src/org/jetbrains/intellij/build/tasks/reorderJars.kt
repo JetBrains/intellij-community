@@ -15,10 +15,9 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.*
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
+private val excludedLibJars = java.util.Set.of("testFramework.jar")
 
 private fun getClassLoadingLog(): InputStream {
   val osName = System.getProperty("os.name")
@@ -105,16 +104,17 @@ fun generateClasspath(homeDir: Path, antTargetFile: Path?): PersistentList<Strin
 }
 
 private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path): LinkedHashSet<Path> {
-  // sorted to ensure stable performance results
-  val existing = TreeSet<Path>()
+  val existing = HashSet<Path>()
   addJarsFromDir(libDir) { paths ->
     paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
   }
 
   val result = LinkedHashSet<Path>()
   // add first - should be listed first
+  sequenceOf(UTIL_JAR).map(libDir::resolve).filterTo(result) { existing.contains(it) }
   sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
-  result.addAll(existing)
+  // sorted to ensure stable performance results
+  result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
   return result
 }
 

@@ -42,7 +42,6 @@ internal val BuildContext.searchableOptionDir: Path
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
-  "aalto-xml",
   "netty-buffer",
   "netty-codec-http",
   "netty-handler-proxy",
@@ -65,21 +64,30 @@ private val libsThatUsedInJps = java.util.Set.of(
   "commons-logging",
   "commons-lang3",
   "kotlin-stdlib",
-  // see ConsoleProcessListFetcher.getConsoleProcessCount
-  "pty4j",
+  "fastutil-min",
 )
 
-private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
+private val notImportantKotlinLibs = persistentSetOf(
+  "kotlinx-coroutines-guava",
+  "kotlinx-coroutines-slf4j",
+  "kotlinx-datetime-jvm",
+  "kotlinx-html-jvm",
+)
+
+private val predefinedMergeRules = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
   map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
   map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
   map.put("rd.jar") { it.startsWith("rd-") }
   map.put(PRODUCT_JAR) { it.startsWith("License") }
   // see ClassPathUtil.getUtilClassPath
-  map.put("3rd-party-rt.jar") {
-    libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect"
+  map.put(UTIL_8_JAR) {
+    libsThatUsedInJps.contains(it) ||
+    (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) ||
+    it == "kotlin-reflect"
   }
-  // used by intellij.database.jdbcConsole
-  map.put("util.jar") { it == "jbr-api" }
+
+  // used in external process - see ConsoleProcessListFetcher.getConsoleProcessCount
+  map.put(UTIL_JAR) { it == "pty4j" }
 }
 
 internal fun getLibraryFileName(library: JpsLibrary): String {
@@ -156,7 +164,7 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
                                                            layout = layout,
                                                            copiedFiles = packager.copiedFiles)
         if (isRootDir) {
-          for ((key, value) in extraMergeRules) {
+          for ((key, value) in predefinedMergeRules) {
             packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value)
           }
           if (!libraryToMerge.isEmpty()) {
@@ -189,7 +197,9 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       // sort because projectStructureMapping is a concurrent collection
       // call Path::toString because the result of Path ordering is platform-dependent
       return list +
-             packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path.toString() }, { it.type }, { it.libraryFile?.toString() }) }
+             packager.libraryEntries.sortedWith { a, b ->
+               compareValuesBy(a, b, { it.path.toString() }, { it.type }, { it.libraryFile?.toString() })
+             }
     }
 
     private suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, MutableList<String>>, context: BuildContext) {
@@ -279,7 +289,7 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       }
 
       if (JpsJavaExtensionService.getInstance().getDependencyExtension(element)?.scope
-            ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
+          ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) != true) {
         continue
       }
 
@@ -351,7 +361,7 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
-      if (packMode == LibraryPackMode.MERGED && !extraMergeRules.values.any { it(libName) } && !isLibraryMergeable(libName)) {
+      if (packMode == LibraryPackMode.MERGED && !predefinedMergeRules.values.any { it(libName) } && !isLibraryMergeable(libName)) {
         packMode = LibraryPackMode.STANDALONE_MERGED
       }
 
@@ -390,8 +400,10 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
 
   private fun filesToSourceWithMapping(to: MutableList<Source>, files: List<Path>, library: JpsLibrary, targetFile: Path) {
     val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
+    val libraryName = library.name
+    val isPreSignedCandidate = libraryName == "pty4j" || libraryName == "jna" || libraryName == "sqlite-native"
     for (file in files) {
-      to.add(ZipSource(file) { size ->
+      to.add(ZipSource(file = file, isPreSignedCandidate = isPreSignedCandidate) { size ->
         val libraryEntry = moduleName?.let {
           ModuleLibraryFileEntry(
             path = targetFile,
@@ -673,8 +685,7 @@ private fun createJarDescriptor(outputDir: Path,
                                 collectNativeFiles: Boolean,
                                 context: BuildContext): JarDescriptor {
   var pathInClassLog = ""
-  val isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
-  if (isReorderingEnabled) {
+  if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
     if (context.paths.distAllDir == outputDir.parent) {
       pathInClassLog = outputDir.parent.relativize(targetFile).toString().replace(File.separatorChar, '/')
     }
@@ -684,13 +695,10 @@ private fun createJarDescriptor(outputDir: Path,
     else {
       val parent = outputDir.parent
       if (parent?.fileName.toString() == "plugins") {
-        pathInClassLog = outputDir.parent.parent.relativize(targetFile).toString().replace(File.separatorChar, '/')
+        pathInClassLog = parent.parent.relativize(targetFile).toString().replace(File.separatorChar, '/')
       }
     }
   }
 
-  val fileName = targetFile.fileName.toString()
-  return JarDescriptor(file = targetFile,
-                       pathInClassLog = pathInClassLog,
-                       collectNativeFiles = collectNativeFiles && (fileName == APP_JAR || fileName.startsWith("3rd-party-")))
+  return JarDescriptor(file = targetFile, pathInClassLog = pathInClassLog, collectNativeFiles = collectNativeFiles)
 }

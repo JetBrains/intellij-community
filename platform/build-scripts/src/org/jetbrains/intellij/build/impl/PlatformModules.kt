@@ -14,6 +14,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.tasks.UTIL_8_JAR
+import org.jetbrains.intellij.build.tasks.UTIL_JAR
+import org.jetbrains.intellij.build.tasks.UTIL_RT_JAR
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -21,9 +24,6 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.*
-
-private const val UTIL_JAR = "util.jar"
-private const val UTIL_RT_JAR = "util_rt.jar"
 
 private val PLATFORM_API_MODULES = persistentListOf(
   "intellij.platform.analysis",
@@ -99,8 +99,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
 
   "intellij.platform.markdown.utils",
 )
-
-private const val UTIL_8 = "util-8.jar"
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
   "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
@@ -178,27 +176,34 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   for ((module, patterns) in productLayout.moduleExcludes) {
     layout.excludeFromModule(module, patterns)
   }
+
   addModule(UTIL_RT_JAR, listOf(
     "intellij.platform.util.rt",
     "intellij.platform.util.trove",
   ), productLayout = productLayout, layout = layout)
-  addModule(UTIL_8, listOf(
-    "intellij.platform.util.rt.java8",
-    "intellij.platform.util.classLoader",
+  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
+
+  // JDOM is used by maven in an external process
+  addModule(UTIL_8_JAR, listOf(
     "intellij.platform.util.jdom",
     "intellij.platform.util.xmlDom",
+    "intellij.platform.tracing.rt",
+    "intellij.platform.util.base",
+    "intellij.platform.util",
+    "intellij.platform.extensions",
+    "intellij.platform.core",
   ), productLayout = productLayout, layout = layout)
-  // fastutil-min cannot be in libsThatUsedInJps - guava is used by JPS and also in this JAR,
-  // but it leads to conflict in some old 3rd-party JDBC driver, so, pack fastutil-min into another JAR
-  layout.withProjectLibrary(libraryName = "fastutil-min", jarName = UTIL_8)
+  // used by jdom - pack to the same JAR
+  layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
+
+  // used by intellij.database.jdbcConsole -
+  // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
+  layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // util.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(UTIL_JAR, listOf(
+    "intellij.platform.util.rt.java8",
+    "intellij.platform.util.classLoader",
     "intellij.platform.util.zip",
-    "intellij.platform.util",
-    "intellij.platform.util.base",
-    "intellij.platform.extensions",
-    "intellij.platform.tracing.rt",
-    "intellij.platform.core",
     // Scala uses GeneralCommandLine in JPS plugin
     "intellij.platform.ide.util.io",
     "intellij.platform.boot",
@@ -259,7 +264,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
                                    relativeOutputFile = APP_JAR,
                                    reason = "<- " + it.second.asReversed().joinToString(separator = " <- "))
                       }).sortedBy { it.moduleName }.toList())
-  layout.withProjectLibrary(libraryName = "ion", jarName = UTIL_RT_JAR)
   for (item in projectLibrariesUsedByPlugins) {
     if (!layout.excludedProjectLibraries.contains(item.libraryName)) {
       layout.includedProjectLibraries.add(item)
