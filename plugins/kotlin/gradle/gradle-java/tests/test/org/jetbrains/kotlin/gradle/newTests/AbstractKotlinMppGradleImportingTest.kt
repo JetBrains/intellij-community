@@ -48,6 +48,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         GradleProjectsPublishingTestsFeature,
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
+        CustomChecksFeature, // NB: Disabled by default in most suites to not pollute the DSL
 
         ContentRootsChecker,
         KotlinFacetSettingsChecker,
@@ -78,14 +79,14 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
-    protected fun doTest(configuration: TestConfigurationDslScope.() -> Unit = { }) {
+    protected fun doTest(runImport: Boolean = true, configuration: TestConfigurationDslScope.() -> Unit = { }) {
         val defaultConfig = TestConfiguration().apply { defaultTestConfiguration() }
         val testConfig = defaultConfig.copy().apply { configuration() }
         context.testConfiguration = testConfig
-        context.doTest()
+        context.doTest(runImport)
     }
 
-    private fun KotlinMppTestsContextImpl.doTest() {
+    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
         installedFeatures.forEach { feature -> with(feature) { context.beforeTestExecution() } }
         createProjectSubFile(
             "local.properties",
@@ -99,7 +100,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         installedFeatures.forEach { feature -> with(feature) { context.beforeImport() } }
 
-        importProject()
+        if (runImport) importProject()
 
         installedFeatures.forEach { feature ->
             with(feature) {
@@ -108,21 +109,17 @@ abstract class AbstractKotlinMppGradleImportingTest :
         }
     }
 
+    @Suppress("RedundantIf")
     private fun KotlinMppTestsContextImpl.isCheckerEnabled(checker: AbstractTestChecker<*>): Boolean {
         // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
         if (checker is TestTasksChecker) return false
 
         val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
-        return when {
-            config.disableCheckers != null -> checker !in config.disableCheckers!!
-
-            config.onlyCheckers != null -> checker in config.onlyCheckers!!
-                    // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
-                    // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
-                    || checker is HighlightingChecker
-
-            else -> true
-        }
+        if (config.disableCheckers != null && checker in config.disableCheckers!!) return false
+        // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
+        // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
+        if (config.onlyCheckers != null && checker !in config.onlyCheckers!! && checker !is HighlightingChecker) return false
+        return true
     }
 
     final override fun findJdkPath(): String {
@@ -144,6 +141,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
+        context.gradleJdkPath = File(findJdkPath())
 
         // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
         GradleSystemSettings.getInstance().gradleVmOptions =
