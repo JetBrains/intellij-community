@@ -35,17 +35,13 @@ import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 
 @Service(Service.Level.PROJECT)
-internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, Disposable {
-  @Suppress("DEPRECATION")
-  private val coroutineScope = project.coroutineScope.childScope()
-
+internal class GrazieSpellCheckerEngine(project: Project, private val coroutineScope: CoroutineScope) : SpellCheckerEngine, Disposable {
   override fun getTransformation(): Transformation = Transformation()
 
-  private val loader = WordListLoader(project)
+  private val loader = WordListLoader(project, coroutineScope)
   private val adapter = WordListAdapter()
 
   internal class SpellerLoadActivity : ProjectActivity {

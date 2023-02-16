@@ -4,6 +4,7 @@ package com.intellij.spellchecker.grazie.async
 import ai.grazie.spell.lists.WordList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -11,6 +12,7 @@ import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.grazie.dictionary.SimpleWordList
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG = logger<WordListLoader>()
 
-internal class WordListLoader(private val project: Project) {
+internal class WordListLoader(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val isLoadingList = AtomicBoolean(false)
   private val listsToLoad = ContainerUtil.createLockFreeCopyOnWriteList<Pair<Loader, (String, WordList) -> Unit>>()
 
@@ -41,10 +43,9 @@ internal class WordListLoader(private val project: Project) {
     }
 
     StartupManager.getInstance(project).runAfterOpened {
-      LOG.debug("Loading ${loader}")
+      LOG.debug { "Loading ${loader}" }
 
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
+      coroutineScope.launch {
         LOG.debug("${loader} loaded!")
         consumer(loader.name, SimpleWordList(readAll(loader)))
 
