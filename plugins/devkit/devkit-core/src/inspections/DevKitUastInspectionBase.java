@@ -6,11 +6,11 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UIdentifier;
-
 
 public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInspectionTool {
 
@@ -48,12 +48,8 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
 
   protected static boolean hasMethodIdentifierEqualTo(@NotNull UCallExpression expression, String @NotNull ... methodNames) {
     UIdentifier identifier = expression.getMethodIdentifier();
-    String methodName = identifier != null ? identifier.getName() : null;
-    for (String checkedName : methodNames) {
-      if (checkedName.equals(methodName)) {
-        return true;
-      }
-    }
-    return false;
+    if (identifier == null) return false;
+    String methodName = identifier.getName();
+    return ArrayUtil.contains(methodName, methodNames);
   }
 }
