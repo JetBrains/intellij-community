@@ -5,22 +5,9 @@ import javax.swing.Icon
 
 class CompanionObjectFileType {
   companion object : LanguageFileType(Language.ANY) {
-    @NonNls
-    override fun getDefaultExtension(): String {
-      return "any"
-    }
-
-    override fun getDescription(): String {
-      return "any"
-    }
-
-    override fun getIcon(): Icon? {
-      return null
-    }
-
-    @NonNls
-    override fun getName(): String {
-      return "any"
-    }
+    override fun getDefaultExtension() = "any"
+    override fun getDescription() = "any"
+    override fun getIcon() = null
+    override fun getName() = "any"
   }
 }

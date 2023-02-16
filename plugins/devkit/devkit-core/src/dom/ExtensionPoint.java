@@ -121,6 +121,7 @@ public interface ExtensionPoint extends DomElement {
    * @return the EP DOM element that defines the instantiated extension class in implemented extensions.
    * Determining the element follows the algorithm described in {@link #getExtensionPointClass()}.
    */
+  @Nullable
   DomElement getExtensionPointClassNameElement();
 
   /**

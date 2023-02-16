@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import java.util.function.Predicate
 
 class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBase() {
 
@@ -66,7 +67,7 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 }
 
 private fun Extension.isAllowed(): Boolean {
-  return allowedObjectRules.any { it.isAllowed(this) }
+  return allowedObjectRules.any { it.test(this) }
 }
 
 private fun Extension.getClassNameDomValues(): List<GenericDomValue<*>> {
@@ -74,14 +75,14 @@ private fun Extension.getClassNameDomValues(): List<GenericDomValue<*>> {
 }
 
 private fun Extension.getExplicitInstantiatedClassElement(): GenericDomValue<*>? {
-  val (elementName, isClassDefinedInTag) = getInstantiatedClassElementInfo() ?: return null
+  val (elementName, isClassDefinedInTag) = this.getInstantiatedClassElementInfo() ?: return null
   val domValue = if (isClassDefinedInTag) {
     DevKitDomUtil.getTag(this, elementName)
   }
   else {
     DevKitDomUtil.getAttribute(this, elementName)
   }
-  return if (domValue != null && DomUtil.hasXml(domValue)) domValue else null
+  return domValue?.takeIf { DomUtil.hasXml(it) }
 }
 
 private fun Extension.implicitClassNameDomValues(): List<GenericDomValue<*>> {
@@ -108,8 +109,7 @@ private fun mapAttributeNamesToExistingDomValues(attributeNames: List<String>, e
 }
 
 private fun getExistingDomValue(parent: DomElement, attributeName: String): GenericDomValue<*>? {
-  val attribute = DevKitDomUtil.getAttribute(parent, attributeName) ?: return null
-  return if (DomUtil.hasXml(attribute)) attribute else null
+  return DevKitDomUtil.getAttribute(parent, attributeName)?.takeIf { DomUtil.hasXml(it) }
 }
 
 private fun Extension.getInstantiatedClassElementInfo(): Pair<String, Boolean>? {
@@ -192,18 +192,14 @@ private val implicitInstantiatedClassAttributes = listOf(
     listOf("handler"))
 )
 
-private val allowedObjectRules = arrayOf<AllowedObjectRule>(
+private val allowedObjectRules = listOf(
   ObjectAllowedWhenAttributeDefinedRule("com.intellij.fileType", "fieldName"),
   ObjectAllowedWhenAttributeDefinedRule("com.intellij.serverFileType", "fieldName")
 )
 
-private interface AllowedObjectRule {
-  fun isAllowed(extension: Extension): Boolean
-}
-
 private class ObjectAllowedWhenAttributeDefinedRule(private val epQualifiedName: String,
-                                                    private val attributeName: String) : AllowedObjectRule {
-  override fun isAllowed(extension: Extension): Boolean {
+                                                    private val attributeName: String) : Predicate<Extension> {
+  override fun test(extension: Extension): Boolean {
     if (extension.extensionPoint?.effectiveQualifiedName == epQualifiedName) {
       val attribute = DevKitDomUtil.getAttribute(extension, attributeName)
       return attribute != null && DomUtil.hasXml(attribute)
