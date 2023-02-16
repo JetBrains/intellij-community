@@ -12,7 +12,7 @@ import java.nio.file.Path
 import kotlin.io.path.absolute
 
 const val NATIVE_PREBUILT_DEV_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
-const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/release"
+const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/releases"
 
 object KotlinNativePrebuiltDownloader {
     fun downloadFile(downloadURL: String, downloadOut: Path) {
