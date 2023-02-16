@@ -748,7 +748,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         if (!visLinesIterator.isCustomFoldRegionLine() &&
             (!visLinesIterator.startsWithSoftWrap() || visLinesIterator.getY() <= viewportStartY)) {
           int logicalLine = visLinesIterator.getDisplayedLogicalLine();
-          String lineToDisplay = converter.convertToText(myEditor, logicalLine + 1);
+          String lineToDisplay = converter.convertLineNumberToString(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
             int y = visLinesIterator.getY();
             if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
@@ -1752,12 +1752,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void calcLineNumberAreaWidth() {
     if (!isLineNumbersShown()) return;
 
-    String maxLineNumber = myLineNumberConverter.getMaxLineNumberText(myEditor);
+    String maxLineNumber = myLineNumberConverter.getMaxLineNumberString(myEditor);
     myLineNumberAreaWidth = Math.max(getInitialLineNumberWidth(), maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber));
 
     myAdditionalLineNumberAreaWidth = 0;
     if (myAdditionalLineNumberConverter != null) {
-      String maxAdditionalLineNumber = myAdditionalLineNumberConverter.getMaxLineNumberText(myEditor);
+      String maxAdditionalLineNumber = myAdditionalLineNumberConverter.getMaxLineNumberString(myEditor);
       myAdditionalLineNumberAreaWidth = maxAdditionalLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxAdditionalLineNumber);
     }
   }
