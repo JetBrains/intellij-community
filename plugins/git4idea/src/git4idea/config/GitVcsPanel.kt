@@ -52,11 +52,13 @@ import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.border.Border
+import kotlin.streams.toList
 
 private fun gitSharedSettings(project: Project) = GitSharedSettings.getInstance(project)
 private fun projectSettings(project: Project) = GitVcsSettings.getInstance(project)
 private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
 private val gitOptionGroupName get() = message("settings.git.option.group")
+private val gitRefNameValidationSettings get() = GitRefNameValidatorSettings.getInstance()
 
 // @formatter:off
 private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), { projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }, groupName = gitOptionGroupName)
@@ -139,6 +141,8 @@ internal class GitVcsPanel(private val project: Project) :
 
   override fun createPanel(): DialogPanel = panel {
     createGitExecutableSelectorRow(project, disposable!!)
+    getBranchingGroup()
+
     group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
@@ -206,6 +210,56 @@ internal class GitVcsPanel(private val project: Project) :
     }
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
+    }
+  }
+
+  private fun Panel.getBranchingGroup() {
+    group(message("settings.branching.group.title")) {
+
+      lateinit var isValidationOnCheckbox : Cell<JBCheckBox>
+      row {
+        isValidationOnCheckbox = checkBox(CheckboxDescriptor(
+          message("settings.branching.name.validator.replacement.toggle"),
+          PropertyBinding(
+            { gitRefNameValidationSettings.isOn },
+            { gitRefNameValidationSettings.isOn = it }
+          ),
+          groupName = gitOptionGroupName
+        ))
+      }
+
+      indent {
+        row {
+          checkBox(CheckboxDescriptor(
+            message("settings.branching.name.validator.convert.to.lower.case"),
+            PropertyBinding(
+              { gitRefNameValidationSettings.isConvertingToLowerCase },
+              { gitRefNameValidationSettings.isConvertingToLowerCase = it}
+            ),
+            groupName = gitOptionGroupName
+          ))
+        }.enabledIf(isValidationOnCheckbox.selected)
+      }
+
+      indent {
+        row(message("settings.branching.name.validator.replacement")) {
+          comboBox(EnumComboBoxModel(GitRefNameValidatorReplacementOption::class.java))
+            .bindItem(
+              { gitRefNameValidationSettings.replacementOption },
+              { gitRefNameValidationSettings.replacementOption = it as GitRefNameValidatorReplacementOption }
+            )
+        }.enabledIf(isValidationOnCheckbox.selected)
+      }
+
+      indent {
+        row(message("settings.branching.name.validator.max.number.of.underscores")) {
+          comboBox(GitRefNameValidatorSettings.MAX_NUM_OF_CONSECUTIVE_UNDERSCORES_OPTIONS.toList())
+            .bindItem(
+              { gitRefNameValidationSettings.maxNumberOfConsecutiveUnderscores },
+              { gitRefNameValidationSettings.maxNumberOfConsecutiveUnderscores = it as Int }
+            )
+        }.enabledIf(isValidationOnCheckbox.selected)
+      }
     }
   }
 

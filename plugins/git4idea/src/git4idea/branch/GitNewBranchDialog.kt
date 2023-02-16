@@ -20,6 +20,7 @@ import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
+import git4idea.config.GitRefNameValidatorSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.validators.*
@@ -60,6 +61,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private var tracking = showSetTrackingOption
   private var branchName = initialName.orEmpty()
   private val validator = GitRefNameValidator.getInstance()
+  private val gitRefNameValidatorSettings = GitRefNameValidatorSettings.getInstance()
 
   private val localBranchDirectories = collectDirectories(collectLocalBranchNames().asIterable(), false).toSet()
 
@@ -88,6 +90,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .focused()
         .applyToComponent {
           selectAll()
+          startTrackingValidationIfNeeded()
+          component.focusAccelerator = 'i'
         }
         .validationRequestor(WHEN_STATE_CHANGED(overwriteCheckbox))
         .validationRequestor(WHEN_TEXT_FIELD_TEXT_CHANGED)
@@ -98,11 +102,15 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       if (showCheckOutOption) {
         checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
           .bindSelected(::checkout)
+          .applyToComponent {
+            mnemonic = KeyEvent.VK_C
+          }
       }
       if (showResetOption) {
         cell(overwriteCheckbox)
           .bindSelected(::reset)
           .applyToComponent {
+            mnemonic = KeyEvent.VK_R
             isEnabled = false
           }
           .component
@@ -110,8 +118,20 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       if (showSetTrackingOption) {
         checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
           .bindSelected(::tracking)
+          .applyToComponent {
+            mnemonic = KeyEvent.VK_T
+          }
           .component
       }
+    }
+
+    row {
+      checkBox(GitBundle.message("settings.branching.name.validator.replacement.toggle.short"))
+        .bindSelected({ gitRefNameValidatorSettings.isOn }, { gitRefNameValidatorSettings.isOn = it })
+        .whenStateChangedFromKeyPress() { gitRefNameValidatorSettings.isOn = it }
+        .whenStateChangedFromUi() { gitRefNameValidatorSettings.isOn = it }
+        .component
+        .apply { mnemonic = KeyEvent.VK_V }
     }
   }
 

@@ -15,6 +15,7 @@ import javax.swing.AbstractButton
 import javax.swing.JCheckBox
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenStateChangedFromUi as whenStateChangedFromUiImpl
+import com.intellij.openapi.observable.util.whenStateChangedFromKeyPress as whenStateChangedFromKeyPressImpl
 
 fun <T : JBCheckBox> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {
   installValidationRequestor(property)
@@ -49,4 +50,13 @@ val Cell<AbstractButton>.selected
 @ApiStatus.Experimental
 fun <T : JCheckBox> Cell<T>.whenStateChangedFromUi(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
   return applyToComponent { whenStateChangedFromUiImpl(parentDisposable, listener) }
+}
+
+/**
+ * @see [com.intellij.openapi.observable.util.ListenerUiUtil#JCheckBox.whenStateChangedFromKeyPress(Disposable, (Boolean) -> Unit)]
+ * [whenStateChangedFromKeyPress]
+ */
+@ApiStatus.Experimental
+fun <T : JCheckBox> Cell<T>.whenStateChangedFromKeyPress(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit): Cell<T> {
+  return applyToComponent { whenStateChangedFromKeyPressImpl(parentDisposable, listener) }
 }

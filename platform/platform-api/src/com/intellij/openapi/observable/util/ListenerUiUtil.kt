@@ -228,3 +228,17 @@ fun JCheckBox.whenStateChangedFromUi(parentDisposable: Disposable? = null, liste
     }
   }
 }
+
+
+/**
+ * <code>whenStateChangedFromUi</code> does not listen for changes caused by mnemonic keyboard shortcuts.
+ * <code>whenStateChangedFromKeyPress</code> has been added to address this deficiency.
+ */
+@Experimental
+fun JCheckBox.whenStateChangedFromKeyPress(parentDisposable: Disposable? = null, listener: (Boolean) -> Unit) {
+  whenKeyReleased(parentDisposable) {
+    invokeLater(ModalityState.stateForComponent(this)) {
+      listener(isSelected)
+    }
+  }
+}

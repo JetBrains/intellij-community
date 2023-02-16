@@ -589,6 +589,7 @@
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
     <projectService serviceImplementation="git4idea.config.GitPullSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings"/>
+    <applicationService serviceImplementation="git4idea.config.GitRefNameValidatorSettings"/>
     <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
