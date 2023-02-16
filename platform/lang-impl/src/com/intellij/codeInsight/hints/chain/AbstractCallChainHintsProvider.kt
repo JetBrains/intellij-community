@@ -89,7 +89,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
   final override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     val uniqueTypeCountName = CodeInsightBundle.message("inlay.hints.chain.minimal.unique.type.count.to.show.hints")
 
-    private val uniqueTypeCount = JBIntSpinner(1, 1, 10)
+    private val uniqueTypeCount by lazy { JBIntSpinner(1, 1, 10) }
 
     override fun createComponent(listener: ChangeListener): JPanel {
       reset()
