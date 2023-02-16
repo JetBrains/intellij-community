@@ -23,19 +23,22 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.APP)
-class IdeScaleTransformer : UISettingsListener, Disposable {
+class IdeScaleTransformer : Disposable {
   private val settingsUtils get() = UISettingsUtils.instance
-  private var lastSetScale: Float = settingsUtils.currentIdeScale
+  private var lastSetScale: Float? = null
 
   init {
     Disposer.register(ApplicationManager.getApplication(), this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, this)
   }
 
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    if (lastSetScale.percentValue != settingsUtils.currentIdeScale.percentValue) {
+  internal fun uiSettingsChanged() {
+    if (lastSetScale?.percentValue != settingsUtils.currentIdeScale.percentValue) {
       scale()
     }
+  }
+
+  internal fun setupLastSetScale() {
+    if (lastSetScale == null) lastSetScale = settingsUtils.currentIdeScale
   }
 
   private fun scale() {
@@ -164,11 +167,6 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
   companion object {
     @JvmStatic
     val instance: IdeScaleTransformer get() = service<IdeScaleTransformer>()
-
-    @JvmStatic
-    fun setup() {
-      instance
-    }
   }
 
   override fun dispose() {}
@@ -176,7 +174,13 @@ class IdeScaleTransformer : UISettingsListener, Disposable {
 
 class IdeScalePostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    IdeScaleTransformer.setup()
+    IdeScaleTransformer.instance.setupLastSetScale()
     IdeScaleIndicatorManager.setup(project)
+  }
+}
+
+class IdeScaleSettingsListener : UISettingsListener {
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    IdeScaleTransformer.instance.uiSettingsChanged()
   }
 }
