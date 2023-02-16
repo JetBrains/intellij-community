@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.TerminalCommandHandlerOptions;
+import org.jetbrains.plugins.terminal.action.TerminalAdvancedSettingToggleAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -28,7 +29,11 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     TerminalToolWindowManager terminalToolWindowManager = TerminalToolWindowManager.getInstance(project);
     terminalToolWindowManager.initToolWindow((ToolWindowEx)toolWindow);
     TerminalCommandHandlerOptions options = new TerminalCommandHandlerOptions(project);
-    toolWindow.setAdditionalGearActions(new DefaultActionGroup(new SmartCommandExecutionToggleAction(options)));
+    toolWindow.setAdditionalGearActions(new DefaultActionGroup(
+      new SmartCommandExecutionToggleAction(options),
+      new TerminalAdvancedSettingToggleAction("terminal.use.1.0.line.spacing.for.alternative.screen.buffer"),
+      new TerminalAdvancedSettingToggleAction("terminal.fill.character.background.including.line.spacing")
+    ));
 
     TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
     terminalToolWindowManager.restoreTabs(terminalArrangementManager.getArrangementState());
