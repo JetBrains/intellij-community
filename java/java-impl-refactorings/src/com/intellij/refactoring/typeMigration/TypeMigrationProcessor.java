@@ -239,7 +239,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     for (SmartPsiElementPointer<PsiNewExpression> newExpressionPointer : newExpressionsToCheckDiamonds) {
       final PsiNewExpression newExpression = newExpressionPointer.getElement();
       if (newExpression != null) {
-        labeler.postProcessNewExpression(newExpression);
+        TypeMigrationReplacementUtil.tryToReplaceWithDiamond(newExpression, null);
       }
     }
 

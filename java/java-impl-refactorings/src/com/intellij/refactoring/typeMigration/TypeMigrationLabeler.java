@@ -397,10 +397,6 @@ public class TypeMigrationLabeler {
     }
   }
 
-  void postProcessNewExpression(@NotNull PsiNewExpression expression) {
-    TypeMigrationReplacementUtil.tryToReplaceWithDiamond(expression, null);
-  }
-
   @Nullable
   Object getConversion(PsiElement element) {
     return myConversions.get(element);
