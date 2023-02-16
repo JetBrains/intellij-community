@@ -26,7 +26,6 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
   public static final int ITEM_WIDTH = 230;
 
-  private Dimension myItemSize;
   private final boolean myIsPrimary;
 
   protected FontFamilyCombo(boolean isPrimary) {
@@ -67,19 +66,12 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
         }
         return null;
       }
+
+      @Override
+      public int getMaxWidth() {
+        return ITEM_WIDTH;
+      }
     });
-    updateItemSize();
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    updateItemSize();
-  }
-
-  private void updateItemSize() {
-    FontMetrics fontMetrics = getFontMetrics(getFont());
-    myItemSize = new Dimension(JBUI.scale(ITEM_WIDTH), fontMetrics.getHeight());
   }
 
   @Override
