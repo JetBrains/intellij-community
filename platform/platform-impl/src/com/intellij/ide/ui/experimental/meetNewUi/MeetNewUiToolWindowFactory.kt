@@ -3,13 +3,15 @@ package com.intellij.ide.ui.experimental.meetNewUi
 
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.ui.ExperimentalUI
 
 class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun isApplicable(project: Project): Boolean {
-    return false // temporary disabled ExperimentalUI.isNewUI()
+    return ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.meetNewUi")
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
