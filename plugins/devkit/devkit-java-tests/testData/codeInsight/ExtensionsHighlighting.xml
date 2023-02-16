@@ -24,6 +24,8 @@
                         dynamic="true"/>
         <extensionPoint name="internalApiEP" interface="foo.MyInternalEP"
                         dynamic="true"/>
+        <extensionPoint name="obsoleteApiEP" interface="foo.MyObsoleteEP"
+                        dynamic="true"/>
 
         <extensionPoint name="intentionAction"
                         beanClass="com.intellij.codeInsight.intention.IntentionActionBean">
@@ -64,6 +66,8 @@
         <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
 
         <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project."><myPlugin.internalApiEP implementation="foo.MyInternalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Internal. Such API should not be used outside of IntelliJ IDEA project.">internalAttribute="DoNotUse"</warning>/></warning>
+
+        <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code."><myPlugin.obsoleteApiEP implementation="foo.MyObsoleteEP" <error descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Obsolete. Such API should not be used in new code.">obsoleteAttribute="DoNotUse"</error>/></error>
 
         <myPlugin.classLevelPropertyEP classLevel="value" customAttributeName="42"/>
 
