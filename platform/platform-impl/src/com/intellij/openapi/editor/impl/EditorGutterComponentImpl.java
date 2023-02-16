@@ -393,7 +393,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
 
       // paint all backgrounds
-      int gutterSeparatorX = ExperimentalUI.isNewUI() ? (int)getExpUIVerticalLineX() : getWhitespaceSeparatorOffset();
+      int gutterSeparatorX = getWhitespaceSeparatorOffset();
       Color caretRowColor = getCaretRowColor();
       paintBackground(g, clip, 0, gutterSeparatorX, backgroundColor, caretRowColor);
       paintBackground(g, clip, gutterSeparatorX, getFoldingAreaWidth(), myEditor.getBackgroundColor(), caretRowColor);
@@ -423,8 +423,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
         if (ExperimentalUI.isNewUI() && myPaintBackground) {
           g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-          double offsetX = getExpUIVerticalLineX();
-          LinePainter2D.paint(g, offsetX, clip.y, offsetX, clip.y + clip.height);
+          LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
         }
       }
       finally {
@@ -459,15 +458,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private double getExpUIVerticalLineX() {
-    return getWidth() - 3;
-  }
-
   private void paintEditorBackgrounds(Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
     myTextFgColors.clear();
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
-    int startX = myEditor.isInDistractionFreeMode() ? 0 : ExperimentalUI.isNewUI() ? (int)getExpUIVerticalLineX() + 1
+    int startX = myEditor.isInDistractionFreeMode() ? 0 : ExperimentalUI.isNewUI() ? getWhitespaceSeparatorOffset() + 1
                                                                                    : getWhitespaceSeparatorOffset();
     IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
     while (!state.atEnd()) {
@@ -1509,7 +1504,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getWhitespaceSeparatorOffset() {
-    return (int)Math.round(getFoldingMarkerCenterOffset2D());
+    if (ExperimentalUI.isNewUI()) {
+      return getWidth() - 3;
+    }
+    else {
+      return (int)Math.round(getFoldingMarkerCenterOffset2D());
+    }
   }
 
   private double getFoldingMarkerCenterOffset2D() {
