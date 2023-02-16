@@ -76,6 +76,8 @@ private val notImportantKotlinLibs = persistentSetOf(
 
 private val predefinedMergeRules = persistentMapOf<String, (String) -> Boolean>().mutate { map ->
   map.put("groovy.jar") { it.startsWith("org.codehaus.groovy:") }
+  // an agent lib should be packed into separate jar, and AuthAgent depends on SSHPacket
+  map.put("sshj.jar") { it == "jsch-agent-proxy-sshj" || it == "SSHJ" }
   map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
   map.put("rd.jar") { it.startsWith("rd-") }
   map.put(PRODUCT_JAR) { it.startsWith("License") }
