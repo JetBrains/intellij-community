@@ -10841,6 +10841,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/ktij-24539.kt");
         }
 
+        @TestMetadata("nothingTypeInReturnPosition.kt")
+        public void testNothingTypeInReturnPosition() throws Exception {
+            runTest("testData/inspectionsLocal/removeExplicitTypeArguments/nothingTypeInReturnPosition.kt");
+        }
+
         @TestMetadata("overloads.kt")
         public void testOverloads() throws Exception {
             runTest("testData/inspectionsLocal/removeExplicitTypeArguments/overloads.kt");
