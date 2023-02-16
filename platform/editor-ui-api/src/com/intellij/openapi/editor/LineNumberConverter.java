@@ -32,7 +32,7 @@ public interface LineNumberConverter {
    * Returns text to be displayed in the gutter for the given document line.
    */
   @Nullable
-  default String convertToText(@NotNull Editor editor, int lineNumber) {
+  default String convertLineNumberToString(@NotNull Editor editor, int lineNumber) {
     Integer converted = convert(editor, lineNumber);
     return String.valueOf(converted);
   }
@@ -42,7 +42,7 @@ public interface LineNumberConverter {
    * to calculate the width of the line number area in the gutter.
    */
   @Nullable
-  default String getMaxLineNumberText(@NotNull Editor editor) {
+  default String getMaxLineNumberString(@NotNull Editor editor) {
     Integer maxLineNumber = getMaxLineNumber(editor);
     return String.valueOf(maxLineNumber);
   }
