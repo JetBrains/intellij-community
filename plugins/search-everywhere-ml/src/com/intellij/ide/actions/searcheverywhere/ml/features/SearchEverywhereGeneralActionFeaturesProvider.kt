@@ -3,10 +3,12 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.actionSystem.AnAction
 
 internal class SearchEverywhereGeneralActionFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
@@ -52,6 +54,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       is String -> value
       is OptionDescription -> GotoActionModel.GotoActionListCellRenderer.calcHit(value)
       is GotoActionModel.ActionWrapper -> value.presentation.text
+      is AnAction -> GotoActionItemProvider.getAnActionText(value)
       else -> null
     }
   }

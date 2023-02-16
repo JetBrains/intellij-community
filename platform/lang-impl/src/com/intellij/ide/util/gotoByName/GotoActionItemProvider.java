@@ -341,7 +341,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @Nullable
   @Nls
-  private static String getAnActionText(AnAction value) {
+  public static String getAnActionText(AnAction value) {
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     return presentation.getText();
