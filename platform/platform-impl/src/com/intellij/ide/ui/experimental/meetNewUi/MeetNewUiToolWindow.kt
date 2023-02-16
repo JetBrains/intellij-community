@@ -28,6 +28,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import java.awt.Font
 import javax.swing.Icon
 import javax.swing.JLabel
 
@@ -58,7 +59,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
         row {
           label(IdeBundle.message("meetnewui.toolwindow.title"))
             .applyToComponent {
-              font = JBFont.h1()
+              font = JBFont.regular().biggerOn(7f).deriveFont(Font.PLAIN)
             }
         }.customize(JBVerticalGaps(bottom = 24))
         row {
@@ -165,7 +166,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     for ((lafReference, button) in themeButtons) {
       val selected = if (lafManager.autodetect) lafReference == null else lafManager.lookAndFeelReference == lafReference
       button.selected = selected
-      button.font = if (selected) JBFont.regular().asBold() else JBFont.regular()
+      button.font = if (selected) JBFont.regular().deriveFont(Font.BOLD) else JBFont.regular()
     }
   }
 
@@ -223,7 +224,7 @@ private data class Density(val button: MeetNewUiButton, val label: JLabel) {
     button.selected = selected
 
     if (selected) {
-      label.font = JBFont.medium().asBold()
+      label.font = JBFont.medium().deriveFont(Font.BOLD)
       label.foreground = JBUI.CurrentTheme.Label.foreground()
     }
     else {
