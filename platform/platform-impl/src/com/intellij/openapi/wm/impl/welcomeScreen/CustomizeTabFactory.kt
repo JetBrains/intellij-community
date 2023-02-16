@@ -58,10 +58,15 @@ class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
 }
 
-private fun getIdeFont() =
+private fun getIdeFontSize() =
   if (settings.overrideLafFonts) settings.fontSize2D
   else ((LafManager.getInstance() as? LafManagerImpl)?.defaultFont?.size2D
         ?: JBFont.label().size2D)
+
+private fun getIdeFontName() =
+  if (settings.overrideLafFonts) settings.fontFace
+  else ((LafManager.getInstance() as? LafManagerImpl)?.defaultFont?.family
+        ?: JBFont.label().family)
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
@@ -69,7 +74,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { laf.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { laf.autodetect }
-  private val ideFontProperty = propertyGraph.lazyProperty { getIdeFont() }
+  private val ideFontProperty = propertyGraph.lazyProperty { getIdeFontSize() }
   private val keymapProperty = propertyGraph.lazyProperty { keymapManager.activeKeymap }
   private val colorBlindnessProperty = propertyGraph.lazyProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.lazyProperty { settings.colorBlindness != null }
@@ -93,6 +98,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
     ideFontProperty.afterChange(parentDisposable) {
       if (settings.fontSize2D == it) return@afterChange
+      settings.fontFace = getIdeFontName()
       settings.overrideLafFonts = true
       WelcomeScreenEventCollector.logIdeFontChanged(settings.fontSize2D, it)
       settings.fontSize2D = it
@@ -113,7 +119,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     }
 
     val busConnection = ApplicationManager.getApplication().messageBus.connect(parentDisposable)
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFont() } })
+    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener { updateProperty(ideFontProperty) { getIdeFontSize() } })
     busConnection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { updateAccessibilityProperties() })
     busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateProperty(lafProperty) { laf.lookAndFeelReference }
