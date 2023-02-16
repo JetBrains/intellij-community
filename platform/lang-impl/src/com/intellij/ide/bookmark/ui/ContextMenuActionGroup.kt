@@ -36,8 +36,6 @@ internal class ContextMenuActionGroup(private val tree: JTree) : DumbAware, Acti
         actions.add(Separator())
         addGroup("AnalyzeMenu")
         actions.add(Separator())
-        addGroup("ProjectViewPopupMenuRefactoringGroup")
-        actions.add(Separator())
         addGroup("ProjectViewPopupMenuRunGroup")
         actions.add(Separator())
         addGroup("VersionControlsGroup")
