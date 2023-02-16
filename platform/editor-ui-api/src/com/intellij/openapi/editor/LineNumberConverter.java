@@ -34,7 +34,7 @@ public interface LineNumberConverter {
   @Nullable
   default String convertLineNumberToString(@NotNull Editor editor, int lineNumber) {
     Integer converted = convert(editor, lineNumber);
-    return String.valueOf(converted);
+    return converted == null ? null : String.valueOf(converted);
   }
 
   /**
@@ -44,7 +44,7 @@ public interface LineNumberConverter {
   @Nullable
   default String getMaxLineNumberString(@NotNull Editor editor) {
     Integer maxLineNumber = getMaxLineNumber(editor);
-    return String.valueOf(maxLineNumber);
+    return maxLineNumber == null ? null : String.valueOf(maxLineNumber);
   }
 
   LineNumberConverter DEFAULT = new LineNumberConverter() {
