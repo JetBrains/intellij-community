@@ -237,12 +237,12 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   }
 
   private ProcessListener createEventMulticaster() {
-    return ReflectionUtil.proxy(ProcessListener.class, new InvocationHandler() {
+    return new ProcessListener() {
       @Override
-      public Object invoke(Object object, Method method, Object[] params) {
+      public void startNotified(@NotNull ProcessEvent event) {
         for (ProcessListener listener : myListeners) {
           try {
-            method.invoke(listener, params);
+            listener.startNotified(event);
           }
           catch (Throwable e) {
             if (!isCanceledException(e)) {
@@ -250,9 +250,50 @@ public abstract class ProcessHandler extends UserDataHolderBase {
             }
           }
         }
-        return null;
       }
-    });
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processTerminated(event);
+          }
+          catch (Throwable e) {
+            if (!isCanceledException(e)) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.processWillTerminate(event, willBeDestroyed);
+          }
+          catch (Throwable e) {
+            if (!isCanceledException(e)) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        for (ProcessListener listener : myListeners) {
+          try {
+            listener.onTextAvailable(event, outputType);
+          }
+          catch (Throwable e) {
+            if (!isCanceledException(e)) {
+              LOG.error(e);
+            }
+          }
+        }
+      }
+    };
   }
 
   private static boolean isCanceledException(Throwable e) {
