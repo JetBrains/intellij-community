@@ -9,9 +9,10 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -29,6 +30,7 @@ import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -206,13 +208,16 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         modificator.commitChanges();
       }
       if (success) {
-        DumbService.getInstance(project).runWhenSmart(() -> {
-          // check if we really attached the necessary annotations, to avoid IDEA-247322
-          if (getJDKToAnnotate(project) == null) {
-            // avoid endless loop on JDK misconfiguration
-            project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
-          }
-        });
+        ReadAction.nonBlocking(() -> {
+            // check if we really attached the necessary annotations, to avoid IDEA-247322
+            return getJDKToAnnotate(project) == null;
+          }).finishOnUiThread(ModalityState.NON_MODAL, hasNoJdkToAnnotate -> {
+            if (hasNoJdkToAnnotate) {
+              // avoid endless loop on JDK misconfiguration
+              project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+            }
+          }).inSmartMode(project)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }, project.getDisposed());
   }
