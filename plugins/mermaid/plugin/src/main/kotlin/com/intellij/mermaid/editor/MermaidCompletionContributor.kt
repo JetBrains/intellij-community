@@ -311,17 +311,12 @@ class MermaidCompletionContributor : CompletionContributor() {
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
     return with(object : PatternCondition<PsiElement>("insideBlock") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
-        val parent = psiElement.parent
-        if (parent != null) {
-          val children = parent.children
-          var i = listOf(*children).indexOf(psiElement)
-          while (--i >= 0) {
-            if (psiElement(MermaidTokens.END).accepts(children[i], context)) {
-              return false
-            }
-            if (pattern.accepts(children[i], context)) {
-              return true
-            }
+        for (sibling in psiElement.siblings(forward = false, withSelf = false)) {
+          if (psiElement(MermaidTokens.END).accepts(sibling, context)) {
+            return false
+          }
+          if (pattern.accepts(sibling, context)) {
+            return true
           }
         }
         return false
@@ -426,14 +421,13 @@ class MermaidCompletionContributor : CompletionContributor() {
   ): PsiElementPattern.Capture<PsiElement> {
     return with(object : PatternCondition<PsiElement>("withLastDocumentLine") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
-        for (child in psiElement.containingFile.children) {
-          if (child.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS) {
-            val lastLine = child.lastChild
-            val lastElement = lastLine.lastChild
-            return documentLinePattern.accepts(lastElement)
+        return psiElement.containingFile.children()
+          .find { it.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS }
+          .let {
+            val lastLine = it?.lastChild
+            val lastElement = lastLine?.lastChild
+            documentLinePattern.accepts(lastElement)
           }
-        }
-        return false
       }
     })
   }
