@@ -11,6 +11,14 @@ class SameParameterValueLocalInspectionTest : SameParameterValueInspectionTestBa
     doHighlightTest()
   }
 
+  fun testVarargs() {
+    doHighlightTest()
+  }
+
+  fun testNamedArg() {
+    doHighlightTest()
+  }
+
   fun testNegativeDouble() {
     doHighlightTest()
   }

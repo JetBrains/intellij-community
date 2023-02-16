@@ -15,6 +15,10 @@ class SameParameterValueGlobalInspectionTest : SameParameterValueInspectionTestB
     doHighlightTest()
   }
 
+  fun testNamedArg() {
+    doHighlightTest()
+  }
+
   fun testNegativeDouble() {
     doHighlightTest()
   }
