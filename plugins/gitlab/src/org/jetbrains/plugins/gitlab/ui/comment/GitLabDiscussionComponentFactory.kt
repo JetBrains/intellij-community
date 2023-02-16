@@ -128,6 +128,7 @@ object GitLabDiscussionComponentFactory {
     ActionLink("") {
       vm.changeResolvedState()
     }.apply {
+      autoHideOnDisable = false
       isFocusPainted = false
       bindDisabled(cs, vm.busy)
       bindText(cs, vm.actionTextFlow)
