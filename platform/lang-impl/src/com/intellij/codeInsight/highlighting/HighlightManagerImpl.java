@@ -19,7 +19,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -29,22 +32,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
-import it.unimi.dsi.fastutil.objects.Object2ByteMap;
-import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.*;
 
 public final class HighlightManagerImpl extends HighlightManager {
   public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
-  private static final Key<Object2ByteMap<RangeHighlighter>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+  private static final Key<Set<RangeHighlighter>> HIGHLIGHTER_SET_KEY = Key.create("HIGHLIGHTER_SET_KEY");
 
   private final Project myProject;
 
@@ -64,38 +64,44 @@ public final class HighlightManagerImpl extends HighlightManager {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
-  @Contract("_,true -> !null")
-  private static Object2ByteMap<RangeHighlighter> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
+  @Contract("_, true -> !null")
+  private static Set<RangeHighlighter> getEditorHighlighters(@NotNull Editor editor, boolean toCreate) {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
-    var map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
-    if (map == null && toCreate) {
-      var newValue = new Object2ByteOpenHashMap<RangeHighlighter>();
-      newValue.defaultReturnValue((byte)-1);
-      map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, newValue);
+    Set<RangeHighlighter> highlighters = editor.getUserData(HIGHLIGHTER_SET_KEY);
+    if (highlighters == null && toCreate) {
+      highlighters = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHTER_SET_KEY, new HashSet<>());
     }
-    return map;
+    return highlighters;
   }
 
-  public RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {
-    var highlightersMap = getHighlightInfoMap(editor, false);
-    if (highlightersMap == null) return RangeHighlighter.EMPTY_ARRAY;
-    return highlightersMap.keySet().toArray(RangeHighlighter.EMPTY_ARRAY);
+  public @NotNull RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, false);
+    if (highlighters == null) return RangeHighlighter.EMPTY_ARRAY;
+    return highlighters.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   @Override
   public boolean removeSegmentHighlighter(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
-    var map = getHighlightInfoMap(editor, false);
-    if (map == null) return false;
-    byte flags = map.getByte(highlighter);
-    if (flags == (byte)-1) return false;
-    MarkupModel markupModel = editor.getMarkupModel();
-    if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
-      highlighter.dispose();
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, false);
+    if (highlighters == null) return false;
+
+    return doRemoveHighlighter(highlighters, highlighter, (MarkupModelEx)editor.getMarkupModel());
+  }
+
+  private static boolean doRemoveHighlighter(@NotNull Set<RangeHighlighter> highlighters,
+                                             @NotNull RangeHighlighter highlighter,
+                                             @NotNull MarkupModelEx markupModel) {
+    boolean wasRemoved = highlighters.remove(highlighter);
+    if (wasRemoved) {
+      setHideFlags(highlighter, null);
+
+      if (markupModel.containsHighlighter(highlighter)) {
+        highlighter.dispose();
+      }
     }
-    map.removeByte(highlighter);
-    return true;
+    return wasRemoved;
   }
 
   @Override
@@ -164,8 +170,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
 
-        var map = getHighlightInfoMap(editor, true);
-        map.put(highlighter, (byte)flags);
+        Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
+        highlighters.add(highlighter);
         setHideFlags(highlighter, flags);
 
         highlighter.setVisibleIfFolded(true);
@@ -309,34 +315,31 @@ public final class HighlightManagerImpl extends HighlightManager {
   }
 
   public boolean hideHighlights(@NotNull Editor editor, @HideFlags int mask) {
-    var map = getHighlightInfoMap(editor, false);
-    if (map == null) return false;
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, false);
+    if (highlighters == null) return false;
 
     List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
-    for (var entry : map.object2ByteEntrySet()) {
-      byte flags = entry.getByteValue();
-      if ((flags & mask) != 0) {
-        RangeHighlighter highlighter = entry.getKey();
+    for (RangeHighlighter highlighter : highlighters) {
+      Integer flags = getHideFlags(highlighter);
+      if (flags != null && (flags & mask) != 0) {
         highlightersToRemove.add(highlighter);
       }
     }
 
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     for (RangeHighlighter highlighter : highlightersToRemove) {
-      byte flags = map.removeByte(highlighter);
-      if (flags != (byte)-1 && markupModel.containsHighlighter(highlighter)) {
-        highlighter.dispose();
-      }
+      doRemoveHighlighter(highlighters, highlighter, markupModel);
     }
 
     return !highlightersToRemove.isEmpty();
   }
 
   boolean hasHighlightersToHide(@NotNull Editor editor, @SuppressWarnings("SameParameterValue") @HideFlags int mask) {
-    var map = getHighlightInfoMap(editor, false);
-    if (map != null) {
-      for (byte flags : map.values()) {
-        if ((flags & mask) != 0) {
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, false);
+    if (highlighters != null) {
+      for (RangeHighlighter highlighter : highlighters) {
+        Integer flags = getHideFlags(highlighter);
+        if (flags != null && (flags & mask) != 0) {
           return true;
         }
       }
