@@ -227,7 +227,7 @@ class InspectionRunner {
     }
     InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspectionBase.SHORT_NAME, myPsiFile);
     Language fileLanguage = myPsiFile.getLanguage();
-    InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
+    InspectionSuppressor suppressor = ContainerUtil.find(LanguageInspectionSuppressors.INSTANCE.allForLanguage(fileLanguage), s -> s instanceof RedundantSuppressionDetector);
     if (!(suppressor instanceof RedundantSuppressionDetector redundantSuppressionDetector)) {
       return;
     }
