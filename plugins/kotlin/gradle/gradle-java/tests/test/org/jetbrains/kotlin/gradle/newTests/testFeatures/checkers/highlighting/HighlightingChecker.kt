@@ -10,7 +10,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
     override fun createDefaultConfiguration() = HighlightingCheckConfiguration()
 
     override fun preprocessFile(origin: File, text: String): String? {
-        if (origin.extension != "kt") return null
+        if (origin.extension != "kt" && origin.extension != "java") return null
         if (HIGHLIGHTING_CONFIGURATION_HEADER !in text) return null
 
         // Make sure that the highlighting configuration is exactly first lines and not
@@ -23,9 +23,10 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
                     "regenerate it for you"
         }
 
-        return lines.drop(1) // header
+        val textWithRemovedTestConfig = lines.drop(1) // header
             .filter { !it.startsWith(HIGHLIGHTING_CONFIGURATION_LINE_PREFIX) && it != HIGHLIGHTING_CONFIGURATION_FOOTER }
             .joinToString(separator = System.lineSeparator())
+        return textWithRemovedTestConfig
     }
 
     override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
