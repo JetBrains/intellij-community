@@ -2,10 +2,7 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.ui.popup.PopupChooserBuilder
+import com.intellij.openapi.ui.popup.*
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
@@ -26,21 +23,8 @@ object ChooserPopupUtil {
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    popupState: PopupState<JBPopup>,
                                    items: List<T>,
-                                   presenter: (T) -> PopupItemPresentation): T? {
-    val listModel = CollectionListModel(items)
-    val list = createList(listModel, presenter)
-
-    @Suppress("UNCHECKED_CAST")
-    val popup = PopupChooserBuilder(list)
-      .setFilteringEnabled { presenter(it as T).shortText }
-      .setResizable(true)
-      .setMovable(true)
-      .setFilterAlwaysVisible(true)
-      .createPopup()
-
-    popupState.prepareToShow(popup)
-    return popup.showAndAwaitSubmission(list, point)
-  }
+                                   presenter: (T) -> PopupItemPresentation): T? =
+    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, SimplePopupItemRenderer(presenter))
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    popupState: PopupState<JBPopup>,
@@ -51,7 +35,7 @@ object ChooserPopupUtil {
     val list = createList(listModel, renderer)
 
     @Suppress("UNCHECKED_CAST")
-    val popup = PopupChooserBuilder(list)
+    val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setFilteringEnabled { filteringMapper(it as T) }
       .setResizable(true)
       .setMovable(true)
@@ -67,11 +51,11 @@ object ChooserPopupUtil {
                                         itemsLoader: suspend () -> List<T>,
                                         presenter: (T) -> PopupItemPresentation): T? {
     val listModel = CollectionListModel<T>()
-    val list = createList(listModel, presenter)
+    val list = createList(listModel, SimplePopupItemRenderer(presenter))
     val loadingListener = ListLoadingListener(listModel, itemsLoader, list)
 
     @Suppress("UNCHECKED_CAST")
-    val popup = PopupChooserBuilder(list)
+    val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setFilteringEnabled { presenter(it as T).shortText }
       .setResizable(true)
       .setMovable(true)
@@ -120,13 +104,6 @@ object ChooserPopupUtil {
     })
     return result
   }
-
-  private fun <T> createList(listModel: CollectionListModel<T>, presenter: (T) -> PopupItemPresentation): JBList<T> =
-    JBList(listModel).apply {
-      visibleRowCount = 7
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
-      cellRenderer = SimplePopupItemRenderer(presenter)
-    }
 
   private fun <T> createList(listModel: CollectionListModel<T>, renderer: ListCellRenderer<T>): JBList<T> =
     JBList(listModel).apply {
