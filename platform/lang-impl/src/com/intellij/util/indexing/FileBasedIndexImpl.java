@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -87,9 +88,6 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import io.opentelemetry.api.metrics.BatchCallback;
-import io.opentelemetry.api.metrics.Meter;
-import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.*;
@@ -100,9 +98,7 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -128,7 +124,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public static final Logger LOG = Logger.getInstance(FileBasedIndexImpl.class);
 
-  private static final boolean USE_NICE_FLASHER = SystemProperties.getBooleanProperty("indexes.flushing.use-nice-flusher", false);
+  private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", false);
+  /** How often, on average, flush each index to the disk */
+  private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
 
 
   private volatile RegisteredIndexes myRegisteredIndexes;
@@ -378,7 +376,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         .getAppScheduledExecutorService()
         .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
           myIndexableFilesFilterHolder.runHealthCheck();
-        }), 5, 5, TimeUnit.MINUTES);
+        }), 5, 5, MINUTES);
     }
   }
 
@@ -2033,12 +2031,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void setUpFlusher() {
     final ScheduledExecutorService scheduler = AppExecutorUtil.getAppScheduledExecutorService();
-    if (USE_NICE_FLASHER) {
-      myFlushingTask = new NiceFlasher(scheduler);
+    if (USE_GENTLE_FLUSHER) {
+      myFlushingTask = new GentleIndexFlusher(scheduler);
       LOG.info("Using nice flusher for indexes");
     }
     else {
-      myFlushingTask = new SimpleFlasher(scheduler);
+      myFlushingTask = new SimpleFlusher(scheduler);
       LOG.info("Using simple flusher for indexes");
     }
   }
@@ -2168,15 +2166,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   //  looking on the signs of intensive indexes/VFS use, and postponing index flush if such a signs present.
 
 
-  private class SimpleFlasher implements Runnable, AutoCloseable {
-    /** How often, on average, flush each index to the disk */
-    public static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+  /**
+   * Legacy flushing implementation: do some basic precautions against contention. Wait for a period without modifications,
+   * use .tryLock() to avoid competing with other threads
+   */
+  private class SimpleFlusher implements Runnable, AutoCloseable {
 
     private int lastModCount;
     private final Future<?> scheduledFuture;
 
 
-    private SimpleFlasher(final @NotNull ScheduledExecutorService scheduler) {
+    private SimpleFlusher(final @NotNull ScheduledExecutorService scheduler) {
       this.scheduledFuture = scheduler.scheduleWithFixedDelay(this, FLUSHING_PERIOD_MS, FLUSHING_PERIOD_MS, MILLISECONDS);
     }
 
@@ -2278,136 +2278,32 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * and fail of .tryLock(). Introduce a limit on how many such signs are OK during a single attempt to flush
    * indexes -- 'contention quota'. Attempt to flush indexes continues until there are less total signs of
    * contention than the quota allows. After quota is fully spent -> flush is interrupted, and the next flush
-   * attempt re-scheduled in a short period, and with contention quota doubled. If quota is more than enough
-   * to flush everything -- i.e. there is unspent quota -- then next attempt scheduled in a regular interval,
-   * and the contention quota is slightly decreased for the next attempt.
+   * attempt is re-scheduled in a short period, and with contention quota doubled. If quota is more than enough
+   * to flush everything -- i.e. there is unspent quota -- then the next attempt is scheduled in a regular
+   * interval, and the contention quota is slightly decreased for the next attempt.
+   * More details in a {@link GentleFlusherBase} javadocs
    */
-  private class NiceFlasher implements Runnable, AutoCloseable {
-    /** How often, on average, flush each index to the disk */
-    public static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
+  private class GentleIndexFlusher extends GentleFlusherBase {
+    private static final int MAX_CONTENTION_QUOTA = 64;
+    private static final int MIN_CONTENTION_QUOTA = 64;
+    private static final int INITIAL_CONTENTION_QUOTA = 16;
 
-    /** How often to check possibility for flushing indexes */
-    public static final long REGULAR_CHECKING_PERIOD_MS = SECONDS.toMillis(1);
-    /**
-     * Delay for the next attempt if not everything was done in a current attempt -- i.e.
-     * flush was interrupted early because of some contention/interference detected
-     */
-    public static final long QUICK_RE_CHECKING_PERIOD_MS = REGULAR_CHECKING_PERIOD_MS / 10;
-
-    public static final int MAX_CONTENTION_QUOTA = 64;
-    public static final int MIN_CONTENTION_QUOTA = 2;
-
-    private final ScheduledExecutorService scheduler;
-    private ScheduledFuture<?> scheduledFuture;
 
     private int lastModCount;
-
     private final Map<ID<?, ?>, IndexFlushingState> flushingStates = new HashMap<>();
 
-    private int contentionQuotaPerTurn = 16;
-
-    //== monitoring:  =====
-    private final AtomicInteger totalQuotaSpent = new AtomicInteger(0);
-    private final AtomicLong totalFlushingTimeUs = new AtomicLong(0);
-    private final AtomicInteger totalFlushes = new AtomicInteger(0);
-    private final AtomicInteger totalFlushesRetried = new AtomicInteger(0);
-
-    private final BatchCallback otelMonitoringHandle;
     //=====================
 
-    private NiceFlasher(final @NotNull ScheduledExecutorService scheduler) {
-      this.scheduler = scheduler;
-      scheduledFuture = this.scheduler.schedule(this, REGULAR_CHECKING_PERIOD_MS, MILLISECONDS);
-
-      otelMonitoringHandle = setupOTelReporting();
+    private GentleIndexFlusher(final @NotNull ScheduledExecutorService scheduler) {
+      super("IndexesFlusher",
+            scheduler, FLUSHING_PERIOD_MS,
+            MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA, INITIAL_CONTENTION_QUOTA,
+            TraceManager.INSTANCE.getMeter("indexes")
+      );
     }
 
     @Override
-    public synchronized void run() {
-      final int currentModCount = myLocalModCount.get();
-      try {
-        if (betterToNotFlushNow(lastModCount)) {
-          LOG.debug("Flush short-circuit -> next turn scheduled early");
-          scheduledFuture = scheduler.schedule(this, QUICK_RE_CHECKING_PERIOD_MS, MILLISECONDS);
-          return;
-        }
-
-        final long startedAtNs = System.nanoTime();
-
-        final IntRef contentionQuota = new IntRef(contentionQuotaPerTurn);
-        final FlushResult flushResult = flushAsMuchAsPossibleWithinQuota(contentionQuota);
-
-        final long finishedAtNs = System.nanoTime();
-
-        //control loop: adjust period and contention quota for next turn
-        // based on the quota spent and success (or lack of) reached
-        final int unspentQuota = contentionQuota.get();
-        final int previousQuotaPerTurn = contentionQuotaPerTurn;
-        totalQuotaSpent.addAndGet(previousQuotaPerTurn - unspentQuota);
-
-        switch (flushResult) {
-          case FLUSHED_ALL -> {
-            totalFlushingTimeUs.addAndGet(NANOSECONDS.toMicros(finishedAtNs - startedAtNs));
-            totalFlushes.incrementAndGet();
-
-            if (unspentQuota < previousQuotaPerTurn) {
-              // if (unspentQuota == previousQuotaPerTurn) => most likely we just did nothing, so no
-              // reason to change per turn quota
-              contentionQuotaPerTurn = clamp(contentionQuotaPerTurn - 1, MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA);
-            }
-
-            scheduledFuture = scheduler.schedule(this, REGULAR_CHECKING_PERIOD_MS, MILLISECONDS);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Flushed everything: contention quota(" + previousQuotaPerTurn + " -> " + unspentQuota + ") -> " +
-                        "next turn scheduled regularly, with quota: " + contentionQuotaPerTurn);
-            }
-          }
-          case HAS_MORE_TO_FLUSH -> {
-            totalFlushingTimeUs.addAndGet(NANOSECONDS.toMicros(finishedAtNs - startedAtNs));
-            totalFlushes.incrementAndGet();
-            totalFlushesRetried.incrementAndGet();
-
-            if (unspentQuota < 0) {
-              contentionQuotaPerTurn = clamp(contentionQuotaPerTurn * 2, MIN_CONTENTION_QUOTA, MAX_CONTENTION_QUOTA);
-            }
-
-            scheduledFuture = scheduler.schedule(this, QUICK_RE_CHECKING_PERIOD_MS, MILLISECONDS);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Flush something, but more remains: contention quota(" + previousQuotaPerTurn + " -> " + unspentQuota + ") -> " +
-                        "next turn scheduled early, with quota: " + contentionQuotaPerTurn);
-            }
-          }
-          case NOTHING_TO_FLUSH_NOW -> {
-            scheduledFuture = scheduler.schedule(this, REGULAR_CHECKING_PERIOD_MS, MILLISECONDS);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Nothing to flush now: contention quota(" + previousQuotaPerTurn + " -> " + unspentQuota + ") -> " +
-                        "next turn scheduled regularly, with quota: " + contentionQuotaPerTurn + " unchanged");
-            }
-          }
-        }
-      }
-      catch (InterruptedException e) {
-        LOG.error("Flushing interrupted -> exiting", e);
-      }
-      finally {
-        lastModCount = currentModCount;
-      }
-    }
-
-    @Override
-    public synchronized void close() {
-      if (scheduledFuture != null) {
-        scheduledFuture.cancel(true);
-        scheduledFuture = null;
-      }
-      otelMonitoringHandle.close();
-    }
-
-    /**
-     * @return true if flushed everything that should be flushed, false if ended prematurely because
-     * contention quota is all spent
-     */
-    private FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) throws InterruptedException {
+    protected FlushResult flushAsMuchAsPossibleWithinQuota(final /*InOut*/ IntRef contentionQuota) {
       //TODO RC: check if there _any_ index to flush -- otherwise no need to flush IndexingStamp either
       IndexingStamp.flushCaches();
 
@@ -2419,10 +2315,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         final FlushResult indexFlushResult = indexFlushingState.tryFlushIfNeeded(
           indexes,
           contentionQuota,
-          FLUSHING_PERIOD_MS
+          flushingPeriodMs
         );
         overallResult = overallResult.and(indexFlushResult);
-        if(LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled()) {
           LOG.debug("\t" + indexFlushingState + " " + indexFlushResult);
         }
 
@@ -2439,43 +2335,36 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return overallResult;
     }
 
-    private boolean betterToNotFlushNow(final int modCount) {
+    @Override
+    protected boolean betterPostponeFlushNow() {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        return true;
+      }
+
       //RC: Basically, we're trying to flush 'if idle': i.e. we don't want to
       //    issue a flush if somebody actively writes to indexes because flush
       //    will slow them down, if not stall them -- and (regular) flush is
       //    less important than e.g. a current UI task. So we issue a flush only
       //    if there _were no updates_ in indexes since the last invocation of
       //    this method:
-      return HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount.get();
+      final int currentModCount = myLocalModCount.get();
+      if (lastModCount != currentModCount) {
+        lastModCount = currentModCount;
+        return true;
+      }
+      return false;
     }
 
-    private BatchCallback setupOTelReporting() {
-      final Meter meter = TraceManager.INSTANCE.getMeter("indexes");
-      final ObservableLongMeasurement spentQuotaCounter = meter.counterBuilder("IndexesFlusher.totalContentionQuotaSpent")
-        .setUnit("1")
-        .setDescription("How many contention flush met in a period")
-        .buildObserver();
-      final ObservableLongMeasurement flushingTimeCounter = meter.counterBuilder("IndexesFlusher.totalFlushingTimeUs")
-        .setUnit("microseconds")
-        .setDescription("Total time spent by flushing in a period")
-        .buildObserver();
-      final ObservableLongMeasurement flushesCounter = meter.counterBuilder("IndexesFlusher.totalFlushes")
-        .setUnit("1")
-        .setDescription("How many flushes done in a period (both: regular and retried)")
-        .buildObserver();
-      final ObservableLongMeasurement retriedFlushesCounter = meter.counterBuilder("IndexesFlusher.totalFlushesRetried")
-        .setUnit("1")
-        .setDescription("How many flushes retried in a period")
-        .buildObserver();
-      return meter.batchCallback(
-        () -> {
-          spentQuotaCounter.record(totalQuotaSpent.longValue());
-          flushingTimeCounter.record(totalFlushingTimeUs.longValue());
-          flushesCounter.record(totalFlushes.longValue());
-          retriedFlushesCounter.record(totalFlushesRetried.longValue());
-        },
-        spentQuotaCounter, flushingTimeCounter, flushesCounter, retriedFlushesCounter
-      );
+    private static int threadsCompetingForLock(final ReadWriteLock lock) {
+      if (!(lock instanceof ReentrantReadWriteLock)) {
+        throw new IllegalStateException("index.lock (" + lock + ") is not ReentrantReadWriteLock -- can't sample queue length");
+      }
+      //RC: worth to add StorageLockContext.defaultContextLock().getQueueLength() into
+      //    the equation: if storages are intensively used outside of indexes, it is better to
+      //    keep hands off the indexes flush also -- since index flush will also compete for the
+      //    storage lock
+      final int storageLockQueueLength = StorageLockContext.defaultContextLock().getQueueLength();
+      return ((ReentrantReadWriteLock)lock).getQueueLength() + storageLockQueueLength;
     }
 
     private class IndexFlushingState {
@@ -2514,7 +2403,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               requestRebuild(indexId, e);
             }
 
-            unspentContentionQuota -= threadsWaitingForLock(indexProtectingLock);
+            unspentContentionQuota -= threadsCompetingForLock(indexProtectingLock);
             contentionQuota.set(unspentContentionQuota);
 
             return FlushResult.FLUSHED_ALL;
@@ -2525,48 +2414,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         //+1 because of the thread currently holding lock (causing .tryLock to fail)
-        final int competingThreads = threadsWaitingForLock(indexProtectingLock) + 1;
+        final int competingThreads = threadsCompetingForLock(indexProtectingLock) + 1;
         unspentContentionQuota -= competingThreads;
 
         contentionQuota.set(unspentContentionQuota);
         return FlushResult.HAS_MORE_TO_FLUSH;
       }
 
-      private static int threadsWaitingForLock(final ReadWriteLock lock) {
-        if (!(lock instanceof ReentrantReadWriteLock)) {
-          throw new IllegalStateException("index.lock (" + lock + ") is not ReentrantReadWriteLock -- can't sample queue length");
-        }
-        //RC: worth to add StorageLockContext.defaultContextLock().getQueueLength() into
-        //    the equation: if storages are intensively used outside of indexes, it is better to
-        //    keep hands off the indexes flush also -- since index flush will also compete for the
-        //    storage lock
-        final int storageLockQueueLength = StorageLockContext.defaultContextLock().getQueueLength();
-        return ((ReentrantReadWriteLock)lock).getQueueLength() + storageLockQueueLength;
-      }
-
       @Override
       public String toString() {
         return "IndexFlushingState[" + indexId + "][lastFlushed: " + lastFlushedMs + ']';
-      }
-    }
-
-    private enum FlushResult {
-      FLUSHED_ALL,
-      HAS_MORE_TO_FLUSH,
-      NOTHING_TO_FLUSH_NOW;
-
-      public boolean needsMoreToFlush() {
-        return this == HAS_MORE_TO_FLUSH;
-      }
-
-      public FlushResult and(final FlushResult another) {
-        return switch (this) {
-          case FLUSHED_ALL -> another == HAS_MORE_TO_FLUSH ?
-                              HAS_MORE_TO_FLUSH :
-                              FLUSHED_ALL;
-          case HAS_MORE_TO_FLUSH -> HAS_MORE_TO_FLUSH;
-          case NOTHING_TO_FLUSH_NOW -> another;
-        };
       }
     }
   }
