@@ -158,14 +158,14 @@ public final class HighlightManagerImpl extends HighlightManager {
     addOccurrenceHighlight(editor, start, end, null, attributesKey, flags, outHighlighters, null);
   }
 
-  private void addOccurrenceHighlight(@NotNull Editor editor,
-                                      int start,
-                                      int end,
-                                      @Nullable TextAttributes forcedAttributes,
-                                      @Nullable TextAttributesKey attributesKey,
-                                      int flags,
-                                      @Nullable Collection<? super RangeHighlighter> outHighlighters,
-                                      @Nullable Color scrollMarkColor) {
+  private static void addOccurrenceHighlight(@NotNull Editor editor,
+                                             int start,
+                                             int end,
+                                             @Nullable TextAttributes forcedAttributes,
+                                             @Nullable TextAttributesKey attributesKey,
+                                             int flags,
+                                             @Nullable Collection<? super RangeHighlighter> outHighlighters,
+                                             @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
@@ -231,14 +231,14 @@ public final class HighlightManagerImpl extends HighlightManager {
     addRangeHighlight(editor, startOffset, endOffset, null, attributesKey, hideByTextChange, hideByAnyKey, highlighters);
   }
 
-  private void addRangeHighlight(@NotNull Editor editor,
-                                int startOffset,
-                                int endOffset,
-                                @Nullable TextAttributes attributes,
-                                @Nullable TextAttributesKey attributesKey,
-                                boolean hideByTextChange,
-                                boolean hideByAnyKey,
-                                @Nullable Collection<? super RangeHighlighter> highlighters) {
+  private static void addRangeHighlight(@NotNull Editor editor,
+                                        int startOffset,
+                                        int endOffset,
+                                        @Nullable TextAttributes attributes,
+                                        @Nullable TextAttributesKey attributesKey,
+                                        boolean hideByTextChange,
+                                        boolean hideByAnyKey,
+                                        @Nullable Collection<? super RangeHighlighter> highlighters) {
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
