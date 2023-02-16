@@ -191,13 +191,26 @@ signalType ::= SOLID_OPEN_ARROW
   | SOLID_POINT
   | DOTTED_POINT
 
-loopStatement ::= LOOP [complexMessage] EOL sequenceBody? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-rectStatement ::= RECT [complexMessage] EOL sequenceBody? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-optStatement ::= OPT [complexMessage] EOL sequenceBody? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-breakStatement ::= BREAK [complexMessage] EOL sequenceBody? END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-altStatement ::= ALT [complexMessage] EOL elseSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-parStatement ::= PAR [complexMessage] EOL parSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
-criticalStatement ::= CRITICAL [complexMessage] EOL optionSections END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+loopStatement ::= loopHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+loopHeader ::= LOOP [complexMessage]
+
+rectStatement ::= rectHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+rectHeader ::= RECT [complexMessage]
+
+optStatement ::= optHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+optHeader ::= OPT [complexMessage]
+
+breakStatement ::= breakHeader EOL+ [sequenceBody] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+breakHeader ::= BREAK [complexMessage]
+
+altStatement ::= altHeader EOL+ [sequenceBody] [EOL* elseSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+altHeader ::= ALT [complexMessage]
+
+parStatement ::= parHeader EOL+ [sequenceBody] [EOL* andSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+parHeader ::= PAR [complexMessage]
+
+criticalStatement ::= criticalHeader EOL+ [sequenceBody] [EOL* optionSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+criticalHeader ::= CRITICAL [complexMessage]
 
 noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessage
   | NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON complexMessage
@@ -208,9 +221,17 @@ private linkContent ::= maybeEmptyString COLON maybeEmptyString [COMMA linkConte
 
 linkStatement ::= LINK complexIdentifier COLON complexMessage
 
-elseSections ::= sequenceBody? [ELSE [complexMessage] EOL elseSections]
-parSections ::= sequenceBody? [AND [complexMessage] EOL parSections]
-optionSections ::= sequenceBody? [OPTION [complexMessage] EOL optionSections]
+private elseSections ::= elseSection [EOL* elseSections]
+private elseSection ::= elseHeader EOL+ [sequenceBody]
+elseHeader ::= ELSE [complexMessage]
+
+private andSections ::= andSection [EOL* andSections]
+private andSection ::= andHeader EOL+ [sequenceBody]
+andHeader ::= AND [complexMessage]
+
+private optionSections ::= optionSection [EOL* optionSections]
+private optionSection ::= optionHeader EOL+ [sequenceBody]
+optionHeader ::= OPTION [complexMessage]
 
 complexMessage ::= MESSAGE+
 
