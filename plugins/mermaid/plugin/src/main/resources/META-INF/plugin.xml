@@ -11,7 +11,7 @@
               implementationClass="com.intellij.mermaid.lang.MermaidFileType"
               fieldName="INSTANCE"
               language="Mermaid"
-              extensions="mermaid"/>
+              extensions="mermaid;mmd"/>
     <lang.parserDefinition language="Mermaid"
                            implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
     <lang.syntaxHighlighter language="Mermaid"
