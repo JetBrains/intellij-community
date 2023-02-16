@@ -126,20 +126,29 @@ class DuplicatesMethodExtractor(val extractOptions: ExtractOptions, val anchor: 
       false -> emptyList()
     }
 
-    val replacedMethod = runWriteAction {
-      replacePsiRange(calls, extractedElements.callElements)
-      method.replace(extractedElements.method) as PsiMethod
-    }
-
-    duplicates.forEach { duplicate ->
+    val duplicatesExtractOptions = duplicates.map { duplicate ->
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
       fun getMappedParameter(parameter: InputParameter): InputParameter {
         val references = parameter.references.map { expression -> expressionMap[expression] ?: expression }
         return parameter.copy(references = references)
       }
 
-      val duplicateOptions = findExtractOptions(duplicate.candidate).copy(inputParameters = parameters.map(::getMappedParameter))
-      val callElements = CallBuilder(duplicateOptions.elements.first()).createCall(replacedMethod, duplicateOptions)
+      findExtractOptions(duplicate.candidate).copy(inputParameters = parameters.map(::getMappedParameter))
+    }
+
+    if (duplicatesExtractOptions.any { options -> options.isStatic }) {
+      runWriteAction {
+        extractedElements.method.modifierList.setModifierProperty(PsiModifier.STATIC, true)
+      }
+    }
+
+    val replacedMethod = runWriteAction {
+      replacePsiRange(calls, extractedElements.callElements)
+      method.replace(extractedElements.method) as PsiMethod
+    }
+
+    duplicates.zip(duplicatesExtractOptions).forEach { (duplicate, extractOptions) ->
+      val callElements = CallBuilder(extractOptions.elements.first()).createCall(replacedMethod, extractOptions)
       runWriteAction {
         replacePsiRange(duplicate.candidate, callElements)
       }
