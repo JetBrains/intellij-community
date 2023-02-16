@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -25,6 +26,7 @@ import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
@@ -97,6 +99,12 @@ fun NewProjectWizardStep.setupProjectSafe(
 ) {
   try {
     execution()
+  }
+  catch (ex: CancellationException) {
+    throw ex
+  }
+  catch (ex: ProcessCanceledException) {
+    throw ex
   }
   catch (ex: Exception) {
     logger<NewProjectWizardStep>().error(errorMessage, ex)
