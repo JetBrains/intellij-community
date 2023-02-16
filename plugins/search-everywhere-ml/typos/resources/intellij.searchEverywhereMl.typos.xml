@@ -6,6 +6,10 @@
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.ide.actions.searcheverywhere.ml.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
 
+    <advancedSetting default="true" id="searcheverywhere.ml.typos.enable"
+                     groupKey="advanced.setting.searcheverywhere.ml.name"
+                     bundle="messages.searchEverywhereMlTyposBundle"/>
+
     <registryKey key="search.everywhere.ml.typos.min.confidence"
                  description="Minimum confidence required for spelling suggestion"
                  defaultValue="0.5"/>

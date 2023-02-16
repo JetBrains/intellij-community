@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -32,7 +31,7 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
      * Returns null if the application is not in an internal mode
      */
     fun getInstance(): ActionsLanguageModel? {
-      if (!ApplicationManager.getApplication().isInternal) return null
+      if (!isTypoFixingEnabled) return null
       return service<ActionsLanguageModel>()
     }
   }

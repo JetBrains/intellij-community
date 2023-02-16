@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 
@@ -28,8 +27,7 @@ private class SearchEverywhereSpellingCorrectorImpl(private val project: Project
 
 private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
   override fun isAvailable(project: Project): Boolean {
-    return ApplicationManager.getApplication().isInternal
-           && (ActionsLanguageModel.getInstance()?.isComputed ?: false)
+    return isTypoFixingEnabled && (ActionsLanguageModel.getInstance()?.isComputed ?: false)
   }
 
   override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl(project)
