@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -559,10 +558,10 @@ public class PyDocumentationBuilder {
       return null;
     }
     final boolean isConstructor = PyUtil.isInitOrNewMethod(pyFunction);
-    Iterable<PyClass> classes = pyClass.getAncestorClasses(myContext);
+    List<PyClass> classes = pyClass.getAncestorClasses(myContext);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc
-      classes = new ChainIterable<>(pyClass).add(classes);
+      classes = ContainerUtil.prepend(classes, pyClass);
     }
     for (PyClass ancestor : classes) {
       PyStringLiteralExpression docstringElement = null;

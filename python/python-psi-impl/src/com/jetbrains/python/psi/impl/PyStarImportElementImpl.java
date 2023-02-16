@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -29,10 +28,10 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -53,21 +52,21 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();
-      ChainIterable<PyElement> chain = new ChainIterable<>();
+      List<PyElement> result = new ArrayList<>();
       for (PsiElement importedFile : new HashSet<>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile sourceFile) {
-          chain.add(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
+          result.addAll(filterStarImportableNames(sourceFile.iterateNames(), sourceFile));
         }
       }
-      return chain;
+      return result;
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  private static Iterable<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull final PyFile file) {
-    return Iterables.filter(declaredNames, input -> {
+  private static List<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull PyFile file) {
+    return ContainerUtil.filter(Lists.newArrayList(declaredNames), input -> {
       final String name = input != null ? input.getName() : null;
       return name != null && PyUtil.isStarImportableFrom(name, file);
     });
