@@ -363,11 +363,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private static JComboBox<?> findAncestorCombo(Editor editor) {
-    Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
-    if (ancestor != null) {
-      return (JComboBox<?>)ancestor;
-    }
-    return null;
+    return (JComboBox<?>)SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
   }
 
   @RequiresEdt
@@ -423,15 +419,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     };
     KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
     ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview", keyStroke, action);
-    advertisePopup(that);
+    advertisePopup(that.myListPopup);
   }
 
-  private static void advertisePopup(@NotNull IntentionPopup that) {
-    ListPopup popup = that.myListPopup;
+  private static void advertisePopup(@NotNull ListPopup popup) {
     if (!popup.isDisposed()) {
-      popup.setAdText(CodeInsightBundle.message(
-        "intention.preview.adv.toggle.text",
-        IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText()), SwingConstants.LEFT);
+      String shortcutText = IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText();
+      popup.setAdText(CodeInsightBundle.message("intention.preview.adv.toggle.text", shortcutText), SwingConstants.LEFT);
     }
   }
 
@@ -456,11 +450,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @Override
-    public void show(@NotNull JComponent parentComponent,
-                     int x,
-                     int y,
-                     JComponent focusBackComponent,
-                     @NotNull HintHint hintHint) {
+    public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintHint) {
       myVisible = true;
       if (myShouldDelay) {
         ourAlarm.cancelAllRequests();
