@@ -162,7 +162,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
     String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
-    strBounds.setLocation((int)(textBounds.getCenterX() - strBounds.getCenterX()), baseline);
+    strBounds.setLocation(Math.max(0, (int)(textBounds.getCenterX() - strBounds.getCenterX())), baseline);
     SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
   }
 
