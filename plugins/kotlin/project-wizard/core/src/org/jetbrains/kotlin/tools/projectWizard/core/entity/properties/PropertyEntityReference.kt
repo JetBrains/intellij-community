@@ -6,11 +6,11 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.EntityReference
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 
-sealed class PropertyReference<out T : Any> : EntityReference() {
+sealed class PropertyEntityReference<out T : Any> : EntityReference() {
     abstract val property: Property<T>
 }
 
-class PluginPropertyReference<out T: Any>(override val property: PluginProperty<T>): PropertyReference<T>() {
+class PluginPropertyReference<out T: Any>(override val property: PluginProperty<T>): PropertyEntityReference<T>() {
     override val path: String
         get() = property.path
 }
@@ -19,7 +19,7 @@ class ModuleConfiguratorPropertyReference<out T : Any>(
     val configurator: ModuleConfigurator,
     val module: Module,
     override val property: ModuleConfiguratorProperty<T>
-) : PropertyReference<T>() {
+) : PropertyEntityReference<T>() {
     override val path: String
         get() = "${configurator.id}/${module.identificator}/${property.path}"
 }
