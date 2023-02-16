@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.java.JavaBundle;
@@ -143,8 +143,8 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       FailedConversionsDialog dialog = new FailedConversionsDialog(myLabeler.getFailedConversionsReport(), myProject);
       if (!dialog.showAndGet()) {
         final int exitCode = dialog.getExitCode();
-        prepareSuccessful();
         if (exitCode == FailedConversionsDialog.VIEW_USAGES_EXIT_CODE) {
+          prepareSuccessful();
           previewRefactoring(refUsages.get());
         }
         return false;
