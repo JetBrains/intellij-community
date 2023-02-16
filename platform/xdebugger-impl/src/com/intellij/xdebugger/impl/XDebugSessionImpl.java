@@ -700,6 +700,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (sessionChanged || forceUpdateExecutionPosition) {
       updateExecutionPosition();
     }
+    else {
+      myExecutionPointManager.showExecutionPosition();
+    }
   }
 
   public XBreakpoint<?> getActiveNonLineBreakpoint() {
