@@ -123,4 +123,14 @@ class ScheduledForRemovalApiUsageTest: JavaCodeInsightFixtureTestCase() {
     inspection.value.myIgnoreInsideImports = false
     myFixture.testHighlighting(true, false, false, "ScheduledForRemovalElementsTest.java")
   }
+
+  fun testJavaInspectionFix() {
+    inspection.value.myIgnoreInsideImports = false
+    inspection.value.myIgnoreApiDeclaredInThisProject = false
+    myFixture.configureByFile("ScheduledForRemovalElementsFix.java")
+    myFixture.checkHighlighting()
+    val intention = myFixture.findSingleIntention("Replace method call with 'X.bar()'")
+    myFixture.checkPreviewAndLaunchAction(intention);
+    myFixture.checkResultByFile("ScheduledForRemovalElementsFix_after.java")
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -143,7 +143,12 @@ private class UnstableApiUsageProcessor(
         messageProvider.buildMessage(annotatedContainingDeclaration)
       }
       val elementToHighlight = getElementToHighlight(sourceNode) ?: return false
-      problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
+      val fix = DeprecationInspection.getReplacementQuickFix(target, elementToHighlight)
+      if (fix != null) {
+        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType, fix)
+      } else {
+        problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
+      }
       return true
     }
     return false
