@@ -236,25 +236,27 @@ public final class PullUpConflictsUtil {
                                              MultiMap<PsiElement, String> conflictsList) {
     for (MemberInfoBase<? extends PsiMember> info : infos) {
       PsiMember member = info.getMember();
-      boolean isConflict = false;
+      PsiMember superMember = null;
       if (member instanceof PsiField) {
-        String name = member.getName();
-
-        isConflict = superClass.findFieldByName(name, false) != null;
+        superMember = superClass.findFieldByName(member.getName(), false);
       }
-      else if (member instanceof PsiMethod) {
-        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, member.getContainingClass(), PsiSubstitutor.EMPTY);
+      else if (member instanceof PsiMethod method) {
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) continue;
+        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
         MethodSignature signature = ((PsiMethod) member).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(superClass, signature, false);
-        isConflict = superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+        if (superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          superMember = superClassMethod;
+        }
       }
 
-      if (isConflict) {
+      if (superMember != null) {
         String message = RefactoringBundle.message("0.already.contains.a.1",
                                                    RefactoringUIUtil.getDescription(superClass, false),
-                                                   RefactoringUIUtil.getDescription(member, false));
+                                                   RefactoringUIUtil.getDescription(superMember, false));
         message = StringUtil.capitalize(message);
-        conflictsList.putValue(superClass, message);
+        conflictsList.putValue(superMember, message);
       }
 
       if (member instanceof PsiMethod method) {
