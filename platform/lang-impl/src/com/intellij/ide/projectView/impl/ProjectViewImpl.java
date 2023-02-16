@@ -83,6 +83,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +96,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -504,8 +506,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
 
   private SimpleToolWindowPanel myPanel;
-  private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
-  private final Collection<AbstractProjectViewPane> myUninitializedPanes = new HashSet<>();
+  private final Map<String, AbstractProjectViewPane> myId2Pane = new ConcurrentHashMap<>();
+  private final Collection<AbstractProjectViewPane> myUninitializedPanes = ConcurrentHashMap.newKeySet();
 
   private DefaultActionGroup myActionGroup;
   private @Nullable String mySavedPaneId = null;
@@ -698,6 +700,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  @CalledInAny
   public synchronized void addProjectPane(@NotNull final AbstractProjectViewPane pane) {
     myUninitializedPanes.add(pane);
     SelectInTarget selectInTarget = pane.createSelectInTarget();
@@ -713,7 +716,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
     if (isInitialized) {
-      doAddUninitializedPanes();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        doAddUninitializedPanes();
+      } else {
+        ApplicationManager.getApplication().invokeLater(this::doAddUninitializedPanes);
+      }
     }
   }
 
@@ -1093,9 +1100,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  @CalledInAny
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isDispatchThread()) {
-      // most tests don't need all panes to be loaded, but also we should not initialize panes on background threads
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      // most tests don't need all panes to be loaded
       ensurePanesLoaded();
     }
 
