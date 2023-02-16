@@ -140,10 +140,11 @@ object GHPRReviewCommentComponent {
                                  maxTextWidth: Int): JComponent {
     val commentComponentFactory = GHPRReviewCommentComponentFactory(project, htmlmageLoader)
     val hunk = thread.patchHunk ?: PatchHunk(0, 0, 0, 0)
-    val commentComponent = if (thread.line != null && GHSuggestedChange.containsSuggestedChange(commentBody)) {
-      val startLine = (thread.startLine ?: thread.line!!)
-      val endLine = thread.line!!
-      val suggestedChange = GHSuggestedChange(commentBody, hunk, thread.filePath, startLine, endLine)
+    val lineIndex = thread.location?.second
+
+    val commentComponent = if (lineIndex != null && GHSuggestedChange.containsSuggestedChange(commentBody)) {
+      val startLineIndex = thread.startLocation?.second ?: lineIndex
+      val suggestedChange = GHSuggestedChange(commentBody, hunk, thread.filePath, startLineIndex, lineIndex)
       commentComponentFactory.createCommentWithSuggestedChangeComponent(thread, suggestedChange, suggestedChangeHelper, maxTextWidth)
     }
     else {
