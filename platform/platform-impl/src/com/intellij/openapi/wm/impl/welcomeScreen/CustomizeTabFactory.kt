@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
@@ -33,10 +34,8 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.not
+import com.intellij.ui.layout.selected
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -59,7 +58,10 @@ class CustomizeTabFactory : WelcomeTabFactory {
   override fun createWelcomeTab(parentDisposable: Disposable) = CustomizeTab(parentDisposable)
 }
 
-private fun getIdeFont() = if (settings.overrideLafFonts) settings.fontSize2D else JBFont.label().size2D
+private fun getIdeFont() =
+  if (settings.overrideLafFonts) settings.fontSize2D
+  else ((LafManager.getInstance() as? LafManagerImpl)?.defaultFont?.size2D
+        ?: JBFont.label().size2D)
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
