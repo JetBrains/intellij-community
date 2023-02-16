@@ -481,10 +481,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   static class IntentionPopup implements Disposable.Parent {
-    private final @NotNull CachedIntentions myCachedIntentions;
+    private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
-    private final PsiFile myFile;
-    private final Project myProject;
+    private final @NotNull PsiFile myFile;
+    private final @NotNull CachedIntentions myCachedIntentions;
     private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
     private PopupMenuListener myOuterComboboxPopupListener;
     private IntentionHintComponent myHint;
@@ -572,25 +572,25 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @RequiresEdt
-    private static void recreateMyPopup(@NotNull IntentionPopup that, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
-      if (that.myListPopup != null) {
-        Disposer.dispose(that.myListPopup);
+    private static void recreateMyPopup(@NotNull IntentionPopup popup, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
+      if (popup.myListPopup != null) {
+        Disposer.dispose(popup.myListPopup);
       }
-      if (that.myDisposed || that.myEditor.isDisposed()) {
-        that.myListPopup = null;
+      if (popup.myDisposed || popup.myEditor.isDisposed()) {
+        popup.myListPopup = null;
         return;
       }
-      that.myListPopup = JBPopupFactory.getInstance().createListPopup(step);
-      if (that.myListPopup instanceof WizardPopup) {
+      popup.myListPopup = JBPopupFactory.getInstance().createListPopup(step);
+      if (popup.myListPopup instanceof WizardPopup) {
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
         for (Shortcut shortcut : shortcuts) {
           if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
             if (keyboardShortcut.getSecondKeyStroke() == null) {
-              ((WizardPopup)that.myListPopup).registerAction(
+              ((WizardPopup)popup.myListPopup).registerAction(
                 "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
                   @Override
                   public void actionPerformed(ActionEvent e) {
-                    that.myListPopup.handleSelect(true);
+                    popup.myListPopup.handleSelect(true);
                   }
                 }
               );
@@ -598,20 +598,20 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           }
         }
 
-        registerIntentionShortcuts(that);
-        registerShowPreviewAction(that);
+        registerIntentionShortcuts(popup);
+        registerShowPreviewAction(popup);
       }
 
-      boolean committed = PsiDocumentManager.getInstance(that.myFile.getProject()).isCommitted(that.myEditor.getDocument());
+      boolean committed = PsiDocumentManager.getInstance(popup.myFile.getProject()).isCommitted(popup.myEditor.getDocument());
       PsiFile injectedFile = committed
-                             ? InjectedLanguageUtil.findInjectedPsiNoCommit(that.myFile, that.myEditor.getCaretModel().getOffset())
+                             ? InjectedLanguageUtil.findInjectedPsiNoCommit(popup.myFile, popup.myEditor.getCaretModel().getOffset())
                              : null;
-      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(that.myEditor, injectedFile);
+      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(popup.myEditor, injectedFile);
 
-      ScopeHighlighter highlighter = new ScopeHighlighter(that.myEditor);
+      ScopeHighlighter highlighter = new ScopeHighlighter(popup.myEditor);
       ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
 
-      ListPopupImpl list = ObjectUtils.tryCast(that.myListPopup, ListPopupImpl.class);
+      ListPopupImpl list = ObjectUtils.tryCast(popup.myListPopup, ListPopupImpl.class);
 
       var selectionListener = new ListSelectionListener() {
         @Override
@@ -625,7 +625,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
             if (selectedItem instanceof IntentionActionWithTextCaching) {
               IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
               if (list != null) {
-                updatePreviewPopup(that, action, list.getOriginalSelectedIndex());
+                updatePreviewPopup(popup, action, list.getOriginalSelectedIndex());
               }
               highlightOnHover(selectedItem);
             }
@@ -645,7 +645,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
               }
             }
             else {
-              PsiElement at = that.myFile.findElementAt(that.myEditor.getCaretModel().getOffset());
+              PsiElement at = popup.myFile.findElementAt(popup.myEditor.getCaretModel().getOffset());
               PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
               if (container != null) {
                 highlighter.highlight(container, Collections.singletonList(container));
@@ -653,23 +653,23 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
             }
           }
           else if (action instanceof CustomizableIntentionAction) {
-            var ranges = ((CustomizableIntentionAction)action).getRangesToHighlight(that.myEditor, that.myFile);
+            var ranges = ((CustomizableIntentionAction)action).getRangesToHighlight(popup.myEditor, popup.myFile);
             for (var range : ranges) {
               TextRange rangeInFile = range.getRangeInFile();
               PsiFile file = range.getContainingFile();
               if (injectedFile != null && file.getViewProvider() == injectedFile.getViewProvider()) {
                 injectionHighlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
               }
-              else if (!InjectedLanguageManager.getInstance(that.myProject).isInjectedFragment(file)) {
+              else if (!InjectedLanguageManager.getInstance(popup.myProject).isInjectedFragment(file)) {
                 highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey());
               }
             }
           }
         }
       };
-      that.myListPopup.addListSelectionListener(selectionListener);
+      popup.myListPopup.addListSelectionListener(selectionListener);
 
-      that.myListPopup.addListener(new JBPopupListener() {
+      popup.myListPopup.addListener(new JBPopupListener() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
           if (list != null) {
@@ -681,57 +681,57 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         public void onClosed(@NotNull LightweightWindowEvent event) {
           highlighter.dropHighlight();
           injectionHighlighter.dropHighlight();
-          that.myPreviewPopupUpdateProcessor.hide();
-          that.myPopupShown = false;
+          popup.myPreviewPopupUpdateProcessor.hide();
+          popup.myPopupShown = false;
         }
       });
 
-      if (that.myEditor.isOneLineMode()) {
+      if (popup.myEditor.isOneLineMode()) {
         // hide popup on combobox popup show
-        JComboBox<?> comboBox = findAncestorCombo(that.myEditor);
+        JComboBox<?> comboBox = findAncestorCombo(popup.myEditor);
         if (comboBox != null) {
-          that.myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
+          popup.myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-              that.myHint.hide();
+              popup.myHint.hide();
             }
           };
 
-          comboBox.addPopupMenuListener(that.myOuterComboboxPopupListener);
+          comboBox.addPopupMenuListener(popup.myOuterComboboxPopupListener);
         }
       }
 
-      Disposer.register(that, that.myListPopup);
-      Disposer.register(that.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+      Disposer.register(popup, popup.myListPopup);
+      Disposer.register(popup.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
     }
 
     @RequiresEdt
-    private static void updatePreviewPopup(@NotNull IntentionPopup that, @NotNull IntentionAction action, int index) {
-      that.myPreviewPopupUpdateProcessor.setup(that.myListPopup, index);
-      that.myPreviewPopupUpdateProcessor.updatePopup(action);
+    private static void updatePreviewPopup(@NotNull IntentionPopup popup, @NotNull IntentionAction action, int index) {
+      popup.myPreviewPopupUpdateProcessor.setup(popup.myListPopup, index);
+      popup.myPreviewPopupUpdateProcessor.updatePopup(action);
     }
 
     /** Add all intention shortcuts to also be available as actions in the popover */
-    private static void registerIntentionShortcuts(@NotNull IntentionPopup that) {
-      for (Object object : that.myListPopup.getListStep().getValues()) {
+    private static void registerIntentionShortcuts(@NotNull IntentionPopup popup) {
+      for (Object object : popup.myListPopup.getListStep().getValues()) {
         if (object instanceof IntentionActionDelegate) {
-          registerIntentionShortcut(that, ((IntentionActionDelegate)object).getDelegate());
+          registerIntentionShortcut(popup, ((IntentionActionDelegate)object).getDelegate());
         }
       }
     }
 
-    private static void registerIntentionShortcut(@NotNull IntentionPopup that, @NotNull IntentionAction intention) {
+    private static void registerIntentionShortcut(@NotNull IntentionPopup popup, @NotNull IntentionAction intention) {
       var shortcuts = IntentionShortcutManager.getInstance().getShortcutSet(intention);
       if (shortcuts == null) return;
 
       for (var shortcut : shortcuts.getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
-          ((WizardPopup)that.myListPopup).registerAction(
+          ((WizardPopup)popup.myListPopup).registerAction(
             IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
               @Override
               public void actionPerformed(ActionEvent e) {
-                that.close();
-                IntentionShortcutUtils.invokeAsAction(intention, that.myEditor, that.myFile);
+                popup.close();
+                IntentionShortcutUtils.invokeAsAction(intention, popup.myEditor, popup.myFile);
               }
             }
           );
@@ -740,16 +740,16 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @RequiresEdt
-    private static void registerShowPreviewAction(@NotNull IntentionPopup that) {
+    private static void registerShowPreviewAction(@NotNull IntentionPopup popup) {
       AbstractAction action = new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          IntentionPreviewPopupUpdateProcessor processor = that.myPreviewPopupUpdateProcessor;
+          IntentionPreviewPopupUpdateProcessor processor = popup.myPreviewPopupUpdateProcessor;
           boolean shouldShow = !processor.isShown();
           EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
           if (shouldShow) {
             processor.activate();
-            showPreview(that);
+            showPreview(popup);
           }
           else {
             processor.hide();
@@ -757,8 +757,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
       };
       KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
-      ((WizardPopup)that.myListPopup).registerAction("showIntentionPreview", keyStroke, action);
-      advertisePopup(that.myListPopup);
+      ((WizardPopup)popup.myListPopup).registerAction("showIntentionPreview", keyStroke, action);
+      advertisePopup(popup.myListPopup);
     }
 
     private static void advertisePopup(@NotNull ListPopup popup) {
@@ -768,14 +768,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     }
 
-    private static void showPreview(@NotNull IntentionPopup that) {
-      that.myPreviewPopupUpdateProcessor.show();
-      if (that.myListPopup instanceof ListPopupImpl) {
-        JList<?> list = ((ListPopupImpl)that.myListPopup).getList();
+    private static void showPreview(@NotNull IntentionPopup popup) {
+      popup.myPreviewPopupUpdateProcessor.show();
+      if (popup.myListPopup instanceof ListPopupImpl) {
+        JList<?> list = ((ListPopupImpl)popup.myListPopup).getList();
         int selectedIndex = list.getSelectedIndex();
         Object selectedValue = list.getSelectedValue();
         if (selectedValue instanceof IntentionActionWithTextCaching) {
-          updatePreviewPopup(that, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
+          updatePreviewPopup(popup, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
         }
       }
     }
