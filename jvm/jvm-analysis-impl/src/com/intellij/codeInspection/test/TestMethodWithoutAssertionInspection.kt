@@ -118,8 +118,7 @@ private class TestMethodWithoutAssertionVisitor(
 
     override fun visitElement(node: UElement): Boolean {
       if (containsAssertion) return true
-      if (node.sourcePsi is PsiCompiledElement) return true // we don't expect assertions in libraries
-      return false
+      return node.sourcePsi is PsiCompiledElement // we don't expect assertions in libraries
     }
 
     override fun visitObjectLiteralExpression(node: UObjectLiteralExpression): Boolean = visitCallExpression(node)

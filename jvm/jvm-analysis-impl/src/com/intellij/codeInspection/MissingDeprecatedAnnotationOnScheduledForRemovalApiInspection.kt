@@ -18,7 +18,7 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
 
   private companion object {
     private val DEPRECATED_ANNOTATION_NAME = java.lang.Deprecated::class.java.canonicalName
-    private val KOTLIN_DEPRECATED_ANNOTATION_NAME = kotlin.Deprecated::class.java.canonicalName
+    private val KOTLIN_DEPRECATED_ANNOTATION_NAME = Deprecated::class.java.canonicalName
     private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = ApiStatus.ScheduledForRemoval::class.java.canonicalName
   }
 

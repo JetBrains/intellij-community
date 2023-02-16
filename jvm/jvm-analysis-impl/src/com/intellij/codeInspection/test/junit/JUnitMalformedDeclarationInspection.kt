@@ -468,11 +468,11 @@ private class JUnitMalformedSignatureVisitor(
       if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
       val foundMethod = containingClass.findMethodsByName(method.name, true).singleOrNull { it.parameters.isEmpty() }
       val uFoundMethod = foundMethod.toUElementOfType<UMethod>()
-      if (uFoundMethod != null) {
-        return checkSourceProvider(uFoundMethod, containingClass, methodSource, method)
+      return if (uFoundMethod != null) {
+        checkSourceProvider(uFoundMethod, containingClass, methodSource, method)
       }
       else {
-        return checkAbsentSourceProvider(containingClass, methodSource, method.name, method)
+        checkAbsentSourceProvider(containingClass, methodSource, method.name, method)
       }
     }
     else {
@@ -503,7 +503,7 @@ private class JUnitMalformedSignatureVisitor(
       "jvm.inspections.junit.malformed.param.method.source.unresolved.descriptor",
       sourceProviderName
     )
-    if (isOnTheFly) {
+    return if (isOnTheFly) {
       val modifiers = mutableListOf(JvmModifier.PUBLIC)
       if (!TestUtils.testInstancePerClass(containingClass)) modifiers.add(JvmModifier.STATIC)
       val typeFromText = JavaPsiFacade.getElementFactory(containingClass.project).createTypeFromText(
@@ -513,9 +513,9 @@ private class JUnitMalformedSignatureVisitor(
       val actions = createMethodActions(containingClass, request)
       val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
 
-      return holder.registerProblem(place, message, *quickFixes)
+      holder.registerProblem(place, message, *quickFixes)
     } else {
-      return holder.registerProblem(place, message)
+      holder.registerProblem(place, message)
     }
   }
 
