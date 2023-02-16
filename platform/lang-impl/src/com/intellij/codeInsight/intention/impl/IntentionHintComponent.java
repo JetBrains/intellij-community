@@ -118,7 +118,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
     IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulb.getIcon(cachedIntentions), intentionPopup);
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), intentionPopup);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -204,7 +204,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
-      Point position = LightBulb.getPosition(myEditor);
+      Point position = LightBulbUtil.getPosition(myEditor);
       if (position != null) {
         hintManager.showQuestionHint(myEditor, position, offset, offset, myComponentHint, action, HintManager.ABOVE);
       }
@@ -221,8 +221,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     RelativePoint positionHint = null;
     if (mouseClick && myLightBulbPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
-      int yOffset = LightBulb.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
-                    myEditor.getLineHeight() - LightBulb.getBorderSize(myEditor.isOneLineMode());
+      int yOffset = LightBulbUtil.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
+                    myEditor.getLineHeight() - LightBulbUtil.getBorderSize(myEditor.isOneLineMode());
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
     }
     myPopup.show(this, positionHint);
@@ -274,8 +274,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  /** The light bulb icon, optionally surrounded by a border. */
-  private static class LightBulb {
+  private abstract static class LightBulbUtil {
 
     private static final int NORMAL_BORDER_SIZE = 6;
     private static final int SMALL_BORDER_SIZE = 4;
@@ -397,6 +396,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
+  /** The light bulb icon, optionally surrounded by a border. */
   private class LightBulbPanel extends JPanel {
     private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
@@ -417,7 +417,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
 
       add(myIconLabel, BorderLayout.CENTER);
-      setBorder(LightBulb.getInactiveBorder(editor.isOneLineMode()));
+      setBorder(LightBulbUtil.getInactiveBorder(editor.isOneLineMode()));
     }
 
     @Override
@@ -429,13 +429,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private void onMouseExit() {
       if (!myPopup.isVisible()) {
         myIconLabel.setIcon(myInactiveIcon);
-        setBorder(LightBulb.getInactiveBorder(myEditor.isOneLineMode()));
+        setBorder(LightBulbUtil.getInactiveBorder(myEditor.isOneLineMode()));
       }
     }
 
     private void onMouseEnter() {
       myIconLabel.setIcon(myHighlightedIcon);
-      setBorder(LightBulb.getActiveBorder(myEditor.isOneLineMode()));
+      setBorder(LightBulbUtil.getActiveBorder(myEditor.isOneLineMode()));
 
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
