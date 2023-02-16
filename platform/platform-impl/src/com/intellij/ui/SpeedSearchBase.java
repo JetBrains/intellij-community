@@ -81,9 +81,25 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   private Disposable myListenerDisposable;
 
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected SpeedSearchBase(Comp component, @SuppressWarnings("unused") Void sig) {
+    myComponent = component;
+  }
+
+  /**
+   * @deprecated Please use non-deprecated constructor with combination with "setup listeners" method
+   *   to get the behaviour of this constructor
+   */
+  @Deprecated
   public SpeedSearchBase(@NotNull Comp component) {
     myComponent = component;
 
+    setupListeners();
+  }
+
+  protected void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentHidden(ComponentEvent event) {
@@ -153,7 +169,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
-    installSupplyTo(component);
+    installSupplyTo(myComponent);
   }
 
   protected boolean isStickySearch() {

@@ -126,7 +126,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myWasTreeInitialized = true;
 
     super.initTree();
-    new TreeSpeedSearch(myTree, true, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()));
+    TreeSpeedSearch.installOn(myTree, true, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }

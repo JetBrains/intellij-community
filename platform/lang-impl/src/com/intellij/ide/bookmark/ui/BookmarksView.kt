@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.preview.DescriptorPreview
 import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
@@ -237,7 +237,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
 
-    TreeSpeedSearch(tree)
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)
     tree.registerNavigateOnEnterAction { editSourceListeners.forEach { it.onEditSource() } }
     EditSourceOnDoubleClickHandler.install(tree) { editSourceListeners.forEach { it.onEditSource() } }

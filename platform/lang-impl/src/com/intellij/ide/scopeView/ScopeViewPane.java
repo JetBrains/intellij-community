@@ -27,7 +27,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.stripe.ErrorStripePainter;
 import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -182,7 +182,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       EditSourceOnDoubleClickHandler.install(myTree);
       EditSourceOnEnterKeyHandler.install(myTree);
       CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_SCOPE_VIEW_POPUP, ActionPlaces.SCOPE_VIEW_POPUP);
-      new TreeSpeedSearch(myTree);
+      TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
       enableDnD();
       myTree.getEmptyText()
         .setText(IdeBundle.message("scope.view.empty.text"))

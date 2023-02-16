@@ -58,7 +58,7 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
+    TreeSpeedSearch.installOn(myTree, true, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName());
 
     myTree.setRootVisible(false);
   }

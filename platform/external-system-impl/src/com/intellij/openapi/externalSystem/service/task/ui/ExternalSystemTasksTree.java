@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -74,7 +74,7 @@ public class ExternalSystemTasksTree extends Tree implements Supplier<ExternalTa
         scheduleCollapseStateAppliance(e.getTreePath());
       }
     });
-    new TreeSpeedSearch(this);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(this);
 
     getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
     getActionMap().put("Enter", new AbstractAction() {
