@@ -6,6 +6,7 @@ import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationService
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -40,7 +41,8 @@ class IdentifierSymbol(
 
   override fun navigationRequest(): NavigationRequest? {
     val virtualFile = file.virtualFile?.takeIf { it.isValid } ?: return null
-    return NavigationService.instance().sourceNavigationRequest(virtualFile, range.startOffset)
+    val navigationService = service<NavigationService>()
+    return navigationService.sourceNavigationRequest(virtualFile, range.startOffset)
   }
 
   companion object {
