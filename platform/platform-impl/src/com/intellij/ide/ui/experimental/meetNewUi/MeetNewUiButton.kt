@@ -14,7 +14,7 @@ import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-internal class MeetNewUiButton(text: @NlsContexts.Button String, icon: Icon? = null) : JLabel(text, icon, LEFT) {
+internal class MeetNewUiButton(text: @NlsContexts.Button String? = null, icon: Icon? = null) : JLabel(text, icon, LEFT) {
 
   var selected: Boolean = false
     set(value) {
