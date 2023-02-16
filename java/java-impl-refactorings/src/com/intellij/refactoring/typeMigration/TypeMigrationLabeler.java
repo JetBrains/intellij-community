@@ -4,12 +4,10 @@ package com.intellij.refactoring.typeMigration;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +29,6 @@ import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -39,14 +36,10 @@ import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
 import java.util.*;
 
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance(TypeMigrationLabeler.class);
-  private boolean myShowWarning = true;
-  private volatile MigrateException myException;
-  private final Semaphore myDialogSemaphore = new Semaphore();
   private final Project myProject;
 
   public TypeMigrationRules getRules() {
@@ -404,7 +397,6 @@ public class TypeMigrationLabeler {
 
   public TypeMigrationUsageInfo[] getMigratedUsages(boolean autoMigrate, final PsiElement... roots) {
     if (myMigratedUsages == null) {
-      myShowWarning = autoMigrate;
       migrate(autoMigrate, roots);
       myMigratedUsages = getMigratedUsages();
     }
@@ -779,29 +771,7 @@ public class TypeMigrationLabeler {
     return null;
   }
 
-  public void clearStopException() {
-    myException = null;
-  }
-
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
-    if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      myShowWarning = false;
-      myDialogSemaphore.down();
-      try {
-        final Runnable checkTimeToStopRunnable = () -> {
-          if (Messages.showYesNoCancelDialog(JavaRefactoringBundle.message("type.migration.preview.warning.text"), JavaRefactoringBundle.message("type.migration.action.name"),
-                                             Messages.getWarningIcon()) == Messages.YES) {
-            myException = new MigrateException();
-          }
-          myDialogSemaphore.up();
-        };
-        SwingUtilities.invokeLater(checkTimeToStopRunnable);
-      }
-      catch (Exception e) {
-        //do nothing
-      }
-    }
-    checkInterrupted();
     rememberRootTrace(usageInfo, type, place, alreadyProcessed);
     if (!alreadyProcessed && !(usageInfo.getElement() instanceof PsiExpression) && !getTypeEvaluator().setType(usageInfo, type)) {
       alreadyProcessed = true;
@@ -809,10 +779,6 @@ public class TypeMigrationLabeler {
 
     if (!alreadyProcessed) myMigrationRoots.addFirst(Pair.create(usageInfo, type));
     return alreadyProcessed;
-  }
-
-  private void checkInterrupted() {
-    if (myException != null) throw myException;
   }
 
   private void rememberRootTrace(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, final boolean alreadyProcessed) {
@@ -1065,9 +1031,6 @@ public class TypeMigrationLabeler {
         iterate();
       }
     }
-
-    myDialogSemaphore.waitFor();
-    checkInterrupted();
   }
 
   public TypeEvaluator getTypeEvaluator() {
@@ -1181,6 +1144,4 @@ public class TypeMigrationLabeler {
 
     return buffer.toString();
   }
-
-  public static class MigrateException extends RuntimeException { }
 }
