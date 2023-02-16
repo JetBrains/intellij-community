@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -862,6 +862,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           holder, false, false);
       }
     }
+    else if (kind == ExtensionPoint.Status.Kind.OBSOLETE) {
+      highlightObsolete(extension, holder);
+    }
     else if (kind == ExtensionPoint.Status.Kind.EXPERIMENTAL_API) {
       highlightExperimental(extension, holder);
     }
@@ -917,6 +920,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if (psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
                module != null && !PsiUtil.isIdeaProject(module.getProject())) {
         highlightInternal(attributeValue, holder);
+      }
+      else if (psiField.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
+        highlightObsolete(attributeValue, holder);
       }
     }
   }
@@ -1203,6 +1209,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     holder.createProblem(element, ProblemHighlightType.WARNING,
                          DevKitBundle.message("inspections.plugin.xml.usage.of.internal.api",
                                               ApiStatus.Internal.class.getCanonicalName()),
+                         null)
+      .highlightWholeElement();
+  }
+
+  private static void highlightObsolete(DomElement element, DomElementAnnotationHolder holder) {
+    holder.createProblem(element, ProblemHighlightType.LIKE_DEPRECATED,
+                         DevKitBundle.message("inspections.plugin.xml.usage.of.obsolete.api",
+                                              ApiStatus.Obsolete.class.getCanonicalName()),
                          null)
       .highlightWholeElement();
   }
