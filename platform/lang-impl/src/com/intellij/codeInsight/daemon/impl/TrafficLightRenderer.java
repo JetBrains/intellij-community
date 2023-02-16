@@ -71,7 +71,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final boolean shouldHighlight;
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
-  private final long myHighlightingSettingsModificationCount;
+  private volatile long myHighlightingSettingsModificationCount;
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
     this(project, document, null);
@@ -595,5 +595,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   protected @NotNull UIController getUIController() {
     return myUIController;
+  }
+
+  void invalidate() {
+    myHighlightingSettingsModificationCount = -1;
   }
 }
