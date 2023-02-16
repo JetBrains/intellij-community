@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -71,7 +72,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         if (!REPORT_INSTANCE_METHODS &&
             !candidate.method.hasModifierProperty(PsiModifier.STATIC) &&
             !candidate.method.isConstructor()) {
-          return; // somebody don't want to report instance methods highlighted because they can be already overridden
+          return; // somebody doesn't want to report instance methods highlighted because they can be already overridden
         }
         Project project = holder.getProject();
         boolean canBeSuper = canChangeTo(project, candidate, false);
@@ -122,11 +123,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       if (!isOverriddenOrOverrides) {
         PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
         if (field != null) {
-          replaceType(project, field.getTypeElement(), suggestMethodParameterType(candidate, isExtends));
+          replaceType(project, Objects.requireNonNull(field.getTypeElement()), suggestMethodParameterType(candidate, isExtends));
         }
 
-        PsiTypeElement methodParameterTypeElement = candidate.methodParameter.getTypeElement();
-        PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
+        PsiTypeElement methodParameterTypeElement = Objects.requireNonNull(candidate.methodParameter.getTypeElement());
+        PsiClassType clone = suggestMethodParameterType(candidate, isExtends);
         replaceType(project, methodParameterTypeElement, clone);
         return;
       }
@@ -140,7 +141,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
         method = superMethod;
         candidate = candidate.getSuperMethodVarianceCandidate(superMethod);
       }
-      PsiClassReferenceType clone = suggestMethodParameterType(candidate, isExtends);
+      PsiClassType clone = suggestMethodParameterType(candidate, isExtends);
       int[] i = {0};
       String candidateName = candidate.methodParameter.getName();
       List<ParameterInfoImpl> parameterInfos = ContainerUtil.map(superMethod.getParameterList().getParameters(),
@@ -165,7 +166,9 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElementFactory pf = PsiElementFactory.getInstance(project);
       PsiTypeElement newTypeElement = pf.createTypeElement(withType);
       if (typeElement.isPhysical()) {
-        WriteCommandAction.runWriteCommandAction(project, (Runnable)() -> typeElement.replace(newTypeElement));
+        WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.replace.type"), null,
+                                                 () -> typeElement.replace(newTypeElement),
+                                                 typeElement.getContainingFile());
       }
       else {
         typeElement.replace(newTypeElement);
@@ -178,8 +181,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  @NotNull
-  private static PsiClassReferenceType suggestMethodParameterType(@NotNull VarianceCandidate candidate, boolean isExtends) {
+  private static @NotNull PsiClassType suggestMethodParameterType(@NotNull VarianceCandidate candidate, boolean isExtends) {
     PsiType type = candidate.type;
 
     PsiManager psiManager = candidate.method.getManager();
@@ -189,18 +191,13 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     PsiClassReferenceType methodParamType = candidate.methodParameterType;
     PsiClassReferenceType clone = new PsiClassReferenceType((PsiJavaCodeReferenceElement)methodParamType.getReference().copy(), methodParamType.getLanguageLevel());
-    PsiAnnotation[] annotations = methodParamType.getApplicableAnnotations();
 
     PsiJavaCodeReferenceElement cloneReference = clone.getReference();
-    for (int i = annotations.length - 1; i >= 0; i--) {
-      PsiAnnotation annotation = annotations[i];
-      cloneReference.addBefore(annotation, cloneReference.getFirstChild());
-    }
     PsiTypeElement innerTypeElement = cloneReference.getParameterList().getTypeParameterElements()[candidate.typeParameterIndex];
 
 
     innerTypeElement.replace(newInnerTypeElement);
-    return clone;
+    return clone.annotate(methodParamType.getAnnotationProvider());
   }
 
   private static boolean isOverriddenOrOverrides(@NotNull PsiMethod method) {
@@ -240,7 +237,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return false;
 
-    PsiClassReferenceType newParameterType = suggestMethodParameterType(candidate, isExtends);
+    PsiClassType newParameterType = suggestMethodParameterType(candidate, isExtends);
 
     PsiMethod methodCopy = DebugUtil
       .performPsiModification("Creating method copy", () -> createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType));
@@ -324,7 +321,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private static PsiMethod createMethodCopy(@NotNull Project project,
                                             PsiMethod method,
                                             int methodParameterIndex, // -1 if no parameter to change
-                                            @NotNull PsiClassReferenceType newParameterExtends) {
+                                            @NotNull PsiClassType newParameterExtends) {
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), method);
     PsiMethod methodCopy = (PsiMethod)dummyHolder.add(method);
 
@@ -346,7 +343,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                                           @Nullable PsiField field,
                                           @NotNull PsiClass containingClass, @NotNull PsiMethod method,
                                           @NotNull PsiMethod methodCopy,
-                                          @NotNull PsiClassReferenceType newParameterExtends) {
+                                          @NotNull PsiClassType newParameterExtends) {
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), containingClass);
     PsiClass classCopy = (PsiClass)dummyHolder.add(containingClass);
 
