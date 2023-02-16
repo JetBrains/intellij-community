@@ -33,7 +33,7 @@ intellij {
   val platformVersion = System.getenv("PLATFORM_VERSION") ?: properties("platformVersion")
   version.set(platformVersion)
   type.set(properties("platformType"))
-  plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
+  plugins.set(listOf("org.intellij.plugins.markdown"))
 }
 
 changelog {
