@@ -50,7 +50,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   public boolean IGNORE_UNCHECKED_CAST;
   public boolean IGNORE_UNCHECKED_OVERRIDING;
 
-  protected LocalQuickFix @NotNull [] createFixes() {
+  @NotNull
+  private LocalQuickFix @NotNull [] createFixes() {
     return new LocalQuickFix[]{new GenerifyFileFix()};
   }
 
@@ -65,7 +66,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     );
   }
 
-  private static LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
+  private static @NotNull LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, @NotNull LocalQuickFix @NotNull [] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
     LOG.assertTrue(parameter.isValid());
     final List<LocalQuickFix> result = new ArrayList<>();
@@ -135,7 +136,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       protected void registerProblem(@NotNull @InspectionMessage String message,
                                      @Nullable PsiElement callExpression,
                                      @NotNull PsiElement psiElement,
-                                     LocalQuickFix @NotNull [] quickFixes) {
+                                     @NotNull LocalQuickFix @NotNull [] quickFixes) {
         final String rawExpression = isMethodCalledOnRawType(callExpression);
         if (rawExpression != null) {
           final String referenceName = ((PsiMethodCallExpression)callExpression).getMethodExpression().getReferenceName();
@@ -174,7 +175,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   private abstract class UncheckedWarningsVisitor extends JavaElementVisitor {
     private final boolean myOnTheFly;
     @NotNull private final LanguageLevel myLanguageLevel;
-    private final LocalQuickFix[] myGenerifyFixes;
+    private final @NotNull LocalQuickFix @NotNull [] myGenerifyFixes;
 
     UncheckedWarningsVisitor(boolean onTheFly, @NotNull LanguageLevel level) {
       myOnTheFly = onTheFly;
@@ -185,7 +186,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     protected abstract void registerProblem(@NotNull @InspectionMessage String message,
                                             PsiElement callExpression,
                                             @NotNull PsiElement psiElement,
-                                            LocalQuickFix @NotNull [] quickFixes);
+                                            @NotNull LocalQuickFix @NotNull [] quickFixes);
 
 
     @Override
@@ -379,7 +380,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     private void checkRawToGenericsAssignment(@NotNull PsiElement parameter,
                                               PsiExpression expression, PsiType parameterType,
                                               PsiType itemType,
-                                              final Supplier<LocalQuickFix[]> fixesSupplier) {
+                                              @NotNull Supplier<? extends @NotNull LocalQuickFix @NotNull []> fixesSupplier) {
       if (GenericsHighlightUtil.checkGenericArrayCreation(expression, expression.getType()) != null) return;
       if (parameterType == null || itemType == null) return;
       if (!TypeConversionUtil.isAssignable(parameterType, itemType)) return;
