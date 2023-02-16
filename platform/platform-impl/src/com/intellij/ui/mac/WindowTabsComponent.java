@@ -637,7 +637,7 @@ public class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public @NotNull ContentResponse getContentResponse(@NotNull DockableContent<?> _content, RelativePoint point) {
-        return _content instanceof WindowFrameDockableContent content && !content.getKey().isInFullScreen() &&
+        return _content instanceof WindowFrameDockableContent content && !content.isInFullScreen() &&
                MacWinTabsHandlerV2.isTabsNotVisible(frame) && !frame.isInFullScreen() ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
       }
 
@@ -769,6 +769,10 @@ public class WindowTabsComponent extends JBTabsImpl {
     @Override
     public @NotNull IdeFrameImpl getKey() {
       return (IdeFrameImpl)myInfo.getObject();
+    }
+
+    public boolean isInFullScreen() {
+      return getKey().isInFullScreen() || myTabsComponent.myNativeWindow.isInFullScreen();
     }
 
     @Override
