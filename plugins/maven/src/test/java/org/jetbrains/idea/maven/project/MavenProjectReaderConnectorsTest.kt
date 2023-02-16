@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import java.rmi.ConnectException
 
-class MavenProjectReaderConnectorsTest : MavenProjectReaderConnectorsTestCase() {
+class MavenProjectReaderConnectorsTest : MavenProjectReaderTestCase() {
   fun `test when using stopped connector always then get exception`() {
     createProjectPom("""
                        <groupId>test</groupId>
