@@ -51,7 +51,7 @@ public class RemoveRedundantParameterTypesFix extends LocalQuickFixAndIntentionA
       PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement == null) return false;
       if (!PsiUtil.isLanguageLevel11OrHigher(parameterList)) {
-        if (AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter, Collections.emptySet())) {
+        if (AnonymousCanBeLambdaInspection.mustKeepAnnotations(parameter, Collections.emptySet())) {
           return false;
         }
       }
