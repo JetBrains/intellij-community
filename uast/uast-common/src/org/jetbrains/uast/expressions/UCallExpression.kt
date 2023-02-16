@@ -118,7 +118,7 @@ interface UCallExpression : UExpression, UResolvable {
    */
   @ApiStatus.Experimental
   fun isMethodNameOneOf(names: Collection<String>): Boolean {
-    return names.contains(methodName)
+    return names.contains(methodName ?: return false)
   }
 }
 
