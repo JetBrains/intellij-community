@@ -829,4 +829,9 @@ object MermaidTokens {
     @JvmField
     val NODE_DESCR = MermaidToken("Mindmap.NODE_DESCR")
   }
+
+  object Timeline {
+    @JvmField
+    val TIMELINE = MermaidToken("Timeline.TIMELINE")
+  }
 }

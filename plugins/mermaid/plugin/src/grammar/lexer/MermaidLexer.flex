@@ -70,6 +70,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states mindmap, mindmap_class, icon, mindmap_node
 
+%states timeline
+
 %%
 
 <YYINITIAL> {
@@ -97,6 +99,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "C4Dynamic" { yybegin (c4); return C4.C4_DYNAMIC; }
   "C4Deployment" { yybegin (c4); return C4.C4_DEPLOYMENT; }
   "mindmap" { yybegin(mindmap); return Mindmap.MINDMAP; }
+  "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
 
   ---\s*[\n\r](.|[\n\r])*[\n\r]--- { return FRONTMATTER; }
 
@@ -851,6 +854,11 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "}}" { yybegin(mindmap); return Mindmap.NODE_DESCR_END; }
 
   [^\S\r\n]+ { return WHITE_SPACE; }
+}
+
+//---mindmap----------------------------------------------------------------------
+<timeline> {
+  .* { return Timeline.TIMELINE; }
 }
 
 //--------------------------------------------------------------------------------

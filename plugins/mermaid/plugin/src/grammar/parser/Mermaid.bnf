@@ -22,6 +22,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.GitGraph.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.C4.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Mindmap.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Timeline.*'
   ]
   generateTokens=false
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
@@ -42,6 +43,7 @@ private diagram ::= pieHeader [pieDocument]
   | gitGraphHeader [gitGraphDocument]
   | c4Header c4Document
   | MINDMAP mindmapDocument
+  | (TIMELINE EOL*)+
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
