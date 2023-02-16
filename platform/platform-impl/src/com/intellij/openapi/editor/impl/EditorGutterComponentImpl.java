@@ -1482,7 +1482,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return;
     }
     boolean shown = isFoldingOutlineShown();
-    double x = getWhitespaceSeparatorOffset2D();
+    double x = getFoldingMarkerCenterOffset2D();
 
     if ((shown || myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator")) && myPaintBackground) {
       g.setColor(getOutlineColor(false));
@@ -1509,15 +1509,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public int getWhitespaceSeparatorOffset() {
-    return (int)Math.round(getWhitespaceSeparatorOffset2D());
+    return (int)Math.round(getFoldingMarkerCenterOffset2D());
   }
 
-  private double getWhitespaceSeparatorOffset2D() {
+  private double getFoldingMarkerCenterOffset2D() {
     ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
     if (ExperimentalUI.isNewUI()) {
       return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth(), ctx, RoundingMode.ROUND, null);
     }
-    return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth() / 2., ctx, RoundingMode.ROUND, null);
+    return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth() / 2.0, ctx, RoundingMode.ROUND, null);
   }
 
   void setActiveFoldRegions(@NotNull List<FoldRegion> activeFoldRegions) {
@@ -1541,8 +1541,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     double height = width + off;
     double baseHeight = height - width / 2;
     double y = getFoldAnchorY(visualLine, width);
-    double centerX = LinePainter2D.getStrokeCenter(g, getWhitespaceSeparatorOffset2D(), StrokeType.CENTERED, getStrokeWidth());
-    double strokeOff = centerX - getWhitespaceSeparatorOffset2D();
+    double centerX = LinePainter2D.getStrokeCenter(g, getFoldingMarkerCenterOffset2D(), StrokeType.CENTERED, getStrokeWidth());
+    double strokeOff = centerX - getFoldingMarkerCenterOffset2D();
     // need to have the same sub-device-pixel offset as centerX for the square_with_plus rect to have equal dev width/height
     double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
