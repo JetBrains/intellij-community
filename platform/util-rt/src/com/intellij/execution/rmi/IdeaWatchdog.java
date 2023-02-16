@@ -13,11 +13,10 @@ public interface IdeaWatchdog extends Remote {
   long PULSE_TIMEOUT = 9 * 1000L;
   long WAIT_TIMEOUT = 20 * 1000L;
 
-  void die() throws RemoteException;
   //always throws RemoteException
   @TestOnly
   void dieNow(int exitCode) throws RemoteException;
   boolean isAlive() throws RemoteException;
-  void ping() throws RemoteException;
+  boolean ping() throws RemoteException;
 }
 

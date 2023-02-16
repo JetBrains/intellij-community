@@ -101,4 +101,10 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
   public MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
+
+  @Override
+  public boolean isAlive(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    return true;
+  }
 }

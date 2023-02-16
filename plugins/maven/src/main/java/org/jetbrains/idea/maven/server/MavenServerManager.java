@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.trustedProjects.TrustedProjectsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
@@ -165,7 +165,7 @@ public final class MavenServerManager implements Disposable {
     });
   }
 
-  public MavenServerConnector getConnector(@NotNull Project project, @NotNull String workingDirectory) {
+  private MavenServerConnector doGetConnector(@NotNull Project project, @NotNull String workingDirectory) {
     String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirectory);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
@@ -183,6 +183,15 @@ public final class MavenServerManager implements Disposable {
       }
     }
     MavenLog.LOG.debug("[connector] get " + connector);
+    return connector;
+  }
+
+  public MavenServerConnector getConnector(@NotNull Project project, @NotNull String workingDirectory) {
+    var connector = doGetConnector(project, workingDirectory);
+    if (!connector.ping()) {
+      shutdownConnector(connector, true);
+      connector = doGetConnector(project, workingDirectory);
+    }
     return connector;
   }
 
@@ -231,12 +240,13 @@ public final class MavenServerManager implements Disposable {
     Integer debugPort = getFreeDebugPort();
     MavenServerConnector connector;
     if (TrustedProjects.isTrusted(project) || project.isDefault()) {
-      connector = new MavenServerConnectorImpl(project, this, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
+      var connectorFactory = ApplicationManager.getApplication().getService(MavenServerConnectorFactory.class);
+      connector = connectorFactory.create(project, jdk, vmOptions, debugPort, distribution, multimoduleDirectory);
       MavenLog.LOG.debug("[connector] new maven connector " + connector);
     }
     else {
       MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
-      connector = new DummyMavenServerConnector(project, this, jdk, vmOptions, distribution, multimoduleDirectory);
+      connector = new DummyMavenServerConnector(project, jdk, vmOptions, distribution, multimoduleDirectory);
     }
     registerDisposable(project, connector);
     return connector;
@@ -506,8 +516,7 @@ public final class MavenServerManager implements Disposable {
             if (myIndexingConnector != null) return myIndexingConnector;
             synchronized (myMultimoduleDirToConnectorMap) {
               if (myIndexingConnector != null) return myIndexingConnector;
-              myIndexingConnector = new MavenIndexingConnectorImpl(MavenServerManager.this,
-                                                                   JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
+              myIndexingConnector = new MavenIndexingConnectorImpl(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(),
                                                                    "",
                                                                    getFreeDebugPort(),
                                                                    MavenDistributionsCache.resolveEmbeddedMavenHome(),
@@ -556,7 +565,7 @@ public final class MavenServerManager implements Disposable {
         MavenServerConnector connector;
         synchronized (myMultimoduleDirToConnectorMap) {
           connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> ContainerUtil.find(
-            c.myMultimoduleDirectories,
+            c.getMultimoduleDirectories(),
             mDir -> FileUtil
               .isAncestor(finalPath, mDir, false)) != null
           );
@@ -626,5 +635,29 @@ public final class MavenServerManager implements Disposable {
 
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;
+  }
+
+  @ApiStatus.Internal
+  public interface MavenServerConnectorFactory {
+    @NotNull MavenServerConnector create(@NotNull Project project,
+                                         @NotNull Sdk jdk,
+                                         @NotNull String vmOptions,
+                                         @Nullable Integer debugPort,
+                                         @NotNull MavenDistribution mavenDistribution,
+                                         @NotNull String multimoduleDirectory);
+  }
+
+  @ApiStatus.Internal
+  public static class MavenServerConnectorFactoryImpl implements MavenServerConnectorFactory {
+
+    @Override
+    public @NotNull MavenServerConnector create(@NotNull Project project,
+                                                @NotNull Sdk jdk,
+                                                @NotNull String vmOptions,
+                                                @Nullable Integer debugPort,
+                                                @NotNull MavenDistribution mavenDistribution,
+                                                @NotNull String multimoduleDirectory) {
+      return new MavenServerConnectorImpl(project, jdk, vmOptions, debugPort, mavenDistribution, multimoduleDirectory);
+    }
   }
 }
