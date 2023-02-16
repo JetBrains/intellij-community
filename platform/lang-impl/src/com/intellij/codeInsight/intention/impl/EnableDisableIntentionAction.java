@@ -20,13 +20,13 @@ public class EnableDisableIntentionAction extends AbstractEditIntentionSettingsA
 
   @Override
   public @NotNull String getText() {
-    final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+    IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     return CodeInsightBundle.message(mySettings.isEnabled(myAction) ? "disable.intention.action" : "enable.intention.action", myFamilyName);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
+    IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
   }
 

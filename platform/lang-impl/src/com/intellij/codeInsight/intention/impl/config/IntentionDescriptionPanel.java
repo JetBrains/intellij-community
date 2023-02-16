@@ -52,11 +52,11 @@ public class IntentionDescriptionPanel {
 
   public IntentionDescriptionPanel() {
     myDescriptionBrowser = new DescriptionEditorPane();
-    final var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
+    var descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser);
     descriptionScrollPane.setBorder(null);
 
-    final JPanel examplePanel = new JPanel(new GridBagLayout());
-    final var constraint = new GridBag()
+    JPanel examplePanel = new JPanel(new GridBagLayout());
+    var constraint = new GridBag()
       .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
       .setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(0.5)
@@ -82,9 +82,9 @@ public class IntentionDescriptionPanel {
                 constraint.nextLine()
     );
 
-    final OnePixelSplitter mySplitter = new OnePixelSplitter(true,
-                                                             "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
-                                                             DIVIDER_PROPORTION_DEFAULT);
+    OnePixelSplitter mySplitter = new OnePixelSplitter(true,
+                                                       "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
+                                                       DIVIDER_PROPORTION_DEFAULT);
     mySplitter.setFirstComponent(descriptionScrollPane);
     mySplitter.setSecondComponent(examplePanel);
     myPanel = mySplitter;
@@ -106,7 +106,7 @@ public class IntentionDescriptionPanel {
                     if (searchTextField != null && search != null) searchTextField.setText(search);
                   });
                 } else {
-                  final Project project = context.getData(CommonDataKeys.PROJECT);
+                  Project project = context.getData(CommonDataKeys.PROJECT);
                   ShowSettingsUtilImpl.showSettingsDialog(project, configId, search);
                 }
               }
@@ -125,10 +125,10 @@ public class IntentionDescriptionPanel {
 
   public void reset(IntentionActionMetaData actionMetaData, String filter)  {
     try {
-      final TextDescriptor url = actionMetaData.getDescription();
-      final String description = StringUtil.isEmpty(url.getText()) ?
-                                 CodeInsightBundle.message("under.construction.string") :
-                                 SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(url.getText(), actionMetaData.getLoader()), filter);
+      TextDescriptor url = actionMetaData.getDescription();
+      String description = StringUtil.isEmpty(url.getText()) ?
+                           CodeInsightBundle.message("under.construction.string") :
+                           SearchUtil.markup(SettingsUtil.wrapWithPoweredByMessage(url.getText(), actionMetaData.getLoader()), filter);
 
       DescriptionEditorPaneKt.readHTML(myDescriptionBrowser, description);
 
@@ -158,9 +158,9 @@ public class IntentionDescriptionPanel {
     }
   }
 
-  private static void showUsages(final JPanel panel,
-                                 final List<IntentionUsagePanel> usagePanels,
-                                 final TextDescriptor @Nullable [] exampleUsages) throws IOException {
+  private static void showUsages(JPanel panel,
+                                 List<IntentionUsagePanel> usagePanels,
+                                 TextDescriptor @Nullable [] exampleUsages) throws IOException {
     GridBagConstraints gb = null;
     boolean reuse = exampleUsages != null && panel.getComponents().length == exampleUsages.length;
     if (!reuse) {
@@ -183,11 +183,11 @@ public class IntentionDescriptionPanel {
 
     if (exampleUsages != null) {
       for (int i = 0; i < exampleUsages.length; i++) {
-        final TextDescriptor exampleUsage = exampleUsages[i];
-        final String name = exampleUsage.getFileName();
-        final FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
-        final String extension = fileTypeManager.getExtension(name);
-        final FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
+        TextDescriptor exampleUsage = exampleUsages[i];
+        String name = exampleUsage.getFileName();
+        FileTypeManagerEx fileTypeManager = FileTypeManagerEx.getInstanceEx();
+        String extension = fileTypeManager.getExtension(name);
+        FileType fileType = fileTypeManager.getFileTypeByExtension(extension);
 
         IntentionUsagePanel usagePanel;
         if (reuse) {
@@ -219,7 +219,7 @@ public class IntentionDescriptionPanel {
   }
 
   private static void disposeUsagePanels(List<? extends IntentionUsagePanel> usagePanels) {
-    for (final IntentionUsagePanel usagePanel : usagePanels) {
+    for (IntentionUsagePanel usagePanel : usagePanels) {
       Disposer.dispose(usagePanel);
     }
     usagePanels.clear();
@@ -229,6 +229,6 @@ public class IntentionDescriptionPanel {
    * @deprecated Used in an older version of intention configuration UI.
    */
   @Deprecated
-  public void init(final int preferredWidth) {
+  public void init(int preferredWidth) {
   }
 }

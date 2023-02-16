@@ -100,7 +100,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   @Override
-  public int compareTo(final @NotNull IntentionActionWithTextCaching other) {
+  public int compareTo(@NotNull IntentionActionWithTextCaching other) {
     if (myAction instanceof Comparable) {
       //noinspection unchecked
       return ((Comparable)myAction).compareTo(other.getAction());
@@ -242,7 +242,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     }
 
     @Override
-    public int compareTo(final @NotNull MyIntentionAction other) {
+    public int compareTo(@NotNull MyIntentionAction other) {
       if (myAction instanceof Comparable) {
         //noinspection unchecked
         return ((Comparable)myAction).compareTo(other.getDelegate());

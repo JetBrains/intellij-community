@@ -59,18 +59,17 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
     return getRangePair(file, editor) != null;
   }
 
-  protected @Nullable Pair<PsiElement, TextRange> getRangePair(final PsiFile file, final Editor editor) {
-    final int offset = editor.getCaretModel().getOffset();
-    final PsiLanguageInjectionHost host =
-      PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
+  protected @Nullable Pair<PsiElement, TextRange> getRangePair(PsiFile file, Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null || host instanceof PsiComment || ElementManipulators.getManipulator(host) == null) return null;
-    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
+    List<Pair<PsiElement, TextRange>> injections = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
-    final int offsetInElement = offset - host.getTextRange().getStartOffset();
-    final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections,
-                                                                     pair -> pair.second.containsRange(offsetInElement, offsetInElement));
+    int offsetInElement = offset - host.getTextRange().getStartOffset();
+    Pair<PsiElement, TextRange> rangePair =
+      ContainerUtil.find(injections, pair -> pair.second.containsRange(offsetInElement, offsetInElement));
     if (rangePair != null) {
-      final Language language = rangePair.first.getContainingFile().getLanguage();
+      Language language = rangePair.first.getContainingFile().getLanguage();
 
 
       Object action = host.getUserData(EDIT_ACTION_AVAILABLE);
@@ -85,11 +84,11 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     invokeImpl(project, editor, file);
   }
 
-  public QuickEditHandler invokeImpl(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public QuickEditHandler invokeImpl(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
     Pair<PsiElement, TextRange> pair = Objects.requireNonNull(getRangePair(file, editor));
 
@@ -160,8 +159,8 @@ public class QuickEditAction extends QuickEditActionKeys implements IntentionAct
   }
 
   public static Balloon.Position getBalloonPosition(Editor editor) {
-    final int line = editor.getCaretModel().getVisualPosition().line;
-    final Rectangle area = editor.getScrollingModel().getVisibleArea();
+    int line = editor.getCaretModel().getVisualPosition().line;
+    Rectangle area = editor.getScrollingModel().getVisibleArea();
     int startLine = area.y / editor.getLineHeight() + 1;
     return (line - startLine) * editor.getLineHeight() < 200 ? Balloon.Position.below : Balloon.Position.above;
   }

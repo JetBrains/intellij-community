@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -93,7 +93,7 @@ public abstract class IntentionSettingsTree {
   }
 
   protected abstract void selectionChanged(Object selected);
-  protected abstract List<IntentionActionMetaData> filterModel(String filter, final boolean force);
+  protected abstract List<IntentionActionMetaData> filterModel(String filter, boolean force);
 
   public void filter(List<IntentionActionMetaData> intentionsToShow) {
     refreshCheckStatus((CheckedTreeNode)myTree.getModel().getRoot());
@@ -139,9 +139,9 @@ public abstract class IntentionSettingsTree {
   }
 
   public void selectIntention(String familyName) {
-    final CheckedTreeNode child = findChildRecursively(getRoot(), familyName);
+    CheckedTreeNode child = findChildRecursively(getRoot(), familyName);
     if (child != null) {
-      final TreePath path = new TreePath(child.getPath());
+      TreePath path = new TreePath(child.getPath());
       TreeUtil.selectPath(myTree, path);
     }
   }
@@ -164,7 +164,7 @@ public abstract class IntentionSettingsTree {
     return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
-  private boolean resetCheckMark(final CheckedTreeNode root) {
+  private boolean resetCheckMark(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData metaData) {
       Boolean b = myIntentionToCheckStatus.get(metaData);
@@ -186,8 +186,8 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private static CheckedTreeNode findChild(TreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<>();
+  private static CheckedTreeNode findChild(TreeNode node, String name) {
+    Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
@@ -200,20 +200,20 @@ public abstract class IntentionSettingsTree {
     return found.get();
   }
 
-  private static CheckedTreeNode findChildRecursively(TreeNode node, final String name) {
-    final Ref<CheckedTreeNode> found = new Ref<>();
+  private static CheckedTreeNode findChildRecursively(TreeNode node, String name) {
+    Ref<CheckedTreeNode> found = new Ref<>();
     visitChildren(node, new CheckedNodeVisitor() {
       @Override
       public void visit(CheckedTreeNode node) {
         if (found.get() != null) return;
-        final Object userObject = node.getUserObject();
+        Object userObject = node.getUserObject();
         if (userObject instanceof IntentionActionMetaData) {
           String text = getNodeText(node);
           if (name.equals(text)) {
             found.set(node);
           }
         } else {
-          final CheckedTreeNode child = findChildRecursively(node, name);
+          CheckedTreeNode child = findChildRecursively(node, name);
           if (child != null) {
             found.set(child);
           }
@@ -224,7 +224,7 @@ public abstract class IntentionSettingsTree {
   }
 
   private static String getNodeText(CheckedTreeNode node) {
-    final Object userObject = node.getUserObject();
+    Object userObject = node.getUserObject();
     String text;
     if (userObject instanceof String) {
       text = (String)userObject;
@@ -243,7 +243,7 @@ public abstract class IntentionSettingsTree {
     apply(root);
   }
 
-  private void refreshCheckStatus(final CheckedTreeNode root) {
+  private void refreshCheckStatus(CheckedTreeNode root) {
     Object userObject = root.getUserObject();
     if (userObject instanceof IntentionActionMetaData actionMetaData) {
       myIntentionToCheckStatus.put(actionMetaData, root.isChecked());
@@ -285,7 +285,7 @@ public abstract class IntentionSettingsTree {
       return enabled != root.isChecked();
     }
     else {
-      final boolean[] modified = new boolean[] { false };
+      boolean[] modified = new boolean[] { false };
       visitChildren(root, new CheckedNodeVisitor() {
         @Override
         public void visit(CheckedTreeNode node) {
@@ -314,7 +314,7 @@ public abstract class IntentionSettingsTree {
   private static void visitChildren(TreeNode node, CheckedNodeVisitor visitor) {
     Enumeration<?> children = node.children();
     while (children.hasMoreElements()) {
-      final CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
+      CheckedTreeNode child = (CheckedTreeNode)children.nextElement();
       visitor.visit(child);
     }
   }
@@ -328,7 +328,7 @@ public abstract class IntentionSettingsTree {
 
     @Override
     public void filter() {
-      final String filter = getFilter();
+      String filter = getFilter();
       if (filter != null && filter.length() > 0) {
         if (!myExpansionMonitor.isFreeze()) {
           myExpansionMonitor.freeze();
@@ -353,7 +353,7 @@ public abstract class IntentionSettingsTree {
 
     @Override
     protected void onlineFilter() {
-      final String filter = getFilter();
+      String filter = getFilter();
       if (filter != null && filter.length() > 0) {
         if (!myExpansionMonitor.isFreeze()) {
           myExpansionMonitor.freeze();
@@ -386,7 +386,7 @@ public abstract class IntentionSettingsTree {
       SimpleTextAttributes attributes = node.getUserObject() instanceof IntentionActionMetaData
                                         ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                                         : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-      final String text = getNodeText(node);
+      String text = getNodeText(node);
       Color background = UIUtil.getTreeBackground(selected, true);
       UIUtil.changeBackGround(this, background);
       SearchUtil.appendFragments(myFilter != null ? myFilter.getFilter() : null,

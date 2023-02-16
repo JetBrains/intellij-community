@@ -58,18 +58,18 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
 
   private TextDescriptor @NotNull [] retrieveURLs(@NotNull String prefix, @NotNull String suffix) {
     Set<TextDescriptor> urls = new LinkedHashSet<>();
-    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
-      final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
-      for (final FileNameMatcher matcher : matchers) {
+      List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
+      for (FileNameMatcher matcher : matchers) {
         if (matcher instanceof ExactFileNameMatcher exactFileNameMatcher) {
-          final String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
+          String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
           String resourcePath = getResourceLocation(prefix + "." + fileName + suffix);
           URL resource = myLoader.getResource(resourcePath);
           if (resource != null) urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
         }
         else if (matcher instanceof ExtensionFileNameMatcher extensionFileNameMatcher) {
-          final String extension = extensionFileNameMatcher.getExtension();
+          String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
             String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
                                   + suffix);

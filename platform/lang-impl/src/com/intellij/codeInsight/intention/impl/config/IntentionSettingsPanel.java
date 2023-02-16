@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.ide.ui.search.SearchUtil;
@@ -36,7 +36,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
       @Override
       protected void selectionChanged(Object selected) {
         if (selected instanceof IntentionActionMetaData actionMetaData) {
-          final Runnable runnable = () -> {
+          Runnable runnable = () -> {
             intentionSelected(actionMetaData);
             if (myDetailsComponent != null) {
               String[] text = ArrayUtil.append(actionMetaData.myCategory, actionMetaData.getFamily());
@@ -55,7 +55,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
       }
 
       @Override
-      protected List<IntentionActionMetaData> filterModel(String filter, final boolean force) {
+      protected List<IntentionActionMetaData> filterModel(String filter, boolean force) {
         List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
         if (filter == null || filter.length() == 0) {
           return list;
@@ -69,7 +69,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
             result.add(metaData);
           }
         }
-        final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
+        Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
         if (force && result.isEmpty()){
           if (filters.size() > 1){
             result = filterModel(filter, false);
@@ -166,7 +166,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
         }
       }
       try {
-        final TextDescriptor description = metaData.getDescription();
+        TextDescriptor description = metaData.getDescription();
         if (StringUtil.containsIgnoreCase(description.getText(), stripped)){
           if (!forceInclude) return true;
         } else if (forceInclude) return false;
@@ -190,7 +190,7 @@ public final class IntentionSettingsPanel implements MasterDetails {
     return forceInclude;
   }
 
-  public Runnable showOption(final String option) {
+  public Runnable showOption(String option) {
     return () -> {
       myIntentionSettingsTree.filter(myIntentionSettingsTree.filterModel(option, true));
       myIntentionSettingsTree.setFilter(option);

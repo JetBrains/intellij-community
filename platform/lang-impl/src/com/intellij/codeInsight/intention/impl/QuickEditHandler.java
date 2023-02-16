@@ -86,7 +86,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   QuickEditHandler(@NotNull Project project,
                    @NotNull PsiFile injectedFile,
-                   final @NotNull PsiFile origFile,
+                   @NotNull PsiFile origFile,
                    @NotNull Editor editor,
                    @NotNull QuickEditAction action) {
     myProject = project;
@@ -194,12 +194,12 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   public void navigate(int injectedOffset) {
     if (myAction.isShowInBalloon()) {
-      final JComponent component = myAction.createBalloonComponent(myNewFile);
+      JComponent component = myAction.createBalloonComponent(myNewFile);
       if (component != null) showBalloon(myEditor, myNewFile, component);
     }
     else {
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
+      FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+      FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
         mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
@@ -208,7 +208,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       // fold missing values
       if (editor instanceof EditorEx) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
-        final FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
+        FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
           CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
@@ -234,7 +234,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   }
 
   public static void showBalloon(Editor editor, PsiFile newFile, JComponent component) {
-    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
       .setShadow(true)
       .setAnimationCycle(0)
       .setHideOnClickOutside(true)
@@ -245,10 +245,10 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     DumbAwareAction.create(e -> balloon.hide())
       .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
     Disposer.register(newFile.getProject(), balloon);
-    final Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
+    Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     if (position == Balloon.Position.above) {
-      final Point p = point.getPoint();
+      Point p = point.getPoint();
       point = new RelativePoint(point.getComponent(), new Point(p.x, p.y - editor.getLineHeight()));
     }
     balloon.show(point, position);
@@ -289,7 +289,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private void closeEditor() {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      final List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+      List<EditorComposite> editors = mySplittedWindow.getAllComposites();
       if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
@@ -329,7 +329,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   }
 
 
-  private void commitToOriginal(final DocumentEvent e) {
+  private void commitToOriginal(DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
       PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
@@ -368,7 +368,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
-    public void handle(final ReadOnlyFragmentModificationException e) {
+    public void handle(ReadOnlyFragmentModificationException e) {
       //nothing
     }
   }

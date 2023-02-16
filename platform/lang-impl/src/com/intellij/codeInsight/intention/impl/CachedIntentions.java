@@ -188,10 +188,10 @@ public final class CachedIntentions {
       }
       return changed;
     }
-    final int caretOffset = myEditor.getCaretModel().getOffset();
-    final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
     PsiElement element;
-    final PsiElement hostElement;
+    PsiElement hostElement;
     if (myFile instanceof PsiCompiledElement) {
       hostElement = element = myFile;
     }
@@ -217,7 +217,7 @@ public final class CachedIntentions {
 
     Set<IntentionActionWithTextCaching> wrappedNew = new LinkedHashSet<>(newDescriptors.size());
     for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
-      final IntentionAction action = descriptor.getAction();
+      IntentionAction action = descriptor.getAction();
       if (element != null &&
           element != hostElement &&
           (!shouldCallIsAvailable || ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
@@ -342,7 +342,7 @@ public final class CachedIntentions {
     }
 
     if (iconable instanceof Iconable) {
-      final Icon icon = ((Iconable)iconable).getIcon(0);
+      Icon icon = ((Iconable)iconable).getIcon(0);
       if (icon != null) {
         return icon;
       }

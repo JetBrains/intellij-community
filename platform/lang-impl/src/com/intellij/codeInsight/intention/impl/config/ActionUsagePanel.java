@@ -67,7 +67,7 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     return editor;
   }
 
-  public void reset(final String usageText, final FileType fileType) {
+  public void reset(String usageText, FileType fileType) {
     reinitViews();
     SwingUtilities.invokeLater(() -> {
       if (myEditor.isDisposed()) return;
@@ -75,11 +75,11 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     });
   }
 
-  private void configureByText(final String usageText, FileType fileType) {
+  private void configureByText(String usageText, FileType fileType) {
     Document document = myEditor.getDocument();
     String text = StringUtil.convertLineSeparators(usageText);
     document.replaceString(0, document.getTextLength(), text);
-    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, scheme, null));
     setupSpots(document);
   }
@@ -88,9 +88,9 @@ public class ActionUsagePanel extends JPanel implements Disposable {
     List<Segment> markers = new ArrayList<>();
     while (true) {
       String text = document.getText();
-      final int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
+      int spotStart = text.indexOf("<" + SPOT_MARKER + ">");
       if (spotStart < 0) break;
-      final int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
+      int spotEnd = text.indexOf("</" + SPOT_MARKER + ">", spotStart);
       if (spotEnd < 0) break;
 
       document.deleteString(spotEnd, spotEnd + SPOT_MARKER.length() + 3);
