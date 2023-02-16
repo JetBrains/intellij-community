@@ -873,7 +873,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   }
 
   override fun setAutodetect(value: Boolean) {
+    if (autodetect == value) {
+      return
+    }
+
     autodetect = value
+
+    // Notify autodetect is changed
+    notifyLookAndFeelChanged()
+
     if (autodetect) {
       detectAndSyncLaf()
     }
