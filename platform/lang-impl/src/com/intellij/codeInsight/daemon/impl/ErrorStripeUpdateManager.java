@@ -55,12 +55,14 @@ public final class ErrorStripeUpdateManager implements Disposable {
     markup.setErrorPanelPopupHandler(new DaemonEditorPopup(myProject, editor));
     markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(myProject, editor));
     markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
-    setOrRefreshErrorStripeRenderer(markup, psiFile);
+    if (psiFile != null) {
+      setOrRefreshErrorStripeRenderer(markup, psiFile);
+    }
   }
 
-  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @Nullable PsiFile file) {
+  void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || file == null || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
@@ -68,7 +70,9 @@ public final class ErrorStripeUpdateManager implements Disposable {
       EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl) editorMarkupModel;
       tlr.refresh(markupModelImpl);
       markupModelImpl.repaintTrafficLightIcon();
-      if (tlr.isValid()) return;
+      if (tlr.isValid()) {
+        return;
+      }
     }
     ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
@@ -79,12 +83,12 @@ public final class ErrorStripeUpdateManager implements Disposable {
 
       TrafficLightRenderer tlRenderer = createRenderer(editor, file);
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (editor.isDisposed()) {
+        if (myProject.isDisposed() || editor.isDisposed()) {
           Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
           return;
         }
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
-      }, modality, myProject.getDisposed());
+      }, modality);
     });
   }
 
