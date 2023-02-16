@@ -76,10 +76,10 @@ private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persis
   map.put(PRODUCT_JAR) { it.startsWith("License") }
   // see ClassPathUtil.getUtilClassPath
   map.put("3rd-party-rt.jar") {
-    libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect" ||
-    // used by intellij.database.jdbcConsole
-    it == "jbr-api"
+    libsThatUsedInJps.contains(it) || it.startsWith("kotlinx-") || it == "kotlin-reflect"
   }
+  // used by intellij.database.jdbcConsole
+  map.put("util.jar") { it == "jbr-api" }
 }
 
 internal fun getLibraryFileName(library: JpsLibrary): String {
