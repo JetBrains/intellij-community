@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -69,12 +69,10 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private final Project myProject;
   private final QuickEditAction myAction;
 
-  @NotNull
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
   private final Document myOrigDocument;
 
-  @NotNull
-  private final Document myNewDocument;
+  private final @NotNull Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
 

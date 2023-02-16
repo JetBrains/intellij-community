@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -55,14 +55,12 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CodeInsightBundle.message("intention.family.convert.absolute.path.to.relative");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return CodeInsightBundle.message("intention.text.convert.path.to.relative");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -39,8 +39,8 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @NotNull HighlightSeverity severity,
                                      @Nullable GutterMark gutterMark,
                                      @Nullable List<? extends Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
-                                     @NotNull final PsiFile psiFile,
-                                     @NotNull final Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
+                                     final @NotNull PsiFile psiFile,
+                                     final @NotNull Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
     super(getColor(psiFile.getProject(), severity), getStatus(psiFile.getProject(), severity));
     Project project = psiFile.getProject();
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
@@ -100,8 +100,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
   }
 
-  @NotNull
-  private static Color getColor(@NotNull Project project, @NotNull HighlightSeverity severity) {
+  private static @NotNull Color getColor(@NotNull Project project, @NotNull HighlightSeverity severity) {
     if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0) {
       return LightColors.RED;
     }

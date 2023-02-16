@@ -46,8 +46,8 @@ public class IntentionDescriptionPanel {
   private final DescriptionEditorPane myDescriptionBrowser;
   private final List<IntentionUsagePanel> myBeforeUsagePanels = new ArrayList<>();
   private final List<IntentionUsagePanel> myAfterUsagePanels = new ArrayList<>();
-  @NonNls private static final String BEFORE_TEMPLATE = "before.java.template";
-  @NonNls private static final String AFTER_TEMPLATE = "after.java.template";
+  private static final @NonNls String BEFORE_TEMPLATE = "before.java.template";
+  private static final @NonNls String AFTER_TEMPLATE = "after.java.template";
   private static final float DIVIDER_PROPORTION_DEFAULT = .25f;
 
   public IntentionDescriptionPanel() {

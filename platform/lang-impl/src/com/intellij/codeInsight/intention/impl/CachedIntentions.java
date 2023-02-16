@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -48,12 +48,9 @@ public final class CachedIntentions {
   private int myOffset;
   private HighlightInfoType myHighlightInfoType;
 
-  @Nullable
-  private final Editor myEditor;
-  @NotNull
-  private final PsiFile myFile;
-  @NotNull
-  private final Project myProject;
+  private final @Nullable Editor myEditor;
+  private final @NotNull PsiFile myFile;
+  private final @NotNull Project myProject;
 
   private final List<AnAction> myGuttersRaw = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -63,43 +60,35 @@ public final class CachedIntentions {
     myEditor = editor;
   }
 
-  @NotNull
-  public Set<IntentionActionWithTextCaching> getIntentions() {
+  public @NotNull Set<IntentionActionWithTextCaching> getIntentions() {
     return myIntentions;
   }
 
-  @NotNull
-  public Set<IntentionActionWithTextCaching> getErrorFixes() {
+  public @NotNull Set<IntentionActionWithTextCaching> getErrorFixes() {
     return myErrorFixes;
   }
 
-  @NotNull
-  public Set<IntentionActionWithTextCaching> getInspectionFixes() {
+  public @NotNull Set<IntentionActionWithTextCaching> getInspectionFixes() {
     return myInspectionFixes;
   }
 
-  @NotNull
-  public Set<IntentionActionWithTextCaching> getGutters() {
+  public @NotNull Set<IntentionActionWithTextCaching> getGutters() {
     return myGutters;
   }
 
-  @NotNull
-  public Set<IntentionActionWithTextCaching> getNotifications() {
+  public @NotNull Set<IntentionActionWithTextCaching> getNotifications() {
     return myNotifications;
   }
 
-  @Nullable
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -111,15 +100,13 @@ public final class CachedIntentions {
     return myHighlightInfoType;
   }
 
-  @NotNull
-  public static CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+  public static @NotNull CachedIntentions create(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, false);
     return res;
   }
 
-  @NotNull
-  public static CachedIntentions createAndUpdateActions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
+  public static @NotNull CachedIntentions createAndUpdateActions(@NotNull Project project, @NotNull PsiFile file, @Nullable Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, true);
     return res;
@@ -302,8 +289,7 @@ public final class CachedIntentions {
     myNotifications.remove(action);
   }
 
-  @NotNull
-  public List<IntentionActionWithTextCaching> getAllActions() {
+  public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
     List<IntentionActionWithTextCaching> result = new ArrayList<>(myErrorFixes);
     result.addAll(myInspectionFixes);
     for (IntentionActionWithTextCaching intention : myIntentions) {
@@ -320,8 +306,7 @@ public final class CachedIntentions {
     return intentionsOrder.getSortedIntentions(this, result);
   }
 
-  @NotNull
-  public IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
+  public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
     if (myErrorFixes.contains(action)) {
       return IntentionGroup.ERROR;
     }
@@ -340,8 +325,7 @@ public final class CachedIntentions {
     return IntentionGroup.OTHER;
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
+  public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching value) {
     if (value.getIcon() != null) {
       return value.getIcon();
     }

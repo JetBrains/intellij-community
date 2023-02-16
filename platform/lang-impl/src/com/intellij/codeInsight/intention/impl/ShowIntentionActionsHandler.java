@@ -123,9 +123,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new IllegalStateException("must not wait for intentions inside write action");
     String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
@@ -201,11 +200,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  @Nullable
-  public static Pair<PsiFile, Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile,
-                                                                   @NotNull Editor hostEditor,
-                                                                   @Nullable PsiFile injectedFile,
-                                                                   @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
+  public static @Nullable Pair<PsiFile, Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile,
+                                                                             @NotNull Editor hostEditor,
+                                                                             @Nullable PsiFile injectedFile,
+                                                                             @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     try {
       Editor editorToApply = null;
       PsiFile fileToApply = null;
@@ -278,10 +276,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
 
-  @Nullable
-  public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
-                                                          @Nullable Editor hostEditor,
-                                                          @NotNull IntentionAction action) {
+  public static @Nullable Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                                    @Nullable Editor hostEditor,
+                                                                    @NotNull IntentionAction action) {
     if (hostEditor == null) {
       return Pair.create(hostFile, null);
     }

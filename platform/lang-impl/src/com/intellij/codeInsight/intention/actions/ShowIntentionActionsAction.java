@@ -64,9 +64,8 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     return true;
   }
 
-  @NotNull
   @Override
-  protected ShowIntentionActionsHandler getHandler() {
+  protected @NotNull ShowIntentionActionsHandler getHandler() {
     return new ShowIntentionActionsHandler();
   }
 }

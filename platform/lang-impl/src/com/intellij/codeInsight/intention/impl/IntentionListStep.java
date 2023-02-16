@@ -36,17 +36,14 @@ import java.util.stream.Collectors;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
-  @NotNull
-  private final CachedIntentions myCachedIntentions;
-  @Nullable
-  private final IntentionHintComponent.IntentionPopup myPopup;
+  private final @NotNull CachedIntentions myCachedIntentions;
+  private final @Nullable IntentionHintComponent.IntentionPopup myPopup;
   private final Dimension myMaxIconSize;
 
   private Runnable myFinalRunnable;
   private final Project myProject;
   private final PsiFile myFile;
-  @Nullable
-  private final Editor myEditor;
+  private final @Nullable Editor myEditor;
 
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
@@ -204,14 +201,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   @Override
-  @NotNull
-  public List<IntentionActionWithTextCaching> getValues() {
+  public @NotNull List<IntentionActionWithTextCaching> getValues() {
     return myCachedIntentions.getAllActions();
   }
 
   @Override
-  @NotNull
-  public String getTextFor(IntentionActionWithTextCaching action) {
+  public @NotNull String getTextFor(IntentionActionWithTextCaching action) {
     String text = action.getText();
     if (LOG.isDebugEnabled() && text.startsWith("<html>")) {
       LOG.info("IntentionAction.getText() returned HTML: action=" + action.getAction().getClass() + " text=" + text);
@@ -228,8 +223,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     return icon;
   }
 
-  @Nullable
-  public Icon getOriginalIconFor(@NotNull IntentionActionWithTextCaching value) {
+  public @Nullable Icon getOriginalIconFor(@NotNull IntentionActionWithTextCaching value) {
     if (!value.isShowIcon()) return null;
 
     return myCachedIntentions.getIcon(value);

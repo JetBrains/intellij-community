@@ -26,10 +26,10 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   protected static final TextDescriptor[] EMPTY_EXAMPLE = new TextDescriptor[0];
   protected static final TextDescriptor EMPTY_DESCRIPTION = new PlainTextDescriptor("", "");
 
-  @NonNls protected static final String DESCRIPTION_FILE_NAME = "description.html";
-  @NonNls static final String EXAMPLE_USAGE_URL_SUFFIX = ".template";
-  @NonNls private static final String BEFORE_TEMPLATE_PREFIX = "before";
-  @NonNls private static final String AFTER_TEMPLATE_PREFIX = "after";
+  protected static final @NonNls String DESCRIPTION_FILE_NAME = "description.html";
+  static final @NonNls String EXAMPLE_USAGE_URL_SUFFIX = ".template";
+  private static final @NonNls String BEFORE_TEMPLATE_PREFIX = "before";
+  private static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
   private TextDescriptor[] myExampleUsagesBefore;
@@ -121,8 +121,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   }
 
   @Override
-  @NotNull
-  public TextDescriptor getDescription() {
+  public @NotNull TextDescriptor getDescription() {
     if (myDescription == null) {
       myDescription = new ResourceTextDescriptor(myLoader, getResourceLocation(DESCRIPTION_FILE_NAME));
     }
