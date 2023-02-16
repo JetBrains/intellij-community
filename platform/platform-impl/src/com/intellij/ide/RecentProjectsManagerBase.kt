@@ -109,9 +109,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   final override fun getState() = state
 
-  fun getProjectMetaInfo(file: Path): RecentProjectMetaInfo? {
+  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+    val path = getProjectPath(projectStoreBaseDir) ?: return null
     synchronized(stateLock) {
-      return state.additionalInfo.get(file.systemIndependentPath)
+      return state.additionalInfo.get(path)
     }
   }
 
@@ -262,6 +263,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
+
+  open fun getProjectPath(projectStoreBaseDir: Path): String? {
+    return projectStoreBaseDir.systemIndependentPath
+  }
 
   open fun getProjectPath(project: Project): String? {
     return FileUtilRt.toSystemIndependentName(project.presentableUrl ?: return null)
