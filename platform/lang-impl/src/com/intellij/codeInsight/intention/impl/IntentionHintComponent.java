@@ -85,27 +85,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static final Logger LOG = Logger.getInstance(IntentionHintComponent.class);
 
-  private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
-
   private static final Alarm ourAlarm = new Alarm();
 
-  private final IntentionPopup myPopup;
-
   private final Editor myEditor;
-
-  private final RowIcon myHighlightedIcon;
-  private final JLabel myIconLabel;
-
-  private final RowIcon myInactiveIcon;
-
-  private final MyComponentHint myComponentHint;
   private boolean myDisposed; // accessed in EDT only
-  private final JPanel myPanel = new JPanel() {
-    @Override
-    public synchronized void addMouseListener(MouseListener l) {
-      // avoid this (transparent) panel consuming mouse click events
-    }
-  };
+
+  private final LightBulbPanel myLightBulbPanel;
+  private final MyComponentHint myComponentHint;
+  private final IntentionPopup myPopup;
 
   @RequiresEdt
   private IntentionHintComponent(@NotNull Project project,
@@ -117,21 +104,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup = popup;
     Disposer.register(this, popup);
 
-    myPanel.setLayout(new BorderLayout());
-    myPanel.setOpaque(false);
+    myLightBulbPanel = new LightBulbPanel(project, file, editor, smartTagIcon);
+    myComponentHint = new MyComponentHint(myLightBulbPanel);
 
-    IconManager iconManager = IconManager.getInstance();
-    myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
-    myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
-
-    myIconLabel = new JLabel(myInactiveIcon);
-    myIconLabel.setOpaque(false);
-    myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
-
-    myPanel.add(myIconLabel, BorderLayout.CENTER);
-    myPanel.setBorder(LightBulb.getInactiveBorder(editor.isOneLineMode()));
-
-    myComponentHint = new MyComponentHint(myPanel);
     EditorUtil.disposeWithEditor(myEditor, this);
     DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
   }
@@ -160,7 +135,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   public boolean isVisible() {
-    return myPanel.isVisible();
+    return myLightBulbPanel.isVisible();
   }
 
   public boolean isDisposed() {
@@ -172,7 +147,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   public void dispose() {
     myDisposed = true;
     myComponentHint.hide();
-    myPanel.hide();
+    myLightBulbPanel.hide();
   }
 
   @Override
@@ -235,25 +210,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  @RequiresEdt
-  private void onMouseExit() {
-    if (!myPopup.isVisible()) {
-      myIconLabel.setIcon(myInactiveIcon);
-      myPanel.setBorder(LightBulb.getInactiveBorder(myEditor.isOneLineMode()));
-    }
-  }
-
-  private void onMouseEnter() {
-    myIconLabel.setIcon(myHighlightedIcon);
-    myPanel.setBorder(LightBulb.getActiveBorder(myEditor.isOneLineMode()));
-
-    String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-    if (!acceleratorsText.isEmpty()) {
-      myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
-    }
-  }
-
   @TestOnly
   public LightweightHint getComponentHint() {
     return myComponentHint;
@@ -267,8 +223,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
     RelativePoint positionHint = null;
-    if (mouseClick && myPanel.isShowing()) {
-      RelativePoint swCorner = RelativePoint.getSouthWestOf(myPanel);
+    if (mouseClick && myLightBulbPanel.isShowing()) {
+      RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
       int yOffset = LightBulb.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
                     myEditor.getLineHeight() - LightBulb.getBorderSize(myEditor.isOneLineMode());
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
@@ -664,6 +620,54 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
+  private class LightBulbPanel extends JPanel {
+    private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
+
+    private final RowIcon myHighlightedIcon;
+    private final RowIcon myInactiveIcon;
+    private final JLabel myIconLabel;
+
+    LightBulbPanel(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
+      setLayout(new BorderLayout());
+      setOpaque(false);
+
+      IconManager iconManager = IconManager.getInstance();
+      myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+      myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
+
+      myIconLabel = new JLabel(myInactiveIcon);
+      myIconLabel.setOpaque(false);
+      myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
+
+      add(myIconLabel, BorderLayout.CENTER);
+      setBorder(LightBulb.getInactiveBorder(editor.isOneLineMode()));
+    }
+
+    @Override
+    public synchronized void addMouseListener(MouseListener l) {
+      // avoid this (transparent) panel consuming mouse click events
+    }
+
+    @RequiresEdt
+    private void onMouseExit() {
+      if (!myPopup.isVisible()) {
+        myIconLabel.setIcon(myInactiveIcon);
+        setBorder(LightBulb.getInactiveBorder(myEditor.isOneLineMode()));
+      }
+    }
+
+    private void onMouseEnter() {
+      myIconLabel.setIcon(myHighlightedIcon);
+      setBorder(LightBulb.getActiveBorder(myEditor.isOneLineMode()));
+
+      String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
+        ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+      if (!acceleratorsText.isEmpty()) {
+        myIconLabel.setToolTipText(CodeInsightBundle.message("lightbulb.tooltip", acceleratorsText));
+      }
+    }
+  }
+
   private class LightBulbMouseListener extends MouseAdapter {
     private final @NotNull Project myProject;
     private final @NotNull PsiFile myFile;
@@ -683,12 +687,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
-      onMouseEnter();
+      myLightBulbPanel.onMouseEnter();
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      onMouseExit();
+      myLightBulbPanel.onMouseExit();
     }
 
     private void logMousePressed(@NotNull MouseEvent e) {
