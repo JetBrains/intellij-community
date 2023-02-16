@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -25,20 +26,20 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
-import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static final String ID = "Problems View";
 
-  public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
-    return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
+  public static @Nullable ToolWindow getToolWindow(@NotNull Project project) {
+    return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
   public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
     ContentManager manager = window.getContentManager();
-    HighlightingPanel panel = get(HighlightingPanel.class, manager.getSelectedContent());
+    Content selectedContent = manager.getSelectedContent();
+    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
     if (file == null || panel == null || !panel.isShowing()) {
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, HighlightingPanel.ID);
@@ -55,20 +56,22 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   public static void selectHighlighterIfVisible(@NotNull Project project, @NotNull RangeHighlighterEx highlighter) {
-    HighlightingPanel panel = get(HighlightingPanel.class, getSelectedContent(project));
+    Content selectedContent = getSelectedContent(project);
+    HighlightingPanel panel = selectedContent == null ? null : get(HighlightingPanel.class, selectedContent);
     if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);
   }
 
-  public static @Nullable Document getDocument(@Nullable Project project, @NotNull VirtualFile file) {
-    Object item = file.isDirectory() ? null : findFileSystemItem(project, file);
-    return item instanceof PsiFile ? PsiDocumentManager.getInstance(project).getDocument((PsiFile)item) : null;
+  public static @Nullable Document getDocument(@NotNull Project project, @NotNull VirtualFile file) {
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    return psiFile == null ? null : PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
 
-  public static @Nullable ProblemsViewPanel getSelectedPanel(@Nullable Project project) {
-    return get(ProblemsViewPanel.class, getSelectedContent(project));
+  public static @Nullable ProblemsViewPanel getSelectedPanel(@NotNull Project project) {
+    Content selectedContent = getSelectedContent(project);
+    return selectedContent == null ? null : get(ProblemsViewPanel.class, selectedContent);
   }
 
-  private static @Nullable Content getSelectedContent(@Nullable Project project) {
+  private static @Nullable Content getSelectedContent(@NotNull Project project) {
     ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();
     return manager == null ? null : manager.getSelectedContent();
@@ -83,19 +86,19 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     manager.addContent(content);
   }
 
-  private static void selectionChanged(boolean selected, @Nullable Content content) {
+  private static void selectionChanged(boolean selected, @NotNull Content content) {
     ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
     if (panel != null) panel.selectionChangedTo(selected);
   }
 
-  private static void visibilityChanged(boolean visible, @Nullable Content content) {
+  private static void visibilityChanged(boolean visible, @NotNull Content content) {
     ProblemsViewPanel panel = get(ProblemsViewPanel.class, content);
     if (panel != null) panel.visibilityChangedTo(visible);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> @Nullable T get(@NotNull Class<T> type, @Nullable Content content) {
-    JComponent component = content == null ? null : content.getComponent();
+  private static <T> @Nullable T get(@NotNull Class<T> type, @NotNull Content content) {
+    JComponent component = content.getComponent();
+    //noinspection unchecked
     return type.isInstance(component) ? (T)component : null;
   }
 
@@ -140,7 +143,10 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
     }
 
-    selectionChanged(true, manager.getSelectedContent());
+    Content selectedContent = manager.getSelectedContent();
+    if (selectedContent != null) {
+      selectionChanged(true, selectedContent);
+    }
     manager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
@@ -176,7 +182,10 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         }
         boolean visible = window.isVisible();
         if (visible != visibility.getAndSet(visible)) {
-          visibilityChanged(visible, window.getContentManager().getSelectedContent());
+          Content selectedContent = window.getContentManager().getSelectedContent();
+          if (selectedContent != null) {
+            visibilityChanged(visible, selectedContent);
+          }
         }
       }
     };
