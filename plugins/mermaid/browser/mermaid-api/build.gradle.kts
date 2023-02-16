@@ -7,7 +7,9 @@ val mermaidVersion: String by project
 dependencies {
   implementation(kotlin("stdlib-js"))
   implementation(npm("mermaid", version = mermaidVersion))
-  implementation(npm("@mermaid-js/mermaid-mindmap", version = mermaidVersion))
+  // Use last external mindmap package, so we can maintain its definition in code.
+  // This dependency is not actually present in the resulting bundle.
+  implementation(npm("@mermaid-js/mermaid-mindmap", version = "9.3.0"))
 }
 
 kotlin {

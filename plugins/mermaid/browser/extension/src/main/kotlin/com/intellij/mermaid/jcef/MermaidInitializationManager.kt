@@ -1,9 +1,8 @@
 package com.intellij.mermaid.jcef
 
+import com.intellij.mermaid.api.ExternalDiagramDefinition
 import com.intellij.mermaid.api.Mermaid
-import com.intellij.mermaid.api.MindMap
 import com.intellij.mermaid.api.SimpleMermaidConfig
-import com.intellij.mermaid.api.definition
 import kotlinx.coroutines.await
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -35,7 +34,8 @@ internal object MermaidInitializationManager {
   }
 
   private suspend fun registerExternalDiagrams() {
-    val externalDiagrams = arrayOf(MindMap.definition)
+    // val externalDiagrams = arrayOf(MindMap.definition)
+    val externalDiagrams = arrayOf<ExternalDiagramDefinition>()
     Mermaid.registerExternalDiagrams(externalDiagrams).await()
   }
 }

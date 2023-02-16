@@ -18,6 +18,7 @@ package com.intellij.mermaid.api
  *
  * For some reason this was the only way for compiler to generate correct code.
  */
+@Deprecated("Should not be used since mermaid 9.4.0")
 @JsModule("@mermaid-js/mermaid-mindmap/dist/mermaid-mindmap.core.mjs")
 external object MindMap
 
