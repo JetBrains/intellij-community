@@ -1011,6 +1011,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myRequestManager.setFilterThread(null);
   }
 
+  public @NotNull Disposable getDisposable() {
+    return myDisposable;
+  }
+
   @Override
   public @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
