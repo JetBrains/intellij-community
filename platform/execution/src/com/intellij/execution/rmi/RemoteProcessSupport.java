@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -336,6 +337,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public Heartbeat getHeartBeat() {
+    return myHeartbeatRef.get();
+  }
+
   private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {
     return new ProcessListener() {
       @Override
@@ -570,23 +577,28 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
     void startBeat() {
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
-        try {
-          if (live) {
-            IdeaWatchdog watchdog = getWatchdog();
-            watchdog.ping();
-          }
-        }
-        catch (Exception ignore) {
-          live = false;
-          myFuture.cancel(false);
-        }
-        catch (Throwable t) {
-          live = false;
-          myFuture.cancel(false);
-          LOG.error(t);
-        }
+        beat();
       }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
       Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
+    }
+
+    public boolean beat() {
+      try {
+        if (live) {
+          IdeaWatchdog watchdog = getWatchdog();
+          return watchdog.ping();
+        }
+      }
+      catch (Exception ignore) {
+        live = false;
+        myFuture.cancel(false);
+      }
+      catch (Throwable t) {
+        live = false;
+        myFuture.cancel(false);
+        LOG.error(t);
+      }
+      return false;
     }
 
     @TestOnly

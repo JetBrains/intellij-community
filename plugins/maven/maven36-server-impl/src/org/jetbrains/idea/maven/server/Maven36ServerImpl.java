@@ -110,6 +110,13 @@ public class Maven36ServerImpl extends MavenRemoteObject implements MavenServer 
       throw wrapToSerializableRuntimeException(e);
     }
   }
+
+  @Override
+  public boolean isAlive(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    return true;
+  }
+
   @Override
   public synchronized void unreferenced() {
     System.exit(0);

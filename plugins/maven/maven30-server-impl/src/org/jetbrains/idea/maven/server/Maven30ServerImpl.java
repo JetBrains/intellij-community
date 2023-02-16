@@ -18,12 +18,12 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import org.jetbrains.idea.maven.server.security.MavenToken;
 
 public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer {
 
@@ -119,6 +119,12 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     catch (RemoteException e) {
       throw wrapToSerializableRuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean isAlive(MavenToken token) {
+    MavenServerUtil.checkToken(token);
+    return true;
   }
 
   @Override

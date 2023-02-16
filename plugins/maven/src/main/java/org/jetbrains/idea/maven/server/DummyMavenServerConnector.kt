@@ -6,17 +6,19 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.server.MavenServerConnector.State
+import org.jetbrains.idea.maven.server.RemoteObjectWrapper.Retriable
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
+import java.rmi.RemoteException
 
 
 class DummyMavenServerConnector(project: @NotNull Project,
-                                val manager: @NotNull MavenServerManager,
                                 jdk: @NotNull Sdk,
                                 vmOptions: @NotNull String,
                                 mavenDistribution: @NotNull MavenDistribution,
-                                multimoduleDirectory: @NotNull String) : MavenServerConnector(project, manager, jdk, vmOptions,
-                                                                                              mavenDistribution, multimoduleDirectory) {
+                                multimoduleDirectory: @NotNull String) : AbstractMavenServerConnector(project, jdk, vmOptions,
+                                                                                                                                                         mavenDistribution, multimoduleDirectory) {
   override fun isNew() = false
 
   override fun isCompatibleWith(jdk: Sdk?, vmOptions: String?, distribution: MavenDistribution?) = true
@@ -28,6 +30,10 @@ class DummyMavenServerConnector(project: @NotNull Project,
     return DummyMavenServer(myProject)
   }
 
+  override fun ping(): Boolean {
+    return true
+  }
+
   override fun stop(wait: Boolean) {
   }
 
@@ -36,6 +42,15 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun getState() = State.RUNNING
 
   override fun checkConnected() = true
+
+  override fun <R, E : Exception?> perform(r: Retriable<R, E>): R {
+    return try {
+      r.execute()
+    }
+    catch (e: RemoteException) {
+      throw RuntimeException(e)
+    }
+  }
 
   companion object {
 
@@ -79,6 +94,10 @@ class DummyMavenServer(val project: Project) : MavenServer {
 
   override fun createPullDownloadListener(token: MavenToken?): MavenPullDownloadListener? {
     return null
+  }
+
+  override fun isAlive(token: MavenToken?): Boolean {
+    return true
   }
 }
 
