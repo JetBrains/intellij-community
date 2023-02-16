@@ -1,5 +1,9 @@
 # Mermaid
 
+## Plugin description
+
+**Note:** Links in plugin description have to be inlined.
+
 [//]: # (Plugin description)
 
 Provides support for creating diagrams with [Mermaid](https://mermaid-js.github.io/).
@@ -10,7 +14,9 @@ Provides support for creating diagrams with [Mermaid](https://mermaid-js.github.
 
 [//]: # (Plugin description end)
 
----
-Plugin based on the [IntelliJ Platform Plugin Template][template].
+## Version scheme
 
-[template]: https://github.com/JetBrains/intellij-platform-plugin-template
+Plugins are required to use SemVer for its versioning.
+
+* Nightly versions are marked with `nightly.X` qualifier, where `X` indicates current nightly iteration. During publishing of a new nightly version, build process checks obtains the latest published version from Marketplace and adjusts the current version accordingly.
+* Local builds by default are marked with `dev` qualifier.
