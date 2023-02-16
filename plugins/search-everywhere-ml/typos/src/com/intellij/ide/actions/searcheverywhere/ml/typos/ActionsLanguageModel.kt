@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -25,6 +26,17 @@ import kotlin.coroutines.EmptyCoroutineContext
 internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictionary = ActionsDictionaryImpl()) : Disposable,
                                                                                                                   Dictionary by actionsDictionary,
                                                                                                                   FrequencyMetadata by actionsDictionary {
+
+  companion object {
+    /**
+     * Returns null if the application is not in an internal mode
+     */
+    fun getInstance(): ActionsLanguageModel? {
+      if (!ApplicationManager.getApplication().isInternal) return null
+      return service<ActionsLanguageModel>()
+    }
+  }
+
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
   private val languageModelComputation = coroutineScope.async {
@@ -94,7 +106,7 @@ internal class ActionsLanguageModel(private val actionsDictionary: ActionsDictio
   @Suppress("unused")  // Registered in the plugin's XML file
   private class ModelComputationStarter : ProjectActivity {
     override suspend fun execute(project: Project) {
-      service<ActionsLanguageModel>()
+      getInstance()
     }
   }
 }

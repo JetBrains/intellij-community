@@ -6,7 +6,6 @@ import ai.grazie.spell.suggestion.ranker.LinearAggregatingSuggestionRanker
 import ai.grazie.spell.suggestion.ranker.SuggestionRanker
 import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.spellchecker.SpellCheckerManager
 
@@ -21,7 +20,7 @@ internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
     get() {
       if (_suggestionRanker != null) return _suggestionRanker
 
-      val languageModel = service<ActionsLanguageModel>()
+      val languageModel = ActionsLanguageModel.getInstance() ?: return null
       if (!languageModel.isComputed) return null
 
       _suggestionRanker = LinearAggregatingSuggestionRanker(
