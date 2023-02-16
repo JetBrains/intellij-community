@@ -408,15 +408,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (myDeadCodeTool.isEntryPoint(javaMethod)) return true;
           if (!javaMethod.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return true;
 
-          UParameter lastParameter = parameters.get(parameters.size() - 1);
-          final Object[] paramValues;
-          final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
-          if (hasVarArg) {
-            if (parameters.size() == 1) return true;
-            paramValues = new Object[parameters.size() - 1];
-          } else {
-            paramValues = new Object[parameters.size()];
-          }
+          Object[] paramValues = new Object[parameters.size()];
           Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           int[] usageCount = {0};
@@ -434,20 +426,20 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
               if (!(parent instanceof UCallExpression methodCall)) {
                 return false;
               }
-              List<UExpression> arguments = methodCall.getValueArguments();
-              if (arguments.size() < paramValues.length) return false;
+              if (methodCall.getValueArguments().size() < paramValues.length) return false;
 
               boolean needFurtherProcess = false;
               for (int i = 0; i < paramValues.length; i++) {
-                Object value = paramValues[i];
-                final Object currentArg = RefParameterImpl.getAccessibleExpressionValue(arguments.get(i), () -> method.getPsi());
-                if (value == VALUE_UNDEFINED) {
-                  paramValues[i] = currentArg;
-                  if (currentArg != VALUE_IS_NOT_CONST) {
+                UExpression arg = methodCall.getArgumentForParameter(i);
+                Object argValue = RefParameterImpl.getAccessibleExpressionValue(arg, () -> method.getSourcePsi());
+                Object paramValue = paramValues[i];
+                if (paramValue == VALUE_UNDEFINED) {
+                  paramValues[i] = argValue;
+                  if (argValue != VALUE_IS_NOT_CONST) {
                     needFurtherProcess = true;
                   }
-                } else if (value != VALUE_IS_NOT_CONST) {
-                  if (!Comparing.equal(paramValues[i], currentArg)) {
+                } else if (paramValue != VALUE_IS_NOT_CONST) {
+                  if (!Comparing.equal(paramValue, argValue)) {
                     paramValues[i] = VALUE_IS_NOT_CONST;
                   } else {
                     needFurtherProcess = true;
