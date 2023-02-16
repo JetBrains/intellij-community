@@ -151,8 +151,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @Override
+  @RequiresEdt
   public void editorScrolled() {
-    closePopup();
+    myPopup.close();
   }
 
   public void hide() {
@@ -213,11 +214,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   @TestOnly
   public LightweightHint getComponentHint() {
     return myComponentHint;
-  }
-
-  @RequiresEdt
-  private void closePopup() {
-    myPopup.close();
   }
 
   @RequiresEdt
