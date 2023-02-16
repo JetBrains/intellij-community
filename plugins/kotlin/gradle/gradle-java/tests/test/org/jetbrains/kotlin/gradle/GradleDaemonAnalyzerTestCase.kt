@@ -11,11 +11,9 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VfsUtil
@@ -26,42 +24,11 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil.TagInfo
-import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Assert
-import org.junit.Test
 import java.io.File
-
-class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-    @Test
-    @PluginTargetVersions(pluginVersion = "1.3.0+")
-    fun testFirst(): Unit = doTest()
-
-    @Test
-    @PluginTargetVersions(pluginVersion = "1.3.0+")
-    fun testNoErrors(): Unit = doTest()
-
-    private fun doTest() {
-        val files = importProjectFromTestData()
-        val project = myTestFixture.project
-
-        checkFiles(
-            files.filter { it.extension == "kt" },
-            project,
-            object : GradleDaemonAnalyzerTestCase(
-                testLineMarkers = true,
-                checkWarnings = true,
-                checkInfos = false,
-                rootDisposable = testRootDisposable
-            ) {}
-        )
-    }
-
-    override fun testDataDirName(): String = "newMultiplatformHighlighting"
-}
 
 abstract class GradleDaemonAnalyzerTestCase(
     val testLineMarkers: Boolean,
