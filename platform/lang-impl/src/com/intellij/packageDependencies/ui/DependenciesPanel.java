@@ -332,7 +332,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
 
     PopupHandler.installPopupMenu(tree, createTreePopupActions(isRightTree), "DependenciesPopup");
   }

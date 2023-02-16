@@ -229,7 +229,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeUtil.installActions(getTree());
 
-    new TreeSpeedSearch(getTree(), false, treePath -> {
+    TreeSpeedSearch.installOn(getTree(), false, treePath -> {
       Object userObject = TreeUtil.getLastUserObject(treePath);
       return userObject != null ? FileStructurePopup.getSpeedSearchText(userObject) : null;
     });

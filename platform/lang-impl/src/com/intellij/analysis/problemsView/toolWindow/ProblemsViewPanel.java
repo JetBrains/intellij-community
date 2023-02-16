@@ -23,7 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -209,7 +209,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
     myTree.addTreeSelectionListener(new RestoreSelectionListener());
     myTree.addTreeSelectionListener(event -> mySelectionAlarm.cancelAndRequest());
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     PopupHandler.installPopupMenu(myTree, getPopupHandlerGroupId(), "ProblemsView.ToolWindow.TreePopup");
