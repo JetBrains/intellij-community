@@ -16,6 +16,7 @@ interface KotlinMppTestsContext {
     val testProjectRoot: File
     val testProject: Project
     val testDataDirectory: File
+    val gradleJdkPath: File
 
     val testConfiguration: TestConfiguration
 }
@@ -27,6 +28,7 @@ class KotlinMppTestsContextImpl : KotlinMppTestsContext {
     override lateinit var testConfiguration: TestConfiguration
     override lateinit var testProjectRoot: File
     override lateinit var testProject: Project
+    override lateinit var gradleJdkPath: File
 
     override val gradleVersion: GradleVersion
         get() = testProperties.gradleVersion
