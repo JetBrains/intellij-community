@@ -289,7 +289,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public boolean shouldDisableLineSpacingForAlternateScreenBuffer() {
-    return AdvancedSettings.getBoolean("terminal.disable.line.spacing.for.alternative.screen.buffer");
+    return AdvancedSettings.getBoolean("terminal.use.1.0.line.spacing.for.alternative.screen.buffer");
   }
 
   @Override
