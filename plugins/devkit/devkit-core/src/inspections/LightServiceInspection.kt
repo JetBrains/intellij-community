@@ -25,7 +25,7 @@ import org.jetbrains.idea.devkit.inspections.quickfix.ReplaceWithGetInstanceCall
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class LightServiceInspection : DevKitUastInspectionBase(UClass::class.java) {
   private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
   private val COMPONENT_MANAGER_GET_SERVICE = CallMatcher.anyOf(
     CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
