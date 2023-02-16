@@ -171,6 +171,7 @@ sequenceStatement ::= actorStatement
   | rectStatement
   | optStatement
   | breakStatement
+  | boxStatement
   | altStatement
   | parStatement
   | criticalStatement
@@ -212,6 +213,12 @@ parHeader ::= PAR [complexMessage]
 
 criticalStatement ::= criticalHeader EOL+ [sequenceBody] [EOL* optionSections] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
 criticalHeader ::= CRITICAL [complexMessage]
+
+boxStatement ::= boxHeader EOL+ [boxBlock] END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+boxHeader ::= BOX [complexMessage]
+boxBlock ::= boxLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private boxLines ::= (boxLine | IGNORED) [boxLines]
+private boxLine ::= actorStatement [separator] | separator
 
 noteStatement ::= NOTE (RIGHT_OF | LEFT_OF) complexIdentifier COLON complexMessage
   | NOTE OVER complexIdentifier [COMMA complexIdentifier] COLON complexMessage

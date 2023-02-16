@@ -370,6 +370,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "critical" { yybegin(sequence_message); return Sequence.CRITICAL; }
   "option" { yybegin(sequence_message); return Sequence.OPTION; }
   "break" { yybegin(sequence_message); return Sequence.BREAK; }
+  "box"	{ yybegin(sequence_message); return Sequence.BOX; }
   "end" { return END; }
   "autonumber" { yypushstate(autonumbers); return Sequence.AUTONUMBER; }
   "link" { return LINK; }

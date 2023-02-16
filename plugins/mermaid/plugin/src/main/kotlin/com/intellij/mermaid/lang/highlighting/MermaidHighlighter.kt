@@ -2,7 +2,6 @@ package com.intellij.mermaid.lang.highlighting
 
 import com.intellij.lexer.Lexer
 import com.intellij.mermaid.lang.lexer.MermaidLexer
-import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -86,7 +85,8 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         MermaidTokens.Sequence.BREAK,
         MermaidTokens.Sequence.AUTONUMBER,
         MermaidTokens.Sequence.OFF,
-        MermaidTokens.Sequence.LINKS
+        MermaidTokens.Sequence.LINKS,
+        MermaidTokens.Sequence.BOX,
       )
       fillMap(
         holder,

@@ -37,7 +37,6 @@ internal object MermaidSpacingBuilder {
     MermaidTokens.Sequence.ACTIVATE,
     MermaidTokens.Sequence.DEACTIVATE,
     MermaidTokens.Sequence.LINKS,
-    MermaidTokens.Sequence.LOOP,
     MermaidTokens.Sequence.RECT,
     MermaidTokens.Sequence.OPT,
     MermaidTokens.Sequence.ALT,
@@ -47,7 +46,8 @@ internal object MermaidSpacingBuilder {
     MermaidTokens.Sequence.CRITICAL,
     MermaidTokens.Sequence.OPTION,
     MermaidTokens.Sequence.BREAK,
-    MermaidTokens.Sequence.AUTONUMBER
+    MermaidTokens.Sequence.AUTONUMBER,
+    MermaidTokens.Sequence.BOX,
   )
   private val SEQUENCE_KEYWORDS_SPACE_BEFORE = TokenSet.create(
 

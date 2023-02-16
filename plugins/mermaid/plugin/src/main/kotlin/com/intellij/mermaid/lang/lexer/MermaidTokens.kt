@@ -426,6 +426,9 @@ object MermaidTokens {
 
     @JvmField
     val LINKS = MermaidToken("Sequence.LINKS")
+
+    @JvmField
+    val BOX = MermaidToken("Sequence.BOX")
   }
 
   object ClassDiagram {

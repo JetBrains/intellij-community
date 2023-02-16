@@ -98,8 +98,21 @@ class DirectionCompletionProvider :
 
 class PieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
 
-class SequenceCompletionProvider : MermaidLiveTemplateCompletionProvider() {
-  private val keywords = listOf("loop", "alt", "opt", "par", "rect", "critical", "break", "participant", "actor")
+class SequenceBlockCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf("loop", "alt", "opt", "par", "rect", "critical", "break")
+
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
+  }
+}
+
+class SequenceActorParticipantCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf("participant", "actor")
 
   override fun addCompletions(
     parameters: CompletionParameters,

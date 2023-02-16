@@ -16,4 +16,6 @@ class SequenceTest : MermaidParserTestCase("sequence") {
   fun `test critical region`() = doTest(true)
 
   fun `test break`() = doTest(true)
+
+  fun `test box`() = doTest(true)
 }

@@ -15,6 +15,8 @@ class SequenceCompletionTest : MermaidBaseTestCase("completion/diagrams/sequence
 
   fun `test inside loop block`() = doTest(*keywords, "end")
 
+  fun `test inside box block`() = doTest("participant", "actor", "end")
+
   fun `test after autonumber`() = doTest("off")
 
   private fun doTest(vararg variants: String) {

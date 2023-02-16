@@ -69,12 +69,20 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Sequence
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER)),
-      SequenceCompletionProvider()
+      psiElement()
+        .insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER))
+        .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),
+      SequenceBlockCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
       psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER)),
+      SequenceActorParticipantCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER))
+      .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),
       SequenceSimpleCompletionProvider("autonumber")
     )
     extend(
@@ -102,7 +110,8 @@ class MermaidCompletionContributor : CompletionContributor() {
           psiElement(MermaidTokens.Sequence.PAR),
           psiElement(MermaidTokens.Sequence.CRITICAL),
           psiElement(MermaidTokens.Sequence.BREAK),
-          psiElement(MermaidTokens.Sequence.RECT)
+          psiElement(MermaidTokens.Sequence.RECT),
+          psiElement(MermaidTokens.Sequence.BOX),
         )
       ),
       SequenceSimpleCompletionProvider("end")
@@ -311,7 +320,11 @@ class MermaidCompletionContributor : CompletionContributor() {
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
     return with(object : PatternCondition<PsiElement>("insideBlock") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
-        for (sibling in psiElement.siblings(forward = false, withSelf = false)) {
+        var element = psiElement
+        if (element !is PsiErrorElement && element.parent is PsiErrorElement) {
+          element = element.parent
+        }
+        for (sibling in element.siblings(forward = false, withSelf = false)) {
           if (psiElement(MermaidTokens.END).accepts(sibling, context)) {
             return false
           }
