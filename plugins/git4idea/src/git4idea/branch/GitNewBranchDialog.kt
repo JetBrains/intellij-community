@@ -90,8 +90,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .focused()
         .applyToComponent {
           selectAll()
-          startTrackingValidationIfNeeded()
-          component.focusAccelerator = 'i'
         }
         .validationRequestor(WHEN_STATE_CHANGED(overwriteCheckbox))
         .validationRequestor(WHEN_TEXT_FIELD_TEXT_CHANGED)
@@ -102,15 +100,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       if (showCheckOutOption) {
         checkBox(GitBundle.message("new.branch.dialog.checkout.branch.checkbox"))
           .bindSelected(::checkout)
-          .applyToComponent {
-            mnemonic = KeyEvent.VK_C
-          }
       }
       if (showResetOption) {
         cell(overwriteCheckbox)
           .bindSelected(::reset)
           .applyToComponent {
-            mnemonic = KeyEvent.VK_R
             isEnabled = false
           }
           .component
@@ -118,9 +112,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       if (showSetTrackingOption) {
         checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"))
           .bindSelected(::tracking)
-          .applyToComponent {
-            mnemonic = KeyEvent.VK_T
-          }
           .component
       }
     }
@@ -131,7 +122,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .whenStateChangedFromKeyPress() { gitRefNameValidatorSettings.isOn = it }
         .whenStateChangedFromUi() { gitRefNameValidatorSettings.isOn = it }
         .component
-        .apply { mnemonic = KeyEvent.VK_V }
     }
   }
 
