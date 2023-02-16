@@ -1446,7 +1446,7 @@
                      implementationClass="com.siyeh.ig.maturity.SystemOutErrInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToPrintStackTrace" shortName="ThrowablePrintStackTrace" bundle="messages.InspectionGadgetsBundle"
                      key="printstacktrace.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.maturity.ThrowablePrintStackTraceInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToThreadDumpStack" shortName="ThreadDumpStack" bundle="messages.InspectionGadgetsBundle"
                      key="dumpstack.call.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.maturity.issues"
@@ -2141,7 +2141,7 @@
                      implementationClass="com.siyeh.ig.serialization.NonSerializableObjectPassedToObjectStreamInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonSerializableClassWithSerialVersionUID" shortName="NonSerializableWithSerialVersionUIDField"
                      bundle="messages.InspectionGadgetsBundle" key="non.serializable.with.serialversionuid.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.NonSerializableWithSerialVersionUIDFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonSerializableClassWithSerializationMethods" shortName="NonSerializableWithSerializationMethods"
                      bundle="messages.InspectionGadgetsBundle" key="non.serializable.class.with.readwriteobject.display.name"
@@ -2173,7 +2173,7 @@
                      implementationClass="com.siyeh.ig.serialization.SerialPersistentFieldsWithWrongSignatureInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SerialVersionUIDWithWrongSignature" shortName="SerialVersionUIDNotStaticFinal"
                      bundle="messages.InspectionGadgetsBundle" key="serialversionuid.private.static.final.long.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.SerialVersionUIDNotStaticFinalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SerializableHasSerializationMethods" alternativeId="serial"
                      bundle="messages.InspectionGadgetsBundle" key="serializable.has.serialization.methods.display.name" groupBundle="messages.InspectionsBundle"
@@ -2393,7 +2393,7 @@
                      implementationClass="com.siyeh.ig.style.UnclearBinaryExpressionInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SizeReplaceableByIsEmpty" bundle="messages.InspectionGadgetsBundle"
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LambdaBodyCanBeCodeBlock" bundle="messages.InspectionGadgetsBundle"
                      key="lambda.body.can.be.code.block.name" groupBundle="messages.InspectionsBundle"
