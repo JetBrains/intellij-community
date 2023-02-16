@@ -692,13 +692,24 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   @Override
   public void loadState(@NotNull State state) {
+    clearViewStateIfNeeded(state);
     myState = state;
     for (ServiceViewState viewState : myState.viewStates) {
-      if (viewState == null) {
-        myState.viewStates = new SmartList<>();
-        break;
-      }
       viewState.treeState = TreeState.createFrom(viewState.treeStateElement);
+    }
+  }
+
+  private static void clearViewStateIfNeeded(@NotNull State state) {
+    // TODO [konstantin.aleev] temporary check state for invalid values cause by 2399fc301031caea7fa90916a87114b1a98c0177
+    if (state.viewStates == null) {
+      state.viewStates = new SmartList<>();
+      return;
+    }
+    for (Object o: ((List)state.viewStates)) {
+      if (!(o instanceof ServiceViewState)) {
+        state.viewStates = new SmartList<>();
+        return;
+      }
     }
   }
 
