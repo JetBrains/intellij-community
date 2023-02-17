@@ -2,15 +2,11 @@
 package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
-import com.intellij.execution.RunManagerListener
-import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
-import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -47,7 +43,6 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.WeakReferenceDelegator
 import training.util.getActionById
-import training.util.invokeActionForFocusContext
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
 
@@ -118,34 +113,16 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   private fun LessonContext.prepareTask() {
-    var needToRun = false
-    prepareRuntimeTask {
-      (this@CommonDebugLesson).debugSession = null
-      val stopAction = getActionById("Stop")
-      invokeActionForFocusContext(stopAction)
-      runWriteAction {
-        needToRun = !selectedNeedConfiguration() && !configureDebugConfiguration()
-      }
-    }
-
     showInvalidDebugLayoutWarning()
 
-    if (needToRun) {
-      // Normally this step should not be shown!
-      task {
-        text(LessonsBundle.message("debug.workflow.run.program", action("RunClass")))
-        addFutureStep {
-          subscribeForMessageBus(RunManagerListener.TOPIC, object : RunManagerListener {
-            override fun runConfigurationSelected(settings: RunnerAndConfigurationSettings?) {
-              if (selectedNeedConfiguration()) {
-                completeStep()
-              }
-            }
-          })
+    prepareRuntimeTask {
+      runWriteAction {
+        val instance = RunManager.getInstance(project)
+        for (it in instance.allSettings) {
+          instance.removeConfiguration(it)
         }
-        proposeRestore {
-          checkExpectedStateOfEditor(sample, false)
-        }
+        RunManager.getInstance(project).selectedConfiguration = null
+        RunConfigurationStartHistory.getInstance(project).loadState(RunConfigurationStartHistory.State())
       }
     }
   }
@@ -448,23 +425,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       textAndRestore(position)
       test { actions(it) }
     }
-  }
-
-  private fun TaskRuntimeContext.selectedNeedConfiguration(): Boolean {
-    val runManager = RunManager.getInstance(project)
-    val selectedConfiguration = runManager.selectedConfiguration
-    return selectedConfiguration?.name == configurationName
-  }
-
-  private fun TaskRuntimeContext.configureDebugConfiguration(): Boolean {
-    val runManager = RunManager.getInstance(project)
-    val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
-    val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
-
-    val configuration = configurationsFromContext?.singleOrNull() ?: return false
-    runManager.addConfiguration(configuration.configurationSettings)
-    runManager.selectedConfiguration = configuration.configurationSettings
-    return true
   }
 
   protected fun TaskContext.proposeModificationRestore(restoreText: String, checkDebugSession: Boolean = true) = proposeRestore {
