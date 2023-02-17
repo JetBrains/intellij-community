@@ -76,6 +76,7 @@ import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 import javax.swing.*
@@ -752,6 +753,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
    */
   override fun updateUI() {
     val uiDefaults = UIManager.getLookAndFeelDefaults()
+    uiDefaults.put("*cache", ConcurrentHashMap<String, Color>()) // for JBColor
     uiDefaults.put("LinkButtonUI", DefaultLinkButtonUI::class.java.name)
     fixPopupWeight()
     fixMenuIssues(uiDefaults)
