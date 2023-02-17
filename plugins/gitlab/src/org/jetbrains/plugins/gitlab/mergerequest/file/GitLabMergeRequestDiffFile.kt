@@ -11,7 +11,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.util.cancelOnDispose
@@ -65,20 +64,18 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(cs, connection.currentUser, connection.projectData, mergeRequestId)
 
     val uiCs = cs.childScope(Dispatchers.Main.immediate)
-    val processor = object : MutableDiffRequestChainProcessor(project, null) {
-      override fun selectFilePath(filePath: FilePath) {
-        uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-          diffBridge.selectFilePath(filePath)
-        }
-      }
-    }.apply {
+    val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest())).apply {
       putContextUserData(GitLabProjectConnection.KEY, connection)
       putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
+
+      selectionEventDispatcher.addListener {
+        diffBridge.selectFilePath(it.filePath)
+      }
     }
+
     job.cancelOnDispose(processor)
 
     uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-      processor.chain = SimpleDiffRequestChain(LoadingDiffRequest())
       diffBridge.chain.collectLatest {
         processor.chain = it
       }

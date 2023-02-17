@@ -8,12 +8,15 @@ import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import kotlin.properties.Delegates
 
-abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
+@ApiStatus.Internal
+class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -36,6 +39,8 @@ abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffReq
     updateRequest()
   }
   private var currentIndex: Int = 0
+
+  val selectionEventDispatcher = EventDispatcher.create(SelectionListener::class.java)
 
   init {
     this.chain = chain
@@ -82,15 +87,11 @@ abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffReq
     return chain.requests.size > 1
   }
 
-  override fun createGoToChangeAction(): AnAction? {
-    return MyGoToChangePopupAction()
-  }
-
-  abstract fun selectFilePath(filePath: FilePath)
+  override fun createGoToChangeAction(): AnAction = MyGoToChangePopupAction()
 
   private fun selectCurrentChange() {
     val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return
-    selectFilePath(producer.filePath)
+    selectionEventDispatcher.multicaster.onSelected(producer)
   }
 
   private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestChain.Producer>() {
@@ -101,7 +102,11 @@ abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffReq
     }
 
     override fun onSelected(change: ChangeDiffRequestChain.Producer) {
-      selectFilePath(change.filePath)
+      selectionEventDispatcher.multicaster.onSelected(change)
     }
+  }
+
+  fun interface SelectionListener : EventListener {
+    fun onSelected(producer: ChangeDiffRequestChain.Producer)
   }
 }
