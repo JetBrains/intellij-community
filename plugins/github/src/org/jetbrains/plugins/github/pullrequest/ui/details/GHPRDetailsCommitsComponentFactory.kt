@@ -127,7 +127,7 @@ internal object GHPRDetailsCommitsComponentFactory {
 
           override fun getAuthor(value: GHCommit?): String {
             val author = value!!.author?.user ?: commitsVm.ghostUser
-            return author.shortName
+            return author.getPresentableName()
           }
 
           override fun getDate(value: GHCommit?): Date {
