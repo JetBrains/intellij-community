@@ -3,5 +3,5 @@ package test
 fun useCommonTest() {
     // Known issue
     useJvmAndAndroidMain()
-    useJvmMain()
+    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: useJvmMain'")!>useJvmMain<!>()
 }
