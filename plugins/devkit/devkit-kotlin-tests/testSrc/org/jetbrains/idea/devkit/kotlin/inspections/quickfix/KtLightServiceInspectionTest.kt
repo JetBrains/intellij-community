@@ -2,11 +2,11 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.LightServiceTestBase
+import org.jetbrains.idea.devkit.inspections.LightServiceInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightService")
-class KtLightServiceTest : LightServiceTestBase() {
+class KtLightServiceInspectionTest : LightServiceInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/lightService/"
 

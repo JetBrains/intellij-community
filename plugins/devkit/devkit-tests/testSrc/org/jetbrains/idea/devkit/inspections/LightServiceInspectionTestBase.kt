@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase
 
-abstract class LightServiceTestBase : DevKitInspectionFixTestBase() {
+abstract class LightServiceInspectionTestBase : DevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()

@@ -3,10 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.LightServiceTestBase
+import org.jetbrains.idea.devkit.inspections.LightServiceInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/lightService")
-class LightServiceTest : LightServiceTestBase() {
+class LightServiceInspectionTest : LightServiceInspectionTestBase() {
 
   private val MAKE_FINAL_FIX_NAME = "Make 'MyService' final"
   private val ANNOTATE_AS_SERVICE_FIX_NAME = "Annotate class 'MyService' as '@Service'"
