@@ -12,10 +12,15 @@ import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
 import training.ui.MessageFactory
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
+import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
@@ -80,7 +85,6 @@ internal object LessonExecutorUtil {
         setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
         setCloseButtonEnabled(false)
         setHideOnCloseClick(false)
-        setRequestFocus(true)
       }
 
     balloon.addListener(object : JBPopupListener {
