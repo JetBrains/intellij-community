@@ -107,7 +107,7 @@ public class RemoteServer {
       System.out.println("Port/ServicesPort/ID: " + (port + "/" + servicesPort + "/" + name));
       System.out.println();
 
-      spinUntilWatchdogAlive(watchdog);
+      spinWhileWatchdogAlive(watchdog);
     }
     catch (Throwable e) {
       e.printStackTrace(System.err);
@@ -115,8 +115,8 @@ public class RemoteServer {
     }
   }
 
-  private static void spinUntilWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
-    long waitTime = IdeaWatchdog.WAIT_TIMEOUT;
+  private static void spinWhileWatchdogAlive(IdeaWatchdog watchdog) throws Exception {
+    long waitTime = watchdog.getWaitTimeoutMillis();
     Object lock = new Object();
     while (true) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
