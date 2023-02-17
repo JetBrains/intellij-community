@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -19,9 +19,7 @@ private class RestoreDefaultSettingsAction : DumbAwareAction() {
 
     CustomConfigMigrationOption.StartWithCleanConfig.writeConfigMarkerFile()
 
-    // Temporary solution for the IDEA-313607 issue in 231 branch. Master has a better solution.
-    ExperimentalUI.getInstance().needSuggestRestart.set(false)
-    ExperimentalUI.setNewUI(false)
+    ExperimentalUI.getInstance().setNewUIInternal(false, false)
 
     invokeLater {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
