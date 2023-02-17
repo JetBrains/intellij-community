@@ -433,6 +433,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
+  // IDEA-313550: Intention light bulb border is calculated wrong
   private class LightBulbMouseListener extends MouseAdapter {
     private final @NotNull Project myProject;
     private final @NotNull PsiFile myFile;
