@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -52,9 +52,6 @@ public abstract class ExperimentalUI {
   private final AtomicBoolean isIconPatcherSet = new AtomicBoolean();
   private IconPathPatcher iconPathPatcher;
 
-  // Temporary solution for the IDEA-313607 issue in 231 branch. Master has a better solution.
-  public final AtomicBoolean needSuggestRestart = new AtomicBoolean(true);
-
   @Contract(pure = true)
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
@@ -64,17 +61,11 @@ public abstract class ExperimentalUI {
   }
 
   public static void setNewUI(boolean newUI) {
-    if (newUI) {
-      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
-        propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH);
-      }
-      else {
-        propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true);
-      }
-    }
+    getInstance().setNewUIInternal(newUI, true);
+  }
 
-    Registry.get("ide.experimental.ui").setValue(newUI);
+  public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
+
   }
 
   public static int getPromotionDaysCount() {
@@ -146,7 +137,7 @@ public abstract class ExperimentalUI {
       else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(instance.iconPathPatcher);
         instance.iconPathPatcher = null;
-        instance.onExpUIDisabled(instance.needSuggestRestart.get());
+        instance.onExpUIDisabled(true);
       }
     }
   }
