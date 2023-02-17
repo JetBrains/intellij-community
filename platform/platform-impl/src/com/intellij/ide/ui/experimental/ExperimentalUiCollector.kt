@@ -22,7 +22,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("experimental.ui.interactions", 2)
+    private val GROUP = EventLogGroup("experimental.ui.interactions", 3)
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")
@@ -40,7 +40,7 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
     fun logMeetNewUiAction(action: MeetNewUiAction) = meetNewUiAction.log(
       meetNewUiActionField with action)
 
-    private val meetNewUiThemeField = EventFields.StringValidatedByInlineRegexp("theme", "\\w+")
+    private val meetNewUiThemeField = EventFields.StringValidatedByEnum("theme_name", "look_and_feel")
     private val meetNewUiSwitchTheme = GROUP.registerVarargEvent("meet.new.ui.switch_theme", meetNewUiThemeField)
 
     @JvmStatic
