@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
@@ -19,6 +20,7 @@ final class HeadlessLafManagerImpl extends LafManager {
     defaults.put("LinkButtonUI", DefaultLinkButtonUI.class.getName());
     defaults.put("SearchFieldWithExtensionUI", DarculaSearchFieldWithExtensionUI.class.getName());
     defaults.put("TreeUI", DefaultTreeUI.class.getName());
+    defaults.put("ComboBoxButtonUI", ComboBoxButtonUI.class.getName());
   }
 
   @Override
