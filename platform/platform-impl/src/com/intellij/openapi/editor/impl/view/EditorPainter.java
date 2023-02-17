@@ -167,7 +167,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myBackgroundColor = myEditor.getBackgroundColor();
       myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
       myScaleContext = ScaleContext.create(myGraphics);
-      myCaretDataInView = new CaretDataInView(myEditor, myStartOffset, myEndOffset);
+      myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myEditor, myStartOffset, myEndOffset) : null;
     }
 
     private void paint() {
