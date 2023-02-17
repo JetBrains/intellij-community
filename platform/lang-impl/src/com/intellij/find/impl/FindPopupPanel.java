@@ -872,6 +872,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         .filter(usage -> usage instanceof UsageInfoAdapter)
         .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
         .map(info -> info.getElement())
+        .filter(Objects::nonNull)
         .toArray(PsiElement[]::new);
     }
     return null;
