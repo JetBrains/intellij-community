@@ -13,8 +13,20 @@ import training.learn.lesson.general.run.CommonRunConfigurationLesson
 import java.awt.Rectangle
 
 class JavaRunConfigurationLesson : CommonRunConfigurationLesson("java.run.configuration") {
-  override val sample: LessonSample = JavaRunLessonsUtils.demoSample
-  override val demoConfigurationName: String = JavaRunLessonsUtils.demoClassName
+  private val demoClassName = "Sample"
+
+  override val sample: LessonSample = parseLessonSample("""
+    public class $demoClassName {
+        public static void main(String[] args) {
+            System.out.println("It is a run configurations sample");
+            for (String arg: args) {
+                System.out.println("Passed argument: " + arg);
+            }
+        }
+    }
+  """.trimIndent())
+
+  override val demoConfigurationName: String = demoClassName
 
   override fun LessonContext.runTask() {
     task {
