@@ -3,6 +3,7 @@ package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.PsiReferenceExpression;
@@ -42,6 +43,7 @@ public class InlinePatternVariableTest extends LightJavaCodeInsightTestCase {
       assertNotNull(patternVariable);
       InlineLocalHandler.inlineVariable(getProject(), getEditor(), patternVariable, (PsiReferenceExpression)element);
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(fileName + ".after");
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.refactoring.inline.InlineConstantFieldProcessor;
@@ -24,6 +25,7 @@ public final class JavaCodeInsightTestUtil {
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
     assert element instanceof PsiLocalVariable : element;
     InlineLocalHandler.inlineVariable(fixture.getProject(), editor, (PsiLocalVariable)element, null);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     fixture.checkResultByFile(after, false);
   }
 

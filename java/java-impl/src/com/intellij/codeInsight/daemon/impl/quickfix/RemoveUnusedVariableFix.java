@@ -26,6 +26,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -109,7 +110,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       final RemoveMode deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects);
       return new Context(deleteMode, references);
     }).finishOnUiThread(ModalityState.NON_MODAL, context -> {
-        ApplicationManager.getApplication().runWriteAction(() -> {
+        WriteCommandAction.writeCommandAction(myVariable.getProject()).run(() -> {
           try {
             RemoveUnusedVariableUtil.deleteReferences(myVariable, context.references, context.deleteMode);
           }
