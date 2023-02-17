@@ -33,5 +33,5 @@ consumerBuild.consumerA.unitTest
 Test configuration:
 - showing only modules matching .*consumerBuild.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
-- hiding dependencies matching .*consumerBuild.*
+- showing only dependencies matching .*producerBuild.*
 - dependencies order is not checked
