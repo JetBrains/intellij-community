@@ -101,10 +101,8 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
       }
     }
 
-    highlightButtonById("CompileDirty")
-
     task("CompileDirty") {
-      text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it), icon(AllIcons.Actions.Compile)))
+      text(JavaLessonsBundle.message("java.debug.workflow.rebuild", action(it)))
       if (isAlwaysHotSwap()) {
         addFutureStep {
           subscribeForMessageBus(Notifications.TOPIC, object : Notifications {
