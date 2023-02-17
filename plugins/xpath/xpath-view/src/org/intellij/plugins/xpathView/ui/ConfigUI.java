@@ -49,10 +49,8 @@ public class ConfigUI extends JPanel {
         JPanel c = this;
 
         scrollToFirst = new JCheckBox(XPathBundle.message("settings.scroll.first.hit.into.visible.area"));
-        scrollToFirst.setMnemonic('S');
 
         useContextAtCursor = new JCheckBox(XPathBundle.message("settings.use.node.at.cursor.as.context.node"));
-        useContextAtCursor.setMnemonic('N');
         useContextAtCursor.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -61,16 +59,10 @@ public class ConfigUI extends JPanel {
         });
 
         highlightStartTagOnly = new JCheckBox(XPathBundle.message("settings.highlight.only.start.tag.instead.of.whole.tag.content"));
-        highlightStartTagOnly.setMnemonic('H');
-
         addErrorStripe = new JCheckBox(XPathBundle.message("settings.add.error.stripe.markers.for.each.result"));
-        addErrorStripe.setMnemonic('A');
-
         showInToolbar = new JCheckBox(XPathBundle.message("settings.show.actions.in.toolbar"));
-        showInToolbar.setMnemonic('T');
         showInToolbar.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath-related.actions.from.the.toolbar"));
         showInMainMenu = new JCheckBox(XPathBundle.message("settings.show.actions.in.main.menu"));
-        showInMainMenu.setMnemonic('M');
         showInMainMenu.setToolTipText(XPathBundle.message("settings.uncheck.to.remove.xpath.related.actions.from.the.main.menubar"));
 
         JPanel settings = new JPanel(new BorderLayout());
