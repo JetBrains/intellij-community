@@ -7,13 +7,10 @@ import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
@@ -42,8 +39,6 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.WeakReferenceDelegator
-import training.util.getActionById
-import java.awt.Rectangle
 import java.awt.event.KeyEvent
 
 abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
@@ -322,19 +317,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     val position = sample.getPosition(3)
     caret(position)
 
-    highlightLineNumberByOffset(position.startOffset)
-    task {
-      if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        val runToCursorAction = getActionById("RunToCursor")
-        triggerAndFullHighlight {
-          usePulsation = true
-          clearPreviousHighlights = false
-        }.component { ui: ActionButton ->
-          ui.action == runToCursorAction && LessonUtil.checkToolbarIsShowing(ui)
-        }
-      }
-    }
-
     actionTask("RunToCursor") {
       proposeRestore {
         checkPositionOfEditor(LessonSample(afterFixText, position))
@@ -344,8 +326,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
       }
       else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      val alternative = LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
-      "$intro $actionPart $alternative"
+      "$intro $actionPart"
     }
   }
 
@@ -402,17 +383,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   protected abstract fun LessonContext.applyProgramChangeTasks()
 
   protected open fun LessonContext.restoreHotSwapStateInformer() = Unit
-
-  private fun LessonContext.highlightLineNumberByOffset(offset: Int) {
-    task {
-      triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
-        val line = editor.offsetToVisualLine(offset, true)
-        val y = editor.visualLineToY(line)
-        return@l Rectangle(2, y, ui.iconsAreaWidth + 6, editor.lineHeight)
-      }
-    }
-  }
 
   private fun LessonContext.quickEvaluateTask(positionId: Int, textAndRestore: TaskContext.(LessonSamplePosition) -> Unit) {
     task("QuickEvaluateExpression") {
