@@ -61,6 +61,9 @@ internal open class FirCallableCompletionContributor(
     private val shouldCompleteTopLevelCallablesFromIndex: Boolean
         get() = prefixMatcher.prefix.isNotEmpty()
 
+    protected val excludeEnumEntries =
+        !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
+
     override fun KtAnalysisSession.complete(
         positionContext: FirNameReferencePositionContext,
         weighingContext: WeighingContext
@@ -109,7 +112,8 @@ internal open class FirCallableCompletionContributor(
             implicitScopes,
             syntheticJavaPropertiesScopes,
             visibilityChecker,
-            scopeNameFilter
+            scopeNameFilter,
+            excludeEnumEntries,
         ) { filter(it) }
         val extensionsWhichCanBeCalled = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
@@ -185,7 +189,8 @@ internal open class FirCallableCompletionContributor(
                     symbol.getStaticMemberScope(),
                     syntheticJavaPropertiesScope = null,
                     visibilityChecker,
-                    scopeNameFilter
+                    scopeNameFilter,
+                    excludeEnumEntries,
                 )
                 nonExtensions.forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
@@ -280,7 +285,8 @@ internal open class FirCallableCompletionContributor(
             possibleReceiverScope,
             syntheticJavaPropertiesScope,
             visibilityChecker,
-            scopeNameFilter
+            scopeNameFilter,
+            excludeEnumEntries,
         ) { filter(it) }
         val extensionNonMembers = collectSuitableExtensions(implicitScopes, extensionChecker, visibilityChecker)
 
@@ -392,7 +398,8 @@ internal class FirCallableReferenceCompletionContributor(
                     memberScope,
                     syntheticJavaPropertiesScope,
                     visibilityChecker,
-                    scopeNameFilter
+                    scopeNameFilter,
+                    excludeEnumEntries,
                 ) { filter(it) }
 
                 nonExtensionMembers.forEach { addCallableSymbolToCompletion(context.withoutExpectedType(), it, getOptions(it)) }

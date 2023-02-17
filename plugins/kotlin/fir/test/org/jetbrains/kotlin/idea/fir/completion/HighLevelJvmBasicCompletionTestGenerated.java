@@ -2405,6 +2405,16 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/DataClassMembers2.kt");
             }
 
+            @TestMetadata("EnumEntriesInsideAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesInsideAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../completion/testData/basic/common/EnumEntriesInsideAbsentWhenFeatureDisabled.kt");
+            }
+
+            @TestMetadata("EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt")
+            public void testEnumEntriesQualifiedAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../completion/testData/basic/common/EnumEntriesQualifiedAbsentWhenFeatureDisabled.kt");
+            }
+
             @TestMetadata("EnumItemsThroughChainedTypeAlias.kt")
             public void testEnumItemsThroughChainedTypeAlias() throws Exception {
                 runTest("../completion/testData/basic/common/EnumItemsThroughChainedTypeAlias.kt");
@@ -2413,6 +2423,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("EnumItemsThroughSingleTypeAlias.kt")
             public void testEnumItemsThroughSingleTypeAlias() throws Exception {
                 runTest("../completion/testData/basic/common/EnumItemsThroughSingleTypeAlias.kt");
+            }
+
+            @TestMetadata("EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt")
+            public void testEnumUserDefinedEntriesNotAbsentWhenFeatureDisabled() throws Exception {
+                runTest("../completion/testData/basic/common/EnumUserDefinedEntriesNotAbsentWhenFeatureDisabled.kt");
             }
 
             @TestMetadata("EnumValuesMethodLowerPriority.kt")

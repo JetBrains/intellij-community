@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -30,6 +30,7 @@ internal fun KtAnalysisSession.collectNonExtensions(
     syntheticJavaPropertiesScope: KtScope?,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: KtScopeNameFilter,
+    excludeEnumEntries: Boolean,
     skipJavaGettersAndSetters: Boolean = true,
     symbolFilter: (KtCallableSymbol) -> Boolean = { true }
 ): Sequence<KtCallableSymbol> {
@@ -53,13 +54,12 @@ internal fun KtAnalysisSession.collectNonExtensions(
         .filter { symbolFilter(it) }
         .filter { visibilityChecker.isVisible(it) }
 
-    return if (skipJavaGettersAndSetters) {
-        val javaGettersAndSetters = syntheticProperties.flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }.toSet()
-
-        nonExtensions.filter { it !in javaGettersAndSetters }
-    } else {
-        nonExtensions
-    }
+    return nonExtensions
+        .applyIf(skipJavaGettersAndSetters) {
+            val javaGettersAndSetters = syntheticProperties.flatMap { listOfNotNull(it.javaGetterSymbol, it.javaSetterSymbol) }.toSet()
+            filter { it !in javaGettersAndSetters }
+        }
+        .applyIf(excludeEnumEntries) { filterNot(::isEnumEntriesProperty) }
 }
 
 private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
@@ -75,4 +75,11 @@ internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
 
         else -> false
     }
+}
+
+private fun KtAnalysisSession.isEnumEntriesProperty(symbol: KtCallableSymbol): Boolean {
+    return symbol is KtPropertySymbol &&
+            symbol.isStatic &&
+            symbol.callableIdIfNonLocal?.callableName == StandardNames.ENUM_ENTRIES &&
+            (symbol.getContainingSymbol() as? KtClassOrObjectSymbol)?.classKind == KtClassKind.ENUM_CLASS
 }

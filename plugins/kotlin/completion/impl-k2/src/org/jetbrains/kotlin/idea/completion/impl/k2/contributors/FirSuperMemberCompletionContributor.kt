@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -30,6 +32,10 @@ internal class FirSuperMemberCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int
 ) : FirCompletionContributorBase<FirSuperReceiverNameReferencePositionContext>(basicContext, priority) {
+
+    private val excludeEnumEntries =
+        !basicContext.project.languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
+
     override fun KtAnalysisSession.complete(
         positionContext: FirSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext
@@ -87,7 +93,7 @@ internal class FirSuperMemberCompletionContributor(
     ): Sequence<KtCallableSymbol> {
         val scope = receiverType.getTypeScope()?.getDeclarationScope() ?: return emptySequence()
         val syntheticJavaPropertiesScope = receiverType.getSyntheticJavaPropertiesScope()?.getDeclarationScope()
-        return collectNonExtensions(scope, syntheticJavaPropertiesScope, visibilityChecker, scopeNameFilter)
+        return collectNonExtensions(scope, syntheticJavaPropertiesScope, visibilityChecker, scopeNameFilter, excludeEnumEntries)
     }
 
     private fun KtAnalysisSession.collectCallToSuperMember(
