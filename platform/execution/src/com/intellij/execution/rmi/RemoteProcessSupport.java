@@ -575,10 +575,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
 
-    void startBeat() {
+    void startBeat() throws RemoteException, NotBoundException {
+      var watchdog = getWatchdog();
+      var pulseTimeoutMillis = watchdog.getPulseTimeoutMillis();
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
         beat();
-      }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      }, pulseTimeoutMillis, pulseTimeoutMillis, TimeUnit.MILLISECONDS);
       Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
     }
 
@@ -604,7 +606,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     @TestOnly
     public void kill(int exitCode) {
       try {
-        getWatchdog().dieNow(exitCode);
+        getWatchdog().dieNowTestOnly(exitCode);
       }
       catch (RemoteException | NotBoundException ignore) {
       }
