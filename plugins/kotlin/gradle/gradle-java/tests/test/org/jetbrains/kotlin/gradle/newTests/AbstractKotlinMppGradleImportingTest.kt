@@ -136,7 +136,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // Hack: usually this is set-up by JUnit's Parametrized magic, but
         // our tests source versions from `kotlinTestPropertiesService`, not from
         // @Parametrized
-        this.gradleVersion = context.gradleVersion.version
+        (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
         super.setUp()
 
         context.testProject = myProject
