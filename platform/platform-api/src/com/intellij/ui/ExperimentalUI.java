@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -60,12 +60,11 @@ public abstract class ExperimentalUI {
   }
 
   public static void setNewUI(boolean newUI) {
-    if (newUI) {
-      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
-    }
+    getInstance().setNewUIInternal(newUI);
+  }
 
-    Registry.get("ide.experimental.ui").setValue(newUI);
+  protected void setNewUIInternal(boolean newUI) {
+
   }
 
   public static int getPromotionDaysCount() {
