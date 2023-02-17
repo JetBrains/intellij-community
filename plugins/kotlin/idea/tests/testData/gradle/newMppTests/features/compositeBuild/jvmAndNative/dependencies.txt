@@ -52,4 +52,4 @@ Test configuration:
 - hiding following roots: resources, android-specific roots, generated
 - showing only source modules matching .*consumerBuild.*
 - hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
-- hiding dependencies matching .*consumerBuild.*
+- showing only dependencies matching .*producerBuild.*
