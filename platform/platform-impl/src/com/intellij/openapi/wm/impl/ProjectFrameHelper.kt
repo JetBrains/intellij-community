@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
@@ -102,8 +104,8 @@ open class ProjectFrameHelper internal constructor(
       override val helper: IdeFrame
         get() = this@ProjectFrameHelper
 
-      override val frameDecorator: IdeFrameImpl.FrameDecorator?
-        get() = this@ProjectFrameHelper.frameDecorator
+      override val isInFullScreen: Boolean
+        get() = frameDecorator?.isInFullScreen ?: false
 
       override fun dispose() {
         if (isTemporaryDisposed(frame)) {
