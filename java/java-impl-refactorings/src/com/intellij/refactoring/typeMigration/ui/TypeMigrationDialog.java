@@ -151,14 +151,16 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       PsiElement root = roots[0];
       if (root instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
-        if (scope instanceof PsiMethod) {
+        if (scope instanceof PsiMethod && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_5)) {
           flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
         }
         else if (scope instanceof PsiCatchSection && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
-      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
+      else if (root instanceof PsiMethod) {
+        flags |= JavaCodeFragmentFactory.ALLOW_VOID;
+      }
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -180,11 +182,14 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     @Override
     protected void canRun() throws ConfigurationException {
       super.canRun();
-      if (!checkType(getMigrationType()))
+      if (!checkType(getMigrationType())) {
         throw new ConfigurationException(
           JavaBundle.message("type.migration.dialog.message.invalid.type", StringUtil.escapeXmlEntities(myTypeCodeFragment.getText())));
-      if (isVoidVariableMigration()) throw new ConfigurationException(
-        JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+      }
+      if (isIllegalVoidMigration()) {
+        throw new ConfigurationException(
+          JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+      }
     }
 
     @Override
@@ -291,10 +296,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       throw new AssertionError("unknown element");
     }
 
-    private boolean isVoidVariableMigration() {
+    private boolean isIllegalVoidMigration() {
       if (!PsiTypes.voidType().equals(getMigrationType())) return false;
       for (PsiElement root : myRoots) {
-        if (root instanceof PsiVariable) return true;
+        if (!(root instanceof PsiMethod)) return true;
       }
       return false;
     }
