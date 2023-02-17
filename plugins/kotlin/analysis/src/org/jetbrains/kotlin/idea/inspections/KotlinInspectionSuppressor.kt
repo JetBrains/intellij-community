@@ -5,12 +5,15 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
 import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.psi.KtAnnotated
@@ -55,6 +58,13 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
 
     override fun isSuppressionFor(elementWithSuppression: PsiElement, place: PsiElement, toolId: String): Boolean {
         return elementWithSuppression === place || elementWithSuppression.isAncestor(place, false)
+    }
+
+    override fun getHighlightingRange(elementWithSuppression: PsiElement, toolId: String): TextRange? {
+        val annotated = elementWithSuppression as? KtAnnotated ?: return null
+        val suppressAnnotationEntry = KotlinPsiHeuristics.findSuppressAnnotation(annotated) ?: return null
+        val index = StringUtil.indexOfIgnoreCase(suppressAnnotationEntry.text, toolId, 0).takeIf { it >= 0 } ?: return null
+        return TextRange(index, index + toolId.length).shiftRight(suppressAnnotationEntry.textRangeIn(annotated).startOffset)
     }
 }
 
