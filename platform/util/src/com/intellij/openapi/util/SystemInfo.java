@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
@@ -55,9 +55,9 @@ public final class SystemInfo {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
+  public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
 
   public static final boolean isXWindow = SystemInfoRt.isXWindow;
   public static final boolean isWayland, isGNOME, isKDE, isXfce, isI3;
@@ -95,11 +95,6 @@ public final class SystemInfo {
     return isXWindow && ourHasXdgMime.getValue();
   }
 
-  /**
-   * @deprecated macOS 10.14 is the minimum version.
-   */
-  @Deprecated
-  public static final boolean isMacOSMojave = isMac && isOsVersionAtLeast("10.14");
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
@@ -188,7 +183,6 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
@@ -230,5 +224,9 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isMacOSMountainLion = isMac;
 
+  /** @deprecated always true (Java 17 requires macOS 10.14+) */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isMacOSMojave = isMac;
   //</editor-fold>
 }
