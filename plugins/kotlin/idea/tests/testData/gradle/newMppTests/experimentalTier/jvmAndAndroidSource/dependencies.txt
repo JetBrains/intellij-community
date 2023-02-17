@@ -18,6 +18,7 @@ project.consumer.androidTest
     producer.main (TEST)
 
 project.consumer.commonMain
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
@@ -31,6 +32,7 @@ project.consumer.commonMain
 project.consumer.commonTest
     consumer.commonMain (friend, TEST)
     consumer.jvmAndAndroidMain (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
@@ -43,6 +45,7 @@ project.consumer.commonTest
 
 project.consumer.jvmAndAndroidMain
     consumer.commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
@@ -118,21 +121,15 @@ project.producer.androidTest
     producer.main (friend, TEST)
 
 project.producer.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
 
 project.producer.commonTest
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     producer.commonMain (friend, TEST)
     producer.jvmAndAndroidMain (TEST)
 
 project.producer.jvmAndAndroidMain
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     producer.commonMain (refines, COMPILE)
 
 project.producer.jvmMain
