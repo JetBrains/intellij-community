@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
+@OldMppTestsInfraDuplicate
 class ImportKotlinGradlePluginVersionTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test

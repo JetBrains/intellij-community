@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.gradle.newTests.testFeatures.GradleProjectsLinker
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
@@ -12,7 +13,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-
+@OldMppTestsInfraDuplicate
 class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase() {
 
     private val KotlinToolingVersion.isPrepareKotlinIdeaImportSupportExpected: Boolean
