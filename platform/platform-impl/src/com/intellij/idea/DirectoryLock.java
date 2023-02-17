@@ -57,7 +57,6 @@ final class DirectoryLock {
   private static final int MARKER = 0xFACADE;
   private static final int HEADER_LENGTH = 6;  // the marker (4 bytes) + a packet length (2 bytes)
   private static final String SERVER_THREAD_NAME = "External Command Listener";
-  private static final String INTERNAL_DIAGNOSTIC_COMMAND = "ij-activation-diagnostic";
 
   private static final Logger LOG = Logger.getInstance(DirectoryLock.class);
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
@@ -273,13 +272,7 @@ final class DirectoryLock {
 
       CliResult result;
       try {
-        if (request.size() == 2 && INTERNAL_DIAGNOSTIC_COMMAND.equals(request.get(1))) {
-          @SuppressWarnings("HardCodedStringLiteral") var message = "PID=" + myPid + " thread=" + Thread.currentThread();
-          result = new CliResult(0, message);
-        }
-        else {
-          result = myProcessor.apply(request);
-        }
+        result = myProcessor.apply(request);
       }
       catch (Throwable t) {
         LOG.error(t);
