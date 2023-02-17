@@ -99,10 +99,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull Icon smartTagIcon,
-                                 @NotNull IntentionPopup popup) {
+                                 @NotNull CachedIntentions cachedIntentions) {
     myEditor = editor;
-    myPopup = popup;
-    Disposer.register(this, popup);
+    myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
+    Disposer.register(this, myPopup);
 
     myLightBulbPanel = new LightBulbPanel(project, file, editor, smartTagIcon);
     myComponentHint = new MyComponentHint(myLightBulbPanel);
@@ -117,8 +117,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
-    IntentionPopup intentionPopup = new IntentionPopup(project, editor, file, cachedIntentions);
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), intentionPopup);
+    IntentionHintComponent component =
+      new IntentionHintComponent(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), cachedIntentions);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -482,8 +482,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private boolean myPopupShown;
 
     private IntentionPopup(@NotNull Project project,
-                           @NotNull Editor editor,
                            @NotNull PsiFile file,
+                           @NotNull Editor editor,
                            @NotNull CachedIntentions cachedIntentions) {
       myProject = project;
       myEditor = editor;
