@@ -11384,6 +11384,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject3.kt");
         }
 
+        @TestMetadata("notApplicableObject4.kt")
+        public void testNotApplicableObject4() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject4.kt");
+        }
+
         @TestMetadata("notApplicableOuterClass.kt")
         public void testNotApplicableOuterClass() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableOuterClass.kt");

@@ -2149,6 +2149,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject3.kt");
         }
 
+        @TestMetadata("notApplicableObject4.kt")
+        public void testNotApplicableObject4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableObject4.kt");
+        }
+
         @TestMetadata("notApplicableOuterClass.kt")
         public void testNotApplicableOuterClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableOuterClass.kt");
