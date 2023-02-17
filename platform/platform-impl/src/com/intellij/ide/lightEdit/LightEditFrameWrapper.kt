@@ -155,13 +155,9 @@ internal class LightEditFrameWrapper(
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
-  override fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
-    return object : CloseProjectWindowHelper() {
-      override fun windowClosing(project: Project?) {
-        if (closeHandler.asBoolean) {
-          super.windowClosing(project)
-        }
-      }
+  override fun windowClosing(project: Project) {
+    if (closeHandler.asBoolean) {
+      super.windowClosing(project)
     }
   }
 
