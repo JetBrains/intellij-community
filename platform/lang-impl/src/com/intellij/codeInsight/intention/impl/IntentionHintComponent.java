@@ -567,12 +567,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         return;
       }
       popup.myListPopup = JBPopupFactory.getInstance().createListPopup(step);
-      if (popup.myListPopup instanceof WizardPopup) {
+      if (popup.myListPopup instanceof WizardPopup wizardPopup) {
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
         for (Shortcut shortcut : shortcuts) {
           if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
             if (keyboardShortcut.getSecondKeyStroke() == null) {
-              ((WizardPopup)popup.myListPopup).registerAction(
+              wizardPopup.registerAction(
                 "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(),
                 Util.createAction(e -> popup.myListPopup.handleSelect(true))
               );
@@ -602,10 +602,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           highlighter.dropHighlight();
           injectionHighlighter.dropHighlight();
 
-          if (source instanceof DataProvider) {
-            Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-            if (selectedItem instanceof IntentionActionWithTextCaching) {
-              IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
+          if (source instanceof DataProvider dataProvider) {
+            Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData(dataProvider);
+            if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
+              IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
               if (list != null) {
                 updatePreviewPopup(popup, action, list.getOriginalSelectedIndex());
               }
@@ -615,27 +615,27 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
 
         private void highlightOnHover(Object selectedItem) {
-          if (!(selectedItem instanceof IntentionActionWithTextCaching)) return;
+          if (!(selectedItem instanceof IntentionActionWithTextCaching actionWithCaching)) return;
 
-          IntentionAction action = IntentionActionDelegate.unwrap(((IntentionActionWithTextCaching)selectedItem).getAction());
-          if (action instanceof SuppressIntentionActionFromFix) {
-            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+          IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
+          if (action instanceof SuppressIntentionActionFromFix suppressAction) {
+            if (injectedFile != null && suppressAction.isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
               PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-              PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              PsiElement container = suppressAction.getContainer(at);
               if (container != null) {
                 injectionHighlighter.highlight(container, Collections.singletonList(container));
               }
             }
             else {
               PsiElement at = popup.myFile.findElementAt(popup.myEditor.getCaretModel().getOffset());
-              PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+              PsiElement container = suppressAction.getContainer(at);
               if (container != null) {
                 highlighter.highlight(container, Collections.singletonList(container));
               }
             }
           }
-          else if (action instanceof CustomizableIntentionAction) {
-            var ranges = ((CustomizableIntentionAction)action).getRangesToHighlight(popup.myEditor, popup.myFile);
+          else if (action instanceof CustomizableIntentionAction customizableAction) {
+            var ranges = customizableAction.getRangesToHighlight(popup.myEditor, popup.myFile);
             for (var range : ranges) {
               TextRange rangeInFile = range.getRangeInFile();
               PsiFile file = range.getContainingFile();
@@ -696,8 +696,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     /** Add all intention shortcuts to also be available as actions in the popover */
     private static void registerIntentionShortcuts(@NotNull IntentionPopup popup) {
       for (Object object : popup.myListPopup.getListStep().getValues()) {
-        if (object instanceof IntentionActionDelegate) {
-          registerIntentionShortcut(popup, ((IntentionActionDelegate)object).getDelegate());
+        if (object instanceof IntentionActionDelegate delegate) {
+          registerIntentionShortcut(popup, delegate.getDelegate());
         }
       }
     }
@@ -741,12 +741,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     private static void showPreview(@NotNull IntentionPopup popup) {
       popup.myPreviewPopupUpdateProcessor.show();
-      if (popup.myListPopup instanceof ListPopupImpl) {
-        JList<?> list = ((ListPopupImpl)popup.myListPopup).getList();
+      if (popup.myListPopup instanceof ListPopupImpl listPopup) {
+        JList<?> list = listPopup.getList();
         int selectedIndex = list.getSelectedIndex();
         Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof IntentionActionWithTextCaching) {
-          updatePreviewPopup(popup, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
+        if (selectedValue instanceof IntentionActionWithTextCaching actionWithCaching) {
+          updatePreviewPopup(popup, actionWithCaching.getAction(), selectedIndex);
         }
       }
     }
