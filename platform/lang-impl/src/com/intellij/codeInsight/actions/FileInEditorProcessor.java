@@ -35,6 +35,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,9 +101,11 @@ public class FileInEditorProcessor {
       myProcessor = mixWithCleanupProcessor(myProcessor);
     }
 
+    Runnable postRunnable = null;
+
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
-      myProcessor.setPostRunnable(() -> {
+      postRunnable = FunctionUtil.composeRunnables(postRunnable, () -> {
         if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) {
           return;
         }
@@ -113,11 +116,15 @@ public class FileInEditorProcessor {
       });
     }
 
-    myProcessor.run();
-
     if (myEditor != null && myOptions.getTextRangeType() == TextRangeType.WHOLE_FILE) {
-      CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+      postRunnable = FunctionUtil.composeRunnables(postRunnable, () -> {
+        CodeStyleSettingsManager.getInstance(myProject).notifyCodeStyleSettingsChanged();
+      });
     }
+
+    myProcessor.setPostRunnable(postRunnable);
+
+    myProcessor.run();
   }
 
   private boolean isExternalFormatterInUse() {
