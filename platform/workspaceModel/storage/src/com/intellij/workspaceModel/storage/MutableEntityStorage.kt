@@ -53,9 +53,6 @@ interface MutableEntityStorage : EntityStorage {
 
   val modificationCount: Long
 
-  @ApiStatus.Internal
-  fun setUseNewRbs(value: Boolean)
-
   companion object {
     @JvmStatic
     fun create(): MutableEntityStorage = MutableEntityStorageImpl.create()

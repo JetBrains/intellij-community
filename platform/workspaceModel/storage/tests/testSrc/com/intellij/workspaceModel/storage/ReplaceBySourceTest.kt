@@ -24,7 +24,6 @@ class ReplaceBySourceTest {
   fun setUp(info: RepetitionInfo) {
     builder = createEmptyBuilder()
     replacement = createEmptyBuilder()
-    builder.useNewRbs = true
     builder.keepLastRbsEngine = true
     // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
     builder.upgradeEngine = { (it as ReplaceBySourceAsTree).shuffleEntities = Random(info.currentRepetition.toLong()).nextLong() }
@@ -1786,7 +1785,6 @@ class ReplaceBySourceTest {
 
   private fun resetChanges() {
     builder = builder.toSnapshot().toBuilder() as MutableEntityStorageImpl
-    builder.useNewRbs = true
     builder.keepLastRbsEngine = true
   }
 

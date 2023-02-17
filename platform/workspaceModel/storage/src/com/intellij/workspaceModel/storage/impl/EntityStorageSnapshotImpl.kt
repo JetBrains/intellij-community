@@ -102,10 +102,6 @@ internal class MutableEntityStorageImpl(
   override val modificationCount: Long
     get() = this.changeLog.modificationCount
 
-  override fun setUseNewRbs(value: Boolean) {
-    useNewRbs = value
-  }
-
   private val writingFlag = AtomicBoolean()
 
   @Volatile
@@ -118,8 +114,6 @@ internal class MutableEntityStorageImpl(
   private var threadName: String? = null
 
   // --------------- Replace By Source stuff -----------
-  internal var useNewRbs = Registry.`is`("ide.workspace.model.rbs.as.tree", true)
-
   @TestOnly
   internal var keepLastRbsEngine = false
   internal var engine: ReplaceBySourceOperation? = null
@@ -347,9 +341,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  private fun getRbsEngine(): ReplaceBySourceOperation {
-    return if (useNewRbs) ReplaceBySourceAsTree() else ReplaceBySourceAsGraph()
-  }
+  private fun getRbsEngine(): ReplaceBySourceOperation = ReplaceBySourceAsTree()
 
   /**
    *  TODO  Spacial cases: when source filter returns true for all entity sources.
