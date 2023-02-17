@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.roots.DependencyScope
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.facetSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 import java.io.PrintStream
 
+@OldMppTestsInfraDuplicate
 class AssociateCompilationImportAndHighlightingTest3 : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @PluginTargetVersions(pluginVersion = "1.8.20-dev-1816+")

@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.roots.DependencyScope
 import org.jetbrains.kotlin.checkers.utils.clearTextFromDiagnosticMarkup
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
+@OldMppTestsInfraDuplicate
 abstract class HierarchicalStructureByDefaultImportAndHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "hierarchicalStructureByDefaultImportAndHighlighting"
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.codeInsight.gradle.isKgpDependencyResolutionEnabled
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
@@ -22,6 +23,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import java.io.PrintStream
 
+@OldMppTestsInfraDuplicate
 abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "hmppImportAndHighlighting"
     override fun clearTextFromMarkup(text: String): String = clearTextFromDiagnosticMarkup(text)
