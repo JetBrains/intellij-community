@@ -15,7 +15,6 @@ class FullLineLogsStorage(storageDir: String) : StorageWithMetadataBase(storageD
   fun enableLogging(path: String) {
     val logPath = "${toFileName(path)}.jsonl"
     val properties = System.getProperties()
-    properties.setProperty("flcc_search_logging_enabled", "true")
     properties.setProperty("flcc_search_log_path", Paths.get(storageDir, logPath).toString())
     logFiles[path] = logPath
   }
