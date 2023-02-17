@@ -27,6 +27,11 @@ interface WorkspaceChecksDsl : OrderEntriesChecksDsl, KotlinFacetSettingsChecksD
     fun TestConfigurationDslScope.disableCheckers(vararg checkers: AbstractTestChecker<*>) {
         config.disableCheckers = checkers.toSet()
     }
+
+    fun TestConfigurationDslScope.onlyDependencies(@Language("RegExp") from: String, @Language("RegExp") to: String) {
+        onlyModules(from)
+        onlyDependencies(to)
+    }
 }
 
 private val TestConfigurationDslScope.config: GeneralWorkspaceChecksConfiguration
