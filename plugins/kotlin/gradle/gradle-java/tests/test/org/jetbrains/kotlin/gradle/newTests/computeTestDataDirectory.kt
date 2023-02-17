@@ -34,7 +34,7 @@ import kotlin.io.path.exists
  * Such an elaborate algorithm is used mostly to comply with DevKit heuristics, which,
  * specifically, enables 'Navigate To Testdata' actions & gutters.
  */
-fun computeTestDataDirectory(testDescription: Description): File {
+fun computeTestDataDirectory(testDescription: Description, strict: Boolean = true): File {
     require(testDescription.methodName.startsWith("test")) {
         "Test method names are expected to start with 'test', actual name: ${testDescription.methodName}\n" +
                 "Please add 'test' prefix, as it helps DevKit to work (e.g. provide " +
@@ -54,12 +54,13 @@ fun computeTestDataDirectory(testDescription: Description): File {
         testFolderName
     )
 
-    require(testFolderFullPath.exists()) {
+    if (strict && !testFolderFullPath.exists()) {
         val testMetadataValuesRenderedWithOwners =
             testMetadataOnClassesFromCurrentToSuper.joinToString(separator = "\n") { (value, clazz) ->
                 "value = $value, found on ${clazz.name}"
             }.nullize()
-        """Can't find test data directory
+        error(
+            """Can't find test data directory
                 | Full path = ${testFolderFullPath.toFile().canonicalPath}
                 |
                 | @TestDataPath.value = ${testDataPathAnnotationValue.first}
@@ -71,6 +72,7 @@ fun computeTestDataDirectory(testDescription: Description): File {
                 | testFolderName = ${testFolderName}
                 | testMethodName = ${testDescription.methodName}
             """.trimMargin()
+        )
     }
 
     return testFolderFullPath.toFile()
@@ -92,13 +94,18 @@ private fun getTestDataPathAnnotationValueWithOwner(description: Description): P
     return result.first.replace("\$PROJECT_ROOT", KotlinRoot.REPO.canonicalPath) to result.second
 }
 
-private fun getTestFolderName(description: Description): String {
-    val testMetadataOnMethod = description.getAnnotation(TestMetadata::class.java)?.value
+internal fun getTestFolderName(description: Description): String =
+    getTestFolderName(description.methodName, description.getAnnotation(TestMetadata::class.java))
+
+internal fun getTestFolderName(testMethodName: String, testMetadataIfAny: TestMetadata?): String {
+    val testMetadataOnMethod = testMetadataIfAny?.value
     return testMetadataOnMethod
-    // JUnit4 doesn't allow to have display name different
-        ?: testNamePattern.matchEntire(description.methodName)!!.groups[1]!!.value.decapitalizeAsciiOnly()
+    // JUnit4 doesn't allow to have display name different from the test name, so have to do some
+    // hoops to remove "parameters" in []
+        ?: testNamePattern.matchEntire(testMethodName)!!.groups[1]!!.value.decapitalizeAsciiOnly()
 }
 
 // expected pattern:
 //      testFoo[1.8.20-dev-3308, Gradle 7.5.1, AGP 7.4.0, any other string for describing versions]
-private val testNamePattern = """test([^\[].*)\[.*]""".toRegex()
+//      testFoo // can be used by infra, e.g. see [testSuiteMethodsAndTestdataFoldersConsistency]
+private val testNamePattern = """test([^\[]*)(\[.*])?""".toRegex()
