@@ -22,15 +22,21 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.junit.Assert
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.PrintStream
+import java.util.TreeSet
+import java.util.*
+import kotlin.Comparator
 
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
@@ -225,6 +231,45 @@ abstract class AbstractKotlinMppGradleImportingTest :
     // override it to preserve line breaks in output of Gradle-process
     final override fun printOutput(stream: PrintStream, text: String) {
         stream.println(text)
+    }
+
+    @Test
+    fun testSuiteMethodsAndTestdataFoldersConsistency() {
+        fun mutableCaseInsensitiveStringSet(): MutableSet<String> =
+            TreeSet(Comparator { o1: String, o2: String -> o1.compareTo(o2, ignoreCase = true) })
+
+        // will point to <testdata-folder of this class>/<methodsAndFoldersAreInOneToOneCorrespondence> (doesn't exist)
+        val testDataFolderForThisTest = computeTestDataDirectory(context.description, strict = false)
+
+        val testDataFolderForThisSuite = testDataFolderForThisTest.parentFile
+
+        val actualTestDataFoldersNames = testDataFolderForThisSuite.listFiles()!!
+            .mapTo(mutableCaseInsensitiveStringSet()) { it.name }
+
+        val testClass = context.description.testClass
+        // NB: Inherited methods are not supported here
+        val expectedTestFolders = testClass.declaredMethods.asSequence()
+            .filter { it.name.startsWith("test") }
+            .mapTo(mutableCaseInsensitiveStringSet()) { getTestFolderName(it.name, it.getAnnotation(TestMetadata::class.java)) }
+
+        val folderNamesPresentOnDiskButNoMethod = actualTestDataFoldersNames - expectedTestFolders
+
+        val errors = buildString {
+            if (folderNamesPresentOnDiskButNoMethod.isNotEmpty()) {
+                appendLine(
+                    "The following folders don't have corresponding test method in ${testClass.simpleName},\n" +
+                            "but are present in ${testDataFolderForThisSuite.absolutePath}"
+                )
+                appendLine("    ${folderNamesPresentOnDiskButNoMethod.joinToString()}")
+            }
+        }
+
+        if (errors.isNotEmpty()) {
+            Assert.fail(
+                "Error! Test methods in the test suite are not consistent with test data on disk\n"
+                        + errors
+            )
+        }
     }
 
     class TestDescriptionProviderJUnitRule(private val testContext: KotlinMppTestsContextImpl) : KotlinBeforeAfterTestRuleWithDescription {
