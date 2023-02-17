@@ -118,7 +118,7 @@ public class RedundantSuppressTest extends JavaInspectionTestCase {
       public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
         return SuppressQuickFix.EMPTY_ARRAY;
       }
-    });
+    }, getTestRootDisposable());
     doTest("redundantSuppress/defaultFile", myWrapper, true);
   }
 
