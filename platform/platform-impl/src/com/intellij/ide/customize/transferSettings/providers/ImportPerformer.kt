@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.providers
 
 import com.intellij.ide.customize.transferSettings.models.PluginFeature
@@ -55,7 +55,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     val installedPlugins = PluginManagerCore.getPlugins().map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
 
-    val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState, {})
+    val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}
     installAndEnableTask.run(pi)
 
     val cp = installAndEnableTask.customPlugins ?: return
@@ -64,7 +64,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
                                    customPlugins: MutableCollection<PluginNode>,
                                    onSuccess: Runnable?,
                                    modalityState: ModalityState,
-                                   function: Consumer<in Boolean>?): Boolean {
+                                   function: Consumer<Boolean>?) {
         var success = true
         try {
           val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
@@ -82,7 +82,6 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
         finally {
           ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, pi.modalityState)
         }
-        return true
       }
     }
     a.doInstallPlugins({ true }, pi.modalityState)

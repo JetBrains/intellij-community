@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +24,12 @@ public class PluginsAdvertiserDialogPluginInstaller {
   private final Collection<PluginDownloader> myPluginToInstall;
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
-  private final @Nullable Consumer<? super Boolean> myFinishFunction;
+  private final @Nullable Consumer<Boolean> myFinishFunction;
 
   public PluginsAdvertiserDialogPluginInstaller(@Nullable Project project,
-                          @NotNull Collection<PluginDownloader> pluginsToInstall,
-                          @NotNull List<PluginNode> customPlugins,
-                          @Nullable Consumer<? super Boolean> finishFunction) {
+                                                @NotNull Collection<PluginDownloader> pluginsToInstall,
+                                                @NotNull List<PluginNode> customPlugins,
+                                                @Nullable Consumer<Boolean> finishFunction) {
     myProject = project;
     myPluginToInstall = pluginsToInstall;
     myCustomPlugins = customPlugins;
@@ -86,26 +87,18 @@ public class PluginsAdvertiserDialogPluginInstaller {
         LOG.error(e);
       }
     }
-    else {
-      if (!pluginsToEnable.isEmpty()) {
-        notifyRunnable.run();
-      }
+    else if (!pluginsToEnable.isEmpty()) {
+      notifyRunnable.run();
     }
     return true;
   }
 
-  public boolean downloadPlugins(
-    @NotNull List<PluginNode> plugins,
-                                 @NotNull Collection<PluginNode> customPlugins,
-                                 @Nullable Runnable onSuccess,
-                                 @NotNull final ModalityState modalityState,
-                                 @Nullable Consumer<? super Boolean> function) throws IOException {
-    return PluginManagerMain.downloadPlugins(plugins,
-                                             customPlugins,
-                                             true,
-                                             onSuccess,
-                                             PluginEnabler.HEADLESS,
-                                             modalityState,
-                                             function);
+  @ApiStatus.OverrideOnly
+  public void downloadPlugins(@NotNull List<PluginNode> plugins,
+                              @NotNull Collection<PluginNode> customPlugins,
+                              @Nullable Runnable onSuccess,
+                              @NotNull ModalityState modalityState,
+                              @Nullable Consumer<Boolean> function) throws IOException {
+    PluginManagerMain.downloadPlugins(plugins, customPlugins, true, onSuccess, PluginEnabler.HEADLESS, modalityState, function);
   }
 }
