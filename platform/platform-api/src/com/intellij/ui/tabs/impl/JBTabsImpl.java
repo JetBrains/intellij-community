@@ -1123,7 +1123,7 @@ public class JBTabsImpl extends JComponent
           if (iconLabel != null) {
             Icon icon = info.getIcon();
             if (info != selectedInfo) {
-              icon = IconLoader.getTransparentIcon(icon, 0.7f);
+              icon = IconLoader.getTransparentIcon(icon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
             }
             iconLabel.setIcon(icon);
           }
