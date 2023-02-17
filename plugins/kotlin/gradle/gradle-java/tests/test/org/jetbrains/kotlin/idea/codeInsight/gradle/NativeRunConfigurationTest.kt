@@ -7,11 +7,13 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
+@OldMppTestsInfraDuplicate
 abstract class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "nativeRunConfiguration"
 
