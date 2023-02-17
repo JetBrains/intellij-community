@@ -169,24 +169,6 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
   }
 
-  @Test
-  open fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
-    importProject(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
-    assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
-  }
 
   @Test
   open fun testLanguageLevelFromPluginManagementSection() {

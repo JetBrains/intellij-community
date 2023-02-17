@@ -3,7 +3,8 @@ package org.jetbrains.idea.maven.compatibility;
 
 import com.intellij.maven.testFramework.MavenImportingTestCase;
 import com.intellij.maven.testFramework.MavenWrapperTestFixture;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -336,5 +337,25 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     waitForReadingCompletion();
 
     assertModules("project", mn("project", "module1"));
+  }
+
+  @Test
+  public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+    var expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0 ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+    assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
   }
 }
