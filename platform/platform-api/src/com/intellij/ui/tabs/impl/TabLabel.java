@@ -207,11 +207,21 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       protected Color getActiveTextColor(Color attributesColor) {
         TabPainterAdapter painterAdapter = myTabs.getTabPainterAdapter();
         TabTheme theme = painterAdapter.getTabTheme();
+        Color editedForeground = editLabelForeground(attributesColor);
+        if (editedForeground != null) {
+          return editedForeground;
+        }
         return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null)
                ? myTabs.isActiveTabs(myInfo)
                  ? theme.getUnderlinedTabForeground()
                  : theme.getUnderlinedTabInactiveForeground()
                : super.getActiveTextColor(attributesColor);
+      }
+
+      @Override
+      protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
+        Icon editedIcon = editIcon(icon);
+        super.paintIcon(g, editedIcon, offset);
       }
     };
     label.setOpaque(false);
@@ -222,6 +232,16 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     label.setIpad(JBInsets.emptyInsets());
 
     return label;
+  }
+
+  // Allows to edit the label foreground right before painting
+  public @Nullable Color editLabelForeground(@Nullable Color baseForeground) {
+    return baseForeground;
+  }
+
+  // Allows to edit the icon right before painting
+  public @NotNull Icon editIcon(@NotNull Icon baseIcon) {
+    return baseIcon;
   }
 
   public boolean isPinned() {

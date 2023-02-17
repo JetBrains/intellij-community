@@ -30,18 +30,12 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ComponentWithMnemonics
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.GuiUtils
-import com.intellij.ui.InplaceButton
+import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.DockableContent
@@ -55,7 +49,6 @@ import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
@@ -613,14 +606,27 @@ private class EditorTabs(
       return super.getPreferredHeight() - insets.top - insets.bottom
     }
 
-    override fun paint(g: Graphics) {
-      if (ExperimentalUI.isNewUI() && selectedInfo != info && !isHoveredTab(this)) {
-        val alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f)
-        GraphicsUtil.paintWithAlpha(g, alpha) { super.paint(g) }
+    override fun editLabelForeground(baseForeground: Color?): Color? {
+      return if (baseForeground != null && paintDimmed()) {
+        val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
+        val background = getInfo().tabColor ?: myTabs.tabPainter.getTabTheme().background
+        if (background != null) {
+          ColorUtil.blendColorsInRgb(background, baseForeground, blendValue.toDouble())
+        }
+        else baseForeground
       }
-      else {
-        super.paint(g)
+      else baseForeground
+    }
+
+    override fun editIcon(baseIcon: Icon): Icon {
+      return if (paintDimmed()) {
+        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
       }
+      else baseIcon
+    }
+
+    private fun paintDimmed(): Boolean {
+      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != getInfo() && !myTabs.isHoveredTab(this)
     }
   }
 
