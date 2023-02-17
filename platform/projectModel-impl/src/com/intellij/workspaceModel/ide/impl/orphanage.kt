@@ -37,7 +37,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
     val newStorage: EntityStorageSnapshot = builder.toSnapshot()
     entityStorage.replace(newStorage, emptyMap(), {}, {})
 
-    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size} modules added")
+    log.info("Update orphanage. ${changes[ModuleEntity::class.java]?.size ?: 0} modules added")
   }
 
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {

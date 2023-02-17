@@ -39,7 +39,7 @@ class DisposableCachedValue<R : Disposable>(
 
       val oldValue = latestValue
       if (oldValue !== currentValue && oldValue != null) {
-        log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Version change from $oldValue to $currentValue" }
+        log.debug { "Dispose old value. Cache name: `$cacheName`. Store type: ${storage.javaClass}. Store version: ${storage.version}" }
         Disposer.dispose(oldValue)
       }
       latestValue = currentValue
