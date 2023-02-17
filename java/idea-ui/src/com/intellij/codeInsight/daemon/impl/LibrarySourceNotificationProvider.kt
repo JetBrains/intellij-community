@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -27,7 +27,8 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
   private companion object {
 
     private val LOG = logger<LibrarySourceNotificationProvider>()
-    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
+    // Support releases (e.g. "android-30") as well as previews (e.g. "android-tiramisu")
+    private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\w+/android.jar!/.*".toRegex()
 
     private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
     private const val METHOD = SHOW_NAME or SHOW_PARAMETERS or SHOW_RAW_TYPE
