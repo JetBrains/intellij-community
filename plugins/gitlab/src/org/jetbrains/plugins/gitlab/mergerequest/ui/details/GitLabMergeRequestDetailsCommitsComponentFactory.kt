@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.CommitPresenter
 import com.intellij.collaboration.ui.codereview.details.CommitRenderer
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
@@ -22,7 +23,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import java.awt.event.ActionListener
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -87,32 +87,32 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
             filteringMapper = { commit: GitLabCommitDTO? ->
               commit?.title ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
             },
-            renderer = object : CommitRenderer<GitLabCommitDTO?>() {
-              override fun isCommitSelected(value: GitLabCommitDTO?): Boolean {
-                return value == commitsVm.selectedCommit.value
-              }
-
-              override fun getAllCommitsText(): String {
-                return CollaborationToolsBundle.message("review.details.commits.popup.all", commitsVm.reviewCommits.value.size)
-              }
-
-              override fun getCommitTitle(value: GitLabCommitDTO?): String {
-                return value!!.title.orEmpty()
-              }
-
-              override fun getAuthor(value: GitLabCommitDTO?): String {
-                return value!!.author.name
-              }
-
-              override fun getDate(value: GitLabCommitDTO?): Date {
-                return value!!.authoredDate
-              }
+            renderer = CommitRenderer { commit: GitLabCommitDTO? ->
+              createCommitPresenter(commit, commitsVm.selectedCommit.value, commitsVm.reviewCommits.value.size)
             }
           )
 
           commitsVm.selectCommit(selectedCommit)
         }
       }
+    }
+  }
+
+  private fun createCommitPresenter(commit: GitLabCommitDTO?, selectedCommit: GitLabCommitDTO?, commitsCount: Int): CommitPresenter {
+    val isSelected = commit == selectedCommit
+    return if (commit == null) {
+      CommitPresenter.AllCommits(
+        title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount),
+        isSelected = isSelected
+      )
+    }
+    else {
+      CommitPresenter.SingleCommit(
+        title = commit.title.orEmpty(),
+        isSelected = isSelected,
+        author = commit.author.name,
+        date = commit.authoredDate
+      )
     }
   }
 }
