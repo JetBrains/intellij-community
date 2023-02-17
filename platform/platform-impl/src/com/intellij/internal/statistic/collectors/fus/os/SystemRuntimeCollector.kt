@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.ui.UIUtil
 import com.sun.management.OperatingSystemMXBean
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -139,7 +140,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
     return "Other"
   }
 
-  private fun getRenderingPipelineName() = if (SystemInfo.isMetalRendering) "Metal" else "OpenGL"
+  private fun getRenderingPipelineName() = if (UIUtil.isMetalRendering()) "Metal" else "OpenGL"
 
   private fun getJavaVendor(): String =
     when {

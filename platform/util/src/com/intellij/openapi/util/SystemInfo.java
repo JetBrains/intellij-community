@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
 import java.util.List;
 
 /**
@@ -46,9 +45,6 @@ public final class SystemInfo {
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
-
-  public static final boolean isMetalRendering = isMac && Boolean.getBoolean("sun.java2d.metal");
-  public static final boolean isDCEVM = ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-XX:+AllowEnhancedClassRedefinition");
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
