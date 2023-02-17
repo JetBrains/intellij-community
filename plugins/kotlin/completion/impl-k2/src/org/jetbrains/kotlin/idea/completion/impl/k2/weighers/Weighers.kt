@@ -117,14 +117,17 @@ internal object Weighers {
                 KindWeigher.Weigher,
                 CallableWeigher.Weigher,
                 ClassifierWeigher.Weigher,
-                K2SoftDeprecationWeigher.Weigher,
             )
             .weighAfter(
                 PlatformWeighersIds.STATS,
                 VariableOrFunctionWeigher.Weigher
             )
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
-            .weighBefore(PlatformWeighersIds.PREFIX, VariableOrParameterNameWithTypeWeigher.Weigher)
+            .weighBefore(
+                PlatformWeighersIds.PREFIX,
+                K2SoftDeprecationWeigher.Weigher,
+                VariableOrParameterNameWithTypeWeigher.Weigher
+            )
             .weighAfter(PlatformWeighersIds.PROXIMITY, ByNameAlphabeticalWeigher.Weigher)
 
     private object PlatformWeighersIds {
