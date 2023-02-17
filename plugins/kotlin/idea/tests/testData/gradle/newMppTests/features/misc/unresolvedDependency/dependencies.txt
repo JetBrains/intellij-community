@@ -2,11 +2,9 @@ MODULES
 my-app
 
 my-app.commonMain
-    unresolved:unresolved:1.0 (COMPILE)
 
 my-app.commonTest
     commonMain (friend, TEST)
-    unresolved:unresolved:1.0 (TEST)
 
 my-app.iosArm64Main
     commonMain (refines, COMPILE)
@@ -23,13 +21,11 @@ my-app.iosArm64Test
 
 my-app.iosMain
     commonMain (refines, COMPILE)
-    unresolved:unresolved:1.0 (COMPILE)
 
 my-app.iosTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     iosMain (friend, TEST)
-    unresolved:unresolved:1.0 (TEST)
 
 my-app.iosX64Main
     commonMain (refines, COMPILE)
@@ -51,7 +47,6 @@ my-app.jvmMain
 my-app.jvmTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jvmMain (friend, RUNTIME)
     jvmMain (friend, TEST)
     unresolved:unresolved:1.0 (TEST)
 
