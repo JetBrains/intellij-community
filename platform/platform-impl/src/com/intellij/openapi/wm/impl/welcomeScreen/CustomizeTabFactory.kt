@@ -60,13 +60,13 @@ class CustomizeTabFactory : WelcomeTabFactory {
 
 private fun getIdeFontSize() =
   if (settings.overrideLafFonts) settings.fontSize2D
-  else ((LafManager.getInstance() as? LafManagerImpl)?.defaultFont?.size2D
-        ?: JBFont.label().size2D)
+  else getDefaultIdeFont().size2D
 
 private fun getIdeFontName() =
   if (settings.overrideLafFonts) settings.fontFace
-  else ((LafManager.getInstance() as? LafManagerImpl)?.defaultFont?.family
-        ?: JBFont.label().family)
+  else getDefaultIdeFont().family
+
+private fun getDefaultIdeFont() = (LafManager.getInstance() as? LafManagerImpl)?.defaultFont ?: JBFont.label()
 
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title"),
                                                                            WelcomeScreenEventCollector.TabType.TabNavCustomize) {
