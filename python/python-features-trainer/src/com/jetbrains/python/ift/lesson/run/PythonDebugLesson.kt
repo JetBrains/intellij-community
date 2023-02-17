@@ -67,7 +67,7 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
         sessionPaused = false
       }
       proposeModificationRestore(afterFixText)
-      PythonLessonsBundle.message("python.debug.workflow.rerun", icon(AllIcons.Actions.Restart), action(it))
+      PythonLessonsBundle.message("python.debug.workflow.rerun", icon(AllIcons.Actions.RestartDebugger), action(it))
     }
 
     task {
