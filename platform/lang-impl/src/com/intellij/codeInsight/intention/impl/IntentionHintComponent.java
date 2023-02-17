@@ -570,13 +570,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (popup.myListPopup instanceof WizardPopup wizardPopup) {
         Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcuts();
         for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
-            if (keyboardShortcut.getSecondKeyStroke() == null) {
-              wizardPopup.registerAction(
-                "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(),
-                Util.createAction(e -> popup.myListPopup.handleSelect(true))
-              );
-            }
+          if (shortcut instanceof KeyboardShortcut keyboardShortcut && keyboardShortcut.getSecondKeyStroke() == null) {
+            wizardPopup.registerAction(
+              "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(),
+              Util.createAction(e -> popup.myListPopup.handleSelect(true))
+            );
           }
         }
 
@@ -743,10 +741,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       popup.myPreviewPopupUpdateProcessor.show();
       if (popup.myListPopup instanceof ListPopupImpl listPopup) {
         JList<?> list = listPopup.getList();
-        int selectedIndex = list.getSelectedIndex();
-        Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof IntentionActionWithTextCaching actionWithCaching) {
-          updatePreviewPopup(popup, actionWithCaching.getAction(), selectedIndex);
+        if (list.getSelectedValue() instanceof IntentionActionWithTextCaching actionWithCaching) {
+          updatePreviewPopup(popup, actionWithCaching.getAction(), list.getSelectedIndex());
         }
       }
     }
