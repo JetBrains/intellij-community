@@ -1,1 +1,0 @@
-class MyExtensionImpl implements MyExtension { }

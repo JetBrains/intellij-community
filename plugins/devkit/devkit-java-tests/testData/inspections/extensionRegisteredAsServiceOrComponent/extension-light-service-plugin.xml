@@ -6,7 +6,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.example">
-    <myExtension implementation="MyExtensionImpl"/>
+    <myExtension implementation="ExtensionLightService"/>
   </extensions>
 
 </idea-plugin>

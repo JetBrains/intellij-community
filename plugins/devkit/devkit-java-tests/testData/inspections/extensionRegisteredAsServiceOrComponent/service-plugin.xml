@@ -6,7 +6,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.example">
-    <applicationService serviceImplementation="MyServiceImpl"/>
+    <applicationService serviceImplementation="ServiceNoHighlighting"/>
   </extensions>
 
 </idea-plugin>
