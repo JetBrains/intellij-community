@@ -88,6 +88,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon InlayRenameInCommentsActive = load("actions/inlayRenameInCommentsActive.svg", -12645693, 2);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFiles = load("actions/inlayRenameInNoCodeFiles.svg", 1146827215, 0);
     /** 12x12 */ public static final @NotNull Icon InlayRenameInNoCodeFilesActive = load("actions/inlayRenameInNoCodeFilesActive.svg", 1330499262, 2);
+    /** 12x12 */ public static final @NotNull Icon InlaySecuredShield = load("actions/inlaySecuredShield.svg", 904190244, 0);
     /** 12x12 */ public static final @NotNull Icon InlineDropFrame = load("actions/inlineDropFrame.svg", -1403280875, 2);
     /** 12x12 */ public static final @NotNull Icon InlineDropFrameSelected = load("actions/inlineDropFrameSelected.svg", 1852607190, 2);
     /** 16x16 */ public static final @NotNull Icon InSelection = load("actions/inSelection.svg", 1931809310, 2);

@@ -97,6 +97,7 @@
     },
     "editor": {
       "inlayGlobe.svg": "actions/inlayGlobe.svg",
+      "inlaySecuredShield.svg": "actions/inlaySecuredShield.svg",
       "inlayRenameInComments.svg": "actions/inlayRenameInComments.svg",
       "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
       "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
