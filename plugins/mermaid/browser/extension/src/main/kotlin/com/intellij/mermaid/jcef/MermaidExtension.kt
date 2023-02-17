@@ -25,8 +25,7 @@ private suspend fun performRender() {
   console.log("Generated all mermaid blocks in $time")
 }
 
-suspend fun main() {
-  MermaidInitializationManager.initializeIfNeeded()
+suspend fun markdownExtensionMain() {
   coroutineScope {
     launch {
       // TODO: Work started on previous patch event probably needs to be cancelled, if there is already a new event

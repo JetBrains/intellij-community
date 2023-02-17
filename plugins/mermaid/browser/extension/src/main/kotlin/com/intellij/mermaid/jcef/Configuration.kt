@@ -5,5 +5,5 @@ import org.w3c.dom.get
 
 internal object Configuration {
   val mermaidTheme: String?
-    get() = window["mermaidTheme"] as? String
+    get() = window["mermaidTheme"] as? String ?: undefined
 }

@@ -1,5 +1,7 @@
 package com.intellij.mermaid.jcef
 
+import org.w3c.dom.events.Event
+import org.w3c.dom.events.EventTarget
 import kotlin.js.Console
 import kotlin.js.Promise
 
@@ -13,4 +15,8 @@ inline fun Console.time(name: String) {
 
 inline fun Console.timeEnd(name: String) {
   asDynamic().timeEnd(name)
+}
+
+fun EventTarget.addEventListener(type: String, callback: (Event) -> Unit) {
+  addEventListener(type, callback)
 }

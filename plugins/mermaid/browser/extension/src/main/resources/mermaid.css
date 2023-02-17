@@ -3,7 +3,7 @@
     max-width: 100%;
 }
 
-.mermaid > .error-text {
+.mermaid > .error-text, #diagram-container > .error-text {
     color: red;
     white-space: pre-wrap;
 }

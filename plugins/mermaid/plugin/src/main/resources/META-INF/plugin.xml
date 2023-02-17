@@ -12,6 +12,10 @@
               fieldName="INSTANCE"
               language="Mermaid"
               extensions="mermaid;mmd"/>
+
+    <fileEditorProvider implementation="com.intellij.mermaid.preview.MermaidEditorWithPreviewProvider"/>
+    <httpRequestHandler implementation="com.intellij.mermaid.preview.MermaidPreviewStaticServer"/>
+
     <lang.parserDefinition language="Mermaid"
                            implementationClass="com.intellij.mermaid.lang.MermaidParserDefinition"/>
     <lang.syntaxHighlighter language="Mermaid"

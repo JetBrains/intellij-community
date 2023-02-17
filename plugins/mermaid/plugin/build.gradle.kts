@@ -104,7 +104,10 @@ tasks {
   }
 
   withType<RunIdeTask> {
-    jvmArgs = commonJvmArgs + listOf("-Dide.browser.jcef.debug.port=8080")
+    jvmArgs = commonJvmArgs + listOf(
+      "-Dide.browser.jcef.debug.port=8080",
+      "-DdevelopmentBuild=true"
+    )
   }
 
   buildSearchableOptions {
