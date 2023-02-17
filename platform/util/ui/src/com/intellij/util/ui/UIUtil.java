@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -3528,5 +3528,9 @@ public final class UIUtil {
 
   private static @Nullable Color getDeprecatedBackground() {
     return Registry.getColor("ui.deprecated.components.color", null);
+  }
+
+  public static boolean isMetalRendering() {
+    return SystemInfo.isMac && Boolean.getBoolean("sun.java2d.metal");
   }
 }
