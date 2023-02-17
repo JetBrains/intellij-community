@@ -54,9 +54,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
   "intellij.platform.elevation",
-  "intellij.platform.elevation.client",
-  "intellij.platform.elevation.common",
-  "intellij.platform.elevation.daemon",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
   // lvcs.xml - convert into product module
