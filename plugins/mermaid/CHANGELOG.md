@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## 0.0.9
+- [MERMAID-26](https://youtrack.jetbrains.com/issue/MERMAID-26) Added support for Mermaid diagram files with `.mmd` extension
+- [MERMAID-27](https://youtrack.jetbrains.com/issue/MERMAID-27) Updated an underlying Mermaid.js version to 9.4.0
+- Added partial support for timeline diagrams
+
 ## 0.0.8
 - [MERMAID-2](https://youtrack.jetbrains.com/issue/MERMAID-2) Added rendering of parsing errors in diagram preview
 - [MERMAID-9](https://youtrack.jetbrains.com/issue/MERMAID-9) Fixed rendering of non-existent icons in Mindmap diagram
