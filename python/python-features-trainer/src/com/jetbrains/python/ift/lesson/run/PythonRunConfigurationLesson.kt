@@ -2,15 +2,22 @@
 package com.jetbrains.python.ift.lesson.run
 
 import com.jetbrains.python.ift.PythonLessonsBundle
-import training.dsl.LessonContext
-import training.dsl.LessonSample
-import training.dsl.LessonUtil
-import training.dsl.checkToolWindowState
+import com.jetbrains.python.run.PythonRunConfiguration
+import training.dsl.*
 import training.learn.lesson.general.run.CommonRunConfigurationLesson
 
 class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.configuration") {
-  override val sample: LessonSample = PythonRunLessonsUtils.demoSample
-  override val demoConfigurationName = PythonRunLessonsUtils.demoConfigurationName
+  override val demoConfigurationName = "sandbox"
+  
+  override val sample: LessonSample = parseLessonSample("""
+    import sys
+    
+    print('It is a run configurations sample')
+    
+    for s in sys.argv:
+        print('Passed argument: ', s)
+  """.trimIndent())
+
 
   override fun LessonContext.runTask() {
     task("RunClass") {
