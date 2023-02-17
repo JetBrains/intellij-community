@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.gradle
 
 import junit.framework.AssertionFailedError
+import org.jetbrains.kotlin.gradle.newTests.OldMppTestsInfraDuplicate
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
+@OldMppTestsInfraDuplicate
 class AssociateCompilationsModelBuilderTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test

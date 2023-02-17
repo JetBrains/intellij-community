@@ -11,11 +11,11 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import kotlin.reflect.KClass
 
-object CustomChecksFeature : AbstractTestChecker<CustomCheck>() {
+object CustomImportChecker : AbstractTestChecker<CustomCheck>() {
     override fun createDefaultConfiguration() = CustomCheck()
 
     override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
-        testConfiguration.getConfiguration(CustomChecksFeature).check(this)
+        testConfiguration.getConfiguration(CustomImportChecker).check(this)
     }
 }
 
@@ -29,7 +29,7 @@ interface CustomChecksDsl {
      * that were not introduced by your own block (e.g. no need to call `configureByFiles` or `importProject`)
      */
     fun TestConfigurationDslScope.customChecks(check: KotlinMppTestsContext.() -> Unit) {
-        writeAccess.getConfiguration(CustomChecksFeature).check = check
+        writeAccess.getConfiguration(CustomImportChecker).check = check
     }
 
     fun KotlinMppTestsContext.buildKotlinMPPGradleModel(
