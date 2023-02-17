@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
@@ -800,6 +801,7 @@ private class JUnitMalformedSignatureVisitor(
   class AnnotatedSignatureProblem(
     private val annotations: List<String>,
     private val shouldBeStatic: Boolean? = null,
+    private val ignoreOnRunWith: Boolean = false,
     private val shouldBeInTestInstancePerClass: Boolean = false,
     private val shouldBeVoidType: Boolean? = null,
     private val shouldBeSubTypeOf: List<String>? = null,
@@ -817,7 +819,16 @@ private class JUnitMalformedSignatureVisitor(
       return problems
     }
 
+    private fun isApplicable(element: UElement): Boolean {
+      if (!ignoreOnRunWith) {
+        val containingClass = element.getContainingUClass()?.javaPsi
+        if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, ORG_JUNIT_RUNNER_RUN_WITH, CHECK_HIERARCHY)) return false
+      }
+      return true
+    }
+
     fun report(holder: ProblemsHolder, element: UField) {
+      if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiField>() ?: return
       val annotation = annotations
         .firstOrNull { MetaAnnotationUtil.isMetaAnnotated(javaPsi, annotations) }
@@ -873,6 +884,7 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     fun report(holder: ProblemsHolder, element: UMethod) {
+      if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiMethod>() ?: return
       val sourcePsi = element.sourcePsi ?: return
       val annotation = annotations

@@ -981,11 +981,11 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
   }
-  fun `test malformed test for JUnit 4 runWith highlighting`() {
+  fun `test no highlighting on RunWith`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       @org.junit.runner.RunWith(org.junit.runner.Runner.class)
       class JUnit4RunWith {
-          @org.junit.Test public int <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(int i) { return -1; }
+          @org.junit.Test public int testMe(int i) { return -1; }
       }
     """.trimIndent())
   }
