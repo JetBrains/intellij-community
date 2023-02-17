@@ -222,7 +222,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (mouseClick && myLightBulbPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
       int yOffset = LightBulbUtil.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
-                    myEditor.getLineHeight() - LightBulbUtil.getBorderSize(myEditor.isOneLineMode());
+                    myEditor.getLineHeight() - LightBulbUtil.getBorderSize(myEditor);
       positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
     }
     myPopup.show(this, positionHint);
@@ -279,11 +279,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private static final int NORMAL_BORDER_SIZE = 6;
     private static final int SMALL_BORDER_SIZE = 4;
 
-    private static final Border INACTIVE_BORDER =
-      BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
-    private static final Border INACTIVE_BORDER_SMALL =
-      BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
-
     static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
       boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
         cachedIntentions.getInspectionFixes(),
@@ -300,30 +295,23 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       return AllIcons.Actions.IntentionBulb;
     }
 
-    static Border getInactiveBorder(boolean small) {
-      return small ? INACTIVE_BORDER_SMALL : INACTIVE_BORDER;
+    static Border createInactiveBorder(Editor editor) {
+      return createEmptyBorder(getBorderSize(editor));
     }
 
-    private static Border createActiveBorder() {
+    static Border createActiveBorder(Editor editor) {
       return BorderFactory.createCompoundBorder(
         BorderFactory.createLineBorder(getBorderColor(), 1),
-        BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE - 1)
+        createEmptyBorder(getBorderSize(editor) - 1)
       );
     }
 
-    static Border getActiveBorder(boolean small) {
-      return small ? createActiveBorderSmall() : createActiveBorder();
+    static int getBorderSize(Editor editor) {
+      return editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
     }
 
-    private static Border createActiveBorderSmall() {
-      return BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(getBorderColor(), 1),
-        BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1, SMALL_BORDER_SIZE - 1)
-      );
-    }
-
-    static int getBorderSize(boolean small) {
-      return small ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE;
+    private static Border createEmptyBorder(int size) {
+      return BorderFactory.createEmptyBorder(size, size, size, size);
     }
 
     private static Color getBorderColor() {
@@ -417,7 +405,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
 
       add(myIconLabel, BorderLayout.CENTER);
-      setBorder(LightBulbUtil.getInactiveBorder(editor.isOneLineMode()));
+      setBorder(LightBulbUtil.createInactiveBorder(editor));
     }
 
     @Override
@@ -429,13 +417,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private void onMouseExit() {
       if (!myPopup.isVisible()) {
         myIconLabel.setIcon(myInactiveIcon);
-        setBorder(LightBulbUtil.getInactiveBorder(myEditor.isOneLineMode()));
+        setBorder(LightBulbUtil.createInactiveBorder(myEditor));
       }
     }
 
     private void onMouseEnter() {
       myIconLabel.setIcon(myHighlightedIcon);
-      setBorder(LightBulbUtil.getActiveBorder(myEditor.isOneLineMode()));
+      setBorder(LightBulbUtil.createActiveBorder(myEditor));
 
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
