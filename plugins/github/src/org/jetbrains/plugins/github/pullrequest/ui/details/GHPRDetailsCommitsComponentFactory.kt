@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
+import com.intellij.collaboration.ui.codereview.details.CommitPresenter
 import com.intellij.collaboration.ui.codereview.details.CommitRenderer
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
@@ -21,11 +22,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import java.awt.FontMetrics
 import java.awt.event.ActionListener
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingConstants
@@ -112,27 +113,8 @@ internal object GHPRDetailsCommitsComponentFactory {
         filteringMapper = { commit: GHCommit? ->
           commit?.messageHeadline ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
         },
-        renderer = object : CommitRenderer<GHCommit?>() {
-          override fun isCommitSelected(value: GHCommit?): Boolean {
-            return value == commitsVm.selectedCommit.value
-          }
-
-          override fun getAllCommitsText(): String {
-            return CollaborationToolsBundle.message("review.details.commits.popup.all", commitsVm.reviewCommits.value.size)
-          }
-
-          override fun getCommitTitle(value: GHCommit?): String {
-            return value!!.messageHeadline
-          }
-
-          override fun getAuthor(value: GHCommit?): String {
-            val author = value!!.author?.user ?: commitsVm.ghostUser
-            return author.getPresentableName()
-          }
-
-          override fun getDate(value: GHCommit?): Date {
-            return value!!.committedDate
-          }
+        renderer = CommitRenderer { commit: GHCommit? ->
+          createCommitPresenter(commit, commitsVm.selectedCommit.value, commitsVm.reviewCommits.value.size, commitsVm.ghostUser)
         }
       )
 
@@ -142,7 +124,27 @@ internal object GHPRDetailsCommitsComponentFactory {
   }
 
   private fun calculateCommitHashWidth(metrics: FontMetrics, commits: List<GHCommit>): Int {
-    val longestCommitHash = commits.maxOf { commit -> metrics.stringWidth(commit.abbreviatedOid) } // list always is not empty
+    require(commits.isNotEmpty())
+    val longestCommitHash = commits.maxOf { commit -> metrics.stringWidth(commit.abbreviatedOid) }
     return longestCommitHash + AllIcons.General.LinkDropTriangle.iconWidth + COMMIT_HASH_OFFSET
+  }
+
+  private fun createCommitPresenter(commit: GHCommit?, selectedCommit: GHCommit?, commitsCount: Int, ghostUser: GHUser): CommitPresenter {
+    val isSelected = commit == selectedCommit
+    return if (commit == null) {
+      CommitPresenter.AllCommits(
+        title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount),
+        isSelected = isSelected
+      )
+    }
+    else {
+      val author = commit.author?.user ?: ghostUser
+      CommitPresenter.SingleCommit(
+        title = commit.messageHeadline,
+        isSelected = isSelected,
+        author = author.getPresentableName(),
+        date = commit.committedDate
+      )
+    }
   }
 }
