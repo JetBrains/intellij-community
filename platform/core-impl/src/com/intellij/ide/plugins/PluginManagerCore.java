@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -992,7 +992,7 @@ public final class PluginManagerCore {
   private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
     String title = CoreBundle.message("third.party.plugins.privacy.note.title");
     String pluginList = descriptors.stream()
-      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
     String text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
     String[] buttons =
@@ -1031,6 +1031,12 @@ public final class PluginManagerCore {
     list.add(descriptor);
     duplicateMap.put(id, list);
     return duplicateMap;
+  }
+
+  public static @NotNull @Nls String getPluginNameAndVendor(@NotNull IdeaPluginDescriptor descriptor) {
+    String vendor = descriptor.getVendor();
+    return vendor != null ? CoreBundle.message("plugin.name.and.vendor", descriptor.getName(), vendor)
+                          : CoreBundle.message("plugin.name.and.unknown.vendor", descriptor.getName());
   }
 
   private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key,
