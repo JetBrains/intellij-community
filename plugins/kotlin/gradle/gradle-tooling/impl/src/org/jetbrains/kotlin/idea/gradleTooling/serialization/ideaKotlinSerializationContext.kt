@@ -30,9 +30,11 @@ private object IdeaKotlinSerializationContextExtensionPoint {
         this::class.java.classLoader.loadClassOrNull("com.intellij.openapi.extensions.ExtensionPointName") != null
 
     private val EP_NAME_OR_NULL: ExtensionPointName<IdeaKotlinSerializationContext>? =
-        if (isExtensionsAvailable) ExtensionPointName.create(
-            "org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext"
-        ) else null
+        if (isExtensionsAvailable) {
+            ExtensionPointName("org.jetbrains.kotlin.idea.gradleTooling.serialization.IdeaKotlinSerializationContext")
+        } else {
+            null
+        }
 
     sealed interface ResolutionResult {
         object ExtensionsUnavailable : ResolutionResult
@@ -43,7 +45,7 @@ private object IdeaKotlinSerializationContextExtensionPoint {
 
     fun resolve(): ResolutionResult {
         if (!isExtensionsAvailable || EP_NAME_OR_NULL == null) return ResolutionResult.ExtensionsUnavailable
-        val extensions = EP_NAME_OR_NULL.extensionList
+        val extensions = EP_NAME_OR_NULL.getExtensionsIfPointIsRegistered(null)
         if (extensions.isEmpty()) return ResolutionResult.MissingExtension
         if (extensions.size > 1) return ResolutionResult.ConflictingExtensions(extensions)
         return ResolutionResult.Resolved(extensions.first())
