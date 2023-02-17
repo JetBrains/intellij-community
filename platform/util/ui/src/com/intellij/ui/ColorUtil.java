@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.function.Supplier;
 
+import static com.intellij.util.MathUtil.clamp;
+import static java.lang.Math.round;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -250,5 +253,30 @@ public final class ColorUtil {
       return 0;
     }
     return (255 * foregroundAlpha * foregroundComponent + (255 - foregroundAlpha) * backgroundAlpha * backgroundComponent) / denominator;
+  }
+
+  /**
+   * Can be useful in case if you need to simulate transparency of the text.
+   *
+   * @param value coefficient of blend normalized 0..1
+   * @return the mixed color of bg and fg with given coefficient.
+   */
+  public static @NotNull Color blendColorsInRgb(@NotNull Color bg, @NotNull Color fg, double value) {
+    int red = blendRgb(bg.getRed(), fg.getRed(), value);
+    int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
+    int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
+    return new Color(clamp(red, 0, 255),
+                     clamp(green, 0, 255),
+                     clamp(blue, 0, 255));
+  }
+
+  /**
+   * @param bg    background color value normalized 0..255
+   * @param fg    foreground color value normalized 0..255
+   * @param value coefficient of blend normalized 0..1
+   * @return linear interpolation of bg and fg values with given coefficient normalized to 0..255
+   */
+  private static int blendRgb(int bg, int fg, double value) {
+    return (int)round((1 - value) * bg + value * fg);
   }
 }
