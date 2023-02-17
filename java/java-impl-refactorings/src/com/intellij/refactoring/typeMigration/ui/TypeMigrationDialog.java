@@ -33,10 +33,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,7 +218,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
       try {
         final PsiExpression[] occurrences = expressions.toArray(PsiExpression.EMPTY_ARRAY);
-        final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
+        PsiType type = myTypeCodeFragment.getType();
+        PsiType[] psiTypes = new TypeSelectorManagerImpl(project, type, occurrences).getTypesForAll();
+        if (root instanceof PsiMethod) {
+          psiTypes = ArrayUtil.append(psiTypes, PsiTypes.voidType());
+        }
+        if (type instanceof PsiIntersectionType) {
+          psiTypes = ArrayUtil.prepend(type, psiTypes);
+        }
+
         if (psiTypes.length > 0) {
           final String[] history = new String[psiTypes.length];
           for (int i = 0; i < psiTypes.length; i++) {
@@ -270,7 +275,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return TypeMigrationLabeler.getElementType(myRoots[0]);
     }
 
-    private static @NlsContexts.Label  String getTypeMigrationLabelText(PsiElement element, String type) {
+    private static @NlsContexts.Label String getTypeMigrationLabelText(PsiElement element, String type) {
       if (element instanceof PsiMethod method) {
         String methodText = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
