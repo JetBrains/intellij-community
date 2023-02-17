@@ -110,8 +110,7 @@ object TimelineDiffComponentFactory {
   }
 
   object AnchorLine : TextDiffType {
-    @Nls
-    override fun getName() = CollaborationToolsBundle.message("review.thread.diff.anchor.name")
+    override fun getName() = "Comment Anchor Line"
 
     override fun getColor(editor: Editor?): Color = JBColor.namedColor(
       "Review.Timeline.Thread.Diff.AnchorLine",
