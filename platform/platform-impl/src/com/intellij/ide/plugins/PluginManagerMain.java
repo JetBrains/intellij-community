@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -393,12 +393,13 @@ public final class PluginManagerMain {
       return true;
     }
 
-    String title = CoreBundle.message("third.party.plugins.privacy.note.title");
-    String pluginList = aliens.stream()
-      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + descriptor.getName() + " (" + descriptor.getVendor() + ')')
+    var title = CoreBundle.message("third.party.plugins.privacy.note.title");
+    var pluginList = aliens.stream()
+      .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    String message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
-    String yesText = CoreBundle.message("third.party.plugins.privacy.note.accept"), noText = CommonBundle.getCancelButtonText();
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
+    var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
       updateSettings.setThirdPartyPluginsAllowed(true);
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
