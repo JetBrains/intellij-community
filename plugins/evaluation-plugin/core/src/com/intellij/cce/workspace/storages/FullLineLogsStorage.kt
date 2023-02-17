@@ -1,6 +1,7 @@
 package com.intellij.cce.workspace.storages
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.nio.file.Paths
 
 class FullLineLogsStorage(storageDir: String) : StorageWithMetadataBase(storageDir) {
@@ -34,5 +35,14 @@ class FullLineLogsStorage(storageDir: String) : StorageWithMetadataBase(storageD
     toRemove.forEach { logFiles.remove(it) }
     val filesJson = gson.toJson(logFiles)
     metadataFile.writeText(filesJson)
+  }
+
+  fun getLog(path: String): String? {
+    if (!metadataFile.exists()) return null
+    val json = metadataFile.readText()
+    val type = object : TypeToken<MutableMap<String, String>>() {}.type
+    logFiles = gson.fromJson(json, type)
+    val logFile = logFiles[path] ?: return null
+    return keyValueStorage.get(logFile)
   }
 }

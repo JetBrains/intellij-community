@@ -47,6 +47,7 @@ class ReportGenerationStep(
     val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language), it.interpret.completionType) }
     val strategies = configs.map { it.actions.strategy }
     val featuresStorages = workspaces.map { it.featuresStorage }
+    val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
     val isCompletionGolfEvaluation = strategies.map { it.completionGolf != null }.allEquals()
     var iteration = 0
@@ -69,6 +70,7 @@ class ReportGenerationStep(
             comparisonStorage.reportName,
             suggestionsComparators,
             featuresStorages,
+            fullLineStorages,
             isCompletionGolfEvaluation
           ),
           JsonReportGenerator(

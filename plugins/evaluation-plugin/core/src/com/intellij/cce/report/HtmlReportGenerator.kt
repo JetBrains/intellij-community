@@ -6,6 +6,7 @@ import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.File
@@ -22,6 +23,7 @@ class HtmlReportGenerator(
   private val comparisonFilterName: String,
   suggestionsComparators: List<SuggestionsComparator>,
   featuresStorages: List<FeaturesStorage>,
+  fullLineStorages: List<FullLineLogsStorage>,
   isCompletionGolfEvaluation: Boolean
 ) : FullReportGenerator {
   companion object {
@@ -49,7 +51,7 @@ class HtmlReportGenerator(
   private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
   private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
-    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
   }
   else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
