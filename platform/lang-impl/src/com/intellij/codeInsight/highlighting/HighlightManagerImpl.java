@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,14 +50,13 @@ public final class HighlightManagerImpl extends HighlightManager {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
         Document document = event.getDocument();
-        for (Iterator<Editor> iterator = EditorFactory.getInstance().editors(document).iterator(); iterator.hasNext(); ) {
-          Editor editor = iterator.next();
+        for (Editor editor : EditorFactory.getInstance().getEditors(document)) {
           Map<RangeHighlighter, HighlightFlags> map = getHighlightInfoMap(editor, false);
           if (map == null) {
             return;
           }
 
-          ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<>();
+          List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
           for (RangeHighlighter highlighter : map.keySet()) {
             HighlightFlags info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
@@ -74,6 +74,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
+  @Contract("_,true->!null")
   private Map<RangeHighlighter, HighlightFlags> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
@@ -115,24 +116,12 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       PsiReference @NotNull [] occurrences,
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, occurrences, null, attributesKey, hideByTextChange, outHighlighters);
-  }
-
-  private void addOccurrenceHighlights(@NotNull Editor editor,
-                                      PsiReference @NotNull [] occurrences,
-                                      @Nullable TextAttributes attributes,
-                                      @Nullable TextAttributesKey attributesKey,
-                                      boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
-    assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
+                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
     if (occurrences.length == 0) return;
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
-
     int oldOffset = editor.getCaretModel().getOffset();
     int horizontalScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
     int verticalScrollOffset = editor.getScrollingModel().getVerticalScrollOffset();
@@ -146,7 +135,7 @@ public final class HighlightManagerImpl extends HighlightManager {
       // each reference can reside in its own injected editor
       Editor textEditor = InjectedLanguageUtil.openEditorFor(containingFile, project);
       if (textEditor != null) {
-        addOccurrenceHighlight(textEditor, start, end, attributes, attributesKey, flags, outHighlighters, scrollMarkColor);
+        addOccurrenceHighlight(textEditor, start, end, null, attributesKey, flags, outHighlighters, null);
       }
     }
     editor.getCaretModel().moveToOffset(oldOffset);
@@ -278,7 +267,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       PsiElement @NotNull [] elements,
                                       @NotNull TextAttributes attributes,
                                       boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
+                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
     addOccurrenceHighlights(editor, elements, attributes, null, hideByTextChange, outHighlighters);
   }
 
@@ -287,7 +276,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       PsiElement @NotNull [] elements,
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
+                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
     addOccurrenceHighlights(editor, elements, null, attributesKey, hideByTextChange, outHighlighters);
   }
 
@@ -296,7 +285,7 @@ public final class HighlightManagerImpl extends HighlightManager {
                                       @Nullable TextAttributes attributes,
                                       @Nullable TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
-                                      Collection<? super RangeHighlighter> outHighlighters) {
+                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
     if (elements.length == 0 || editor instanceof ImaginaryEditor) return;
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {

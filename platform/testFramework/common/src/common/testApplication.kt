@@ -233,11 +233,11 @@ fun Application.cleanApplicationStateCatching(): Throwable? {
       }
     },
     { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
-    { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
     { UiInterceptors.clear() },
     {
       runInEdtAndWait {
         CompletionProgressIndicator.cleanupForNextTest()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
       }
     },
   )

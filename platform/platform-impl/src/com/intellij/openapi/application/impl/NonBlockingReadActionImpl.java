@@ -653,6 +653,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
@@ -661,6 +662,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
       if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
         return;
