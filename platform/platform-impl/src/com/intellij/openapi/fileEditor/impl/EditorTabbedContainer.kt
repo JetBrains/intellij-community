@@ -48,6 +48,9 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
+import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout
+import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
+import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
@@ -557,6 +560,13 @@ private class EditorTabs(
   override fun getEditorWindow(): EditorWindow = window
 
   override fun supportsTableLayoutAsSingleRow(): Boolean = true
+
+  override fun createSingleRowLayout(): SingleRowLayout {
+    return if (!UISettings.getInstance().hideTabsIfNeeded && supportsCompression()) {
+      CompressibleSingleRowLayout(this)
+    }
+    else ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar())
+  }
 
   override fun paintChildren(g: Graphics) {
     super.paintChildren(g)
