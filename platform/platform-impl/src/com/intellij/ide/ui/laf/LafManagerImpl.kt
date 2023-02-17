@@ -536,9 +536,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     if (!isFirstSetup && installEditorScheme) {
       if (processChangeSynchronously) {
         updateEditorSchemeIfNecessary(oldLaf, true)
+        shadowInstance.fireUISettingsChanged()
+        ActionToolbarImpl.updateAllToolbarsImmediately()
       }
       else {
-        ApplicationManager.getApplication().invokeLater { updateEditorSchemeIfNecessary(oldLaf, false) }
+        ApplicationManager.getApplication().invokeLater {
+          updateEditorSchemeIfNecessary(oldLaf, false)
+          shadowInstance.fireUISettingsChanged()
+          ActionToolbarImpl.updateAllToolbarsImmediately()
+        }
       }
     }
     isFirstSetup = false
@@ -746,8 +752,6 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         (editorColorManager as EditorColorsManagerImpl).setGlobalScheme(scheme, processChangeSynchronously)
       }
     }
-    shadowInstance.fireUISettingsChanged()
-    ActionToolbarImpl.updateAllToolbarsImmediately()
   }
 
   /**
