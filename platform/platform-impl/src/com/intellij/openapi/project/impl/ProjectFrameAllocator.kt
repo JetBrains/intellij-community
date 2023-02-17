@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -198,9 +200,11 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
   private suspend fun createFrameManager(watcher: (frameHelper: ProjectFrameHelper, loadingState: MutableLoadingState) -> Unit) {
     var frame = options.frame
+    var isFrameReused = false
     if (frame == null) {
       val windowManager = ApplicationManager.getApplication().serviceAsync<WindowManager>().await() as WindowManagerImpl
       frame = windowManager.removeAndGetRootFrame()
+      isFrameReused = frame != null
     }
 
     if (frame != null) {
@@ -211,7 +215,9 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         ProjectFrameHelper(frame = frame, loadingState = loadingState)
       }
 
-      updateFullScreenState(frameHelper, getFrameInfo())
+      if (!isFrameReused) {
+        updateFullScreenState(frameHelper, getFrameInfo())
+      }
 
       watcher(frameHelper, loadingState)
 
