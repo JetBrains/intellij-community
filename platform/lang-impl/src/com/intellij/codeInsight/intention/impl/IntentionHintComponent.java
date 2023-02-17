@@ -67,6 +67,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Shows a light bulb icon in the editor if some intention is available.
@@ -228,10 +229,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup.show(this, positionHint);
   }
 
-  private static JComboBox<?> findAncestorCombo(Editor editor) {
-    return (JComboBox<?>)SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
-  }
-
   private static final class MyComponentHint extends LightweightHint {
     private boolean myVisible;
     private boolean myShouldDelay;
@@ -333,7 +330,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       JComponent convertComponent = editor.getContentComponent();
 
       // place the light bulb at the corner of the surrounding component
-      JComboBox<?> ancestorCombo = findAncestorCombo(editor);
+      JComboBox<?> ancestorCombo = Util.findAncestorCombo(editor);
       if (ancestorCombo != null) {
         convertComponent = ancestorCombo;
       }
@@ -551,7 +548,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     @Override
     public void dispose() {
       if (myOuterComboboxPopupListener != null) {
-        JComboBox<?> ancestor = findAncestorCombo(myEditor);
+        JComboBox<?> ancestor = Util.findAncestorCombo(myEditor);
         if (ancestor != null) {
           ancestor.removePopupMenuListener(myOuterComboboxPopupListener);
         }
@@ -576,12 +573,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
             if (keyboardShortcut.getSecondKeyStroke() == null) {
               ((WizardPopup)popup.myListPopup).registerAction(
-                "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
-                  @Override
-                  public void actionPerformed(ActionEvent e) {
-                    popup.myListPopup.handleSelect(true);
-                  }
-                }
+                "activateSelectedElement", keyboardShortcut.getFirstKeyStroke(),
+                Util.createAction(e -> popup.myListPopup.handleSelect(true))
               );
             }
           }
@@ -677,7 +670,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       if (popup.myEditor.isOneLineMode()) {
         // hide popup on combobox popup show
-        JComboBox<?> comboBox = findAncestorCombo(popup.myEditor);
+        JComboBox<?> comboBox = Util.findAncestorCombo(popup.myEditor);
         if (comboBox != null) {
           popup.myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
             @Override
@@ -716,13 +709,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       for (var shortcut : shortcuts.getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
           ((WizardPopup)popup.myListPopup).registerAction(
-            IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                popup.close();
-                IntentionShortcutUtils.invokeAsAction(intention, popup.myEditor, popup.myFile);
-              }
-            }
+            IntentionShortcutUtils.getWrappedActionId(intention), keyboardShortcut.getFirstKeyStroke(), Util.createAction(e -> {
+              popup.close();
+              IntentionShortcutUtils.invokeAsAction(intention, popup.myEditor, popup.myFile);
+            })
           );
         }
       }
@@ -730,30 +720,22 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     @RequiresEdt
     private static void registerShowPreviewAction(@NotNull IntentionPopup popup) {
-      AbstractAction action = new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          IntentionPreviewPopupUpdateProcessor processor = popup.myPreviewPopupUpdateProcessor;
-          boolean shouldShow = !processor.isShown();
-          EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
-          if (shouldShow) {
-            processor.activate();
-            showPreview(popup);
-          }
-          else {
-            processor.hide();
-          }
-        }
-      };
       KeyStroke keyStroke = KeymapUtil.getKeyStroke(IntentionPreviewPopupUpdateProcessor.Companion.getShortcutSet());
+      Action action = Util.createAction(e -> maybeShowPreview(popup));
       ((WizardPopup)popup.myListPopup).registerAction("showIntentionPreview", keyStroke, action);
       advertisePopup(popup.myListPopup);
     }
 
-    private static void advertisePopup(@NotNull ListPopup popup) {
-      if (!popup.isDisposed()) {
-        String shortcutText = IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText();
-        popup.setAdText(CodeInsightBundle.message("intention.preview.adv.toggle.text", shortcutText), SwingConstants.LEFT);
+    private static void maybeShowPreview(@NotNull IntentionPopup popup) {
+      IntentionPreviewPopupUpdateProcessor processor = popup.myPreviewPopupUpdateProcessor;
+      boolean shouldShow = !processor.isShown();
+      EditorSettingsExternalizable.getInstance().setShowIntentionPreview(shouldShow);
+      if (shouldShow) {
+        processor.activate();
+        showPreview(popup);
+      }
+      else {
+        processor.hide();
       }
     }
 
@@ -767,6 +749,28 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           updatePreviewPopup(popup, ((IntentionActionWithTextCaching)selectedValue).getAction(), selectedIndex);
         }
       }
+    }
+
+    private static void advertisePopup(@NotNull ListPopup popup) {
+      if (!popup.isDisposed()) {
+        String shortcutText = IntentionPreviewPopupUpdateProcessor.Companion.getShortcutText();
+        popup.setAdText(CodeInsightBundle.message("intention.preview.adv.toggle.text", shortcutText), SwingConstants.LEFT);
+      }
+    }
+  }
+
+  private static final class Util {
+    static Action createAction(Consumer<ActionEvent> perform) {
+      return new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          perform.accept(e);
+        }
+      };
+    }
+
+    static JComboBox<?> findAncestorCombo(Editor editor) {
+      return (JComboBox<?>)SwingUtilities.getAncestorOfClass(JComboBox.class, editor.getContentComponent());
     }
   }
 }
