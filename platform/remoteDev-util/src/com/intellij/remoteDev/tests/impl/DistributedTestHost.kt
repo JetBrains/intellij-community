@@ -11,7 +11,6 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
@@ -22,7 +21,7 @@ import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -80,8 +79,8 @@ class DistributedTestHost {
   private fun createProtocol(hostAddress: InetAddress, port: Int) {
     logger.info("Creating protocol...")
 
-    val lifetime = LifetimeDefinition()
-    application.whenDisposed { lifetime.terminate() }
+    // EternalLifetime.createNested() is used intentionally to make sure logger session's lifetime is not terminated before the actual application stop.
+    val lifetime = EternalLifetime.createNested()
 
     val wire = SocketWire.Client(lifetime, DistributedTestIdeScheduler, port, AgentConstants.protocolName, hostAddress)
     val protocol =
@@ -89,11 +88,11 @@ class DistributedTestHost {
     val model = protocol.distributedTestModel
 
     logger.info("Advise for session...")
-    model.session.viewNotNull(lifetime) { lt, session ->
+    model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       try {
         logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
-        AgentTestLoggerFactory.bindSession(lt, session)
+        AgentTestLoggerFactory.bindSession(sessionLifetime, session)
         if (session.testMethodName == null) {
           logger.info("Test session without test class to run.")
         }
@@ -157,21 +156,29 @@ class DistributedTestHost {
               return@set RdTask.faulted(ex)
             }
           }
+        }
 
-          session.shutdown.advise(lifetime) {
-            projectOrNull?.let {
+        session.closeProject.set { _, _ ->
+          when (projectOrNull) {
+            null ->
+              return@set RdTask.faulted(IllegalStateException("Nothing to close"))
+            else -> {
               logger.info("Close project...")
               try {
-                ProjectManagerEx.getInstanceEx().forceCloseProject(it)
+                ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+                return@set RdTask.fromResult(false)
               }
               catch (e: Exception) {
                 logger.error("Error on project closing", e)
+                return@set RdTask.fromResult(true)
               }
             }
-
-            logger.info("Shutdown application...")
-            application.exit(true, true, false)
           }
+        }
+
+        session.shutdown.advise(lifetime) {
+          logger.info("Shutdown application...")
+          application.exit(true, true, false)
         }
 
         session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
