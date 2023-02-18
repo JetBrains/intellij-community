@@ -141,9 +141,10 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
     }
 
     private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
-      return profileName
-        ?.let { profileManager.getProfile(profileName, false) }
-        ?: InspectionProfileImpl("Default")
+      profileName ?: return InspectionProfileImpl("Default")
+
+      return profileManager.getProfile(profileName, false)
+             ?: throw IllegalArgumentException("Can't find base profile '$profileName'")
     }
 
     @JvmStatic
