@@ -1045,11 +1045,11 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     PyTargetExpression targetExpr = context.getTypeAliasStack().isEmpty() ? null : context.getTypeAliasStack().peek();
     final PyGenericType typeVar = as(type, PyGenericType.class);
     if (typeVar != null) {
-      return typeVar.withScopeOwner(getTypeVarScope(typeVar.getName(), typeHint, context)).withTargetExpression(targetExpr);
+      return typeVar.withScopeOwner(getTypeParameterScope(typeVar.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
     final PyParamSpecType paramSpec = as(type, PyParamSpecType.class);
     if (paramSpec != null) {
-      return paramSpec.withTargetExpression(targetExpr);
+      return paramSpec.withScopeOwner(getTypeParameterScope(paramSpec.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
     return type;
   }
@@ -1560,31 +1560,31 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
 
   // See https://peps.python.org/pep-0484/#scoping-rules-for-type-variables
   @Nullable
-  private static PyQualifiedNameOwner getTypeVarScope(@NotNull String name, @NotNull PyExpression typeHint, @NotNull Context context) {
+  private static PyQualifiedNameOwner getTypeParameterScope(@NotNull String name, @NotNull PyExpression typeHint, @NotNull Context context) {
     PsiElement typeHintContext = getStubRetainedTypeHintContext(typeHint);
     // TODO: type aliases
-    List<PyQualifiedNameOwner> typeVarOwnerCandidates =
+    List<PyQualifiedNameOwner> typeParamOwnerCandidates =
       StreamEx.iterate(typeHintContext, Objects::nonNull, owner -> PsiTreeUtil.getStubOrPsiParentOfType(owner, ScopeOwner.class))
         .filter(owner -> owner instanceof PyFunction || owner instanceof PyClass)
         .select(PyQualifiedNameOwner.class)
         .toList();
 
-    PyQualifiedNameOwner closestOwner = ContainerUtil.getFirstItem(typeVarOwnerCandidates);
+    PyQualifiedNameOwner closestOwner = ContainerUtil.getFirstItem(typeParamOwnerCandidates);
     if (closestOwner instanceof PyClass) {
       return closestOwner;
     }
-    return StreamEx.of(typeVarOwnerCandidates)
+    return StreamEx.of(typeParamOwnerCandidates)
       .skip(1)
-      .map(owner -> findSameTypeVarInDefinition(owner, name, context))
+      .map(owner -> findSameTypeParameterInDefinition(owner, name, context))
       .nonNull()
       .findFirst()
-      .map(PyGenericType::getScopeOwner)
+      .map(PyTypeParameterType::getScopeOwner)
       .orElse(closestOwner);
   }
 
-  private static @Nullable PyGenericType findSameTypeVarInDefinition(@NotNull PyQualifiedNameOwner owner,
-                                                                     @NotNull String name,
-                                                                     @NotNull Context context) {
+  private static @Nullable PyTypeParameterType findSameTypeParameterInDefinition(@NotNull PyQualifiedNameOwner owner,
+                                                                                 @NotNull String name,
+                                                                                 @NotNull Context context) {
     // At this moment, the definition of the TypeVar should be the type alias at the top of the stack.
     // While evaluating type hints of enclosing functions' parameters, resolving to the same TypeVar
     // definition shouldn't trigger the protection against recursive aliases, so we manually remove
@@ -1593,7 +1593,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     try {
       if (owner instanceof PyClass) {
         return StreamEx.of(collectGenericTypes((PyClass)owner, context))
-          .select(PyGenericType.class)
+          .select(PyTypeParameterType.class)
           .findFirst(type -> name.equals(type.getName()))
           .orElse(null);
       }
@@ -1603,7 +1603,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
           .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, (PyFunction)owner, context))
           .map(Ref::deref)
           .map(paramType -> PyTypeChecker.collectGenerics(paramType, context.getTypeContext()))
-          .flatMap(generics -> StreamEx.of(generics.getTypeVars()))
+          .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars()).append(generics.getParamSpecs()))
           .findFirst(type -> name.equals(type.getName()))
           .orElse(null);
       }
