@@ -75,12 +75,11 @@ public class PyLocalAttachDebuggerProvider implements XAttachDebuggerProvider {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                                     @NotNull XAttachHost attachHost,
-                                                     @NotNull ProcessInfo processInfo,
-                                                     @NotNull UserDataHolder contextHolder) {
+  public @NotNull List<? extends XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                                        @NotNull XAttachHost attachHost,
+                                                                        @NotNull ProcessInfo processInfo,
+                                                                        @NotNull UserDataHolder contextHolder) {
     final String filter = PyDebuggerOptionsProvider.getInstance(project).getAttachProcessFilter();
     if (StringUtil.containsIgnoreCase(processInfo.getCommandLine(), filter)) {
       List<XAttachDebugger> result;

@@ -55,8 +55,8 @@ public interface XAttachDebuggerProvider {
    * @return a list of the debuggers that can attach and debug a given process
    */
   @NotNull
-  List<XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
-                                              @NotNull XAttachHost attachHost,
-                                              @NotNull ProcessInfo processInfo,
-                                              @NotNull UserDataHolder contextHolder);
+  List<? extends XAttachDebugger> getAvailableDebuggers(@NotNull Project project,
+                                                        @NotNull XAttachHost attachHost,
+                                                        @NotNull ProcessInfo processInfo,
+                                                        @NotNull UserDataHolder contextHolder);
 }
