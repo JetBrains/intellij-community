@@ -287,6 +287,11 @@ def is_mac():
     return platform.system() == 'Darwin'
 
 
+def is_mac_arm64():
+    import platform
+    return platform.machine() == 'arm64'
+
+
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
     assert '\'' not in python_code, 'Having a single quote messes with our command.'
     from winappdbg.process import Process
@@ -531,11 +536,15 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
 
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
     #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+    #   i386:x86-64:nacl, i386:x64-32:nacl, auto, arm64
 
     if is_python_64bit():
-        suffix = 'x86_64.dylib'
-        arch = 'i386:x86-64'
+        if is_mac_arm64():
+            suffix = 'arm64.dylib'
+            arch = 'arm64'
+        else:
+            suffix = 'x86_64.dylib'
+            arch = 'i386:x86-64'
     else:
         suffix = 'x86.dylib'
         arch = 'i386'
