@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.AnalysisResult
-import org.jetbrains.kotlin.analyzer.InvalidResolverException
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -235,26 +233,14 @@ open class DebuggerTestCompilerFacility(
         classesDir: File,
         classBuilderFactory: ClassBuilderFactory = ClassBuilderFactories.BINARIES
     ): CompilationResult {
-        val kotlinCacheService = KotlinCacheService.getInstance(project)
-        var resolutionFacade = kotlinCacheService.getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
 
-        var analysisResult: AnalysisResult? = null
-        var pce: ProcessCanceledException? = null
-        for (i in 0..2) {
-            try {
-                analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(files)
-                break
-            } catch (e: ProcessCanceledException) {
-                // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
-                pce = e
-                if ((kotlinCacheService as? KotlinCacheServiceImpl)?.disposed == true) break
-                if (e.cause is InvalidResolverException) {
-                    resolutionFacade = kotlinCacheService.getResolutionFacadeWithForcedPlatform(files, JvmPlatforms.unspecifiedJvmPlatform)
-                }
-            }
+        val analysisResult = try {
+            resolutionFacade.analyzeWithAllCompilerChecks(files)
+        } catch (_: ProcessCanceledException) {
+            // allow module's descriptors update due to dynamic loading of Scripting Support Libraries for .kts files
+            resolutionFacade.analyzeWithAllCompilerChecks(files)
         }
-        if (analysisResult == null) throw pce!!
-
         analysisResult.throwIfError()
 
         val configuration = CompilerConfiguration()
