@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
@@ -105,7 +106,9 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
         // Enable Conda for SSH in DataSpell while keeping it disabled in PyCharm and other IDEs.
         // SSH target configuration at this wizard stage is characterized by implementing `IncompleteTargetEnvironmentConfiguration` marker
         // interface.
-        if (PlatformUtils.isDataSpell() || targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) add(condaPanel)
+        if (Registry.`is`("enable.conda.on.targets") || targetEnvironmentConfiguration !is IncompleteTargetEnvironmentConfiguration) {
+          add(condaPanel)
+        }
       } to venvPanel
       else -> listOf(venvPanel, systemWidePanel, condaPanel) to systemWidePanel
     }
