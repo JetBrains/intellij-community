@@ -2,7 +2,7 @@ import ctypes
 import os
 from _pydev_bundle import pydev_log, pydev_monkey
 from _pydevd_bundle.pydevd_constants import get_frame, IS_PY2, IS_PY37_OR_GREATER, IS_CPYTHON, IS_WINDOWS, IS_LINUX, IS_MACOS, \
-    IS_64BIT_PROCESS, IS_PYCHARM_ATTACH
+    IS_64BIT_PROCESS, IS_ARM64, IS_PYCHARM_ATTACH
 from _pydev_imps._pydev_saved_modules import thread, threading
 
 try:
@@ -120,7 +120,10 @@ def load_python_helper_lib():
 
     elif IS_MACOS:
         if IS_64BIT_PROCESS:
-            suffix = 'x86_64.dylib'
+            if IS_ARM64:
+                suffix = 'arm64.dylib'
+            else:
+                suffix = 'x86_64.dylib'
         else:
             suffix = 'x86.dylib'
 
