@@ -2284,9 +2284,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
    * More details in a {@link GentleFlusherBase} javadocs
    */
   private class GentleIndexFlusher extends GentleFlusherBase {
-    private static final int MAX_CONTENTION_QUOTA = 64;
-    private static final int MIN_CONTENTION_QUOTA = 64;
+    private static final int MIN_CONTENTION_QUOTA = 2;
     private static final int INITIAL_CONTENTION_QUOTA = 16;
+    private static final int MAX_CONTENTION_QUOTA = 64;
 
 
     private int lastModCount;

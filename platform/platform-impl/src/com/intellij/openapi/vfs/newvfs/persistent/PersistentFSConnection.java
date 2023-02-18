@@ -407,11 +407,12 @@ final public class PersistentFSConnection {
   private class GentleVFSFlusher extends GentleFlusherBase {
     /** How often, on average, flush each index to the disk */
     private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(5);
-    private static final int INITIAL_CONTENTION_QUOTA = 16;
 
 
-    private static final int MAX_CONTENTION_QUOTA = 32;
+
     private static final int MIN_CONTENTION_QUOTA = 2;
+    private static final int INITIAL_CONTENTION_QUOTA = 16;
+    private static final int MAX_CONTENTION_QUOTA = 32;
 
 
     private int lastModCount;
