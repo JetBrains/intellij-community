@@ -1445,10 +1445,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             if (isEllipsis(parametersExpr)) {
               return new PyCallableTypeImpl(null, Ref.deref(getType(returnTypeExpr, context)));
             }
-            if (isParamSpec(parametersExpr, context.myContext)) {
-              final var name = parametersExpr.getName();
-              if (name != null) {
-                final var parameter = PyCallableParameterImpl.nonPsi(parametersExpr.getName(), new PyParamSpecType(name));
+            if (parametersExpr instanceof PyReferenceExpression) {
+              if (Ref.deref(getType(parametersExpr, context.myContext)) instanceof PyParamSpecType paramSpec) {
+                final var parameter = PyCallableParameterImpl.nonPsi(parametersExpr.getName(), paramSpec);
                 return new PyCallableTypeImpl(Collections.singletonList(parameter), Ref.deref(getType(returnTypeExpr, context)));
               }
             }
