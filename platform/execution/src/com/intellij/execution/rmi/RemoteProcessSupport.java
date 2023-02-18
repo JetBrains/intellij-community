@@ -581,7 +581,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
         beat();
       }, pulseTimeoutMillis, pulseTimeoutMillis, TimeUnit.MILLISECONDS);
-      Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
+      Disposer.register(ApplicationManager.getApplication(), () -> stopBeat());
     }
 
     public boolean beat() {
@@ -593,11 +593,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
       catch (Exception ignore) {
         live = false;
-        myFuture.cancel(false);
+        stopBeat();
       }
       catch (Throwable t) {
         live = false;
-        myFuture.cancel(false);
+        stopBeat();
         LOG.error(t);
       }
       return false;
