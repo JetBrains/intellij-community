@@ -1188,6 +1188,19 @@ public class Py3TypeTest extends PyTestCase {
              expr = changes_return_type_to_str(returns_int)""");
   }
 
+  // PY-59127
+  public void testParamSpecInImportedFile() {
+    doMultiFileTest("(a: str, b: bool) -> str",
+                    """
+                      from mod import changes_return_type_to_str
+                            
+                      def returns_int(a: str, b: bool) -> int:
+                          return 42
+
+                      expr = changes_return_type_to_str(returns_int)
+                      """);
+  }
+
   // PY-49935
   public void testParamSpecSeveral() {
     doTest("(y: int, x: str) -> bool",
