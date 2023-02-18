@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -15,33 +16,44 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Type of typing.ParamSpec using in type checker to unify parameters of generic calls
  */
-public class PyParamSpecType implements PyType {
+public final class PyParamSpecType implements PyTypeParameterType {
   @NotNull private final String myName;
   @Nullable private final PyTargetExpression myTargetExpression;
   @Nullable private final List<PyCallableParameter> myParameters;
+  @Nullable private final PyQualifiedNameOwner myScopeOwner;
 
   public PyParamSpecType(@NotNull String name) {
-    this(name, null, null);
+    this(name, null, null, null);
   }
 
-  private PyParamSpecType(@NotNull String name, @Nullable PyTargetExpression target, @Nullable List<PyCallableParameter> parameters) {
+  private PyParamSpecType(@NotNull String name,
+                          @Nullable PyTargetExpression target,
+                          @Nullable List<PyCallableParameter> parameters,
+                          @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myTargetExpression = target;
     myParameters = parameters;
+    myScopeOwner = scopeOwner;
   }
 
   @NotNull
   public PyParamSpecType withParameters(@Nullable List<PyCallableParameter> parameters, @NotNull TypeEvalContext context) {
-    return new PyParamSpecType(myName, myTargetExpression, getNonPsiParameters(parameters, context));
+    return new PyParamSpecType(myName, myTargetExpression, getNonPsiParameters(parameters, context), myScopeOwner);
   }
 
   @NotNull
   public PyParamSpecType withTargetExpression(@Nullable PyTargetExpression target) {
-    return new PyParamSpecType(myName, target, myParameters);
+    return new PyParamSpecType(myName, target, myParameters, myScopeOwner);
+  }
+
+  @NotNull
+  public PyParamSpecType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyParamSpecType(myName, myTargetExpression, myParameters, scopeOwner);
   }
 
   @Nullable
@@ -100,6 +112,11 @@ public class PyParamSpecType implements PyType {
     }
   }
 
+  @Override
+  public @Nullable PyQualifiedNameOwner getScopeOwner() {
+    return myScopeOwner;
+  }
+
   @NotNull
   public String getVariableName() {
     return myName;
@@ -123,7 +140,7 @@ public class PyParamSpecType implements PyType {
       return false;
     }
     final PyParamSpecType type = (PyParamSpecType)o;
-    return myName.equals(type.myName);
+    return myName.equals(type.myName) && Objects.equals(myScopeOwner, type.myScopeOwner);
   }
 
   @Override
