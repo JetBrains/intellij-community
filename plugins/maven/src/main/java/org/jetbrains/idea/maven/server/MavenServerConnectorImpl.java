@@ -138,9 +138,8 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
           if (!Thread.currentThread().isInterrupted()) {
             myDownloadConnectFailedCount.incrementAndGet();
           }
-          else {
-            throw new RuntimeException(e);
-          }
+          MavenLog.LOG.warn("Maven pulling download listener stopped");
+          myPullingDownloadFuture.cancel(true);
         }
       },
       500,
@@ -170,9 +169,8 @@ public class MavenServerConnectorImpl extends MavenServerConnectorBase {
           if (!Thread.currentThread().isInterrupted()) {
             myLoggerConnectFailedCount.incrementAndGet();
           }
-          else {
-            throw new RuntimeException(e);
-          }
+          MavenLog.LOG.warn("Maven pulling logger stopped");
+          myPullingLoggerFuture.cancel(true);
         }
       },
       0,
