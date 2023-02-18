@@ -13,6 +13,7 @@ class SetupFullLineStep : UndoableEvaluationStep {
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
     initLoggingEnabledValue = java.lang.Boolean.parseBoolean(System.getProperty(LOGGING_ENABLED_PROPERTY, "false"))
     initLogPathValue = System.getProperty(LOG_PATH_PROPERTY)
+    System.setProperty(LOGGING_ENABLED_PROPERTY, "true")
     return workspace
   }
 
