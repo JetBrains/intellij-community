@@ -78,6 +78,26 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/annotations/NoSetterParameterAutopopup.kt");
             }
 
+            @TestMetadata("OnFunction.kt")
+            public void testOnFunction() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnFunction.kt");
+            }
+
+            @TestMetadata("OnFunction2.kt")
+            public void testOnFunction2() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnFunction2.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot.kt")
+            public void testOnFunctionWithoutDot() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnFunctionWithoutDot.kt");
+            }
+
+            @TestMetadata("OnFunctionWithoutDot2.kt")
+            public void testOnFunctionWithoutDot2() throws Exception {
+                runTest("../completion/testData/basic/common/annotations/OnFunctionWithoutDot2.kt");
+            }
+
             @TestMetadata("OnlyAnnotations.kt")
             public void testOnlyAnnotations() throws Exception {
                 runTest("../completion/testData/basic/common/annotations/OnlyAnnotations.kt");
