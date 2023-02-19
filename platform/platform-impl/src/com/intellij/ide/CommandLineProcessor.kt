@@ -348,39 +348,46 @@ object CommandLineProcessor {
         else -> error("Unexpected exception during parsing arguments: $e")
       }
     }
-    return when (val parsedArgs = parsedArgsResult.getOrNull()) {
-      is OpenProjectResult -> {
-        openFileOrProject(file = parsedArgs.file,
-                          line = parsedArgs.line,
-                          column = parsedArgs.column,
-                          tempProject = parsedArgs.tempProject,
-                          shouldWait = parsedArgs.shouldWait,
-                          lightEditMode = parsedArgs.lightEditMode)
-      }
-      is NoProjectResult -> {
-        if (parsedArgs.shouldWait) {
-          CommandLineProcessorResult(
-            project = null,
-            result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
-          )
+
+    val commands = parsedArgsResult.getOrNull()
+    requireNotNull(commands) { "Parsed args result should have been checked for failure before" }
+
+    var result: CommandLineProcessorResult? = null
+    for (command in commands) {
+        result = when (command) {
+          is OpenProjectResult -> {
+            openFileOrProject(file = command.file,
+                              line = command.line,
+                              column = command.column,
+                              tempProject = command.tempProject,
+                              shouldWait = command.shouldWait,
+                              lightEditMode = command.lightEditMode)
+          }
+          is NoProjectResult -> {
+            if (command.shouldWait) {
+              CommandLineProcessorResult(
+                project = null,
+                result = CliResult(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+              )
+            }
+            else if (command.lightEditMode) {
+              LightEditService.getInstance().showEditorWindow()
+              CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
+            }
+            else {
+              CommandLineProcessorResult(project = null, future = OK_FUTURE)
+            }
+          }
         }
-        else if (parsedArgs.lightEditMode) {
-          LightEditService.getInstance().showEditorWindow()
-          CommandLineProcessorResult(project = LightEditService.getInstance().project, future = OK_FUTURE)
-        }
-        else {
-          CommandLineProcessorResult(project = null, future = OK_FUTURE)
-        }
-      }
-      else -> error("Unexpected parsing result: $parsedArgs")
     }
+    return result ?: error("Parsing result shouldn't be null at this point; args are not empty")
   }
 
   private fun parseArgs(
     args: List<String>,
     currentDirectory: String?,
-  ): Result<ParsingResult> {
-    var result: OpenProjectResult? = null
+  ): Result<List<ParsingResult>> {
+    val openProjectResults = mutableListOf<OpenProjectResult>()
     var line = -1
     var column = -1
     var tempProject = false
@@ -428,7 +435,7 @@ object CommandLineProcessor {
       }
       val file = parseFilePath(arg, currentDirectory) ?: return Result.failure(ParseException(arg, i))
 
-      result = OpenProjectResult(
+      openProjectResults += OpenProjectResult(
         file = file,
         line = line,
         column = column,
@@ -445,11 +452,13 @@ object CommandLineProcessor {
       i++
     }
 
-    return Result.success(result
-      ?: NoProjectResult(
+    return Result.success(
+      openProjectResults.ifEmpty {
+        listOf(NoProjectResult(
           shouldWait = shouldWait,
           lightEditMode = lightEditMode
-        )
+        ))
+      }
     )
   }
 
