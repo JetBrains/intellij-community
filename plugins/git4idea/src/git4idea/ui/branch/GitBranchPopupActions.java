@@ -391,7 +391,7 @@ public class GitBranchPopupActions {
                               @NotNull @NlsSafe String branchName,
                               @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = immutableList(repositories);
+      myRepositories = Collections.unmodifiableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = project.getService(GitBranchManager.class);
