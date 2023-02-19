@@ -38,10 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
 import kotlin.reflect.KClass;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
@@ -88,7 +85,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      final Meter meter = TraceManager.INSTANCE.getMeter("EDT");
+      Meter meter = TraceManager.INSTANCE.getMeter("EDT");
       MONITOR = new OTelMonitor(meter);
     }
     else {
@@ -239,7 +236,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Nullable private final ProgressIndicator myProgressIndicator;
     @NotNull private final NonBlockingReadActionImpl<T> builder;
 
-    // a sum composed of: 1 for non-done promise, 1 for each currently running thread
+    // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
@@ -275,6 +272,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           cancel();
           break;
         }
+        //noinspection Convert2Lambda,Anonymous2MethodRef
         Disposable child = new Disposable() { // not a lambda to create a separate object for each parent
           @Override
           public void dispose() {
@@ -390,8 +388,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         else {
           if (!current.getComputationOrigin().equals(getComputationOrigin())) {
             //RC: Sort of fool-proofing: sometimes it _could_ be OK to invoke 2 ReadActions with different .computable
-            //    from different places in code, but with same .coalesceBy -- but it is much more likely an error. Hence we
-            //    prefer to prohibit it completely:
+            //    from different places in code, but with same .coalesceBy -- but it is much more likely an error.
+            //    Hence, we prefer to prohibit it completely:
             reportCoalescingConflict(current);
           }
           if (current.myReplacement != null) {
@@ -516,7 +514,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       currentIndicator = indicator;
       try {
         Ref<ContextConstraint> unsatisfiedConstraint = Ref.create();
-        final boolean success;
+        boolean success;
         if (ApplicationManager.getApplication().isReadAccessAllowed()) {
           insideReadAction(indicator, unsatisfiedConstraint);
           success = true;
@@ -527,7 +525,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         else {
           if (myProgressIndicator != null) {
             try {
-              //Give ProgressSuspender a chance to suspend now, it can't do it under a read-action
+              // Give ProgressSuspender a chance to suspend now. It can't do it under a read-action
               myProgressIndicator.checkCanceled();
             }
             catch (ProcessCanceledException e) {
@@ -629,7 +627,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         setResult(result);
 
-        if (isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
+        if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           builder.myUiThreadAction.accept(result);
         }
       }, builder.myModalityState, __ -> isCancelled());
@@ -709,7 +707,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
      */
     private final AtomicInteger failedExecutionsCount = new AtomicInteger();
     /**
-     * Total time (in microseconds) of successful executions -- i.e. those that run to the end
+     * Total time (in microseconds) of successful executions -- i.e., those that run to the end
      */
     private final AtomicLong finalizedExecutionTimeUs = new AtomicLong();
     /**
@@ -719,11 +717,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private final AtomicLong failedExecutionTimeUs = new AtomicLong();
     private final AutoCloseable otelSubscription;
 
-    private OTelMonitor(final @NotNull Meter meter) {
-      final var finalizedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionsCount").buildObserver();
-      final var failedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionsCount").buildObserver();
-      final var finalizedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionTimeUs").buildObserver();
-      final var failedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionTimeUs").buildObserver();
+    private OTelMonitor(@NotNull Meter meter) {
+      var finalizedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionsCount").buildObserver();
+      var failedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionsCount").buildObserver();
+      var finalizedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionTimeUs").buildObserver();
+      var failedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionTimeUs").buildObserver();
 
       otelSubscription = meter.batchCallback(
         () -> {
@@ -738,26 +736,28 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       );
     }
 
-    public <V> Callable<V> wrap(final @NotNull Callable<V> computation) {
+    @NotNull
+    <V> Callable<V> wrap(@NotNull Callable<V> computation) {
       return new MonitoredComputation<>(computation);
     }
 
-    private <V> V callWrapped(final @NotNull Callable<V> computation) throws Exception {
-      final long startedAtNs = System.nanoTime();
+    @Contract(pure = true)
+    private <V> V callWrapped(@NotNull Callable<V> computation) throws Exception {
+      long startedAtNs = System.nanoTime();
       try {
-        final V result = computation.call();
+        V result = computation.call();
 
         finalizedExecutionsCount.incrementAndGet();
-        final long finishedAtNs = System.nanoTime();
-        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        long finishedAtNs = System.nanoTime();
+        long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
         finalizedExecutionTimeUs.addAndGet(durationUs);
 
         return result;
       }
       catch (Throwable t) {
         failedExecutionsCount.incrementAndGet();
-        final long finishedAtNs = System.nanoTime();
-        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        long finishedAtNs = System.nanoTime();
+        long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
         failedExecutionTimeUs.addAndGet(durationUs);
         throw t;
       }
@@ -771,17 +771,13 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private class MonitoredComputation<V> implements Callable<V> {
       private final Callable<V> wrappedComputation;
 
-      private MonitoredComputation(final @NotNull Callable<V> wrappedComputation) {
+      private MonitoredComputation(@NotNull Callable<V> wrappedComputation) {
         this.wrappedComputation = wrappedComputation;
       }
 
       @Override
       public V call() throws Exception {
         return callWrapped(wrappedComputation);
-      }
-
-      public Callable<V> wrappedComputation() {
-        return wrappedComputation;
       }
     }
   }
