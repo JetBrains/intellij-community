@@ -21,6 +21,16 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
     myFixture.type(' ')
     moveCaret4LinesDown()
 
+    myFixture.checkResult("""
+       line1
+
+
+
+      l ine2
+
+
+
+      li<caret>ne3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
     myFixture.checkResult("""
        line1
@@ -64,6 +74,78 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
 
 
 
+      line3""".trimIndent())
+  }
+
+  fun testNavigateBetweenEditLocationsWithMultiCaret() {
+    myFixture.configureByText("${getTestName(false)}.txt", """
+      <caret>li<caret>ne1
+      -------
+      -------
+      -------
+      line2
+      -------
+      -------
+      -------
+      line3""".trimIndent())
+    myFixture.type('A')
+    moveCaret4LinesDown()
+    myFixture.type('B')
+    moveCaret4LinesDown()
+
+    myFixture.checkResult("""
+      AliAne1
+      -------
+      -------
+      -------
+      lBineB2
+      -------
+      -------
+      -------
+      li<caret>ne3<caret>""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
+    myFixture.checkResult("""
+      AliAne1
+      -------
+      -------
+      -------
+      lB<caret>ineB<caret>2
+      -------
+      -------
+      -------
+      line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
+    myFixture.checkResult("""
+      A<caret>liA<caret>ne1
+      -------
+      -------
+      -------
+      lBineB2
+      -------
+      -------
+      -------
+      line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
+    myFixture.checkResult("""
+      AliAne1
+      -------
+      -------
+      -------
+      lB<caret>ineB<caret>2
+      -------
+      -------
+      -------
+      line3""".trimIndent())
+    EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
+    myFixture.checkResult("""
+      AliAne1
+      -------
+      -------
+      -------
+      lB<caret>ineB<caret>2
+      -------
+      -------
+      -------
       line3""".trimIndent())
   }
 
