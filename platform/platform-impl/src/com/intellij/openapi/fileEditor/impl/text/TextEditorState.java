@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,9 +83,7 @@ public final class TextEditorState implements FileEditorState {
   public boolean canBeMergedWith(@NotNull FileEditorState otherState, @NotNull FileEditorStateLevel level) {
     if (!(otherState instanceof TextEditorState other)) return false;
     return level == FileEditorStateLevel.NAVIGATION &&
-           CARETS.length == 1 &&
-           other.CARETS.length == 1 &&
-           Math.abs(CARETS[0].LINE - other.CARETS[0].LINE) < MIN_CHANGE_DISTANCE;
+           ArrayUtil.areEqual(CARETS, other.CARETS, (a, b) -> Math.abs(a.LINE - b.LINE) < MIN_CHANGE_DISTANCE);
   }
 
   @Override
