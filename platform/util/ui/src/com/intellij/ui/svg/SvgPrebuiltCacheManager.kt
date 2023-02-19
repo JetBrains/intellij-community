@@ -22,6 +22,7 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
       1.25f -> list.s1_25.getOrCreate()
       1.5f -> list.s1_5.getOrCreate()
       2f -> list.s2.getOrCreate()
+      2.5f -> list.s2_5.getOrCreate()
       else -> return null
     }
 
@@ -55,6 +56,7 @@ private class Stores(dbDir: Path, classifier: String) {
   val s1_25 = StoreContainer(dbDir, 1.25f, classifier)
   val s1_5 = StoreContainer(dbDir, 1.5f, classifier)
   val s2 = StoreContainer(dbDir, 2f, classifier)
+  val s2_5 = StoreContainer(dbDir, 2.5f, classifier)
 }
 
 private class StoreContainer(private val dbDir: Path, private val scale: Float, private val classifier: String) {
