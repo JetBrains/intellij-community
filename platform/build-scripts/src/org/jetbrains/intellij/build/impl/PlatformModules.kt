@@ -206,11 +206,15 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   addModule("externalProcess-rt.jar", listOf(
     "intellij.platform.externalProcessAuthHelper.rt"
   ), productLayout = productLayout, layout = layout)
+
+  // ap-validation
   addModule("stats.jar", listOf(
     "intellij.platform.statistics",
     "intellij.platform.statistics.uploader",
     "intellij.platform.statistics.config",
   ), productLayout = productLayout, layout = layout)
+  layout.withProjectLibrary("ap-validation", "stats.jar")
+
   if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
     layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
   }
@@ -440,7 +444,9 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
   val modules = content.children("module")
   val result = LinkedHashSet<ModuleItem>()
   for (module in modules) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = APP_JAR, reason = "productModule"))
+    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue,
+                          relativeOutputFile = "modules.jar",
+                          reason = "productModule"))
   }
   return result
 }
