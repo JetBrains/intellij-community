@@ -99,7 +99,7 @@ internal class LightEditFrameWrapper(
       if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
         frame.toggleFullScreen(true)
       }
-      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
+      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper, frame))
       IdeMenuBar.installAppMenuIfNeeded(uiFrame)
 
       @Suppress("DEPRECATION")
