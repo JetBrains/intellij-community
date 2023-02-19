@@ -47,9 +47,14 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     val accessibleName: @Nls String?
     val project: Project?
     val helper: IdeFrame
-    val isInFullScreen: Boolean?
+    val frameDecorator: FrameDecorator?
 
     fun dispose()
+  }
+
+  interface FrameDecorator {
+    val isInFullScreen: Boolean
+    fun appClosing() {}
   }
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
@@ -98,7 +103,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     return if (SystemInfoRt.isMac && isInFullScreen) JBInsets.emptyInsets() else super.getInsets()
   }
 
-  override fun isInFullScreen(): Boolean = frameHelper?.isInFullScreen ?: false
+  override fun isInFullScreen(): Boolean = frameHelper?.frameDecorator?.isInFullScreen ?: false
 
   override fun dispose() {
     val frameHelper = frameHelper
