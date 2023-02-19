@@ -193,19 +193,6 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       return list +
              packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path.toString() }, { it.type }, { it.libraryFile?.toString() }) }
     }
-
-    private suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, MutableList<String>>, context: BuildContext) {
-      coroutineScope {
-        for (source in nativeFiles.keys.sortedBy { it.file.name }) {
-          val paths = nativeFiles.getValue(source)
-          val sourceFile = source.file
-          async(Dispatchers.IO) {
-            unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = context)
-          }
-          continue
-        }
-      }
-    }
   }
 
   private fun packModules(includedModules: Collection<ModuleItem>,
@@ -427,105 +414,6 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
                           collectNativeFiles = collectNativeFiles,
                           context = context)
     }.sources
-  }
-}
-
-private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
-  val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
-  val signTool = context.proprietaryBuildTools.signTool
-  val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
-
-  val packagePrefix = if (paths.size == 1) {
-    // if a native lib is built with the only arch for testing purposes
-    val first = paths.first()
-    first.substring(0, first.indexOf('/') + 1)
-  }
-  else {
-    getCommonPath(paths)
-  }
-
-  val libName = sourceFile.name.substringBefore('-')
-  HashMapZipFile.load(sourceFile).use { zipFile ->
-    val outDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
-    Files.createDirectories(outDir)
-    for (pathWithPackage in paths) {
-      val path = pathWithPackage.substring(packagePrefix.length)
-      val fileName = path.substring(path.lastIndexOf('/') + 1)
-
-      val os = when {
-        path.startsWith("darwin-") || path.startsWith("mac-") || path.startsWith("darwin/") || path.startsWith("mac/") || path.startsWith(
-          "Mac/") -> OsFamily.MACOS
-        path.startsWith("win32-") || path.startsWith("win/") || path.startsWith("win-") || path.startsWith("Windows/") -> OsFamily.WINDOWS
-        path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> continue
-        path.startsWith("linux-") || path.startsWith("linux/") || path.startsWith("Linux/") -> OsFamily.LINUX
-        else -> continue
-      }
-
-      val osAndArch = path.substring(0, path.indexOf('/'))
-      val arch: JvmArchitecture? = when {
-        osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> JvmArchitecture.aarch64
-        path.contains("x86-64") || path.contains("x86_64") -> JvmArchitecture.x64
-        // universal library
-        os == OsFamily.MACOS && path.count { it == '/' } == 1 -> null
-        else -> continue
-      }
-
-      var file: Path? = if (os != OsFamily.LINUX && signTool.usePresignedNativeFiles) {
-        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
-      }
-      else {
-        null
-      }
-
-      if (file == null) {
-        @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        file = outDir.resolve(path)!!
-        Files.createDirectories(file.parent)
-        FileChannel.open(file, W_CREATE_NEW).use { channel ->
-          val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
-          try {
-            while (byteBuffer.hasRemaining()) {
-              channel.write(byteBuffer)
-            }
-          }
-          finally {
-            zipFile.releaseBuffer(byteBuffer)
-          }
-        }
-
-        if (os != OsFamily.LINUX) {
-          unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
-        }
-      }
-
-      val relativePath = "lib/$libName/" + if (libName == "jna") {
-        "${arch!!.dirName}/$fileName"
-      }
-      else {
-        path
-      }
-      context.addDistFile(DistFile(file = file, relativePath = relativePath, os = os, arch = arch))
-    }
-  }
-
-  if (!signTool.usePresignedNativeFiles) {
-    val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
-    coroutineScope {
-      launch {
-        unsignedFiles.get(OsFamily.MACOS)?.let {
-          signMacBinaries(context, it, additionalOptions = versionOption)
-        }
-      }
-      launch {
-        unsignedFiles.get(OsFamily.WINDOWS)?.let {
-          @Suppress("SpellCheckingInspection")
-          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
-            "contentType" to "application/x-exe",
-            "jsign_replace" to "true"
-          ))
-        }
-      }
-    }
   }
 }
 
