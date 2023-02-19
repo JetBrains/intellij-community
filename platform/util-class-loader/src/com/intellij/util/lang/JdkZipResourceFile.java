@@ -87,7 +87,7 @@ final class JdkZipResourceFile implements ResourceFile {
       try (InputStream stream = zipFile.getInputStream(entry)) {
         bytes = loadBytes(stream, (int)entry.getSize());
       }
-      return classConsumer.consumeClassData(className, bytes);
+      return classConsumer.consumeClassData(className, bytes, jarLoader);
     }
     finally {
       if (!lockJars) {

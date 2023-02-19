@@ -80,15 +80,15 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data)
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader)
     throws IOException {
     BytecodeTransformer transformer = this.transformer;
     if (transformer != null && transformer.isApplicable(name, this)) {
       byte[] transformedData = transformer.transform(this, name, data);
       if (transformedData != null) {
-        return super.consumeClassData(name, transformedData);
+        return super.consumeClassData(name, transformedData, loader);
       }
     }
-    return super.consumeClassData(name, data);
+    return super.consumeClassData(name, data, loader);
   }
 }

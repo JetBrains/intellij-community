@@ -191,6 +191,12 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    launch(CoroutineName("coroutine debug probes init")) {
+      enableCoroutineDump()
+    }
+  }
+
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
   // async - handle error separately
