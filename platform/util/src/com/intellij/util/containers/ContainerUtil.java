@@ -204,7 +204,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from the input collection (or {@link Collections#emptyList()} when original list is empty)
+   * @return read-only list consisting of the elements from the input collection (or {@link Collections#emptyList()} when the original list is empty)
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -659,7 +659,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in merged list result.
+   * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in the merged list result.
    * When equal elements occurred, then if {@code mergeEqualItems} then output only the element from the {@code list1} and ignore the second,
    * else output them both in unspecified order.
    * {@code processor} is invoked for each (output element, is the element from {@code list1}) pair.
@@ -669,7 +669,7 @@ public final class ContainerUtil {
                                                    @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
-                                                   // (element in the result, is element from the list1)
+                                                   // (`element in the result`, `is the element from the list1`)
                                                    @NotNull PairConsumer<? super T, ? super Boolean> processor) {
     int index1 = 0;
     int index2 = 0;
@@ -1233,7 +1233,7 @@ public final class ContainerUtil {
 
   /**
    * Add all supplied elements to the supplied collection and returns the modified collection.
-   * Unlike {@link Collections#addAll(Collection, Object[])} this method does not track whether collection
+   * Unlike {@link Collections#addAll(Collection, Object[])} this method does not track whether the collection
    * was modified, so it could be marginally faster.
    *
    * @param collection collection to add elements to
@@ -1319,7 +1319,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of the elements from the collections stored in list added together
+   * @return read-only list consisting of all the elements from the collections stored in the list merged together
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -1602,7 +1602,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Returns the only item from the collection or null if collection is empty or contains more than one item
+   * Returns the only item from the collection or null if the collection is empty or contains more than one item
    *
    * @param items collection to get the item from
    * @param <T> type of collection element
@@ -1979,7 +1979,7 @@ public final class ContainerUtil {
   /**
    * @param array an input array to process
    * @param mapping a side effect-free function which transforms array elements
-   * @param emptyArray an empty array of desired result type (maybe returned if the result is also empty)
+   * @param emptyArray an empty array of the desired result type (maybe returned if the result is also empty)
    * @return array consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @Contract(pure=true)
@@ -2256,7 +2256,7 @@ public final class ContainerUtil {
 
   @Contract(mutates = "param1")
   private static <T> void quickSort(@NotNull List<? extends T> x, @NotNull Comparator<? super T> comparator, int off, int len) {
-    // Insertion sort on smallest arrays
+    // Insertion sort on the smallest arrays
     if (len < 7) {
       for (int i = off; i < len + off; i++) {
         for (int j = i; j > off && comparator.compare(x.get(j), x.get(j - 1)) < 0; j--) {
@@ -2303,7 +2303,7 @@ public final class ContainerUtil {
       swapElements(x, b++, c--);
     }
 
-    // Swap partition elements back to middle
+    // Swap partition elements back to the middle
     int s = Math.min(a - off, b - a);
     vecswap(x, off, b - s, s);
     int n = off + len;
@@ -2560,14 +2560,14 @@ public final class ContainerUtil {
   }
 
   /**
-   * Creates List which is thread-safe to modify and iterate.
+   * Creates List, which is thread-safe to modify and iterate.
    * It differs from the java.util.concurrent.CopyOnWriteArrayList in the following:
    * - faster modification in the uncontended case
    * - less memory
    * - slower modification in highly contented case (which is the kind of situation you shouldn't use COWAL anyway)<br>
    *
    * N.B. Avoid using {@code list.toArray(new T[list.size()])} on this list because it is inherently racey and
-   * therefore can return array with null elements at the end.
+   * therefore can return an array with null elements at the end.
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList() {
@@ -2866,7 +2866,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of elements in the input collection or {@link #emptyList()} if the collections is null
+   * @return read-only list consisting of elements in the input collection or {@link #emptyList()} if the {@code list} is null
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -2875,7 +2875,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only set consisting of elements in the input collection or {@link Collections#emptySet()} if the collections is null
+   * @return read-only set consisting of elements in the input collection or {@link Collections#emptySet()} if the {@code set} is null
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -2884,7 +2884,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only map consisting of elements in the input collection or {@link Collections#emptyMap()} if the collections is null
+   * @return read-only map consisting of elements in the input collection or {@link Collections#emptyMap()} if the collection is null
    */
   @Contract(pure = true)
   @Unmodifiable
@@ -2972,7 +2972,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Hard keys soft values hash map.
+   * Create a hard-key soft-value hash map.
    * Null keys are NOT allowed
    * Null values are allowed
    */
@@ -2982,7 +2982,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Hard keys weak values hash map.
+   * Create a hard-key weak-value hash map.
    * Null keys are NOT allowed
    * Null values are allowed
    */
@@ -2993,7 +2993,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * Soft keys hard values hash map.
+   * Create a soft-key hard-value hash map.
    * Null keys are NOT allowed
    * Null values are allowed
    */
