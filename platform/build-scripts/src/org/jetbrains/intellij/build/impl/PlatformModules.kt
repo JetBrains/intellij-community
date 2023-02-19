@@ -197,7 +197,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
 
   // used by intellij.database.jdbcConsole -
-  // cannot be in UTIL_8_JAR, because this JAR must contain classes for java versions <= 8 only
+  // cannot be in 3rd-party-rt.jar, because this JAR must contain classes for java versions <= 7 only
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // util.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
   addModule(UTIL_JAR, listOf(
