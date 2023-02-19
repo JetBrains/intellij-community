@@ -35,7 +35,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
   }
 
-  private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
+  private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = Set.of(
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
     "extenderClass", // DomExtenderEP
@@ -86,7 +86,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
     for (With element : elements) {
       final String attributeName = element.getAttribute().getStringValue();
-      if (EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
+      if (attributeName != null && EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
         return element;
       }
     }

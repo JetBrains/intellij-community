@@ -17,9 +17,9 @@ import java.util.*;
 public final class AnnotationTargetUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
-  public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
+  public static final Set<TargetType> DEFAULT_TARGETS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
-    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT);
+    TargetType.PARAMETER, TargetType.LOCAL_VARIABLE, TargetType.MODULE, TargetType.RECORD_COMPONENT)));
 
   private static final TargetType[] PACKAGE_TARGETS = {TargetType.PACKAGE};
   private static final TargetType[] TYPE_USE_TARGETS = {TargetType.TYPE_USE};

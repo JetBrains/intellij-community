@@ -422,10 +422,12 @@ public final class ContainerUtil {
 
   /**
    * @return read-only set consisting of the elements from the input collection
+   * @deprecated use {@link Set#of(Object[])}
    */
   @SafeVarargs
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <E> Set<E> immutableSet(E @NotNull ... elements) {
     switch (elements.length) {
       case 0:

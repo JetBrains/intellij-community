@@ -8,8 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +48,8 @@ public final class HtmlMarkdownUtils {
   }
 
   private static final Set<String> ACCEPTABLE_TAGS =
-    ContainerUtil.immutableSet("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
-                               "li", "blockquote", "ol", "b", "a", "tt", "tt", "pre", "tr", "th",
+    Set.of("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
+                               "li", "blockquote", "ol", "b", "a", "tt", "pre", "tr", "th",
                                "td", "table", "strong", "em", "u", "dl", "dd", "dt");
 
   private HtmlMarkdownUtils() {

@@ -35,7 +35,7 @@ public final class PluginDescriptorStructureUtil {
 
   @NonNls 
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
-    ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
+    Set.of("id", "name", "version", "category", "resource-bundle");
 
   @NonNls
   private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()

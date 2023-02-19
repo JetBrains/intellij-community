@@ -95,9 +95,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      String fqn;
       if (ref != null &&
           ref.resolve() instanceof PsiClass annotationClass &&
-          !runtimeAnnotationsToIgnore.contains(annotationClass.getQualifiedName())) {
+          ((fqn = annotationClass.getQualifiedName()) == null ||
+          !runtimeAnnotationsToIgnore.contains(fqn))) {
         final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
         // Default retention is CLASS: keep it
         if (retentionAnno == null) return true;
