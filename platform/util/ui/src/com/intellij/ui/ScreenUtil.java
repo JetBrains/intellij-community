@@ -448,7 +448,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
     if (bounds == null) {
       return false;
     }

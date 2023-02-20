@@ -547,62 +547,57 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
-    MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
-                                              e.isPopupTrigger());
-
     LightweightHint currentHint = getCurrentHint();
-    if (currentHint != null) {
-      if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
-        return true;
-      }
+    if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
+      return true;
     }
-
     int visualLine = getVisualLineByEvent(e);
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.visualLineToY(visualLine);
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
-    if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
-      Set<RangeHighlighter> highlighters = getNearestHighlighters(me);
-      if (highlighters.isEmpty()) return false;
-
-      int y = e.getY();
-      RangeHighlighter nearest = getNearestRangeHighlighter(e);
-      if (nearest != null) {
-        ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
-        int eachStartY = range.getStartOffset();
-        int eachEndY = range.getEndOffset();
-        y = eachStartY + (eachEndY - eachStartY) / 2;
-      }
-      if (currentHint != null && y == myCurrentHintAnchorY) return true;
-      me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
-                          e.isPopupTrigger());
-      TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
-      if (bigRenderer != null) {
-        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(true));
-        myCurrentHint = new WeakReference<>(hint);
-        myCurrentHintAnchorY = y;
-        myKeepHint = false;
-        myMouseMovementTracker.reset();
-        return true;
-      }
-      return false;
-    }
-    else {
-      float rowRatio = (float)visualLine /(myEditor.getVisibleLineCount() - 1);
-      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : me.getY();
-      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
+    if (!isVisible &&
+        UISettings.getInstance().getShowEditorToolTip() &&
+        !UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty()) {
+      float rowRatio = (float)visualLine / (myEditor.getVisibleLineCount() - 1);
+      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : e.getY() + 1;
       List<RangeHighlighterEx> highlighters = new ArrayList<>();
       collectRangeHighlighters(this, visualLine, highlighters);
       collectRangeHighlighters(myEditor.getFilteredDocumentMarkupModel(), visualLine, highlighters);
-      myEditorFragmentRenderer.show(visualLine, highlighters, me.isAltDown(), createHint(me));
+      myEditorFragmentRenderer.show(visualLine, highlighters, e.isAltDown(), createHint(e.getComponent(), new Point(0,y)));
       return true;
     }
+
+    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY() + 1);
+    if (highlighters.isEmpty()) return false;
+
+    int y = e.getY();
+    RangeHighlighter nearest = getNearestRangeHighlighter(e);
+    if (nearest != null) {
+      ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
+      int eachStartY = range.getStartOffset();
+      int eachEndY = range.getEndOffset();
+      y = eachStartY + (eachEndY - eachStartY) / 2;
+    }
+    if (currentHint != null && y == myCurrentHintAnchorY) {
+      return true;
+    }
+    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    if (bigRenderer != null) {
+      LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
+      myCurrentHint = new WeakReference<>(hint);
+      myCurrentHintAnchorY = y;
+      myKeepHint = false;
+      myMouseMovementTracker.reset();
+      return true;
+    }
+    return false;
   }
 
-  private static HintHint createHint(MouseEvent me) {
-    return new HintHint(me)
+  @NotNull
+  private static HintHint createHint(Component component, Point point) {
+    return new HintHint(component, point)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
       .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
@@ -651,7 +646,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private @Nullable RangeHighlighter getNearestRangeHighlighter(@NotNull MouseEvent e) {
-    Set<RangeHighlighter> highlighters = getNearestHighlighters(e);
+    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY());
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
@@ -666,10 +661,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @NotNull
-  private Set<RangeHighlighter> getNearestHighlighters(@NotNull MouseEvent e) {
+  private Set<RangeHighlighter> getNearestHighlighters(int y) {
     Set<RangeHighlighter> highlighters = new HashSet<>();
-    addNearestHighlighters(this, e.getY(), highlighters);
-    addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), e.getY(), highlighters);
+    addNearestHighlighters(this, y, highlighters);
+    addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), y, highlighters);
     return highlighters;
   }
 
