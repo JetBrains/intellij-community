@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -348,11 +349,13 @@ public interface Application extends ComponentManager {
    * @param modalityState the state in which the runnable will be executed.
    * @throws ProcessCanceledException when the current thread is interrupted
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) throws ProcessCanceledException;
 
   /**
    * Same as {@link #invokeAndWait(Runnable, ModalityState)}, using {@link ModalityState#defaultModalityState()}.
    */
+  @RequiresBlockingContext
   void invokeAndWait(@NotNull Runnable runnable) throws ProcessCanceledException;
 
   /**

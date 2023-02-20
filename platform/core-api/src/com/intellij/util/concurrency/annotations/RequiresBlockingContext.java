@@ -10,7 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Methods annotated with {@code RequiresBlockingContext} are not designed to be called in suspend context.
+ * Methods annotated with {@code RequiresBlockingContext} are not designed to be called in suspend context
+ * (where {@code currentCoroutineContext} is available).
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
