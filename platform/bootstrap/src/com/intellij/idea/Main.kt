@@ -21,7 +21,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
@@ -58,10 +57,7 @@ fun main(rawArgs: Array<String>) {
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        startApplication(args = args,
-                         appStarterDeferred = appStarterDeferred,
-                         mainScope = this@runBlocking,
-                         busyThread = busyThread)
+        startApplication(args, appStarterDeferred, this@runBlocking, busyThread)
       }
 
       awaitCancellation()
@@ -83,10 +79,10 @@ private fun initProjectorIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider(Supplier {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
       val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
       projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-    })
+    }
 
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(
