@@ -261,6 +261,54 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build2.buildSrc", "build2.buildSrc.main", "build2.buildSrc.test")
   }
 
+  /*
+
+  Builds inclusion and buildSrc presence graph
+
+   A--> B--> D--> buildSrc
+   |    └--> buildSrc
+   |
+   └--> C--> D--> buildSrc
+        └--> buildSrc
+   */
+  @Test
+  @TargetVersions("8.0+")
+  fun `test buildSrc in a composite with build names duplication`() {
+    createSettingsFile("""
+      rootProject.name = "A"
+      includeBuild("B")
+      includeBuild("C")
+    """.trimIndent())
+
+    createProjectSubFile("B/settings.gradle", """
+      rootProject.name = "B"
+      includeBuild("D")
+    """.trimIndent())
+
+    createProjectSubFile("B/buildSrc/settings.gradle", "")
+
+    createProjectSubFile("B/D/settings.gradle", "rootProject.name = 'D'")
+    createProjectSubFile("B/D/buildSrc/settings.gradle", "")
+
+
+    createProjectSubFile("C/settings.gradle", """
+      rootProject.name = "C"
+      includeBuild("D")
+    """.trimIndent())
+
+    createProjectSubFile("C/buildSrc/settings.gradle", "")
+
+    createProjectSubFile("C/D/settings.gradle", "rootProject.name = 'D'")
+    createProjectSubFile("C/D/buildSrc/settings.gradle", "")
+
+    importProject("")
+    assertModules("A", "B", "C", "D", "C.D",
+                  "B.buildSrc", "B.buildSrc.main", "B.buildSrc.test",
+                  "C.buildSrc", "C.buildSrc.main", "C.buildSrc.test",
+                  "D.buildSrc", "D.buildSrc.main", "D.buildSrc.test",
+                  "C.D.buildSrc", "C.D.buildSrc.main", "C.D.buildSrc.test")
+  }
+
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
     val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)
     val modulePath = ExternalSystemApiUtil.getExternalProjectPath(module)
