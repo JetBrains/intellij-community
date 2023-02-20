@@ -99,13 +99,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
-                                 @NotNull Icon smartTagIcon,
                                  @NotNull CachedIntentions cachedIntentions) {
     myEditor = editor;
     myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel = new LightBulbPanel(project, file, editor, smartTagIcon);
+    myLightBulbPanel = new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions));
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -118,8 +117,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
-    IntentionHintComponent component =
-      new IntentionHintComponent(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), cachedIntentions);
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
