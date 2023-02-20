@@ -125,7 +125,7 @@ public final class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  boolean isGenerateConditionalExit() {
+  public boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
@@ -180,7 +180,7 @@ public final class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  boolean isReturnPresentBetween() {
+  public boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 
