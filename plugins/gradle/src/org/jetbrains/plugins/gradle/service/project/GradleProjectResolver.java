@@ -47,6 +47,7 @@ import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
@@ -57,8 +58,10 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -156,9 +159,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         getProjectDataFunction(resolverContext, projectResolverChain, false));
 
       // auto-discover buildSrc projects of the main and included builds
-      File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
-      new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
-        .discoverAndAppendTo(projectDataNode);
+      if (GradleVersion.version(resolverContext.getProjectGradleVersion()).compareTo(GradleVersion.version("8.0")) < 0) {
+        File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
+        new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
+          .discoverAndAppendTo(projectDataNode);
+      }
+
       return projectDataNode;
     }
     finally {
@@ -488,6 +494,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       mergeLibraryAndModuleDependencyData(resolverCtx, projectDataNode, resolverCtx.getGradleUserHome(), gradleHomeDir, gradleVersion);
     }
 
+    processBuildSrcModules(resolverCtx, projectDataNode);
+
     for (GradleProjectResolverExtension resolver = tracedResolverChain; resolver != null; resolver = resolver.getNext()) {
       resolver.resolveFinished(projectDataNode);
     }
@@ -501,6 +509,49 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
+  }
+
+  private static void processBuildSrcModules(DefaultProjectResolverContext ctx, DataNode<ProjectData> projectDataNode) {
+    // since Gradle 8.0 buildSrc are available as composite build members
+    DataNode<CompositeBuildData> compositeNode = find(projectDataNode, CompositeBuildData.KEY);
+    if (compositeNode == null) return;
+
+    GradleBuildSrcProjectsResolver.Index index = GradleBuildSrcProjectsResolver.prepareIndexes(projectDataNode);
+
+    CompositeBuildData compositeBuildData = compositeNode.getData();
+    for (BuildParticipant participant : compositeBuildData.getCompositeParticipants()) {
+      if (participant.getRootProjectName().endsWith("buildSrc")) {
+        Set<String> buildSrcProjectPaths = participant.getProjects();
+
+        @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes =
+          index.buildClasspathNodesMap().get(Path.of(participant.getRootPath()).getParent());
+
+        @NotNull Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
+        @Nullable AtomicReference<DataNode<? extends ModuleData>> buildSrcModuleNode = new AtomicReference<>();
+
+        findAll(projectDataNode, ProjectKeys.MODULE).stream()
+          .filter(node -> buildSrcProjectPaths.contains(node.getData().getLinkedExternalProjectPath()))
+          .forEach(node -> {
+            buildSrcModules.put(node.getData().getId(), node);
+            findAll(node, GradleSourceSetData.KEY).forEach(
+              sourceSetNode -> buildSrcModules.put(sourceSetNode.getData().getId(), sourceSetNode));
+
+            if (participant.getRootPath().equals(node.getData().getLinkedExternalProjectPath())) {
+              if (ctx.isResolveModulePerSourceSet()) {
+                buildSrcModuleNode.set(findChild(node, GradleSourceSetData.KEY,
+                                                 sourceSetNode -> sourceSetNode.getData().getExternalName().endsWith(":main")));
+              }
+              else {
+                buildSrcModuleNode.set(node);
+              }
+            }
+          });
+
+        GradleBuildSrcProjectsResolver.addBuildSrcToBuildScriptClasspathData(buildClasspathNodes,
+                                                                             buildSrcModules,
+                                                                             buildSrcModuleNode.get());
+      }
+    }
   }
 
   private static boolean isCustomSerializationSupported(@NotNull DefaultProjectResolverContext resolverCtx,

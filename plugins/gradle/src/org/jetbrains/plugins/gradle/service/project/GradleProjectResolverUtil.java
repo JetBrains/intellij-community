@@ -177,7 +177,7 @@ public final class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
-    String buildSrcGroup = resolverCtx.getBuildSrcGroup();
+    String buildSrcGroup = resolverCtx.getBuildSrcGroup(gradleModule);
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
       if (StringUtil.isNotEmpty(buildSrcGroup)) {
@@ -228,8 +228,16 @@ public final class GradleProjectResolverUtil {
     String gradlePath = projectIdentifier.getProjectPath();
     String compositePrefix = "";
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+
+    if (GradleVersion.version(resolverCtx.getProjectGradleVersion()).compareTo(GradleVersion.version("8.0")) >= 0) {
+      if (build != resolverCtx.getModels().getMainBuild() || isRootPath) {
+        compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, build.getBuildIdentifier());
+      }
+      return compositePrefix + (StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath) ? "" : gradlePath);
+    }
+
     if (!isRootPath && build != resolverCtx.getModels().getMainBuild()) {
-      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, build.getBuildIdentifier());
+      compositePrefix = build.getName();
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
@@ -244,9 +252,15 @@ public final class GradleProjectResolverUtil {
     IdeaProject ideaProject = gradleModule.getProject();
     boolean isRootPath = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
 
+    if (GradleVersion.version(resolverCtx.getProjectGradleVersion()).compareTo(GradleVersion.version("8.0")) >= 0) {
+      if (ideaProject != resolverCtx.getModels().getModel(IdeaProject.class) || isRootPath) {
+        compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, gradleProject.getProjectIdentifier().getBuildIdentifier());
+      }
+      return compositePrefix + (StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath) ? "" : gradlePath);
+    }
+
     if (!isRootPath && ideaProject != resolverCtx.getModels().getModel(IdeaProject.class)) {
-      BuildIdentifier buildId = gradleModule.getGradleProject().getProjectIdentifier().getBuildIdentifier();
-      compositePrefix = buildCompositePrefixFromBuildNames(resolverCtx, buildId);
+      compositePrefix = ideaProject.getName();
     } else if (!StringUtil.isEmpty(resolverCtx.getBuildSrcGroup())) {
       compositePrefix = resolverCtx.getBuildSrcGroup() + (isRootPath ? ":" : ":buildSrc");
     }
@@ -255,18 +269,48 @@ public final class GradleProjectResolverUtil {
   }
 
   @NotNull
-  private static String buildCompositePrefixFromBuildNames(@NotNull ProjectResolverContext resolverCtx, BuildIdentifier buildId) {
-    String compositePrefix;
-    List<String> list = Stream.iterate(
-        findIncludedBuild(resolverCtx, buildId),
-        Objects::nonNull,
-        b -> findIncludedBuild(resolverCtx, b.getParentBuildIdentifier())
-      )
-      .map(Build::getName)
-      .collect(Collectors.toList());
-    Collections.reverse(list);
-    compositePrefix = StringUtil.join(list, ".");
-    return compositePrefix;
+  private static String buildCompositePrefixFromBuildNames(@NotNull ProjectResolverContext resolverCtx, @NotNull BuildIdentifier buildId) {
+    String result = "";
+    Build build = findBuild(resolverCtx, buildId);
+    // if this build can not be found, return empty prefix
+    if (build == null) {
+      return result;
+    }
+
+    boolean isBuildSrc = build.getBuildIdentifier().getRootDir().getName().equals("buildSrc");
+
+    if (isBuildSrc) {
+      build = findBuild(resolverCtx, new BuildIdentifier() {
+        @Override
+        public File getRootDir() {
+          return buildId.getRootDir().getParentFile();
+        }
+      });
+    }
+
+    List<String> includedParentsList = Stream.iterate(
+      build,
+      Objects::nonNull,
+      b -> findIncludedBuild(resolverCtx, b.getParentBuildIdentifier())
+    ).map(b -> {
+      var ideaProject = resolverCtx.getModels().getModel(b, IdeaProject.class);
+      if (ideaProject != null) {
+        return ideaProject.getName();
+      }
+      else {
+        return b.getName();
+      }
+    }).collect(Collectors.toList());
+
+    Collections.reverse(includedParentsList);
+
+    result = StringUtil.join(includedParentsList, ".");
+
+    if (isBuildSrc) {
+      result += ":buildSrc";
+    }
+
+    return result;
   }
 
   @Nullable
@@ -275,6 +319,14 @@ public final class GradleProjectResolverUtil {
       return null;
     }
     return ContainerUtil.find(resolverCtx.getModels().getIncludedBuilds(), b -> FileUtil.filesEqual(b.getBuildIdentifier().getRootDir(), buildId.getRootDir()));
+  }
+
+  @Nullable
+  private static Build findBuild(@NotNull ProjectResolverContext resolverCtx, @Nullable BuildIdentifier buildId) {
+    if (buildId == null) {
+      return null;
+    }
+    return ContainerUtil.find(resolverCtx.getModels().getAllBuilds(), b -> FileUtil.filesEqual(b.getBuildIdentifier().getRootDir(), buildId.getRootDir()));
   }
 
   @NotNull
