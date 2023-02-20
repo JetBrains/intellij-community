@@ -562,8 +562,9 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                      "  </plugins>" +
                      "</build>"))
     importProject()
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+    val expectedlevel = if (mavenVersionIsOrMoreThan("3.9.0")) LanguageLevel.JDK_1_9 else LanguageLevel.JDK_11;
+    assertEquals(expectedlevel, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))))
+    assertEquals(expectedlevel.toJavaVersion().toString(),
                  ideCompilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }
 

@@ -62,10 +62,14 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     }
   }
 
-  protected LanguageLevel getDefaultLanguageLevel(){
-    if(VersionComparatorUtil.compare("3.9.0", myMavenVersion)>=0) {
+  protected LanguageLevel getDefaultLanguageLevel() {
+    if (VersionComparatorUtil.compare("3.9.0", myMavenVersion) >= 0) {
       return LanguageLevel.JDK_1_6;
     }
     return LanguageLevel.JDK_1_5;
+  }
+
+  protected boolean mavenVersionIsOrMoreThan(String version) {
+    return VersionComparatorUtil.compare(version, myMavenVersion) >= 0;
   }
 }
