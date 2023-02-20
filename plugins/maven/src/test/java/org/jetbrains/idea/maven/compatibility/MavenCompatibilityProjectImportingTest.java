@@ -355,7 +355,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
                   "  </plugins>" +
                   "</build>");
     assertModules("project");
-    var expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0 ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+    var expectedVersion = VersionComparatorUtil.compare(myMavenVersion, "3.9.0") >= 0 ? LanguageLevel.JDK_1_7 : LanguageLevel.JDK_1_5;
     assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
   }
 }

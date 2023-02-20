@@ -86,7 +86,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1");
+
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1", "3.10.1");
+    }
+    else {
+      assertCompletionVariants(myProjectPom, "2.0.2", "3.1");
+    }
   }
 
   @Test 
@@ -165,7 +171,12 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1");
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1");
+    }
+    else {
+      assertCompletionVariants(myProjectPom, RENDERING_TEXT, "2.0.2", "3.1");
+    }
   }
 
   @Test 
@@ -182,12 +193,13 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                          </plugins>
                        </build>
                        """);
-    var pluginVersion = getDefaultPluginVersion(myMavenVersion, "org.apache.maven:maven-compiler-plugin");
+    var pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
 
     String pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertNotNull("file: " + filePath + " not exists!", f);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 

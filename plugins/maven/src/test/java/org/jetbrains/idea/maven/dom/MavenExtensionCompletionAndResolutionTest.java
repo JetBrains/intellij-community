@@ -142,11 +142,12 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                        </build>
                        """);
 
-    String pluginVersion = getDefaultPluginVersion(myMavenVersion, "org.apache.maven:maven-compiler-plugin");
+    String pluginVersion = getDefaultPluginVersion("org.apache.maven:maven-compiler-plugin");
     String pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/" + pluginVersion + "/maven-compiler-plugin-" + pluginVersion + ".pom";
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertNotNull("file: " + filePath + " not exists!", f);
     assertResolved(myProjectPom, findPsiFile(f));
   }
 

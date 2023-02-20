@@ -80,9 +80,9 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   @NotNull
-  protected static String getDefaultPluginVersion(String mavenVersion, String pluginId) {
+  protected String getDefaultPluginVersion(String pluginId) {
     if (pluginId.equals("org.apache.maven:maven-compiler-plugin")) {
-      if (VersionComparatorUtil.compare("3.9.0", getActualVersion(mavenVersion)) >= 0) {
+      if (mavenVersionIsOrMoreThan("3.9.0")) {
         return "3.10.1";
       }
       return "3.1";
