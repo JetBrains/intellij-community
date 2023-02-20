@@ -119,25 +119,33 @@ internal fun ChangeLog.anonymize(): ChangeLog {
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
 
-        @Suppress("UNCHECKED_CAST")
-        val changedData = value.dataChange.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        changedData.entitySource = changedData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
-        val changedOldData = value.dataChange.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
-        val dataChange = ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(changedOldData, changedData),
-                                                   value.dataChange.references.copy()
-        )
+        val dataChange = if (value.dataChange.data != null) {
+          @Suppress("UNCHECKED_CAST")
+          val changedData = value.dataChange.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          changedData.entitySource = changedData.entitySource.anonymize(null)
+          @Suppress("UNCHECKED_CAST")
+          val changedOldData = value.dataChange.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
+          ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(changedOldData, changedData), value.dataChange.references?.copy())
+        }
+        else {
+          ChangeEntry.ReplaceEntity(null, value.dataChange.references?.copy())
+        }
         ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
       }
       is ChangeEntry.ReplaceEntity -> {
-        @Suppress("UNCHECKED_CAST")
-        val newEntityData = value.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
-        val oldEntityData = value.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
-        oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
-        ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(oldEntityData, newEntityData), value.references.copy())
+        if (value.data != null) {
+          @Suppress("UNCHECKED_CAST")
+          val newEntityData = value.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
+          @Suppress("UNCHECKED_CAST")
+          val oldEntityData = value.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+          oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
+          ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(oldEntityData, newEntityData), value.references?.copy())
+        }
+        else {
+          ChangeEntry.ReplaceEntity(null, value.references?.copy())
+        }
       }
     }
   }
@@ -218,9 +226,9 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
       when (it) {
         is ChangeEntry.AddEntity -> it.entityData
         is ChangeEntry.RemoveEntity -> null
-        is ChangeEntry.ReplaceEntity -> it.data.newData
+        is ChangeEntry.ReplaceEntity -> it.data?.newData
         is ChangeEntry.ChangeEntitySource -> it.newData
-        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data.newData
+        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data?.newData
       }
     }.asSequence()
 
