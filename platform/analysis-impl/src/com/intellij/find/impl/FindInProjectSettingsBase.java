@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -77,13 +76,20 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     return ArrayUtilRt.toStringArray(findStrings);
   }
 
+  public @NlsSafe String getMostRecentFindString() {
+    return findStrings.isEmpty() ? "" : findStrings.get(findStrings.size() - 1);
+  }
+
   public @NlsSafe String @NotNull [] getRecentReplaceStrings() {
     return ArrayUtilRt.toStringArray(replaceStrings);
   }
 
-  static void addRecentStringToList(@Nullable @NlsSafe String str,
-                                    @NotNull List<? super String> list) {
-    if (StringUtil.isEmptyOrSpaces(str)) {
+  public @NlsSafe String getMostRecentReplaceString() {
+    return replaceStrings.isEmpty() ? "" : replaceStrings.get(replaceStrings.size() - 1);
+  }
+
+  static void addRecentStringToList(@Nullable @NlsSafe String str, @NotNull List<? super String> list) {
+    if (str == null) {
       return;
     }
 

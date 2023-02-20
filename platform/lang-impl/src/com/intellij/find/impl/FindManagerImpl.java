@@ -42,7 +42,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
 import com.intellij.psi.*;
@@ -162,10 +161,7 @@ public final class FindManagerImpl extends FindManager {
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-
-    if (!StringUtil.isEmpty(stringToFind)) {
-      findInProjectSettings.addStringToFind(stringToFind);
-    }
+    findInProjectSettings.addStringToFind(stringToFind);
     if (!findModel.isMultipleFiles()) {
       setFindWasPerformed();
     }

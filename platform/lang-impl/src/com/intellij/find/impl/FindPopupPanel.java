@@ -1041,22 +1041,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       header.fileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
     }
     header.fileMaskField.setEnabled(isThereFileFilter);
-    String toSearch = myModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-
-    if (StringUtil.isEmpty(toSearch)) {
-      String[] history = findInProjectSettings.getRecentFindStrings();
-      toSearch = history.length > 0 ? history[history.length - 1] : "";
-    }
-
-    mySearchComponent.setText(toSearch);
-    String toReplace = myModel.getStringToReplace();
-
-    if (StringUtil.isEmpty(toReplace)) {
-      String[] history = findInProjectSettings.getRecentReplaceStrings();
-      toReplace = history.length > 0 ? history[history.length - 1] : "";
-    }
-    myReplaceComponent.setText(toReplace);
+    mySearchComponent.setText(findInProjectSettings.getMostRecentFindString());
+    myReplaceComponent.setText(findInProjectSettings.getMostRecentReplaceString());
     updateControls();
     updateScopeDetailsPanel();
 
@@ -1583,7 +1570,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     model.setRegularExpressions(myRegexState.get());
     model.setStringToFind(getStringToFind());
 
-    if (model.isReplaceState()) {
+    if (myHelper.isReplaceState()) {
       model.setStringToReplace(StringUtil.convertLineSeparators(getStringToReplace()));
     }
 

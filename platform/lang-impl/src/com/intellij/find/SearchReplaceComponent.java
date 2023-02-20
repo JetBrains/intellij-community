@@ -524,21 +524,19 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   public void addTextToRecent(@NotNull JTextComponent textField) {
     final String text = textField.getText();
-    if (text.length() > 0) {
-      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-      if (textField == mySearchTextComponent) {
-        if (myAddSearchResultsToGlobalSearch) {
-          findInProjectSettings.addStringToFind(text);
-        }
-        if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+    if (textField == mySearchTextComponent) {
+      if (myAddSearchResultsToGlobalSearch) {
+        findInProjectSettings.addStringToFind(text);
       }
-      else {
-        findInProjectSettings.addStringToReplace(text);
-        if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+      if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
+      }
+    }
+    else {
+      findInProjectSettings.addStringToReplace(text);
+      if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
       }
     }
   }
