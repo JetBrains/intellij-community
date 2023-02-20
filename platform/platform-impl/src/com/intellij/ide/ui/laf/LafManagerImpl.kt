@@ -85,8 +85,6 @@ import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
 import javax.swing.plaf.metal.DefaultMetalTheme
 import javax.swing.plaf.metal.MetalLookAndFeel
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -692,7 +690,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // trees
       defaults.put(JBUI.CurrentTheme.Tree.rowHeightKey(), 22)
       // lists
-      defaults.put("List.rowHeight", 24)
+      defaults.put("List.rowHeight", 22)
       // status bar
       defaults.put(JBUI.CurrentTheme.StatusBar.Widget.insetsKey(), cmInsets(4, 8, 3, 8))
       defaults.put(JBUI.CurrentTheme.StatusBar.Breadcrumbs.navBarInsetsKey(), cmInsets(1, 0, 1, 4))
