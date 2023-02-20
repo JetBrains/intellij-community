@@ -85,12 +85,24 @@ internal class GitLabReviewTabComponentFactory(
       }
     }
 
+    val diffBridge = project.service<GitLabMergeRequestDiffBridgeRepository>().get(conn, reviewId)
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-      val diffBridge = project.service<GitLabMergeRequestDiffBridgeRepository>().get(conn, reviewId)
       detailsVmFlow.flatMapLatest {
         it.changesVm.userChangesSelection
       }.collectLatest {
         diffBridge.setChanges(it)
+      }
+    }
+
+    cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
+      detailsVmFlow.collectLatest { detailsVm ->
+        diffBridge.changes.collectLatest { changes ->
+          if (!changes.isExplicitSelection) {
+            diffBridge.selectedChange.filterNotNull().collect {
+              detailsVm.changesVm.selectChange(it)
+            }
+          }
+        }
       }
     }
 

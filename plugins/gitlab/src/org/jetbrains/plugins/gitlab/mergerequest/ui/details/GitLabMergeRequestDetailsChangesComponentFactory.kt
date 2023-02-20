@@ -18,10 +18,10 @@ import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapLatest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
@@ -30,20 +30,29 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 internal class GitLabMergeRequestDetailsChangesComponentFactory(private val project: Project) {
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun create(cs: CoroutineScope, vm: GitLabMergeRequestChangesViewModel): JComponent {
     val wrapper = Wrapper(LoadingLabel())
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       val changesModel = SingleValueModel<Collection<Change>>(emptyList())
-      vm.changesResult.collectLatest { res ->
-        res.onFailure {
-          wrapper.setContent(SimpleHtmlPane(it.localizedMessage))
-          wrapper.repaint()
-        }.onSuccess {
-          changesModel.value = it
-          if (wrapper.targetComponent !is ChangesTree) {
-            wrapper.setContent(createChangesTree(vm, changesModel))
+      vm.changesResult.mapLatest {
+        it.map {
+          changesModel.apply { value = it }
+        }
+      }.distinctUntilChanged { old, new ->
+        old.getOrNull() === new.getOrNull()
+      }.collectLatest { res ->
+        coroutineScope {
+          res.onFailure {
+            wrapper.setContent(SimpleHtmlPane(it.localizedMessage))
             wrapper.repaint()
+          }.onSuccess {
+            if (wrapper.targetComponent !is ChangesTree) {
+              wrapper.setContent(createChangesTree(vm, it))
+              wrapper.repaint()
+            }
           }
+          awaitCancellation()
         }
       }
     }
@@ -54,9 +63,16 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     }
   }
 
-  private fun createChangesTree(vm: GitLabMergeRequestChangesViewModel, changesModel: SingleValueModel<Collection<Change>>): JComponent =
+  private fun CoroutineScope.createChangesTree(vm: GitLabMergeRequestChangesViewModel,
+                                               changesModel: SingleValueModel<Collection<Change>>): JComponent =
     CodeReviewChangesTreeFactory(project, changesModel)
       .create(GitLabBundle.message("merge.request.details.changes.empty")).also { tree ->
+        launch(start = CoroutineStart.UNDISPATCHED) {
+          vm.changeSelectionRequests.collect {
+            tree.setSelectedChanges(listOf(it))
+          }
+        }
+
         tree.addTreeSelectionListener {
           // focus transfer happens after selection change :(
           invokeLater {

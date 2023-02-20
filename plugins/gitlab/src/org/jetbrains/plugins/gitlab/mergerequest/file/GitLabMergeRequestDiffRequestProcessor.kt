@@ -20,6 +20,7 @@ import com.intellij.util.childScope
 import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
@@ -56,6 +57,21 @@ fun createMergeRequestDiffRequestProcessor(project: Project,
       processor.chain = it
     }
   }
+
+  uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
+    callbackFlow {
+      val listener = MutableDiffRequestChainProcessor.SelectionListener { producer ->
+        trySend((producer as? ChangeDiffRequestProducer)?.change)
+      }
+      processor.selectionEventDispatcher.addListener(listener)
+      awaitClose {
+        processor.selectionEventDispatcher.removeListener(listener)
+      }
+    }.collect {
+      diffBridge.changeSelected(it)
+    }
+  }
+
   return processor
 }
 

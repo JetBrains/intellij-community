@@ -16,7 +16,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
+
   val userChangesSelection: StateFlow<ListSelection<Change>>
+  val changeSelectionRequests: Flow<Change>
+
+  fun selectChange(change: Change)
 
   fun updateChangesSelectedByUser(changes: ListSelection<Change>)
 
@@ -44,6 +48,15 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   private val _userChangesSelection = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
   override val userChangesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
 
+  private val _changeSelectionRequests = MutableSharedFlow<Change>()
+  override val changeSelectionRequests: Flow<Change> = _changeSelectionRequests.asSharedFlow()
+
+  override fun selectChange(change: Change) {
+    cs.launch {
+      _changeSelectionRequests.emit(change)
+    }
+  }
+
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests = _showDiffRequests.asSharedFlow()
 
@@ -70,17 +83,20 @@ internal class GitLabMergeRequestChangesViewModelImpl(
       val newList = new.list
       if (oldList.size != newList.size) return false
 
-      return oldList.equalsVia(newList) { o1, o2 ->
+      return oldList.isEqual(newList)
+    }
+
+    private fun Collection<Change>.isEqual(other: Collection<Change>): Boolean =
+      equalsVia(other) { o1, o2 ->
         o1 == o2 &&
         o1.beforeRevision == o2.beforeRevision &&
         o1.afterRevision == o2.afterRevision
       }
-    }
 
-    private fun <E> List<E>.equalsVia(other: List<E>, isEqual: (E, E) -> Boolean): Boolean {
+    private fun <E> Collection<E>.equalsVia(other: Collection<E>, isEqual: (E, E) -> Boolean): Boolean {
       if (other === this) return true
-      val i1 = listIterator()
-      val i2 = other.listIterator()
+      val i1 = iterator()
+      val i2 = other.iterator()
 
       while (i1.hasNext() && i2.hasNext()) {
         val e1 = i1.next()

@@ -11,8 +11,15 @@ class GitLabMergeRequestDiffBridge {
   private val _changes = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
   val changes: StateFlow<ListSelection<Change>> = _changes.asStateFlow()
 
+  private val _selectedChange = MutableStateFlow<Change?>(null)
+  val selectedChange: StateFlow<Change?> = _selectedChange.asStateFlow()
+
   fun setChanges(changes: ListSelection<Change>) {
     _changes.value = changes
+  }
+
+  fun changeSelected(change: Change?) {
+    _selectedChange.value = change
   }
 }
 
