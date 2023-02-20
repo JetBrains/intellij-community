@@ -271,6 +271,8 @@ private fun checkName(name: String,
          //!name.startsWith("com/thoughtworks/xstream/io/xml/XppDom") &&
          //!name.startsWith("com/michaelbaranov/microba/jgrpah/birdview/Birdview") &&
 
+         // XmlRPC lib
+         !name.startsWith("org/xml/sax/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&

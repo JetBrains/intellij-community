@@ -75,6 +75,8 @@ private val extraMergeRules: PersistentMap<String, (String) -> Boolean> = persis
   map.put("sshj.jar") { it == "jsch-agent-proxy-sshj" || it == "SSHJ" }
   map.put("jsch-agent.jar") { it.startsWith("jsch-agent") }
   map.put("rd.jar") { it.startsWith("rd-") }
+  // all grpc garbage into one jar
+  map.put("grpc.jar") { it.startsWith("grpc-") }
   map.put(PRODUCT_JAR) { it.startsWith("License") }
   // see ClassPathUtil.getUtilClassPath
   map.put("3rd-party-rt.jar") {
