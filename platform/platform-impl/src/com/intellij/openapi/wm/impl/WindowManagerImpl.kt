@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.ComponentListener
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
@@ -57,7 +58,15 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   internal var oldLayout: DesktopLayout? = null
     private set
 
-  private val projectToFrame = HashMap<Project, ProjectFrameHelper>()
+  private class ProjectItem(@JvmField val frameHelper: ProjectFrameHelper, private val listener: ComponentListener?) {
+    fun release() {
+      listener?.let {
+        frameHelper.frame.removeComponentListener(it)
+      }
+    }
+  }
+
+  private val projectToFrame = HashMap<Project, ProjectItem>()
   // read from any thread, write from EDT
   private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
@@ -72,8 +81,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       Disposer.register(app, Disposable { disposeRootFrame() })
       connection.subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
         override fun configurationChanged() {
-          for ((project, frameHelper) in projectToFrame) {
-            frameHelper.updateTitle(project)
+          for ((project, item) in projectToFrame) {
+            item.frameHelper.updateTitle(project)
           }
         }
       })
@@ -89,15 +98,15 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     })
   }
 
-  override fun getAllProjectFrames() = projectToFrame.values.toTypedArray()
+  override fun getAllProjectFrames() = projectToFrame.values.map { it.frameHelper }.toTypedArray()
 
-  override fun getProjectFrameHelpers() = projectToFrame.values.toList()
+  override fun getProjectFrameHelpers() = projectToFrame.values.map { it.frameHelper }
 
   override fun findVisibleFrame(): JFrame? {
-    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
+    return projectToFrame.values.firstOrNull()?.frameHelper?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
-  override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()
+  override fun findFirstVisibleFrameHelper() = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
 
   override fun getScreenBounds() = ScreenUtil.getAllScreensRectangle()
 
@@ -222,14 +231,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   @ApiStatus.Internal
-  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)
+  override fun getFrameHelper(project: Project?) = projectToFrame.get(project)?.frameHelper
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
   }
 
   @ApiStatus.Internal
-  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.rootPane
+  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.frameHelper?.rootPane
 
   override fun getIdeFrame(project: Project?): IdeFrame? {
     if (project != null) {
@@ -257,12 +266,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
     LOG.assertTrue(!projectToFrame.containsKey(project))
-    projectToFrame.put(project, frameHelper)
-    frameHelper.frame.addComponentListener(FrameStateListener(defaultFrameInfoHelper, frameHelper))
+
+    val listener = FrameStateListener(defaultFrameInfoHelper)
+    frameHelper.frame.addComponentListener(listener)
+    projectToFrame.put(project, ProjectItem(frameHelper, listener))
   }
 
   internal suspend fun lightFrameAssign(project: Project, frameHelper: ProjectFrameHelper) {
-    projectToFrame.put(project, frameHelper)
+    projectToFrame.put(project, ProjectItem(frameHelper, null))
     frameHelper.setProject(project)
     frameHelper.installDefaultProjectStatusBarWidgets(project)
     frameHelper.updateTitle(project)
@@ -271,7 +282,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
     val project = releasedFrameHelper.project
     if (project != null) {
-      projectToFrame.remove(project)
+      projectToFrame.remove(project)?.release()
+
       if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
         frameToReuse.set(releasedFrameHelper.frame)
         releasedFrameHelper.frame.doSetRootPane(null)
@@ -419,10 +431,7 @@ internal fun getFrameInfoByFrameHelper(frameHelper: ProjectFrameHelper): FrameIn
   return updateFrameInfo(frameHelper = frameHelper, frame = frameHelper.frame, lastNormalFrameBounds = null, oldFrameInfo = null)
 }
 
-internal class FrameStateListener(
-  private val defaultFrameInfoHelper: FrameInfoHelper,
-  private val frameHelper: ProjectFrameHelper,
-) : ComponentAdapter() {
+internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoHelper) : ComponentAdapter() {
   override fun componentMoved(e: ComponentEvent) {
     update(e)
   }
@@ -434,8 +443,7 @@ internal class FrameStateListener(
   private fun update(e: ComponentEvent) {
     val frame = e.component as IdeFrameImpl
     val rootPane = frame.rootPane
-    if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true
-                             || frame.togglingFullScreenInProgress)) {
+    if (rootPane != null && (rootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) == true || frame.togglingFullScreenInProgress)) {
       return
     }
 
@@ -444,6 +452,8 @@ internal class FrameStateListener(
     if (extendedState == Frame.NORMAL && rootPane != null) {
       frame.normalBounds = bounds
     }
+
+    val frameHelper = frame.frameHelper?.helper as? ProjectFrameHelper ?: return
 
     val project = frameHelper.project
     if (project == null) {
