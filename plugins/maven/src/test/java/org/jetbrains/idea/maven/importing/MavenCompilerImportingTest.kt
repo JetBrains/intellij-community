@@ -149,7 +149,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
+    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
   }
 
   @Test
@@ -166,7 +166,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
+    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
   }
 
 

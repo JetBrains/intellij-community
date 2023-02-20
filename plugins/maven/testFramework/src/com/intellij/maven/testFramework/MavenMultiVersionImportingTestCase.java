@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nullable;
@@ -59,5 +60,12 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     if (myWrapperTestFixture != null) {
       myWrapperTestFixture.tearDown();
     }
+  }
+
+  protected LanguageLevel getDefaultLanguageLevel(){
+    if(VersionComparatorUtil.compare("3.9.0", myMavenVersion)>=0) {
+      return LanguageLevel.JDK_1_6;
+    }
+    return LanguageLevel.JDK_1_5;
   }
 }
