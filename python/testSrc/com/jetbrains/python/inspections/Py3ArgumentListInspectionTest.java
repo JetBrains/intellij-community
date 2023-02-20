@@ -37,8 +37,7 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-50404
   public void testPassingKeywordArgumentsToParamSpec() {
     doTestByText("""
-                   from collections.abc import Callable
-                   from typing import ParamSpec
+                   from typing import Callable,  ParamSpec
 
                    P = ParamSpec("P")
 

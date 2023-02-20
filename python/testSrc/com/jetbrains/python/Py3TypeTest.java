@@ -1172,8 +1172,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecExample() {
     doTest("(a: str, b: bool) -> str",
            """
-             from collections.abc import Callable
-             from typing import ParamSpec
+             from typing import Callable, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1383,8 +1382,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAdd() {
     doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1402,8 +1400,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAddSeveralParameters() {
     doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1421,8 +1418,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateRemove() {
     doTest("(args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1440,8 +1436,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateTransform() {
     doTest("(str, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
