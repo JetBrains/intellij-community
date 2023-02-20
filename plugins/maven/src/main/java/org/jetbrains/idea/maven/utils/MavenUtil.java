@@ -706,7 +706,7 @@ public class MavenUtil {
       MavenLog.LOG.warn("Maven version less than 3.0.2 are not correctly displayed in Build Window");
       return;
     }
-    String listenerPath = MavenServerManager.getMavenEventListener().getAbsolutePath();
+    String listenerPath = MavenServerManager.getInstance().getMavenEventListener().getAbsolutePath();
     String extClassPath = params.getVMParametersList().getPropertyValue(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH);
     if (isEmpty(extClassPath)) {
       params.getVMParametersList()

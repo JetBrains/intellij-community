@@ -84,7 +84,8 @@
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
     <trustedProjectsLocator implementation="org.jetbrains.idea.maven.wizards.MavenTrustedProjectsLocator"/>
 
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
+    <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager"
+                        serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactory"
                         serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactoryImpl"/>
 
