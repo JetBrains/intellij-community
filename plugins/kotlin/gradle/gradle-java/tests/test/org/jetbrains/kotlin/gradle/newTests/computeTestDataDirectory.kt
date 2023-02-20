@@ -13,7 +13,9 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 
 /**
- * This service provides discovery of test-related folders.
+ * Finds the testdata-folder given the [testDescription].
+ *
+ * [strict]=true will make the function to throw an exception if the found folder doesn't exist
  *
  * General intuition:
  * - @TestDataPath always gives the first part of the path. $PROJECT_ROOT template is supported
@@ -22,13 +24,13 @@ import kotlin.io.path.exists
  *
  * - @TestMetadata give subsequent parts in order from the farthest supertype to the
  *   concrete class
- *   Tip: allows to "inherit" test data paths. E.g. some base test class for all
+ *   Tip: it allows to "inherit" test data paths. E.g. some base test class for all
  *   Gradle-related tests can be annotated with 'gradle' (giving `$PROJECT/allTests/gradle`
  *   together with @TestDataPath), and subsequent inheritors can add more specific paths,
  *   e.g. 'multiplatform' for `$PROJECT/allTests/gradle/multiplatform`
  *
  * - Last part is either test name without 'test' or @TestMetadata on test method
- *   Tip: use this if you want to have test method name to be different from the folder.
+ *   Tip: @TestMetadata on method if you want to have test method name to be different from the folder.
  *   This is most often useful when you want to run several tests against same testdata.
  *
  * Such an elaborate algorithm is used mostly to comply with DevKit heuristics, which,
