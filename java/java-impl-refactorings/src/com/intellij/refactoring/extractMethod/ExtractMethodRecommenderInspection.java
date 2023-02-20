@@ -104,7 +104,6 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
                   textRange = textRange.union(ret.getTextRangeInParent());
                 }
               }
-              // TODO: ensure output is referred in subsequent statements?
               holder.registerProblem(block, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
                                      ProblemHighlightType.WEAK_WARNING,
                                      textRange,
@@ -240,7 +239,6 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
     }
 
     private boolean assumeOkMethod(@NotNull PsiMethodCallExpression call) {
-      // TODO: static get-like method
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       if (method.getName().startsWith("assert") && ExpressionUtils.isVoidContext(call)) return false;
@@ -250,7 +248,6 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
       if (PropertyUtilBase.isSimplePropertySetter(method) && ExpressionUtils.resolveLocalVariable(qualifier) == myVariable) {
         return true;
       }
-      // TODO: argument = lambda?
       for (PsiExpression expr : ArrayUtil.append(args, qualifier)) {
         if (expr != null) {
           PsiLocalVariable variable = ExpressionUtils.resolveLocalVariable(expr);
