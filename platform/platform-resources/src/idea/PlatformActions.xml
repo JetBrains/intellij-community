@@ -621,11 +621,12 @@
             </action>
             <separator/>
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
-            <separator/>
-            <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
-              <synonym key="action.SwitchIdeScaleAction.text"/>
-            </action>
           </group>
+
+          <separator/>
+          <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
+            <synonym key="action.SwitchIdeScaleAction.text"/>
+          </action>
 
           <group id="UIToggleActions">
             <separator/>
