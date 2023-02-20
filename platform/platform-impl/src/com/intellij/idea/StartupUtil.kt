@@ -239,7 +239,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     val rwLockHolder = rwLockHolderDeferred.await()
     val app = runActivity("app instantiation") {
-      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), rwLockHolder)
+      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), false, rwLockHolder)
     }
 
     runActivity("telemetry waiting") {
