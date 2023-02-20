@@ -4,15 +4,10 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -53,29 +48,6 @@ public interface MavenServerManager extends Disposable {
     return ApplicationManager.getApplication().getServiceIfCreated(MavenServerManager.class);
   }
 
-  static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
-      return true;
-    }
-    SdkTypeId sdkType = jdk.getSdkType();
-    if (sdkType instanceof JavaSdk) {
-      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
-      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  static @Nullable String getMavenVersion(@Nullable String mavenHome) {
-    return MavenUtil.getMavenVersion(getMavenHomeFile(mavenHome));
-  }
-
-  @Nullable
-  default String getMavenVersion(@Nullable File mavenHome) {
-    return MavenUtil.getMavenVersion(mavenHome);
-  }
-
   /**
    * @deprecated use {@link MavenGeneralSettings.mavenHome} and {@link MavenUtil.getMavenVersion}
    */
@@ -87,23 +59,6 @@ public interface MavenServerManager extends Disposable {
 
   default boolean isUseMaven2() {
     return false;
-  }
-
-  /**
-   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
-   * @see MavenDistributionsCache
-   */
-  @Nullable
-  @ApiStatus.Internal
-  static File getMavenHomeFile(@Nullable String mavenHome) {
-    if (mavenHome == null) return null;
-    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
-      File file = e.getMavenHomeFile(mavenHome);
-      if (file != null) return file;
-    }
-
-    final File home = new File(mavenHome);
-    return MavenUtil.isValidMavenHome(home) ? home : null;
   }
 
   @ApiStatus.Internal

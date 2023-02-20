@@ -62,6 +62,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jetbrains.annotations.*;
+import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -650,7 +651,7 @@ public class MavenUtil {
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
-      return MavenServerManager.getMavenHomeFile(overrideMavenHome);
+      return getMavenHomeFile(overrideMavenHome);
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -699,7 +700,7 @@ public class MavenUtil {
       }
     }
 
-    return MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+    return getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
   }
 
   public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
@@ -788,6 +789,27 @@ public class MavenUtil {
 
   public static File getMavenConfFile(File mavenHome) {
     return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
+  }
+
+  /**
+   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
+   * @see MavenDistributionsCache
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static File getMavenHomeFile(@Nullable String mavenHome) {
+    if (mavenHome == null) return null;
+    for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
+      File file = e.getMavenHomeFile(mavenHome);
+      if (file != null) return file;
+    }
+
+    final File home = new File(mavenHome);
+    return isValidMavenHome(home) ? home : null;
+  }
+
+  public static @Nullable String getMavenVersionByMavenHome(@Nullable String mavenHome) {
+    return getMavenVersion(getMavenHomeFile(mavenHome));
   }
 
   @Nullable
@@ -1106,7 +1128,7 @@ public class MavenUtil {
       result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
     }
     return result == null ? doResolveSuperPomFile(
-      new File(MavenServerManager.getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+      new File(getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
   }
 
   @Nullable
@@ -1173,6 +1195,20 @@ public class MavenUtil {
 
   public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
     restartMavenConnectors(project, wait, c -> Boolean.TRUE);
+  }
+
+  public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
+    if (compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true;
+    }
+    SdkTypeId sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdk) {
+      JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(jdk);
+      if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public interface MavenTaskHandler {
