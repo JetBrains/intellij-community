@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.statistic
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -27,6 +28,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
+      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
     }
     else {
       val learnProjectState = LearnProjectState.instance
