@@ -638,7 +638,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   @ApiStatus.Internal
-  public interface MavenServerConnectorFactory {
+  interface MavenServerConnectorFactory {
     @NotNull MavenServerConnector create(@NotNull Project project,
                                          @NotNull Sdk jdk,
                                          @NotNull String vmOptions,
@@ -648,7 +648,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   @ApiStatus.Internal
-  public static class MavenServerConnectorFactoryImpl implements MavenServerConnectorFactory {
+  static class MavenServerConnectorFactoryImpl implements MavenServerConnectorFactory {
 
     @Override
     public @NotNull MavenServerConnector create(@NotNull Project project,

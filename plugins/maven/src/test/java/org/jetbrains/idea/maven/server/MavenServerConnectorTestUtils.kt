@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project
+package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.use
 import com.intellij.testFramework.replaceService
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenModel
-import org.jetbrains.idea.maven.server.*
 import java.nio.file.Path
 import java.rmi.ConnectException
 
