@@ -92,7 +92,6 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
       }
       catch (Throwable ignored) {
       }
-      MavenServerManager.getInstance().cleanUp(this);
       throw e instanceof CannotStartServerException
             ? (CannotStartServerException)e
             : new CannotStartServerException(e);
