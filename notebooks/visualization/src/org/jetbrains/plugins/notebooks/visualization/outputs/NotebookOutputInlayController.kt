@@ -242,10 +242,11 @@ class NotebookOutputInlayController private constructor(
     ): NotebookCellInlayController? {
       val interval = intervalIterator.next()
       if (interval.type != NotebookCellLines.CellType.CODE) return null
-
       val outputDataKeys =
-        NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-          .mapNotNull { it.extract(editor, interval) }
+        NotebookOutputDataKeyExtractor.EP_NAME.extensionList.reversed().asSequence()
+          .mapNotNull {
+            it.extract(editor, interval)
+          }
           .firstOrNull()
           ?.takeIf { it.isNotEmpty() }
         ?: return null
