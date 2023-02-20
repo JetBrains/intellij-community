@@ -16,9 +16,28 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
+/**
+ * A base class for [AbstractTestChecker]s that want to check the project' workspace model
+ * and run assertions based on expected-testdata
+ *
+ * [check] is the entry point for external clients
+ *
+ * [classifier], [process] and [renderTestConfigurationDescription] are the abstract methods
+ * to implement for inheritors
+ */
 abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
+    /**
+     * Name of the file, without extension, with the expected testdata
+     *
+     * Example: `classifier = "myChecks` will look for `myChecks.txt` in the testdata
+     * folder
+     */
     abstract val classifier: String
 
+    /**
+     * Invoked for each [Module] in the project. Checker is expected to print
+     * the string-representation of expected data in passed [PrinterContext.printer]
+     */
     abstract fun PrinterContext.process(module: Module)
 
     /**

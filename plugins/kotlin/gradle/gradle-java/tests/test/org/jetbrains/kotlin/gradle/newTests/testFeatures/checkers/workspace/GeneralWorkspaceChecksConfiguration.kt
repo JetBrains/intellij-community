@@ -4,10 +4,6 @@ package org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.workspace
 import org.jetbrains.kotlin.gradle.newTests.AbstractTestChecker
 
 class GeneralWorkspaceChecksConfiguration {
-    // includedModuleNames == null -> use default (include everything), but
-    // includedModuleNames == emptySet() -> don't include anything (hide all modules)
-    //
-    // those two modes are mutually exclusive: if one isn't null, then other must be null (ensured in [FilterModulesSupport])
     var excludedModuleNames: Regex? = null
     var includedModuleNames: Regex? = null
 

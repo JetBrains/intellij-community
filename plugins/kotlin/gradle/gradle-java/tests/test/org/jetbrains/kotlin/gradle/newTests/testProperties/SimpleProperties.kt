@@ -13,7 +13,8 @@ import kotlin.reflect.KProperty
  *
  * val my_property by simplePropertyWithValue("my-default-value")
  *
- * This will tell tests' infrastructure to substitute all occurrences of {{my_property}} in the test data with "my-default-value".
+ * This will tell tests' infrastructure to substitute all occurrences of {{my_property}}
+ * in the test data with "my-default-value".
  */
 internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinToolingVersion) : Map<String, String> {
     val result: MutableMap<String, String> = mutableMapOf()

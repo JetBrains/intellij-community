@@ -38,6 +38,34 @@ import java.util.TreeSet
 import java.util.*
 import kotlin.Comparator
 
+/**
+ * The base class for Kotlin MPP Import-based tests.
+ *
+ * # Usage
+ * 1. inherit it in your test-suite
+ *
+ * 2. Add `@TestMetadata` on the test suite to define a subpath relative to
+ * `community/plugins/kotlin/idea/tests/testData/gradle`
+ *
+ * 3. Define tests inside as usual
+ *
+ * 4. In each test, call `doTest()` to run the test.
+ * It will by default execute all [TestFeature]s and [AbstractTestChecker]s declared in [installedFeatures]
+ *
+ * 5. You can override [defaultTestConfiguration] to tweak the checks globally for all the tests in suite,
+ * or `doTest { ... }`-block to tweak it locally for the specific test
+ *
+ * # Overrides, JUnit `@Rule`s, inheritance, extensibility
+ *
+ * This class **is explicitly designed to forbid extension by inheritance**. Most of overrides from [GradleImportingTestCase]
+ * are intentionally `final`. Some methods and fields are not private due to JUnit restrictions, but it is heavily discouraged to
+ * tweak them in inheritors.
+ *
+ * Avoid using [Rule] in inheritors to not complicate lifecycle any further, instead use [TestFeatureWithSetUpTearDown].
+ * [KotlinMppTestsContext.description] should cover common needs for [Rule]
+ *
+ * Sharing of the test suite capabilities should be done via standalone composable modularized [TestFeature]s
+ */
 @RunWith(KotlinMppTestsJUnit4Runner::class)
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :

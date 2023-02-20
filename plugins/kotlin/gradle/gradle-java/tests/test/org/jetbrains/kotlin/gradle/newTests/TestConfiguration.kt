@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.gradle.newTests
 
 /**
  * Use it as extension-receiver to extend DSL-scope in `doTest { <here> }`
+ *
+ * [TestFeature]s are supposed to use [writeAccess] to actually mutate the [TestConfiguration]
  */
 interface TestConfigurationDslScope
 
