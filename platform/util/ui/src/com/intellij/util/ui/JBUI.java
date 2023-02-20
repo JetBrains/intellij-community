@@ -628,6 +628,10 @@ public final class JBUI {
       public static float unselectedAlpha() {
         return getFloat("EditorTabs.unselectedAlpha", 0.75f);
       }
+
+      public static float unselectedBlend() {
+        return getFloat("EditorTabs.unselectedBlend", StartupUiUtil.isUnderDarcula() ? 0.7f : 0.85f);
+      }
     }
 
     public interface Editor {

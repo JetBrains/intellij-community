@@ -618,7 +618,7 @@ private class EditorTabs(
 
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
-        val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedAlpha();
+        val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
         val background = getInfo().tabColor ?: myTabs.tabPainter.getTabTheme().background
         if (background != null) {
           ColorUtil.blendColorsInRgb(background, baseForeground, blendValue.toDouble())
