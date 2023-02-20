@@ -271,20 +271,6 @@ public class RegistryValue {
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
   }
 
-  @ApiStatus.Internal
-  public void setValueBypassListeners(String value) {
-    resetCache();
-
-    myRegistry.getUserProperties().put(myKey, value);
-
-    if (!isChangedFromDefault() && !isRestartRequired()) {
-      myRegistry.getUserProperties().remove(myKey);
-    }
-
-    myChangedSinceStart = true;
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'' + "[LISTENERS BYPASSED]");
-  }
-
   public void setValue(boolean value, @NotNull Disposable parentDisposable) {
     final boolean prev = asBoolean();
     setValue(value);
