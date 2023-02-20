@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
 public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements PersistentStateComponent<ProjectFacetManagerImpl.ProjectFacetManagerState> {
@@ -28,7 +29,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
   private static final Logger LOG = Logger.getInstance(ProjectFacetManagerImpl.class);
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
   private final Project myProject;
-  private volatile MultiMap<FacetTypeId<?>, Module> myIndex;
+  private final AtomicReference<MultiMap<FacetTypeId<?>, Module>> myIndex = new AtomicReference<>();
 
   public ProjectFacetManagerImpl(Project project) {
     myProject = project;
@@ -36,23 +37,23 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
     ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<>() {
       @Override
       public void facetAdded(@NotNull Facet facet) {
-        myIndex = null;
+        myIndex.set(null);
       }
 
       @Override
       public void facetRemoved(@NotNull Facet facet) {
-        myIndex = null;
+        myIndex.set(null);
       }
     }, project);
     project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
-        myIndex = null;
+        myIndex.set(null);
       }
 
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-        myIndex = null;
+        myIndex.set(null);
       }
     });
   }
@@ -69,7 +70,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
 
   @NotNull
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = myIndex;
+    MultiMap<FacetTypeId<?>, Module> index = myIndex.get();
     return index == null ? createAndCacheIndex() : index;
   }
 
@@ -82,7 +83,7 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
         .distinct()
         .forEach(facetTypeId -> index.putValue(facetTypeId, module));
     }
-    myIndex = index;
+    myIndex.compareAndSet(null, index);
     return index;
   }
 
