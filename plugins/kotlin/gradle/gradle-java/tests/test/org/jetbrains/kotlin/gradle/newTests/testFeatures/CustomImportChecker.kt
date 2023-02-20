@@ -11,23 +11,14 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import kotlin.reflect.KClass
 
-object CustomImportChecker : AbstractTestChecker<CustomCheck>() {
-    override fun createDefaultConfiguration() = CustomCheck()
-
-    override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
-        testConfiguration.getConfiguration(CustomImportChecker).check(this)
-    }
-}
-
-data class CustomCheck(var check: KotlinMppTestsContext.() -> Unit = { })
-
+/**
+ * Allows to have custom post-import checks via `customChecks { ... }`-block
+ *
+ * Test infra will always load the project into IDE (a.k.a. `configureByFiles`)
+ *
+ * Use `doTest(runImport = false)` if you don't need the import to be run before your custom checks
+ */
 interface CustomChecksDsl {
-    /**
-     * Allows to have custom post-import checks via `customChecks { ... }`-block
-     *
-     * Only perform checks there, no need to setup or teardown parts of the infrastructure
-     * that were not introduced by your own block (e.g. no need to call `configureByFiles` or `importProject`)
-     */
     fun TestConfigurationDslScope.customChecks(check: KotlinMppTestsContext.() -> Unit) {
         writeAccess.getConfiguration(CustomImportChecker).check = check
     }
@@ -49,3 +40,13 @@ interface CustomChecksDsl {
             debuggerOptions
         )
 }
+
+object CustomImportChecker : AbstractTestChecker<CustomCheck>() {
+    override fun createDefaultConfiguration() = CustomCheck()
+
+    override fun KotlinMppTestsContext.check(additionalTestClassifier: String?) {
+        testConfiguration.getConfiguration(CustomImportChecker).check(this)
+    }
+}
+
+data class CustomCheck(var check: KotlinMppTestsContext.() -> Unit = { })
