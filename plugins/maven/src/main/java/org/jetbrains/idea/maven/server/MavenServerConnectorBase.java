@@ -147,17 +147,7 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
   @Override
   public boolean ping() {
     try {
-      var server = getServer();
-
-      var support = mySupport;
-      if (null == support) return false;
-
-      var heartBeat = support.getHeartBeat();
-      if (null == heartBeat) return false;
-
-      if (!heartBeat.beat()) return false;
-
-      return server.isAlive(MavenRemoteObjectWrapper.ourToken);
+      return getServer().ping(MavenRemoteObjectWrapper.ourToken);
     }
     catch (RemoteException e) {
       return false;
