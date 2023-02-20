@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons
 import org.jetbrains.annotations.NonNls
@@ -163,20 +164,23 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
                 MultiplatformModule(
                     "library",
                     permittedTemplateIds = emptySet(),
-                    targets = listOf(
-                        ModuleType.common.createDefaultTarget(),
-                        ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet()),
-                        MultiplatformTargetModule(
-                            "js",
-                            MppLibJsBrowserTargetConfigurator,
-                            createDefaultSourceSets(),
-                            permittedTemplateIds = emptySet()
-                        )
-                            .withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
+                    targets = buildList {
+                        +ModuleType.common.createDefaultTarget()
+                        +ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet())
+
+                        if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+                            +MultiplatformTargetModule(
+                                "js",
+                                MppLibJsBrowserTargetConfigurator,
+                                createDefaultSourceSets(),
+                                permittedTemplateIds = emptySet()
+                            ).withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
                                 JSConfigurator.kind withValue JsTargetKind.LIBRARY
-                            },
-                        ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
-                    )
+                            }
+                        }
+
+                        +ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
+                    }
                 )
             )
         )
@@ -188,6 +192,9 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
     override val id = "fullStackWebApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.WEB
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName: String = "myFullStackApplication"
@@ -278,6 +285,9 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
     override val icon: Icon
         get() = KotlinIcons.Wizard.JS
 
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
     override val projectKind = ProjectKind.Js
@@ -305,6 +315,9 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
     override val id = "reactApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.REACT_JS
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
@@ -399,6 +412,9 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
     override val id = "nodejsApplication"
     override val icon: Icon
         get() = KotlinIcons.Wizard.NODE_JS
+
+    override fun isVisible(): Boolean =
+        AdvancedSettings.getBoolean("kotlin.mpp.experimental")
 
     @NonNls
     override val suggestedProjectName = "myKotlinJsApplication"
