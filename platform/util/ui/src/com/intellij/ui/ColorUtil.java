@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.MathUtil.clamp;
 import static java.lang.Math.round;
+import static java.lang.Math.sqrt;
 
 /**
  * @author Konstantin Bulenkov
@@ -274,9 +275,9 @@ public final class ColorUtil {
    * @param bg    background color value normalized 0..255
    * @param fg    foreground color value normalized 0..255
    * @param value coefficient of blend normalized 0..1
-   * @return linear interpolation of bg and fg values with given coefficient normalized to 0..255
+   * @return interpolation of bg and fg values with given coefficient normalized to 0..255
    */
   private static int blendRgb(int bg, int fg, double value) {
-    return (int)round((1 - value) * bg + value * fg);
+    return (int)round(sqrt(bg * bg * (1 - value) + fg * fg * value));
   }
 }
