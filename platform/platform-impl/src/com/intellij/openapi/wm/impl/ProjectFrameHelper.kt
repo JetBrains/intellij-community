@@ -116,6 +116,9 @@ open class ProjectFrameHelper internal constructor(
         }
       }
     })
+    if (frameDecorator != null && getReusedFullScreenState()) {
+      frameDecorator.setStoredFullScreen()
+    }
     frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen = { isInFullScreen })
 
@@ -374,6 +377,16 @@ open class ProjectFrameHelper internal constructor(
     else {
       return frameDecorator.toggleFullScreen(state).asDeferred()
     }
+  }
+
+  fun storeStateForReuse() {
+    frame.reusedFullScreenState = frameDecorator != null && frameDecorator.isInFullScreen
+  }
+
+  private fun getReusedFullScreenState(): Boolean {
+    val reusedFullScreenState = frame.reusedFullScreenState
+    frame.reusedFullScreenState = false
+    return reusedFullScreenState
   }
 
   private fun temporaryFixForIdea156004(state: Boolean): Boolean {
