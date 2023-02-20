@@ -331,7 +331,7 @@ private class JUnitMalformedSignatureVisitor(
     if (method.isConstructor) return
     if (!TestUtils.isJUnit3TestMethod(javaMethod.javaPsi)) return
     val containingClass = method.javaPsi.containingClass ?: return
-    if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
+    if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) return
     if (checkSuspendFunction(method)) return
     if (PsiTypes.voidType() != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic
         || (!method.isNoArg() && !method.isParameterizedTest())) {
@@ -821,8 +821,14 @@ private class JUnitMalformedSignatureVisitor(
 
     private fun isApplicable(element: UElement): Boolean {
       if (!ignoreOnRunWith) {
-        val containingClass = element.getContainingUClass()?.javaPsi
-        if (containingClass == null || AnnotationUtil.isAnnotated(containingClass, ORG_JUNIT_RUNNER_RUN_WITH, CHECK_HIERARCHY)) return false
+        val containingClass = element.getContainingUClass()?.javaPsi ?: return false
+        if (AnnotationUtil.isAnnotated(containingClass, ORG_JUNIT_RUNNER_RUN_WITH, CHECK_HIERARCHY)) {
+          val annotation = containingClass.getAnnotation(ORG_JUNIT_RUNNER_RUN_WITH)!!
+          val runnerType = annotation.findAttributeValue("value")
+            .toUElement()?.asSafely<UClassLiteralExpression>()
+            ?.type ?: return false
+          return checkableRunners.any(runnerType::equalsToText)
+        }
       }
       return true
     }
@@ -888,7 +894,7 @@ private class JUnitMalformedSignatureVisitor(
       val javaPsi = element.javaPsi.asSafely<PsiMethod>() ?: return
       val sourcePsi = element.sourcePsi ?: return
       val annotation = annotations
-        .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, AnnotationUtil.CHECK_HIERARCHY) }
+        .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, CHECK_HIERARCHY) }
         ?.substringAfterLast('.') ?: return
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
       val elementIsStatic = alternatives.any { it.isStatic }
@@ -1151,6 +1157,18 @@ private class JUnitMalformedSignatureVisitor(
 
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
+
+    val checkableRunners = listOf(
+      "org.junit.runners.AllTests",
+      "org.junit.runners.Parameterized",
+      "org.junit.runners.BlockJUnit4ClassRunner",
+      "org.junit.runners.JUnit4",
+      "org.junit.runners.Suite",
+      "org.junit.internal.runners.JUnit38ClassRunner",
+      "org.junit.internal.runners.JUnit4ClassRunner",
+      "org.junit.experimental.categories.Categories",
+      "org.junit.experimental.categories.Enclosed"
+    )
 
     val visibilityToModifier = mapOf(
       UastVisibility.PUBLIC to JvmModifier.PUBLIC,

@@ -1125,11 +1125,25 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
       }
     """.trimIndent())
   }
-  fun `test no highlighting on RunWith`() {
+  fun `test no highlighting on custom runner`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
-      @org.junit.runner.RunWith(org.junit.runner.Runner::class)
-      class JUnit4RunWith {
+      class MyRunner : org.junit.runner.Runner() {
+          override fun getDescription(): org.junit.runner.Description? { return null }
+
+          override fun run(notifier: org.junit.runner.notification.RunNotifier) { }
+      }
+      
+      @org.junit.runner.RunWith(MyRunner::class)
+      class Foo {
           public fun testMe(i: Int): Int { return -1 }
+      }
+    """.trimIndent())
+  }
+  fun `test highlighting on predefined runner`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      @org.junit.runner.RunWith(org.junit.runners.JUnit4::class)
+      class Foo {
+          @org.junit.Test public fun <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(i: Int): Int { return -1 }
       }
     """.trimIndent())
   }

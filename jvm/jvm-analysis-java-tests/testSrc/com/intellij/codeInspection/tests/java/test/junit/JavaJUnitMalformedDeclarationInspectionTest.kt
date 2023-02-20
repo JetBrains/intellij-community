@@ -981,11 +981,29 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
   }
-  fun `test no highlighting on RunWith`() {
+  fun `test no highlighting on custom runner`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
-      @org.junit.runner.RunWith(org.junit.runner.Runner.class)
-      class JUnit4RunWith {
-          @org.junit.Test public int testMe(int i) { return -1; }
+      class MyRunner extends org.junit.runner.Runner {
+          @Override
+          public org.junit.runner.Description getDescription() { return null; }
+        
+          @Override
+          public void run(org.junit.runner.notification.RunNotifier notifier) { }
+      }
+      
+      @org.junit.runner.RunWith(MyRunner.class)
+      class Foo {
+          @org.junit.Test 
+          public int testMe(int i) { return -1; }
+      }
+    """.trimIndent())
+  }
+  fun `test highlighting on predefined runner`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.runner.RunWith(org.junit.runners.JUnit4.class)
+      class Foo {
+          @org.junit.Test 
+          public int <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(int i) { return -1; }
       }
     """.trimIndent())
   }
