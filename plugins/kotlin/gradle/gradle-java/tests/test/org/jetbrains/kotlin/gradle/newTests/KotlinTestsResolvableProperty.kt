@@ -3,6 +3,14 @@ package org.jetbrains.kotlin.gradle.newTests
 
 import com.intellij.testFramework.UsefulTestCase
 
+/**
+ * Models special test properties that define test parameterizations on CI.
+ * They can be read from the environment in form of `$ID = $acronym`, and also
+ * will be substituted in the testdata with the pattern {{$id}}
+ *
+ * Unless you're changing CI-runs matrix, you should use simpler
+ * [org.jetbrains.kotlin.gradle.newTests.testProperties.SimpleProperties]
+ */
 interface KotlinTestsResolvableProperty {
     val id: String
     val valuesByAcronyms: Map<String, String>

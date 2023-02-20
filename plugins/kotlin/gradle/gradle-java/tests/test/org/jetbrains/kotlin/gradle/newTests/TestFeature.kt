@@ -3,16 +3,69 @@ package org.jetbrains.kotlin.gradle.newTests
 
 import java.io.File
 
+/**
+ * Represents a single tweak/additional check of tests.
+ *
+ * Recommended usage:
+ * 1. inherit [TestFeature]
+ * Tip: use `object` for implementors
+ *
+ * 2. if your test feature provides some per-test configuration, create a mutable class
+ * and pass it as [V]. Please, store all settings there and do not extend [KotlinMppTestsContext]
+ *
+ * 3. override needed lifetime hooks and implement actual behaviour of the test feature
+ *
+ * 4. if necessary, provide the DSL for configuring your test feature by adding extension
+ * functions on [TestConfigurationDslScope]
+ * Tip: scope all extension-functions to a named interface, and inherit that
+ * interface in relevant test suites. This helps with the completion speed/relevance a lot
+ *
+ * 5. install the feature in the relevant test suite
+ * Default: add to [AbstractKotlinMppGradleImportingTest.installedFeatures])
+ *
+ * See also [AbstractTestChecker] for simplified API for test features which just provide
+ * additional test assertions/checks.
+ */
 interface TestFeature<V : Any> {
+    /**
+     * Provides a fresh configuration for this feature. It will be invoked for each test
+     */
     fun createDefaultConfiguration(): V
 
-    fun KotlinMppTestsContext.beforeTestExecution() { }
+    /**
+     * Executed after the whole test-instance/fixture setup, but before any actual test-related
+     * actions in IDEA VM or on disk are executed (i.e. before `configureByFiles`)
+     *
+     * Tip: use it to tweak the project (e.g. to add a new file to the project)
+     */
+    fun KotlinMppTestsContext.beforeTestExecution() {}
 
-    fun KotlinMppTestsContext.beforeImport() { }
-
+    /**
+     * Will be invoked on copying the project from testdata to the temporary directory.
+     * For each file, it's [origin] in the testdata directory and the current state of
+     * preprocessed [text] is passed. Returned string will be used instead of [origin]'s
+     * text.
+     *
+     * Tip: use it for custom pre-processing of files (e.g. to remove some
+     * custom testdata markup)
+     */
     fun preprocessFile(origin: File, text: String): String? = null
 
-    fun KotlinMppTestsContext.afterImport() { }
+    /**
+     * Invoked after the project is loaded into IDE (e.g. VFS, editors, most services are available),
+     * but before Gradle Sync is invoked.
+     *
+     * Tip: use it to tweak the configuration of IDEA services that affect import (e.g., setting
+     * some Registry-key)
+     */
+    fun KotlinMppTestsContext.beforeImport() {}
+
+    /**
+     * Invoked after import
+     *
+     * Tip: use for checks on the imported project
+     */
+    fun KotlinMppTestsContext.afterImport() {}
 }
 
 /**
@@ -35,7 +88,7 @@ interface TestFeature<V : Any> {
  *   but doesn't have that guarantee)
  */
 interface TestFeatureWithSetUpTearDown<V : Any> : TestFeature<V> {
-    fun additionalSetUp() { }
+    fun additionalSetUp() {}
 
     fun additionalTearDown() {}
 }
@@ -51,6 +104,6 @@ abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
         check()
     }
 
-    final override fun KotlinMppTestsContext.beforeTestExecution() { }
-    final override fun KotlinMppTestsContext.beforeImport() { }
+    final override fun KotlinMppTestsContext.beforeTestExecution() {}
+    final override fun KotlinMppTestsContext.beforeImport() {}
 }

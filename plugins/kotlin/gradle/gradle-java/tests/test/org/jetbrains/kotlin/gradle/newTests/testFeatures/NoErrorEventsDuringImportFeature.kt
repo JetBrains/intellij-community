@@ -8,6 +8,10 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.ImportStatusCollector
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
+/**
+ * Records all error-events received during import and compares them with the expected
+ * error-events in the `importErrors.txt`-file. If no error events present, file is expected to be absent
+ */
 internal object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
     private var importStatusCollector: ImportStatusCollector? = null
 

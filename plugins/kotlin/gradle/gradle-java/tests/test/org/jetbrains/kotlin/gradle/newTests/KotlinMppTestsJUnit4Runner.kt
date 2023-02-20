@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.gradle.newTests
 import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.model.FrameworkMethod
 
+/**
+ * Custom test runner to change displayed name of tests to include "parametrization"
+ */
 class KotlinMppTestsJUnit4Runner(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     override fun testName(method: FrameworkMethod?): String {
         val props = KotlinTestProperties.constructFromEnvironment()
