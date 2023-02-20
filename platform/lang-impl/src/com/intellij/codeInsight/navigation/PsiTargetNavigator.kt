@@ -8,15 +8,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.list.createTargetPresentationRenderer
 
 class PsiTargetNavigator {
 
-  fun createPopup(elements: Array<PsiElement>, @PopupTitle title: String?): JBPopup {
+  fun <T: PsiElement> createPopup(elements: Array<T>, @PopupTitle title: String?): JBPopup  {
     return createPopup(elements, title) { element -> EditSourceUtil.navigateToPsiElement(element) }
   }
 
-  fun createPopup(elements: Array<PsiElement>, @PopupTitle title: String?, processor: (PsiElement) -> Unit): JBPopup {
+  fun <T: PsiElement> createPopup(elements: Array<T>, @PopupTitle title: String?, processor: PsiElementProcessor<T>): JBPopup {
 
     val project = elements[0].project
     val targets: List<ItemWithPresentation> = GotoTargetHandler.computePresentationInBackground(project, elements, false)
@@ -28,7 +29,8 @@ class PsiTargetNavigator {
       .withHintUpdateSupply()
       .setItemsChosenCallback { items ->
         items.forEach { it ->
-          it.dereference()?.let { processor(it) }
+          @Suppress("UNCHECKED_CAST")
+          (it.dereference() as? T)?.let { processor.execute(it) }
         }
       }
     if (title != null) {

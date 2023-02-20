@@ -4,9 +4,8 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -102,11 +101,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           assert returnType != null;
           final String title =
             JavaBundle.message("introduce.functional.variable.interface.chooser.title", methodSignature, returnType.getPresentableText());
-          NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
-                                            psiClass -> {
-                                              functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
-                                              return true;
-                                            }).showInBestPositionFor(editor);
+          new PsiTargetNavigator().createPopup(psiClasses, title,
+                                               psiClass -> {
+                                                 functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
+                                                 return true;
+                                               }).showInBestPositionFor(editor);
         }
       }
     });
