@@ -5,17 +5,11 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.DataEnumerator;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -24,7 +18,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableDataEnumeratorEx<String>> {
 
@@ -129,7 +122,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
       enumerator.enumerate(value);
     }
 
-    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> expectedNames = ContainerUtil.newHashSet(values);
     final Set<String> returnedNames = new HashSet<>(expectedNames.size());
     enumerator.processAllDataObjects(name -> {
       returnedNames.add(name);
@@ -153,7 +146,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
     closeEnumerator(enumerator);
     enumerator = openEnumerator(storageFile);
 
-    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> expectedNames = ContainerUtil.newHashSet(values);
     final Set<String> returnedNames = new HashSet<>(expectedNames.size());
     enumerator.processAllDataObjects(name -> {
       returnedNames.add(name);
@@ -179,7 +172,7 @@ public abstract class NonStrictStringsEnumeratorTestBase<T extends ScannableData
     closeEnumerator(enumerator);
     enumerator = openEnumerator(storageFile);
 
-    final Set<String> expectedNames = ContainerUtil.set(values);
+    final Set<String> expectedNames = ContainerUtil.newHashSet(values);
     final Set<String> returnedNames = new HashSet<>(expectedNames.size());
     enumerator.processAllDataObjects(name -> {
       returnedNames.add(name);

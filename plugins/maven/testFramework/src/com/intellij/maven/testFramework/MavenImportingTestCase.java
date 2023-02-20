@@ -84,11 +84,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
   private final Set<String> FAILED_IN_MASTER =
-    ContainerUtil.set("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
-                      "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
-                      "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
-                      "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
-                      "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
+    Set.of("MavenProjectsManagerTest.testUpdatingProjectsWhenMovingModuleFile",
+           "MavenProjectsManagerTest.testUpdatingProjectsWhenAbsentManagedProjectFileAppears",
+           "MavenProjectsManagerTest.testAddingManagedFileAndChangingAggregation",
+           "MavenProjectsManagerWatcherTest.testChangeConfigInOurProjectShouldCallUpdatePomFile",
+           "MavenProjectsManagerWatcherTest.testIncrementalAutoReload");
 
   @Override
   protected void setUp() throws Exception {

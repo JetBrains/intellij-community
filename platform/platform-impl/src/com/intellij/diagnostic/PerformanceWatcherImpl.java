@@ -633,7 +633,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
           StackTraceElement[] edtStack = edt.getStackTrace();
           if (edtStack != null) {
             if (stacktraceCommonPart == null) {
-              stacktraceCommonPart = List.of(edtStack);
+              stacktraceCommonPart = Arrays.asList(edtStack);
             }
             else {
               stacktraceCommonPart = getStacktraceCommonPart(stacktraceCommonPart, edtStack);

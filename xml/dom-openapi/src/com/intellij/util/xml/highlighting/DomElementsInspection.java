@@ -46,7 +46,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   private final Set<Class<? extends T>> myDomClasses;
 
   public DomElementsInspection(Class<? extends T> domClass, Class<? extends T> @NotNull ... additionalClasses) {
-    myDomClasses = ContainerUtil.set(additionalClasses);
+    myDomClasses = ContainerUtil.newHashSet(additionalClasses);
     myDomClasses.add(domClass);
   }
 

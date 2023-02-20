@@ -745,7 +745,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (collection.size() != checkers.length) {
       Assert.fail(toString(collection));
     }
-    Set<Consumer<? super T>> checkerSet = ContainerUtil.set(checkers);
+    Set<Consumer<? super T>> checkerSet = ContainerUtil.newHashSet(checkers);
     int i = 0;
     Throwable lastError = null;
     for (T actual : collection) {

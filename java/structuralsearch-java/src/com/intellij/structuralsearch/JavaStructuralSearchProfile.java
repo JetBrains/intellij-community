@@ -57,7 +57,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", () -> SSRBundle.message("pattern.context.class.member"));
   private static final List<PatternContext> PATTERN_CONTEXTS = List.of(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
-  private static final Set<String> PRIMITIVE_TYPES = ContainerUtil.set(
+  private static final Set<String> PRIMITIVE_TYPES = Set.of(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
     PsiKeyword.INT, PsiKeyword.FLOAT,
@@ -65,7 +65,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   );
 
   private static final Set<String> RESERVED_WORDS =
-    ContainerUtil.set(MatchOptions.MODIFIER_ANNOTATION_NAME, MatchOptions.INSTANCE_MODIFIER_NAME, PsiModifier.PACKAGE_LOCAL);
+    Set.of(MatchOptions.MODIFIER_ANNOTATION_NAME, MatchOptions.INSTANCE_MODIFIER_NAME, PsiModifier.PACKAGE_LOCAL);
 
   @Override
   public @NotNull String getText(@NotNull PsiElement match, int start, int end) {

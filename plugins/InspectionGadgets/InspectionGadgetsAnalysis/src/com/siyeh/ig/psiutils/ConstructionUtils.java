@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 public final class ConstructionUtils {
   private static final Set<String> GUAVA_UTILITY_CLASSES =
-    ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
+    Set.of("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
   private static final CallMatcher ENUM_SET_NONE_OF =
     CallMatcher.staticCall("java.util.EnumSet", "noneOf").parameterCount(1);
 
@@ -91,7 +91,7 @@ public final class ConstructionUtils {
           PsiClass aClass = method.getContainingClass();
           if(aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
-            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
+            if (qualifiedName != null && GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
               return true;
             }
           }
@@ -129,7 +129,7 @@ public final class ConstructionUtils {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return false;
         String qualifiedName = aClass.getQualifiedName();
-        if (!GUAVA_UTILITY_CLASSES.contains(qualifiedName)) return false;
+        if (qualifiedName == null || !GUAVA_UTILITY_CLASSES.contains(qualifiedName)) return false;
         for (PsiParameter parameter : method.getParameterList().getParameters()) {
           PsiType type = parameter.getType();
           if (type instanceof PsiEllipsisType) {
@@ -179,7 +179,7 @@ public final class ConstructionUtils {
           PsiClass aClass = method.getContainingClass();
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
-            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
+            if (qualifiedName != null && GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
               return ContainerUtil.and(method.getParameterList().getParameters(), p -> p.getType() instanceof PsiPrimitiveType);
             }
           }

@@ -34,7 +34,7 @@ public final class JavadocParser {
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
-  private static final Set<String> REFERENCE_TAGS = ContainerUtil.set("@throws", "@exception", "@provides", "@uses");
+  private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 
@@ -134,7 +134,7 @@ public final class JavadocParser {
           JavaParserUtil.getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_1_4) && LINK_PLAIN_TAG.equals(tagName) && isInline) {
         parseSeeTagValue(builder, false);
       }
-      else if (!isInline && REFERENCE_TAGS.contains(tagName)) {
+      else if (!isInline && tagName != null && REFERENCE_TAGS.contains(tagName)) {
         PsiBuilder.Marker tagValue = builder.mark();
         builder.remapCurrentToken(JavaDocElementType.DOC_REFERENCE_HOLDER);
         builder.advanceLexer();

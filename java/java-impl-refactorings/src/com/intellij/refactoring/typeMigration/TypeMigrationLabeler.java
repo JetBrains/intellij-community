@@ -82,7 +82,7 @@ public class TypeMigrationLabeler {
                               Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
-    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
+    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.immutableSet(allowedRoots);
 
     myConversions = new LinkedHashMap<>();
     myFailedConversions = new LinkedHashMap<>();

@@ -129,7 +129,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private Set<OrderRootType> getAllRootTypes() {
-    Set<OrderRootType> rootTypes = ContainerUtil.set(OrderRootType.getAllTypes());
+    Set<OrderRootType> rootTypes = ContainerUtil.newHashSet(OrderRootType.getAllTypes());
     if (myKind != null) {
       rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }

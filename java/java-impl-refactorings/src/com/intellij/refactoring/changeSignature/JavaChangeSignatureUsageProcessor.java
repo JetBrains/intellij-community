@@ -1281,7 +1281,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
       MultiMap<PsiElement, @Nls String> conflictDescriptions = new MultiMap<>();
       final PsiMethod prototype = addMethodConflicts(conflictDescriptions);
-      Set<UsageInfo> usagesSet = ContainerUtil.set(refUsages.get());
+      Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(refUsages.get());
       RenameUtil.removeConflictUsages(usagesSet);
       if (myChangeInfo.isVisibilityChanged()) {
         try {

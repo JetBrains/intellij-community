@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,12 +27,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class LoggingConditionDisagreesWithLogStatementInspection extends BaseInspection {
 
-  private static final @NonNls Set<String> loggingLevels = ContainerUtil.set(
-    "debug", "error", "fatal", "info", "trace", "warn", "severe", "warning", "info", "config", "fine", "finer", "finest"
+  private static final @NonNls Set<String> loggingLevels = Set.of(
+    "debug", "error", "fatal", "info", "trace", "warn", "severe", "warning", "config", "fine", "finer", "finest"
   );
 
   private static final Map<String, LoggingProblemChecker> problemCheckers = new HashMap<>();

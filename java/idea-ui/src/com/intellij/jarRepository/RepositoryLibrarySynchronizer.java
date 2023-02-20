@@ -116,7 +116,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
   private static boolean hasDuplicatedRoots(Library library) {
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       String[] urls = library.getUrls(type);
-      if (urls.length != ContainerUtil.set(urls).size()) {
+      if (urls.length != ContainerUtil.newHashSet(urls).size()) {
         return true;
       }
     }

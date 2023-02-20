@@ -871,7 +871,7 @@ public class MavenProject {
   }
 
   public @NotNull Set<String> getSupportedDependencyScopes() {
-    Set<String> result = ContainerUtil.set(MavenConstants.SCOPE_COMPILE,
+    Set<String> result = ContainerUtil.newHashSet(MavenConstants.SCOPE_COMPILE,
                                            MavenConstants.SCOPE_PROVIDED,
                                            MavenConstants.SCOPE_RUNTIME,
                                            MavenConstants.SCOPE_TEST,

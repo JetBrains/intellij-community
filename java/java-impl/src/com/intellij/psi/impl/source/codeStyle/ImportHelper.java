@@ -208,7 +208,7 @@ public final class ImportHelper{
                                                @NotNull final Set<String> onDemandImports) {
     final GlobalSearchScope resolveScope = file.getResolveScope();
     final String thisPackageName = file.getPackageName();
-    final Set<String> implicitlyImportedPackages = ContainerUtil.set(file.getImplicitlyImportedPackages());
+    final Set<String> implicitlyImportedPackages = Set.of(file.getImplicitlyImportedPackages());
     final PsiManager manager = file.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 

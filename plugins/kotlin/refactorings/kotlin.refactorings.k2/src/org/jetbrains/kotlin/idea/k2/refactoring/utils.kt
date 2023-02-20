@@ -32,7 +32,7 @@ fun PsiElement?.canDeleteElement(): Boolean {
             || this is KtTypeAlias
 }
 
-fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement> {
+fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>, @Nls actionString: String): List<PsiElement> {
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
     data class AnalyzedModel(
@@ -52,7 +52,7 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
                 }
 
                 val filteredDeclarations =
-                    if (ignore != null) renderToPsi.filter { !ignore.contains(it.first) } else renderToPsi
+                  renderToPsi.filter { !ignore.contains(it.first) }
 
                 val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
 

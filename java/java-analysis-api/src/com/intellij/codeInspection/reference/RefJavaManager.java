@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastMetaLanguage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UParameter;
@@ -34,7 +33,7 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   protected RefJavaManager() {
     List<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
-    for (String lang : ContainerUtil.set(Registry.stringValue("batch.inspections.ignored.jvm.languages").split(","))) {
+    for (String lang : Registry.stringValue("batch.inspections.ignored.jvm.languages").split(",")) {
       languages.removeIf(l -> l.isKindOf(lang));
     }
     myLanguages = Collections.unmodifiableList(languages);

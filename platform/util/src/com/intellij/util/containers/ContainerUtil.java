@@ -2113,10 +2113,11 @@ public final class ContainerUtil {
   }
 
   /**
-   * Please use immutable {@link Set#of(Object[])} instead
-   * If you need a mutable {@link Set} please use {@link HashSet#HashSet()};
-   * If you need a mutable {@link Set} pre-populated with elements, use {@link #newHashSet}
+   * @deprecated use more standard immutable {@link Set#of(Object[])} instead.
+   * If you do need a mutable {@link Set} please use {@link HashSet#HashSet()} or {@link #newHashSet(Object[])}
    */
+  @Deprecated
+  @Unmodifiable
   @SafeVarargs
   public static @NotNull <T> Set<T> set(T @NotNull ... items) {
     //noinspection SSBasedInspection

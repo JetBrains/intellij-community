@@ -24,7 +24,7 @@ import static com.intellij.codeInspection.dataFlow.JavaMethodContractUtil.ORG_JE
 
 public class DefaultInferredAnnotationProvider implements InferredAnnotationProvider {
   private static final Set<String> JB_INFERRED_ANNOTATIONS =
-    ContainerUtil.set(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
+    Set.of(ORG_JETBRAINS_ANNOTATIONS_CONTRACT, Mutability.UNMODIFIABLE_ANNOTATION,
                       Mutability.UNMODIFIABLE_VIEW_ANNOTATION);
   private static final Set<String> EXPERIMENTAL_INFERRED_ANNOTATIONS = Collections.emptySet();
   private final Project myProject;

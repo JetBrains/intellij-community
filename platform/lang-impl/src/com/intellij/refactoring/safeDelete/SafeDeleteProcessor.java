@@ -466,7 +466,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
                                                             PsiElement @NotNull [] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
                                                             boolean askForAccessors) {
     ArrayList<PsiElement> elements = new ArrayList<>(Arrays.asList(elementsToDelete));
-    Set<PsiElement> elementsToDeleteSet = ContainerUtil.set(elementsToDelete);
+    Set<PsiElement> elementsToDeleteSet = ContainerUtil.newHashSet(elementsToDelete);
 
     for (PsiElement psiElement : elementsToDelete) {
       for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {

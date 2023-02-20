@@ -111,7 +111,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     WriteAction.run(moduleModel::commit);
     createModule("util"); // groups aren't shown for single-module projects so we need to add an empty second module
 
-    Set<PsiFile> files = ContainerUtil.set(getPackageDirectory("package1").getFiles());
+    Set<PsiFile> files = Set.of(getPackageDirectory("package1").getFiles());
     DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, files, ALL_MARKED, settings);
