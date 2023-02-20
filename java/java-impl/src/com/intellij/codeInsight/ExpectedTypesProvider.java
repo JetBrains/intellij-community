@@ -623,29 +623,28 @@ public final class ExpectedTypesProvider {
       return result;
     }
 
+
     private static List<ExpectedTypeInfo> processedPatternTypes(@NotNull List<PsiType> expectedTypes) {
-      List<ExpectedTypeInfo> result = new ArrayList<>();
-      Set<PsiType> processedTypes = new HashSet<>();
+      LinkedHashSet<PsiClass> processedTypes = new LinkedHashSet<>();
 
       for (PsiType type : expectedTypes) {
         PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (currentClass == null) {
           continue;
         }
-        PsiClassType[] types = currentClass.getSuperTypes();
+        LinkedHashSet<PsiClass> allSuperClasses = InheritanceUtil.getSuperClasses(currentClass);
         if (processedTypes.isEmpty()) {
-          Collections.addAll(processedTypes, types);
-          processedTypes.add(type);
+          processedTypes = allSuperClasses;
         }
         else {
-          List<PsiType> combined = new ArrayList<>();
-          Collections.addAll(combined, types);
-          combined.add(type);
-          processedTypes.retainAll(combined);
+          processedTypes.retainAll(allSuperClasses);
         }
       }
-      for (PsiType type : processedTypes) {
-        result.add(createInfo(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, type, TailType.NONE));
+
+      List<ExpectedTypeInfo> result = new ArrayList<>();
+      for (PsiClass psiClass : processedTypes) {
+        PsiClassType type = PsiTypesUtil.getClassType(psiClass);
+        result.add(createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE));
       }
       return result;
     }
