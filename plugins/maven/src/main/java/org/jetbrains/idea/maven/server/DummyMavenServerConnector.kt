@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.execution.rmi.IdeaWatchdog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.NotNull
@@ -62,7 +63,10 @@ class DummyMavenServerConnector(project: @NotNull Project,
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-
+  private lateinit var watchdog: IdeaWatchdog;
+  override fun setWatchdog(watchdog: IdeaWatchdog) {
+    this.watchdog = watchdog
+  }
 
   override fun createEmbedder(settings: MavenEmbedderSettings?, token: MavenToken?): MavenServerEmbedder {
     return UntrustedDummyEmbedder(project)
@@ -96,7 +100,7 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return null
   }
 
-  override fun isAlive(token: MavenToken?): Boolean {
+  override fun ping(token: MavenToken?): Boolean {
     return true
   }
 }

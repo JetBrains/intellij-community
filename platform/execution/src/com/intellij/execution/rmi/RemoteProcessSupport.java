@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -335,12 +334,6 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     // init hard ref that will keep it from DGC and thus preventing from System.exit
     info.entryPointHardRef = result;
     return result;
-  }
-
-  @ApiStatus.Internal
-  @Nullable
-  public Heartbeat getHeartBeat() {
-    return myHeartbeatRef.get();
   }
 
   private ProcessListener getProcessListener(@NotNull final Pair<Target, Parameters> key) {

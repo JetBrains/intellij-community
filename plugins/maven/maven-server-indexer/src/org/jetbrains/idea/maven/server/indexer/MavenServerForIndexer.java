@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.indexer;
 
+import com.intellij.execution.rmi.IdeaWatchdog;
 import org.codehaus.plexus.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +16,9 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
 public class MavenServerForIndexer extends MavenRemoteObject implements MavenServer {
-
   private volatile MavenIdeaIndexerImpl myIndexerRef;
   private volatile PlexusContainer myPlexusContainer;
+  private volatile IdeaWatchdog myWatchdog;
 
   @Override
   public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings, MavenToken token) throws RemoteException {
@@ -103,8 +104,14 @@ public class MavenServerForIndexer extends MavenRemoteObject implements MavenSer
   }
 
   @Override
-  public boolean isAlive(MavenToken token) {
+  public boolean ping(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    return true;
+    if (null == myWatchdog) return false;
+    return myWatchdog.ping();
+  }
+
+  @Override
+  public void setWatchdog(@NotNull IdeaWatchdog watchdog) {
+    myWatchdog = watchdog;
   }
 }
