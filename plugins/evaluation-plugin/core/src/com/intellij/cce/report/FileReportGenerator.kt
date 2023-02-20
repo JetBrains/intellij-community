@@ -35,9 +35,11 @@ abstract class FileReportGenerator(
     processStorages(sessions, resourceFile)
     val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
     createHTML().html {
-      createHead(reportTitle, resourcePath)
+      head {
+        createHead(this, reportTitle, resourcePath)
+      }
       body {
-        h1 { +reportTitle }
+        headerTitle(reportTitle)
         unsafe {
           +getHtml(
             sessions.sortedBy { it.evaluationType },
@@ -51,16 +53,18 @@ abstract class FileReportGenerator(
     reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
-  private fun HTML.createHead(reportTitle: String, resourcePath: Path) {
-    head {
-      meta(charset = "UTF-8")
-      title(reportTitle)
-      script { src = "../res/pako.min.js" }
-      script { src = dirs.filesDir.relativize(resourcePath).toString() }
-      link {
-        href = "../res/style.css"
-        rel = "stylesheet"
-      }
+  open fun BODY.headerTitle(reportTitle: String) {
+    h1 { +reportTitle }
+  }
+
+  open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {
+    meta(charset = "UTF-8")
+    title(reportTitle)
+    script { src = "../res/pako.min.js" }
+    script { src = dirs.filesDir.relativize(resourcePath).toString() }
+    link {
+      href = "../res/style.css"
+      rel = "stylesheet"
     }
   }
 

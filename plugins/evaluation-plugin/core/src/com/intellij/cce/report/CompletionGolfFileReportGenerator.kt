@@ -4,13 +4,17 @@ import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
-import com.intellij.cce.metric.*
+import com.intellij.cce.metric.MovesCount
+import com.intellij.cce.metric.MovesCountNormalised
+import com.intellij.cce.metric.PerfectLine
+import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import java.io.File
+import java.nio.file.Path
 import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
@@ -20,6 +24,30 @@ class CompletionGolfFileReportGenerator(
   private val fullLineStorages: List<FullLineLogsStorage>,
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
+
+  override fun BODY.headerTitle(reportTitle: String) {
+    a(classes = "v2-switcher") {
+      onClick = "enableV2()"
+      button {
+        type = ButtonType.button
+        +"v2"
+      }
+    }
+  }
+
+  override fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) {
+    super.createHead(head, reportTitle, resourcePath)
+    with(head) {
+      script {
+        type = "module"
+        src = "../res/index.js?v=" + System.currentTimeMillis()
+      }
+      link {
+        rel = "stylesheet"
+        href = "../res/index.css?v=" + System.currentTimeMillis()
+      }
+    }
+  }
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     return createHTML().body {
@@ -69,6 +97,15 @@ class CompletionGolfFileReportGenerator(
       }
       script { src = "../res/script.js" }
       script { +"isCompletionGolf = true" }
+      script {
+        +"""
+          function enableV2() {
+              const urlParams = new URLSearchParams(window.location.search);
+              urlParams.set('v2', 'true');
+              window.location.search = urlParams;
+          }
+        """.trimIndent()
+      }
     }
   }
 
