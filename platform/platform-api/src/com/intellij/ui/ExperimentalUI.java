@@ -44,6 +44,7 @@ public abstract class ExperimentalUI {
   public static final String KEY = "ide.experimental.ui";
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+  public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
   public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
 
   private static final String FIRST_PROMOTION_DATE_FORMAT = "yyyy/MM/dd";
@@ -66,7 +67,13 @@ public abstract class ExperimentalUI {
   public static void setNewUI(boolean newUI) {
     if (newUI) {
       PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
+      if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
+        propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH);
+      }
+      else {
+        propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true);
+        propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
+      }
     }
 
     Registry.get("ide.experimental.ui").setValue(newUI);
