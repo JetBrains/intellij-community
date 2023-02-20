@@ -182,6 +182,8 @@ internal sealed class ChangeEntry {
   /**
    * Fields about children or parents contain information only about changes on this particular entity. This means, that if some entity
    *   is removed, information about its removal is NOT added to the parent using this mechanism
+   *
+   * The information is split into two parts: changes in the entity itself (updated fields) and changes between references
    */
   data class ReplaceEntity(
     val data: Data?,
