@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
@@ -76,8 +76,7 @@ public final class FSRecords {
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";
 
   public static final boolean USE_FAST_NAMES_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
-    SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = SystemProperties.getBooleanProperty("vfs.use-streamlined-attributes-storage", false);
 
   /**
    * Initially record=0 was used as a storage header record, hence fileId=0 was reserved.
@@ -120,21 +119,18 @@ public final class FSRecords {
     return nextMask(59 + (PersistentFSRecordsStorageFactory.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
-                             nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-                                      nextMask(bulkAttrReadSupport,
-                                               nextMask(inlineAttributes,
-                                                        nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
-                                                                 nextMask(false, // feel free to use
-                                                                          nextMask(useSmallAttrTable,
-                                                                                   nextMask(
-                                                                                     PersistentHashMapValueStorage.COMPRESSION_ENABLED,
-                                                                                     nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
-                                                                                              nextMask(
-                                                                                                ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
-                                                                                                nextMask(USE_FAST_NAMES_IMPLEMENTATION,
-                                                                                                         nextMask(
-                                                                                                           USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
-                                                                                                           0)))))))))))));
+                    nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
+                    nextMask(bulkAttrReadSupport,
+                    nextMask(inlineAttributes,
+                    nextMask(SystemProperties.getBooleanProperty(IDE_USE_FS_ROOTS_DATA_LOADER, false),
+                    nextMask(false, // feel free to use
+                    nextMask(useSmallAttrTable,
+                    nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
+                    nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
+                    nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),
+                    nextMask(USE_FAST_NAMES_IMPLEMENTATION,
+                    nextMask(USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION,
+                    0)))))))))))));
   }
 
   /** @return path to the directory there all VFS files are located */

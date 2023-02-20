@@ -12,7 +12,6 @@ object PersistentFSRecordsStorageFactory {
 
   enum class RecordsStorageKind {
     REGULAR,
-    LOCK_FREE,
     IN_MEMORY,
     OVER_LOCK_FREE_FILE_CACHE,
     OVER_MMAPPED_FILE
@@ -20,14 +19,13 @@ object PersistentFSRecordsStorageFactory {
 
   @JvmField
   val RECORDS_STORAGE_KIND =
-    RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name));
+    RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name));
 
 
   @JvmStatic
   fun recordsLength(): Int =
     when (RECORDS_STORAGE_KIND) {
       RecordsStorageKind.REGULAR, RecordsStorageKind.IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
-      RecordsStorageKind.LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
       RecordsStorageKind.OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES
     }
@@ -39,7 +37,6 @@ object PersistentFSRecordsStorageFactory {
 
     return when (RECORDS_STORAGE_KIND) {
       RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()))
-      RecordsStorageKind.LOCK_FREE -> PersistentFSLockFreeRecordsStorage(openRMappedFile(file, recordsLength()))
       RecordsStorageKind.IN_MEMORY -> PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file)
       RecordsStorageKind.OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile(file,
