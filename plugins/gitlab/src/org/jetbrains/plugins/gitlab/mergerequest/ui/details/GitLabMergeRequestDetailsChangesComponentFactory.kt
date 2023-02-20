@@ -9,9 +9,11 @@ import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFac
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
@@ -45,23 +47,30 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
   private fun createChangesTree(vm: GitLabMergeRequestChangesViewModel, changes: Collection<Change>): JComponent {
     val changesModel = SingleValueModel(changes)
     return CodeReviewChangesTreeFactory(project, changesModel)
-      .create(GitLabBundle.message("merge.request.details.changes.empty")).apply {
-        doubleClickHandler = Processor { e ->
-          if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-          vm.showDiff()
-          true
+      .create(GitLabBundle.message("merge.request.details.changes.empty")).also { tree ->
+        tree.addTreeSelectionListener {
+          // focus transfer happens after selection change :(
+          invokeLater {
+            if (tree.isFocusOwner) {
+              vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+            }
+          }
         }
-        enterKeyHandler = Processor {
-          vm.showDiff()
-          true
-        }
-      }.also {
-        it.addSelectionListener {
-          vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
-        }
-        vm.updateSelectedChanges(VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change })
 
-        it.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
+        tree.doubleClickHandler = Processor { e ->
+          if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+          vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+          vm.showDiff()
+          true
+        }
+
+        tree.enterKeyHandler = Processor {
+          vm.updateChangesSelectedByUser(VcsTreeModelData.getListSelectionOrAll(tree).map { it as? Change })
+          vm.showDiff()
+          true
+        }
+
+        tree.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
       }
   }
 }

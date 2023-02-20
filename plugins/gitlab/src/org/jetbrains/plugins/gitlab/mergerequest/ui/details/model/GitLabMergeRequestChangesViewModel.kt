@@ -16,9 +16,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
-  val selectedChanges: StateFlow<ListSelection<Change>>
+  val userChangesSelection: StateFlow<ListSelection<Change>>
 
-  fun updateSelectedChanges(changes: ListSelection<Change>)
+  fun updateChangesSelectedByUser(changes: ListSelection<Change>)
 
   fun showDiff()
 }
@@ -41,11 +41,8 @@ internal class GitLabMergeRequestChangesViewModelImpl(
       }
     }.modelFlow(cs, thisLogger())
 
-  private val _selectedChangesEvents = MutableSharedFlow<ListSelection<Change>>()
-  override val selectedChanges: StateFlow<ListSelection<Change>> =
-    _selectedChangesEvents
-      .distinctUntilChanged(::isSelectionEqual)
-      .stateIn(cs, SharingStarted.Lazily, ListSelection.empty())
+  private val _userChangesSelection = MutableStateFlow<ListSelection<Change>>(ListSelection.empty())
+  override val userChangesSelection: StateFlow<ListSelection<Change>> = _userChangesSelection.asStateFlow()
 
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests = _showDiffRequests.asSharedFlow()
@@ -54,9 +51,9 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     return commit.shortId
   }
 
-  override fun updateSelectedChanges(changes: ListSelection<Change>) {
-    cs.launch {
-      _selectedChangesEvents.emit(changes)
+  override fun updateChangesSelectedByUser(changes: ListSelection<Change>) {
+    _userChangesSelection.update {
+      if (isSelectionEqual(it, changes)) it else changes
     }
   }
 
