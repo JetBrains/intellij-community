@@ -522,6 +522,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   open fun testReleasePropertyNotSupport() {
+
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<packaging>pom</packaging>" +
