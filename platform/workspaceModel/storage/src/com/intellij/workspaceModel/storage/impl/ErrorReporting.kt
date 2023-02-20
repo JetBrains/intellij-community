@@ -120,27 +120,24 @@ internal fun ChangeLog.anonymize(): ChangeLog {
         val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
 
         @Suppress("UNCHECKED_CAST")
-        val changedData = value.dataChange.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        val changedData = value.dataChange.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
         changedData.entitySource = changedData.entitySource.anonymize(null)
         @Suppress("UNCHECKED_CAST")
-        val changedOldData = value.dataChange.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        val changedOldData = value.dataChange.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
         changedOldData.entitySource = changedOldData.entitySource.anonymize(null)
-        val dataChange = ChangeEntry.ReplaceEntity(changedOldData,
-          value.dataChange.oldParents,
-          changedData,
-          value.dataChange.newChildren,
-          value.dataChange.removedChildren,
-          value.dataChange.modifiedParents)
+        val dataChange = ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(changedOldData, changedData),
+                                                   value.dataChange.references.copy()
+        )
         ChangeEntry.ReplaceAndChangeSource(dataChange, sourceChange)
       }
       is ChangeEntry.ReplaceEntity -> {
         @Suppress("UNCHECKED_CAST")
-        val newEntityData = value.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        val newEntityData = value.data.newData.clone() as WorkspaceEntityData<WorkspaceEntity>
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
         @Suppress("UNCHECKED_CAST")
-        val oldEntityData = value.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
+        val oldEntityData = value.data.oldData.clone() as WorkspaceEntityData<WorkspaceEntity>
         oldEntityData.entitySource = oldEntityData.entitySource.anonymize(null)
-        ChangeEntry.ReplaceEntity(oldEntityData, value.oldParents, newEntityData, value.newChildren, value.removedChildren, value.modifiedParents)
+        ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(oldEntityData, newEntityData), value.references.copy())
       }
     }
   }
@@ -221,9 +218,9 @@ private fun EntityStorageSerializerImpl.serializeDiffLog(file: Path, log: Change
       when (it) {
         is ChangeEntry.AddEntity -> it.entityData
         is ChangeEntry.RemoveEntity -> null
-        is ChangeEntry.ReplaceEntity -> it.newData
+        is ChangeEntry.ReplaceEntity -> it.data.newData
         is ChangeEntry.ChangeEntitySource -> it.newData
-        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.newData
+        is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data.newData
       }
     }.asSequence()
 

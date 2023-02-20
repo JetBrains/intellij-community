@@ -382,7 +382,7 @@ internal class MutableEntityStorageImpl(
             @Suppress("DuplicatedCode")
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+            val replaceToData = change.data.newData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
@@ -396,7 +396,7 @@ internal class MutableEntityStorageImpl(
           is ChangeEntry.ReplaceAndChangeSource -> {
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            val replaceToData = change.dataChange.newData.createEntity(this) as WorkspaceEntityBase
+            val replaceToData = change.dataChange.data.newData.createEntity(this) as WorkspaceEntityBase
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
               .add(EntityChange.Replaced(replacedData, replaceToData))
           }
@@ -457,10 +457,10 @@ internal class MutableEntityStorageImpl(
       this.refs.getParentRefsOfChild(new.asChild()).forEach { (connection, parent) ->
         val changedParent = changeLog.changeLog[parent.id]
         if (changedParent is ChangeEntry.ReplaceEntity) {
-          if (changedParent.newData == changedParent.oldData
-              && changedParent.modifiedParents.isEmpty()
-              && changedParent.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
-              && changedParent.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
+          if (changedParent.data.newData == changedParent.data.oldData
+              && changedParent.references.modifiedParents.isEmpty()
+              && changedParent.references.removedChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == initial } != null
+              && changedParent.references.newChildren.singleOrNull()?.takeIf { it.first == connection && it.second.id == new } != null) {
             collapsibleChanges.add(parent.id)
           }
         }

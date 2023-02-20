@@ -192,16 +192,16 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
   }
 
   private fun replaceOperation(change: ChangeEntry.ReplaceEntity) {
-    val sourceEntityId = change.newData.createEntityId().notThis()
+    val sourceEntityId = change.data.newData.createEntityId().notThis()
 
     val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId.id.asParent()).flatMap { (key, value) -> value.map { key to it } }
     val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId.id.asChild())
 
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId.id.asThis())
-    val newTargetEntityData = change.newData.clone()
+    val newTargetEntityData = change.data.newData.clone()
     newTargetEntityData.id = targetEntityId.id.arrayId
 
-    checkSymbolicId(change.newData, newTargetEntityData.createEntityId())
+    checkSymbolicId(change.data.newData, newTargetEntityData.createEntityId())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId.id) ?: return
@@ -224,10 +224,10 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
+    change.references.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
 
     val removedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
+    change.references.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
 
     replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
 
@@ -316,7 +316,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     change: ChangeEntry.ReplaceEntity,
     newEntityId: EntityId,
   ) {
-    val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
+    val updatedModifiedParents = change.references.modifiedParents.mapValues { it.value }
 
     val modifiedParentsMap = updatedModifiedParents.toMutableMap()
     val newChildEntityId = newEntityId.asChild()

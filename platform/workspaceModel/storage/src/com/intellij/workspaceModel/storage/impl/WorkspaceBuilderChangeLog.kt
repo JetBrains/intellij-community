@@ -29,20 +29,24 @@ class WorkspaceBuilderChangeLog {
     modificationCount++
 
     val existingChange = changeLog[entityId]
-    val replaceEvent = ChangeEntry.ReplaceEntity(originalEntity, originalParents, copiedData, addedChildren, removedChildren.toList(),
-      parentsMapRes)
+    val replaceEvent = ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(originalEntity, copiedData),
+                                                 ChangeEntry.ReplaceEntity.References(addedChildren, removedChildren.toList(),
+                                                                                      originalParents,
+                                                                                      parentsMapRes))
 
     val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity ->
       val addedChildrenSet = addedChildren.toSet()
-      val newAddedChildren = (replaceEntity.newChildren.toSet() - removedChildren + (addedChildrenSet - replaceEntity.removedChildren.toSet())).toList()
-      val newRemovedChildren = (replaceEntity.removedChildren.toSet() - addedChildrenSet + (removedChildren - replaceEntity.newChildren.toSet())).toList()
-      val newChangedParents = (replaceEntity.modifiedParents + parentsMapRes).toMutableMap()
+      val newAddedChildren = (replaceEntity.references.newChildren.toSet() - removedChildren + (addedChildrenSet - replaceEntity.references.removedChildren.toSet())).toList()
+      val newRemovedChildren = (replaceEntity.references.removedChildren.toSet() - addedChildrenSet + (removedChildren - replaceEntity.references.newChildren.toSet())).toList()
+      val newChangedParents = (replaceEntity.references.modifiedParents + parentsMapRes).toMutableMap()
       originalParents.forEach { (key, value) -> newChangedParents.remove(key, value) }
       if (originalEntity.equalsIgnoringEntitySource(
           copiedData) && newAddedChildren.isEmpty() && newRemovedChildren.isEmpty() && newChangedParents.isEmpty()) {
         null
       }
-      else ChangeEntry.ReplaceEntity(originalEntity, originalParents, copiedData, newAddedChildren, newRemovedChildren, newChangedParents)
+      else ChangeEntry.ReplaceEntity(ChangeEntry.ReplaceEntity.Data(originalEntity, copiedData),
+                                     ChangeEntry.ReplaceEntity.References(newAddedChildren, newRemovedChildren, originalParents,
+                                                                          newChangedParents))
     }
 
     if (existingChange == null) {
@@ -176,13 +180,21 @@ internal sealed class ChangeEntry {
    *   is removed, information about its removal is NOT added to the parent using this mechanism
    */
   data class ReplaceEntity(
-    val oldData: WorkspaceEntityData<out WorkspaceEntity>,
-    val oldParents: Map<ConnectionId, ParentEntityId>,
-    val newData: WorkspaceEntityData<out WorkspaceEntity>,
-    val newChildren: List<Pair<ConnectionId, ChildEntityId>>,
-    val removedChildren: List<Pair<ConnectionId, ChildEntityId>>,
-    val modifiedParents: Map<ConnectionId, ParentEntityId?>
-  ) : ChangeEntry()
+    val data: Data,
+    val references: References,
+  ) : ChangeEntry() {
+    data class Data(
+      val oldData: WorkspaceEntityData<out WorkspaceEntity>,
+      val newData: WorkspaceEntityData<out WorkspaceEntity>,
+    )
+
+    data class References(
+      val newChildren: List<Pair<ConnectionId, ChildEntityId>>,
+      val removedChildren: List<Pair<ConnectionId, ChildEntityId>>,
+      val oldParents: Map<ConnectionId, ParentEntityId>,
+      val modifiedParents: Map<ConnectionId, ParentEntityId?>
+    )
+  }
 
   data class ReplaceAndChangeSource(
     val dataChange: ReplaceEntity,
@@ -199,11 +211,11 @@ internal sealed class ChangeEntry {
 internal fun MutableEntityStorageImpl.getOriginalEntityData(id: EntityId): WorkspaceEntityData<*> {
   return this.changeLog.changeLog[id]?.let {
     when (it) {
-      is ChangeEntry.ReplaceEntity -> it.oldData
+      is ChangeEntry.ReplaceEntity -> it.data.oldData
       is ChangeEntry.AddEntity -> it.entityData
       is ChangeEntry.ChangeEntitySource -> it.newData
       is ChangeEntry.RemoveEntity -> it.oldData
-      is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.oldData
+      is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.data.oldData
     }
   }?.clone() ?: this.entityDataByIdOrDie(id).clone()
 }
@@ -214,11 +226,11 @@ internal fun MutableEntityStorageImpl.getOriginalEntityData(id: EntityId): Works
 internal fun MutableEntityStorageImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
   return this.changeLog.changeLog[id.id]?.let {
     when (it) {
-      is ChangeEntry.ReplaceEntity -> it.oldParents
+      is ChangeEntry.ReplaceEntity -> it.references.oldParents
       is ChangeEntry.AddEntity -> this.refs.getParentRefsOfChild(id)
       is ChangeEntry.ChangeEntitySource -> this.refs.getParentRefsOfChild(id)
       is ChangeEntry.RemoveEntity -> it.oldParents
-      is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.oldParents
+      is ChangeEntry.ReplaceAndChangeSource -> it.dataChange.references.oldParents
     }
   } ?: this.refs.getParentRefsOfChild(id)
 }
