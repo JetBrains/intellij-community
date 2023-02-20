@@ -410,7 +410,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
-      // if only event thread were suspended, then only this particular thread must be suspended during stepping
+      // if only event thread was suspended, then only this particular thread must be suspended during stepping
       stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
                                    ? EventRequest.SUSPEND_EVENT_THREAD
                                    : EventRequest.SUSPEND_ALL);
