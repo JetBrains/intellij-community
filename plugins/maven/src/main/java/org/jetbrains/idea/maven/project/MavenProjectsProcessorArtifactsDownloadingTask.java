@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -44,7 +45,7 @@ public final class MavenProjectsProcessorArtifactsDownloadingTask implements Mav
                       @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     var progressListener = project.getService(SyncViewManager.class);
-    var downloadConsole = project.getService(MavenProjectsManager.class).getDownloadConsole();
+    var downloadConsole = new MavenDownloadConsole(project);
     MavenArtifactDownloader.DownloadResult result = null;
     try {
       downloadConsole.startDownload(progressListener, myDownloadSources, myDownloadDocs);
