@@ -112,7 +112,8 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
                      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
                      dryRun: Boolean = false,
                      context: BuildContext): Collection<DistributionFileEntry> {
-      val packager = JarPackager(collectNativeFiles = layout !is PluginLayout, outputDir = outputDir, context = context)
+      val isRootDir = context.paths.distAllDir == outputDir.parent
+      val packager = JarPackager(collectNativeFiles = isRootDir, outputDir = outputDir, context = context)
 
       // must be concurrent - buildJars executed in parallel
       val moduleNameToSize = ConcurrentHashMap<String, Int>()
@@ -152,11 +153,8 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
         )
       }
 
-      val isRootDir = context.paths.distAllDir == outputDir.parent
       if (layout != null) {
-        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir,
-                                                           layout = layout,
-                                                           copiedFiles = packager.copiedFiles)
+        val libraryToMerge = packager.packProjectLibraries(outputDir = outputDir, layout = layout, copiedFiles = packager.copiedFiles)
         if (isRootDir) {
           for ((key, value) in extraMergeRules) {
             packager.mergeLibsByPredicate(key, libraryToMerge, outputDir, value)
@@ -176,7 +174,7 @@ class JarPackager private constructor(private val collectNativeFiles: Boolean,
       val list = mutableListOf<DistributionFileEntry>()
 
       if (nativeFiles.isNotEmpty()) {
-        packNativePresignedFiles(nativeFiles = nativeFiles, context = context)
+        packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context)
       }
 
       for (item in packager.jarDescriptors.values) {

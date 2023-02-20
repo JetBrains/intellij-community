@@ -18,19 +18,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, context: BuildContext) {
+internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
   coroutineScope {
     for ((source, paths) in nativeFiles) {
       val sourceFile = source.file
       async(Dispatchers.IO) {
-        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, context = context)
+        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
       }
       continue
     }
   }
 }
 
-private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, context: BuildContext) {
+private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext) {
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
@@ -46,7 +46,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
   val libName = sourceFile.fileName.toString().substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val outDir = Files.createDirectories(context.paths.tempDir.resolve(libName))
+    val outDir = if (dryRun) context.paths.tempDir.resolve(libName) else Files.createTempDirectory(context.paths.tempDir, libName)
     Files.createDirectories(outDir)
     for (pathWithPackage in paths) {
       val path = pathWithPackage.substring(packagePrefix.length)
@@ -69,26 +69,28 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         else -> continue
       }
 
-      var file: Path? = if (os != OsFamily.LINUX && signTool.usePresignedNativeFiles) {
-        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
+      var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+        null
       }
       else {
-        null
+        signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
       }
 
       if (file == null) {
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         file = outDir.resolve(path)!!
-        Files.createDirectories(file.parent)
-        FileChannel.open(file, W_CREATE_NEW).use { channel ->
-          val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
-          try {
-            while (byteBuffer.hasRemaining()) {
-              channel.write(byteBuffer)
+        if (!dryRun) {
+          Files.createDirectories(file.parent)
+          FileChannel.open(file, W_CREATE_NEW).use { channel ->
+            val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
+            try {
+              while (byteBuffer.hasRemaining()) {
+                channel.write(byteBuffer)
+              }
             }
-          }
-          finally {
-            zipFile.releaseBuffer(byteBuffer)
+            finally {
+              zipFile.releaseBuffer(byteBuffer)
+            }
           }
         }
 
@@ -102,7 +104,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
     }
   }
 
-  if (!signTool.usePresignedNativeFiles) {
+  if (signTool.signNativeFileMode == SignNativeFileMode.PREPARE) {
     val versionOption = mapOf(SignTool.LIB_VERSION_OPTION_NAME to libVersion)
     coroutineScope {
       launch {
