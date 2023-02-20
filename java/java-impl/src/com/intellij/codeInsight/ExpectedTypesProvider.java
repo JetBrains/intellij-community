@@ -619,20 +619,33 @@ public final class ExpectedTypesProvider {
         }
       }
       result.addAll(processedExpressionTypes(labeledExpressionTypes, mustBeReference, statement));
-      result.addAll(processedPatternTypes(labeledPatternsTypes));
+      result.addAll(processedPatternTypes(labeledPatternsTypes, statement));
       return result;
     }
 
 
-    private static List<ExpectedTypeInfo> processedPatternTypes(@NotNull List<PsiType> expectedTypes) {
-      LinkedHashSet<PsiClass> processedTypes = new LinkedHashSet<>();
-
+    private static List<ExpectedTypeInfo> processedPatternTypes(@NotNull List<PsiType> expectedTypes, @NotNull PsiSwitchBlock statement) {
+      LinkedHashSet<PsiType> processedTypes = new LinkedHashSet<>();
       for (PsiType type : expectedTypes) {
         PsiClass currentClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (currentClass == null) {
           continue;
         }
-        LinkedHashSet<PsiClass> allSuperClasses = InheritanceUtil.getSuperClasses(currentClass);
+        if (!(type instanceof PsiClassType classType)) {
+          continue;
+        }
+        PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
+        LinkedHashSet<PsiType> allSuperClasses = new LinkedHashSet<>();
+        InheritanceUtil.processSuperTypes(classType, true, nextType -> {
+          PsiClass superClass = PsiUtil.resolveClassInClassTypeOnly(nextType);
+          if (superClass != null) {
+            PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, currentClass, substitutor);
+            PsiType substituted = superClassSubstitutor.substitute(nextType);
+            allSuperClasses.add(substituted);
+          }
+
+          return true;
+        });
         if (processedTypes.isEmpty()) {
           processedTypes = allSuperClasses;
         }
@@ -642,9 +655,13 @@ public final class ExpectedTypesProvider {
       }
 
       List<ExpectedTypeInfo> result = new ArrayList<>();
-      for (PsiClass psiClass : processedTypes) {
-        PsiClassType type = PsiTypesUtil.getClassType(psiClass);
-        result.add(createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE));
+      for (PsiType parent : processedTypes) {
+        result.add(createInfo(parent, ExpectedTypeInfo.TYPE_STRICTLY, parent, TailType.NONE));
+      }
+      //return Object if it is impossible to find common types
+      if (result.isEmpty() && !expectedTypes.isEmpty()) {
+        PsiClassType objectType = TypeUtils.getObjectType(statement);
+        result.add(createInfo(objectType, ExpectedTypeInfo.TYPE_STRICTLY, objectType, TailType.NONE));
       }
       return result;
     }
