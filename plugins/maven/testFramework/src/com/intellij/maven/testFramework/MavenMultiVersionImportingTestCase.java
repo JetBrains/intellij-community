@@ -4,7 +4,9 @@ package com.intellij.maven.testFramework;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -63,13 +65,33 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   protected LanguageLevel getDefaultLanguageLevel() {
-    if (VersionComparatorUtil.compare("3.9.0", myMavenVersion) >= 0) {
-      return LanguageLevel.JDK_1_6;
+    var version = getActualVersion(myMavenVersion);
+    if (VersionComparatorUtil.compare("3.9.0", version) <= 0) {
+      return LanguageLevel.JDK_1_7;
     }
     return LanguageLevel.JDK_1_5;
   }
 
+  protected static String getActualVersion(String version) {
+    if (version.equals("bundled")) {
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
+    }
+    return version;
+  }
+
+  @NotNull
+  protected static String getDefaultPluginVersion(String mavenVersion, String pluginId) {
+    if (pluginId.equals("org.apache.maven:maven-compiler-plugin")) {
+      if (VersionComparatorUtil.compare("3.9.0", getActualVersion(mavenVersion)) >= 0) {
+        return "3.10.1";
+      }
+      return "3.1";
+    }
+    throw new IllegalArgumentException(
+      "this plugin is not configured yet, consider https://youtrack.jetbrains.com/issue/IDEA-313733/create-matrix-of-plugin-levels-for-different-java-versions");
+  }
+
   protected boolean mavenVersionIsOrMoreThan(String version) {
-    return VersionComparatorUtil.compare(version, myMavenVersion) >= 0;
+    return VersionComparatorUtil.compare(version, getActualVersion(myMavenVersion)) <= 0;
   }
 }

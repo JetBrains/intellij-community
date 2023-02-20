@@ -165,7 +165,16 @@ public final class MavenImportUtil {
   public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
     if (plugin != null && plugin.getVersion() != null) {
-      if (VersionComparatorUtil.compare("3.8.1", plugin.getVersion()) <= 0) {
+      //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
+      // consider "source" parameter documentation.
+      // also note, that this are versions of plugin, not maven.
+      if (VersionComparatorUtil.compare("3.11.0", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_8;
+      }
+      if (VersionComparatorUtil.compare("3.9.0", plugin.getVersion()) <= 0) {
+        return LanguageLevel.JDK_1_7;
+      }
+      if (VersionComparatorUtil.compare("3.8.0", plugin.getVersion()) <= 0) {
         return LanguageLevel.JDK_1_6;
       }
       else {
