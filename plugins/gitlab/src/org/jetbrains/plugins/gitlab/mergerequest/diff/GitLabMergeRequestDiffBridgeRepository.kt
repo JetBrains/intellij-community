@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,11 +11,8 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import java.util.concurrent.ConcurrentHashMap
 
-@Service
-class GitLabMergeRequestDiffBridgeRepository(
-  private val project: Project,
-  cs: CoroutineScope
-) {
+@Service(Service.Level.PROJECT)
+class GitLabMergeRequestDiffBridgeRepository(cs: CoroutineScope) {
 
   private val cs = cs.childScope(Dispatchers.Default)
 
@@ -26,7 +22,7 @@ class GitLabMergeRequestDiffBridgeRepository(
     connection.checkIsOpen()
     val id = ModelId(connection.id, connection.repo.repository, GitLabMergeRequestId.Simple(mr))
     return models.getOrPut(id) {
-      GitLabMergeRequestDiffBridgeImpl(project, connection.projectData, mr).also {
+      GitLabMergeRequestDiffBridge().also {
         cs.launch {
           connection.awaitClose()
           models.remove(id)

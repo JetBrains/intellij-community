@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
-import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
-import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
-import com.intellij.diff.requests.LoadingDiffRequest
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
@@ -13,18 +10,11 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.util.cancelOnDispose
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModelImpl
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
@@ -58,29 +48,7 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
       project.serviceIfCreated<GitLabMergeRequestDiffBridgeRepository>()?.get(connection, mergeRequestId)
       ?: error("Missing diff model for $this")
 
-    val job = SupervisorJob()
-    val cs = CoroutineScope(job)
-
-    val reviewVm = GitLabMergeRequestDiffReviewViewModelImpl(cs, connection.currentUser, connection.projectData, mergeRequestId)
-
-    val uiCs = cs.childScope(Dispatchers.Main.immediate)
-    val processor = MutableDiffRequestChainProcessor(project, SimpleDiffRequestChain(LoadingDiffRequest())).apply {
-      putContextUserData(GitLabProjectConnection.KEY, connection)
-      putContextUserData(GitLabMergeRequestDiffReviewViewModel.KEY, reviewVm)
-
-      selectionEventDispatcher.addListener {
-        diffBridge.selectFilePath(it.filePath)
-      }
-    }
-
-    job.cancelOnDispose(processor)
-
-    uiCs.launch(start = CoroutineStart.UNDISPATCHED) {
-      diffBridge.chain.collectLatest {
-        processor.chain = it
-      }
-    }
-    return processor
+    return createMergeRequestDiffRequestProcessor(project, connection, diffBridge, mergeRequestId)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
