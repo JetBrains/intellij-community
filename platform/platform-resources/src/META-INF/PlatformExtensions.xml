@@ -1428,6 +1428,9 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
 
+    <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
+                    serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
+
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
     <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>

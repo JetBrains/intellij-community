@@ -10,6 +10,7 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorInfo;
 import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.idea.LoggerFactory;
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -110,7 +111,7 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
         }
       }
       if (OpenProjectCommand.Companion.shouldOpenInSmartMode(project)) {
-        runScriptAfterDumb(project);
+        runScriptWhenInitializedAndIndexed(project);
       }
       else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
         runScriptDuringIndexing(project);
@@ -363,11 +364,12 @@ public final class ProjectLoaded extends InitProjectActivityJavaShim implements 
     }
   }
 
-  private void runScriptAfterDumb(Project project) {
+  private void runScriptWhenInitializedAndIndexed(Project project) {
     DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(() -> {
       myAlarm.addRequest(Context.current().wrap(() -> {
-        if (DumbService.isDumb(project) || CoreProgressManager.getCurrentIndicators().size() != 0) {
-          runScriptAfterDumb(project);
+        if (DumbService.isDumb(project) || CoreProgressManager.getCurrentIndicators().size() != 0 ||
+            !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished()) {
+          runScriptWhenInitializedAndIndexed(project);
         }
         else {
           runScriptFromFile(project);
