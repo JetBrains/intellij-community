@@ -58,6 +58,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
   public static @Nullable PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(sourcePosition.getFile());
+      if (document == null) return null;
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
         int offset = sourcePosition.getOffset();
@@ -68,6 +69,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
             if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
               return PyPsiUtils.getStatement(element);
             }
+            if (element == null) return null;
             offset = element.getTextRange().getEndOffset();
           }
           while (offset < lineEndOffset);
