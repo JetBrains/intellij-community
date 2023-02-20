@@ -12,6 +12,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -306,4 +308,9 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
         fun data(): Collection<Array<Any>> = SUPPORTED_GRADLE_VERSIONS.map { arrayOf(it) }
     }
+}
+
+fun GradleImportingTestCase.enableExperimentalMPP(enable: Boolean) {
+    //enable experimental MPP features e.g. an import K/JS run tasks
+    (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", enable, testRootDisposable)
 }
