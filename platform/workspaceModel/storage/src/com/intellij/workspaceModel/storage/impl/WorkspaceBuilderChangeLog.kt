@@ -208,6 +208,9 @@ internal fun MutableEntityStorageImpl.getOriginalEntityData(id: EntityId): Works
   }?.clone() ?: this.entityDataByIdOrDie(id).clone()
 }
 
+/**
+ * This returns parents that were attached to the entity prior ANY modification of this entity.
+ */
 internal fun MutableEntityStorageImpl.getOriginalParents(id: ChildEntityId): Map<ConnectionId, ParentEntityId> {
   return this.changeLog.changeLog[id.id]?.let {
     when (it) {

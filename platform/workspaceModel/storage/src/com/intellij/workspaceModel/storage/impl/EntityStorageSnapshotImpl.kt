@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -498,8 +497,6 @@ internal class MutableEntityStorageImpl(
     return EntityStorageSnapshotImpl(newEntities, newRefs, newIndexes)
   }
 
-  @Deprecated("The name may be misleading, use !hasChanges() instead", replaceWith = ReplaceWith("!hasChanges()"))
-  override fun isEmpty(): Boolean = this.changeLog.changeLog.isEmpty()
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
   override fun addDiff(diff: MutableEntityStorage) {
@@ -687,8 +684,9 @@ internal class MutableEntityStorageImpl(
       originalParents: Map<ConnectionId, ParentEntityId>,
     ) {
       val parents = builder.refs.getParentRefsOfChild(entityId.asChild())
-      val unmappedChildren = builder.refs.getChildrenRefsOfParentBy(entityId.asParent())
-      val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
+      val children = builder.refs
+        .getChildrenRefsOfParentBy(entityId.asParent())
+        .flatMap { (key, value) -> value.map { key to it } }
 
       // Collect children changes
       val beforeChildrenSet = beforeChildren.toMutableSet()
@@ -713,7 +711,8 @@ internal class MutableEntityStorageImpl(
       val removedKeys = beforeParents.keys - parents.keys
       removedKeys.forEach { parentsMapRes[it] = null }
 
-      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, originalParents, addedChildren, removedChildren, parentsMapRes)
+      builder.changeLog.addReplaceEvent(entityId, copiedData, originalEntity, originalParents, addedChildren, removedChildren,
+                                        parentsMapRes)
     }
   }
 }
