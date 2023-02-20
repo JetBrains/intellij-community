@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -494,6 +494,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       if (usages == null) {
         return;
       }
+      myHelper.updateFindSettings();
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
           try {
@@ -674,6 +675,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     Runnable updatePreviewRunnable = () -> {
       if (Disposer.isDisposed(myDisposable)) return;
       int[] selectedRows = myResultsPreviewTable.getSelectedRows();
+      if (selectedRows.length > 1 || selectedRows.length == 1 && selectedRows[0] != 0) {
+        myHelper.updateFindSettings();
+      }
+      myReplaceSelectedButton.setEnabled(selectedRows.length > 0);
       List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
       String file = null;
       for (int row : selectedRows) {
