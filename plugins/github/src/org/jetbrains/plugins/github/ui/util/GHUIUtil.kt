@@ -264,6 +264,3 @@ object GHUIUtil {
     return repos.any { it.serverPath != firstServer }
   }
 }
-
-@NlsSafe
-fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()
