@@ -42,8 +42,11 @@ public class FocusWatcher implements ContainerListener, FocusListener {
   }
 
   @Override
-  public final void componentAdded(final ContainerEvent e) {
-    installImpl(e.getChild());
+  public final void componentAdded(ContainerEvent e) {
+    Component component = e.getChild();
+    if (component != null) {
+      installImpl(component);
+    }
   }
 
   @Override
@@ -118,12 +121,15 @@ public class FocusWatcher implements ContainerListener, FocusListener {
     installImpl(component);
   }
 
-  private void installImpl(Component component) {
+  private void installImpl(@NotNull Component component) {
     if (component instanceof Container container) {
       synchronized (container.getTreeLock()) {
         int componentCount = container.getComponentCount();
         for (int i = 0; i < componentCount; i++) {
-          installImpl(container.getComponent(i));
+          Component child = container.getComponent(i);
+          if (child != null) {
+            installImpl(child);
+          };
         }
         container.addContainerListener(this);
       }
