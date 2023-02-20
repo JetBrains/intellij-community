@@ -31,7 +31,13 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
   override fun setNewUIInternal(newUI: Boolean) {
     if (newUI) {
       val propertyComponent = PropertiesComponent.getInstance()
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
+      if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
+        propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
+      }
+      else {
+        propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
+        propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
+      }
     }
 
     newValue = newUI
