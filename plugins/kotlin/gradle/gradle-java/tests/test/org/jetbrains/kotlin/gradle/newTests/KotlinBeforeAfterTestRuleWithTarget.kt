@@ -5,7 +5,10 @@ import org.junit.rules.MethodRule
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.Statement
 
-
+/**
+ * Similar to [org.junit.rules.ExternalResource], but additionally passes test-instance to
+ * [before] and [after].
+ */
 interface KotlinBeforeAfterTestRuleWithTarget : MethodRule {
     override fun apply(base: Statement, method: FrameworkMethod, target: Any): Statement {
         return object : Statement() {
