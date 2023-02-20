@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -62,14 +62,6 @@ public final class ReplaceInProjectManager {
 
   public ReplaceInProjectManager(Project project) {
     myProject = project;
-  }
-
-  private static boolean hasReadOnlyUsages(final Collection<? extends Usage> usages) {
-    for (Usage usage : usages) {
-      if (usage.isReadOnly()) return true;
-    }
-
-    return false;
   }
 
   static class ReplaceContext {
@@ -316,10 +308,6 @@ public final class ReplaceInProjectManager {
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<? extends Usage> usages) {
-    if (!ensureUsagesWritable(replaceContext, usages)) {
-      return true;
-    }
-
     int[] replacedCount = {0};
     boolean[] success = {true};
     boolean result = ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
@@ -378,10 +366,12 @@ public final class ReplaceInProjectManager {
     }
   }
 
-  public boolean replaceUsage(@NotNull final Usage usage,
-                              @NotNull final FindModel findModel,
-                              @NotNull final Set<Usage> excludedSet,
-                              final boolean justCheck)
+  public boolean replaceSingleUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet)
+    throws FindManager.MalformedReplacementStringException {
+    return ensureUsagesWritable(Collections.singleton(usage)) && replaceUsage(usage, findModel, excludedSet, false);
+  }
+
+  public boolean replaceUsage(@NotNull Usage usage, @NotNull FindModel findModel, @NotNull Set<Usage> excludedSet, boolean justCheck)
     throws FindManager.MalformedReplacementStringException {
     final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
     final boolean result = WriteAction.compute(() -> {
@@ -451,44 +441,28 @@ public final class ReplaceInProjectManager {
     final List<Usage> usages = new ArrayList<>(usagesSet);
     usages.sort(UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET);
 
-    if (!ensureUsagesWritable(replaceContext, usages)) return;
+    if (!ensureUsagesWritable(usages)) return;
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final boolean success = replaceUsages(replaceContext, usages);
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true));
     }, FindBundle.message("find.replace.command"), null);
 
     replaceContext.invalidateExcludedSetCache();
   }
 
-  private boolean ensureUsagesWritable(ReplaceContext replaceContext, Collection<? extends Usage> selectedUsages) {
-    Set<VirtualFile> readOnlyFiles = null;
-    for (final Usage usage : selectedUsages) {
+  private boolean ensureUsagesWritable(Collection<? extends Usage> selectedUsages) {
+    Set<VirtualFile> files = new HashSet<>();
+    for (Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();
-
-      if (file != null && !file.isWritable()) {
-        if (readOnlyFiles == null) readOnlyFiles = new HashSet<>();
-        readOnlyFiles.add(file);
-      }
+      files.add(file);
     }
 
-    if (readOnlyFiles != null) {
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(readOnlyFiles);
-    }
-
-    if (hasReadOnlyUsages(selectedUsages)) {
-      int result = Messages.showOkCancelDialog(replaceContext.getUsageView().getComponent(),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.prompt"),
-                                               FindBundle.message("find.replace.occurrences.in.read.only.files.title"),
-                                               Messages.getWarningIcon());
-      if (result != Messages.OK) {
-        return false;
-      }
-    }
-    return true;
+    return !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files).hasReadonlyFiles();
   }
 
   private boolean closeUsageViewIfEmpty(UsageView usageView, boolean success) {

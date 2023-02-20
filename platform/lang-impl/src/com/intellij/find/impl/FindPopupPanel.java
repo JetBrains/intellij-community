@@ -498,7 +498,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
           try {
-            ReplaceInProjectManager.getInstance(myProject).replaceUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet(), false);
+            boolean success = ReplaceInProjectManager.getInstance(myProject)
+              .replaceSingleUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet());
+            if (!success) return;
             ((DefaultTableModel)myResultsPreviewTable.getModel()).removeRow(entry.getKey());
           }
           catch (FindManager.MalformedReplacementStringException ex) {
@@ -988,6 +990,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       if (validateModel.isReplaceState() &&
           !openInFindWindow &&
           myResultsPreviewTable.getRowCount() > 1 &&
+          !"1".equals(myFilesCount) &&
           !ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
             getStringToFind(),
