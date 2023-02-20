@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -321,11 +321,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       touchbarActions.add(new NextOccurrenceAction());
       Touchbar.setActions(this, touchbarActions);
     }
-  }
-
-  public void resetUndoRedoActions() {
-    SwingUndoUtil.resetUndoRedoActions(mySearchTextComponent);
-    SwingUndoUtil.resetUndoRedoActions(myReplaceTextComponent);
   }
 
   @Override

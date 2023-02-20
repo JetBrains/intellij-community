@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.BundleBase;
@@ -422,13 +421,11 @@ public class EditorSearchSession implements SearchSession,
   @Override
   public void searchForward() {
     moveCursor(SearchResults.Direction.DOWN);
-    addTextToRecent(myComponent.getSearchTextComponent());
   }
 
   @Override
   public void searchBackward() {
     moveCursor(SearchResults.Direction.UP);
-    addTextToRecent(myComponent.getSearchTextComponent());
   }
 
   public boolean isLast(boolean forward) {
@@ -499,6 +496,8 @@ public class EditorSearchSession implements SearchSession,
   private void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
       try {
+        addTextToRecent(myComponent.getSearchTextComponent());
+        addTextToRecent(myComponent.getReplaceTextComponent());
         myLivePreviewController.performReplace();
       }
       catch (FindManager.MalformedReplacementStringException e) {
@@ -528,6 +527,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   private void moveCursor(SearchResults.Direction direction) {
+    addTextToRecent(myComponent.getSearchTextComponent());
     myLivePreviewController.moveCursor(direction);
   }
 
@@ -649,11 +649,6 @@ public class EditorSearchSession implements SearchSession,
     mySearchResults.nextOccurrence(true);
   }
 
-  public void clearUndoInTextFields() {
-    myComponent.resetUndoRedoActions();
-  }
-
-
   private abstract static class ButtonAction extends DumbAwareAction implements CustomComponentAction, ActionListener {
     private final @NlsActions.ActionText String myTitle;
     private final char myMnemonic;
@@ -738,6 +733,8 @@ public class EditorSearchSession implements SearchSession,
 
     @Override
     protected void onClick() {
+      addTextToRecent(myComponent.getSearchTextComponent());
+      addTextToRecent(myComponent.getReplaceTextComponent());
       myLivePreviewController.performReplaceAll();
     }
   }
