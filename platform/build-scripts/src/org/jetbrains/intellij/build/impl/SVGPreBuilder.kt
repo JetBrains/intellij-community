@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.DistFile
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.nio.file.Files
 import java.nio.file.Path
@@ -65,7 +66,10 @@ private suspend fun runSvgTool(context: BuildContext, svgToolClasspath: List<Str
       }
 
       found = true
-      context.addDistFile(DistFile(file = file, relativePath = "bin/icons/${file.fileName}"))
+      val filename = file.fileName.toString()
+      context.addDistFile(DistFile(file = file,
+                                   relativePath = "bin/icons/${filename}",
+                                   os = if (filename.contains("-1.5") || filename.contains("-1.25")) OsFamily.WINDOWS else null))
     }
 
     check(found) {
