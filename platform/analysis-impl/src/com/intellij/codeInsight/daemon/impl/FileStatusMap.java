@@ -284,6 +284,17 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  public String toString(@NotNull Document document) {
+    synchronized (myDocumentToStatusMap) {
+      if (myDocumentToStatusMap.containsKey(document)) {
+        return myDocumentToStatusMap.get(document).toString();
+      }
+      else {
+        return "";
+      }
+    }
+  }
+
   @TestOnly
   public void assertAllDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
