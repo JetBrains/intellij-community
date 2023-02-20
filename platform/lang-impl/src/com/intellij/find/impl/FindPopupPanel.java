@@ -719,7 +719,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
-      myPreviewUpdater.addRequest(updatePreviewRunnable, 50); //todo[vasya]: remove this dirty hack of updating preview panel after clicking on Replace button
+      myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
@@ -1056,7 +1056,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     header.titleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
-    myOKButton.setText(FindBundle.message("find.popup.find.button"));
     myReplaceAllButton.setVisible(isReplaceState);
     myReplaceSelectedButton.setVisible(isReplaceState);
   }
@@ -1133,6 +1132,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
+    myOKButton.setEnabled(result == null);
     myComponentValidator.updateInfo(result);
 
     ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase() {
