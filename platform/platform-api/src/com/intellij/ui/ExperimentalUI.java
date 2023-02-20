@@ -61,10 +61,10 @@ public abstract class ExperimentalUI {
   }
 
   public static void setNewUI(boolean newUI) {
-    getInstance().setNewUIInternal(newUI);
+    getInstance().setNewUIInternal(newUI, true);
   }
 
-  protected void setNewUIInternal(boolean newUI) {
+  public void setNewUIInternal(boolean newUI, boolean suggestRestart) {
 
   }
 

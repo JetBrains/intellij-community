@@ -28,7 +28,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 
-  override fun setNewUIInternal(newUI: Boolean) {
+  override fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
     if (newUI) {
       val propertyComponent = PropertiesComponent.getInstance()
       if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
@@ -42,7 +42,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
 
     newValue = newUI
 
-    if (newValue != isNewUI()) {
+    if (newValue != isNewUI() && suggestRestart) {
       ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
     }
   }
