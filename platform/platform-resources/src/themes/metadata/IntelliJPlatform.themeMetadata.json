@@ -395,7 +395,12 @@
     },
     {
       "key": "EditorTabs.unselectedAlpha",
-      "description": "The alpha coefficient (0..1) that is used to paint file icon and blend label foreground if the tab is not selected and not hovered",
+      "description": "The alpha coefficient (0..1) that is used to paint file icon if the tab is not selected and not hovered",
+      "since": "2023.1"
+    },
+    {
+      "key": "EditorTabs.unselectedBlend",
+      "description": "The blending coefficient (0..1) that is used to edit the foreground of the tab label if the tab is not selected and not hovered",
       "since": "2023.1"
     },
     {
