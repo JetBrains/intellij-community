@@ -16,7 +16,9 @@
 package com.intellij.html.impl.providers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HtmlAttributeValueProvider {
@@ -27,9 +29,18 @@ public class HtmlAttributeValueProvider {
    * Calculates attribute value. Used when it is impossible to get attribute value as text of PSI element
    * @return calculated value
    */
-  @Nullable
-  public String getCustomAttributeValues(final XmlTag tag, final String attributeName) {
+  public @Nullable String getCustomAttributeValues(@NotNull XmlTag tag, @NotNull String attributeName) {
     return null;
   }
+
+  /**
+   * Allows to provide an attribute value from a different non-standard attribute to work with in place of a regular one.
+   * It is useful in frameworks, e.g. to provide a directive attribute value instead of {@code src} attribute of {@code <img>} tag.
+   * @return a custom attribute to use instead of a standard one
+   */
+  public @Nullable PsiElement getCustomAttributeValue(@NotNull XmlTag tag, @NotNull String attributeName) {
+    return null;
+  }
+
 }
 
