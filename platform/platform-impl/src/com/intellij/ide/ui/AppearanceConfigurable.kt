@@ -10,6 +10,8 @@ import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
@@ -170,6 +172,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
+                logIdeZoomChanged(scale, false)
                 resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
                 settings.fireUISettingsChanged()
@@ -463,6 +466,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               if (IdeScaleTransformer.Settings.validatePresentationModePercentScaleInput(it.item) != null) return@onChanged
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, true)?.let { scale ->
+                logIdeZoomChanged(scale, true)
                 settings.presentationModeIdeScale = scale
                 if (settings.presentationMode) {
                   settings.fireUISettingsChanged()
@@ -545,4 +549,16 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
 
     text = value.presentableName
   }
+}
+
+private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
+  val oldScale = if (isPresentation) settings.presentationModeIdeScale else settings.ideScale
+
+  IdeZoomChanged.log(
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > oldScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+                                     else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
+    IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SETTINGS),
+    IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
+    IdeZoomEventFields.presentationMode.with(isPresentation)
+  )
 }

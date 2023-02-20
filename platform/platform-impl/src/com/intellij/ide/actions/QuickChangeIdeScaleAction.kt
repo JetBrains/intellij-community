@@ -5,6 +5,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentStringValue
 import com.intellij.ide.ui.percentValue
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
+import com.intellij.internal.statistic.service.fus.collectors.IdeZoomSwitcherClosed
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -64,7 +67,8 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
         switchAlarm.cancelAllRequests()
         listPopup = null
         if (!event.isOk) {
-          applyScale(initialScale)
+          applyScale(initialScale, false)
+          logSwitcherClosed(false)
         }
       }
     })
@@ -76,8 +80,9 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == initialScale.percentValue }
   }
 
-  private fun applyScale(scale: Float) {
+  private fun applyScale(scale: Float, shouldLog: Boolean = true) {
     if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
+    if (shouldLog) logIdeZoomChanged(scale)
 
     UISettingsUtils.instance.setCurrentIdeScale(scale)
     UISettings.getInstance().fireUISettingsChanged()
@@ -92,13 +97,33 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     override fun actionPerformed(e: AnActionEvent) {
       val utils = UISettingsUtils.instance
       if (utils.currentIdeScale.percentValue != scale.percentValue) {
+        logIdeZoomChanged(scale)
         utils.setCurrentIdeScale(scale)
         UISettings.getInstance().fireUISettingsChanged()
       }
+      logSwitcherClosed(true)
     }
   }
 
   companion object {
     private const val SELECTION_THROTTLING_MS = 500
   }
+}
+
+private fun logIdeZoomChanged(value: Float) {
+  IdeZoomChanged.log(
+    IdeZoomEventFields.zoomMode.with(if (value.percentValue > UISettingsUtils.instance.currentIdeScale.percentValue) IdeZoomEventFields.ZoomMode.ZOOM_IN
+                                     else IdeZoomEventFields.ZoomMode.ZOOM_OUT),
+    IdeZoomEventFields.place.with(IdeZoomEventFields.Place.SWITCHER),
+    IdeZoomEventFields.zoomScalePercent.with(value.percentValue),
+    IdeZoomEventFields.presentationMode.with(UISettings.getInstance().presentationMode)
+  )
+}
+
+private fun logSwitcherClosed(applied: Boolean) {
+  IdeZoomSwitcherClosed.log(
+    IdeZoomEventFields.applied.with(applied),
+    IdeZoomEventFields.finalZoomScalePercent.with(UISettingsUtils.instance.currentIdeScale.percentValue),
+    IdeZoomEventFields.presentationMode.with(UISettings.getInstance().presentationMode)
+  )
 }
