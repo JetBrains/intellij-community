@@ -1,10 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.debug;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonRunConfiguration;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+
+import static com.jetbrains.python.debugger.PyDebugSupportUtils.ASYNCIO_ENV;
 
 public class PythonDebuggerAsyncioTest extends PyEnvTestCase {
 
@@ -33,9 +40,16 @@ public class PythonDebuggerAsyncioTest extends PyEnvTestCase {
 
     private final TestCase myTestCase;
 
-    private AsyncioPyDebuggerTask(TestCase testCase) {
-      super(RELATIVE_PATH, SCRIPT_NAME);
+    private AsyncioPyDebuggerTask(TestCase testCase, String scriptName) {
+      super(RELATIVE_PATH, scriptName);
       myTestCase = testCase;
+    }
+
+    @Override
+    protected AbstractPythonRunConfiguration createRunConfiguration(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+      PythonRunConfiguration runConfiguration = (PythonRunConfiguration)super.createRunConfiguration(sdkHome, existingSdk);
+      runConfiguration.getEnvs().put(ASYNCIO_ENV, "True");
+      return runConfiguration;
     }
 
     protected void testConsole() throws Exception {
@@ -88,60 +102,65 @@ public class PythonDebuggerAsyncioTest extends PyEnvTestCase {
       }
       setWaitForTermination(false);
     }
+
+    @Override
+    public void after() throws Exception {
+      getRunConfiguration().getEnvs().remove(ASYNCIO_ENV);
+    }
   }
 
   @EnvTestTagsRequired(tags = "python3.8")
   @Test
   public void testAsyncioConsole38() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.9")
   @Test
   public void testAsyncioConsole39() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.10")
   @Test
   public void testAsyncioConsole310() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.CONSOLE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
 
   @EnvTestTagsRequired(tags = "python3.8")
   @Test
   public void testAsyncioEvaluate38() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.9")
   @Test
   public void testAsyncioEvaluate39() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.10")
   @Test
   public void testAsyncioEvaluate310() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.EVALUATE, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.8")
   @Test
   public void testAsyncioBreakpoint38() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.9")
   @Test
   public void testAsyncioBreakpoint39() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 
   @EnvTestTagsRequired(tags = "python3.10")
   @Test
   public void testAsyncioBreakpoint310() {
-    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT));
+    runPythonTest(new AsyncioPyDebuggerTask(TestCase.BREAKPOINT, AsyncioPyDebuggerTask.SCRIPT_NAME));
   }
 }
