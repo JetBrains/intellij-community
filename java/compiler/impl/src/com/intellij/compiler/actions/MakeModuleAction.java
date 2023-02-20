@@ -86,6 +86,7 @@ public class MakeModuleAction extends CompileActionBase {
       }
     }
     presentation.setText(presentationText);
-    presentation.setEnabledAndVisible(isEnabled);
+    presentation.setEnabled(isEnabled);
+    presentation.setVisible(isEnabled || !ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()));
   }
 }
