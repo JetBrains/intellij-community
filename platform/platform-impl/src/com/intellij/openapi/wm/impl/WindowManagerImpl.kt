@@ -81,7 +81,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosing(project: Project) {
+      override fun projectClosed(project: Project) {
         getFrameHelper(project)?.let {
           releaseFrame(it)
         }
@@ -273,6 +273,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     if (project != null) {
       projectToFrame.remove(project)
       if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
+        releasedFrameHelper.storeStateForReuse()
         frameToReuse.set(releasedFrameHelper.frame)
         releasedFrameHelper.frame.doSetRootPane(null)
         releasedFrameHelper.frame.setFrameHelper(null)
