@@ -426,6 +426,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           continue;
         }
 
+        String enabled = comment.readValue("Enabled");
+        if (enabled != null) {
+          breakpoint.getXBreakpoint().setEnabled(Boolean.parseBoolean(enabled));
+          systemPrintln("Enabled = " + enabled);
+        }
+
         String suspendPolicy = comment.readValue("suspendPolicy");
         if (suspendPolicy != null) {
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));

@@ -535,6 +535,11 @@ public class BreakpointManager {
       return;
     }
     requestManager.setFilterThread(newFilterThread);
+
+    if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
+      return;
+    }
+
     EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
     if (DebuggerUtilsAsync.isAsyncEnabled() && eventRequestManager instanceof EventRequestManagerImpl) {
       Stream<EventRequestManagerImpl.ThreadVisibleEventRequestImpl> requests =

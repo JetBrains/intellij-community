@@ -761,6 +761,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return Registry.is("debugger.enable.breakpoints.during.evaluation");
   }
 
+  public static boolean filterBreakpointsDuringSteppingUsingDebuggerEngine() {
+    return Registry.is("debugger.filter.breakpoints.during.stepping.using.debugger.engine");
+  }
+
   public void sessionResumed() {
     XDebugSession session = getXDebugSession();
     if (session != null) session.sessionResumed();
