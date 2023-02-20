@@ -309,9 +309,10 @@ final class MavenServerManagerImpl implements MavenServerManager {
         myIndexerWrapper = null;
         return connector;
       }
-      if (!myMultimoduleDirToConnectorMap.values().remove(connector)) {
+      if (!myMultimoduleDirToConnectorMap.containsValue(connector)) {
         return null;
       }
+      myMultimoduleDirToConnectorMap.entrySet().removeIf(e -> e.getValue() == connector);
     }
     return connector;
   }
