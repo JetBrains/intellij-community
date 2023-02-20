@@ -24,19 +24,14 @@ public interface ProjectInitializationDiagnosticService {
     return project.getService(ProjectInitializationDiagnosticService.class);
   }
 
+  @NotNull
+  static ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
+    return getInstance(project).registerBeginningOfInitializationActivity(() -> debugActivityName);
+  }
+
   ActivityTracker registerBeginningOfInitializationActivity(@NotNull Supplier<@NotNull @NlsSafe String> debugMessageProducer);
 
   boolean isProjectInitializationAndIndexingFinished();
-
-  default void runInitializationActivity(@NotNull Supplier<@NotNull @NlsSafe String> debugMessageProducer, @NotNull Runnable activity) {
-    ActivityTracker lock = registerBeginningOfInitializationActivity(debugMessageProducer);
-    try {
-      activity.run();
-    }
-    finally {
-      lock.activityFinished();
-    }
-  }
 
   interface ActivityTracker {
     void activityFinished();
