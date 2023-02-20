@@ -39,7 +39,7 @@ abstract class FileReportGenerator(
         createHead(this, reportTitle, resourcePath)
       }
       body {
-        headerTitle(reportTitle)
+        h1 { +reportTitle }
         unsafe {
           +getHtml(
             sessions.sortedBy { it.evaluationType },
@@ -51,10 +51,6 @@ abstract class FileReportGenerator(
       }
     }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
     reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
-  }
-
-  open fun BODY.headerTitle(reportTitle: String) {
-    h1 { +reportTitle }
   }
 
   open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {

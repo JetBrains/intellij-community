@@ -25,26 +25,16 @@ class CompletionGolfFileReportGenerator(
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
-  override fun BODY.headerTitle(reportTitle: String) {
-    a(classes = "v2-switcher") {
-      onClick = "enableV2()"
-      button {
-        type = ButtonType.button
-        +"v2"
-      }
-    }
-  }
-
   override fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) {
     super.createHead(head, reportTitle, resourcePath)
     with(head) {
       script {
         type = "module"
-        src = "../res/index.js?v=" + System.currentTimeMillis()
+        src = "../res/index-v2.js?v=" + System.currentTimeMillis()
       }
       link {
         rel = "stylesheet"
-        href = "../res/index.css?v=" + System.currentTimeMillis()
+        href = "../res/index-v2.css?v=" + System.currentTimeMillis()
       }
     }
   }
@@ -54,6 +44,15 @@ class CompletionGolfFileReportGenerator(
       div("cg") {
         div {
           style = "display: flex; gap: 12px;"
+          div {
+            a(classes = "v2-switcher") {
+              onClick = "enableV2()"
+              button {
+                type = ButtonType.button
+                +"v2 view"
+              }
+            }
+          }
           div {
             label("labelText") { +"With delimiter:" }
             select("delimiter-pick") {
