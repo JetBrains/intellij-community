@@ -11,10 +11,12 @@ import org.jetbrains.kotlin.gradle.newTests.writeAccess
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 
-object DevModeTestFeature : TestFeature<DevModeTweaksImpl>  {
-    override fun createDefaultConfiguration(): DevModeTweaksImpl = DevModeTweaksImpl()
-}
-
+/**
+ * Provides `dev`-block with assorted utilities for **local** development.
+ *
+ * Those tweaks are not supposed to be run on CI, usually. Use `dev(allowOnTeamcity = true) { ... }`
+ * if you know what you're doing.
+ */
 interface DevModeTweaks {
     /**
      * If non-null, the preprocessed test project (with all TestProperties substituted with actual values)
@@ -28,8 +30,11 @@ interface DevModeTweaks {
      *
      * NB: if you use dev { ... } block to configure this in test, test name won't be changed
      * (impossible to do because test name has to be determined before test started).
+     *
      * If you want overridden version to be displayed in the test name, overwrite default values
      * in [DevModeTweaksImpl]
+     * Note that overwriting default values **will fail CI-runs** because of irreconcilable incompatibilities
+     * with how test runs are organized on the CI
      */
     var overrideGradleVersion: GradleVersionTestsProperty.Value?
     var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Value?
@@ -39,6 +44,10 @@ interface DevModeTweaks {
      * Launches Gradle Daemon with suspend option, listening for debugger connection on [port]
      */
     fun enableGradleDebugWithSuspend(port: Int = 5005)
+}
+
+object DevModeTestFeature : TestFeature<DevModeTweaksImpl>  {
+    override fun createDefaultConfiguration(): DevModeTweaksImpl = DevModeTweaksImpl()
 }
 
 class DevModeTweaksImpl : DevModeTweaks {

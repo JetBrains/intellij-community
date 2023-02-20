@@ -10,7 +10,7 @@ class OrderEntriesChecksConfiguration {
     var hideKonanDist: Boolean = false
 
     /**
-     * Enables or disabled sorting of dependencies (based on the lexicographical order of their
+     * Enables or disables sorting of dependencies (based on the lexicographical order of their
      * string representation)
      *
      * This is technically incorrect, because dependencies order matters in general case. However,
