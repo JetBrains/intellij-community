@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -39,8 +37,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsClass() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests"""",
             runReadActionAndWait {
@@ -65,8 +62,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun testForJsMethod() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests.jsTest"""",
             runReadActionAndWait {
@@ -91,8 +87,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsPackage() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
             runReadActionAndWait {
@@ -118,8 +113,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsDirectory() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {
@@ -147,8 +141,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsModule() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {

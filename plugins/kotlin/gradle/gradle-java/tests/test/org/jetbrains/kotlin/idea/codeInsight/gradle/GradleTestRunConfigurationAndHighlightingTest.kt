@@ -23,8 +23,7 @@ import java.io.File
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
     fun testExpectClassWithTests() {
-        //enable experimental MPP features to import K/JS run tasks
-        (AdvancedSettings.getInstance() as AdvancedSettingsImpl).setSetting("kotlin.mpp.experimental", true, testRootDisposable)
+        enableExperimentalMPP(true)
         doTest()
     }
 
