@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.HtmlSettings;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -232,11 +233,17 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   }
 
   static boolean isHtmlElementInTextCompletionEnabledForFile(@NotNull PsiFile file) {
-    return HtmlInTextCompletionEnabler.EP_NAME.getExtensionList().stream().anyMatch(enabler -> enabler.isEnabledInFile(file));
+    return ContainerUtil.exists(HtmlInTextCompletionEnabler.EP_NAME.getExtensionList(), enabler -> enabler.isEnabledInFile(file));
+  }
+
+  static boolean isHtmlElementInTextCompletionAutoPopupEnabledForFile(@NotNull PsiFile file) {
+    return HtmlSettings.getInstance().AUTO_POPUP_TAG_CODE_COMPLETION_ON_TYPING_IN_TEXT
+           && isHtmlElementInTextCompletionEnabledForFile(file);
   }
 
   private static boolean isDeselectingFirstPopupItemDisabled(@NotNull PsiElement element) {
-    return ContainerUtil.exists(HtmlInTextCompletionPopupExtension.EP_NAME.getExtensionList(), ext -> ext.isDeselectingFirstItemDisabled(element));
+    return ContainerUtil.exists(HtmlInTextCompletionPopupExtension.EP_NAME.getExtensionList(),
+                                ext -> ext.isDeselectingFirstItemDisabled(element));
   }
 
   private static CompletionSorter withoutLiveTemplatesWeigher(@Nullable CompletionSorter sorter,
