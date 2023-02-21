@@ -36,7 +36,7 @@ import java.util.Objects;
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class DelegatingPsiElementWithSymbolPointer implements PsiElement {
+public class DelegatingPsiElementWithSymbolPointer implements PsiElement, SyntheticElement {
   private final @NotNull PsiElement myDeclarationElement;
   private final @NotNull Pointer<? extends Symbol> mySymbolPointer;
 
