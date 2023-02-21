@@ -25,7 +25,6 @@ import java.util.function.Predicate;
 
 /**
  * User: ktisha
- *
  * Common part for type specifying intentions
  */
 public abstract class TypeIntention extends PyBaseIntentionAction {
@@ -112,9 +111,13 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
                             .select(PyFunction.class);
     }
     final ProjectFileIndex index = ProjectFileIndex.getInstance(elementAt.getProject());
-    return definitions.filter(elem -> !index.isInLibraryClasses(elem.getContainingFile().getVirtualFile()))
-                      .filter(extraCondition)
-                      .toList();
+    return definitions
+      .filter(elem -> {
+        VirtualFile dir = elem.getContainingFile().getOriginalFile().getVirtualFile();
+        return dir != null && !index.isInLibraryClasses(dir);
+      })
+      .filter(extraCondition)
+      .toList();
   }
 
   @Nullable
