@@ -6,6 +6,7 @@ val mermaidVersion: String by project
 
 dependencies {
   implementation(kotlin("stdlib-js"))
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
   implementation(npm("mermaid", version = mermaidVersion))
   // Use last external mindmap package, so we can maintain its definition in code.
   // This dependency is not actually present in the resulting bundle.

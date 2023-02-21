@@ -1,8 +1,6 @@
 package com.intellij.mermaid.jcef
 
-import com.intellij.mermaid.api.Mermaid
-import com.intellij.mermaid.api.MermaidApi
-import com.intellij.mermaid.api.renderAsync
+import com.intellij.mermaid.api.*
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
 import kotlinx.coroutines.await
@@ -15,12 +13,6 @@ import org.w3c.dom.parsing.XMLSerializer
 
 val nodeToLastValidHtml = mutableMapOf<Element, String>()
 
-private suspend fun MermaidApi.render(id: String, text: String): Result<String?> {
-  return runCatching {
-    Mermaid.api.renderAsync(id, text).await()
-  }
-}
-
 private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
   val blockParent = block.findCodeBlockContainer()
   val lastValidRenderResult = nodeToLastValidHtml[blockParent] ?: ""
@@ -32,24 +24,19 @@ private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
 
 suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): Node? {
   val id = "mermaid-generated-$cacheId"
-  val renderResult = Mermaid.api.render(id, content)
-  val svg = renderResult.getOrNull()
-  if (svg == null) {
-    val exception = renderResult.exceptionOrNull()
-    if (exception == null) {
-      console.error("Failed to generate block without exception for\n$content")
-      return null
-    }
+  try {
+    val renderResult = Mermaid.api.render(id, content).await()
+    renderResult.appendTo(block)
+    val node = block.findSvgElement()
+    checkNotNull(node) { "Failed to find svg node after append" }
+    addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
+    nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
+    return node
+  } catch (exception: Throwable) {
     console.error("Error while generating blocks:\n", exception)
     handleFailedRender(block, exception)
-    return null
   }
-  block.innerHTML = svg
-  val node = block.findSvgElement()
-  checkNotNull(node) { "Failed to find svg node after append" }
-  addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
-  nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
-  return node
+  return null
 }
 
 private fun HTMLElement.findSvgElement(): Element? {
