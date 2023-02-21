@@ -839,8 +839,8 @@ private class JUnitMalformedSignatureVisitor(
     private fun isApplicable(element: UElement): Boolean {
       if (!ignoreOnRunWith) {
         val containingClass = element.getContainingUClass()?.javaPsi ?: return false
-        if (AnnotationUtil.isAnnotated(containingClass, ORG_JUNIT_RUNNER_RUN_WITH, CHECK_HIERARCHY)) {
-          val annotation = containingClass.getAnnotation(ORG_JUNIT_RUNNER_RUN_WITH)!!
+        val annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, setOf(ORG_JUNIT_RUNNER_RUN_WITH))
+        if (annotation != null) {
           val runnerType = annotation.findAttributeValue("value")
             .toUElement()?.asSafely<UClassLiteralExpression>()
             ?.type ?: return false
