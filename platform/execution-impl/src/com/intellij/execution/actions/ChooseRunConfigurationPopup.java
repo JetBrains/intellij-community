@@ -200,7 +200,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, ExecutionBundle.message("dialog.title.edit.configuration.settings"), executor)) {
       RunManager.getInstance(project).setSelectedConfiguration(configuration);
-      ExecutionUtil.runConfiguration(configuration, executor);
+      ExecutorRegistryImpl.RunnerHelper.run(project, configuration.getConfiguration(), configuration, DataContext.EMPTY_CONTEXT, executor);
     }
   }
 
@@ -389,7 +389,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
           if (!manager.isRiderRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
-          ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
+          ExecutorRegistryImpl.RunnerHelper.run(project, settings.getConfiguration(), settings, context, executor);
         }
 
         @Override
@@ -415,7 +415,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public boolean available(@NotNull Executor executor) {
           RunnerAndConfigurationSettings value = getValue();
-          return value != null && ProgramRunner.getRunner(executor.getId(), value.getConfiguration()) != null;
+          return value != null && ExecutorRegistryImpl.RunnerHelper.canRun(project, executor, settings.getConfiguration());
         }
 
         @Override
@@ -625,8 +625,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
       for (final Executor executor : allExecutors) {
-        final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
-        if (runner != null) {
+        if (ExecutorRegistryImpl.RunnerHelper.canRun(project, executor, settings.getConfiguration())) {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
             @Override
             public void perform() {
@@ -635,7 +634,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                 manager.setTemporaryConfiguration(settings);
               }
               if (!manager.isRiderRunWidgetActive()) manager.setSelectedConfiguration(settings);
-              ExecutionUtil.runConfiguration(settings, executor);
+              ExecutorRegistryImpl.RunnerHelper.run(project, settings.getConfiguration(), settings, DataContext.EMPTY_CONTEXT, executor);
             }
           });
           isFirst = false;
