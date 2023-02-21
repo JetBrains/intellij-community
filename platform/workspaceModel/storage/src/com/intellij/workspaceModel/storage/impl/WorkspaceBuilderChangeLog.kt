@@ -32,6 +32,10 @@ class WorkspaceBuilderChangeLog {
     addReplaceDataEvent(entityId, copiedData, originalEntity, incModificationCounter = false)
   }
 
+  /**
+   * This function adds replace event that represents changes in references between entities (without change of data)
+   * Use [addReplaceDataEvent] to record changes in data inside the entity
+   */
   internal fun addReplaceReferencesEvent(
     entityId: EntityId,
     originalParents: Map<ConnectionId, ParentEntityId>,
@@ -103,6 +107,10 @@ class WorkspaceBuilderChangeLog {
     }
   }
 
+  /**
+   * This function adds replace event that represents changes in data only (without changes in references between entities)
+   * Use [addReplaceReferencesEvent] to record changes in related entities
+   */
   internal fun addReplaceDataEvent(
     entityId: EntityId,
     copiedData: WorkspaceEntityData<out WorkspaceEntity>,
