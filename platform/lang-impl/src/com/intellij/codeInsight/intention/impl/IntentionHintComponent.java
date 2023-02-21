@@ -375,7 +375,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (textColumn == -1) return false;
 
       int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
-      return textX > NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconWidth() + NORMAL_BORDER_SIZE;
+      int iconWidth = EmptyIcon.ICON_16.getIconWidth();
+      return textX > NORMAL_BORDER_SIZE + iconWidth + iconWidth + NORMAL_BORDER_SIZE;
     }
   }
 
