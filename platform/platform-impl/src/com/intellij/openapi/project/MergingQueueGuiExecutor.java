@@ -84,7 +84,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
   private final Project myProject;
   private final MergingTaskQueue<T> myTaskQueue;
-  private final AtomicBoolean isRunning = new AtomicBoolean(false);
+  private final SingleTaskExecutor mySingleTaskExecutor;
   private final AtomicBoolean mySuspended = new AtomicBoolean();
   private final ExecutorStateListener myListener;
   private final MergingQueueGuiSuspender myGuiSuspender = new MergingQueueGuiSuspender();
@@ -103,6 +103,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     myListener = new SafeExecutorStateListenerWrapper(listener);
     myProgressTitle = progressTitle;
     mySuspendedText = suspendedText;
+    mySingleTaskExecutor = new SingleTaskExecutor(visibleIndicator -> {
+      runWithCallbacks(() -> runBackgroundProcessWithSuspender(visibleIndicator));
+    });
   }
 
   protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
@@ -113,6 +116,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
         if (myProject.isDisposed()) break;
         if (mySuspended.get()) break;
 
+        mySingleTaskExecutor.clearScheduledFlag(); // reset the flag before peeking the following task
         try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
           if (task == null) break;
 
@@ -138,26 +142,30 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   public final void startBackgroundProcess() {
     if (mySuspended.get()) return;
 
-    try {
-      backgroundTasksSubmitted.incrementAndGet();
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myProgressTitle, false) {
-        @Override
-        public void run(final @NotNull ProgressIndicator visibleIndicator) {
-          runBackgroundProcess(visibleIndicator);
-        }
-      });
-    }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
-    catch (Throwable e) {
-      LOG.error("Failed to start background index update task", e);
-      if (isRunning.compareAndSet(false, true)) {
-        // simulate empty queue
-        if (myListener.beforeFirstTask()) myListener.afterLastTask();
-        isRunning.set(false);
+    mySingleTaskExecutor.tryStartProcess(task -> {
+      try {
+        backgroundTasksSubmitted.incrementAndGet();
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myProgressTitle, false) {
+          @Override
+          public void run(final @NotNull ProgressIndicator visibleIndicator) {
+            try (task) {
+              task.run(visibleIndicator);
+            }
+          }
+        });
       }
-    }
+      catch (ProcessCanceledException pce) {
+        task.close();
+        throw pce;
+      }
+      catch (Throwable e) {
+        try (task) {
+          LOG.error("Failed to start background index update task", e);
+          // simulate empty queue
+          runWithCallbacks(mySingleTaskExecutor::clearScheduledFlag);
+        }
+      }
+    });
   }
 
 
@@ -165,23 +173,23 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * Start task queue processing in this thread under progress indicator. If background thread is already running, this method does nothing
    * and returns immediately.
    */
-  public final void runBackgroundProcess(@NotNull ProgressIndicator visibleIndicator) {
-    boolean started = isRunning.compareAndSet(false, true);
-    if (!started) return;
-
-    try {
-      boolean shouldProcessQueue = myListener.beforeFirstTask();
-      if (shouldProcessQueue) {
-        try {
-          runBackgroundProcessWithSuspender(visibleIndicator);
-        }
-        finally {
-          myListener.afterLastTask();
-        }
+  public final void tryStartProcessInThisThread(@NotNull ProgressIndicator indicator) {
+    mySingleTaskExecutor.tryStartProcess(task -> {
+      try (task) {
+        task.run(indicator);
       }
-    }
-    finally {
-      isRunning.set(false);
+    });
+  }
+
+  private void runWithCallbacks(Runnable runnable) {
+    boolean shouldProcessQueue = myListener.beforeFirstTask();
+    if (shouldProcessQueue) {
+      try {
+        runnable.run();
+      }
+      finally {
+        myListener.afterLastTask();
+      }
     }
   }
 
@@ -240,7 +248,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * @return true if some task is currently executed in background thread.
    */
   public final boolean isRunning() {
-    return isRunning.get();
+    return mySingleTaskExecutor.isRunning();
   }
 
   /**
@@ -250,6 +258,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    */
   public final void suspendQueue() {
     mySuspended.set(true);
+    mySingleTaskExecutor.clearScheduledFlag();
   }
 
   /**
