@@ -56,6 +56,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import javax.swing.*
+import javax.swing.text.JTextComponent
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -836,7 +837,7 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
 
 private fun setBackgroundRecursively(component: Component, bg: Color) {
   UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
-    if (c !is ActionButton && c !is Divider) {
+    if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
       c.background = bg
     }
   })
