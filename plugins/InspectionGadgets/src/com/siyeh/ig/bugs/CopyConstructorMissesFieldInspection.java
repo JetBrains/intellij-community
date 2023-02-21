@@ -16,10 +16,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Bas Leijdekkers
@@ -60,10 +57,10 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      final List<PsiField> fields = ContainerUtil.filter(aClass.getFields(),
+      final List<PsiField> fields = new ArrayList<>(ContainerUtil.filter(aClass.getFields(),
                                                          f -> !f.hasModifierProperty(PsiModifier.STATIC) &&
                                                               !f.hasModifierProperty(PsiModifier.TRANSIENT) &&
-                                                              (!f.hasModifierProperty(PsiModifier.FINAL) || f.getInitializer() == null));
+                                                              (!f.hasModifierProperty(PsiModifier.FINAL) || f.getInitializer() == null)));
       if (fields.isEmpty()) return;
       final PsiParameter parameter = Objects.requireNonNull(method.getParameterList().getParameter(0));
       final List<PsiField> assignedFields = new SmartList<>();

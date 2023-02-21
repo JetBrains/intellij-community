@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.codeFragment;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -16,10 +17,12 @@ public class CodeFragment {
     returnInstructionInside = returnInside;
   }
 
+  @Unmodifiable
   public Collection<String> getInputVariables() {
     return inputVariables;
   }
 
+  @Unmodifiable
   public Collection<String> getOutputVariables() {
     return outputVariables;
   }

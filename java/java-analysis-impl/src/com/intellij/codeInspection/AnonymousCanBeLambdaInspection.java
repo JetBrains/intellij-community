@@ -334,8 +334,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
   @NotNull
   static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
-    final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
-    psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
+    final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
+    comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
   }
 

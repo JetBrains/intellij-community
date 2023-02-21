@@ -24,6 +24,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -72,6 +73,7 @@ public abstract class RenamePsiElementProcessorBase {
   }
 
   @NotNull
+  @Unmodifiable
   public Collection<PsiReference> findReferences(@NotNull PsiElement element,
                                                  @NotNull SearchScope searchScope,
                                                  boolean searchInCommentsAndStrings) {

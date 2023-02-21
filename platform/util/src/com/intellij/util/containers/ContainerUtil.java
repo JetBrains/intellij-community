@@ -400,6 +400,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <K, V> Map<K, V> union(@NotNull Map<? extends K, ? extends V> map, @NotNull Map<? extends K, ? extends V> map2) {
     Map<K, V> result = new HashMap<>(map.size() + map2.size());
     result.putAll(map);
@@ -408,11 +409,13 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> Set<T> union(@NotNull Set<? extends T> set, @NotNull Set<? extends T> set2) {
     return union((Collection<? extends T>)set, set2);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> Set<T> union(@NotNull Collection<? extends T> set, @NotNull Collection<? extends T> set2) {
     Set<T> result = new HashSet<>(set.size() + set2.size());
     result.addAll(set);
@@ -484,10 +487,11 @@ public final class ContainerUtil {
   /**
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
    * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
-   * Otherwise, please prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
+   * @deprecated prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
    */
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <E> ImmutableList<E> immutableSingletonList(E element) {
     return ImmutableList.singleton(element);
   }
@@ -717,6 +721,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> List<T> mergeSortedLists(@NotNull List<? extends T> list1,
                                                       @NotNull List<? extends T> list2,
                                                       @NotNull Comparator<? super T> comparator,
@@ -975,19 +980,9 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> List<T> filter(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
     return findAll(collection, condition);
-  }
-
-  @Contract(pure = true)
-  public static @NotNull <T> List<T> findAll(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
-    List<T> result = new SmartList<>();
-    for (T t : collection) {
-      if (condition.value(t)) {
-        result.add(t);
-      }
-    }
-    return result;
   }
 
   /**
@@ -1059,6 +1054,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T, V extends T> List<V> findAll(T @NotNull [] array, @NotNull Class<V> instanceOf) {
     List<V> result = new SmartList<>();
     for (T t : array) {
@@ -1067,7 +1063,7 @@ public final class ContainerUtil {
         result.add((V)t);
       }
     }
-    return result;
+    return Collections.unmodifiableList(result);
   }
 
   @Contract(pure=true)
@@ -1095,6 +1091,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T, V extends T> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> result = new SmartList<>();
     for (T t : collection) {
@@ -1103,7 +1100,19 @@ public final class ContainerUtil {
         result.add((V)t);
       }
     }
-    return result;
+    return Collections.unmodifiableList(result);
+  }
+
+  @Contract(pure = true)
+  @Unmodifiable
+  public static @NotNull <T> List<T> findAll(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
+    List<T> result = new SmartList<>();
+    for (T t : collection) {
+      if (condition.value(t)) {
+        result.add(t);
+      }
+    }
+    return Collections.unmodifiableList(result);
   }
 
   public static <T> boolean all(T @NotNull [] array, @NotNull Condition<? super T> condition) {
@@ -1856,22 +1865,25 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> List<T> sorted(@NotNull Collection<? extends T> list, @NotNull Comparator<? super T> comparator) {
     return sorted((Iterable<? extends T>)list, comparator);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T> List<T> sorted(@NotNull Iterable<? extends T> list, @NotNull Comparator<? super T> comparator) {
     List<T> sorted = newArrayList(list);
     sort(sorted, comparator);
-    return sorted;
+    return Collections.unmodifiableList(sorted);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T extends Comparable<? super T>> List<T> sorted(@NotNull Collection<? extends T> list) {
     List<T> result = new ArrayList<>(list);
     result.sort(null);
-    return result;
+    return Collections.unmodifiableList(result);
   }
 
   /**
@@ -2308,10 +2320,10 @@ public final class ContainerUtil {
 
     // Swap partition elements back to the middle
     int s = Math.min(a - off, b - a);
-    vecswap(x, off, b - s, s);
+    vecSwap(x, off, b - s, s);
     int n = off + len;
     s = Math.min(d - c, n - d - 1);
-    vecswap(x, b, n - s, s);
+    vecSwap(x, b, n - s, s);
 
     // Recursively sort non-partition-elements
     if ((s = b - a) > 1) quickSort(x, comparator, off, s);
@@ -2334,7 +2346,7 @@ public final class ContainerUtil {
    * Swaps x[a .. (a+n-1)] with x[b .. (b+n-1)].
    */
   @Contract(mutates = "param1")
-  private static <T> void vecswap(List<T> x, int a, int b, int n) {
+  private static <T> void vecSwap(List<T> x, int a, int b, int n) {
     for (int i = 0; i < n; i++, a++, b++) {
       swapElements(x, a, b);
     }
@@ -2353,6 +2365,7 @@ public final class ContainerUtil {
    * Processes the list, remove all duplicates and return the list with unique elements.
    * @param list must be sorted (according to the comparator), all elements must be not-null
    */
+  @Unmodifiable
   public static @NotNull <T> List<? extends T> removeDuplicatesFromSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator) {
     T prev = null;
     List<T> result = null;
@@ -2376,7 +2389,7 @@ public final class ContainerUtil {
       }
       prev = t;
     }
-    return result == null ? list : result;
+    return result == null ? list : Collections.unmodifiableList(result);
   }
 
   /**
@@ -2690,6 +2703,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return emptyList();
     List<V> list = new ArrayList<>(collection.size());
@@ -2855,7 +2869,7 @@ public final class ContainerUtil {
     while (enumeration.hasMoreElements()) {
       result.add(enumeration.nextElement());
     }
-    return result;
+    return Collections.unmodifiableList(result);
   }
 
   @Contract(value = "null -> true", pure = true)

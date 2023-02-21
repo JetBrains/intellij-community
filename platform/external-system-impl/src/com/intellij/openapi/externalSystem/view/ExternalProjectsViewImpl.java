@@ -104,7 +104,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     Condition<ExternalSystemViewContributor> contributorPredicate =
       c -> ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
-    myViewContributors = ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate);
+    myViewContributors = new ArrayList<>(ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate));
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {

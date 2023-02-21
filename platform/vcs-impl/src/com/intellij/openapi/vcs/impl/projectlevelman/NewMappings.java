@@ -333,7 +333,7 @@ public final class NewMappings implements Disposable {
         }
       }
 
-      List<MappedRoot> result = Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR));
+      List<MappedRoot> result = ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR);
 
       for (MappedRoot root : result) {
         if (myVcsManager.isIgnored(VcsUtil.getFilePath(root.root))) {
