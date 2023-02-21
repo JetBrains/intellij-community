@@ -1,177 +1,141 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.images.editor.impl.jcef;
+package org.intellij.images.editor.impl.jcef
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.components.Magnificator;
-import com.intellij.ui.components.ZoomableViewport;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.JBUI;
-import org.intellij.images.ImagesBundle;
-import org.intellij.images.editor.actionSystem.ImageEditorActions;
-import org.intellij.images.options.EditorOptions;
-import org.intellij.images.options.Options;
-import org.intellij.images.options.OptionsManager;
-import org.intellij.images.options.ZoomOptions;
-import org.intellij.images.ui.ImageComponentDecorator;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.ui.Messages
+import com.intellij.ui.JBColor
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.components.Magnificator
+import com.intellij.ui.components.ZoomableViewport
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ui.JBUI
+import org.intellij.images.ImagesBundle
+import org.intellij.images.editor.actionSystem.ImageEditorActions
+import org.intellij.images.editor.impl.jcef.JCefImageViewer.Companion.isDebugMode
+import org.intellij.images.options.OptionsManager
+import org.intellij.images.ui.ImageComponentDecorator
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import java.awt.CardLayout
+import java.awt.Component
+import java.awt.Point
+import java.awt.event.MouseWheelListener
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+class JCefImageViewerUI(private val myContentComponent: Component,
+                        private val myViewer: JCefImageViewer) : JPanel(), DataProvider, Disposable {
+  private val myInfoLabel: JLabel
+  private val myViewPort: JPanel
 
-public class JCefImageViewerUI extends JPanel implements DataProvider, Disposable {
-  private final @NotNull JCefImageViewer myViewer;
-  private final @NotNull JLabel myInfoLabel;
-  private final @NotNull Component myContentComponent;
+  override fun getData(dataId: String): Any? = if (ImageComponentDecorator.DATA_KEY.`is`(dataId)) myViewer else null
 
-  @NonNls
-  private static final String IMAGE_PANEL = "image";
-  @NonNls
-  private static final String ERROR_PANEL = "error";
-  private final JPanel myViewPort;
+  override fun dispose() {
+    myViewer.preferredFocusedComponent.removeMouseWheelListener(MOUSE_WHEEL_LISTENER)
+  }
 
-  public JCefImageViewerUI(@NotNull Component component, @NotNull JCefImageViewer viewer) {
-    myViewer = viewer;
-    myContentComponent = component;
-    setLayout(new BorderLayout());
+  fun setInfo(info: @Nls String) {
+    myInfoLabel.text = info
+  }
 
-    ActionManager actionManager = ActionManager.getInstance();
-    ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
-    ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true);
-    actionToolbar.setTargetComponent(this);
+  private inner class ViewPort : JPanel(BorderLayout()), ZoomableViewport {
+    private var myMagnificationPoint: Point? = null
+    private var myOriginalZoom = 1.0
+    private fun convertToContentCoordinates(point: Point): Point {
+      return SwingUtilities.convertPoint(this, point, myContentComponent)
+    }
 
-    JComponent toolbarPanel = actionToolbar.getComponent();
-    toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
+    override fun getMagnificator(): Magnificator {
+      return Magnificator { scale, at ->
+        myViewer.setZoom(scale, at)
+        at
+      }
+    }
 
-    JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    topPanel.add(toolbarPanel, BorderLayout.WEST);
-    myInfoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-    myInfoLabel.setBorder(JBUI.Borders.emptyRight(2));
-    topPanel.add(myInfoLabel, BorderLayout.EAST);
-    add(topPanel, BorderLayout.NORTH);
-    myViewPort = new ViewPort();
-    myViewPort.setLayout(new CardLayout());
+    override fun magnificationStarted(at: Point) {
+      myMagnificationPoint = at
+      myOriginalZoom = myViewer.getZoom()
+    }
 
-    myViewer.getPreferredFocusedComponent().addMouseWheelListener(MOUSE_WHEEL_LISTENER);
+    override fun magnificationFinished(magnification: Double) {
+      myMagnificationPoint = null
+      myOriginalZoom = 1.0
+    }
 
-    myViewPort.add(component, IMAGE_PANEL);
-    JLabel errorLabel = new JLabel(
+    override fun magnify(magnification: Double) {
+      val p = myMagnificationPoint
+      if (magnification.compareTo(0.0) != 0 && p != null) {
+        val magnificator = magnificator
+        val inContentPoint = convertToContentCoordinates(p)
+        val scale = if (magnification < 0) 1f / (1 - magnification) else 1 + magnification
+        magnificator.magnify(myOriginalZoom * scale, inContentPoint)
+      }
+    }
+  }
+
+  private val MOUSE_WHEEL_LISTENER = MouseWheelListener { e ->
+    val zoomOptions = OptionsManager.getInstance().options.editorOptions.zoomOptions
+    if (zoomOptions.isWheelZooming && e.isControlDown) {
+      val rotation = e.wheelRotation
+      if (rotation < 0) {
+        myViewer.setZoom(myViewer.getZoom() * 1.2, Point(e.x, e.y))
+      }
+      else if (rotation > 0) {
+        myViewer.setZoom(myViewer.getZoom() / 1.2, Point(e.x, e.y))
+      }
+      e.consume()
+    }
+  }
+
+  init {
+    layout = BorderLayout()
+    val actionManager = ActionManager.getInstance()
+    val actionGroup = actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR) as ActionGroup
+    val actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true)
+    actionToolbar.targetComponent = this
+
+    val toolbarPanel = actionToolbar.component
+    toolbarPanel.background = JBColor.lazy { background }
+    val topPanel: JPanel = NonOpaquePanel(BorderLayout())
+    topPanel.add(toolbarPanel, BorderLayout.WEST)
+
+    myInfoLabel = JLabel(null as String?, SwingConstants.RIGHT)
+    myInfoLabel.border = JBUI.Borders.emptyRight(2)
+    topPanel.add(myInfoLabel, BorderLayout.EAST)
+    add(topPanel, BorderLayout.NORTH)
+
+    myViewPort = ViewPort()
+    myViewPort.setLayout(CardLayout())
+    myViewer.preferredFocusedComponent.addMouseWheelListener(MOUSE_WHEEL_LISTENER)
+    myViewPort.add(myContentComponent, IMAGE_PANEL)
+
+    val errorLabel = JLabel(
       ImagesBundle.message("error.broken.image.file.format"),
       Messages.getErrorIcon(), SwingConstants.CENTER
-    );
+    )
+    val errorPanel = JPanel(BorderLayout())
+    errorPanel.add(errorLabel, BorderLayout.CENTER)
 
-    JPanel errorPanel = new JPanel(new BorderLayout());
-    errorPanel.add(errorLabel, BorderLayout.CENTER);
-    myViewPort.add(component, IMAGE_PANEL);
-    myViewPort.add(errorPanel, ERROR_PANEL);
-    add(myViewPort, BorderLayout.CENTER);
+    myViewPort.add(myContentComponent, IMAGE_PANEL)
+    myViewPort.add(errorPanel, ERROR_PANEL)
+    add(myViewPort, BorderLayout.CENTER)
 
-    if (!JCefImageViewer.isDebugMode()) { // Use the context menu for calling devtools in debug mode
-      PopupHandler.installPopupMenu(myViewer.getPreferredFocusedComponent(), ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
+    if (!isDebugMode()) { // Use the context menu for calling devtools in debug mode
+      PopupHandler.installPopupMenu(myViewer.preferredFocusedComponent, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE)
     }
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return myViewer;
-    }
-    return null;
-  }
+  fun showError() = (myViewPort.layout as CardLayout).show(myViewPort, ERROR_PANEL)
+  fun showImage() = (myViewPort.layout as CardLayout).show(myViewPort, IMAGE_PANEL)
 
-  @Override
-  public void dispose() {
-    myViewer.getPreferredFocusedComponent().removeMouseWheelListener(MOUSE_WHEEL_LISTENER);
-  }
-
-  public void setInfo(@Nls String info) {
-    myInfoLabel.setText(info);
-  }
-
-  private class ViewPort extends JPanel implements ZoomableViewport {
-    private Point myMagnificationPoint = null;
-    private Double myOriginalZoom = 1.0;
-
-    ViewPort() {
-      super(new BorderLayout());
-    }
-
-    protected Point convertToContentCoordinates(Point point) {
-      return SwingUtilities.convertPoint(this, point, myContentComponent);
-    }
-
-    @Override
-    public Magnificator getMagnificator() {
-      return new Magnificator() {
-        @Override
-        public Point magnify(double scale, Point at) {
-          myViewer.setZoom(scale, at);
-          return at;
-        }
-      };
-    }
-
-    @Override
-    public void magnificationStarted(Point at) {
-      myMagnificationPoint = at;
-      myOriginalZoom = myViewer.getZoom();
-    }
-
-    @Override
-    public void magnificationFinished(double magnification) {
-      myMagnificationPoint = null;
-      myOriginalZoom = 1.0;
-    }
-
-    @Override
-    public void magnify(double magnification) {
-      Point p = myMagnificationPoint;
-      if (Double.compare(magnification, 0) != 0 && p != null) {
-        Magnificator magnificator = getMagnificator();
-        Point inContentPoint = convertToContentCoordinates(p);
-        double scale = magnification < 0 ? 1f / (1 - magnification) : (1 + magnification);
-        magnificator.magnify(myOriginalZoom * scale, inContentPoint);
-      }
-    }
-  }
-
-  private final @NotNull MouseWheelListener MOUSE_WHEEL_LISTENER = new MouseWheelListener() {
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-      Options options = OptionsManager.getInstance().getOptions();
-      EditorOptions editorOptions = options.getEditorOptions();
-      ZoomOptions zoomOptions = editorOptions.getZoomOptions();
-      if (zoomOptions.isWheelZooming() && e.isControlDown()) {
-        int rotation = e.getWheelRotation();
-        if (rotation < 0) {
-          myViewer.setZoom(myViewer.getZoom() * 1.2, new Point(e.getX(), e.getY()));
-        }
-        else if (rotation > 0) {
-          myViewer.setZoom(myViewer.getZoom() / 1.2, new Point(e.getX(), e.getY()));
-        }
-
-        e.consume();
-      }
-    }
-  };
-
-  public void showError() {
-    CardLayout layout = (CardLayout)myViewPort.getLayout();
-    layout.show(myViewPort, ERROR_PANEL);
-  }
-
-  public void showImage() {
-    CardLayout layout = (CardLayout)myViewPort.getLayout();
-    layout.show(myViewPort, IMAGE_PANEL);
+  companion object {
+    private const val IMAGE_PANEL: @NonNls String = "image"
+    private const val ERROR_PANEL: @NonNls String = "error"
   }
 }
