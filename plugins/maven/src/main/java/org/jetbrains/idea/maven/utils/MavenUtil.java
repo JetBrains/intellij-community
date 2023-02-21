@@ -1353,7 +1353,7 @@ public class MavenUtil {
 
   @NotNull
   public static <K, V extends Map<?, ?>> V getOrCreate(Map<K, V> map, K key) {
-    V res = (V)map.get(key);
+    V res = map.get(key);
     if (res == null) {
       //noinspection unchecked
       res = (V)new HashMap<>();
