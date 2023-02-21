@@ -229,7 +229,7 @@
             "type": "string"
           }
         },
-        "project-tools": {
+        "project-tool-executables": {
           "description": "List of tool executables (without extension), which presence should be checked in the project. In case of Node projects, such tools will be searched in node_modules/.bin/",
           "type": "array",
           "items": {
