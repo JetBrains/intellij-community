@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type IdeInfo struct {
@@ -298,4 +300,19 @@ func (ide *IDE) RunIde() *os.Process {
 	}
 	logger.DebugLogger.Println("Started the IDE with PID " + strconv.Itoa(cmd.Process.Pid))
 	return cmd.Process
+}
+
+func (ide *IDE) CheckIfPathIsAllowed(path string) {
+	if !isASCII(path) {
+		logger.FatalLogger.Fatal(errors.New("The path contains non-ASCII characters. IDE cannot run here: " + path))
+	}
+}
+
+func isASCII(s string) bool {
+	for _, c := range s {
+		if c > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
 }

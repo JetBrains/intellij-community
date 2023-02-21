@@ -62,6 +62,7 @@ func initPath() {
 		ideaBinary, err = helpers.SelectIdeaBinary()
 		logger.ExitWithExceptionOnError(err)
 	}
+	helpers.CurrentIde.CheckIfPathIsAllowed(ideaBinary)
 	helpers.CurrentIde.SetBinaryToWrokWith(ideaBinary)
 }
 
