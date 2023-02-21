@@ -186,10 +186,8 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
       val isClassMember = declaration !is JvmClass
       addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
 
-      if (!acceptedModifiers.any { declaration.hasModifier(it) }) {
-        for (modifier in acceptedModifiers) {
-          addIfApplicable(declaration, modifier, true, actionsList)
-        }
+      if (!acceptedModifiers.any { declaration.hasModifier(it) } && acceptedModifiers.isNotEmpty()) {
+          addIfApplicable(declaration, acceptedModifiers[0], true, actionsList)
       }
       if (isClassMember) {
         addIfApplicable(declaration, JvmModifier.STATIC, false, actionsList)
