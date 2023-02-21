@@ -73,8 +73,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.openapi.application.ActionsKt.runReadAction;
-
 final class FindInProjectTask {
   private static final Logger LOG = Logger.getInstance(FindInProjectTask.class);
 
@@ -315,8 +313,8 @@ final class FindInProjectTask {
                              && !Registry.is("find.search.in.excluded.dirs")
                              && !ReadAction.compute(() -> myProjectFileIndex.isExcluded(myDirectory));
     boolean withSubdirs = myDirectory != null && myFindModel.isWithSubdirectories();
-    boolean locateClassSources = myDirectory != null && runReadAction(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
-    boolean searchInLibs = globalCustomScope != null && globalCustomScope.isSearchInLibraries();
+    boolean locateClassSources = myDirectory != null && ReadAction.compute(() -> myProjectFileIndex.getClassRootForFile(myDirectory)) != null;
+    boolean searchInLibs = globalCustomScope != null && ReadAction.compute(() -> globalCustomScope.isSearchInLibraries());
 
     ConcurrentLinkedDeque<Object> deque = new ConcurrentLinkedDeque<>();
     if (customScope instanceof LocalSearchScope) {
