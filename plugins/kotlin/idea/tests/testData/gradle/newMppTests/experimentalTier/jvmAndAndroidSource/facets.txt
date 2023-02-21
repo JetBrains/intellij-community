@@ -48,6 +48,7 @@ project.consumer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :consumer:commonTest
+    additionalVisibleModuleNames = :consumer:commonMain, :consumer:jvmAndAndroidMain, :consumer:jvmMain
     targetPlatform = JVM (17)
 
 project.consumer.main
@@ -113,6 +114,7 @@ project.producer.jvmTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
+    additionalVisibleModuleNames = :producer:commonMain, :producer:jvmAndAndroidMain, :producer:jvmMain
     targetPlatform = JVM (17)
 
 project.producer.main
@@ -130,9 +132,3 @@ project.producer.unitTest
     mppVersion = M3
     dependsOnModuleNames = :producer:commonTest
     targetPlatform = JVM (17)
-
-
-Test configuration:
-- hiding following roots: resources, android-specific roots, generated
-- hiding following standard dependencies: sdk, self
-- dependencies order is not checked
