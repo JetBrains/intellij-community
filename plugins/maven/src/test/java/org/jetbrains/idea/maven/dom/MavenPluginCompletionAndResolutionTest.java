@@ -64,9 +64,9 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
-                             "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
-                             "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "maven-site-plugin", "maven-eclipse-plugin", "maven-war-plugin",
+                                    "maven-resources-plugin", "maven-surefire-plugin", "maven-jar-plugin", "maven-clean-plugin",
+                                    "maven-install-plugin", "maven-compiler-plugin", "maven-deploy-plugin");
   }
 
   @Test 
@@ -951,7 +951,17 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                        </build>
                        """);
 
-    assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    if (mavenVersionIsOrMoreThan("3.9.0")) {
+      assertDocumentation(
+        "Type: <b>java.lang.String</b><br>Default Value: <b>1.7</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i><p>The -source argument for the Java compiler.</p>\n" +
+        "\n" +
+        "<b>NOTE: </b>Since 3.8.0 the default value has changed from 1.5 to 1.6.\n" +
+        "Since 3.9.0 the default value has changed from 1.6 to 1.7</i>");
+    }
+    else {
+      assertDocumentation(
+        "Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    }
   }
 
   @Test 
