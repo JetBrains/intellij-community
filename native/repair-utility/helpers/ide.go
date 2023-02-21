@@ -14,18 +14,22 @@ import (
 )
 
 type IdeInfo struct {
-	Name              string
-	Version           string // 2022.2.1
-	BuildNumber       string
-	ProductCode       string
-	DataDirectoryName string
+	Name              string `json:"name"`
+	Version           string `json:"version"`
+	BuildNumber       string `json:"buildNumber"`
+	ProductCode       string `json:"productCode"`
+	DataDirectoryName string `json:"dataDirectoryName"`
 	IsRepairBundled   bool
 	Launch            []struct {
-		Os                 string `json:"os"`
-		LauncherPath       string `json:"launcherPath"`
-		JavaExecutablePath string `json:"javaExecutablePath"`
-		VmOptionsFilePath  string `json:"vmOptionsFilePath"`
+		Os                     string   `json:"os"`
+		Arch                   string   `json:"arch"`
+		LauncherPath           string   `json:"launcherPath"`
+		JavaExecutablePath     string   `json:"javaExecutablePath"`
+		VmOptionsFilePath      string   `json:"vmOptionsFilePath"`
+		BootClassPathJarNames  []string `json:"bootClassPathJarNames"`
+		AdditionalJvmArguments []string `json:"additionalJvmArguments"`
 	} `json:"launch"`
+	BundledPlugins []string `json:"bundledPlugins"`
 }
 type IDE struct {
 	Binary  string
@@ -67,7 +71,7 @@ func (ide *IDE) GetInfo() IdeInfo {
 	}
 	return ide.Info
 }
-func (ide *IDE) GetDownloadUrl() string {
+func (ide *IDE) GetManifestDownloadUrl() string {
 	if //goland:noinspection ALL
 	len(EmbeededDownloadUrl) > 0 && CurrentIde.IsRepairBundled() {
 		logger.DebugLogger.Println("Embedded download URL = " + EmbeededDownloadUrl)
@@ -82,7 +86,13 @@ func (ide *IDE) GetDownloadUrl() string {
 		architectureSuffix = "-aarch64"
 	}
 	//For example https://download.jetbrains.com/idea/ideaIU-2022.2.1.exe.manifest
-	url := downloadsURL + "/" + ideBinary + "/" + ideBinary + ideInfo.ProductCode + "-" + ideInfo.Version + architectureSuffix + archiveExtension[runtime.GOOS]
+	url := downloadsURL + "/" +
+		ideBinary + "/" +
+		ideBinary +
+		ideInfo.ProductCode + "-" + ideInfo.Version +
+		architectureSuffix +
+		archiveExtension[runtime.GOOS] +
+		".manifest"
 	logger.DebugLogger.Println("No embedded download URL found. Generated download URL = " + url)
 	return url
 }
