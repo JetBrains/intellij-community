@@ -20,10 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -219,7 +217,9 @@ public final class FileColorsModel implements Cloneable {
   @Nullable
   public String getScopeColor(@NotNull String scopeName, Project project) {
     FileColorConfiguration configuration = null;
-    for (FileColorConfiguration each : getConfigurations()) {
+    Iterator<FileColorConfiguration> iterator = getConfigurations();
+    while (iterator.hasNext()) {
+      var each = iterator.next();
       if (scopeName.equals(each.getScopeName())) {
         configuration = each;
         break;
@@ -233,7 +233,9 @@ public final class FileColorsModel implements Cloneable {
 
   @Nullable
   private FileColorConfiguration findConfiguration(@NotNull final VirtualFile colored) {
-    for (FileColorConfiguration configuration : getConfigurations()) {
+    Iterator<FileColorConfiguration> iterator = getConfigurations();
+    while(iterator.hasNext()) {
+      var configuration = iterator.next();
       NamedScope scope = NamedScopesHolder.getScope(myProject, configuration.getScopeName());
       if (scope != null) {
         NamedScopesHolder namedScopesHolder = NamedScopesHolder.getHolder(myProject, configuration.getScopeName(), null);
@@ -247,8 +249,8 @@ public final class FileColorsModel implements Cloneable {
   }
 
   @NotNull
-  private List<FileColorConfiguration> getConfigurations() {
-    return ContainerUtil.concat(myApplicationLevelConfigurations, myProjectLevelConfigurations);
+  private Iterator<FileColorConfiguration> getConfigurations() {
+    return ContainerUtil.concatIterators(myApplicationLevelConfigurations.iterator(), myProjectLevelConfigurations.iterator());
   }
 
   public boolean isProjectLevel(@NotNull FileColorConfiguration configuration) {
@@ -282,11 +284,11 @@ public final class FileColorsModel implements Cloneable {
   }
 
   public List<FileColorConfiguration> getLocalConfigurations() {
-    return myApplicationLevelConfigurations;
+    return ContainerUtil.copyList(myApplicationLevelConfigurations);
   }
 
   @NotNull
   public List<FileColorConfiguration> getProjectLevelConfigurations() {
-    return myProjectLevelConfigurations;
+    return ContainerUtil.copyList(myProjectLevelConfigurations);
   }
 }
