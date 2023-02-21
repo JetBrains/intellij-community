@@ -65,6 +65,8 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
@@ -3420,6 +3422,26 @@ public final class UIUtil {
         runnable.run();
       }
     });
+  }
+
+  public static Future<?> runOnceWhenResized(@NotNull Component component, @NotNull Runnable runnable) {
+    var future = new CompletableFuture<>();
+    component.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        component.removeComponentListener(this);
+        if (!future.isCancelled()) {
+          try {
+            runnable.run();
+            future.complete(null);
+          }
+          catch (Throwable ex) {
+            future.completeExceptionally(ex);
+          }
+        }
+      }
+    });
+    return future;
   }
 
   public static Font getLabelFont() {
