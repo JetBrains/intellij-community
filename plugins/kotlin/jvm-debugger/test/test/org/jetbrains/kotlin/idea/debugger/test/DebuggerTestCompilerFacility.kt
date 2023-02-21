@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -35,6 +36,7 @@ import java.io.File
 data class TestCompileConfiguration(
     val useIrBackend: Boolean,
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
+    val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
 )
 
@@ -51,6 +53,9 @@ open class DebuggerTestCompilerFacility(
     private val mavenArtifacts = mutableListOf<String>()
 
     init {
+        if (compileConfig.languageVersion?.usesK2 == true && compileConfig.lambdasGenerationScheme != JvmClosureGenerationScheme.INDY) {
+            throw IllegalArgumentException("There is no point in test K2 with old lambdas generation scheme")
+        }
         val splitFiles = splitByTarget(files)
         mainFiles = splitByLanguage(splitFiles.main)
         libraryFiles = splitByLanguage(splitFiles.library)
@@ -172,9 +177,12 @@ open class DebuggerTestCompilerFacility(
         libClassesDir: File,
     ) {
         val options = mutableListOf(
-            "-Xcommon-sources=${commonSrcDir.absolutePath}",
             "-Xmulti-platform",
         )
+        val commonSources = commonSrcDir.walk().filter { it.extension == "kt" }.map { it.absolutePath }.toList()
+        if (commonSources.isNotEmpty()) {
+            options.add("-Xcommon-sources=${commonSources.joinToString(",")}")
+        }
         options.addAll(getCompilerOptionsCommonForLibAndSource())
 
         KotlinCompilerStandalone(
@@ -189,6 +197,9 @@ open class DebuggerTestCompilerFacility(
         val options = mutableListOf(
             "-Xlambdas=${compileConfig.lambdasGenerationScheme.description}",
         )
+        if (compileConfig.languageVersion != null) {
+            options.add("-language-version=${compileConfig.languageVersion}")
+        }
         if (!compileConfig.useIrBackend) {
             options.add("-Xuse-old-backend")
         }

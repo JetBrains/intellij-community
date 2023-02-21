@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.AbstractAsyncStackTraceTest
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility

@@ -16,6 +16,7 @@ import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -44,6 +45,10 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
     override fun getTestAppPath(): String = testAppDirectory.absolutePath
 
     override fun initOutputChecker(): OutputChecker = OutputChecker({ "" }, { "" })
+
+    protected open val lambdasGenerationScheme: JvmClosureGenerationScheme get() = JvmClosureGenerationScheme.CLASS
+
+    protected open val compileWithK2: Boolean get() = false
 
     override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
         testAppDirectory = KotlinTestUtils.tmpDir("debuggerTestSources")
@@ -87,7 +92,11 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
         val classesDir = File(testAppDirectory, CLASSES_DIRECTORY_NAME)
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, JvmTarget.JVM_1_8,
-            TestCompileConfiguration(useIrBackend = true, JvmClosureGenerationScheme.CLASS, enabledLanguageFeatures = emptyList())
+            TestCompileConfiguration(
+                useIrBackend = true, lambdasGenerationScheme,
+                languageVersion = chooseLanguageVersionForCompilation(compileWithK2),
+                enabledLanguageFeatures = emptyList()
+            )
         )
         compilerFacility.compileTestSourcesWithCli(
             module, jvmSourcesOutputDirectory, commonSourcesOutputDirectory,

@@ -33,7 +33,9 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
@@ -119,6 +121,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
     protected open val isK2Plugin: Boolean get() = false
 
+    protected open val compileWithK2: Boolean get() = false
+
     override fun setUp() {
         super.setUp()
 
@@ -189,12 +193,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
+        val languageVersion = chooseLanguageVersionForCompilation(compileWithK2)
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
 
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
-            TestCompileConfiguration(useIrBackend(), lambdasGenerationScheme(), enabledLanguageFeatures)
+            TestCompileConfiguration(useIrBackend(), lambdasGenerationScheme(), languageVersion, enabledLanguageFeatures)
         )
 
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
