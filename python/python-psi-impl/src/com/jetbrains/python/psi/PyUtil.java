@@ -913,6 +913,22 @@ public final class PyUtil {
     } // don't touch non-dirs
   }
 
+  @Nullable
+  public static PsiElement turnDirIntoInitPy(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    return psiDirectory.findFile(PyNames.INIT_DOT_PY);
+  }
+
+  @Nullable
+  public static PsiElement turnDirIntoInitPyi(@Nullable PsiElement target) {
+    if (!(target instanceof PsiDirectory psiDirectory)) return target;
+    final PsiFile initStub = psiDirectory.findFile(PyNames.INIT_DOT_PYI);
+    if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
+      return initStub;
+    }
+    return null;
+  }
+
   /**
    * If directory is a PsiDirectory, that is also a valid Python package, return PsiFile that points to __init__.py,
    * if such file exists, or directory itself (i.e. namespace package). Otherwise, return {@code null}.
