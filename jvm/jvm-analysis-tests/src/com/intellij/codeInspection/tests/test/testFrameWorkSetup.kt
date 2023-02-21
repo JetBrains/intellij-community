@@ -1,4 +1,4 @@
-package com.intellij.codeInspection.tests.test.junit
+package com.intellij.codeInspection.tests.test
 
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.project.IntelliJProjectConfiguration

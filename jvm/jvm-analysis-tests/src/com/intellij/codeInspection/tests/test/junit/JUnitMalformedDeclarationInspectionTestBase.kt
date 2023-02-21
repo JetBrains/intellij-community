@@ -2,6 +2,9 @@ package com.intellij.codeInspection.tests.test.junit
 
 import com.intellij.codeInspection.test.junit.JUnitMalformedDeclarationInspection
 import com.intellij.codeInspection.tests.JvmInspectionTestBase
+import com.intellij.codeInspection.tests.test.addJUnit3Library
+import com.intellij.codeInspection.tests.test.addJUnit4Library
+import com.intellij.codeInspection.tests.test.addJUnit5Library
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
