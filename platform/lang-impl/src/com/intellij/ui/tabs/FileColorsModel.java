@@ -31,8 +31,8 @@ import java.util.Map;
 public final class FileColorsModel implements Cloneable {
   public static final String FILE_COLOR = "fileColor";
 
-  private final List<FileColorConfiguration> myApplicationLevelConfigurations = new ArrayList<>();
-  private final List<FileColorConfiguration> myProjectLevelConfigurations = new ArrayList<>();
+  private final List<FileColorConfiguration> myApplicationLevelConfigurations = ContainerUtil.createConcurrentList();
+  private final List<FileColorConfiguration> myProjectLevelConfigurations = ContainerUtil.createConcurrentList();
   private final Map<String, String> myPredefinedScopeNameToPropertyKey = new HashMap<>();
   private final Map<String, String> myPredefinedScopeNameToColor = new HashMap<>();
 
@@ -127,6 +127,7 @@ public final class FileColorsModel implements Cloneable {
 
     configurations.clear();
 
+    List<FileColorConfiguration> newConfigurations = new ArrayList<>();
     Map<String, String> predefinedScopeNameToPropertyKey = new HashMap<>(myPredefinedScopeNameToPropertyKey);
     for (Element child : e.getChildren(FILE_COLOR)) {
       FileColorConfiguration configuration = FileColorConfiguration.load(child);
@@ -134,7 +135,7 @@ public final class FileColorsModel implements Cloneable {
         if (!isProjectLevel) {
           predefinedScopeNameToPropertyKey.remove(configuration.getScopeName());
         }
-        configurations.add(configuration);
+        newConfigurations.add(configuration);
       }
     }
 
@@ -145,10 +146,12 @@ public final class FileColorsModel implements Cloneable {
 
         // empty means that value deleted
         if (!StringUtil.isEmpty(colorName)) {
-          configurations.add(new FileColorConfiguration(scopeName, colorName));
+          newConfigurations.add(new FileColorConfiguration(scopeName, colorName));
         }
       }
     }
+
+    configurations.addAll(newConfigurations);
   }
 
   @Override
@@ -253,16 +256,13 @@ public final class FileColorsModel implements Cloneable {
   }
 
   public void setConfigurations(@NotNull List<? extends FileColorConfiguration> configurations, boolean isProjectLevel) {
-    if (isProjectLevel) {
-      myProjectLevelConfigurations.clear();
-      myProjectLevelConfigurations.addAll(configurations);
-    }
-    else {
-      myApplicationLevelConfigurations.clear();
+    List<FileColorConfiguration> myConfigurations = isProjectLevel ? myProjectLevelConfigurations : myApplicationLevelConfigurations;
+    myConfigurations.clear();
+    myConfigurations.addAll(configurations);
+    if (!isProjectLevel) {
       Map<String, String> predefinedScopeNameToPropertyKey = new HashMap<>(myPredefinedScopeNameToPropertyKey);
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
       for (FileColorConfiguration configuration : configurations) {
-        myApplicationLevelConfigurations.add(configuration);
         String propertyKey = predefinedScopeNameToPropertyKey.remove(configuration.getScopeName());
         if (propertyKey != null) {
           propertiesComponent.setValue(propertyKey, configuration.getColorID());
