@@ -3,6 +3,7 @@ package com.intellij.codeInspection.tests.test
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import com.intellij.util.PathUtil
 import junit.framework.TestCase
 import java.io.File
@@ -31,4 +32,8 @@ internal fun ModifiableRootModel.addJUnit5Library() {
   PsiTestUtil.addLibrary(this, "junit5-params", paramsJar.parent, paramsJar.name)
   val platformJar = File(PathUtil.getJarPathForClass(org.junit.platform.commons.annotation.Testable::class.java))
   PsiTestUtil.addLibrary(this, "junit-platform", platformJar.parent, platformJar.name)
+}
+
+internal fun ModifiableRootModel.addAssertJLibrary() {
+  MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:3.11.1")
 }
