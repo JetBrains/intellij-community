@@ -9,7 +9,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.SystemProperties
 import junit.framework.TestCase
-import org.junit.Ignore
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Phaser
@@ -88,7 +87,6 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
     }
   }
 
-  @Ignore("Failing")
   fun `test no redundant tasks submitted (IDEA-311620)`() {
     class WaitingTask : MergeableQueueTask<WaitingTask> {
       @Volatile
@@ -126,7 +124,6 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
     stopExecutor(executor)
   }
 
-  @Ignore("Flaky")
   fun `test concurrent stress mode`() {
     val repeatCount = 500
     val writeThreadsCount = 5
