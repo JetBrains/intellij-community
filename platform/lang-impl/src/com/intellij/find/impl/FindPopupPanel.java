@@ -187,7 +187,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           super.updateInfo(null);
         }
         else {
-        super.updateInfo(info);
+          super.updateInfo(info);
         }
       }
     };
@@ -199,8 +199,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     });
 
     initComponents();
-    initByModel();
-
     FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel());
   }
 
