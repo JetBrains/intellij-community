@@ -72,13 +72,27 @@ class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveA
 
             val initialTypeName = expressionTypeAsPrimitive.kotlinName()
             val conversionFunctionName = "to${toTypeAsPrimitive.kotlinName()}"
-            return JKQualifiedExpression(
-                expression.copyTreeAndDetach().parenthesizeIfCompoundExpression(),
-                JKCallExpressionImpl(
-                    symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
-                    JKArgumentList()
+
+            val receiver = expression.copyTreeAndDetach().parenthesizeIfCompoundExpression()
+            val result = if ((expressionTypeAsPrimitive == FLOAT || expressionTypeAsPrimitive == DOUBLE) &&
+                (toTypeAsPrimitive == BYTE || toTypeAsPrimitive == SHORT)
+            ) {
+                // conversions of floating point types to integral types lesser than Int is an error (KT-30360)
+                // we have to convert in two steps
+                receiver
+                    .callOn(symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.toInt"))
+                    .callOn(symbolProvider.provideMethodSymbol("kotlin.Int.$conversionFunctionName"))
+            } else {
+                JKQualifiedExpression(
+                    receiver,
+                    JKCallExpressionImpl(
+                        symbolProvider.provideMethodSymbol("kotlin.$initialTypeName.$conversionFunctionName"),
+                        JKArgumentList()
+                    )
                 )
-            ).withFormattingFrom(expression)
+            }
+
+            return result.withFormattingFrom(expression)
         }
 
         private fun RecursiveApplicableConversionBase.charConversion(

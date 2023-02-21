@@ -5558,6 +5558,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/beforeDot.java");
         }
 
+        @TestMetadata("byteCasts.java")
+        public void testByteCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/byteCasts.java");
+        }
+
         @TestMetadata("castNullObject.java")
         public void testCastNullObject() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/castNullObject.java");
@@ -5596,6 +5601,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("primitiveType.java")
         public void testPrimitiveType() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/primitiveType.java");
+        }
+
+        @TestMetadata("shortCasts.java")
+        public void testShortCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/shortCasts.java");
         }
 
         @TestMetadata("simpleGenericCast.java")
