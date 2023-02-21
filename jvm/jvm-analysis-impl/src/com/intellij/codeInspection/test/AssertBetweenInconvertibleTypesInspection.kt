@@ -87,19 +87,22 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
   }
 
   private fun processAssertJ(call: UCallExpression) {
-    if (!assertjIsEqualMatcher.uCallMatches(call)) return
+    if (!ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(call)) return
     var qualifier = getQualifier(call)
     if (qualifier == null) return
     val chain = qualifier.getOutermostQualified().getQualifiedChain()
     val lastDescribed = chain.lastOrNull { expr ->
-      expr is UCallExpression && assertjDescribedMatcher.uCallMatches(expr)
+      expr is UCallExpression && ASSERTJ_DESCRIBED_MATCHER.uCallMatches(expr)
     }
     if (lastDescribed != null) qualifier = getQualifier(lastDescribed as UCallExpression)
-    if (qualifier == null || !assertJAssertThatMatcher.uCallMatches(qualifier)) return
-    val callValueArguments = call.valueArguments
+    if (qualifier == null || !ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(qualifier)) return
+    val lastExtracting = chain.lastOrNull { expr ->
+      expr is UCallExpression && ASSERTJ_EXTRACTING_MATCHER.uCallMatches(expr)
+    } as UCallExpression?
+    val callValueArguments = lastExtracting?.valueArguments ?: call.valueArguments
     val qualValueArguments = qualifier.valueArguments
     if (callValueArguments.isEmpty() || qualValueArguments.isEmpty()) return
-    checkConvertibleTypes(call, callValueArguments[0], qualValueArguments[0], holder)
+    checkConvertibleTypes(call, callValueArguments.first(), qualValueArguments[0], holder)
   }
 
 
@@ -123,15 +126,19 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
   private fun isAssertNotSameMethod(methodName: String): Boolean = "assertNotSame" == methodName || "isNotSameAs" == methodName
 
   private companion object {
-    private val assertjIsEqualMatcher: CallMatcher = CallMatcher.instanceCall(
+    private val ASSERTJ_IS_EQUALS_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs"
     ).parameterTypes(CommonClassNames.JAVA_LANG_OBJECT)
 
-    private val assertjDescribedMatcher: CallMatcher = CallMatcher.instanceCall(
+    private val ASSERTJ_DESCRIBED_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.Descriptable", "describedAs", "as"
     )
 
-    private val assertJAssertThatMatcher: CallMatcher = CallMatcher.staticCall(
+    private val ASSERTJ_EXTRACTING_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractObjectAssert", "extracting"
+    )
+
+    private val ASSERTJ_ASSERT_THAT_MATCHER: CallMatcher = CallMatcher.staticCall(
       "org.assertj.core.api.Assertions", "assertThat"
     ).parameterCount(1)
   }
