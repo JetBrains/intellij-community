@@ -87,66 +87,66 @@ internal class IdeDocumentHistoryFunctionalTest : HeavyFileEditorManagerTestCase
       -------
       -------
       -------
-      line3""".trimIndent())
-    myFixture.type('A')
+      longer_line3""".trimIndent())
+    myFixture.type("AAA")
     moveCaret4LinesDown()
-    myFixture.type('B')
+    myFixture.type("BBB")
     moveCaret4LinesDown()
 
     myFixture.checkResult("""
-      AliAne1
+      AAAliAAAne1
       -------
       -------
       -------
-      lBineB2
+      linBBBe2BBB
       -------
       -------
       -------
-      li<caret>ne3<caret>""".trimIndent())
+      longer<caret>_line<caret>3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
     myFixture.checkResult("""
-      AliAne1
+      AAAliAAAne1
       -------
       -------
       -------
-      lB<caret>ineB<caret>2
+      linBBB<caret>e2BBB<caret>
       -------
       -------
       -------
-      line3""".trimIndent())
+      longer_line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_LAST_CHANGE)
     myFixture.checkResult("""
-      A<caret>liA<caret>ne1
+      AAA<caret>liAAA<caret>ne1
       -------
       -------
       -------
-      lBineB2
+      linBBBe2BBB
       -------
       -------
       -------
-      line3""".trimIndent())
+      longer_line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
     myFixture.checkResult("""
-      AliAne1
+      AAAliAAAne1
       -------
       -------
       -------
-      lB<caret>ineB<caret>2
+      linBBB<caret>e2BBB<caret>
       -------
       -------
       -------
-      line3""".trimIndent())
+      longer_line3""".trimIndent())
     EditorTestUtil.executeAction(editor, IdeActions.ACTION_GOTO_NEXT_CHANGE)
     myFixture.checkResult("""
-      AliAne1
+      AAAliAAAne1
       -------
       -------
       -------
-      lB<caret>ineB<caret>2
+      linBBB<caret>e2BBB<caret>
       -------
       -------
       -------
-      line3""".trimIndent())
+      longer_line3""".trimIndent())
   }
 
   fun testForwardToANearPlace() {
