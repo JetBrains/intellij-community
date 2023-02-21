@@ -1,6 +1,6 @@
-package com.intellij.codeInspection.tests.java
+package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
+import com.intellij.codeInspection.tests.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 
 class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
