@@ -480,8 +480,14 @@
   </extensions>
 
   <actions>
-    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction">
+    <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
+    </action>
+
+    <action id="Kotlin.NewScript" class="org.jetbrains.kotlin.idea.actions.NewKotlinScriptAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.SCRIPT">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </action>
 
     <group id="KotlinToolsGroup" popup="true" icon="/org/jetbrains/kotlin/idea/icons/kotlin13.svg"
