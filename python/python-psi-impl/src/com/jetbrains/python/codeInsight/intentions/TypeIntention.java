@@ -58,11 +58,6 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
 
   @Nullable
   protected final PyNamedParameter findOnlySuitableParameter(@NotNull Editor editor, @NotNull PsiFile file) {
-    return ContainerUtil.getOnlyItem(findSuitableParameters(editor, file));
-  }
-
-  @NotNull
-  private List<PyNamedParameter> findSuitableParameters(@NotNull Editor editor, @NotNull PsiFile file) {
     final PsiElement elementAt = getElementUnderCaret(editor, file);
     final StreamEx<PyNamedParameter> parameters;
     final PyNamedParameter immediateParam = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class);
@@ -88,7 +83,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
         return dir != null && !index.isInLibraryClasses(dir);
       })
       .filter(param -> !isParamTypeDefined(param))
-      .toList();
+      .findFirst().orElse(null);
   }
 
   @Nullable
