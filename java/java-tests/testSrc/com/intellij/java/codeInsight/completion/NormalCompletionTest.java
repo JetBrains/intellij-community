@@ -1663,6 +1663,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1672,6 +1673,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1681,6 +1683,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
