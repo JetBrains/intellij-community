@@ -55,4 +55,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInvokedLambdaBody(myFixture)
     }
 
+    fun testLambdaImplicitParameters() {
+        checkLambdaImplicitParameters(myFixture)
+    }
+
 }

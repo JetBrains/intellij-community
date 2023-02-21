@@ -351,4 +351,96 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(unusedLambda!!.asRecursiveLogString(), invokedLambda!!.asRecursiveLogString())
     }
 
+    fun checkLambdaImplicitParameters(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T> fun0Consumer(f: () -> T): T {
+                  return f()
+                }
+                
+                inline fun <P, R> fun1Consumer(arg: P, f: (P) -> R): R {
+                    return f(arg)
+                }
+                
+                inline fun <P, R> fun1ExtConsumer(arg: P, f: P.() -> R): R {
+                    return arg.f()
+                }
+                
+                inline fun <P1, P2, R> fun2Consumer(arg1: P1, arg2: P2, f: (P1, P2) -> R): R {
+                    return f(arg1, arg2)
+                }
+                
+                inline fun <P1, P2, R> fun2ExtConsumer(arg1: P1, arg2: P2, f: P1.(P2) -> R): R {
+                    return arg1.f(arg2)
+                }
+                
+                fun test() {
+                    fun0Consumer {
+                        println("Function0")
+                    }
+                    fun1Consumer(42) {
+                        println(it)
+                    }
+                    fun1ExtConsumer(42) {
+                        println(this)
+                    }
+                    fun2Consumer(42, "42") { p1, p2 ->
+                        println(p1.toString() == p2)
+                    }
+                    fun2ExtConsumer(42, "42") { 
+                        println(this.toString() == it)
+                    }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                val parameters = node.parameters
+                val methodName = (node.uastParent as? UCallExpression)?.methodName
+                TestCase.assertNotNull(methodName)
+
+                when (methodName!!) {
+                    "fun0Consumer" -> {
+                        TestCase.assertTrue(parameters.isEmpty())
+                    }
+                    "fun1Consumer" -> {
+                        TestCase.assertEquals(1, parameters.size)
+                        val it = parameters.single()
+                        TestCase.assertEquals("it", it.name)
+                        TestCase.assertEquals("int", it.type.canonicalText)
+                    }
+                    "fun1ExtConsumer" -> {
+                        TestCase.assertEquals(1, parameters.size)
+                        val it = parameters.single()
+                        TestCase.assertEquals("<this>", it.name)
+                        TestCase.assertEquals("int", it.type.canonicalText)
+                    }
+                    "fun2Consumer" -> {
+                        TestCase.assertEquals(2, parameters.size)
+                        val p1 = parameters[0]
+                        TestCase.assertEquals("p1", p1.name)
+                        TestCase.assertEquals("int", p1.type.canonicalText)
+                        val p2 = parameters[1]
+                        TestCase.assertEquals("p2", p2.name)
+                        TestCase.assertEquals("java.lang.String", p2.type.canonicalText)
+                    }
+                    "fun2ExtConsumer" -> {
+                        TestCase.assertEquals(2, parameters.size)
+                        val p1 = parameters[0]
+                        TestCase.assertEquals("<this>", p1.name)
+                        TestCase.assertEquals("int", p1.type.canonicalText)
+                        val p2 = parameters[1]
+                        TestCase.assertEquals("it", p2.name)
+                        TestCase.assertEquals("java.lang.String", p2.type.canonicalText)
+                    }
+                    else -> TestCase.assertFalse("Unexpected $methodName", true)
+                }
+
+                return super.visitLambdaExpression(node)
+            }
+        })
+    }
+
 }
