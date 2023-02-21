@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -82,7 +83,10 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     return parameters
       .filter(param -> !param.isSelf())
       .filter(param -> PsiTreeUtil.getParentOfType(param, PyLambdaExpression.class) == null)
-      .filter(param -> !index.isInLibraryClasses(param.getContainingFile().getVirtualFile()))
+      .filter(param -> {
+        VirtualFile dir = param.getContainingFile().getOriginalFile().getVirtualFile();
+        return dir != null && !index.isInLibraryClasses(dir);
+      })
       .filter(param -> !isParamTypeDefined(param))
       .toList();
   }
