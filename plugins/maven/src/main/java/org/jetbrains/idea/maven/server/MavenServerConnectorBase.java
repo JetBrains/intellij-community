@@ -147,9 +147,12 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
   @Override
   public boolean ping() {
     try {
-      return getServer().ping(MavenRemoteObjectWrapper.ourToken);
+      boolean pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken);
+      MavenLog.LOG.debug("maven server ping: " + pinged);
+      return pinged;
     }
     catch (RemoteException e) {
+      MavenLog.LOG.warn("maven server ping error", e);
       return false;
     }
   }
