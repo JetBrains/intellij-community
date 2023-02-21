@@ -123,18 +123,6 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.params.provider.ValueSource(strings = "foo")
         void implicitParameter(String argument, org.junit.jupiter.api.TestInfo testReporter) { }
         
-        @org.junit.jupiter.api.extension.ExtendWith(org.junit.jupiter.api.extension.TestExecutionExceptionHandler.class)
-        @interface RunnerExtension { }
-      
-        @RunnerExtension
-        abstract class AbstractValueSource { }
-        
-        class ValueSourcesWithCustomProvider extends AbstractValueSource {
-          @org.junit.jupiter.params.ParameterizedTest
-          @org.junit.jupiter.params.provider.ValueSource(ints = {1})
-          void testWithIntValues(int i, String fromExtension) { }
-        }
-        
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = { "FIRST" })
         void implicitConversionEnum(TestEnum e) { }
@@ -672,6 +660,36 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         static void beforeAll() { return ""; }
       }
     """.trimIndent(), "Fix 'beforeAll' method signature")
+  }
+  fun `test no highlighting when automatic parameter resolver is found`() {
+    myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.java", """
+      package com.intellij.testframework.ext;
+      
+      class AutomaticExtension implements org.junit.jupiter.api.extension.ParameterResolver {
+        @Override
+        public boolean supportsParameter(
+          org.junit.jupiter.api.extension.ParameterContext parameterContext, 
+          org.junit.jupiter.api.extension.ExtensionContext extensionContext
+        ) {
+          return true;
+        }
+    
+        @Override
+        public Object resolveParameter(
+          org.junit.jupiter.api.extension.ParameterContext parameterContext, 
+          org.junit.jupiter.api.extension.ExtensionContext extensionContext
+        ) {
+          return "";
+        }
+      }    
+    """.trimIndent())
+    addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MainTest {
+        @org.junit.jupiter.api.BeforeEach
+        public void foo(int x) { }
+      }
+    """.trimIndent())
   }
 
   /* Malformed Datapoint(s) */

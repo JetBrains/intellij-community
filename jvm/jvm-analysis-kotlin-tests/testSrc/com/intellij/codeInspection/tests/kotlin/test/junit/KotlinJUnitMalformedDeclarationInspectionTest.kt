@@ -114,18 +114,6 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
         @org.junit.jupiter.params.provider.ValueSource(strings = ["foo"])
         fun implicitParameter(argument: String, testReporter: org.junit.jupiter.api.TestInfo) { }
         
-        @org.junit.jupiter.api.extension.ExtendWith(org.junit.jupiter.api.extension.TestExecutionExceptionHandler::class)
-        annotation class RunnerExtension { }
-      
-        @RunnerExtension
-        abstract class AbstractValueSource { }
-        
-        class ValueSourcesWithCustomProvider : AbstractValueSource() {
-          @org.junit.jupiter.params.ParameterizedTest
-          @org.junit.jupiter.params.provider.ValueSource(ints = [1])
-          fun testWithIntValues(i: Int, fromExtension: String) { }
-        }
-        
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = ["FIRST"])
         fun implicitConversionEnum(e: TestEnum) { }
@@ -836,6 +824,30 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           }
       }
     """.trimIndent(), "Fix 'beforeAll' method signature")
+  }
+  fun `test no highlighting when automatic registered parameter resolver is found`() {
+    myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.kt", """
+      package com.intellij.testframework.ext
+      
+      class AutomaticExtension : org.junit.jupiter.api.extension.ParameterResolver {
+        override fun supportsParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Boolean = true
+    
+        override fun resolveParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Any = ""
+      }    
+    """.trimIndent())
+    addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class MainTest {
+        @org.junit.jupiter.api.BeforeEach
+        fun foo(x: Int) { }
+      }
+    """.trimIndent())
   }
 
   /* Malformed datapoint(s) */
