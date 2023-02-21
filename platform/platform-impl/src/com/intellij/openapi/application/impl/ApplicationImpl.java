@@ -34,6 +34,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -90,6 +91,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
+  private final ReadActionCacheIml myReadActionCacheIml = new ReadActionCacheIml();
+
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
@@ -113,6 +116,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ReadActionCache.class, myReadActionCacheIml, ComponentManagerImpl.fakeCorePluginDescriptor);
 
     myIsInternal = isInternal;
     myTestModeFlag = isTestMode;
@@ -828,6 +832,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -841,6 +846,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -854,6 +860,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1060,6 +1067,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1233,6 +1241,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     @Override
     public void finish() {
+      myReadActionCacheIml.clear();
       myLock.endRead(myReader);
     }
   }
