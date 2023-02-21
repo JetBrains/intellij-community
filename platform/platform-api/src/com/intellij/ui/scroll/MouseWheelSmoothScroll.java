@@ -94,6 +94,7 @@ public final class MouseWheelSmoothScroll {
       return direction * bar.getBlockIncrement(direction);
     }
 
+    double scrollableIncrement = -1;
     if (event.getSource() instanceof JScrollPane) {
       JViewport viewport = ((JScrollPane)event.getSource()).getViewport();
       if (viewport.getView() instanceof Scrollable scrollable) {
@@ -108,15 +109,14 @@ public final class MouseWheelSmoothScroll {
             rect.x = (int)animationTargetValue;
           }
         }
-        float scrollableIncrement = max(scrollable.getScrollableUnitIncrement(rect, orientation, direction), 0);
-        double smoothScrollAmount = event.getPreciseWheelRotation() * event.getScrollAmount();
-        return smoothScrollAmount * scrollableIncrement;
+        scrollableIncrement = max(scrollable.getScrollableUnitIncrement(rect, orientation, direction), 0);
       }
     }
-
-    int increment = bar.getUnitIncrement(direction);
-    int delta = increment * event.getUnitsToScroll();
-    return delta == 0 ? rotation : delta;
+    if (scrollableIncrement == -1) {
+      scrollableIncrement = bar.getUnitIncrement(direction);
+    }
+    double smoothScrollAmount = event.getPreciseWheelRotation() * event.getScrollAmount();
+    return smoothScrollAmount * scrollableIncrement;
   }
 
   static class InertialAnimator {
