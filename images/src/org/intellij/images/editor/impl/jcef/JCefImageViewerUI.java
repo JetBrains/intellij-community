@@ -62,8 +62,6 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
     myViewPort = new ViewPort();
     myViewPort.setLayout(new CardLayout());
 
-    PopupHandler.installPopupMenu(myViewPort, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
-
     myViewer.getPreferredFocusedComponent().addMouseWheelListener(MOUSE_WHEEL_LISTENER);
 
     myViewPort.add(component, IMAGE_PANEL);
@@ -76,9 +74,11 @@ public class JCefImageViewerUI extends JPanel implements DataProvider, Disposabl
     errorPanel.add(errorLabel, BorderLayout.CENTER);
     myViewPort.add(component, IMAGE_PANEL);
     myViewPort.add(errorPanel, ERROR_PANEL);
-
-    PopupHandler.installPopupMenu((JComponent)component, ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
     add(myViewPort, BorderLayout.CENTER);
+
+    if (!JCefImageViewer.isDebugMode()) { // Use the context menu for calling devtools in debug mode
+      PopupHandler.installPopupMenu(myViewer.getPreferredFocusedComponent(), ImageEditorActions.GROUP_POPUP, ImageEditorActions.ACTION_PLACE);
+    }
   }
 
   @Override

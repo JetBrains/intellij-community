@@ -74,13 +74,22 @@ class JCefImageViewer(private val myFile: VirtualFile,
     private const val IMAGE_URL = "$PROTOCOL://$HOST_NAME$IMAGE_PATH"
     private const val SCROLLBARS_STYLE_URL = "$PROTOCOL://$HOST_NAME$SCROLLBARS_CSS_PATH"
     private const val CHESSBOARD_STYLE_URL = "$PROTOCOL://$HOST_NAME$CHESSBOARD_CSS_PATH"
+
+    private val ourCefClient = JBCefApp.getInstance().createClient()
+
+    init {
+      Disposer.register(ApplicationManager.getApplication(), ourCefClient)
+    }
+
+    @JvmStatic
+    fun isDebugMode() = RegistryManager.getInstance().`is`("ide.browser.jcef.svg-viewer.debug")
   }
 
   private val myDocument: Document = FileDocumentManager.getInstance().getDocument(myFile)!!
-  private val myCefClient: JBCefClient = JBCefApp.getInstance().createClient()
-  private val myBrowser: JBCefBrowser = JBCefBrowserBuilder().setClient(myCefClient).build()
+  private val myBrowser: JBCefBrowser = JBCefBrowserBuilder().setClient(ourCefClient).setEnableOpenDevToolsMenuItem(isDebugMode()).build()
   private val myUIComponent: JCefImageViewerUI
   private val myViewerStateJSQuery: JBCefJSQuery
+  private val myRequestHandler: CefRequestHandler
 
   private var myState = ViewerState()
   private var myEditorState: ImageFileEditorState = ImageFileEditorState(
@@ -132,6 +141,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   }
 
   override fun dispose() {
+    ourCefClient.removeRequestHandler(myRequestHandler, myBrowser.cefBrowser)
     myViewerStateJSQuery.clearHandlers()
     myDocument.removeDocumentListener(this)
   }
@@ -179,23 +189,23 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   init {
     myDocument.addDocumentListener(this)
-    val resourceRequestHandler = CefLocalRequestHandler(PROTOCOL, HOST_NAME)
+    myRequestHandler = CefLocalRequestHandler(PROTOCOL, HOST_NAME)
 
-    resourceRequestHandler.addResource(VIEWER_PATH) {
+    myRequestHandler.addResource(VIEWER_PATH) {
       javaClass.getResourceAsStream("resources/image_viewer.html")?.let {
         CefStreamResourceHandler(it, "text/html", this@JCefImageViewer)
       }
     }
 
-    resourceRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
+    myRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
       CefStreamResourceHandler(ByteArrayInputStream(buildScrollbarsStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
-    resourceRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
+    myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
       CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
-    resourceRequestHandler.addResource(IMAGE_PATH) {
+    myRequestHandler.addResource(IMAGE_PATH) {
       var stream: InputStream? = null
       try {
         stream = if (FileUtilRt.isTooLarge(myFile.length)) myFile.inputStream
@@ -217,10 +227,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
       }
     }
 
-    myCefClient.addRequestHandler(resourceRequestHandler, myBrowser.cefBrowser)
+    ourCefClient.addRequestHandler(myRequestHandler, myBrowser.cefBrowser)
 
-    myUIComponent = JCefImageViewerUI(myBrowser.cefBrowser.uiComponent, this)
+    myUIComponent = JCefImageViewerUI(myBrowser.component, this)
     Disposer.register(this, myUIComponent)
+    Disposer.register(this, myBrowser)
 
     @Suppress("DEPRECATION")
     myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
@@ -253,18 +264,20 @@ class JCefImageViewer(private val myFile: VirtualFile,
       JBCefJSQuery.Response(null)
     }
 
-    myCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
+    ourCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-        reloadStyles()
-        execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
-        execute("setImageUrl('$IMAGE_URL');")
-        isGridVisible = myEditorState.isGridVisible
-        isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
-        setBorderVisible(ShowBorderAction.isBorderVisible())
+        if (frame.isMain) {
+          reloadStyles()
+          execute("sendInfo = function(info_text) {${myViewerStateJSQuery.inject("info_text")};}")
+          execute("setImageUrl('$IMAGE_URL');")
+          isGridVisible = myEditorState.isGridVisible
+          isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
+          setBorderVisible(ShowBorderAction.isBorderVisible())
+        }
       }
     }, myBrowser.cefBrowser)
 
-    if (RegistryManager.getInstance().`is`("ide.browser.jcef.svg-viewer.debug")) {
+    if (isDebugMode()) {
       myBrowser.loadURL("$VIEWER_URL?debug")
     }
     else {
