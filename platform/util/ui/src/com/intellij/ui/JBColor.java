@@ -95,7 +95,7 @@ public class JBColor extends Color {
 
       @Override
       public int hashCode() {
-        return name.hashCode();
+        return System.identityHashCode(this);
       }
 
       @Override
