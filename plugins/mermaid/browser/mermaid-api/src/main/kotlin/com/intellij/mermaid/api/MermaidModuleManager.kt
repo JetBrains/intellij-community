@@ -15,6 +15,7 @@ object MermaidModuleManager {
   }
 
   suspend fun loadModule(): MermaidModule {
+    check(instance == null) { "Mermaid module should be loaded only once" }
     // They are esm now
     val module = import("mermaid/dist/mermaid.core.mjs").await()
     val exports = module.default.unsafeCast<MermaidModule>()
