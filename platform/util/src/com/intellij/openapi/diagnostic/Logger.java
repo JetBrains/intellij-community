@@ -97,6 +97,12 @@ public abstract class Logger {
 
   public abstract boolean isDebugEnabled();
 
+  /**
+   * @param message should be a plain string literal,
+   *                or the call should be enclosed in {@link #isDebugEnabled()};
+   *                for all other cases, {@link #debug(String, Object...)} is more efficient
+   *                as it delays building the string and calling {@link Object#toString()} on the arguments
+   */
   public abstract void debug(String message);
 
   public abstract void debug(@Nullable Throwable t);
