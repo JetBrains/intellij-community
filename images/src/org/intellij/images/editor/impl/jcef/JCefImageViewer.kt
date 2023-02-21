@@ -126,15 +126,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
         return
       }
 
-      if (options.isSmartZooming) {
-        val zoomFactor = options.getSmartZoomFactor(
-          Rectangle(Point(0, 0), Dimension(myState.imageSize.width, myState.imageSize.height)),
-          Dimension(myState.viewportSize.width, myState.viewportSize.height),
-          5
-        )
-        execute("setZoom(${zoomFactor});")
-      }
-      else {
+      if (!options.isSmartZooming) {
         execute("setZoom(${state.zoomFactor});")
       }
     }
@@ -236,7 +228,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     @Suppress("DEPRECATION")
     myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
     myViewerStateJSQuery.addHandler { s: String ->
-      val oldStatus = myState.status
+      val oldState = myState
       try {
         myState = jsonParser.decodeFromString(s)
       }
@@ -245,8 +237,15 @@ class JCefImageViewer(private val myFile: VirtualFile,
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
-      // Init the viewer zoom factor
-      if (oldStatus == ViewerState.Status.INIT && oldStatus != myState.status) setState(myEditorState)
+      val zoomOptions = OptionsManager.getInstance().options.editorOptions.zoomOptions
+      if (oldState.status == ViewerState.Status.INIT && zoomOptions.isSmartZooming) {
+        val zoomFactor = zoomOptions.getSmartZoomFactor(
+          Rectangle(Point(0, 0), Dimension(myState.imageSize.width, myState.imageSize.height)),
+          Dimension(myState.viewportSize.width, myState.viewportSize.height),
+          5
+        )
+        execute("setZoom(${zoomFactor});")
+      }
 
       SwingUtilities.invokeLater {
         if (myState.status == ViewerState.Status.OK) {
