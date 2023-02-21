@@ -233,14 +233,16 @@
       "chevronDownLarge.svg": "toolbar/expand.svg",
       "chevronLeft.svg": [
         "general/arrowLeft.svg",
-        "general/chevron-left.svg"
+        "general/chevron-left.svg",
+        "actions/arrowCollapse.svg"
       ],
       "chevronRight.svg": [
         "general/arrowRight.svg",
         "general/chevron-right.svg",
         "icons/ide/menuArrow.svg",
         "icons/ide/menuArrowSelected.svg",
-        "ide/link.svg"
+        "ide/link.svg",
+        "actions/arrowExpand.svg"
       ],
       "chevronUp.svg": [
         "actions/findAndShowPrevMatches.svg",
