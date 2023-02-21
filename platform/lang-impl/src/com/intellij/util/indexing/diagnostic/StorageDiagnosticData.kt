@@ -71,7 +71,7 @@ object StorageDiagnosticData {
   fun dumpOnShutdown() {
     //Since we know it is a shutdown -> cancel regular stats dumping:
     val regularDumpHandleLocalCopy = regularDumpHandle
-    if(regularDumpHandleLocalCopy !=null){
+    if (regularDumpHandleLocalCopy != null) {
       regularDumpHandleLocalCopy.cancel(false)
       regularDumpHandle = null
     }
@@ -87,6 +87,10 @@ object StorageDiagnosticData {
       val stats = getStorageDataStatistics()
       val file = getDumpFile(sessionLocalDateTime, onShutdown)
       IndexDiagnosticDumperUtils.writeValue(file, stats)
+    }
+    catch (e: AlreadyDisposedException){
+      //e.g. IDEA-313757
+      thisLogger().info("Can't collect storage statistics: ${e.message} -- probably, already a shutdown?")
     }
     catch (e: Exception) {
       thisLogger().error(e)
@@ -139,7 +143,6 @@ object StorageDiagnosticData {
 
   private fun otherGeneralStorageStatistics(mapStats: Map<Path, PersistentHashMapStatistics>,
                                             enumeratorStats: Map<Path, PersistentEnumeratorStatistics>): StatsPerStorage {
-    //FIXME RC: PathMacroManager could be destroyed earlier than SDD stopped, hence the exception here (IDEA-313757)
     val macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication())
     return StatsPerStorage(
       mapStats.mapKeys { macroManager.collapsePath(it.key.pathString) }.toSortedMap(),
