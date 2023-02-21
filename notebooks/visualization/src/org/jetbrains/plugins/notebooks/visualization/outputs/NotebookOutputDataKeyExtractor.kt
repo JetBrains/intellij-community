@@ -14,6 +14,16 @@ interface NotebookOutputDataKey {
 
 interface NotebookOutputDataKeyExtractor {
   /**
+   * This boolean flag can be utilized to differentiate between extractors that are specifically designed to extract a specific
+   * [NotebookOutputDataKey] from some expected data format and more general extractors that can extract data from various inputs.
+   * The purpose of this flag is to sort a list of [NotebookOutputDataKeyExtractor] by prioritizing those that have
+   * isTargetedForSpecificData=true.
+   * Note that extractors with isTargetedForSpecificData=true are assumed to have arbitrary precedence as they are tailored
+   * to extract specific data and cannot extract data from a different format, so they should not clash with each other.
+   */
+  val isTargetedForSpecificData: Boolean
+
+  /**
    * Seeks somewhere for some data to be represented below [interval].
    *
    * @return
