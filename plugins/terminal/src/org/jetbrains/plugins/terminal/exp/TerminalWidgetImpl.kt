@@ -18,27 +18,24 @@ class TerminalWidgetImpl(private val project: Project,
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
   override val termSize: TermSize?
-    get() = if (!blocksContainer.bounds.isEmpty) blocksContainer.getTerminalSize() else null
+    get() = if (!blocksController.component.bounds.isEmpty) blocksController.getTerminalSize() else null
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
 
 
-  private val session: TerminalSession
-  private val blocksContainer: TerminalBlocksContainer
+  private val session: TerminalSession = TerminalSession(project, terminalSettings)
+  private val blocksController: TerminalBlocksController = TerminalBlocksController(project, session, terminalSettings)
 
   init {
-    session = TerminalSession(project, terminalSettings)
-    blocksContainer = TerminalBlocksContainer(project, session, terminalSettings)
-
     Disposer.register(parent, this)
     Disposer.register(this, session)
-    Disposer.register(this, blocksContainer)
+    Disposer.register(this, blocksController)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector) {
     ttyConnectorAccessor.ttyConnector = ttyConnector
     session.start(ttyConnector)
-    blocksContainer.sizeTerminalToComponent()
+    blocksController.sizeTerminalToComponent()
   }
 
   override fun writePlainMessage(message: String) {
@@ -50,11 +47,11 @@ class TerminalWidgetImpl(private val project: Project,
   }
 
   override fun hasFocus(): Boolean {
-    return blocksContainer.isFocused()
+    return blocksController.isFocused()
   }
 
   override fun requestFocus() {
-    blocksContainer.requestFocus()
+    blocksController.component.requestFocus()
   }
 
   override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
@@ -69,7 +66,7 @@ class TerminalWidgetImpl(private val project: Project,
 
   }
 
-  override fun getComponent(): JComponent = blocksContainer
+  override fun getComponent(): JComponent = blocksController.component
 
-  override fun getPreferredFocusableComponent(): JComponent = blocksContainer.preferredFocusableComponent
+  override fun getPreferredFocusableComponent(): JComponent = blocksController.preferredFocusableComponent
 }
