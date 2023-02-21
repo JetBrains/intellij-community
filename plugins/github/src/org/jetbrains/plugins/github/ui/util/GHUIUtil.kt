@@ -19,10 +19,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.ListUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.github.GithubIcons
@@ -117,7 +114,10 @@ object GHUIUtil {
       cellRenderer.getText(it.value)
     }
 
-    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField)
+    val panel = JBUI.Panels.simplePanel(scrollPane).addToTop(searchField).apply {
+      val size = searchField.preferredSize
+      preferredSize = JBDimension(size.width, size.height * 5, true) // default size for loading popup state
+    }
     ListUtil.installAutoSelectOnMouseMove(list)
 
     fun toggleSelection() {
@@ -145,6 +145,7 @@ object GHUIUtil {
       .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
+          panel.preferredSize = null // needed that popup does not drop out outside an IDE window
           list.setPaintBusy(true)
           list.emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
 
