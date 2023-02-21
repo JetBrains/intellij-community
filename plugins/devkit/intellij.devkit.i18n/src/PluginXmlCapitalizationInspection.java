@@ -41,7 +41,7 @@ import java.util.Set;
 public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
       checkActionOrGroup((ActionOrGroup)element, holder);
     }

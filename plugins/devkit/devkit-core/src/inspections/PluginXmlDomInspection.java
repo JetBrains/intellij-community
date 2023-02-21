@@ -151,7 +151,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     super.checkDomElement(element, holder, helper);
 
     ComponentModuleRegistrationChecker componentModuleRegistrationChecker =
