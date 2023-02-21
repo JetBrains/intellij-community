@@ -13,6 +13,9 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Utility class for work with <code>java.time</code> package
+ */
 public final class ChronoUtil {
 
   private static final CallMatcher CHRONO_GET_MATCHERS = CallMatcher.anyOf(
@@ -30,17 +33,24 @@ public final class ChronoUtil {
   private static final Map<String, ChronoField> chronoFieldMap = Arrays.stream(ChronoField.values())
     .collect(Collectors.toMap(t -> t.name(), t -> t));
 
+  /**
+   * @return {@code ChronoField} enum with the same name or null if enum is not found
+   */
   @Nullable
   public static ChronoField getChronoField(@NotNull String name) {
     return chronoFieldMap.get(name);
   }
 
+  /**
+   * @return true if the {@code method} (<code>get(ChronoField)</code> or <code>getLong(ChronoField)</code>)
+   * can be called with given {@code chronoField} without an exception, otherwise false
+   */
   public static boolean isGetSupported(@NotNull PsiMethod method, @NotNull ChronoField chronoField) {
     if (!CHRONO_GET_MATCHERS.methodMatches(method)) {
       return false;
     }
     String methodName = method.getName();
-    if ("getInt".equals(methodName) && !chronoField.range().isIntValue()) {
+    if ("get".equals(methodName) && !chronoField.range().isIntValue()) {
       return false;
     }
     PsiClass containingClass = method.getContainingClass();

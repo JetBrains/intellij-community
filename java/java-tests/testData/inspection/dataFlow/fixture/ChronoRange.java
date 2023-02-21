@@ -22,6 +22,7 @@ class Test {
     {
       System.out.println("4");
     }
+    localDate.get(ChronoField.EPOCH_DAY);
   }
   private static void checked(OffsetTime offsetTime, LocalDateTime localDateTime, LocalDate localDate, LocalTime localTime) {
     if(<warning descr="Condition 'offsetTime.get(ChronoField.OFFSET_SECONDS)>1_000_000_000' is always 'false'">offsetTime.get(ChronoField.OFFSET_SECONDS)>1_000_000_000</warning>)
