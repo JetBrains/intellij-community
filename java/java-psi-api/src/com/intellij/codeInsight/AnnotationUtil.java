@@ -186,7 +186,8 @@ public class AnnotationUtil {
     final PsiAnnotation[] annotations = modifierList.getAnnotations();
     ArrayList<PsiAnnotation> result = null;
     for (final PsiAnnotation psiAnnotation : annotations) {
-      if (annotationNames.contains(psiAnnotation.getQualifiedName())) {
+      String qualifiedName = psiAnnotation.getQualifiedName();
+      if (qualifiedName != null && annotationNames.contains(qualifiedName)) {
         if (result == null) result = new ArrayList<>();
         result.add(psiAnnotation);
       }
