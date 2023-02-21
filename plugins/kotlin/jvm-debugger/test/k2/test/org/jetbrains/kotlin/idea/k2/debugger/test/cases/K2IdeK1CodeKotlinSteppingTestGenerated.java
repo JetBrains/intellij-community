@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestRoot("jvm-debugger/test/k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlinSteppingTest {
+public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2IdeK1CodeKotlinSteppingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepIntoAndSmartStepInto")
-    public static class StepInto extends AbstractK2IrKotlinSteppingTest {
+    public static class StepInto extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -108,7 +108,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepIntoAndSmartStepInto")
-    public static class SmartStepInto extends AbstractK2IrKotlinSteppingTest {
+    public static class SmartStepInto extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSmartStepIntoTest, this, testDataFilePath);
         }
@@ -196,7 +196,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepInto")
-    public static class StepIntoOnly extends AbstractK2IrKotlinSteppingTest {
+    public static class StepIntoOnly extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -329,7 +329,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepOut")
-    public static class StepOut extends AbstractK2IrKotlinSteppingTest {
+    public static class StepOut extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepOutTest, this, testDataFilePath);
         }
@@ -387,10 +387,10 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/stepOver")
-    public abstract static class StepOver extends AbstractK2IrKotlinSteppingTest {
+    public abstract static class StepOver extends AbstractK2IdeK1CodeKotlinSteppingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/stepping/stepOver/coroutines")
-        public static class Coroutines extends AbstractK2IrKotlinSteppingTest {
+        public static class Coroutines extends AbstractK2IdeK1CodeKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -418,7 +418,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/stepping/stepOver")
-        public static class Uncategorized extends AbstractK2IrKotlinSteppingTest {
+        public static class Uncategorized extends AbstractK2IdeK1CodeKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
             }
@@ -997,7 +997,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/filters")
-    public static class Filters extends AbstractK2IrKotlinSteppingTest {
+    public static class Filters extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
         }
@@ -1065,7 +1065,7 @@ public abstract class K2IrKotlinSteppingTestGenerated extends AbstractK2IrKotlin
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/stepping/custom")
-    public static class Custom extends AbstractK2IrKotlinSteppingTest {
+    public static class Custom extends AbstractK2IdeK1CodeKotlinSteppingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
         }

@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/fileRanking")
-public class K2FileRankingTestGenerated extends AbstractK2FileRankingTest {
+public class K2IdeK1CodeFileRankingTestGenerated extends AbstractK2IdeK1CodeFileRankingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

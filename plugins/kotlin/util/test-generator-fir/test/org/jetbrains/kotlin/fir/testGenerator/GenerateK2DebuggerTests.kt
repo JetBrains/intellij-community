@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.testGenerator.model.*
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
     testGroup("jvm-debugger/test/k2", testDataPath = "../testData") {
 
-        testClass<AbstractK2IrKotlinSteppingTest> {
+        testClass<AbstractK2IdeK1CodeKotlinSteppingTest> {
             model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
             model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
             model("stepping/stepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
@@ -68,12 +68,12 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         }
 
 
-        testClass<AbstractK2FileRankingTest> {
+        testClass<AbstractK2IdeK1CodeFileRankingTest> {
             model("fileRanking")
         }
 
 
-        testClass<AbstractK2AsyncStackTraceTest> {
+        testClass<AbstractK2IdeK1CodeAsyncStackTraceTest> {
             model("asyncStackTrace")
         }
 
@@ -94,7 +94,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         //    model("continuation")
         //}
 
-        testClass<AbstractK2KotlinVariablePrintingTest> {
+        testClass<AbstractK2IdeK1CodeKotlinVariablePrintingTest> {
             model("variables")
         }
 

@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/asyncStackTrace")
-public class K2AsyncStackTraceTestGenerated extends AbstractK2AsyncStackTraceTest {
+public class K2IdeK1CodeAsyncStackTraceTestGenerated extends AbstractK2IdeK1CodeAsyncStackTraceTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

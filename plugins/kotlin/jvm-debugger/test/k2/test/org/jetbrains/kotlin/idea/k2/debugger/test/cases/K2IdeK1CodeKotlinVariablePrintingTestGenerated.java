@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/variables")
-public class K2KotlinVariablePrintingTestGenerated extends AbstractK2KotlinVariablePrintingTest {
+public class K2IdeK1CodeKotlinVariablePrintingTestGenerated extends AbstractK2IdeK1CodeKotlinVariablePrintingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
