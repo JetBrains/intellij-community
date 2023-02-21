@@ -19,8 +19,10 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Single-threaded executor for {@link MergingTaskQueue}.
@@ -88,6 +90,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
   private final MergingQueueGuiSuspender myGuiSuspender = new MergingQueueGuiSuspender();
   private final @NlsContexts.ProgressTitle String myProgressTitle;
   private final @NlsContexts.ProgressText String mySuspendedText;
+  private final AtomicInteger backgroundTasksSubmitted = new AtomicInteger(0);
 
   protected MergingQueueGuiExecutor(@NotNull Project project,
                                     @NotNull MergingTaskQueue<T> queue,
@@ -136,6 +139,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     if (mySuspended.get()) return;
 
     try {
+      backgroundTasksSubmitted.incrementAndGet();
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myProgressTitle, false) {
         @Override
         public void run(final @NotNull ProgressIndicator visibleIndicator) {
@@ -266,5 +270,10 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
   public final void suspendAndRun(@NlsContexts.ProgressText @NotNull String activityName, @NotNull Runnable activity) {
     getGuiSuspender().suspendAndRun(activityName, activity);
+  }
+
+  @TestOnly
+  int getBackgroundTasksSubmittedCount(){
+    return backgroundTasksSubmitted.get();
   }
 }
