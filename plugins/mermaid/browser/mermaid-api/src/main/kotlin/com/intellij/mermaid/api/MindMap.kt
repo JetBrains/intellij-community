@@ -22,5 +22,6 @@ package com.intellij.mermaid.api
 @JsModule("@mermaid-js/mermaid-mindmap/dist/mermaid-mindmap.core.mjs")
 external object MindMap
 
+@Suppress("DEPRECATION")
 val MindMap.definition: ExternalDiagramDefinition
   get() = asDynamic().default.unsafeCast<ExternalDiagramDefinition>()

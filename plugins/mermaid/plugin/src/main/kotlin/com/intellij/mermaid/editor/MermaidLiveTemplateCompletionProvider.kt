@@ -18,7 +18,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 abstract class MermaidLiveTemplateCompletionProvider :
   CompletionProvider<CompletionParameters>() {
   private val priority = 10.0
-  
+
   protected fun createKeywordLookupElement(project: Project, keyword: String, predefinedNameVar: String? = null): LookupElement {
     val templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     val template = TemplateSettings.getInstance().getTemplateById("mermaid_$keyword")
@@ -56,6 +56,7 @@ abstract class MermaidLiveTemplateCompletionProvider :
               if (file != null) {
 
                 val line = document.getLineNumber(startOffset)
+                @Suppress("NAME_SHADOWING")
                 val startOffset = document.getLineStartOffset(line)
                 val endOffset = document.getLineEndOffset(line + 1)
 

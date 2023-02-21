@@ -95,7 +95,7 @@ internal object MermaidSpacingBuilder {
   )
 
   fun get(settings: CodeStyleSettings): SpacingBuilder {
-    val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
+    // val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
     val indentOptions = settings.getLanguageIndentOptions(MermaidLanguage)
 
     return SpacingBuilder(settings, MermaidLanguage)
