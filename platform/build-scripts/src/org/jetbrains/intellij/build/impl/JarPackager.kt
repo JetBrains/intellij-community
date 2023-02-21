@@ -60,6 +60,7 @@ private val libsThatUsedInJps = java.util.Set.of(
   "NanoXML",
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
+  "Guava",
   "http-client",
   "commons-codec",
   "commons-logging",
