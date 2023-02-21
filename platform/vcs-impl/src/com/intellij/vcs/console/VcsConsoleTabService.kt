@@ -74,9 +74,7 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
     if (project.isDisposed || project.isDefault) return
 
-    val contentTab = ChangesViewContentManager.getInstance(project)
-      .findContents { it.tabName == ChangesViewContentManager.CONSOLE }
-      .firstOrNull()
+    val contentTab = ChangesViewContentManager.getInstance(project).findContent(ChangesViewContentManager.CONSOLE)
     if (contentTab == null) {
       createConsoleContentTab()
     }

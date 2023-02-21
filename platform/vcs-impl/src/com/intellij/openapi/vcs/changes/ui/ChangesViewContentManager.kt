@@ -177,8 +177,12 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     return allContents.filter { predicate.test(it) }
   }
 
+  override fun findContent(tabName: String): Content? {
+    return findContents { it.tabName == tabName }.firstOrNull()
+  }
+
   private fun getContentToolWindowId(tabName: String): String? {
-    val content = findContents { it.tabName == tabName }.firstOrNull() ?: return null
+    val content = findContent(tabName) ?: return null
     return content.resolveToolWindowId()
   }
 
