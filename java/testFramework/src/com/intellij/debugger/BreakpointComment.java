@@ -136,8 +136,10 @@ public final class BreakpointComment {
     private int i;
     private final BreakpointComment comment;
 
-    private Parser(String text, String fileName, int lineNumber) {
-      s = StringUtil.substringAfter(text, "//").codePoints().toArray();
+    private Parser(String lineText, String fileName, int lineNumber) {
+      String text = StringUtil.substringAfter(lineText, "//");
+      if (text == null) throw new IllegalArgumentException("Breakpoint comment must start with '//' at " + fileName + ":" + lineNumber);
+      s = text.codePoints().toArray();
       len = s.length;
       comment = new BreakpointComment(fileName, lineNumber);
     }
