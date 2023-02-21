@@ -16,7 +16,7 @@ interface WebSymbolsContextSourceProximityProvider {
   enum class SourceKind {
     PackageManagerDependency,
     IdeLibrary,
-    ProjectTool,
+    ProjectToolExecutable,
   }
 
   companion object {
