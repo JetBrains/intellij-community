@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DefaultDomAnnotator implements Annotator {
   @Nullable
-  private static DomElement getDomElement(PsiElement psiElement, DomManager myDomManager) {
+  private static DomElement getDomElement(@NotNull PsiElement psiElement, @NotNull DomManager myDomManager) {
     if (psiElement instanceof XmlTag) {
       return myDomManager.getDomElement((XmlTag)psiElement);
     }
@@ -28,11 +28,9 @@ public class DefaultDomAnnotator implements Annotator {
     return null;
   }
 
-  public <T extends DomElement> void runInspection(DomElementsInspection<DomElement> inspection, DomFileElement<DomElement> fileElement, @NotNull AnnotationHolder toFill) {
-    if (inspection == null) {
-      return;
-    }
-
+  public <T extends DomElement> void runInspection(@NotNull DomElementsInspection<DomElement> inspection,
+                                                   @NotNull DomFileElement<DomElement> fileElement,
+                                                   @NotNull AnnotationHolder toFill) {
     DomElementAnnotationsManagerImpl annotationsManager = getAnnotationsManager(fileElement);
     if (annotationsManager.isHolderUpToDate(fileElement) && annotationsManager.getProblemHolder(fileElement).isInspectionCompleted(inspection)) {
       return;
@@ -42,16 +40,10 @@ public class DefaultDomAnnotator implements Annotator {
     inspection.checkFileElement(fileElement, annotationHolder);
     //noinspection unchecked
     annotationsManager.appendProblems(fileElement, annotationHolder, (Class<? extends DomElementsInspection<?>>)inspection.getClass());
-    //for (final DomElementProblemDescriptor descriptor : annotationHolder) {
-    //  for (Annotation annotation : descriptor.getAnnotations()) {
-    //
-    //    toFill.addAll();
-    //  }
-    //}
-    //toFill.addAll(annotationHolder.getAnnotations());
   }
 
-  protected DomElementAnnotationsManagerImpl getAnnotationsManager(DomElement element) {
+  @NotNull
+  protected DomElementAnnotationsManagerImpl getAnnotationsManager(@NotNull DomElement element) {
     return (DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(element.getManager().getProject());
   }
 
@@ -72,7 +64,9 @@ public class DefaultDomAnnotator implements Annotator {
         if (domElement != null) {
           DomFileElement<DomElement> root = DomUtil.getFileElement(domElement);
           DomElementsInspection<DomElement> inspection = getAnnotationsManager(domElement).getMockInspection(root);
-          runInspection(inspection, root, holder);
+          if (inspection != null) {
+            runInspection(inspection, root, holder);
+          }
           break;
         }
       }

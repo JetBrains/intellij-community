@@ -166,7 +166,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   public void testDefaultAnnotator() {
     final DefaultDomAnnotator annotator = new DefaultDomAnnotator() {
       @Override
-      protected DomElementAnnotationsManagerImpl getAnnotationsManager(final DomElement element) {
+      protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(final @NotNull DomElement element) {
         return myAnnotationsManager;
       }
     };
