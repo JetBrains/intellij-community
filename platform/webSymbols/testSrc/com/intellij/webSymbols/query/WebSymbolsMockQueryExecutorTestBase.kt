@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
+import com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionPoint
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsMatchPrefixFilter
 import com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP
 import com.intellij.webSymbols.query.impl.WebSymbolsMockQueryExecutorFactory
@@ -32,6 +33,12 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       "com.intellij.webSymbols.defaultIconProvider",
       "com.intellij.webSymbols.query.WebSymbolDefaultIconProvider",
       ExtensionPoint.Kind.INTERFACE, true)
+    application.extensionArea.registerExtensionPoint(
+      "com.intellij.webSymbols.context",
+      WebSymbolsContextProviderExtensionPoint::class.java.name,
+      ExtensionPoint.Kind.BEAN_CLASS,
+      true
+    )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
                                                        WebSymbolsMatchPrefixFilter::class.java.classLoader)
     application.extensionArea.getExtensionPoint<WebSymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
