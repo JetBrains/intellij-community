@@ -43,9 +43,7 @@ class TerminalBlocksContainer(private val project: Project,
 
     session.addCommandListener(object : ShellCommandListener {
       override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-        invokeLater {
-          onCommandFinished(command, exitCode, duration)
-        }
+        onCommandFinished(command, exitCode, duration)
       }
     }, parentDisposable = this)
 
@@ -78,11 +76,8 @@ class TerminalBlocksContainer(private val project: Project,
   }
 
   private fun onCommandStarted(command: String) {
+    installRunningPanel()
     session.executeCommand(command)
-
-    invokeLater {
-      installRunningPanel()
-    }
   }
 
   private fun installRunningPanel() {
@@ -99,8 +94,8 @@ class TerminalBlocksContainer(private val project: Project,
 
   private fun onCommandFinished(command: String, exitCode: Int, duration: Long) {
     runningPanel?.makeReadOnly() ?: error("Running panel is null")
-    runningPanel = null
 
+    // prepare terminal for the next command
     val model = session.model
     model.lock()
     try {
@@ -110,12 +105,14 @@ class TerminalBlocksContainer(private val project: Project,
       model.unlock()
     }
 
-    promptPanel.reset()
-    promptPanel.isVisible = true
-    revalidate()
-    repaint()
-
-    IdeFocusManager.getInstance(project).requestFocus(promptPanel.preferredFocusableComponent, true)
+    invokeLater {
+      runningPanel = null
+      promptPanel.reset()
+      promptPanel.isVisible = true
+      revalidate()
+      repaint()
+      IdeFocusManager.getInstance(project).requestFocus(promptPanel.preferredFocusableComponent, true)
+    }
   }
 
   private fun toggleFullScreen(isFullScreen: Boolean) {
