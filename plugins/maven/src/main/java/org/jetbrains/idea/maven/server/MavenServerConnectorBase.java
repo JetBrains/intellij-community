@@ -53,7 +53,7 @@ abstract class MavenServerConnectorBase extends AbstractMavenServerConnector {
     if (!myConnectStarted.compareAndSet(false, true)) {
       return;
     }
-    MavenLog.LOG.debug("connecting new maven server:", new Exception());
+    MavenLog.LOG.debug("connecting new maven server: " + this);
     ApplicationManager.getApplication().executeOnPooledThread(newStartServerTask());
   }
 
