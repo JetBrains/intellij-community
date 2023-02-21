@@ -13,6 +13,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStructureViewModel {
   protected SymbolBasedStructureViewModel(@NotNull PsiFile psiFile) {
@@ -45,7 +47,13 @@ public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStruc
         else {
           elementDeclarations.forEach(it -> {
             if (shouldCreateNode(it)) {
-              result.add(new PsiSymbolTreeElement(it, SymbolBasedStructureViewModel.this));
+              result.add(new PsiSymbolTreeElement(it) {
+                @Override
+                public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
+                  final PsiElement element = getElement();
+                  return element != null ? collectClosestChildrenSymbols(element) : Collections.emptyList();
+                }
+              });
             }
           });
         }
