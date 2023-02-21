@@ -20,3 +20,9 @@ abstract class AbstractK2IdeK1CodeFileRankingTest : AbstractFileRankingTest() {
     }
 
 }
+
+abstract class AbstractK2IdeK2CodeFileRankingTest : AbstractK2IdeK1CodeFileRankingTest() {
+    override val compileWithK2 = true
+
+    override val lambdasGenerationScheme = JvmClosureGenerationScheme.INDY
+}

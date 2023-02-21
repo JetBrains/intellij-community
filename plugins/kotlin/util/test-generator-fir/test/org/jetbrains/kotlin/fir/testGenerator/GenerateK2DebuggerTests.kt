@@ -7,24 +7,20 @@ import org.jetbrains.kotlin.testGenerator.model.*
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
     testGroup("jvm-debugger/test/k2", testDataPath = "../testData") {
 
-        testClass<AbstractK2IdeK1CodeKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
-        }
-
-        testClass<AbstractK2IndyLambdaKotlinSteppingTest> {
-            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
-            model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
-            model("stepping/stepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
-            model("stepping/stepOut", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
-            model("stepping/stepOver", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
-            model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
-            model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+        listOf(
+            AbstractK2IdeK1CodeKotlinSteppingTest::class,
+            AbstractK2IdeK2CodeKotlinSteppingTest::class,
+            AbstractK2IndyLambdaKotlinSteppingTest::class,
+        ).forEach {
+            testClass(it) {
+                model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
+                model("stepping/stepIntoAndSmartStepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
+                model("stepping/stepInto", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
+                model("stepping/stepOut", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
+                model("stepping/stepOver", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
+                model("stepping/filters", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
+                model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+            }
         }
         //
         //testClass<AbstractKotlinEvaluateExpressionTest> {
@@ -67,14 +63,17 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             model("breakpointApplicability")
         }
 
-
-        testClass<AbstractK2IdeK1CodeFileRankingTest> {
-            model("fileRanking")
+        listOf(AbstractK2IdeK1CodeFileRankingTest::class, AbstractK2IdeK2CodeFileRankingTest::class,).forEach {
+            testClass(it) {
+                model("fileRanking")
+            }
         }
 
 
-        testClass<AbstractK2IdeK1CodeAsyncStackTraceTest> {
-            model("asyncStackTrace")
+        listOf(AbstractK2IdeK1CodeAsyncStackTraceTest::class, AbstractK2IdeK2CodeAsyncStackTraceTest::class).forEach {
+            testClass(it) {
+                model("asyncStackTrace")
+            }
         }
 
         //
@@ -94,8 +93,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         //    model("continuation")
         //}
 
-        testClass<AbstractK2IdeK1CodeKotlinVariablePrintingTest> {
-            model("variables")
+        listOf(AbstractK2IdeK1CodeKotlinVariablePrintingTest::class, AbstractK2IdeK2CodeKotlinVariablePrintingTest::class,).forEach {
+            testClass(it) {
+                model("variables")
+            }
         }
 
         //testClass<AbstractXCoroutinesStackTraceTest> {
