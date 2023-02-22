@@ -2,17 +2,18 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.bindText
+import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.emptyBorders
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SingleComponentCenteringLayout
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import net.miginfocom.layout.AC
@@ -20,6 +21,7 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
@@ -33,7 +35,13 @@ internal object GHPRTitleComponent {
       font = JBFont.h2().asBold()
     }
     model.addAndInvokeListener {
-      titlePane.setBody(createTitleText(model.value.title, model.value.number.toString(), model.value.url))
+      val title = CodeReviewTitleUIUtil.createTitleText(
+        title = model.value.title,
+        reviewNumber = "#${model.value.number}",
+        url = model.value.url,
+        tooltip = GithubBundle.message("open.on.github.action")
+      )
+      titlePane.setBody(title)
     }
     return titlePane
   }
@@ -41,8 +49,13 @@ internal object GHPRTitleComponent {
   fun create(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
     val titleLabel = HtmlEditorPane().apply {
       font = JBFont.h2().asBold()
-      bindText(scope, reviewDetailsVm.titleState.map { title ->
-        createTitleText(title, reviewDetailsVm.number, reviewDetailsVm.url)
+      bindTextHtml(scope, reviewDetailsVm.titleState.map { title ->
+        CodeReviewTitleUIUtil.createTitleText(
+          title = title,
+          reviewNumber = "#${reviewDetailsVm.number}",
+          url = reviewDetailsVm.url,
+          tooltip = GithubBundle.message("open.on.github.action")
+        )
       })
     }
     val stateLabel = JLabel().apply {
@@ -71,18 +84,5 @@ internal object GHPRTitleComponent {
       add(titleLabel)
       add(stateLabel, CC().alignY("top"))
     }
-  }
-
-  private fun createTitleText(title: @NlsSafe String, reviewNumber: @NlsSafe String, url: String): @NlsSafe String {
-    return HtmlBuilder()
-      .append(title)
-      .nbsp()
-      .append(
-        HtmlChunk
-          .link(url, "#${reviewNumber}")
-          .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())))
-      )
-      .wrapWithHtmlBody()
-      .toString()
   }
 }

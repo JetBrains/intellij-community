@@ -32,17 +32,29 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Shape
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.DefaultCaret
+import javax.swing.text.Element
+import javax.swing.text.View
+import javax.swing.text.html.HTML
+import javax.swing.text.html.InlineView
 import javax.swing.text.html.StyleSheet
 import kotlin.properties.Delegates
 
 object CollaborationToolsUIUtil {
   val COMPONENT_SCOPE_KEY = Key.create<CoroutineScope>("Collaboration.Component.Coroutine.Scope")
+
+  /**
+   * Show tooltip from HTML title attribute
+   *
+   * Syntax is `<{CONTENT_TAG} title="{text}">`
+   */
+  val CONTENT_TOOLTIP: ExtendableHTMLViewFactory.Extension = ContentTooltipExtension()
 
   val animatedLoadingIcon = AnimatedIcon.Default.INSTANCE
 
@@ -308,7 +320,10 @@ fun TransparentScrollPane(content: JComponent): JScrollPane =
 @Suppress("FunctionName")
 fun SimpleHtmlPane(additionalStyleSheet: StyleSheet? = null, @Language("HTML") body: @Nls String? = null): JEditorPane =
   JEditorPane().apply {
-    editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().apply {
+    editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
+      ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
+      CollaborationToolsUIUtil.CONTENT_TOOLTIP
+    ).apply {
       if (additionalStyleSheet != null) {
         val defaultStyleSheet = StyleSheetUtil.getDefaultStyleSheet()
         additionalStyleSheet.addStyleSheet(defaultStyleSheet)
@@ -377,4 +392,21 @@ fun ComboBoxModel<*>.selectFirst() {
   }
   val first = getElementAt(0)
   selectedItem = first
+}
+
+private class ContentTooltipExtension : ExtendableHTMLViewFactory.Extension {
+  override fun invoke(elem: Element, defaultView: View): View? {
+    if (defaultView !is InlineView) return null
+
+    return object : InlineView(elem) {
+      override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? {
+        val title = element.attributes.getAttribute(HTML.Attribute.TITLE) as? String
+        if (!title.isNullOrEmpty()) {
+          return title
+        }
+
+        return super.getToolTipText(x, y, allocation)
+      }
+    }
+  }
 }
