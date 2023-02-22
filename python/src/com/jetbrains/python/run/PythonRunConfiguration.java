@@ -55,6 +55,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   @Override
+  protected boolean isNewUiSupported() {
+    return true;
+  }
+
+  @Override
   protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
     if (Registry.is("python.new.run.config", false)) {
       return new PythonConfigurationFragmentedEditor(this);

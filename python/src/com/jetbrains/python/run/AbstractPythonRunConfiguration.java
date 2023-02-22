@@ -120,7 +120,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @NotNull
   @Override
   public final SettingsEditor<T> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", false)) {
+    if (Registry.is("python.new.run.config", false) && isNewUiSupported()) {
       // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
       // investigation needed PY-17716
       return createConfigurationEditor();
@@ -137,6 +137,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
+  }
+
+  protected boolean isNewUiSupported() {
+    return false;
   }
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
