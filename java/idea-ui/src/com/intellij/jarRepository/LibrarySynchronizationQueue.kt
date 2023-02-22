@@ -66,7 +66,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   }
 
   fun requestAllLibrariesSynchronization() {
-    synchronizationRequests.trySend(Request.Flush)
+    synchronizationRequests.trySend(Request.AllLibrariesSynchronization)
   }
 
   fun requestSynchronization(library: LibraryEx) {
