@@ -269,7 +269,6 @@
 
     "EditorTabs": {
       "background": "panel",
-      "tabInsets": "0,8,0,8",
       "underlinedTabBackground": "white",
       "borderColor": "border",
       "hoverBackground": "#00000019",
@@ -315,14 +314,12 @@
     },
 
     "HelpTooltip": {
-      "defaultTextBorderInsets": "8,10,10,13",
       "descriptionSizeDelta": {
         "os.linux": -2
       },
       "fontSizeDelta": {
         "os.linux": -2
-      },
-      "smallTextBorderInsets": "6,10,7,12"
+      }
     },
 
     "Hyperlink.linkColor": "#589df6",
@@ -923,13 +920,11 @@
     "MainToolbar": {
       "background": "#f2f2f2",
       "Icon": {
-        "borderInsets": "10,10,10,10",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"
       },
       "Dropdown": {
-        "borderInsets": "3,5,3,5",
         "background": "#f2f2f2",
         "hoverBackground": "#dfdfdf",
         "pressedBackground": "#dfdfdf"

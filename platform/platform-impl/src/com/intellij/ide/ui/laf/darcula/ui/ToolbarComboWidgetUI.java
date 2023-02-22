@@ -63,7 +63,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     c.setBackground(JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground()));
     c.setHoverBackground(JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background()));
 
-    Insets insets = UIManager.getInsets("MainToolbar.Dropdown.borderInsets");
+    Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     c.setBorder(border);
   }

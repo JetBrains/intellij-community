@@ -224,8 +224,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     if (ExperimentalUI.isNewUI()) {
       scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
         int orientation = ((ActionToolbarImpl)myToolbar).getOrientation();
-        Insets i = orientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
-                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+        Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
+                                                          : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
         Border innerBorder = i != null ? JBUI.Borders.empty(i.top, i.left, i.bottom, i.right)
                                        : JBUI.Borders.empty(2);
 

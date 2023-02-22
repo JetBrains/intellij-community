@@ -69,7 +69,8 @@ public class LineStatusMarkerPopupPanel extends JPanel {
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
-    JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets", JBInsets.create(1, 5));
+    JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets",
+                                  ExperimentalUI.isNewUI() ? JBUI.insets(6, 8, 6, 10) : JBInsets.create(1, 5));
     Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
     toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
