@@ -19,6 +19,7 @@ abstract class PipBasedPackageManager(project: Project, sdk: Sdk) : PythonPackag
     return withContext(Dispatchers.IO) {
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
         runPackagingTool("install", specification.buildInstallationString(), PyBundle.message("python.packaging.install.progress", specification.name))
+        refreshPaths()
         reloadPackages()
       }
     }
@@ -28,6 +29,7 @@ abstract class PipBasedPackageManager(project: Project, sdk: Sdk) : PythonPackag
     return withContext(Dispatchers.IO) {
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
         runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
+        refreshPaths()
         reloadPackages()
       }
     }
