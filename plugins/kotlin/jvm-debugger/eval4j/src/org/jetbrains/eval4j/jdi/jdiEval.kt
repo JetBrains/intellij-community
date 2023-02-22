@@ -164,6 +164,8 @@ open class JDIEval(
             return array.array().setValue(index.int, newValue.asJdiValue(vm, array.asmType.arrayElementType))
         } catch (e: IndexOutOfBoundsException) {
             throwInterpretingException(ArrayIndexOutOfBoundsException(e.message))
+        } catch (e: InvalidTypeException) {
+            throwInterpretingException(ArrayStoreException(e.message))
         }
     }
 
