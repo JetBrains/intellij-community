@@ -1,22 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.inspections
+package org.jetbrains.idea.devkit.inspections.quickfix
 
-import org.jetbrains.idea.devkit.inspections.quickfix.DevKitInspectionFixTestBase
+import org.jetbrains.idea.devkit.inspections.RetrievingLightServiceInspection
 
-abstract class LightServiceInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class RetrievingLightServiceInspectionTestBase : DevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(LightServiceInspection())
+    myFixture.enableInspections(RetrievingLightServiceInspection())
     myFixture.addClass("""
       package com.intellij.openapi.components;
 
       public @interface Service {
         Level[] value() default {};
 
-        enum Level {
-          APP, PROJECT
-        }
+        enum Level { APP, PROJECT }
       }
       """)
     myFixture.addClass("""
@@ -25,11 +23,6 @@ abstract class LightServiceInspectionTestBase : DevKitInspectionFixTestBase() {
       public interface ComponentManager {
         <T> T getService(@NotNull Class<T> serviceClass);
       }
-      """)
-    myFixture.addClass("""
-      package org.jetbrains.annotations;
-
-      public @interface NotNull {}
       """)
     myFixture.addClass("""
       package com.intellij.openapi.project;
@@ -63,4 +56,3 @@ abstract class LightServiceInspectionTestBase : DevKitInspectionFixTestBase() {
     """)
   }
 }
-

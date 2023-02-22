@@ -1,0 +1,19 @@
+<html>
+<body>
+Reports classes annotated with the <code>@com.intellij.openapi.components.Service</code> annotation that are not final.
+<p>Suggests making a class final in Java or not open in Kotlin</p>
+<p><b>Example:</b></p>
+<pre><code>
+  // MyService.kt
+  @Service(Service.Level.APP)
+  open class MyService
+</code></pre>
+<p>After the quick fix is applied:</p>
+<pre><code>
+  // MyService.kt
+  @Service(Service.Level.APP)
+  class MyService
+</code></pre>
+<p><small>New in 2023.1</small>
+</body>
+</html>

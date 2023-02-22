@@ -1,7 +1,5 @@
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 @Service(Service.Level.PROJECT)
 final class MyService {

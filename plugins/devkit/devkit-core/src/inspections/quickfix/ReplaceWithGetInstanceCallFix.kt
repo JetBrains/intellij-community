@@ -15,7 +15,7 @@ class ReplaceWithGetInstanceCallFix(private val serviceName: String,
                                     private val methodName: String,
                                     private val isApplicationLevelService: Boolean) : LocalQuickFix {
 
-  override fun getFamilyName(): String = DevKitBundle.message("inspection.light.service.replace.with", serviceName, methodName)
+  override fun getFamilyName(): String = DevKitBundle.message("inspection.retrieving.light.service.replace.with", serviceName, methodName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val oldCall = descriptor.psiElement.toUElement() as? UQualifiedReferenceExpression ?: return
