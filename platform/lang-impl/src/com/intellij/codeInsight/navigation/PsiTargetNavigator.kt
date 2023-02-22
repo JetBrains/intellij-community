@@ -12,7 +12,11 @@ import java.util.function.Predicate
 
 class PsiTargetNavigator {
 
-  fun <T: PsiElement> createPopup(elements: Array<T>, @PopupTitle title: String?): JBPopup  {
+  private var selection: PsiElement? = null
+
+  fun selection(selection: PsiElement?): PsiTargetNavigator = this.apply { this.selection = selection }
+
+  fun <T: PsiElement> createPopup(elements: Array<T>, @PopupTitle title: String?): JBPopup {
     return createPopup(elements, title) { element -> EditSourceUtil.navigateToPsiElement(element) }
   }
 
@@ -26,6 +30,10 @@ class PsiTargetNavigator {
     })
     if (title != null) {
       builder.setTitle(title)
+    }
+    if (selection != null) {
+      val i = elements.indexOf(selection)
+      builder.setSelectedValue(targets[i], true)
     }
 
     return builder.createPopup()
