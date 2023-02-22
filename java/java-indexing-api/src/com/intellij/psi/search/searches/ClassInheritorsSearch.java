@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  *   class B extends A {}
  *   class C extends B {}
  * </pre>
- * searching for {@code A} with default {@code checkDeep=true} returns {@code B} and {@code C}.
+ * searching for inheritors of {@code A} with default {@code checkDeep=true} returns {@code B} and {@code C}.
  * <p/>
  * Use {@code checkDeep=false} or {@link DirectClassInheritorsSearch} to search for direct inheritors only.
  *

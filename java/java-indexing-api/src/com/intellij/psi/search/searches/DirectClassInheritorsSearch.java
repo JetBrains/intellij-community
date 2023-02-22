@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  *   class B extends A {}
  *   class C extends B {}
  * </pre>
- * searching for {@code A} returns {@code B}.
+ * searching for inheritors of {@code A} returns {@code B}.
  * <p/>
  * See {@link ClassInheritorsSearch} to search for all inheritors.
  *
