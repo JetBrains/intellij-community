@@ -31,6 +31,18 @@ class PythonRunConfigurationLesson : CommonRunConfigurationLesson("python.run.co
     }
   }
 
+  override fun LessonContext.addAnotherRunConfiguration() {
+    prepareRuntimeTask {
+      addNewRunConfigurationFromContext { runConfiguration ->
+        runConfiguration.name = demoWithParametersName
+        if (runConfiguration is PythonRunConfiguration) {
+          runConfiguration.setNameChangedByUser(true)
+          runConfiguration.scriptParameters = "hello world"
+        }
+      }
+    }
+  }
+
   // Redefine the base class links:
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(PythonLessonsBundle.message("python.run.configuration.help.link"),
