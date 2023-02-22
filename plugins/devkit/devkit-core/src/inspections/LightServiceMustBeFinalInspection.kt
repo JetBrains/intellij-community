@@ -3,10 +3,7 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.jvm.DefaultJvmElementVisitor
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmElementVisitor
-import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.createModifierActions
 import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.components.Service
@@ -18,9 +15,10 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
   override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): JvmElementVisitor<Boolean> {
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitClass(clazz: JvmClass): Boolean {
+        if (clazz.classKind != JvmClassKind.CLASS || clazz.hasModifier(JvmModifier.FINAL)) return true
         val file = clazz.sourceElement?.containingFile ?: return true
         val hasServiceAnnotation = clazz.annotations.any { it.qualifiedName == Service::class.java.canonicalName }
-        if (hasServiceAnnotation && !clazz.hasModifier(JvmModifier.FINAL)) {
+        if (hasServiceAnnotation) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
           sink.highlight(DevKitBundle.message("inspection.light.service.must.be.final.message"), ProblemHighlightType.GENERIC_ERROR, *fixes)
