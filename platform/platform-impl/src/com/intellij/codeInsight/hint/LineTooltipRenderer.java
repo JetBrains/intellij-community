@@ -58,14 +58,14 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final @Tooltip String text, final int width, Object @NotNull [] comparable) {
+  public LineTooltipRenderer(@Nullable @Tooltip String text, int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;
   }
 
   @NotNull
-  private static JPanel createMainPanel(@NotNull final HintHint hintHint,
+  private static JPanel createMainPanel(@NotNull HintHint hintHint,
                                         @NotNull JScrollPane pane,
                                         @NotNull JEditorPane editorPane,
                                         boolean highlightActions,
@@ -158,11 +158,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @Override
-  public LightweightHint show(@NotNull final Editor editor,
-                              @NotNull final Point p,
-                              final boolean alignToRight,
-                              @NotNull final TooltipGroup group,
-                              @NotNull final HintHint hintHint) {
+  public LightweightHint show(@NotNull Editor editor,
+                              @NotNull Point p,
+                              boolean alignToRight,
+                              @NotNull TooltipGroup group,
+                              @NotNull HintHint hintHint) {
     LightweightHint hint = createHint(editor, p, alignToRight, group, hintHint, true, true,
                                       null);
     if (hint != null) {
@@ -174,11 +174,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return hint;
   }
 
-  public LightweightHint createHint(@NotNull final Editor editor,
-                                    @NotNull final Point p,
-                                    final boolean alignToRight,
-                                    @NotNull final TooltipGroup group,
-                                    @NotNull final HintHint hintHint,
+  public LightweightHint createHint(@NotNull Editor editor,
+                                    @NotNull Point p,
+                                    boolean alignToRight,
+                                    @NotNull TooltipGroup group,
+                                    @NotNull HintHint hintHint,
                                     boolean highlightActions,
                                     boolean limitWidthToScreen,
                                     @Nullable TooltipReloader tooltipReloader) {
@@ -189,13 +189,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     String tooltipPreText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
     String dressedText = dressDescription(editor, tooltipPreText, myCurrentWidth > 0);
 
-    final boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);
+    boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);
 
-    final JComponent contentComponent = editor.getContentComponent();
+    JComponent contentComponent = editor.getContentComponent();
 
-    final JComponent editorComponent = editor.getComponent();
+    JComponent editorComponent = editor.getComponent();
     if (!editorComponent.isShowing()) return null;
-    final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     String textToDisplay = colorizeSeparators(dressedText);
     JEditorPane editorPane = IdeTooltipManager.initPane(new Html(textToDisplay).setKeepFont(true),
@@ -238,7 +238,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
         }
       });
     }
-    final LightweightHint hint = new LightweightHint(grid) {
+    LightweightHint hint = new LightweightHint(grid) {
 
       @Override
       public void hide() {
@@ -270,19 +270,19 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     editorPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
+      public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
           return;
         }
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          final URL url = e.getURL();
+          URL url = e.getURL();
           if (url != null) {
             BrowserUtil.browse(url);
             hint.hide();
             return;
           }
 
-          final String description = e.getDescription();
+          String description = e.getDescription();
           if (description != null &&
               handle(description, editor)) {
             hint.hide();
@@ -322,7 +322,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return XmlStringUtil.wrapInHtml(b.toString());
   }
 
-  protected boolean isContentAction(String dressedText) {
+  protected boolean isContentAction(@NotNull String dressedText) {
     return isActiveHtml(dressedText);
   }
 
@@ -356,22 +356,22 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull TooltipReloader expandCallback,
                            boolean highlightActions) {
     hintHint.setComponentBorder(JBUI.Borders.empty());
-    hintHint.setBorderInsets(JBUI.insets(0));
+    hintHint.setBorderInsets(JBUI.emptyInsets());
   }
 
-  private static boolean handle(@NotNull final String ref, @NotNull final Editor editor) {
+  private static boolean handle(@NotNull String ref, @NotNull Editor editor) {
     // @kirillk please don't remove this call anymore
     return TooltipLinkHandlerEP.handleLink(ref, editor);
   }
 
-  public static void correctLocation(Editor editor,
-                                     JComponent tooltipComponent,
-                                     Point p,
-                                     boolean alignToRight,
-                                     boolean expanded,
-                                     int currentWidth) {
-    final JComponent editorComponent = editor.getComponent();
-    final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+  private static void correctLocation(@NotNull Editor editor,
+                                      @NotNull JComponent tooltipComponent,
+                                      @NotNull Point p,
+                                      boolean alignToRight,
+                                      boolean expanded,
+                                      int currentWidth) {
+    JComponent editorComponent = editor.getComponent();
+    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
     int widthLimit = layeredPane.getWidth() - 10;
     int heightLimit = layeredPane.getHeight() - 5;
@@ -386,12 +386,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     tooltipComponent.setPreferredSize(dimension);
   }
 
-  private static Dimension correctLocation(Editor editor,
-                                           Point p,
+  @NotNull
+  private static Dimension correctLocation(@NotNull Editor editor,
+                                           @NotNull Point p,
                                            boolean alignToRight,
                                            boolean expanded,
-                                           JComponent tooltipComponent,
-                                           JLayeredPane layeredPane,
+                                           @NotNull JComponent tooltipComponent,
+                                           @NotNull JLayeredPane layeredPane,
                                            int widthLimit,
                                            int heightLimit,
                                            int currentWidth) {
@@ -433,7 +434,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     return dimension;
   }
 
-  private static void locateOutsideMouseCursor(Editor editor, JComponent editorComponent, Point p, int width, int height, int heightLimit) {
+  private static void locateOutsideMouseCursor(@NotNull Editor editor, @NotNull JComponent editorComponent, @NotNull Point p, int width, int height, int heightLimit) {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return;
     Point mouse = pointerInfo.getLocation();
@@ -457,7 +458,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected @Tooltip String dressDescription(@NotNull final Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
+  protected @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
     return tooltipText;
   }
 
@@ -484,18 +485,20 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   private static final class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    @NotNull 
     private final HintHint myHintHint;
+    @NotNull
     private final TooltipReloader myReloader;
     private final boolean myExpanded;
 
-    private ReloadHintAction(HintHint hintHint, TooltipReloader reloader, boolean expanded) {
+    private ReloadHintAction(@NotNull HintHint hintHint, @NotNull TooltipReloader reloader, boolean expanded) {
       myHintHint = hintHint;
       myReloader = reloader;
       myExpanded = expanded;
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
       myHintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
       TooltipActionsLogger.logShowDescription(e.getProject(), TooltipActionsLogger.Source.Shortcut, e.getInputEvent(), e.getPlace());

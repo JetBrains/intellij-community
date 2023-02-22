@@ -70,7 +70,6 @@ import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentatio
 import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
 
 public class EditorMouseHoverPopupManager implements Disposable {
-
   static final Logger LOG = Logger.getInstance(EditorMouseHoverPopupManager.class);
   public static final int MAX_QUICK_DOC_CHARACTERS = 100_000;
 
@@ -230,7 +229,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     return KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null;
   }
 
-  // e.g. if documentation popup (opened via keyboard shortcut) is already shown
+  // e.g., if documentation popup (opened via keyboard shortcut) is already shown
   private static boolean isAnotherPopupFocused() {
     JBPopup popup = PopupUtil.getPopupContainerFor(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
     return popup != null && !popup.isDisposed();
@@ -536,8 +535,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
     }
 
     @Nullable EditorHoverInfo calcInfo(@NotNull Editor editor) {
-      var highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
-      var documentationHoverInfo = documentationHoverInfo(editor);
+      HighlightHoverInfo highlightHoverInfo = HighlightHoverInfo.highlightHoverInfo(editor, getHighlightInfo());
+      DocumentationHoverInfo documentationHoverInfo = documentationHoverInfo(editor);
       return highlightHoverInfo == null && documentationHoverInfo == null
              ? null
              : new EditorHoverInfo(highlightHoverInfo, documentationHoverInfo);
@@ -581,9 +580,9 @@ public class EditorMouseHoverPopupManager implements Disposable {
                 quickDocMessage = quickDocMessage.substring(0, MAX_QUICK_DOC_CHARACTERS);
               }
               if (quickDocMessage != null) {
-                var finalTargetElement = targetElement;
-                var finalQuickDocMessage = quickDocMessage;
-                var finalProvider = provider;
+                PsiElement finalTargetElement = targetElement;
+                String finalQuickDocMessage = quickDocMessage;
+                DocumentationProvider finalProvider = provider;
                 quickDocMessage = ReadAction.compute(
                   () -> documentationManager.decorate(finalTargetElement, finalQuickDocMessage, null, finalProvider)
                 );
@@ -657,7 +656,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     @Override
     public void mouseEntered(@NotNull EditorMouseEvent event) {
       // we receive MOUSE_MOVED event after MOUSE_ENTERED even if the mouse wasn't physically moved,
-      // e.g. if a popup overlapping editor has been closed
+      // e.g., if a popup overlapping editor has been closed
       getInstance().skipNextMovement();
     }
 

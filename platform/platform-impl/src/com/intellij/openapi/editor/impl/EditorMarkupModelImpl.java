@@ -552,6 +552,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return new Rectangle(location, hint.getSize());
   }
 
+  // true if tooltip shown
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
     LightweightHint currentHint = getCurrentHint();
     if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
@@ -1338,6 +1339,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       LineTooltipRenderer bigRenderer = null;
       //do not show the same tooltip twice
       Set<String> tooltips = null;

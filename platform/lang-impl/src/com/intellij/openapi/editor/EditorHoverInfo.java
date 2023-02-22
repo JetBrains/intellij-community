@@ -11,14 +11,10 @@ import java.util.Objects;
 
 @Internal
 public final class EditorHoverInfo {
+  private final @Nullable HighlightHoverInfo highlightHoverInfo;
+  private final @Nullable DocumentationHoverInfo documentationHoverInfo;
 
-  public final @Nullable HighlightHoverInfo highlightHoverInfo;
-  public final @Nullable DocumentationHoverInfo documentationHoverInfo;
-
-  public EditorHoverInfo(
-    @Nullable HighlightHoverInfo highlightHoverInfo,
-    @Nullable DocumentationHoverInfo documentationHoverInfo
-  ) {
+  EditorHoverInfo(@Nullable HighlightHoverInfo highlightHoverInfo, @Nullable DocumentationHoverInfo documentationHoverInfo) {
     assert highlightHoverInfo != null || documentationHoverInfo != null;
     this.highlightHoverInfo = highlightHoverInfo;
     this.documentationHoverInfo = documentationHoverInfo;

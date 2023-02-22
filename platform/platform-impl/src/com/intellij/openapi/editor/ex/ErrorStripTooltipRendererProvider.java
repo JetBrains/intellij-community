@@ -36,7 +36,7 @@ public interface ErrorStripTooltipRendererProvider {
   TooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip @NotNull String text, int width);
 
   @NotNull
-  default TooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip @NotNull String text, @Nullable TooltipAction action, int width) {
+  default TooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip String text, @Nullable TooltipAction action, int width) {
     return calcTooltipRenderer(text, width);
   }
 }

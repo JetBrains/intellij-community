@@ -57,7 +57,6 @@ public class FindInProjectManager {
     startFindInProject(findModel);
   }
 
-  @SuppressWarnings("WeakerAccess")
   protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
