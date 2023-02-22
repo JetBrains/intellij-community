@@ -560,6 +560,22 @@ public final class JBUI {
       public static Color underlinedTabBackground() {
         return UIManager.getColor("DebuggerTabs.underlinedTabBackground");
       }
+
+      public static String tabHeightKey() {
+        return "DebuggerTabs.tabHeight";
+      }
+
+      public static int tabHeight() {
+        return getInt(tabHeightKey(), 35);
+      }
+
+      public static @NotNull Font font() {
+        return ObjectUtils.coalesce(getFont(fontKey()), JBFont.label());
+      }
+
+      public static String fontKey() {
+        return "DebuggerTabs.font";
+      }
     }
 
     public static final class EditorTabs {

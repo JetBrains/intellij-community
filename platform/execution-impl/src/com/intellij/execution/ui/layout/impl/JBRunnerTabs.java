@@ -105,13 +105,31 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
    * @return scaled preferred runner tab label height aligned with toolbars
    */
   public static int getTabLabelPreferredHeight() {
-    return ExperimentalUI.isNewUI() ? JBUI.scale(35) : JBUI.scale(29);
+    return ExperimentalUI.isNewUI() ? JBUI.scale(JBUI.CurrentTheme.DebuggerTabs.tabHeight())
+                                    : JBUI.scale(29);
   }
 
   @NotNull
   @Override
   protected TabLabel createTabLabel(@NotNull TabInfo info) {
     return new SingleHeightLabel(this, info) {
+      {
+        updateFont();
+      }
+
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        updateFont();
+      }
+
+      private void updateFont() {
+        JComponent label = getLabelComponent();
+        if (label != null && ExperimentalUI.isNewUI()) {  // can be null at the first updateUI call during init
+          label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
+        }
+      }
+
       @Override
       protected int getActionsInset() {
         return 8;

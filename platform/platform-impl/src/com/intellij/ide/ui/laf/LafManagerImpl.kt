@@ -701,6 +701,9 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // toolwindows
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerHeightKey(), 32)
       defaults.put(JBUI.CurrentTheme.ToolWindow.headerFontKey(), Supplier { JBFont.medium() })
+      // run, debug tabs
+      defaults.put(JBUI.CurrentTheme.DebuggerTabs.tabHeightKey(), 32)
+      defaults.put(JBUI.CurrentTheme.DebuggerTabs.fontKey(), Supplier { JBFont.medium() })
       // VCS log
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.rowHeightKey(), 24)
       defaults.put(JBUI.CurrentTheme.VersionControl.Log.verticalPaddingKey(), 4)
