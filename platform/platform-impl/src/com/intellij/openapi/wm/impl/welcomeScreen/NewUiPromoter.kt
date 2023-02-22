@@ -39,7 +39,7 @@ class NewUiPromoter : BannerStartPagePromoter() {
   }
 
   override val description: String
-    get() = IdeBundle.message("welcome.expUi.promo.description")
+    get() = IdeBundle.message("welcome.expUi.promo.description", WelcomeScreenComponentFactory.getAppName())
 
   override val closeAction: ((JPanel) -> Unit) = { panel ->
     PropertiesComponent.getInstance().setValue(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY, true)
