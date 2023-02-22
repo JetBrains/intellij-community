@@ -89,6 +89,15 @@ internal class MutableEntityStorageImpl(
   private var trackStackTrace: Boolean = false
 ) : MutableEntityStorage, AbstractEntityStorage() {
 
+  /**
+   * This log collects the log of operations, not the log of state changes.
+   * This means, that if we remove child entity, we'll record only remove event without "modify" event for its parent.
+   *
+   * This change log affects addDiff operation and [collectChanges] return result
+   *
+   * There is no particular reason not to store the list of "state" changes here. However, this will require a lot of work in order
+   *   to record all changes on the storage and update [addDiff] method to work in the new way.
+   */
   internal val changeLog = WorkspaceBuilderChangeLog()
 
   // Temporal solution for accessing error in deft project.
@@ -361,6 +370,55 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  /**
+   * Implementation note: [changeLog] contains the information about modified entities, but don't contain the info
+   *   regarding the entities that are affected by this change.
+   * For example, if we remove the child entity, we should generate two events: remove of child and modification of parent.
+   *
+   * --- Ideal behaviour - that is currently not implemented --------------
+   *
+   * The [EntityChange.Added] and [EntityChange.Removed] events are straightforward and generated in case of added or removed entities.
+   *
+   * The [EntityChange.Replaced] is generated in case if any of the fields of the entity will return a different value in the newer
+   *   version of storage.
+   * This means, that this event is generated for case of "primitive" field change (Int, String, data class, etc.) or in case of
+   *   changes of the references to other entity.
+   * So, for example, if we remove child entity, we'll generate two events: remove event for child and replace event for parent.
+   *
+   * # Examples
+   *
+   * Assuming the following structure of entities: A --> B --> C
+   * Where A is the root entity and B and C are the children.
+   *
+   * - If we modify primitive field of C: [Replace(C)]
+   * - If we remove C: [Replace(B), Remove(C)]
+   * - If we remove reference between B and C: [Replace(B), Replace(C)]
+   * - If we remove B: [Replace(A), Remove(B), Remove(C)]
+   *
+   * Another example:
+   * Before: A --> B  C, After A  C --> B
+   * We have an entity `A` that has a child `B` and we move this child from `A` to `C`
+   *
+   * Produced events: [Replace(A), Replace(B), Replace(C)]
+   *
+   * ----------------------------------------------------------------
+   *
+   * ^^^ The behaviour above is not yet implemented as it breaks some current behaviour of IDE.
+   * For example, adding of facets should not cause roots changed event. But since we add the facet to some module,
+   *   the module itself gets "replace" event and this causes roots changed event.
+   *
+   * The code in this implementation contains commented out code that reverts the ideal behaviour that is described above.
+   *
+   * The initial refactoring of this method was made for IDEA-313747.
+   * It was aimed to fix the case of "adding reference between two existing entities".
+   *   It described the problem that `A.link = B` and `B.link = A` cause two different events while they create the same state change.
+   *
+   * However, during investigation, I've found another case with entities creation:
+   * `new B(link = A)` and `A.link = new B()` also generate different events while modifying storage in the same way.
+   *
+   * The proper fix for the case above is to create two events: modify A and create B. However, at the moment this will cause more
+   *   roots changed events and at least will break some tests.
+   */
   override fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>> {
     try {
       lockWrite()
@@ -372,39 +430,50 @@ internal class MutableEntityStorageImpl(
         when (change) {
           is ChangeEntry.AddEntity -> {
             changedEntityIds += entityId
-            //val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
-            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
+            //changedEntityIds += this.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
+            //changedEntityIds += this.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
           }
           is ChangeEntry.RemoveEntity -> {
             changedEntityIds += entityId
-            //val removedData = originalImpl.entityDataById(change.id) ?: continue
-            //val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
-            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
+            //changedEntityIds += originalImpl.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
+            //changedEntityIds += originalImpl.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
           }
           is ChangeEntry.ReplaceEntity -> {
             changedEntityIds += entityId
-            //@Suppress("DuplicatedCode")
-            //val oldData = originalImpl.entityDataById(entityId) ?: continue
-            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            //val replaceToData = change.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
-            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-            //  .add(EntityChange.Replaced(replacedData, replaceToData))
+
+            //if (change.references != null) {
+            //  changedEntityIds += (change.references.oldParents - change.references.modifiedParents).values.map { it.id }
+            //  changedEntityIds += (change.references.modifiedParents - change.references.oldParents).values.mapNotNull { it?.id }
+            //
+            //  val updatedChildren = change.references.removedChildren.map { it.second.id } + change.references.newChildren.map { it.second.id }
+            //  changedEntityIds += updatedChildren
+            //  updatedChildren.forEach { childId ->
+            //    val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+            //    val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+            //    changedEntityIds += (origParents - newParents)
+            //    changedEntityIds += (newParents - origParents)
+            //  }
+            //}
           }
           is ChangeEntry.ChangeEntitySource -> {
             changedEntityIds += entityId
-            //val oldData = originalImpl.entityDataById(entityId) ?: continue
-            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            //val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
-            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-            //  .add(EntityChange.Replaced(replacedData, replaceToData))
           }
           is ChangeEntry.ReplaceAndChangeSource -> {
             changedEntityIds += entityId
-            //val oldData = originalImpl.entityDataById(entityId) ?: continue
-            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            //val replaceToData = change.dataChange.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
-            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-            //  .add(EntityChange.Replaced(replacedData, replaceToData))
+
+            //if (change.dataChange.references != null) {
+            //  changedEntityIds += (change.dataChange.references.oldParents - change.dataChange.references.modifiedParents).values.map { it.id }
+            //  changedEntityIds += (change.dataChange.references.modifiedParents - change.dataChange.references.oldParents).values.mapNotNull { it?.id }
+            //
+            //  val updatedChildren = change.dataChange.references.removedChildren.map { it.second.id } + change.dataChange.references.newChildren.map { it.second.id }
+            //  changedEntityIds += updatedChildren
+            //  updatedChildren.forEach { childId ->
+            //    val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+            //    val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+            //    changedEntityIds += (origParents - newParents)
+            //    changedEntityIds += (newParents - origParents)
+            //  }
+            //}
           }
         }
       }
