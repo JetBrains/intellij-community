@@ -5,9 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.management.runPackagingTool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -40,10 +41,10 @@ class PipPythonPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManag
 
       installedPackages = result.getOrThrow()
 
-      ApplicationManager.getApplication()
-        .messageBus
-        .syncPublisher(PACKAGE_MANAGEMENT_TOPIC)
-        .packagesChanged(sdk)
+      ApplicationManager.getApplication().messageBus.apply {
+        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+        syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+      }
 
       result
     }
