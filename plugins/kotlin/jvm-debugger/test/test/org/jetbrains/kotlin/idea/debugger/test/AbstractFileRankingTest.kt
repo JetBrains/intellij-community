@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.psi.KtElement
@@ -142,3 +143,9 @@ private fun collectClassNamesToKtFiles(
             }
         }
     }
+
+abstract class AbstractK1IdeK2CodeFileRankingTest : AbstractFileRankingTest() {
+    override val compileWithK2 = true
+
+    override val lambdasGenerationScheme = JvmClosureGenerationScheme.INDY
+}

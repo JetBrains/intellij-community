@@ -5,8 +5,16 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+
 abstract class AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest : AbstractKotlinEvaluateExpressionTest() {
     override fun useIrBackend(): Boolean = true
     override fun fragmentCompilerBackend() =
         FragmentCompilerBackend.JVM_IR
+}
+
+abstract class AbstractK1IdeK2CodeKotlinEvaluateExpressionTest : AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,4 +46,16 @@ abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEval
 
     // Only one script file is allowed
     private fun getScriptKtFile(): KtFile = sourcesKtFiles.scriptKtFiles.single()
+}
+
+abstract class AbstractK1IdeK2CodeScriptEvaluateExpressionTest : AbstractKotlinScriptEvaluateExpressionTest() {
+    override val compileWithK2 = true
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
+
+    override fun createJavaParameters(mainClass: String?): JavaParameters {
+        return super.createJavaParameters(mainClass).apply {
+            val languageVersion = chooseLanguageVersionForCompilation(useK2 = true)
+            programParametersList.add("-language-version=$languageVersion")
+        }
+    }
 }
