@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     Rectangle paintRect = new Rectangle(0, 0, innerArea.width, innerArea.height);
     int maxTextWidth = calcMaxTextWidth(combo, paintRect);
     try {
+      GraphicsUtil.setupAAPainting(g2);
       if (!leftIcons.isEmpty()) {
         Rectangle iconsRect = paintIcons(leftIcons, combo, g2, paintRect, combo.getLeftIconsGap());
         doClip(paintRect, iconsRect.width + getGapAfterLeftIcons());

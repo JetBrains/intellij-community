@@ -202,8 +202,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     val g2 = g.create() as Graphics2D
 
     try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
+      GraphicsUtil.setupAAPainting(g2)
       g2.color = color
       val arc = buttonArc.float
       val width = rect.width
