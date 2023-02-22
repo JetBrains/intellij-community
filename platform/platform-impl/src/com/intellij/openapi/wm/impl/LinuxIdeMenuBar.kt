@@ -44,7 +44,7 @@ internal class LinuxIdeMenuBar : IdeMenuBar() {
     }
 
     if (globalMenu == null) {
-      val globalMenuLinux = GlobalMenuLinux.create(frame) ?: return
+      val globalMenuLinux = GlobalMenuLinux.create(frame)
       globalMenu = globalMenuLinux
       coroutineScope.coroutineContext.job.invokeOnCompletion {
         Disposer.dispose(globalMenuLinux)
