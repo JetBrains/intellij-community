@@ -9,9 +9,9 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider.Companion.KotlinGradleModelParameter.Companion.parse
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheMapperImpl
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCachingChain
@@ -131,12 +131,7 @@ abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {
     }
 }
 
-private const val REQUEST_FOR_NON_ANDROID_MODULES_ONLY = "*"
-
-class AndroidAwareGradleModelProvider<TModel>(
-    private val modelClass: Class<TModel>,
-    private val androidPluginIsRequestingVariantSpecificModels: Boolean
-) : ProjectImportModelProvider {
+class AndroidAwareGradleModelProvider<TModel>(private val modelClass: Class<TModel>) : ProjectImportModelProvider {
     override fun populateBuildModels(
         controller: BuildController,
         buildModel: GradleBuild,
@@ -148,40 +143,46 @@ class AndroidAwareGradleModelProvider<TModel>(
         projectModel: Model,
         modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
     ) {
-        val supportsParametrizedModels: Boolean = controller.findModel(BuildEnvironment::class.java)?.gradle?.gradleVersion?.let {
-            // Parametrized build models were introduced in 4.4. Make sure that gradle import does not fail on pre-4.4
-            GradleVersion.version(it) >= GradleVersion.version("4.4")
-        } ?: false
-
-        val model = if (androidPluginIsRequestingVariantSpecificModels && supportsParametrizedModels) {
-            controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
-                it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
-            }
-        } else {
-            controller.findModel(projectModel, modelClass)
+        controller.findModel(projectModel, modelClass)?.let{
+            modelConsumer.consume(it, modelClass)
         }
-        if (model != null) {
-            modelConsumer.consume(model, modelClass)
-        }
-    }
-
-    class Result(
-        private val hasProjectAndroidBasePlugin: Boolean,
-        private val requestedVariantNames: Set<String>?
-    ) {
-        fun shouldSkipBuildAllCall(): Boolean =
-            hasProjectAndroidBasePlugin && requestedVariantNames?.singleOrNull() == REQUEST_FOR_NON_ANDROID_MODULES_ONLY
-
-        fun shouldSkipSourceSet(sourceSetName: String): Boolean =
-            requestedVariantNames != null && !requestedVariantNames.contains(sourceSetName.lowercase(Locale.getDefault()))
     }
 
     companion object {
-        fun parseParameter(project: Project, parameterValue: String?): Result {
-            return Result(
-                hasProjectAndroidBasePlugin = project.plugins.findPlugin("com.android.base") != null,
-                requestedVariantNames = parameterValue?.splitToSequence(',')?.map { it.lowercase(Locale.getDefault()) }?.toSet()
-            )
+        data class KotlinGradleModelParameter (val requestedVariants: Set<String> = emptySet(), val includeClasspath: Boolean = false) {
+            fun toParameter() = mutableListOf(
+                requestedVariants.joinToString(separator = ",")
+            ).apply {
+                if (includeClasspath) {
+                    add(INCLUDE_CLASSPATH)
+                }
+            }.joinToString(separator = PARAMETER_SEPERATOR)
+
+            fun shouldSkipBuildAllCall(project: Project) =
+                project.plugins.findPlugin("com.android.base") != null && requestedVariants.isEmpty()
+
+            fun shouldIncludeSourceSet(sourceSetName: String) =
+                requestedVariants.isEmpty() || // If nothing specified, this means fetch everything
+                        requestedVariants.contains(sourceSetName.lowercase(Locale.getDefault()))
+
+            companion object {
+                private const val PARAMETER_SEPERATOR = ";"
+                private const val INCLUDE_CLASSPATH = "includeClasspath"
+
+                internal fun parse(param: String?) : KotlinGradleModelParameter {
+                    // Entire parameter is a ';' delimited string of multiple independent parameters and structured as\
+                    // <requestedVariantNames>:<omitClasspath>
+                    // If no ';' is present, it just assumes it's <requestedVariantNames>
+                    // <requestedVariantNames> itself is comma seperated
+                    val (variants, includeClasspath) = (param?: "").split(PARAMETER_SEPERATOR)
+                        .let { it.getOrNull(0) to it.getOrNull(1) }
+
+                    return KotlinGradleModelParameter(
+                        requestedVariants = variants?.ifEmpty { null }?.splitToSequence(',')?.map { it.lowercase(Locale.getDefault()) }?.toSet().orEmpty(),
+                        includeClasspath = includeClasspath == INCLUDE_CLASSPATH
+                    )
+                }
+            }
         }
     }
 }
@@ -248,8 +249,8 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
         // accidentally named starting with upper case.
-        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
-        if (androidVariantRequest.shouldSkipBuildAllCall()) return null
+        val parameters = parse(builderContext?.parameter)
+        if (parameters.shouldSkipBuildAllCall(project)) return null
         val kotlinPluginId = kotlinPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
         val platformPluginId = platformPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
         val target = project.getTarget()
@@ -270,10 +271,15 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         kotlinCompileTasks.forEach { compileTask ->
             if (compileTask.javaClass.name !in kotlinCompileTaskClasses) return@forEach
             val sourceSetName = compileTask.getSourceSetName()
-            if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
-            val currentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = false)
+            if (!parameters.shouldIncludeSourceSet(sourceSetName)) return@forEach
+            val currentArguments = CompilerArgumentsCachingChain.extractAndCacheTask(
+                compileTask,
+                argsMapper,
+                defaultsOnly = false,
+                includeClasspath = parameters.includeClasspath
+            )
             val defaultArguments = CompilerArgumentsCachingChain.extractAndCacheTask(compileTask, argsMapper, defaultsOnly = true)
-            val dependencyClasspath = compileTask.getDependencyClasspath()
+            val dependencyClasspath = (if (parameters.includeClasspath) compileTask.getDependencyClasspath() else emptyList())
                 .map { KotlinCachedRegularCompilerArgument(argsMapper.cacheArgument(it)) }
             cachedCompilerArgumentsBySourceSet[sourceSetName] =
                 CachedExtractedArgsInfo(argsMapper.cacheOriginIdentifier, currentArguments, defaultArguments, dependencyClasspath)
