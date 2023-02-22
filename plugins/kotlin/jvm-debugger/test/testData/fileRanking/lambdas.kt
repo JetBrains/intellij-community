@@ -36,3 +36,4 @@ class A {
     }
 }
 // PRODUCED_CLASS_NAMES: b.A, b.A$b$1, b.A$b$2, b.A$b$2$1, b.A$b$2$1$1
+// IGNORE_FOR_K2_CODE

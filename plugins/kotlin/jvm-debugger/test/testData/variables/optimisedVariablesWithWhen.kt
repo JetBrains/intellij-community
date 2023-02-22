@@ -92,3 +92,4 @@ inline fun inlineBlock(block: () -> Unit) = block()
 fun block(block: () -> Unit) = block()
 
 // IGNORE_K2
+// IGNORE_FOR_K2_CODE

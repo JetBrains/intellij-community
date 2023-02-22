@@ -34,3 +34,4 @@ fun <T> block(obj: T, block: T.() -> Unit) {
 
 // SHOW_KOTLIN_VARIABLES
 // PRINT_FRAME
+// IGNORE_FOR_K2_CODE

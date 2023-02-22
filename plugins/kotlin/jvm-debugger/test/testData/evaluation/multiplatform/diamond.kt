@@ -54,3 +54,4 @@ actual fun rightImplInLeaf(): Int = 2
 fun main(){
     commonContext()
 }
+// IGNORE_FOR_K2_CODE

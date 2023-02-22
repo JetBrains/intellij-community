@@ -27,3 +27,4 @@ suspend fun b(bParam: String) {
     //Breakpoint!
     b + 1
 }
+// IGNORE_FOR_K2_CODE

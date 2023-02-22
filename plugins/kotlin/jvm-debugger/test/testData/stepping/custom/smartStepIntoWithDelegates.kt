@@ -66,3 +66,4 @@ fun main(args: Array<String>) {
     test5()
 }
 // IGNORE_K2
+// IGNORE_FOR_K2_CODE
