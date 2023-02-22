@@ -6,28 +6,28 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.junit.Test
 import java.util.List
-import java.util.concurrent.atomic.AtomicBoolean
 
 class MavenTasksManagerTest : MavenCompilingTestCase() {
   @Test
-  fun testRunExecuteBeforeBuildTasks() {
+  fun `test run execute before build tasks`() {
     importProject("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
-                    
                     """.trimIndent())
-    val mavenGoalExecuted = AtomicBoolean(false)
-    subscribeToMavenGoalExecution("clean", mavenGoalExecuted)
+
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("clean", parametersList)
     addCompileTask(myProjectPom.path, "clean")
     compileModules("project")
-    assertTrue(mavenGoalExecuted.get())
+    assertSize(1, parametersList)
   }
 
   @Test
-  fun testRunExecuteBeforeBuildTasksInTheSameModule() {
+  fun `test run execute before build tasks in the same module`() {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -37,8 +37,8 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <module>m1</module>
                     <module>m2</module>
                   </modules>
-                  
                   """.trimIndent())
+
     val m1File = createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
@@ -47,8 +47,8 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <artifactId>parent</artifactId>
                     <version>1</version>
                   </parent>
-                  
                   """.trimIndent())
+
     val m2File = createModulePom("m2", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
@@ -57,18 +57,18 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <artifactId>parent</artifactId>
                     <version>1</version>
                   </parent>
-                  
                   """.trimIndent())
+
     importProject()
-    val mavenGoalExecuted = AtomicBoolean(false)
-    subscribeToMavenGoalExecution("generate-sources", mavenGoalExecuted)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
     compileModules("m1")
-    assertTrue(mavenGoalExecuted.get())
+    assertSize(1, parametersList)
   }
 
   @Test
-  fun testDontRunExecuteBeforeBuildTasksInAnotherModule() {
+  fun `test don't run execute before build tasks in another module` () {
     createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -78,8 +78,8 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <module>m1</module>
                     <module>m2</module>
                   </modules>
-                  
                   """.trimIndent())
+
     val m1File = createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
@@ -88,8 +88,8 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <artifactId>parent</artifactId>
                     <version>1</version>
                   </parent>
-                  
                   """.trimIndent())
+
     val m2File = createModulePom("m2", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
@@ -98,14 +98,60 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     <artifactId>parent</artifactId>
                     <version>1</version>
                   </parent>
-                  
                   """.trimIndent())
+
     importProject()
-    val mavenGoalExecuted = AtomicBoolean(false)
-    subscribeToMavenGoalExecution("generate-sources", mavenGoalExecuted)
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
     addCompileTask(m1File.path, "generate-sources")
     compileModules("m2")
-    assertFalse(mavenGoalExecuted.get())
+    assertSize(0, parametersList)
+  }
+
+  @Test
+  fun `test group tasks by goal` () {
+    var p = createProjectPom("""
+                  <groupId>group</groupId>
+                  <artifactId>parent</artifactId>
+                  <version>1</version>
+                  <packaging>pom</packaging>
+                  <modules>
+                    <module>m1</module>
+                    <module>m2</module>
+                  </modules>
+                  """.trimIndent())
+
+    val m1File = createModulePom("m1", """
+                  <artifactId>m1</artifactId>
+                  <version>1</version>
+                  <parent>
+                    <groupId>group</groupId>
+                    <artifactId>parent</artifactId>
+                    <version>1</version>
+                  </parent>
+                  """.trimIndent())
+
+    val m2File = createModulePom("m2", """
+                  <artifactId>m2</artifactId>
+                  <version>1</version>
+                  <parent>
+                    <groupId>group</groupId>
+                    <artifactId>parent</artifactId>
+                    <version>1</version>
+                  </parent>
+                  """.trimIndent())
+
+    importProject()
+    val parametersList = mutableListOf<MavenRunnerParameters>()
+    subscribeToMavenGoalExecution("generate-sources", parametersList)
+    addCompileTask(m1File.path, "generate-sources")
+    addCompileTask(m2File.path, "generate-sources")
+    compileModules("m1", "m2")
+
+    assertSize(1, parametersList)
+    val parameters = parametersList[0]
+    assertEquals(p.path, parameters.workingDirPath + "/" + parameters.pomFileName)
+    assertEquals(setOf("group:m1", "group:m2"), parameters.projectsCmdOptionValues.toSet())
   }
 
   private fun addCompileTask(pomPath: String, goal: String) {
@@ -114,15 +160,13 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
     mavenTasksManager.addCompileTasks(List.of(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
-  private fun subscribeToMavenGoalExecution(goal: String, executionFlag: AtomicBoolean) {
+  private fun subscribeToMavenGoalExecution(goal: String, parametersList: MutableList<MavenRunnerParameters>) {
     val connection = myProject.messageBus.connect()
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) {
-        if (environmentLocal.runProfile is MavenRunConfiguration) {
-          val mavenGoal = (environmentLocal.runProfile as MavenRunConfiguration).runnerParameters.goals[0]
-          if (mavenGoal == goal) {
-            executionFlag.set(true)
-          }
+        val runProfile = environmentLocal.runProfile
+        if (runProfile is MavenRunConfiguration) {
+          parametersList.add(runProfile.runnerParameters)
         }
       }
     })
