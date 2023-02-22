@@ -38,6 +38,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
     return if (specification is CondaPackageSpecification) withContext(Dispatchers.IO) {
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
         runConda("install", specification.buildInstallationString() + "-y", PyBundle.message("conda.packaging.install.progress", specification.name))
+        refreshPaths()
         reloadPackages()
       }
     }
@@ -48,6 +49,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
     return if (pkg is CondaPackage && !pkg.installedWithPip) withContext(Dispatchers.IO) {
       runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
         runConda("uninstall", listOf(pkg.name, "-y"), PyBundle.message("conda.packaging.uninstall.progress", pkg.name))
+        refreshPaths()
         reloadPackages()
       }
     }
