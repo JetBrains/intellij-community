@@ -39,7 +39,17 @@ fun <T> T?.orFail(msg: String): T {
         ?: throw AssertionError(msg)
 }
 
+internal val PsiAnnotation.isNotNull: Boolean
+    get() {
+        return qualifiedName?.endsWith("NotNull") == true
+    }
+
+internal val PsiAnnotation.isNullable: Boolean
+    get() {
+        return qualifiedName?.endsWith("Nullable") == true
+    }
+
 internal val PsiAnnotation.isNullnessAnnotation: Boolean
     get() {
-        return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
+        return isNotNull || isNullable
     }

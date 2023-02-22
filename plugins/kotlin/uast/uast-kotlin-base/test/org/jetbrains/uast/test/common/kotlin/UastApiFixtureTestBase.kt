@@ -157,6 +157,55 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkReifiedTypeNullability(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                import kotlin.reflect.KClass
+
+                interface NavArgs
+                class Fragment
+                class Bundle
+                class NavArgsLazy<Args : NavArgs>(
+                    private val navArgsClass: KClass<Args>,
+                    private val argumentProducer: () -> Bundle
+                )
+                
+                inline fun <reified Args : NavArgs> Fragment.navArgs() = NavArgsLazy(Args::class) {
+                    throw IllegalStateException("Fragment $this has null arguments")
+                }
+                
+                inline fun <reified Args : NavArgs> Fragment.navArgsNullable(flag: Boolean) =
+                    if (flag)
+                        NavArgsLazy(Args::class) {
+                            throw IllegalStateException("Fragment $this has null arguments")
+                        }
+                    else
+                        null
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitMethod(node: UMethod): Boolean {
+                if (!node.name.startsWith("navArgs")) return super.visitMethod(node)
+
+                TestCase.assertEquals("NavArgsLazy<Args>", node.javaPsi.returnType?.canonicalText)
+
+                val annotations = node.javaPsi.annotations
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                if (node.name.endsWith("Nullable")) {
+                    TestCase.assertTrue(annotation.isNullable)
+                } else {
+                    TestCase.assertTrue(annotation.isNotNull)
+                }
+
+                return super.visitMethod(node)
+            }
+        })
+    }
+
     fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
