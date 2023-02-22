@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
@@ -773,7 +773,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @NotNull
   public List<LocalChangeList> getChangeLists() {
     synchronized (myDataLock) {
-      return Collections.unmodifiableList(myWorker.getChangeLists());
+      return myWorker.getChangeLists();
     }
   }
 
@@ -1311,7 +1311,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     Element element = new Element("state");
     synchronized (myDataLock) {
       boolean areChangeListsEnabled = myWorker.areChangeListsEnabled();
-      List<LocalChangeListImpl> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
+      List<? extends LocalChangeList> changesToSave = areChangeListsEnabled ? myWorker.getChangeLists() : myDisabledWorkerState;
       ChangeListManagerSerialization.writeExternal(element, changesToSave, areChangeListsEnabled);
     }
     myConflictTracker.saveState(element);
@@ -1503,7 +1503,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       assert enabled != myWorker.areChangeListsEnabled();
 
       if (!enabled) {
-        myDisabledWorkerState = myWorker.getChangeLists();
+        myDisabledWorkerState = myWorker.getChangeListsImpl();
       }
 
       myWorker.setChangeListsEnabled(enabled);
