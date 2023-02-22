@@ -7,6 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider.Companion.KotlinGradleModelParameter.Companion.parse
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -64,8 +65,8 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
     }
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl? {
-        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
-        if (androidVariantRequest.shouldSkipBuildAllCall()) return null
+        val parameters = parse(builderContext?.parameter)
+        if (parameters.shouldSkipBuildAllCall(project)) return null
 
         val kaptPlugin: Plugin<*>? = project.plugins.findPlugin("kotlin-kapt")
         val kaptIsEnabled = kaptPlugin != null
@@ -113,7 +114,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                     ?: project.getAllTasks(false)[project]
                 compileTasks?.forEach{ compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
-                    if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach
+                    if (!parameters.shouldIncludeSourceSet(sourceSetName)) return@forEach
                     handleCompileTask(sourceSetName, compileTask)
                 }
             }

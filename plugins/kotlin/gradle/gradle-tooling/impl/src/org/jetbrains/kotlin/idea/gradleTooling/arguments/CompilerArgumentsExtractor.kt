@@ -17,30 +17,45 @@ object CompilerArgumentsExtractor {
 
     private val ARGUMENT_ANNOTATION_CLASSES = setOf(LEGACY_ARGUMENT_ANNOTATION_CLASS, ARGUMENT_ANNOTATION_CLASS)
 
-    fun extractCompilerArgumentsFromTask(compileTask: Task, defaultsOnly: Boolean = false): ExtractedCompilerArgumentsBucket {
+    fun extractCompilerArgumentsFromTask(compileTask: Task, defaultsOnly: Boolean = false, includeClasspath: Boolean = false): ExtractedCompilerArgumentsBucket {
         val compileTaskClass = compileTask.javaClass
         val compilerArguments = compileTask[CREATE_COMPILER_ARGS]!!
+        // find: setupCompilerArgs(args: T, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean, includeClasspath: Boolean)
+        compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java, Boolean::class.java, Boolean::class.java)
+            // if found, call and set ignoreClasspathIssues to false, and set includeClasspath
+            ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, ignoreClasspathIssues = false, includeClasspath = includeClasspath)
         compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java, Boolean::class.java)
-            ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, false)
+            // if found, call and set ignoreClasspathIssues to false
+            ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, ignoreClasspathIssues = false, includeClasspath = null)
+        // if not found call the method with shorter signature
             ?: compileTaskClass.getMethodOrNull(SETUP_COMPILER_ARGS, compilerArguments::class.java, Boolean::class.java)
-                ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly)
+                ?.doSetupCompilerArgs(compileTask, compilerArguments, defaultsOnly, ignoreClasspathIssues = null, includeClasspath = null)
 
         return prepareCompilerArgumentsBucket(compilerArguments)
     }
+
 
 
     private fun Method.doSetupCompilerArgs(
         compileTask: Task,
         compilerArgs: Any,
         defaultsOnly: Boolean,
-        ignoreClasspathIssues: Boolean? = null
+        ignoreClasspathIssues: Boolean?,
+        includeClasspath: Boolean?
     ) {
         try {
-            ignoreClasspathIssues?.also { invoke(compileTask, compilerArgs, defaultsOnly, it) }
-                ?: invoke(compileTask, compilerArgs, defaultsOnly)
+            when {
+                includeClasspath == null && ignoreClasspathIssues == null -> invoke(compileTask, compilerArgs, defaultsOnly)
+                includeClasspath == null -> invoke(compileTask, compilerArgs, defaultsOnly, ignoreClasspathIssues)
+                else -> invoke(compileTask, compilerArgs, defaultsOnly, ignoreClasspathIssues, includeClasspath)
+            }
         } catch (e: Exception) {
-            ignoreClasspathIssues?.also { if (!it) doSetupCompilerArgs(compileTask, compilerArgs, defaultsOnly, true) }
+            if (ignoreClasspathIssues == false) {
+                // Try again, this time ignoring issues
+                doSetupCompilerArgs(compileTask, compilerArgs, defaultsOnly, ignoreClasspathIssues = true, includeClasspath = includeClasspath)
+            }
         }
+
     }
 
     @Suppress("UNCHECKED_CAST")

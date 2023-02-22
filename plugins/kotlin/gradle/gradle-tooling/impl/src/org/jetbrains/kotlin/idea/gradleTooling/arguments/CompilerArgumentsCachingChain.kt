@@ -8,9 +8,10 @@ object CompilerArgumentsCachingChain {
     fun extractAndCacheTask(
         compileTask: Task,
         mapper: CompilerArgumentsCacheMapper,
-        defaultsOnly: Boolean = false
+        defaultsOnly: Boolean = false,
+        includeClasspath: Boolean = false
     ): CachedCompilerArgumentsBucket =
-        CompilerArgumentsExtractor.extractCompilerArgumentsFromTask(compileTask, defaultsOnly).let {
+        CompilerArgumentsExtractor.extractCompilerArgumentsFromTask(compileTask, defaultsOnly, includeClasspath).let {
             CompilerArgumentsCachingManager.cacheCompilerArguments(it, mapper)
         }
 }

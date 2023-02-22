@@ -177,12 +177,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         error("getModelProvider() is overridden instead")
     }
 
-    override fun getModelProvider(): ProjectImportModelProvider {
-        val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KOTLIN_GRADLE_MODEL_KEY")
-        val isAndroidPluginRequestingKotlinGradleModel =
-            isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null
-        return AndroidAwareGradleModelProvider(KotlinGradleModel::class.java, isAndroidPluginRequestingKotlinGradleModel)
-    }
+    override fun getModelProvider() = AndroidAwareGradleModelProvider(KotlinGradleModel::class.java)
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
         return super.createModule(gradleModule, projectDataNode)?.also {
