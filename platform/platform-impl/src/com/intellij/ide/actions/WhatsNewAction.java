@@ -30,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.InputEvent;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -59,8 +59,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     var whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
 
-    //noinspection deprecation
-    if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
+    if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
       var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
       var prompt = IdeBundle.message("browser.url.popup");
       whatsNewUrl = Messages.showInputDialog(e.getProject(), prompt, title, null, whatsNewUrl, null);
