@@ -42,6 +42,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
     assertStringEP();
   }
 
+  public void testMyStringEPViaLanguageExtensionSuperCall() {
+    assertStringEP();
+  }
+
   public void testMyBeanClassStringEP() {
     assertSingleEPDeclaration("MyBeanClassStringEP.java", "com.intellij.myBeanClassStringEP");
   }
