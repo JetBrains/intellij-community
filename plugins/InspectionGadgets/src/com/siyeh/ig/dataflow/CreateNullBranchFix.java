@@ -8,6 +8,8 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.BaseSwitchFix;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
@@ -57,29 +59,26 @@ public final class CreateNullBranchFix extends BaseSwitchFix {
     if (selectorType == null) return;
     List<PsiElement> branches = SwitchUtils.getSwitchBranches(switchBlock);
     for (PsiElement branch : branches) {
-      // just for the case if we already contain null or an unconditional pattern, there is no need to apply the fix
+      // just for the case if we already contain null, there is no need to apply the fix
       if (branch instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType())) return;
-      if (branch instanceof PsiPattern && JavaPsiPatternUtil.isUnconditionalForType(((PsiPattern)branch), selectorType)) return;
     }
-    PsiElement defaultElement = SwitchUtils.findDefaultElement(switchBlock);
-    PsiElement anchor;
-    if (defaultElement instanceof PsiSwitchLabelStatementBase) {
-      anchor = defaultElement;
-    }
-    else if (defaultElement instanceof PsiDefaultCaseLabelElement) {
-      defaultElement = defaultElement.getParent().getParent();
-      anchor = defaultElement;
-    }
-    else {
-      anchor = body.getRBrace();
-    }
+    PsiElement unconditionalLabel = findUnconditionalLabel(switchBlock);
+    PsiElement anchor = unconditionalLabel != null ? unconditionalLabel : body.getRBrace();
     if (anchor == null) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-    generateStatements(switchBlock, SwitchUtils.isRuleFormatSwitch(switchBlock), defaultElement)
+    generateStatements(switchBlock, SwitchUtils.isRuleFormatSwitch(switchBlock), unconditionalLabel)
       .stream()
       .map(text -> factory.createStatementFromText(text, body))
       .forEach(statement -> body.addBefore(statement, anchor));
     CreateDefaultBranchFix.startTemplateOnStatement(PsiTreeUtil.getPrevSiblingOfType(anchor, PsiStatement.class));
+  }
+
+  @Nullable
+  private static PsiElement findUnconditionalLabel(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    return ContainerUtil.find(body.getStatements(),
+                              stmt -> stmt instanceof PsiSwitchLabelStatementBase label && SwitchUtils.isUnconditionalLabel(label));
   }
 
   private static @NonNls List<String> generateStatements(@NotNull PsiSwitchBlock switchBlock, boolean isRuleBasedFormat,
