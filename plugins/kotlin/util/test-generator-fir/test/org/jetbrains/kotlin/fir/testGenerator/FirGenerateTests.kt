@@ -103,6 +103,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/localVariableWithTypeParameters", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
+            model("quickfix/modifiers/addOpenToClassDeclaration", pattern = pattern)
             model("quickfix/nullables", pattern = pattern)
             model("quickfix/override", pattern = pattern, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
