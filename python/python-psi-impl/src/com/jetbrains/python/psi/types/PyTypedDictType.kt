@@ -131,7 +131,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
 
   override fun getDeclarationElement(): PyQualifiedNameOwner = declaration ?: super<PyClassTypeImpl>.getDeclarationElement()
 
-  class FieldTypeAndTotality @JvmOverloads constructor(val value: PyExpression?, val type: PyType?, val isRequired: Boolean = true)
+  data class FieldTypeAndTotality @JvmOverloads constructor(val value: PyExpression?, val type: PyType?, val isRequired: Boolean = true)
 
   companion object {
 
