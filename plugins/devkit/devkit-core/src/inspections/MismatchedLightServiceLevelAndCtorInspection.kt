@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
-class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspection() {
+internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspection() {
 
   private val COROUTINE_SCOPE_PARAM_NAME = "scope"
 
