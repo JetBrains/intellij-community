@@ -46,6 +46,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
     }
 
+    fun testUnderscoreOperatorForTypeArguments() {
+        doCheck("UnderscoreOperatorForTypeArguments", ::checkUnderscoreOperatorForTypeArguments)
+    }
+
     fun testCallKindOfSamConstructor() {
         doCheck("CallKindOfSamConstructor", ::checkCallKindOfSamConstructor)
     }
