@@ -70,6 +70,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Queue;
@@ -136,7 +137,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private int myRowAdjuster;
   private int myWheelAccumulator;
   private int myLastVisualLine;
-  private WeakReference<LightweightHint> myCurrentHint;
+  private Reference<LightweightHint> myCurrentHint;
   private int myCurrentHintAnchorY;
   private boolean myKeepHint;
 

@@ -101,7 +101,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final PassExecutorService myPassExecutorService;
   // Timestamp of myUpdateRunnable which it's needed to start (in System.nanoTime() sense)
   // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
-  // When it's so happens that future is started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
+  // When it's so happens that the future has started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
   private long myScheduledUpdateTimestamp; // guarded by this
   private volatile boolean completeEssentialHighlightingRequested;
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
@@ -395,7 +395,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                            @Nullable Runnable callbackWhileWaiting) {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
-      PsiFile psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(virtualFile); // findCachedFile doesn't work with temp file system in tests
+      PsiFile psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(virtualFile); // findCachedFile doesn't work with the temp file system in tests
       psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
       LOG.assertTrue(psiFile != null, "PsiFile not found for " + virtualFile);
       HighlightingSession session = queuePassesCreation(textEditor, virtualFile, psiFile, passesToIgnore);
@@ -752,14 +752,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   /**
    * Collects HighlightInfos intersecting with a certain offset.
-   * If there's several infos they're combined into HighlightInfoComposite and returned as a single object.
+   * If there are several Infos, they're combined into HighlightInfoComposite and returned as a single object.
    * Several options are available to adjust the collecting strategy
    *
    * @param document document in which the collecting is performed
-   * @param offset offset which infos should intersect with to be collected
-   * @param includeFixRange states whether the rage of a fix associated with an info should be taken into account during the range checking
-   * @param highestPriorityOnly states whether to include all infos or only the ones with the highest HighlightSeverity
-   * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
+   * @param offset offset which the info should intersect with to be collected
+   * @param includeFixRange states whether the range of a fix associated with the info should be taken into account during the range checking
+   * @param highestPriorityOnly states whether to include all infos, or only the ones with the highest HighlightSeverity
+   * @param minSeverity the minimum HighlightSeverity starting from which infos are considered
    */
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
                                                         int offset,
@@ -789,7 +789,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           relevantInfos.add(info);
           return true;
         }
-        // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all highlight infos at the same line
+        // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all HighlightInfos at the same line
         boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
         if (atTheSameLine && info.isUnresolvedReference()) {
           relevantInfos.add(info);
@@ -930,7 +930,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         }
       }
 
-      Collection<FileEditor> activeEditors = dca.getSelectedEditors();
+      Collection<? extends FileEditor> activeEditors = dca.getSelectedEditors();
       boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
@@ -942,7 +942,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       if (activeEditors.isEmpty()) return;
 
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // makes no sense to start from within write action, will cancel anyway
+        // makes no sense to start from within write action - will cancel anyway
         // we'll restart when the write action finish
         return;
       }
@@ -987,9 +987,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   /**
-   * @return HighlightingSession when everything's ok or
+   * @return HighlightingSession when everything's OK or
    * return null if session wasn't created because highlighter/document/psiFile wasn't found or
-   * throw PCE if it really wasn't appropriate moment to ask
+   * throw PCE if it really wasn't an appropriate moment to ask
    */
   private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
                                                   @NotNull VirtualFile virtualFile,
@@ -1009,7 +1009,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     // pre-create HighlightingSession in EDT to make visible range available in a background thread
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (editor != null && editor.getDocument().isInBulkUpdate()) {
-      // avoid restarts until bulk mode is finished and daemon restarted in DaemonListeners
+      // avoid restarts until the bulk mode is finished and daemon restarted in DaemonListeners
       stopProcess(false, editor.getDocument() +" is in bulk state");
       throw new ProcessCanceledException();
     }
@@ -1164,13 +1164,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return myUpdateProgress;
   }
 
-  private @NotNull Collection<FileEditor> getSelectedEditors() {
+  private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
 
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.getInstance(myProject).getActiveEditors();
-    Collection<FileEditor> activeTextEditors;
+    Collection<TextEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
     }
