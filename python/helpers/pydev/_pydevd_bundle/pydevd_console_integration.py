@@ -179,7 +179,6 @@ def console_exec(thread_id, frame_id, expression, dbg):
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
-    is_multiline = expression.count('@LINE@') > 1
     try:
         expression = str(expression.replace('@LINE@', '\n'))
     except UnicodeEncodeError as e:
@@ -207,12 +206,13 @@ def console_exec(thread_id, frame_id, expression, dbg):
 
     try:
         if IS_ASYNCIO_DEBUGGER_ENV:
-            code = asyncio_command_compiler(expression)
+            compiler = asyncio_command_compiler
         else:
-            if not is_multiline:
-                code = compile_command(expression)
-            else:
-                code = expression
+            compiler = compile_command
+        try:
+            code = compiler(expression)
+        except (OverflowError, SyntaxError, ValueError):
+            code = compiler(expression, symbol='exec')
     except (OverflowError, SyntaxError, ValueError):
         # Case 1
         interpreter.showsyntaxerror()
