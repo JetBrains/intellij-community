@@ -279,6 +279,7 @@
     <extensionPoint qualifiedName="com.intellij.jarRepositoryAuthenticationDataProvider"
                     interface="com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension" interface="com.intellij.compiler.cache.client.JpsServerAuthExtension" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.execution.applicationRunLineMarkerHider" interface="com.intellij.execution.ApplicationRunLineMarkerHider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
