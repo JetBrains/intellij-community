@@ -84,7 +84,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
 
   @Override
   public void enterFullScreen() {
-    if (myFrame.getWidth() == 0 || myFrame.getHeight() == 0) {
+    if (myFrame.getWidth() == 0 || myFrame.getHeight() == 0 || myFrame.getLocationOnScreen().x > 0) {
       handleFullScreenResize(myFrame);
     }
   }
