@@ -144,14 +144,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   private static boolean ourShowPlatformUpdateIcon;
   private static boolean ourShowPluginsUpdateIcon;
-  private static boolean ourNewUiIcon;
+  private static boolean ourNewUiIcon = calculateOurNewUiIcon();
 
   public static void updateState() {
     resetActionIcon();
 
-    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-    ourNewUiIcon = !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
-                   && ExperimentalUI.getPromotionDaysCount() < 14;
+    ourNewUiIcon = calculateOurNewUiIcon();
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
@@ -173,6 +171,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
+  }
+
+  private static boolean calculateOurNewUiIcon() {
+    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
+    return !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+           && ExperimentalUI.getPromotionDaysCount() < 14;
   }
 
   private static @NotNull @Nls String getActionTooltip() {
