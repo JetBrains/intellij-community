@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.mock.MockInspectionProfile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlElement;
@@ -166,7 +167,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   public void testDefaultAnnotator() {
     final DefaultDomAnnotator annotator = new DefaultDomAnnotator() {
       @Override
-      protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(final @NotNull DomElement element) {
+      protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(final @NotNull Project project) {
         return myAnnotationsManager;
       }
     };
