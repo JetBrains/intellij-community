@@ -366,40 +366,61 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       val originalImpl = original as AbstractEntityStorage
 
+      val changedEntityIds = HashSet<Long>()
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
           is ChangeEntry.AddEntity -> {
-            val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
-            res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
+            changedEntityIds += entityId
+            //val addedEntity = change.entityData.createEntity(this) as WorkspaceEntityBase
+            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Added(addedEntity))
           }
           is ChangeEntry.RemoveEntity -> {
-            val removedData = originalImpl.entityDataById(change.id) ?: continue
-            val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
-            res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
+            changedEntityIds += entityId
+            //val removedData = originalImpl.entityDataById(change.id) ?: continue
+            //val removedEntity = removedData.createEntity(originalImpl) as WorkspaceEntityBase
+            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
           }
           is ChangeEntry.ReplaceEntity -> {
-            @Suppress("DuplicatedCode")
-            val oldData = originalImpl.entityDataById(entityId) ?: continue
-            val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            val replaceToData = change.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
-            res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-              .add(EntityChange.Replaced(replacedData, replaceToData))
+            changedEntityIds += entityId
+            //@Suppress("DuplicatedCode")
+            //val oldData = originalImpl.entityDataById(entityId) ?: continue
+            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+            //val replaceToData = change.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
+            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            //  .add(EntityChange.Replaced(replacedData, replaceToData))
           }
           is ChangeEntry.ChangeEntitySource -> {
-            val oldData = originalImpl.entityDataById(entityId) ?: continue
-            val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
-            res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-              .add(EntityChange.Replaced(replacedData, replaceToData))
+            changedEntityIds += entityId
+            //val oldData = originalImpl.entityDataById(entityId) ?: continue
+            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+            //val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            //  .add(EntityChange.Replaced(replacedData, replaceToData))
           }
           is ChangeEntry.ReplaceAndChangeSource -> {
-            val oldData = originalImpl.entityDataById(entityId) ?: continue
-            val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
-            val replaceToData = change.dataChange.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
-            res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
-              .add(EntityChange.Replaced(replacedData, replaceToData))
+            changedEntityIds += entityId
+            //val oldData = originalImpl.entityDataById(entityId) ?: continue
+            //val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+            //val replaceToData = change.dataChange.data?.newData?.createEntity(this) as? WorkspaceEntityBase ?: replacedData
+            //res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }
+            //  .add(EntityChange.Replaced(replacedData, replaceToData))
           }
+        }
+      }
+
+      changedEntityIds.forEach { id ->
+        val entityClass = id.clazz.findWorkspaceEntity()
+        val oldData = originalImpl.entityDataById(id)?.createEntity(originalImpl)
+        val newData = this.entityDataById(id)?.createEntity(this)
+        val event = when {
+          oldData != null && newData != null -> EntityChange.Replaced(oldData, newData)
+          oldData == null && newData != null -> EntityChange.Added(newData)
+          oldData != null && newData == null -> EntityChange.Removed(oldData)
+          else -> null
+        }
+        if (event != null) {
+          res.getOrPut(entityClass) { ArrayList() }.add(event)
         }
       }
 
