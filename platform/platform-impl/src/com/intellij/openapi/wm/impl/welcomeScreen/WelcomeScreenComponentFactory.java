@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -70,9 +71,7 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.WEST);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
+    String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
@@ -126,10 +125,7 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.NORTH);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
-    JLabel appName = new JLabel(applicationName);
+    JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
     appName.setFont(WelcomeScreenUIManager.getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
@@ -395,5 +391,11 @@ public final class WelcomeScreenComponentFactory {
 
     StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
     return selectedPromoter.getPromotion(isEmptyState);
+  }
+
+  public static @NlsSafe String getAppName() {
+    return Boolean.getBoolean("ide.ui.name.with.edition")
+           ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+           : ApplicationNamesInfo.getInstance().getFullProductName();
   }
 }
