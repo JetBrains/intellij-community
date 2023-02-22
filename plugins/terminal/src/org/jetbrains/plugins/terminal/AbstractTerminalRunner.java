@@ -142,6 +142,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     TerminalWidget terminalWidget = createShellTerminalWidget(parent, startupOptions);
     JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
     if (jediTermWidget == null) {
+      Disposer.dispose(terminalWidget);
       throw new IncompatibleWidgetException();
     }
     scheduleOpenSessionInDirectory(terminalWidget, startupOptions, deferSessionStartUntilUiShown);

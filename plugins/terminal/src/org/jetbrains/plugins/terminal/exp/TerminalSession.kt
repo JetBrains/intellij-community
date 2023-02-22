@@ -72,6 +72,9 @@ class TerminalSession(private val project: Project,
 
   override fun dispose() {
     terminalExecutor.shutdown()
-    terminalStarter.close()
+    // Can be disposed before session is started
+    if (this::terminalStarter.isInitialized) {
+      terminalStarter.close()
+    }
   }
 }
