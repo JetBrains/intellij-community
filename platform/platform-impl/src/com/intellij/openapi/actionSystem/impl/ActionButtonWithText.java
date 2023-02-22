@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
-  private static final int TEXT_ARROW_SPACE = 1;
+  private static final int TEXT_ARROW_SPACE = 2;
   private static final int BUTTONS_GAP = 4;
 
   private int myHorizontalTextPosition = SwingConstants.TRAILING;
