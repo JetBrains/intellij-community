@@ -402,7 +402,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   }
 
-  private EditorEx initEditor() {
+  private void initEditorDisposables() {
     Disposable uiDisposable = PlatformDataKeys.UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
     if (uiDisposable != null) {
       // If this component is added to a dialog (for example, the settings dialog),
@@ -433,6 +433,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(myDocument);
       }
     });
+  }
+
+  private EditorEx initEditor() {
+    if (myDisposable == null) {
+      initEditorDisposables();
+    }
+
     if (myEditor != null) {
       releaseEditorAndScheduleForRemovalLater();
     }
@@ -479,6 +486,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private void deInitEditor() {
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
+      myDisposable = null;
     }
   }
 
