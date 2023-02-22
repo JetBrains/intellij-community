@@ -515,6 +515,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     ActivityTracker.getInstance().inc();
   }
 
+  public void forcingUpdateStatusToolbar() {
+    myStatusUpdates.queue(Update.create("forcingUpdate", () -> {
+      statusToolbar.updateActionsImmediately();
+    }));
+  }
+
   private static final class PositionedStripe {
     private @NotNull Color color;
     private int yEnd;
