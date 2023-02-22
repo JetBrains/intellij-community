@@ -28,7 +28,8 @@ __intellij_cmd_preexec() {
 
 __intellij_command_terminated() {
   builtin local LAST_EXIT_CODE="$?"
-  builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
+  builtin local current_directory="$PWD"
+  builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' "$LAST_EXIT_CODE" "$(__intellij_encode "${current_directory}")"
 }
 
 add-zsh-hook preexec __intellij_cmd_preexec

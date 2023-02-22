@@ -38,7 +38,9 @@ class ShellCommandManager(terminal: Terminal) {
 
   private fun processCommandFinishedEvent(event: List<String>) {
     val exitCodeStr = event.getOrNull(1)
-    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=")) {
+    val currentDirectoryField = event.getOrNull(2)
+    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=") &&
+        currentDirectoryField != null && currentDirectoryField.startsWith("current_directory=")) {
       val exitCode = try {
         exitCodeStr.removePrefix("exit_code=").toInt()
       }
@@ -47,6 +49,10 @@ class ShellCommandManager(terminal: Terminal) {
       }
       val commandRun = this.commandRun
       if (commandRun != null) {
+        val newDirectory = currentDirectoryField.removePrefix("current_directory=")
+        if (commandRun.workingDirectory != newDirectory) {
+          fireDirectoryChanged(newDirectory)
+        }
         fireCommandFinished(commandRun, exitCode)
       }
     }
@@ -70,6 +76,15 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun fireDirectoryChanged(newDirectory: String) {
+    for (listener in listeners) {
+      listener.directoryChanged(newDirectory)
+    }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Current directory changed from '${commandRun?.workingDirectory}' to '$newDirectory'")
+    }
+  }
+
   fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
     listeners.add(listener)
     Disposer.register(parentDisposable) {
@@ -84,7 +99,10 @@ class ShellCommandManager(terminal: Terminal) {
 
 interface ShellCommandListener {
   fun commandStarted(command: String) {}
+
   fun commandFinished(command: String, exitCode: Int, duration: Long) {}
+
+  fun directoryChanged(newDirectory: String) {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {
