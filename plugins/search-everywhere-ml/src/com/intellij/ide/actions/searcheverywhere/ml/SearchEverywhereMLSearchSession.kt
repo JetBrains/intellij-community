@@ -9,6 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.Search
 import com.intellij.ide.actions.searcheverywhere.ml.id.SearchEverywhereMlItemIdProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelProvider
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
@@ -43,7 +44,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       searchQuery: String,
-                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+                      searchScope: ScopeDescriptor?) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -58,7 +60,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
         keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
-        projectIsDumb
+        projectIsDumb, searchScope
       )
     }
 
