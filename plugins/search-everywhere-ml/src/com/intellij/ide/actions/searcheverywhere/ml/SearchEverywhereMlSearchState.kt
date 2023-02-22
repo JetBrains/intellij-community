@@ -21,9 +21,11 @@ internal class SearchEverywhereMlSearchState(
   private val modelProvider: SearchEverywhereModelProvider,
   private val providersCache: FeaturesProviderCache?,
   projectIsDumb: Boolean?,
-  searchScope: ScopeDescriptor?
+  searchScope: ScopeDescriptor?,
+  isSearchEverywhere: Boolean,
 ) {
-  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb, searchScope)
+  val searchStateFeatures = SearchEverywhereStateFeaturesProvider().getSearchStateFeatures(tabId, searchQuery, projectIsDumb,
+                                                                                           searchScope, isSearchEverywhere)
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
 
   private val model: SearchEverywhereRankingModel by lazy {

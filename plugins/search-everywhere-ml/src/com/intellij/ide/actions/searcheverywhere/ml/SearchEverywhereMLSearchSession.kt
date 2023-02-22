@@ -45,7 +45,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       backspacesTyped: Int,
                       searchQuery: String,
                       previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
-                      searchScope: ScopeDescriptor?) {
+                      searchScope: ScopeDescriptor?,
+                      isSearchEverywhere: Boolean) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -60,7 +61,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
         keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
-        projectIsDumb, searchScope
+        projectIsDumb, searchScope, isSearchEverywhere
       )
     }
 

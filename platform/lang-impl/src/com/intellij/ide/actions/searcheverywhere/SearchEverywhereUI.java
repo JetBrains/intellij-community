@@ -561,7 +561,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         myProject, tabId, reason,
         mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
         () -> myListModel.getFoundElementsInfo(),
-        getSelectedSearchScope(myHeader.getSelectedTab())
+        getSelectedSearchScope(myHeader.getSelectedTab()), myHeader.isEverywhere()
       );
     }
 

@@ -12,50 +12,50 @@ class SearchEverywhereStateFeaturesProviderTest : BasePlatformTestCase() {
   private val featuresProvider = SearchEverywhereStateFeaturesProvider()
 
   fun `test contains path feature exists in all tab`() {
-    val features = featuresProvider.getSearchStateFeatures(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID, "foo", false, null, false)
     assertNotNull(findFeature(QUERY_CONTAINS_PATH_DATA_KEY, features))
   }
 
   fun `test contains path feature exists in files tab`() {
-    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "foo", false, null, false)
     assertNotNull(findFeature(QUERY_CONTAINS_PATH_DATA_KEY, features))
   }
 
   fun `test contains path feature is false when no path specified`() {
-    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "foo", false, null, false)
     val containsPath = findBooleanFeature(QUERY_CONTAINS_PATH_DATA_KEY, features)
 
     assertFalse(containsPath)
   }
 
   fun `test contains path feature is false when nothing before slash`() {
-    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/foo", false, null, false)
     val containsPath = findBooleanFeature(QUERY_CONTAINS_PATH_DATA_KEY, features)
 
     assertFalse(containsPath)
   }
 
   fun `test contains path feature is true with one slash`() {
-    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "bar/foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "bar/foo", false, null, false)
     val containsPath = findBooleanFeature(QUERY_CONTAINS_PATH_DATA_KEY, features)
 
     assertTrue(containsPath)
   }
 
   fun `test contains path feature is true with multiple slashes`() {
-    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", false, null)
+    val features = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", false, null, false)
     val containsPath = findBooleanFeature(QUERY_CONTAINS_PATH_DATA_KEY, features)
 
     assertTrue(containsPath)
   }
 
   fun `test contains isDumbMode feature is true when isDumb is true`() {
-    val featuresDumbFalse = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", true, null)
+    val featuresDumbFalse = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", true, null, false)
     assertTrue(findBooleanFeature(IS_DUMB_MODE, featuresDumbFalse))
   }
 
   fun `test contains isDumbMode feature is null when isDumb null`() {
-    val featuresDumbNull = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", null, null)
+    val featuresDumbNull = featuresProvider.getSearchStateFeatures(FileSearchEverywhereContributor::class.java.simpleName, "/x/bar/foo", null, null, false)
     assertNull(findFeature(IS_DUMB_MODE, featuresDumbNull))
   }
 

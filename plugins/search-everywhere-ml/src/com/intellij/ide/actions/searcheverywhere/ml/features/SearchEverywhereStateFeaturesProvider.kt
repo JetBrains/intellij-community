@@ -22,6 +22,7 @@ class SearchEverywhereStateFeaturesProvider {
     internal val QUERY_IS_ALL_UPPERCASE_DATA_KEY = EventFields.Boolean("queryIsAllUppercase")
     internal val IS_DUMB_MODE = EventFields.Boolean("isDumbMode")
     private val SEARCH_SCOPE_DATA_KEY = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
+    private val IS_SEARCH_EVERYWHERE_DATA_KEY = EventFields.Boolean("isSearchEverywhere")
 
     fun getFeaturesDefinition(): List<EventField<*>> {
       return arrayListOf(
@@ -29,12 +30,13 @@ class SearchEverywhereStateFeaturesProvider {
         QUERY_CONTAINS_PATH_DATA_KEY, QUERY_CONTAINS_COMMAND_CHAR_DATA_KEY,
         QUERY_CONTAINS_SPACES_DATA_KEY, QUERY_IS_CAMEL_CASE_DATA_KEY,
         QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY, QUERY_IS_ALL_UPPERCASE_DATA_KEY,
-        IS_DUMB_MODE, SEARCH_SCOPE_DATA_KEY
+        IS_DUMB_MODE, SEARCH_SCOPE_DATA_KEY, IS_SEARCH_EVERYWHERE_DATA_KEY,
       )
     }
   }
 
-  fun getSearchStateFeatures(tabId: String, query: String, isDumb: Boolean?, searchScope: ScopeDescriptor?): List<EventPair<*>> {
+  fun getSearchStateFeatures(tabId: String, query: String, isDumb: Boolean?,
+                             searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean): List<EventPair<*>> {
     val features = arrayListOf<EventPair<*>>(
       QUERY_LENGTH_DATA_KEY.with(query.length),
       IS_EMPTY_QUERY_DATA_KEY.with(query.isEmpty()),
@@ -42,6 +44,7 @@ class SearchEverywhereStateFeaturesProvider {
       QUERY_IS_CAMEL_CASE_DATA_KEY.with(query.isCamelCase()),
       QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY.with(query.containsAbbreviations()),
       QUERY_IS_ALL_UPPERCASE_DATA_KEY.with(query.all { it.isUpperCase() }),
+      IS_SEARCH_EVERYWHERE_DATA_KEY.with(isSearchEverywhere)
     )
 
     isDumb?.let {

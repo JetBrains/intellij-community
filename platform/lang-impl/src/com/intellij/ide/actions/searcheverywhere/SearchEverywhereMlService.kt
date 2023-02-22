@@ -45,7 +45,7 @@ abstract class SearchEverywhereMlService {
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                               searchScope: ScopeDescriptor?)
+                               searchScope: ScopeDescriptor?, isSearchEverywhere: Boolean)
 
   abstract fun onItemSelected(project: Project?, indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>)

@@ -70,13 +70,14 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                backspacesTyped: Int,
                                searchQuery: String,
                                previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                               searchScope: ScopeDescriptor?) {
+                               searchScope: ScopeDescriptor?,
+                               isSearchEverywhere: Boolean) {
     if (!isEnabled()) return
 
     val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
       project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
-      searchScope
+      searchScope, isSearchEverywhere
     )
   }
 
