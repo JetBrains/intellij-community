@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -33,6 +34,9 @@ import java.util.function.Supplier;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
+  /**
+   * @see ToolbarComboWidgetUiSizes#getGapBeforeExpandIcon()
+   */
   private static final int TEXT_ARROW_SPACE = 2;
   private static final int BUTTONS_GAP = 4;
 

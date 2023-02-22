@@ -9,6 +9,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -416,7 +417,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     }) {
 
       override fun getMargins(): Insets = JBInsets.create(0, 8)
-      override fun iconTextSpace(): Int = JBUI.scale(6)
+      override fun iconTextSpace(): Int = ToolbarComboWidgetUiSizes.gapAfterLeftIcons
       override fun shallPaintDownArrow() = true
       override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
