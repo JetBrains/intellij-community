@@ -196,6 +196,10 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
   @Override
   public void setStoredFullScreen() {
     myInFullScreen = true;
+    JRootPane rootPane = frame.getRootPane();
+    if (rootPane != null) {
+      rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
+    }
   }
 
   private void storeFullScreenStateIfNeeded() {
