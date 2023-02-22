@@ -13,7 +13,7 @@ public final class RestoreDefaultLayoutAction extends RestoreNamedLayoutAction {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return false; // Restore Current Layout in the Window menu looks weird with a check mark
+    return false; // Restore Current Layout in the main Layouts menu looks weird with a check mark
   }
 
 }

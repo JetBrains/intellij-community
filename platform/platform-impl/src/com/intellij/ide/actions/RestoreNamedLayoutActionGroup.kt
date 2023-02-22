@@ -10,10 +10,6 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
-  companion object {
-    const val ID = "RestoreNamedLayoutGroup"
-  }
-
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
     RestoreNamedLayoutActionImpl(it)
   }

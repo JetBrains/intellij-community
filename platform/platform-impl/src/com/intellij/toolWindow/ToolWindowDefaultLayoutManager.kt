@@ -8,7 +8,10 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
+import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
@@ -25,7 +28,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
-    const val DEFAULT_LAYOUT_NAME = "Default"
+    const val DEFAULT_LAYOUT_NAME = "Custom"
   }
 
   @Volatile
