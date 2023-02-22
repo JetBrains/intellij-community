@@ -8,9 +8,9 @@ import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.psi.PsiClass
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.xml.DomManager
-import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
@@ -20,26 +20,37 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
 
   override fun checkClass(uClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
     val psiClass = uClass.javaPsi
-    if (psiClass.classKind != JvmClassKind.CLASS || PsiUtil.isInnerClass(psiClass) || PsiUtil.isLocalOrAnonymousClass(
-        psiClass) || PsiUtil.isAbstractClass(psiClass)) {
+    if (psiClass.classKind != JvmClassKind.CLASS ||
+        PsiUtil.isInnerClass(psiClass) ||
+        PsiUtil.isLocalOrAnonymousClass(psiClass) ||
+        PsiUtil.isAbstractClass(psiClass)) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
+
+    var isExtension = false
+    var isService = false
 
     val extensionsCandidates = locateExtensionsByPsiClass(psiClass)
     val domManager = DomManager.getDomManager(manager.project)
 
-    val extensions = extensionsCandidates
-      .mapNotNull { it.pointer.element }
-      .mapNotNull { domManager.getDomElement(it) }
-      .filterIsInstance<Extension>()
+    for (candidate in extensionsCandidates) {
+      if (isExtension && isService) break
+      val tag = candidate.pointer.element ?: continue
+      val element = domManager.getDomElement(tag) ?: continue
+      if (element is Extension) {
+        if (hasServiceBeanFqn(element)) {
+          isService = true
+        } else {
+          isExtension = true
+        }
+      }
+    }
 
-    val isExtension = extensions.any { !hasServiceBeanFqn(it) }
     if (!isExtension) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
 
-    val isService = extensions.any { hasServiceBeanFqn(it) } || isLightService(uClass)
-    if (isService) {
+    if (isService || isLightService(uClass)) {
       return registerProblem(uClass, DevKitBundle.message("inspection.extension.registered.as.service.message"), manager, isOnTheFly)
     }
 
@@ -59,6 +70,11 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
   }
 
   private fun isRegisteredComponentImplementation(psiClass: PsiClass): Boolean {
+    @Suppress("DEPRECATION") // BaseComponent is used for its name only
+    val baseComponentFqn = com.intellij.openapi.components.BaseComponent::class.java.canonicalName
+    if (!InheritanceUtil.isInheritor(psiClass, false, baseComponentFqn)) {
+      return false
+    }
     val types = RegistrationCheckerUtil.getRegistrationTypes(psiClass, RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS)
     return !types.isNullOrEmpty()
   }
