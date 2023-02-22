@@ -13,6 +13,7 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.DynamicPlugins;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.internal.statistic.IntentionsCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
@@ -220,9 +221,30 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     RelativePoint positionHint = null;
     if (mouseClick && myLightBulbPanel.isShowing()) {
       RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
-      int yOffset = LightBulbUtil.canPlaceBulbOnTheSameLine(myEditor) ? 0 :
-                    myEditor.getLineHeight() - LightBulbUtil.getBorderSize(myEditor);
-      positionHint = new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset));
+      Point popup = swCorner.getPoint();
+
+      Point panel = SwingUtilities.convertPoint(myLightBulbPanel, new Point(), myEditor.getContentComponent());
+      Point caretLine = myEditor.offsetToXY(myEditor.getCaretModel().getOffset());
+      if (panel.y + myLightBulbPanel.getHeight() <= caretLine.y) {
+        // The light bulb panel is shown above the caret line.
+        // The caret line should be completely visible, as it contains the interesting code.
+        // The popup menu is shown below the caret line.
+        popup.y += 1; // Step outside the light bulb panel.
+        popup.y += myEditor.getLineHeight();
+      }
+      else {
+        // Let the top border pixel of the popup menu overlap the bottom border pixel of the light bulb panel.
+      }
+
+      // XXX: This formula is only guessed.
+      int adjust = (int)(UISettingsUtils.getInstance().getCurrentIdeScale() - 0.5);
+      // Align the left border of the popup menu with the light bulb panel.
+      // XXX: Where does the 1 come from?
+      popup.x += 1 + adjust;
+      // Align the top border of the menu bar.
+      popup.y += adjust;
+
+      positionHint = new RelativePoint(swCorner.getComponent(), popup);
     }
     myPopup.show(this, positionHint);
   }
@@ -345,28 +367,40 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     private static @Nullable Point getPositionMultiLine(Editor editor) {
+      int visualCaretLine = editor.offsetToVisualPosition(editor.getCaretModel().getOffset()).line;
+      int lineY = editor.visualPositionToXY(new VisualPosition(visualCaretLine, 0)).y;
+
+      int iconWidth = EmptyIcon.ICON_16.getIconWidth();
+      int iconHeight = EmptyIcon.ICON_16.getIconHeight();
+      int panelWidth = NORMAL_BORDER_SIZE + iconWidth + iconWidth + NORMAL_BORDER_SIZE;
+      int panelHeight = NORMAL_BORDER_SIZE + iconHeight + NORMAL_BORDER_SIZE;
+
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      VisualPosition visualPosition = editor.offsetToVisualPosition(editor.getCaretModel().getOffset());
-      Point lineStart = editor.visualPositionToXY(new VisualPosition(visualPosition.line, 0));
-      if (lineStart.y < visibleArea.y || lineStart.y >= visibleArea.y + visibleArea.height) return null;
+      if (lineY < visibleArea.y) return null;
+      int lineHeight = editor.getLineHeight();
+      if (lineY + panelHeight >= visibleArea.y + visibleArea.height) return null;
 
-      // try to place bulb on the same line
-      int yShift = -(NORMAL_BORDER_SIZE + EmptyIcon.ICON_16.getIconHeight());
-      if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(NORMAL_BORDER_SIZE + (EmptyIcon.ICON_16.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+      int x = visibleArea.x;
+      int y;
+      if (lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
+        // Center the light bulb icon in the caret line.
+        // The (usually invisible) border may be outside the caret line.
+        y = lineY + (lineHeight - panelHeight) / 2;
       }
-      else if (lineStart.y < visibleArea.y + editor.getLineHeight()) {
-        yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
+      else if (lineY - panelHeight >= visibleArea.y) {
+        // Place the light bulb panel above the caret line.
+        y = lineY - panelHeight;
+      }
+      else {
+        // Place the light bulb panel below the caret line.
+        y = lineY + lineHeight;
       }
 
-      int xShift = EmptyIcon.ICON_16.getIconWidth();
-
-      Point realPoint = new Point(Math.max(0, visibleArea.x - xShift), lineStart.y + yShift);
-      Point p = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
-      return new Point(p.x, p.y);
+      return SwingUtilities.convertPoint(editor.getContentComponent(), new Point(x, y),
+                                         editor.getComponent().getRootPane().getLayeredPane());
     }
 
-    private static boolean canPlaceBulbOnTheSameLine(Editor editor) {
+    private static boolean fitsInCaretLine(Editor editor, int windowRight) {
       if (ApplicationManager.getApplication().isUnitTestMode() || editor.isOneLineMode()) return false;
       if (Registry.is("always.show.intention.above.current.line", false)) return false;
 
@@ -374,9 +408,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       int textColumn = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, visualCaretLine);
       if (textColumn == -1) return false;
 
-      int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, textColumn)).x;
-      int iconWidth = EmptyIcon.ICON_16.getIconWidth();
-      return textX > NORMAL_BORDER_SIZE + iconWidth + iconWidth + NORMAL_BORDER_SIZE;
+      int safetyColumn = Math.max(0, textColumn - 2); // 2 characters safety margin, for IDEA-313840.
+      int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, safetyColumn)).x;
+      return textX > windowRight;
     }
   }
 
