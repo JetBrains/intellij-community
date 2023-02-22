@@ -416,6 +416,10 @@ public final class MavenExternalParameters {
       parametersList.add(goal);
     }
 
+    for (var cmdOption : parameters.getCmdOptions()) {
+      parametersList.add(cmdOption);
+    }
+
     if (parameters.getPomFileName() != null && !FileUtil.namesEqual(MavenConstants.POM_XML, parameters.getPomFileName())) {
       parametersList.add("-f");
       parametersList.add(parameters.getPomFileName());

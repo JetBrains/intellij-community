@@ -23,6 +23,8 @@ public final class MavenRunnerParameters implements Cloneable {
 
   private boolean myResolveToWorkspace;
 
+  private final List<String> myProjectsCmdOptionValues = new ArrayList<>();
+
   private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<>();
 
   private final Collection<String> myEnabledProfilesForXmlSerializer = new TreeSet<>();
@@ -109,6 +111,7 @@ public final class MavenRunnerParameters implements Cloneable {
   public MavenRunnerParameters(MavenRunnerParameters that) {
     this(that.myWorkingDirPath, that.myPomFileName, that.isPomExecution, that.myGoals, that.myProfilesMap);
     myResolveToWorkspace = that.myResolveToWorkspace;
+    setProjectsCmdOptionValues(that.myProjectsCmdOptionValues);
   }
 
   public boolean isPomExecution() {
@@ -171,6 +174,29 @@ public final class MavenRunnerParameters implements Cloneable {
     if (goals != null) {
       myGoals.addAll(goals);
     }
+  }
+
+  public List<String> getProjectsCmdOptionValues() {
+    return myProjectsCmdOptionValues;
+  }
+
+  public void setProjectsCmdOptionValues(@Nullable List<String> projectsCmdOptionValues) {
+    if (myProjectsCmdOptionValues == projectsCmdOptionValues) return;
+    myProjectsCmdOptionValues.clear();
+
+    if (projectsCmdOptionValues != null) {
+      myProjectsCmdOptionValues.addAll(projectsCmdOptionValues);
+    }
+  }
+
+  public List<String> getCmdOptions() {
+    if (myProjectsCmdOptionValues.isEmpty()) {
+      return List.of();
+    }
+
+    var projects = "--projects=" + String.join(",", myProjectsCmdOptionValues);
+
+    return List.of(projects);
   }
 
   /**
@@ -244,6 +270,7 @@ public final class MavenRunnerParameters implements Cloneable {
     if (isPomExecution != that.isPomExecution) return false;
     if (myResolveToWorkspace != that.myResolveToWorkspace) return false;
     if (!myGoals.equals(that.myGoals)) return false;
+    if (!myProjectsCmdOptionValues.equals(that.myProjectsCmdOptionValues)) return false;
     if (!Objects.equals(myWorkingDirPath, that.myWorkingDirPath)) return false;
     if (!Objects.equals(myPomFileName, that.myPomFileName)) return false;
     if (!myProfilesMap.equals(that.myProfilesMap)) return false;
