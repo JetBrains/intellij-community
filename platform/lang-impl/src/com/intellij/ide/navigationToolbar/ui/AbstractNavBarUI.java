@@ -47,7 +47,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Deprecated(forRemoval = true)
   public JBInsets getElementPadding() {
     return ExperimentalUI.isNewUI()
-           ? JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0))
+           ? JBUI.CurrentTheme.StatusBar.Breadcrumbs.itemInsets()
            : JBUI.insets(3);
   }
 

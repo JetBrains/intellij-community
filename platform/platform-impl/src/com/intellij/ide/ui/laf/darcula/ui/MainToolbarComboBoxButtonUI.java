@@ -57,7 +57,7 @@ public class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     c.setForeground(JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground()));
     c.setBackground(COLOR);
 
-    Insets insets = UIManager.getInsets("MainToolbar.Dropdown.borderInsets");
+    Insets insets = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets();
     JBEmptyBorder border = JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right);
     c.setBorder(border);
     c.setOpaque(true);
