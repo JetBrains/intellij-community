@@ -505,7 +505,7 @@ project.multiplatformJvmLibrary.commonTest
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (TEST)
     multiplatformJvmLibrary.commonMain (friend, TEST)
-    multiplatformJvmLibrary.jvmMain (TEST)
+    multiplatformJvmLibrary.jvmMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
