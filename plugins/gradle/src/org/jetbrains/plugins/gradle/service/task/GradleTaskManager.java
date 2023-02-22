@@ -38,7 +38,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.*;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleGroovyUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -49,7 +52,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -132,7 +134,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
 
-      var isApplicableTestLauncher = isApplicableTestLauncher(settings);
+      var isApplicableTestLauncher = isApplicableTestLauncher(tasks, settings);
       appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
@@ -329,21 +331,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
                                            @NotNull String initScript,
                                            @NotNull String initScriptPrefix) {
-    try {
-      String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
-      File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefixName);
-      effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      throw wrapWithESException(e);
-    }
-  }
-
-  @NotNull
-  private static ExternalSystemException wrapWithESException(IOException e) {
-    ExternalSystemException externalSystemException = new ExternalSystemException(e);
-    externalSystemException.initCause(e);
-    return externalSystemException;
+    String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
+    File tempFile = GradleInitScriptUtil.createInitScript(initScriptPrefixName, initScript);
+    effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
@@ -425,10 +415,11 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     tools.add(taskClass);
     tools.add(GsonBuilder.class);
     tools.add(ExternalSystemException.class);
-    String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
+    Set<String> paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
+    String toolingPaths = GradleGroovyUtil.toGroovyList(paths, it -> "mapPath(" + GradleGroovyUtil.toGroovyString(it) + ")");
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +
-                        "    classpath files(" + paths + ")\n" +
+                        "    classpath files(" + toolingPaths + ")\n" +
                         "  }\n" +
                         "}\n" +
                         "allprojects {\n" +

@@ -65,19 +65,19 @@ public class GradleExecutionHelperTest {
   public void testWriteToFileGradleInitScript() throws IOException {
     String prefix = "init";
 
-    File tempFile = writeToFileGradleInitScript("foo", prefix);
+    File tempFile = GradleInitScriptUtil.createInitScript(prefix, "foo");
     assertTrue(tempFile.exists());
     assertEquals("foo", loadFile(tempFile));
 
-    assertTrue(filesEqual(tempFile, writeToFileGradleInitScript("foo", prefix)));
+    assertTrue(filesEqual(tempFile, GradleInitScriptUtil.createInitScript(prefix, "foo")));
 
-    File anotherTempFile = writeToFileGradleInitScript("bar", prefix);
+    File anotherTempFile = GradleInitScriptUtil.createInitScript(prefix, "bar");
     assertTrue(anotherTempFile.exists());
     assertEquals("bar", loadFile(anotherTempFile));
 
     assertFalse(filesEqual(tempFile, anotherTempFile));
 
-    assertTrue(filesEqual(anotherTempFile, writeToFileGradleInitScript("bar", prefix)));
+    assertTrue(filesEqual(anotherTempFile, GradleInitScriptUtil.createInitScript(prefix, "bar")));
   }
 
   @Test

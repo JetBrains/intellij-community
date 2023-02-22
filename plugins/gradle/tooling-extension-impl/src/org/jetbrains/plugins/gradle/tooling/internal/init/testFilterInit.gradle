@@ -1,6 +1,6 @@
 //file:noinspection GrPackage
 
-String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
+String[] ijTestIncludes = TEST_PATTERNS
 
 Class abstractTestTaskClass = null
 try {
@@ -13,7 +13,9 @@ gradle.taskGraph.whenReady { taskGraph ->
   taskGraph.allTasks.each { Task task ->
     if (task instanceof Test || (abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class))) {
       try {
-        ${FORCE_TEST_EXECUTION}
+        if (FORCE_TEST_EXECUTION) {
+          task.outputs.upToDateWhen { false }
+        }
         String[] strings = ['*']
         if(ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
           def filter = task.getFilter()

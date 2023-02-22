@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -41,32 +40,27 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
+import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
+import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.awt.geom.IllegalPathStateException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
-import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
-import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_KEY;
-import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.INIT_SCRIPT_PREFIX_KEY;
 
 public class GradleExecutionHelper {
 
@@ -323,7 +317,7 @@ public class GradleExecutionHelper {
     lines.add("}");
     lines.add("");
 
-    File initScriptFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
+    File initScriptFile = GradleInitScriptUtil.createInitScript("wrapper_init", lines.toString());
     settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getCanonicalPath());
 
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
@@ -471,10 +465,8 @@ public class GradleExecutionHelper {
     }
     else {
       var testTaskPatterns = extractTestTaskPatterns(arguments);
-      var path = renderTestFilterInitScript(testTaskPatterns, isTestExecForced(settings));
-      if (path != null) {
-        ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
-      }
+      var path = GradleInitScriptUtil.createTestInitScript(testTaskPatterns, isTestExecForced(settings));
+      ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path.getAbsolutePath());
     }
     addIdeaParameters(arguments, settings);
     operation.withArguments(arguments);
@@ -576,7 +568,7 @@ public class GradleExecutionHelper {
       ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
     TargetEnvironmentConfiguration environmentConfiguration =
       environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
-    if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
+    if (environmentConfiguration != null && !LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
       if (settings.isPassParentEnvs()) {
         LOG.warn("Host system environment variables will not be passed for the target run.");
       }
@@ -665,89 +657,26 @@ public class GradleExecutionHelper {
     return i <= 0 ? Couple.of(arg, "") : Couple.of(arg.substring(0, i), arg.substring(i));
   }
 
-  @Nullable
-  public static File generateInitScript(boolean isBuildSrcProject, @NotNull Set<Class<?>> toolingExtensionClasses) {
-    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle");
-    if (stream == null) {
-      LOG.warn("Can't find init script template");
-      return null;
-    }
-    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String script = StreamUtil.readText(reader).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), Matcher.quoteReplacement(toolingExtensionsJarPaths));
-      if (isBuildSrcProject) {
-        String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
-        if (buildSrcDefaultInitScript == null) return null;
-        script += buildSrcDefaultInitScript;
-      }
-
-      return writeToFileGradleInitScript(script, "ijinit");
-    }
-    catch (Exception e) {
-      LOG.warn("Can't generate IJ gradle init script", e);
-      return null;
-    }
-  }
-
-  public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-    int contentLength = contentBytes.length;
-    return FileUtil.findSequentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, file -> {
-      try {
-        if (!file.exists()) {
-          FileUtil.writeToFile(file, contentBytes, false);
-          file.deleteOnExit();
-          return true;
-        }
-        if (contentLength != file.length()) return false;
-        return content.equals(FileUtil.loadFile(file, StandardCharsets.UTF_8));
-      }
-      catch (IOException ignore) {
-        // Skip file with access issues. Will attempt to check the next file
-      }
-      return false;
-    });
+  @ApiStatus.Internal
+  public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
+    var initScriptFile = GradleInitScriptUtil.createInitScript("ijmapper", "if (!ext.has('mapPath')) ext.mapPath = { path -> path }\n");
+    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
   }
 
   @ApiStatus.Experimental
   @NotNull
   public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {
-    final String initScript = configuration.getUserData(INIT_SCRIPT_KEY);
+    final String initScript = configuration.getUserData(GradleTaskManager.INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
-      String prefix = Objects.requireNonNull(configuration.getUserData(INIT_SCRIPT_PREFIX_KEY), "init script file prefix is required");
+      String prefix = configuration.getUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY);
+      if (prefix == null) {
+        throw new NullPointerException("init script file prefix is required");
+      }
       Map<String, String> map = new LinkedHashMap<>();
       map.put(prefix, initScript);
       return map;
     }
     return Collections.emptyMap();
-  }
-
-  @ApiStatus.Internal
-  public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
-    try {
-      File initScriptFile = writeToFileGradleInitScript(
-        "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
-      executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
-    }
-    catch (IOException e) {
-      LOG.warn("Can't generate IJ gradle init script", e);
-    }
-  }
-
-  @Nullable
-  public static String getBuildSrcDefaultInitScript() {
-    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/buildSrcInit.gradle");
-    if (stream == null) {
-      LOG.warn("Can't find default init script template");
-      return null;
-    }
-    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      return StreamUtil.readText(reader);
-    }
-    catch (Exception e) {
-      LOG.warn("Can't use IJ gradle init script", e);
-      return null;
-    }
   }
 
   @Nullable
@@ -896,57 +825,8 @@ public class GradleExecutionHelper {
     return taskToTestsPatterns;
   }
 
-  private static String toGroovyList(@NotNull List<String> list) {
-    var rawList = list.stream()
-      .map(it -> toGroovyString(it))
-      .collect(Collectors.joining(","));
-    return "[" + rawList + "]";
-  }
-
-  @NotNull
-  public static String toGroovyString(@NotNull String string) {
-    StringBuilder stringBuilder = new StringBuilder();
-    for (char ch : string.toCharArray()) {
-      if (ch == '\\') {
-        stringBuilder.append("\\\\");
-      }
-      else if (ch == '\'') {
-        stringBuilder.append("\\'");
-      }
-      else if (ch == '$') {
-        stringBuilder.append("\\$");
-      }
-      else {
-        stringBuilder.append(ch);
-      }
-    }
-    return "'" + stringBuilder + "'";
-  }
-
-  @Nullable
-  public static String renderTestFilterInitScript(@NotNull Set<String> testTasksPatterns, boolean forceExecution) {
-    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
-    if (stream == null) {
-      LOG.error("Can't find test filter init script template");
-      return null;
-    }
-    try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-      var testNameIncludes = Matcher.quoteReplacement(toGroovyList(new ArrayList<>(testTasksPatterns)));
-      String script = StreamUtil.readText(reader)
-        .replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), testNameIncludes)
-        .replaceFirst(Pattern.quote("${FORCE_TEST_EXECUTION}"), forceExecution ? " task.outputs.upToDateWhen { false } " : "");
-      File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
-      return tempFile.getAbsolutePath();
-    }
-    catch (Exception e) {
-      LOG.warn("Can't generate IJ gradle test filter init script", e);
-      return null;
-    }
-  }
-
-  @NotNull
-  public static String getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {
-    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
+  public static @NotNull Set<String> getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {
+    return ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
       if (path != null) {
         if (FileUtilRt.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
@@ -965,17 +845,6 @@ public class GradleExecutionHelper {
       }
       return null;
     });
-    StringBuilder buf = new StringBuilder();
-    buf.append('[');
-    for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
-      String jarPath = it.next();
-      buf.append("mapPath(\"").append(jarPath).append("\")");
-      if (it.hasNext()) {
-        buf.append(',');
-      }
-    }
-    buf.append(']');
-    return buf.toString();
   }
 
   @NotNull

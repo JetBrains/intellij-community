@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.toGroovyString
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
+import org.jetbrains.plugins.gradle.service.execution.toGroovyString
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
@@ -173,11 +173,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     for (localPath in localPathsToMap) {
       if (targetPathMapper != null && targetPathMapper.canReplaceLocal(localPath)) {
         val targetPath = targetPathMapper.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
+        mapperInitScript.append("ext.pathMapper.put(${localPath.toGroovyString()}, ${targetPath.toGroovyString()})\n")
       }
       else if (pathMappingSettings.canReplaceLocal(localPath)) {
         val targetPath = pathMappingSettings.convertToRemote(localPath)
-        mapperInitScript.append("ext.pathMapper.put(${toGroovyString(localPath)}, ${toGroovyString(targetPath)})\n")
+        mapperInitScript.append("ext.pathMapper.put(${localPath.toGroovyString()}, ${targetPath.toGroovyString()})\n")
       }
     }
 
@@ -188,7 +188,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     if (javaRuntime != null) {
       val targetJavaExecutablePath = arrayOf(javaRuntime.homePath, "bin", java).joinToString(platform.fileSeparator.toString())
       mapperInitScript.append(
-        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", ${toGroovyString(targetJavaExecutablePath)})\n")
+        "ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", ${targetJavaExecutablePath.toGroovyString()})\n")
     }
     else {
       mapperInitScript.append("ext.pathMapper.put(\"${targetJavaExecutablePathMappingKey}\", \"${java}\")\n")
@@ -244,7 +244,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         if (file.extension != GradleConstants.EXTENSION) continue
         if (file.name.startsWith("ijinit")) {
           val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
-          // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle` file
+          // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle` file
           val toolingExtensionsPaths = fileContent
             .substringAfter(
               "initscript {\n" +
