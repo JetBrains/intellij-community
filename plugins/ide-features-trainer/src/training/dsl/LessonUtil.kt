@@ -4,9 +4,15 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
+import com.intellij.execution.RunManager
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -248,6 +254,8 @@ object LessonUtil {
     }
   }
 
+  fun rawShift() = LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
+
   fun checkToolbarIsShowing(ui: ActionButton): Boolean {
     // Some buttons are duplicated to several tab-panels. It is a way to find an active one.
     val parentOfType = UIUtil.getParentOfType(JBTabsImpl.Toolbar::class.java, ui)
@@ -395,6 +403,9 @@ object LessonUtil {
     }
   }
 
+  fun lastHighlightedUi(): JComponent? {
+    return LearningUiHighlightingManager.highlightingComponents.getOrNull(0) as? JComponent
+  }
 }
 
 fun LessonContext.firstLessonCompletedMessage() {
@@ -606,7 +617,8 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
 fun LessonContext.highlightButtonById(actionId: String,
                                       highlightInside: Boolean = true,
                                       usePulsation: Boolean = true,
-                                      clearHighlights: Boolean = true) {
+                                      clearHighlights: Boolean = true,
+                                      additionalContent: (TaskContext.() -> Unit)? = null) {
   val needToFindButton = getActionById(actionId)
 
   task {
@@ -639,6 +651,7 @@ fun LessonContext.highlightButtonById(actionId: String,
       }
     }
     addStep(feature)
+    additionalContent?.invoke(this)
   }
 }
 
@@ -727,4 +740,15 @@ fun LessonContext.sdkConfigurationTasks() {
   if (langSupport != null && lesson.languageId == langSupport.primaryLanguage) {
     langSupport.sdkConfigurationTasks.invoke(this, lesson)
   }
+}
+
+fun TaskRuntimeContext.addNewRunConfigurationFromContext(editConfiguration: (RunConfiguration) -> Unit = {}) {
+  val runManager = RunManager.getInstance(project) as RunManagerImpl
+  val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
+  val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
+  val configurationSettings = configurationsFromContext?.singleOrNull() ?.configurationSettings ?: return
+  val runConfiguration = configurationSettings.configuration.clone()
+  editConfiguration(runConfiguration)
+  val newSettings = RunnerAndConfigurationSettingsImpl(runManager, runConfiguration)
+  runManager.addConfiguration(newSettings)
 }
