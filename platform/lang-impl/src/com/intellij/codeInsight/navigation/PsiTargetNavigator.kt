@@ -2,14 +2,13 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.ide.util.EditSourceUtil
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.ui.list.createTargetPresentationRenderer
+import com.intellij.ui.list.buildTargetPopupWithMultiSelect
+import java.util.function.Function
+import java.util.function.Predicate
 
 class PsiTargetNavigator {
 
@@ -22,24 +21,11 @@ class PsiTargetNavigator {
     val project = elements[0].project
     val targets: List<ItemWithPresentation> = GotoTargetHandler.computePresentationInBackground(project, elements, false)
 
-    val builder = JBPopupFactory.getInstance().createPopupChooserBuilder(targets)
-      .setRenderer(createTargetPresentationRenderer { it.presentation })
-      .setNamerForFiltering { it.presentation.presentableText }
-      .setFont(EditorUtil.getEditorFont())
-      .withHintUpdateSupply()
-      .setItemsChosenCallback { items ->
-        items.forEach { it ->
-          @Suppress("UNCHECKED_CAST")
-          (it.dereference() as? T)?.let { processor.execute(it) }
-        }
-      }
+    val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, Predicate {
+      @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
+    })
     if (title != null) {
       builder.setTitle(title)
-    }
-    if (builder is PopupChooserBuilder<*>) {
-      val pane = (builder as PopupChooserBuilder<*>).scrollPane
-      pane?.border = null
-      pane?.viewportBorder = null
     }
 
     return builder.createPopup()
