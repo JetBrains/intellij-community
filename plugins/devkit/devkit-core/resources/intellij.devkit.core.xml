@@ -246,7 +246,7 @@
                      key="inspection.retrieving.light.service.display.name"/>
     <localInspection language="UAST" shortName="NonFinalOrNonInternalExtensionClass"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.NonFinalOrNonInternalExtensionClassInspection"
                      key="inspection.extension.class.display.name"/>
     <localInspection language="UAST" shortName="NonDefaultConstructor"
