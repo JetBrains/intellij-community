@@ -30,7 +30,6 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
     return Arrays.asList(
       new String[]{"3.9.0"},
       new String[]{"3.8.6"},
-      new String[]{"3.8.6"},
       new String[]{"3.8.5"},
       new String[]{"3.8.4"},
       new String[]{"3.8.3"},
