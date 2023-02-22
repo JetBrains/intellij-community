@@ -15,6 +15,8 @@ import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule;
+import org.jetbrains.kotlin.idea.base.util.module;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
-    if (Registry.is("ide.jvm.run.marker") || !isIdentifier(element)) {
+    if (Registry.is("ide.jvm.run.marker") || !isIdentifier(element) || element.module?.isAndroidModule() == true) {
       return null;
     }
 
