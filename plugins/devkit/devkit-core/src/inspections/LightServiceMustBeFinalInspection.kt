@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmElementVisitor
@@ -22,7 +23,7 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
         if (hasServiceAnnotation && !clazz.hasModifier(JvmModifier.FINAL)) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-          sink.highlight(DevKitBundle.message("inspection.light.service.must.be.final.message"), *fixes)
+          sink.highlight(DevKitBundle.message("inspection.light.service.must.be.final.message"), ProblemHighlightType.GENERIC_ERROR, *fixes)
         }
         return true
       }
