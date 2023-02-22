@@ -12,7 +12,6 @@ import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
-import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +52,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   private List<String> myShellCommand;
   private final Prompt myPrompt = new Prompt();
   private final Queue<String> myPendingCommandsToExecute = new LinkedList<>();
-  private final TtyConnectorAccessor myTtyConnectorAccessor = new TtyConnectorAccessor();
   private final TerminalShellCommandHandlerHelper myShellCommandHandlerHelper;
 
   private final Alarm myVfsRefreshAlarm;
@@ -196,7 +194,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   }
 
   public void executeWithTtyConnector(@NotNull Consumer<TtyConnector> consumer) {
-    myTtyConnectorAccessor.executeWithTtyConnector(consumer);
+    asNewWidget().getTtyConnectorAccessor().executeWithTtyConnector(consumer);
   }
 
   @Override
@@ -211,7 +209,6 @@ public class ShellTerminalWidget extends JBTerminalWidget {
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
     super.setTtyConnector(ttyConnector);
-    myTtyConnectorAccessor.setTtyConnector(ttyConnector);
 
     String command;
     while ((command = myPendingCommandsToExecute.poll()) != null) {
