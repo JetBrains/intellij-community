@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -284,11 +284,11 @@ public final class FileColorsModel implements Cloneable {
   }
 
   public List<FileColorConfiguration> getLocalConfigurations() {
-    return ContainerUtil.copyList(myApplicationLevelConfigurations);
+    return new ArrayList<>(myApplicationLevelConfigurations);
   }
 
   @NotNull
   public List<FileColorConfiguration> getProjectLevelConfigurations() {
-    return ContainerUtil.copyList(myProjectLevelConfigurations);
+    return new ArrayList<>(myProjectLevelConfigurations);
   }
 }
