@@ -10,11 +10,9 @@ import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
@@ -31,24 +29,24 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun enforcePresentableName() = true
 
-  override fun isValid(): Boolean = findConnection() != null
+  override fun isValid(): Boolean = findContext() != null
 
   override fun getPath(): String =
     (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId, true)
 
   override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
 
-  private fun findConnection() = project.serviceIfCreated<GitLabProjectConnectionManager>()?.connectionState?.value?.takeIf {
-    it.id == connectionId
-  }
+  private fun findContext() = project.serviceIfCreated<GitLabProjectUIContextHolder>()
+    ?.projectContext?.value?.takeIf { it.connectionId == connectionId }
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
-    val connection = findConnection() ?: error("Missing connection for $this")
-    val diffBridge: GitLabMergeRequestDiffBridge =
-      project.serviceIfCreated<GitLabMergeRequestDiffBridgeRepository>()?.get(connection, mergeRequestId)
-      ?: error("Missing diff model for $this")
-
-    return createMergeRequestDiffRequestProcessor(project, connection, diffBridge, mergeRequestId)
+    val ctx = findContext() ?: error("Missing context for $this")
+    return createMergeRequestDiffRequestProcessor(project,
+                                                  ctx.currentUser,
+                                                  ctx.projectData,
+                                                  ctx.getDiffBridge(mergeRequestId),
+                                                  ctx.avatarIconProvider,
+                                                  mergeRequestId)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()

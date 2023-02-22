@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.associateBy
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
@@ -15,6 +16,8 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 
 interface GitLabMergeRequestDiffReviewViewModel {
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+
   fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffChangeViewModel?>
 
   companion object {
@@ -29,6 +32,7 @@ class GitLabMergeRequestDiffReviewViewModelImpl(
   parentCs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val projectData: GitLabProject,
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   private val mrId: GitLabMergeRequestId
 ) : GitLabMergeRequestDiffReviewViewModel {
 

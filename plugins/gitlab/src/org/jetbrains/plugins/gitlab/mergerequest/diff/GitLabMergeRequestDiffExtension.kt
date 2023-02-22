@@ -44,7 +44,6 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     if (viewer !is DiffViewerBase) return
 
-    val connection = context.getUserData(GitLabProjectConnection.KEY) ?: return
     val reviewVm = context.getUserData(GitLabMergeRequestDiffReviewViewModel.KEY) ?: return
 
     val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
@@ -67,20 +66,17 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
       }
 
     val cs = DisposingMainScope(viewer)
-    val avatarIconsProvider = CachingIconsProvider(
-      AsyncImageIconsProvider(cs, connection.imageLoader)
-    )
 
     val componentFactory = { inlayCs: CoroutineScope, inlay: DiffInlayViewModel ->
       when (inlay) {
         is DiffInlayViewModel.Discussion -> {
           GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(
-            project, inlayCs, avatarIconsProvider, inlay.vm
+            project, inlayCs, reviewVm.avatarIconsProvider, inlay.vm
           )
         }
         is DiffInlayViewModel.NewNote -> {
           GitLabMergeRequestDiffInlayComponentsFactory.createNewDiscussion(
-            project, inlayCs, avatarIconsProvider, inlay.editVm
+            project, inlayCs, reviewVm.avatarIconsProvider, inlay.editVm
           ) {
             inlay.cancel()
           }

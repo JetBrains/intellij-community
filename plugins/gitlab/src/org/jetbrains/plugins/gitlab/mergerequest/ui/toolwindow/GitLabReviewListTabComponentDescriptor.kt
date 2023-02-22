@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersHistoryModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModelImpl
@@ -23,7 +24,7 @@ internal class GitLabReviewListTabComponentDescriptor(
   project: Project,
   cs: CoroutineScope,
   accountManager: GitLabAccountManager,
-  projectContext: GitLabToolwindowProjectContext
+  ctx: GitLabProjectUIContext
 ) : ReviewListTabComponentDescriptor {
 
   override val viewModel: GitLabMergeRequestsListViewModel
@@ -31,32 +32,32 @@ internal class GitLabReviewListTabComponentDescriptor(
   override val component: JComponent
 
   init {
-    val connection = projectContext.connection
-    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = projectContext.avatarIconProvider
+    val avatarIconsProvider: IconsProvider<GitLabUserDTO> = ctx.avatarIconProvider
 
+    val projectData = ctx.projectData
     val filterVm: GitLabMergeRequestsFiltersViewModel = GitLabMergeRequestsFiltersViewModelImpl(
       cs,
-      currentUser = connection.currentUser,
+      currentUser = ctx.currentUser,
       historyModel = GitLabMergeRequestsFiltersHistoryModel(project.service<GitLabMergeRequestsPersistentFiltersHistory>()),
       avatarIconsProvider = avatarIconsProvider,
-      projectData = connection.projectData
+      projectData = projectData
     )
 
     viewModel = GitLabMergeRequestsListViewModelImpl(
       cs,
       filterVm = filterVm,
-      repository = connection.repo.repository.projectPath.name,
-      account = connection.account,
+      repository = ctx.projectName,
+      account = ctx.account,
       avatarIconsProvider = avatarIconsProvider,
       accountManager = accountManager,
-      tokenRefreshFlow = connection.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+      tokenRefreshFlow = ctx.tokenRefreshFlow,
+      loaderSupplier = { filtersValue -> projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
     )
 
     component = GitLabMergeRequestsPanelFactory().create(project, cs, viewModel).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
           else -> null
         }
       }

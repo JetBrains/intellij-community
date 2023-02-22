@@ -16,10 +16,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
@@ -27,7 +24,8 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridgeRepository
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestDetailsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
@@ -39,17 +37,17 @@ import javax.swing.*
 
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
-  private val toolwindowViewModel: GitLabToolwindowViewModel,
-) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabToolwindowProjectContext> {
+  private val toolwindowViewModel: GitLabProjectUIContextHolder,
+) : ReviewTabsComponentFactory<GitLabReviewTab, GitLabProjectUIContext> {
   override fun createReviewListComponentDescriptor(
     cs: CoroutineScope,
-    projectContext: GitLabToolwindowProjectContext
+    projectContext: GitLabProjectUIContext
   ): ReviewListTabComponentDescriptor {
     return GitLabReviewListTabComponentDescriptor(project, cs, toolwindowViewModel.accountManager, projectContext)
   }
 
   override fun createTabComponent(cs: CoroutineScope,
-                                  projectContext: GitLabToolwindowProjectContext,
+                                  projectContext: GitLabProjectUIContext,
                                   reviewTabType: GitLabReviewTab): JComponent {
     return when (reviewTabType) {
       is GitLabReviewTab.ReviewSelected -> {
@@ -65,11 +63,10 @@ internal class GitLabReviewTabComponentFactory(
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
-    projectContext: GitLabToolwindowProjectContext,
+    ctx: GitLabProjectUIContext,
     reviewId: GitLabMergeRequestId
   ): JComponent {
-    val conn = projectContext.connection
-    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, conn.currentUser, conn.projectData, reviewId).apply {
+    val reviewDetailsVm = GitLabMergeRequestDetailsLoadingViewModelImpl(project, cs, ctx.currentUser, ctx.projectData, reviewId).apply {
       requestLoad()
     }
 
@@ -81,11 +78,11 @@ internal class GitLabReviewTabComponentFactory(
       detailsVmFlow.flatMapLatest {
         it.detailsInfoVm.showTimelineRequests
       }.collect {
-        projectContext.filesController.openTimeline(reviewId, true)
+        ctx.filesController.openTimeline(reviewId, true)
       }
     }
 
-    val diffBridge = project.service<GitLabMergeRequestDiffBridgeRepository>().get(conn, reviewId)
+    val diffBridge = ctx.getDiffBridge(reviewId)
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       detailsVmFlow.flatMapLatest {
         it.changesVm.userChangesSelection
@@ -110,16 +107,16 @@ internal class GitLabReviewTabComponentFactory(
       detailsVmFlow.flatMapLatest {
         it.changesVm.showDiffRequests
       }.collect {
-        projectContext.filesController.openDiff(reviewId, true)
+        ctx.filesController.openDiff(reviewId, true)
       }
     }
 
 
-    val avatarIconsProvider = projectContext.avatarIconProvider
+    val avatarIconsProvider = ctx.avatarIconProvider
     return GitLabMergeRequestDetailsComponentFactory.createDetailsComponent(project, cs, reviewDetailsVm, avatarIconsProvider).also {
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> projectContext.filesController
+          GitLabMergeRequestsActionKeys.FILES_CONTROLLER.`is`(dataId) -> ctx.filesController
           else -> null
         }
       }

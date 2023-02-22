@@ -2,10 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.async.DisposingScope
-import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
-import com.intellij.collaboration.ui.icon.CachingIconsProvider
-import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
@@ -15,16 +11,15 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.plugins.gitlab.api.GitLabProjectConnection
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
-import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.JComponent
 
 internal class GitLabMergeRequestTimelineFileEditor(private val project: Project,
-                                                    private val connection: GitLabProjectConnection,
+                                                    private val ctx: GitLabProjectUIContext,
                                                     private val file: GitLabMergeRequestTimelineFile)
   : UserDataHolderBase(), FileEditor, CheckedDisposable {
 
@@ -34,14 +29,8 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   private val cs = DisposingScope(this)
 
   private val component = run {
-    val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs,
-                                                        connection.currentUser,
-                                                        connection.projectData,
-                                                        file.mergeRequestId)
-    val userIconsProvider = CachingIconsProvider(
-      AsyncImageIconsProvider(cs, GitLabImageLoader(connection.apiClient, connection.repo.repository.serverPath))
-    )
-    GitLabMergeRequestTimelineComponentFactory.create(project, cs.childScope(Dispatchers.Main), vm, userIconsProvider)
+    val vm = LoadAllGitLabMergeRequestTimelineViewModel(cs, ctx.currentUser, ctx.projectData, file.mergeRequestId)
+    GitLabMergeRequestTimelineComponentFactory.create(project, cs.childScope(Dispatchers.Main), vm, ctx.avatarIconProvider)
   }
 
   override fun getComponent(): JComponent = component
