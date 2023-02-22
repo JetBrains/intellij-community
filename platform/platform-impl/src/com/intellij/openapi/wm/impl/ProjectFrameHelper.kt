@@ -190,12 +190,7 @@ open class ProjectFrameHelper internal constructor(
       frame.iconImage = null
     }
     else if (SystemInfoRt.isLinux) {
-      frame.addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent) {
-          frame.removeComponentListener(this)
-          IdeMenuBar.installAppMenuIfNeeded(frame)
-        }
-      })
+      IdeMenuBar.installAppMenuIfNeeded(frame)
       // in production (not from sources) makes sense only on Linux
       AppUIUtil.updateWindowIcon(frame)
     }
