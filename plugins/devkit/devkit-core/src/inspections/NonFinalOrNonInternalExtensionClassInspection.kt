@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.getAnchorPsi
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -58,7 +57,7 @@ internal class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspect
       }
       return true
     }
-  }, arrayOf(UClass::class.java, UQualifiedReferenceExpression::class.java))
+  }, arrayOf(UClass::class.java))
 
 
   fun isInternal(aClass: PsiClass): Boolean {
