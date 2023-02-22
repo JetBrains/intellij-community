@@ -257,7 +257,13 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         .compute(context)
     }
 
-    fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyType? {
+    fun getTypedDictTypeForResolvedElement(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
+      return Ref.deref(PyUtil.getParameterizedCachedValue(resolved, context) { typeEvalContext ->
+        return@getParameterizedCachedValue Ref.create(calculateTypeDictType(resolved, typeEvalContext))
+      })
+    }
+
+    private fun calculateTypeDictType(resolved: PsiElement, context: TypeEvalContext): PyTypedDictType? {
       if (resolved is PyClass && isTypingTypedDictInheritor(resolved, context)) {
         return getTypedDictTypeForTypingTDInheritorAsCallee(resolved, context, true)
       }
