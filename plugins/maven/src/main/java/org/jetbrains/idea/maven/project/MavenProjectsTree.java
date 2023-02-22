@@ -458,12 +458,10 @@ public final class MavenProjectsTree {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
-    Stack<MavenProject> updateStack = new Stack<>();
 
     var updater = new MavenProjectsTreeUpdater(this,
                                                explicitProfiles,
                                                updateContext,
-                                               updateStack,
                                                projectReader,
                                                generalSettings,
                                                process);
@@ -502,7 +500,7 @@ public final class MavenProjectsTree {
     private final MavenProjectsTree tree;
     private final MavenExplicitProfiles explicitProfiles;
     private final UpdateContext updateContext;
-    private final Stack<MavenProject> updateStack;
+    private final Stack<MavenProject> updateStack = new Stack<>();
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
@@ -510,14 +508,12 @@ public final class MavenProjectsTree {
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
                              UpdateContext context,
-                             Stack<MavenProject> stack,
                              MavenProjectReader reader,
                              MavenGeneralSettings settings,
                              MavenProgressIndicator process) {
       this.tree = tree;
       explicitProfiles = profiles;
       updateContext = context;
-      updateStack = stack;
       this.reader = reader;
       generalSettings = settings;
       this.process = process;
@@ -727,7 +723,6 @@ public final class MavenProjectsTree {
     if (files.isEmpty()) return;
 
     UpdateContext updateContext = new UpdateContext();
-    Stack<MavenProject> updateStack = new Stack<>();
 
     Set<MavenProject> inheritorsToUpdate = new HashSet<>();
     for (VirtualFile each : files) {
@@ -739,7 +734,7 @@ public final class MavenProjectsTree {
     }
     inheritorsToUpdate.removeAll(updateContext.deletedProjects);
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, updateStack, projectReader, generalSettings, process);
+    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       updater.update(mavenProject, null, false, false, false);
