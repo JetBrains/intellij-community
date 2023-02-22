@@ -73,7 +73,7 @@ internal class RetrievingLightServiceInspection : DevKitUastInspectionBase(UQual
     val returnExpr = node.uastParent as? UReturnExpression ?: return false
     val method = returnExpr.jumpTarget as? UMethod ?: return false
     val returnExpression = getReturnExpression(method)
-    return method.returnTypeReference?.getQualifiedName() == uClass.qualifiedName &&
+    return method.getContainingDeclaration() == uClass &&
            returnExpression?.sourcePsi === returnExpr.sourcePsi
   }
 
