@@ -54,10 +54,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -1825,7 +1823,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void setSize(final @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
-    if (!isBusy()) setBounds(null, new Dimension(size));
+    if (!isBusy()) {
+      setBounds(null, new Dimension(size));
+      if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
+    }
   }
 
   public int getAdComponentHeight() {
@@ -1920,6 +1921,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         size = window.getPreferredSize();
       }
       window.setBounds(location.x, location.y, size.width, size.height);
+      //window.validate();
       window.setCursor(Cursor.getDefaultCursor());
       updateMaskAndAlpha(window);
     }
