@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
@@ -41,6 +42,7 @@ data class ModuleTestSourceInfo internal constructor(
             }
 
             list.addAll(list.closure { it.expectedBy })
+            list.addAll(module.additionalVisibleModules.mapNotNull { it.productionSourceInfo })
 
             list.toHashSet()
         }
