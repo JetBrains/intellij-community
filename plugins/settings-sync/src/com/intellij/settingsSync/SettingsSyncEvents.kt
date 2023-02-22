@@ -5,7 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
 import java.util.*
 
-internal class SettingsSyncEvents : Disposable {
+// Used by Rider
+class SettingsSyncEvents : Disposable {
 
   private val settingsChangeDispatcher = EventDispatcher.create(SettingsChangeListener::class.java)
   private val enabledStateChangeDispatcher = EventDispatcher.create(SettingsSyncEnabledStateListener::class.java)

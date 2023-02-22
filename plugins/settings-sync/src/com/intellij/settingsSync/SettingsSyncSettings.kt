@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-internal fun interface SettingsSyncEnabledStateListener : EventListener {
+fun interface SettingsSyncEnabledStateListener : EventListener {
   fun enabledStateChanged(syncEnabled: Boolean)
 }
 
