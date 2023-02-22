@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -22,8 +21,60 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 
-@Service(Service.Level.PROJECT)
-class VcsConsoleTabService(val project: Project) : Disposable {
+interface VcsConsoleTabService {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): VcsConsoleTabService = project.service()
+  }
+
+  @CalledInAny
+  fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType)
+
+  @CalledInAny
+  fun addMessage(line: VcsConsoleLine?)
+
+  @RequiresEdt
+  fun isConsoleVisible(): Boolean
+
+  @RequiresEdt
+  fun isConsoleEmpty(): Boolean
+
+  @RequiresEdt
+  fun showConsoleTab(selectContent: Boolean, onShown: Runnable?)
+
+  @RequiresEdt
+  fun showConsoleTabAndScrollToTheEnd()
+}
+
+class MockVcsConsoleTabService() : VcsConsoleTabService {
+  @CalledInAny
+  override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
+  }
+
+  @CalledInAny
+  override fun addMessage(line: VcsConsoleLine?) {
+  }
+
+  @RequiresEdt
+  override fun isConsoleVisible(): Boolean {
+    return false
+  }
+
+  @RequiresEdt
+  override fun isConsoleEmpty(): Boolean {
+    return true
+  }
+
+  @RequiresEdt
+  override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
+  }
+
+  @RequiresEdt
+  override fun showConsoleTabAndScrollToTheEnd() {
+  }
+}
+
+internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabService, Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): VcsConsoleTabService = project.service()
@@ -37,12 +88,12 @@ class VcsConsoleTabService(val project: Project) : Disposable {
 
 
   @CalledInAny
-  fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
+  override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
     addMessage(VcsConsoleLine.create(message, contentType))
   }
 
   @CalledInAny
-  fun addMessage(line: VcsConsoleLine?) {
+  override fun addMessage(line: VcsConsoleLine?) {
     if (line == null) return
     if (project.isDisposed || project.isDefault) return
 
@@ -56,7 +107,7 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   }
 
   @RequiresEdt
-  fun isConsoleVisible(): Boolean {
+  override fun isConsoleVisible(): Boolean {
     if (project.isDisposed || project.isDefault) return false
 
     val toolWindow = ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.CONSOLE) ?: return false
@@ -65,13 +116,13 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   }
 
   @RequiresEdt
-  fun isConsoleEmpty(): Boolean {
+  override fun isConsoleEmpty(): Boolean {
     if (project.isDisposed || project.isDefault) return true
     return consoleView.contentSize == 0
   }
 
   @RequiresEdt
-  fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
+  override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
     if (project.isDisposed || project.isDefault) return
 
     val contentTab = ChangesViewContentManager.getInstance(project).findContent(ChangesViewContentManager.CONSOLE)
@@ -86,7 +137,7 @@ class VcsConsoleTabService(val project: Project) : Disposable {
   }
 
   @RequiresEdt
-  fun showConsoleTabAndScrollToTheEnd() {
+  override fun showConsoleTabAndScrollToTheEnd() {
     showConsoleTab(true) {
       consoleView.requestScrollingToEnd()
     }
