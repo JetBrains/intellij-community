@@ -648,7 +648,7 @@ public final class JBUI {
       }
 
       public static float unselectedBlend() {
-        return getFloat("EditorTabs.unselectedBlend", StartupUiUtil.isUnderDarcula() ? 0.7f : 0.85f);
+        return getFloat("EditorTabs.unselectedBlend", StartupUiUtil.isUnderDarcula() ? 0.7f : 0.9f);
       }
     }
 
