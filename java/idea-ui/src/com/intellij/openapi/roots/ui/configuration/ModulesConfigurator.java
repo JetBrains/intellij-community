@@ -408,7 +408,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (null != modules && !modules.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (Module module : modules) {
-          if (getModule(module.getName()) != null) {
+          if (module != null && getModule(module.getName()) != null) {
             getOrCreateModuleEditor(module);
           }
         }
