@@ -639,6 +639,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   @Override
   public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(cls, context, typeEvalContext -> calculateGenericSubstitutions(cls, typeEvalContext));
+  }
+
+  @NotNull
+  private Map<PyType, PyType> calculateGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     if (!isGeneric(cls, context)) {
       return Collections.emptyMap();
     }
