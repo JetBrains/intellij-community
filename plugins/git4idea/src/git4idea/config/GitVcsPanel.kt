@@ -220,10 +220,8 @@ internal class GitVcsPanel(private val project: Project) :
       row {
         isValidationOnCheckbox = checkBox(CheckboxDescriptor(
           message("settings.branching.name.validator.replacement.toggle"),
-          PropertyBinding(
-            { gitRefNameValidationSettings.isOn },
-            { gitRefNameValidationSettings.isOn = it }
-          ),
+          { gitRefNameValidationSettings.isOn },
+          { gitRefNameValidationSettings.isOn = it },
           groupName = gitOptionGroupName
         ))
       }
@@ -232,10 +230,8 @@ internal class GitVcsPanel(private val project: Project) :
         row {
           checkBox(CheckboxDescriptor(
             message("settings.branching.name.validator.convert.to.lower.case"),
-            PropertyBinding(
-              { gitRefNameValidationSettings.isConvertingToLowerCase },
-              { gitRefNameValidationSettings.isConvertingToLowerCase = it}
-            ),
+            { gitRefNameValidationSettings.isConvertingToLowerCase },
+            { gitRefNameValidationSettings.isConvertingToLowerCase = it },
             groupName = gitOptionGroupName
           ))
         }.enabledIf(isValidationOnCheckbox.selected)
