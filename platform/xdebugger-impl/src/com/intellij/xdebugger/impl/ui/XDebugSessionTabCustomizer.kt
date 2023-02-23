@@ -9,6 +9,8 @@ interface XDebugSessionTabCustomizer {
   fun getBottomLocalsComponentProvider(): SessionTabComponentProvider? = null
 
   fun allowFramesViewCustomization(): Boolean = false
+
+  fun getDefaultFramesViewKey(): String? = null
 }
 
 interface SessionTabComponentProvider {
