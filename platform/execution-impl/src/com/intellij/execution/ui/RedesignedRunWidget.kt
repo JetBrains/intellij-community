@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
+import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -245,6 +246,11 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
 
+    if (!isContrastRunWidget && actionButton is ActionButton && actionButton.action is RedesignedRunConfigurationSelector) {
+      super.paintIcon(g, actionButton, icon, x, y)
+      return
+    }
+
     var resultIcon = icon
 
     if (icon is LayeredIcon && icon.allLayers.size == 2) {
@@ -391,12 +397,7 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
     if (!isContrastRunWidget) {
       val icon = e.presentation.icon
       if (icon != null) {
-        e.presentation.icon = PreparedIcon(if (icon is InvalidRunConfigurationIcon) {
-          InvalidRunConfigurationIcon(IconUtil.toStrokeIcon(icon.mainIcon, JBUI.CurrentTheme.RunWidget.FOREGROUND))
-        }
-                                           else {
-          IconUtil.toStrokeIcon(icon, JBUI.CurrentTheme.RunWidget.FOREGROUND)
-        })
+        e.presentation.icon = adjustIconForHeader(icon)
       }
     }
     e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
@@ -43,23 +44,20 @@ internal class HeaderToolbarButtonLook(
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon) {
-    val scaledIcon = scaleIcon(adjustColor(icon))
+    val scaledIcon = scaleIcon(adjustIconForHeader(icon))
     super.paintIcon(g, actionButton, scaledIcon)
   }
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon, x: Int, y: Int) {
-    val scaledIcon = scaleIcon(adjustColor(icon))
+    val scaledIcon = scaleIcon(adjustIconForHeader(icon))
     super.paintIcon(g, actionButton, scaledIcon, x, y)
   }
 
   override fun paintDownArrow(g: Graphics?, actionButton: ActionButtonComponent?, originalIcon: Icon, arrowIcon: Icon) {
-    val scaledOriginalIcon = scaleIcon(adjustColor(originalIcon))
-    val scaledArrowIcon = scaleIcon(adjustColor(arrowIcon))
+    val scaledOriginalIcon = scaleIcon(adjustIconForHeader(originalIcon))
+    val scaledArrowIcon = scaleIcon(adjustIconForHeader(arrowIcon))
     super.paintDownArrow(g, actionButton, scaledOriginalIcon, scaledArrowIcon)
   }
-
-  private fun adjustColor(icon: Icon) =
-    if (isDarkHeader()) IconLoader.getDarkIcon(icon, true) else icon
 
   private fun scaleIcon(icon: Icon) : Icon {
     if (icon is ScalableIcon) {
