@@ -102,7 +102,10 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateHighlighted(project, editor));
+        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(
+          editor ->
+            myAlarm.addRequest(() -> updateHighlighted(project, editor), 300)
+        );
       }
     };
     eventMulticaster.addDocumentListener(documentListener, parentDisposable);
