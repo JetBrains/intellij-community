@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -50,10 +51,16 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
-  fun runAllWhileSmartInThisThread() {
+  fun onDumbModeFinished() {
+    runAllWhileSmartInThisThread()
+  }
+
+  private fun runAllWhileSmartInThisThread() {
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
+
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-    while (!DumbService.isDumb(project)) {
+    while (isSmart()) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
       doRun(runnable)
     }
@@ -71,6 +78,8 @@ class SmartModeScheduler(private val project: Project) : Disposable {
       LOG.error("Error executing task $runnable", e)
     }
   }
+
+  private fun isSmart() = !DumbService.isDumb(project)
 
   fun clear() {
     myRunWhenSmartQueue.clear()
