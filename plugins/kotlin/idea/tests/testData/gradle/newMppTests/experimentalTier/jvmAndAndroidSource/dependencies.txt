@@ -31,7 +31,7 @@ project.consumer.commonMain
 
 project.consumer.commonTest
     consumer.commonMain (friend, TEST)
-    consumer.jvmAndAndroidMain (TEST)
+    consumer.jvmAndAndroidMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
@@ -126,7 +126,7 @@ project.producer.commonMain
 project.producer.commonTest
     org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     producer.commonMain (friend, TEST)
-    producer.jvmAndAndroidMain (TEST)
+    producer.jvmAndAndroidMain (friend, TEST)
 
 project.producer.jvmAndAndroidMain
     org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
