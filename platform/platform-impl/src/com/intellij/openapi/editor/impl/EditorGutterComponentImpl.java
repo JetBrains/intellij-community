@@ -140,7 +140,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider,
                                                                                  Accessible, UiInspectorPreciseContextProvider {
-  public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
+  static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -155,7 +155,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private ClickInfo myLastActionableClick;
   @NotNull
   private final EditorImpl myEditor;
-  private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
+  private final FoldingAnchorsOverlayStrategy myAnchorDisplayStrategy;
   @Nullable private Int2ObjectMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
@@ -168,7 +168,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   int myTextAnnotationExtraSize;
   final IntList myTextAnnotationGutterSizes = new IntArrayList();
   final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
-  boolean myGapAfterAnnotations;
+  private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
   @NotNull private LineNumberConverter myLineNumberConverter = LineNumberConverter.DEFAULT;
@@ -200,7 +200,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       installDnD();
     }
     setOpaque(true);
-    myAnchorsDisplayStrategy = new FoldingAnchorsOverlayStrategy(editor);
+    myAnchorDisplayStrategy = new FoldingAnchorsOverlayStrategy(editor);
 
     Project project = myEditor.getProject();
     if (project != null) {
@@ -293,7 +293,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
-      .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
+      .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag-n-drop)
       .install();
   }
 
@@ -499,16 +499,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void processClose(final MouseEvent e) {
     final IdeEventQueue queue = IdeEventQueue.getInstance();
 
-    // See IDEA-59553 for rationale on why this feature is disabled
-    //if (isLineNumbersShown()) {
-    //  if (e.getX() >= getLineNumberAreaOffset() && getLineNumberAreaOffset() + getLineNumberAreaWidth() >= e.getX()) {
-    //    queue.blockNextEvents(e);
-    //    myEditor.getSettings().setLineNumbersShown(false);
-    //    e.consume();
-    //    return;
-    //  }
-    //}
-
     if (getGutterRenderer(e) != null) return;
 
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
@@ -557,7 +547,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
               y = viewportStartY;
             }
             else if (viewportStartY < y && y < viewportStartY + lineHeight && visLinesIterator.startsWithSoftWrap()) {
-              // avoid drawing bg over the "sticky" line above, or over a possible gap in the gutter below (e.g. code vision)
+              // avoid drawing bg over the "sticky" line above, or over a possible gap in the gutter below (e.g., code vision)
               bgLineHeight = y - viewportStartY;
               y = viewportStartY + lineHeight;
             }
@@ -661,9 +651,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (idx + 1 < topLevelRegions.length) {
       FoldRegion region = topLevelRegions[idx + 1];
-      if (region instanceof CustomFoldRegion && region.getStartOffset() <= caretOffset) {
-        return true;
-      }
+      return region instanceof CustomFoldRegion && region.getStartOffset() <= caretOffset;
     }
     return false;
   }
@@ -910,7 +898,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize(false, true);
   }
 
-  public void updateSize() {
+  void updateSize() {
     updateSize(false, false);
   }
 
@@ -1462,7 +1450,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     final double width = getFoldingAnchorWidth2D();
 
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
-      myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegions);
+      myAnchorDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegions);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
       boolean active = myActiveFoldRegions.contains(anchor.foldRegion);
       if (ExperimentalUI.isNewUI()) {
@@ -1874,9 +1862,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int neighbourhoodStartOffset = myEditor.visualPositionToOffset(new VisualPosition(visualLine, 0));
     int neighbourhoodEndOffset = myEditor.visualPositionToOffset(new VisualPosition(visualLine, Integer.MAX_VALUE));
 
-    Collection<DisplayedFoldingAnchor> displayedAnchors = myAnchorsDisplayStrategy.getAnchorsToDisplay(neighbourhoodStartOffset,
-                                                                                                       neighbourhoodEndOffset,
-                                                                                                       Collections.emptyList());
+    Collection<DisplayedFoldingAnchor> displayedAnchors = myAnchorDisplayStrategy.getAnchorsToDisplay(neighbourhoodStartOffset,
+                                                                                                      neighbourhoodEndOffset,
+                                                                                                      Collections.emptyList());
     x = convertX(x);
     for (DisplayedFoldingAnchor anchor : displayedAnchors) {
       Rectangle r = rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX);

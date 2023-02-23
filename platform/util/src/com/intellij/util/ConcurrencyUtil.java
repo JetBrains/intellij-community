@@ -20,7 +20,7 @@ public final class ConcurrencyUtil {
   public static final long DEFAULT_TIMEOUT_MS = 10;
 
   /**
-   * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way
+   * Invokes and waits for all tasks using {@code executorService}, avoiding thread starvation on the way.
    * (see <a href="http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html">"A Thread Pool Puzzler"</a>).
    */
   public static <T> List<Future<T>> invokeAll(@NotNull Collection<? extends Callable<T>> tasks, ExecutorService executorService) throws Throwable {
@@ -38,7 +38,7 @@ public final class ConcurrencyUtil {
         Future<T> future = executorService.submit(t);
         futures.add(future);
       }
-      // force not started futures to execute using the current thread
+      // force not yet started futures to execute using the current thread
       for (Future<?> f : futures) {
         ((Runnable)f).run();
       }
@@ -68,7 +68,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map),
+   * @return defaultValue if there is no entry in the map (in that case, defaultValue is placed into the map),
    *         or corresponding value if entry already exists.
    */
   @NotNull
@@ -114,7 +114,7 @@ public final class ConcurrencyUtil {
   }
 
   /**
-   * Service which executes tasks synchronously immediately after they submitted
+   * Service, which executes tasks synchronously, immediately after they submitted
    */
   @NotNull
   public static ExecutorService newSameThreadExecutorService() {
