@@ -13,10 +13,10 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
 
-public class AddAnnotationFixWithoutArg extends AddAnnotationFix {
-  public AddAnnotationFixWithoutArg(@NotNull String fqn,
-                                    @NotNull PsiModifierListOwner modifierListOwner,
-                                    String @NotNull ... annotationsToRemove) {
+public class AddAnnotationFixWithoutArgFix extends AddAnnotationFix {
+  public AddAnnotationFixWithoutArgFix(@NotNull String fqn,
+                                       @NotNull PsiModifierListOwner modifierListOwner,
+                                       String @NotNull ... annotationsToRemove) {
     super(fqn, modifierListOwner, annotationsToRemove);
   }
 

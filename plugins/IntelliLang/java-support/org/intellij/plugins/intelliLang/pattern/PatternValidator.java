@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArg;
+import com.intellij.codeInsight.intention.AddAnnotationFixWithoutArgFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -228,8 +228,8 @@ public class PatternValidator extends LocalInspectionTool {
             }
           }
           final String classname = configuration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          if (owner != null && AddAnnotationFixWithoutArg.isApplicable(owner, classname)) {
-            fixes.add(new AddAnnotationFixWithoutArg(classname, owner));
+          if (owner != null && AddAnnotationFixWithoutArgFix.isApplicable(owner, classname)) {
+            fixes.add(new AddAnnotationFixWithoutArgFix(classname, owner));
           } else {
             fixes.add(new IntroduceVariableFix(false));
           }
