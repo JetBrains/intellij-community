@@ -1,6 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
+import com.intellij.ide.actions.ToggleToolbarAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -19,13 +23,14 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static final String ID = "Problems View";
@@ -78,8 +83,9 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewTab panel) {
-    if (!(panel instanceof JComponent component))
-      throw new IllegalArgumentException("panel is not JComponent");
+    if (!(panel instanceof JComponent component)) {
+      throw new IllegalArgumentException("panel " + panel.getClass()+ " is not a JComponent");
+    }
 
     Content content = manager.getFactory().createContent(component, panel.getName(0), false);
     content.setCloseable(false);
@@ -109,57 +115,73 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
-    var window = getToolWindow(project);
+    ToolWindow window = getToolWindow(project);
     assert window != null;
-    var manager = window.getContentManager();
-    var panel = provider.create();
+    ContentManager manager = window.getContentManager();
+    ProblemsViewTab panel = provider.create();
     if (panel == null) return;
     createContent(manager, panel);
   }
 
   public static void removePanel(Project project, String id) {
-    var content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
-    var toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
+    Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
+    ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (content == null || toolWindow == null)
       return;
-    
+
     toolWindow.getContentManager().removeContent(content, true);
   }
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow window) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     ProblemsViewState state = ProblemsViewState.getInstance(project);
-    state.setShowToolbar(isToolbarVisible(window, project));
+    state.setShowToolbar(ToggleToolbarAction.isToolbarVisible(window, project));
     ContentManager manager = window.getContentManager();
 
+    // initialize javax.swing.ActionMap in EDT to avoid weird NPEs when ProblemsViewPanelProvider.create() will mess with swing in BGT later
+    window.getComponent().getActionForKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+    CompletableFuture<?> result = CompletableFuture.completedFuture(null);
     for (ProblemsViewPanelProvider provider : ProblemsViewPanelProvider.getEP().getExtensions(project)) {
-      var panel = provider.create();
-      if (panel == null) continue;
-      createContent(manager, panel);
-    }
+      CompletableFuture<ProblemsViewTab> future = new CompletableFuture<>();
+      ReadAction.nonBlocking(() -> provider.create())
+        .finishOnUiThread(ModalityState.NON_MODAL, panel -> {
+          if (panel != null && !manager.isDisposed()) {
+            createContent(manager, panel);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService())
+        .onError(throwable -> future.completeExceptionally(throwable))
+        .onSuccess(o->future.complete(o));
 
-    var selectedTabId = state.getSelectedTabId();
-    if (selectedTabId != null) {
-      ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
+      result = result.thenCompose(__->future);
     }
-
-    Content selectedContent = manager.getSelectedContent();
-    if (selectedContent != null) {
-      selectionChanged(true, selectedContent);
-    }
-    manager.addContentManagerListener(new ContentManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull ContentManagerEvent event) {
-        boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
-        var component = event.getContent().getComponent();
-        if (component instanceof ProblemsViewTab problemsView) {
-          ProblemsView.selectionChanged(selected, event.getContent());
-          if (selected)
-            state.setSelectedTabId(problemsView.getTabId());
-        }
+    // after all problem views are created in BGT, perform initial setup in EDT
+    result.thenRun(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || manager.isDisposed()) return;
+      String selectedTabId = state.getSelectedTabId();
+      if (selectedTabId != null) {
+        ProblemsViewToolWindowUtils.INSTANCE.selectContent(manager, selectedTabId);
       }
-    });
-    project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+      Content selectedContent = manager.getSelectedContent();
+      if (selectedContent != null) {
+        selectionChanged(true, selectedContent);
+      }
+      manager.addContentManagerListener(new ContentManagerListener() {
+        @Override
+        public void selectionChanged(@NotNull ContentManagerEvent event) {
+          boolean selected = ContentManagerEvent.ContentOperation.add == event.getOperation();
+          JComponent component = event.getContent().getComponent();
+          if (component instanceof ProblemsViewTab problemsView) {
+            ProblemsView.selectionChanged(selected, event.getContent());
+            if (selected) {
+              state.setSelectedTabId(problemsView.getTabId());
+            }
+          }
+        }
+      });
+      project.getMessageBus().connect(manager).subscribe(ToolWindowManagerListener.TOPIC, createListener());
+    }));
   }
 
   @NotNull
