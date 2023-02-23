@@ -63,7 +63,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbModeListener myPublisher;
   private long myModificationCount;
 
+  // Lock that must be hold to perform transition form dumb to smart mode and back (as defined by isDumb(): !SMART and SMART)
+  // This lock is not needed while transiting between different !SMART states (e.g. SCHEDULED_TASKS>RUNNING_DUMB_TASKS)
+  // Used with myRunWhenSmartQueue to make sure that either of two statements hold true:
+  //   1. If there is dumb mode now, tasks added to myRunWhenSmartQueue will be executed after becoming smart
+  //   2. If there is NO dumb mode now, don't add tasks to myRunWhenSmartQueue - they will NOT be executed
+  private final Object myDumbSmartTransitionLock = new Object();
   private final Deque<Runnable> myRunWhenSmartQueue = new ConcurrentLinkedDeque<>();
+
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -177,7 +184,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (isSynchronousTaskExecution()) {
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
       // continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
+      synchronized (myDumbSmartTransitionLock) {
+        myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
+      }
     } else {
       // switch to smart mode and notify subscribers if no dumb mode tasks were scheduled
       if (myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.WAITING_FOR_FINISH)) {
@@ -299,7 +308,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
     if (!ALWAYS_SMART) {
-      synchronized (myRunWhenSmartQueue) {
+      synchronized (myDumbSmartTransitionLock) {
         if (isDumb()) {
           myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
           return;
@@ -366,7 +375,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private boolean tryEnterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
-      synchronized (myRunWhenSmartQueue) {
+      synchronized (myDumbSmartTransitionLock) {
         State old = myState.getAndSet(State.SCHEDULED_TASKS);
         if (old == State.SCHEDULED_TASKS) return false;
       }
@@ -389,7 +398,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private boolean switchToSmartMode() {
-    synchronized (myRunWhenSmartQueue) {
+    synchronized (myDumbSmartTransitionLock) {
       if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
         return false;
       }
@@ -492,7 +501,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Don't invoke waitForSmartMode from a background startup activity");
     }
     CountDownLatch switched;
-    synchronized (myRunWhenSmartQueue) {
+    synchronized (myDumbSmartTransitionLock) {
       if (!isDumb()) {
         return;
       }
