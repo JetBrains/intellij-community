@@ -20,7 +20,7 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-internal class RetrievingLightServiceInspection : DevKitUastInspectionBase(UQualifiedReferenceExpression::class.java) {
+internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
   private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
   private val COMPONENT_MANAGER_GET_SERVICE: CallMatcher = CallMatcher.anyOf(
     CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),

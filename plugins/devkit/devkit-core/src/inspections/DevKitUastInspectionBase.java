@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
+import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UIdentifier;
 
@@ -17,6 +18,9 @@ public abstract class DevKitUastInspectionBase extends AbstractBaseUastLocalInsp
   protected DevKitUastInspectionBase() {
   }
 
+  /**
+   * When *NOT* overriding {@link #buildInternalVisitor} but using {@code checkClass|Method|Field}.
+   */
   @SafeVarargs
   protected DevKitUastInspectionBase(Class<? extends UElement>... uElementsTypesHint) {
     super(uElementsTypesHint);
