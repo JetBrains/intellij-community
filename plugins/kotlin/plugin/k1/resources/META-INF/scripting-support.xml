@@ -5,10 +5,6 @@
     </extensionPoint>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.scriptingSupport"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport"
-            area="IDEA_PROJECT"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.idea.settings.provider"
             interface="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportSpecificSettingsProvider"
             dynamic="true"
@@ -36,21 +32,11 @@
             qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader"
             area="IDEA_PROJECT"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
-            area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptDependenciesProvider"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
 
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
 
@@ -103,34 +89,6 @@
     <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
 
     <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
-
-    <registryKey key="kotlin.scripts.as.entities"
-                 description="Enables explicit script dependencies support"
-                 defaultValue="true"
-                 restartRequired="true"/>
-
-    <registryKey key="kotlin.scripting.support.warning"
-                 description="Show Kotlin scripting support warning"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
-    <registryKey key="kotlin.resolve.scripting.limit.dependency.element.finder"
-                 description="Limit applicability of an element finder for scripting dependencies"
-                 defaultValue="true"
-                 restartRequired="true"/>
-
-    <registryKey key="kotlin.scripting.fs.roots.storage.enabled"
-                 description="Cache resolved dependencies paths across all scripts"
-                 defaultValue="false"
-                 restartRequired="true"/>
-
-    <registryKey key="kotlin.scripting.index.dependencies.sources"
-                 description="Index script dependencies sources eagerly (not deferred)"
-                 defaultValue="false"
-                 restartRequired="true"/>
-
-    <fileType name="script-definition-marker" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
 
     <fileEditorProvider implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
   </extensions>

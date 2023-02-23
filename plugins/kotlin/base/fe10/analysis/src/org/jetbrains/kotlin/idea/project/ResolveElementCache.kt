@@ -824,6 +824,7 @@ class ResolveElementCache(
             IdeaModuleStructureOracle(),
             IdeSealedClassInheritorsProvider,
             ControlFlowInformationProviderImpl.Factory,
+            IdeaAbsentDescriptorHandler(resolveSession.declarationProviderFactory)
         ).get()
     }
 

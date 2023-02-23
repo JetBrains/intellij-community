@@ -10562,6 +10562,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/protectedIsDefaultForSealedConstructor.kt");
         }
 
+        @TestMetadata("publicExplicitApiModeStrict.kt")
+        public void testPublicExplicitApiModeStrict() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeStrict2.kt")
+        public void testPublicExplicitApiModeStrict2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict2.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeStrict3.kt")
+        public void testPublicExplicitApiModeStrict3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeStrict3.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning.kt")
+        public void testPublicExplicitApiModeWarning() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning2.kt")
+        public void testPublicExplicitApiModeWarning2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning2.kt");
+        }
+
+        @TestMetadata("publicExplicitApiModeWarning3.kt")
+        public void testPublicExplicitApiModeWarning3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicExplicitApiModeWarning3.kt");
+        }
+
         @TestMetadata("publicOverrideProtectedSetter.kt")
         public void testPublicOverrideProtectedSetter() throws Exception {
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicOverrideProtectedSetter.kt");

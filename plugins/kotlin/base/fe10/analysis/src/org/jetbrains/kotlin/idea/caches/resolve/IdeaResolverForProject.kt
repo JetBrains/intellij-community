@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
@@ -131,6 +132,7 @@ class IdeaResolverForProject(
             languageVersionSettings,
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
             resolveOptimizingOptions = optimizingOptions,
+            absentDescriptorHandlerClass = IdeaAbsentDescriptorHandler::class.java
         )
         ResolverForModuleComputationTrackerEx.getInstance(project)?.onCreateResolverForModule(descriptor, moduleInfo)
         return resolverForModule

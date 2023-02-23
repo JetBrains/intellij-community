@@ -133,16 +133,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         includeExplicitParameters: Boolean
     ): List<KotlinUParameter> {
         analyzeForUast(ktLambdaExpression) {
-            val valueParameters = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
-            if (includeExplicitParameters && valueParameters.isEmpty()) {
-                val expectedType = ktLambdaExpression.getExpectedType() as? KtFunctionalType
-                val lambdaImplicitReceiverType = expectedType?.ownTypeArguments?.get(0)?.type?.asPsiType(
+            val anonymousFunctionSymbol = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol()
+            val parameters = mutableListOf<KotlinUParameter>()
+            if (includeExplicitParameters && anonymousFunctionSymbol.receiverParameter != null) {
+                val lambdaImplicitReceiverType = anonymousFunctionSymbol.receiverParameter!!.type.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
                     KtTypeMappingMode.DEFAULT_UAST,
                     isAnnotationMethod = false
                 ) ?: UastErrorType
-                return listOf(
+                parameters.add(
                     KotlinUParameter(
                         UastKotlinPsiParameterBase(
                             name = LAMBDA_THIS_PARAMETER_NAME,
@@ -158,7 +158,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )
                 )
             }
-            return valueParameters.map { p ->
+            anonymousFunctionSymbol.valueParameters.mapTo(parameters) { p ->
                 val psiType = p.returnType.asPsiType(
                     ktLambdaExpression,
                     allowErrorTypes = false,
@@ -179,6 +179,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     parent
                 )
             }
+            return parameters
         }
     }
 
