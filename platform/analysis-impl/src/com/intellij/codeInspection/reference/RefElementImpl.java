@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -247,11 +247,15 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public String getURL() {
     final PsiElement element = getPsiElement();
     if (element == null || !element.isPhysical()) return null;
-    final PsiFileSystemItem containingFile = (element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile());
+    final PsiFileSystemItem containingFile = element instanceof PsiFileSystemItem
+                                             ? (PsiFileSystemItem) element
+                                             : element.getContainingFile();
     if (containingFile == null) return null;
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
-    return virtualFile.getUrl() + "#" + element.getTextOffset();
+    return element instanceof PsiFileSystemItem
+           ? virtualFile.getUrl()
+           : virtualFile.getUrl() + "#" + element.getTextOffset();
   }
 
   protected abstract void initialize();
