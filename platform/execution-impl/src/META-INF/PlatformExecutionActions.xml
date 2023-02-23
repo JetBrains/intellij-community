@@ -69,6 +69,7 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
+    <actionPromoter implementation="com.intellij.execution.actions.ExecutionActionsPromoter"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
     <console.folding implementation="com.intellij.execution.wsl.WslDistributionConsoleFolding" os="windows"/>
     <projectService serviceInterface="com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager"
