@@ -16,6 +16,7 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
+import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -57,7 +58,7 @@ internal object GHPRTitleComponent {
         )
       })
     }
-    val pullRequestStateLabel = JLabel().apply {
+    val stateLabel = JLabel().apply {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
@@ -75,10 +76,13 @@ internal object GHPRTitleComponent {
       }
     }
 
-    return JPanel(MigLayout(LC().emptyBorders().fillX())).apply {
+    return JPanel(MigLayout(
+      LC().emptyBorders().fillX().hideMode(3),
+      AC().gap("push")
+    )).apply {
       isOpaque = false
-      add(titleLabel, CC().grow().push())
-      add(pullRequestStateLabel, CC())
+      add(titleLabel)
+      add(stateLabel, CC().alignY("top"))
     }
   }
 }
