@@ -33,7 +33,6 @@ import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.RootIcon;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
@@ -297,7 +296,7 @@ public class StructureFilterPopupComponent
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myAllActions = allActions;
-      myIcon = RootIcon.createAndScaleCheckbox(VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
+      myIcon = RootIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 

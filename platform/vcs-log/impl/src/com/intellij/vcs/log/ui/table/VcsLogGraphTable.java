@@ -797,14 +797,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return ColorUtil.mix(new Color(HOVERED_BACKGROUND.getRGB()), background, alpha / 255.0);
   }
 
-  public static @NotNull Color getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
-    return colorManager.getRootColor(root);
-  }
-
-  public static @NotNull Color getPathBackgroundColor(@NotNull FilePath filePath, @NotNull VcsLogColorManager colorManager) {
-    return colorManager.getPathColor(filePath);
-  }
-
   static Font getTableFont() {
     return UIManager.getFont("Table.font");
   }
