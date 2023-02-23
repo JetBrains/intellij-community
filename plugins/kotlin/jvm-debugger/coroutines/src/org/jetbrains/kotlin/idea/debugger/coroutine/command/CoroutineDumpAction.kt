@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
@@ -26,14 +27,11 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
-class CoroutineDumpAction : AnAction() {
-    companion object {
-        val log by logger
-    }
+val LOG = Logger.getInstance(CoroutineDumpAction::class.java)
 
+class CoroutineDumpAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val context = DebuggerManagerEx.getInstanceEx(project).context
@@ -48,7 +46,7 @@ class CoroutineDumpAction : AnAction() {
                         ApplicationManager.getApplication().invokeLater({
                             val ui = session.xDebugSession?.ui
                             if (ui == null) {
-                                log.warn("Failed to retrieve UI instance")
+                                LOG.warn("Failed to retrieve UI instance")
                                 createCoroutineDumpFailedErrorNotification(project)
                                 return@invokeLater
                             }

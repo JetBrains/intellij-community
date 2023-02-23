@@ -28,7 +28,8 @@ object CoroutinesStackTraceInfoParser {
         val size = continuationRefs.size
         if (stackTraceElements.size != size ||
             spilledVariableFieldMappings.size != size ||
-            nextContinuationRefs.size != size) {
+            nextContinuationRefs.size != size)
+        {
             error("Arrays must have equal sizes")
         }
 
