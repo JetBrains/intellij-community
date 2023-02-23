@@ -14,7 +14,6 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
-import com.intellij.diff.fragments.LineFragment
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -129,7 +128,6 @@ internal class IntentionPreviewComputable(private val project: Project,
     val manager = PsiDocumentManager.getInstance(project)
     manager.commitDocument(editorCopy.document)
     manager.doPostponedOperationsAndUnblockDocument(editorCopy.document)
-    val comparisonManager = ComparisonManager.getInstance()
     return when (val result = info) {
       IntentionPreviewInfo.DIFF,
       IntentionPreviewInfo.DIFF_NO_TRIM -> {
@@ -141,23 +139,15 @@ internal class IntentionPreviewComputable(private val project: Project,
           policy = policy,
           fileName = if (anotherFile) psiFileCopy.name else null,
           normalDiff = !anotherFile,
-          lineFragments = comparisonManager.compareLines(fileToCopy.text, document.text, policy, DumbProgressIndicator.INSTANCE))
+          lineFragments = ComparisonManager.getInstance().compareLines(fileToCopy.text, document.text, policy,
+                                                                       DumbProgressIndicator.INSTANCE))
       }
       IntentionPreviewInfo.EMPTY, IntentionPreviewInfo.FALLBACK_DIFF -> null
-      is IntentionPreviewInfo.CustomDiff -> {
-        val fileFactory = PsiFileFactory.getInstance(project)
-        IntentionPreviewDiffResult(
-          fileFactory.createFileFromText("__dummy__", result.fileType(), result.modifiedText()),
-          fileFactory.createFileFromText("__dummy__", result.fileType(), result.originalText()),
-          comparisonManager.compareLines(result.originalText(), result.modifiedText(),
-                                         ComparisonPolicy.TRIM_WHITESPACES, DumbProgressIndicator.INSTANCE),
-          fileName = result.fileName(),
-          normalDiff = false,
-          policy = ComparisonPolicy.TRIM_WHITESPACES)
-      }
+      is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(project, result)
       else -> result
     }
   }
+
 
   private fun generateFallbackDiff(editorCopy: IntentionPreviewEditor, psiFileCopy: PsiFile): IntentionPreviewInfo {
     // Fallback algorithm for intention actions that don't support preview normally
@@ -244,10 +234,3 @@ fun findCopyIntention(project: Project,
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFileCopy, editorCopy, actionsToShow)
   return getFixes(cachedIntentions).find { it.text == originalAction.text }?.action
 }
-
-internal data class IntentionPreviewDiffResult(val psiFile: PsiFile,
-                                               val origFile: PsiFile,
-                                               val lineFragments: List<LineFragment>,
-                                               val normalDiff: Boolean = true,
-                                               val fileName: String? = null,
-                                               val policy: ComparisonPolicy): IntentionPreviewInfo
