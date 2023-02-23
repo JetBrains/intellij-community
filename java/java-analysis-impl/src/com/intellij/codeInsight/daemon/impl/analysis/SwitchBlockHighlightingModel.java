@@ -399,15 +399,23 @@ public class SwitchBlockHighlightingModel {
   private static @NotNull LinkedHashMap<PsiClass, PsiPattern> findPatternClasses(@NotNull List<? extends PsiCaseLabelElement> elements) {
     LinkedHashMap<PsiClass, PsiPattern> patternClasses = new LinkedHashMap<>();
     for (PsiCaseLabelElement element : elements) {
-      PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
-      if (patternLabelElement == null) continue;
+      PsiPattern pattern = extractPattern(element);
+      if (pattern == null) continue;
       PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(element));
       if (patternClass != null) {
-        patternClasses.put(patternClass, patternLabelElement);
-        visitAllPermittedClasses(patternClass, permittedClass -> patternClasses.put(permittedClass, patternLabelElement));
+        patternClasses.put(patternClass, pattern);
+        visitAllPermittedClasses(patternClass, permittedClass -> patternClasses.put(permittedClass, pattern));
       }
     }
     return patternClasses;
+  }
+
+  private static @Nullable PsiPattern extractPattern(PsiCaseLabelElement element) {
+    if (element instanceof PsiPatternGuard patternGuard) {
+      Object constVal = ExpressionUtils.computeConstantExpression(patternGuard.getGuardingExpression());
+      return Boolean.TRUE.equals(constVal) ? patternGuard.getPattern() : null;
+    }
+    return ObjectUtils.tryCast(element, PsiPattern.class);
   }
 
   private static void visitAllPermittedClasses(@NotNull PsiClass psiClass, Consumer<? super PsiClass> consumer){
