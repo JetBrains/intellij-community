@@ -17,7 +17,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
@@ -37,6 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -58,6 +58,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -77,6 +78,7 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.*;
@@ -380,9 +382,30 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
       @Override
       public @NotNull List<EventPair<?>> getEventData() {
-        return List.of(UsageViewStatisticsCollector.PRIMARY_TARGET.with(handler.getPsiElement().getClass()),
-                       EventFields.Language.with(handler.getPsiElement().getLanguage()),
-                       UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(primaryElements.length + secondaryElements.length));
+        List<EventPair<?>> eventData = new ArrayList<>();
+        PsiElement target = handler.getPsiElement();
+        eventData.add(UsageViewStatisticsCollector.TARGET_ELEMENT_DATA.with(UsageViewStatisticsCollector.calculateElementData(target)));
+        eventData.add(UsageViewStatisticsCollector.NUMBER_OF_TARGETS.with(primaryElements.length + secondaryElements.length));
+        return eventData;
+      }
+
+      @Override
+      public @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage) {
+        List<EventPair<?>> eventData = getEventData();
+        PsiElement target = handler.getPsiElement();
+        PsiElement selectedUsagesElement = selectedUsage != null ? selectedUsage.getElement() : null;
+        if (selectedUsagesElement != null) {
+          PsiFile containingFile = selectedUsagesElement.getContainingFile();
+          eventData.add(UsageViewStatisticsCollector.IS_THE_SAME_FILE.with(selectedUsagesElement.getManager()
+                                                                             .areElementsEquivalent(target.getContainingFile(),
+                                                                                                    containingFile)));
+          eventData.add(UsageViewStatisticsCollector.SELECTED_ELEMENT_DATA.with(
+            UsageViewStatisticsCollector.calculateElementData(selectedUsagesElement)));
+          eventData.add(UsageViewStatisticsCollector.IS_SELECTED_ELEMENT_AMONG_RECENT_FILES.with(
+            ContainerUtil.exists(ContainerUtil.reverse(EditorHistoryManager.getInstance(target.getProject()).getFileList()),
+                                 e -> e.equals(containingFile.getVirtualFile()))));
+        }
+        return eventData;
       }
     };
   }
@@ -410,7 +433,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Runnable itemChosenCallback = table.prepareTable(
       showMoreUsagesRunnable(parameters, actionHandler),
-      showUsagesInMaximalScopeRunnable(parameters, actionHandler)
+      showUsagesInMaximalScopeRunnable(parameters, actionHandler), actionHandler
     );
 
     Consumer<AbstractPopup> tableResizer = popup -> {
@@ -430,11 +453,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         @Nullable UsageNode node = getSelectedUsageNode(table);
+        Usage usage = node != null ? node.getUsage() : null;
+        UsageInfo2UsageAdapter usageAdapter = ObjectUtils.tryCast(usage, UsageInfo2UsageAdapter.class);
+        UsageInfo usageInfo = usageAdapter != null ? usageAdapter.getUsageInfo() : null;
         UsageViewStatisticsCollector.logPopupClosed(project, usageView, event.isOk(),
                                                     getRowNumber(preselectedRow.get(), table),
                                                     getRowNumber(node, table),
-                                                    node != null ? node.getUsage() : null,
-                                                    popupShownTime.get(), actionHandler.getEventData());
+                                                    popupShownTime.get(), actionHandler.buildFinishEventData(usageInfo));
       }
     });
     ProgressIndicator indicator = new ProgressIndicatorBase();
