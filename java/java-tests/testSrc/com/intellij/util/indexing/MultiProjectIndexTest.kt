@@ -69,7 +69,7 @@ class MultiProjectIndexTest {
     val commonBundledFileCount = ext.commonBundledFileCounter.get()
     PsiTestUtil.addContentRoot(module2, commonContentRoot.toVirtualFile())
     assertEquals(2, ext.trigramCounter.get())
-    assertEquals(2, ext.stubCounter.get())
+    assertEquals(4, ext.stubCounter.get())
     assertEquals(commonBundledFileCount, ext.commonBundledFileCounter.get())
 
     ProjectManagerEx.getInstanceEx().forceCloseProject(project1)
