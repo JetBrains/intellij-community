@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
@@ -11,16 +11,16 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * PropertyGraph is traces modifications inside observable properties. It creates graph of dependent properties.
+ * PropertyGraph traces modifications inside observable properties. It creates a graph of dependent properties.
  *
- * PropertyGraph can recognize and stop infinity updates between properties. For example, we have properties
- * A -> B -> C -> A (-> depends on) and property A is modified. Then property graph detects this cycle, and it doesn't
- * make last modification.
+ * PropertyGraph can recognize and stop infinite updates between properties.
+ * For example, assume there are properties A -> B -> C -> A (-> means depends on) and property A is modified.
+ * Then the PropertyGraph detects this cycle, and it doesn't make the last modification.
  *
- * PropertyGraph can block propagation through property, which was modified externally (outside PropertyGraph).
- * It is needed for UI cases. For example, we have dependent properties id and name. When we modify property id, we put
- * id's value into property name. But if we modify property name and after that try to modify id property then property
- * name isn't modified automatically.
+ * PropertyGraph can block propagation through a property that was modified externally (outside the PropertyGraph).
+ * This is needed for UI cases.
+ * For example, assume there are two properties named id and name, and whenever id is modified, its value is copied to the name.
+ * When name is now modified externally, the id is no longer copied to the name.
  *
  * @param isBlockPropagation if true then property changes propagation will be blocked through modified properties.
  */
