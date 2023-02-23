@@ -81,7 +81,8 @@ class PersistentFSTreeAccessor {
     }
   }
 
-  @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
+  @NotNull
+  ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
 
     final PersistentFSRecordsStorage records = myFSConnection.getRecords();
@@ -180,7 +181,12 @@ class PersistentFSTreeAccessor {
       try (DataOutputStream output = myAttributeAccessor.writeAttribute(ROOT_RECORD_ID, CHILDREN_ATTR)) {
         final int newRootFileId = FSRecords.createRecord();
 
-        int index = Arrays.binarySearch(ids, newRootFileId);
+        final int index = Arrays.binarySearch(ids, newRootFileId);
+        if (index >= 0) {
+          throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
+                                   "ids (=" + Arrays.toString(ids) + "), names(=" + Arrays.toString(names) + "), " +
+                                   "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootNameId + ")");
+        }
         ids = ArrayUtil.insert(ids, -index - 1, newRootFileId);
         names = ArrayUtil.insert(names, -index - 1, rootNameId);
 
