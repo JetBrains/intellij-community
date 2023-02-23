@@ -242,6 +242,9 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
 
   static void updateTabBarsAfterMerge() {
     IdeFrame[] helpers = WindowManager.getInstance().getAllProjectFrames();
+    if (helpers.length == 0) {
+      return;
+    }
 
     for (IdeFrame helper : helpers) {
       removeFromFrame(((ProjectFrameHelper)helper).getFrame(), null);
