@@ -23,18 +23,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlin.coroutines.EmptyCoroutineContext
 
 private val Application.lifecycleScope: CoroutineScope
     get() {
-        val scope = CoroutineScope(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher())
+        val scope = CoroutineScope(EmptyCoroutineContext)
         val connection = messageBus.simpleConnect()
         connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
             override fun appClosing() {
