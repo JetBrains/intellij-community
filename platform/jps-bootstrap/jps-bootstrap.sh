@@ -153,7 +153,7 @@ fi
 
 set -x
 
-if [ "x$JPS_BOOTSTRAP_PREPARE_SKIP_DOWNLOAD" != "x1" ] ; then
+if [ "x${JPS_BOOTSTRAP_PREPARE_SKIP_DOWNLOAD:-0}" != "x1" ] ; then
   # Download and compile jps-bootstrap
   "$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_PREPARE_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 fi
