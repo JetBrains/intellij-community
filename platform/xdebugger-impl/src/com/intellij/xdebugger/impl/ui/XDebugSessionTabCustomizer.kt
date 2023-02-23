@@ -11,6 +11,8 @@ interface XDebugSessionTabCustomizer {
   fun allowFramesViewCustomization(): Boolean = false
 
   fun getDefaultFramesViewKey(): String? = null
+
+  fun forceShowNewDebuggerUi(): Boolean = false
 }
 
 interface SessionTabComponentProvider {
