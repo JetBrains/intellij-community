@@ -76,7 +76,7 @@ public final class GitRefNameValidator implements InputValidator {
   }
 
   @NotNull
-  private static String replaceDoubleQuotes(String branchName) {
+  private static String removeDoubleQuotes(String branchName) {
     return branchName.replaceAll("\"", "");
   }
 
@@ -131,7 +131,7 @@ public final class GitRefNameValidator implements InputValidator {
 
     return MethodChainer.wrap(branchName)
       .run(GitRefNameValidator::replaceIllegal)
-      .run(GitRefNameValidator::replaceDoubleQuotes)
+      .run(GitRefNameValidator::removeDoubleQuotes)
       .run(GitRefNameValidator::deduplicateForwardSlashes)
       .run(GitRefNameValidator::deduplicateUnderscores)
       .run(GitRefNameValidator::convertToLowerCase)
