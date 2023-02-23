@@ -162,6 +162,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   }
 
   private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
+    Set<Build> updatedBuilds = new HashSet<>();
     Map<File, Build> rootDirsToBuilds = new HashMap<>();
     for (Build build : builds) {
       rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
@@ -175,7 +176,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
       for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
         Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
-        if (buildToUpdate instanceof DefaultBuild) {
+        if (buildToUpdate instanceof DefaultBuild && updatedBuilds.add(buildToUpdate)) {
           ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
             new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
         }
