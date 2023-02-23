@@ -123,7 +123,7 @@ public final class InconsistentResourceBundleInspection extends GlobalSimpleInsp
   }
 
   private boolean isProviderEnabled(final String providerName) {
-    return ContainerUtil.getOrElse(mySettings, providerName, true);
+    return mySettings.getOrDefault(providerName, true);
   }
 
   @SafeVarargs

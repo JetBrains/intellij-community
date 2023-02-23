@@ -701,7 +701,7 @@ public final class GradleProjectResolverUtil {
 
     for (ExternalDependency dependency: dependencyMap.values()) {
       Collection<ExternalDependency> transitiveDependencies = dependency.getDependencies();
-      final ExternalDependency mergedDependency = ContainerUtil.getOrElse(mergedDependencyMap, dependency.getId(), dependency);
+      final ExternalDependency mergedDependency = mergedDependencyMap.getOrDefault(dependency.getId(), dependency);
       DependencyScope dependencyScope = getDependencyScope(mergedDependency.getScope());
 
       ModuleData ownerModule = null;

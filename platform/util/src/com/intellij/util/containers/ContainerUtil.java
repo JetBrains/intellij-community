@@ -2194,10 +2194,13 @@ public final class ContainerUtil {
     return result.computeIfAbsent(key, __ -> factory.create());
   }
 
+  /**
+   * @deprecated use {@link Map#getOrDefault(Object, Object)}
+   */
+  @Deprecated
   @Contract(pure = true)
-  public static @NotNull <T, V> V getOrElse(@NotNull Map<? extends T, ? extends V> map, T key, @NotNull V defValue) {
-    V value = map.get(key);
-    return value == null ? defValue : value;
+  public static @NotNull <T, V> V getOrElse(@NotNull Map<? extends T, V> map, T key, @NotNull V defValue) {
+    return map.getOrDefault(key, defValue);
   }
 
   @Contract(pure=true)
