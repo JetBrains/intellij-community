@@ -16,15 +16,12 @@
 
 package org.jetbrains.idea.packagesearch.api
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
 import org.jetbrains.idea.packagesearch.HashingAlgorithm
@@ -34,16 +31,13 @@ import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.util.concurrent.CompletableFuture
 
 @Service(PROJECT)
-internal class LifecycleScope : CoroutineScope, Disposable {
-  override val coroutineContext = SupervisorJob()
-  override fun dispose() = cancel()
-}
+internal class LifecycleScope(val cs: CoroutineScope)
 
 fun AsyncPackageSearchApiClient(
   project: Project,
   config: PackageSearchServiceConfig = service<DefaultPackageServiceConfig>(),
   engine: HttpClientEngine? = null
-) = AsyncPackageSearchApiClient(project.service<LifecycleScope>(), config, engine)
+) = AsyncPackageSearchApiClient(project.service<LifecycleScope>().cs, config, engine)
 
 class AsyncPackageSearchApiClient(
   private val scope: CoroutineScope,
