@@ -24,6 +24,7 @@ class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
+    toolWindow.isShowStripeButton = true
     val project = toolWindow.project
     val propertiesComponent = PropertiesComponent.getInstance()
     if (isNotificationSilentMode(project) || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)) {
