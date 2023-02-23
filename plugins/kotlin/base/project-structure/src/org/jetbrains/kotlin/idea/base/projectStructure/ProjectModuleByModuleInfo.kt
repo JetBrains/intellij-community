@@ -72,7 +72,7 @@ internal class KtSourceModuleByModuleInfo(
     override val moduleName: String get() = ideaModule.name
 
     override val directRegularDependencies: List<KtModule>
-        get() = moduleInfo.dependencies(provider)
+        get() = moduleInfo.collectDependencies(provider, ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 
     override val contentScope: GlobalSearchScope
         get() = if (moduleInfo is ModuleTestSourceInfo) {
@@ -86,21 +86,31 @@ internal class KtSourceModuleByModuleInfo(
     override val project: Project get() = ideaModule.project
 }
 
-private fun ModuleSourceInfo.dependencies(provider: ProjectStructureProviderIdeImpl): List<KtModule> {
+fun ModuleSourceInfo.collectDependencies(
+    provider: ProjectStructureProvider,
+    collectionMode: ModuleDependencyCollector.CollectionMode
+): List<KtModule> {
     val sourceRootType = when (this) {
         is ModuleProductionSourceInfo -> SourceKotlinRootType
         is ModuleTestSourceInfo -> TestSourceKotlinRootType
         else -> SourceKotlinRootType
     }
     val key = when (sourceRootType) {
-        SourceKotlinRootType -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES
-        TestSourceKotlinRootType -> DependencyKeys.TEST_MODULE_DEPENDENCIES
+        SourceKotlinRootType -> when (collectionMode) {
+            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES_IGNORED
+            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> DependencyKeys.SOURCE_MODULE_DEPENDENCIES
+        }
+
+        TestSourceKotlinRootType -> when (collectionMode) {
+            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED  -> DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
+            ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED  -> DependencyKeys.TEST_MODULE_DEPENDENCIES
+        }
     }
     return CachedValuesManager.getManager(project).getCachedValue(
         module,
         key,
         {
-            val dependencies = calculateModuleDependencies(sourceRootType, provider)
+            val dependencies = calculateModuleDependencies(sourceRootType, provider, collectionMode)
             CachedValueProvider.Result.create(dependencies, ProjectRootModificationTracker.getInstance(project))
         },
         false
@@ -109,10 +119,12 @@ private fun ModuleSourceInfo.dependencies(provider: ProjectStructureProviderIdeI
 
 private fun ModuleSourceInfo.calculateModuleDependencies(
     sourceRootType: KotlinSourceRootType,
-    provider: ProjectStructureProviderIdeImpl
+    provider: ProjectStructureProvider,
+    collectionMode: ModuleDependencyCollector.CollectionMode,
 ): List<KtModule> {
+    require(provider is ProjectStructureProviderIdeImpl)
     return ModuleDependencyCollector.getInstance(project)
-        .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true)
+        .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true, collectionMode)
         .asSequence()
         .filterNot { it == this }
         .map(provider::getKtModuleByModuleInfo)
@@ -121,7 +133,10 @@ private fun ModuleSourceInfo.calculateModuleDependencies(
 
 private object DependencyKeys {
     val SOURCE_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KtModule>>>("SOURCE_MODULE_DEPENDENCIES")
+    val SOURCE_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("SOURCE_MODULE_DEPENDENCIES_IGNORED")
+
     val TEST_MODULE_DEPENDENCIES = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES")
+    val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
 internal class KtLibraryModuleByModuleInfo(

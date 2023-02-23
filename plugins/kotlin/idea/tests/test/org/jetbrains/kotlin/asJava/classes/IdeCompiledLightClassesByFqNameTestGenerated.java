@@ -151,6 +151,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PlatformTypes.kt"));
         }
 
+        @TestMetadata("PrimitiveBackedInlineClasses.kt")
+        public void testPrimitiveBackedInlineClasses() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/PrimitiveBackedInlineClasses.kt"));
+        }
+
         @TestMetadata("Primitives.kt")
         public void testPrimitives() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Primitives.kt"));

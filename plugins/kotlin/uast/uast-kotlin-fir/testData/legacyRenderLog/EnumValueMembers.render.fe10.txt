@@ -11,5 +11,5 @@ public enum Style {
     private fun Style(@org.jetbrains.annotations.NotNull value: java.lang.String) = UastEmptyExpression
     public static fun getEntries() : kotlin.enums.EnumEntries<Style> = UastEmptyExpression
     public static fun values() : Style[] = UastEmptyExpression
-    public static fun valueOf(name: java.lang.String) : Style = UastEmptyExpression
+    public static fun valueOf(value: java.lang.String) : Style = UastEmptyExpression
 }

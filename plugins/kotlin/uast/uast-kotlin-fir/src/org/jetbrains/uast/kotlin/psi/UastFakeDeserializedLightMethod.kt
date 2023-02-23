@@ -8,15 +8,15 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.psi.KtFunction
 
 /**
- * An abstraction similar to [UastDescriptorLightMethod], but with the original, deserialized source PSI of [KtFunction].
+ * An abstraction similar to [UastFakeDescriptorLightMethod], but with the original, deserialized source PSI of [KtFunction].
  *
- * Technically, we can just reuse [UastFakeLightMethod] as-is, which is, however, used as a fake UAST node for methods
+ * Technically, we can just reuse [UastFakeSourceLightMethod] as-is, which is, however, used as a fake UAST node for methods
  * that are in source, but not converted/supported by light classes (e.g., due to the presence of @JvmSynthetic).
- * To keep the semantics of [UastFakeLightMethod], here we introduce a dummy abstraction as a placeholder.
+ * To keep the semantics of [UastFakeSourceLightMethod], here we introduce a dummy abstraction as a placeholder.
  */
 internal class UastFakeDeserializedLightMethod(
-    original: KtFunction,
+    private val original: KtFunction,
     containingClass: PsiClass,
-) : UastFakeLightMethod(original, containingClass) {
+) : UastFakeSourceLightMethod(original, containingClass) {
     override fun toString(): String = "${this::class.simpleName} of ${original.name}"
 }

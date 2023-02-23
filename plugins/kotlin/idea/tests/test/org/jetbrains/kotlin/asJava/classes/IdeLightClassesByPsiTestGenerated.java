@@ -351,6 +351,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/strangeIdentifiers.kt"));
         }
 
+        @TestMetadata("targetAnnotation.kt")
+        public void testTargetAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/targetAnnotation.kt"));
+        }
+
         @TestMetadata("throwsAnnotation.kt")
         public void testThrowsAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt"));

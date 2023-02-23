@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.psi.PsiFile
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
@@ -10,21 +11,20 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.DescriptionRenderingOption
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 import java.util.*
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 
-abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
     protected val HIGHLIGHTING_EXTENSION = "highlighting"
 
-    open fun doTest(unused: String) {
-        myFixture.configureByFile(fileName())
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
-
-        checkHighlighting(expectedHighlighting)
+        checkHighlighting(files.first(), expectedHighlighting)
     }
 
-    private fun checkHighlighting(expectedHighlightingFile: File) {
+    private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File) {
         val highlightingRenderConfiguration = HighlightingConfiguration(
             descriptionRenderingOption = DescriptionRenderingOption.IF_NOT_NULL,
             renderSeverityOption = SeverityRenderingOption.ONLY_NON_INFO,
@@ -35,13 +35,13 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
             filterMetaInfo = createMetaInfoFilter()
         )
 
-        codeMetaInfoTestCase.checkFile(myFixture.file.virtualFile, expectedHighlightingFile, project)
+        codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
     }
 
     /**
      * This filter serves two purposes:
      * - Fail the test on ERRORS, since we don't want to have ERRORS in the tests for a regular highlighting
-     * - Filter WARNINGS, since they are provided by the compiler and (usually) are not interesting to us in the context of highlighting
+     * - Filter WARNINGS, since they're provided by the compiler and (usually) aren't interesting to us in the context of highlighting
      * - Filter exact highlightings duplicates. It is a workaround about a bug in old FE10 highlighting, which sometimes highlights
      * something twice
      */

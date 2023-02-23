@@ -18,10 +18,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/highlighterMetaInfo")
-public abstract class HighlightingMetaInfoTestGenerated extends AbstractHighlightingMetaInfoTest {
+public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1HighlightingMetaInfoTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/dsl")
-    public static class Dsl extends AbstractHighlightingMetaInfoTest {
+    public static class Dsl extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -59,7 +59,7 @@ public abstract class HighlightingMetaInfoTestGenerated extends AbstractHighligh
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo/smartCasts")
-    public static class SmartCasts extends AbstractHighlightingMetaInfoTest {
+    public static class SmartCasts extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -107,7 +107,7 @@ public abstract class HighlightingMetaInfoTestGenerated extends AbstractHighligh
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/highlighterMetaInfo")
-    public static class Uncategorized extends AbstractHighlightingMetaInfoTest {
+    public static class Uncategorized extends AbstractK1HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -160,6 +160,11 @@ public abstract class HighlightingMetaInfoTestGenerated extends AbstractHighligh
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("testData/highlighterMetaInfo/KDoc.kt");
+        }
+
+        @TestMetadata("KotlinAnnotationsInJava.kt")
+        public void testKotlinAnnotationsInJava() throws Exception {
+            runTest("testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
         }
 
         @TestMetadata("KotlinInjection.kt")

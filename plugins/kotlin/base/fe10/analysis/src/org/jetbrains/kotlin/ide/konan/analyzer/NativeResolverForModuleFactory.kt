@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.context.ModuleContext
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.frontend.di.createContainerForLazyResolve
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
@@ -17,8 +18,10 @@ import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.resolve.konan.platform.NativePlatformAnalyzerServices
+import org.jetbrains.kotlin.resolve.lazy.AbsentDescriptorHandler
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService.Companion.createDeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 
 class NativeResolverForModuleFactory(
     private val platformAnalysisParameters: PlatformAnalysisParameters,
@@ -31,7 +34,9 @@ class NativeResolverForModuleFactory(
         moduleContent: ModuleContent<M>,
         resolverForProject: ResolverForProject<M>,
         languageVersionSettings: LanguageVersionSettings,
-        sealedInheritorsProvider: SealedClassInheritorsProvider
+        sealedInheritorsProvider: SealedClassInheritorsProvider,
+        resolveOptimizingOptions: OptimizingOptions?,
+        absentDescriptorHandlerClass: Class<out AbsentDescriptorHandler>?
     ): ResolverForModule {
 
         val declarationProviderFactory = createDeclarationProviderFactory(
@@ -49,7 +54,8 @@ class NativeResolverForModuleFactory(
             moduleDescriptor.platform!!,
             NativePlatformAnalyzerServices,
             targetEnvironment,
-            languageVersionSettings
+            languageVersionSettings,
+            IdeaAbsentDescriptorHandler::class.java
         )
 
         var packageFragmentProvider = container.get<ResolveSession>().packageFragmentProvider
