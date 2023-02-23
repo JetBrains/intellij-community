@@ -442,9 +442,9 @@ object CodeWithMeClientDownloader {
           FileUtil.delete(data.targetPath)
 
           require(data.targetPath.notExists()) { "Target path \"${data.targetPath}\" for $archivePath already exists" }
-          FileManifestUtil.decompressWithManifest(archivePath, data.targetPath, data.includeInManifest)
+          FileManifestUtil.decompressWithManifest(archivePath, data.targetPath, config.modifiedDateInManifestIncluded, data.includeInManifest)
 
-          require(FileManifestUtil.isUpToDate(data.targetPath, data.includeInManifest)) {
+          require(FileManifestUtil.isUpToDate(data.targetPath, config.modifiedDateInManifestIncluded, data.includeInManifest)) {
             "Manifest verification failed for archive: $archivePath -> ${data.targetPath}"
           }
 
@@ -491,7 +491,7 @@ object CodeWithMeClientDownloader {
   }
 
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
-    val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, fileData.includeInManifest)
+    val extractDirectory = FileManifestUtil.getExtractDirectory(fileData.targetPath, config.modifiedDateInManifestIncluded, fileData.includeInManifest)
     return extractDirectory.isUpToDate && !fileData.targetPath.fileName.toString().contains("SNAPSHOT")
   }
 

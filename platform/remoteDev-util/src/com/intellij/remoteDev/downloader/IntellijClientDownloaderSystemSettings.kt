@@ -6,6 +6,7 @@ object IntellijClientDownloaderSystemSettings {
   private val osRegistryConfigProvider = OsRegistryConfigProvider("JetBrainsClient")
   private const val downloadDestinationKey = "downloadDestination"
   private const val versionManagementEnabledKey = "versionManagementEnabled"
+  private const val modifiedDateInManifestIncludedKey = "modifiedDateInManifestIncluded"
 
   fun getDownloadDestination(): OsRegistryConfigProvider.OsRegistrySystemSetting<String?> {
     val systemValue = osRegistryConfigProvider.get(downloadDestinationKey)
@@ -15,13 +16,11 @@ object IntellijClientDownloaderSystemSettings {
     return OsRegistryConfigProvider.OsRegistrySystemSetting(null, null)
   }
 
-  fun isVersionManagementEnabled(): OsRegistryConfigProvider.OsRegistrySystemSetting<Boolean> {
-    val systemValue = osRegistryConfigProvider.get(versionManagementEnabledKey)
+  fun isVersionManagementEnabled(): Boolean {
+    return osRegistryConfigProvider.`is`(versionManagementEnabledKey, true)
+  }
 
-    if (systemValue != null) {
-      return OsRegistryConfigProvider.OsRegistrySystemSetting(systemValue.value.toBoolean(), systemValue.osOriginLocation)
-    }
-
-    return OsRegistryConfigProvider.OsRegistrySystemSetting(true, null)
+  fun isModifiedDateInManifestIncluded(): Boolean {
+    return osRegistryConfigProvider.`is`(modifiedDateInManifestIncludedKey, true)
   }
 }

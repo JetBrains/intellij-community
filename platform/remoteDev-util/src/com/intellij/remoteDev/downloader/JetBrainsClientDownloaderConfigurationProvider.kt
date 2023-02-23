@@ -34,6 +34,7 @@ interface JetBrainsClientDownloaderConfigurationProvider {
   val jreDownloadUrl: URI
   val clientCachesDir: Path
   val clientVersionManagementEnabled: Boolean
+  val modifiedDateInManifestIncluded: Boolean
 
   val verifySignature: Boolean
 
@@ -65,7 +66,9 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   }
 
   override val clientVersionManagementEnabled: Boolean
-    get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled().value
+    get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
+  override val modifiedDateInManifestIncluded: Boolean
+    get() = IntellijClientDownloaderSystemSettings.isModifiedDateInManifestIncluded()
   override val verifySignature: Boolean = true
 
   override fun patchVmOptions(vmOptionsFile: Path, connectionUri: URI) {
@@ -100,6 +103,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override var jreDownloadUrl: URI = URI("https://download.jetbrains.com/idea/jbr/")
   override var clientCachesDir: Path = Files.createTempDirectory("")
   override var clientVersionManagementEnabled: Boolean = true
+  override val modifiedDateInManifestIncluded: Boolean = true
   override var verifySignature: Boolean = true
 
   override val clientLaunched: Signal<Unit> = Signal()
