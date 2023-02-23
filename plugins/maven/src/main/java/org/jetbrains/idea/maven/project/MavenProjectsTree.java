@@ -519,11 +519,11 @@ public final class MavenProjectsTree {
       this.process = process;
     }
 
-    public void update(MavenProject mavenProject,
-                       MavenProject aggregator,
-                       boolean isNew,
-                       boolean recursive,
-                       boolean force) {
+    public void update(final MavenProject mavenProject,
+                       final MavenProject aggregator,
+                       final boolean isNew,
+                       final boolean recursive,
+                       final boolean forceReading) {
       if (updateStack.contains(mavenProject)) {
         MavenLog.LOG.info("Recursion detected in " + mavenProject.getFile());
         return;
@@ -540,10 +540,11 @@ public final class MavenProjectsTree {
       }
 
       MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
-      boolean isChanged = force || !timestamp.equals(tree.myTimestamps.get(mavenProject));
+      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
+      boolean readProject = forceReading || timeStampChanged;
 
-      MavenProjectChanges changes = force ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
-      if (isChanged) {
+      MavenProjectChanges changes = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
+      if (readProject) {
         tree.withWriteLock(() -> {
           if (!isNew) {
             tree.clearIDMaps(mavenProject);
@@ -571,7 +572,7 @@ public final class MavenProjectsTree {
         reconnected = tree.reconnect(aggregator, mavenProject);
       }
 
-      if (isChanged || reconnected) {
+      if (readProject || reconnected) {
         updateContext.update(mavenProject, changes);
       }
 
@@ -614,12 +615,12 @@ public final class MavenProjectsTree {
           }
         }
 
-        if (isChanged || isNewModule || recursive) {
+        if (readProject || isNewModule || recursive) {
           update(module,
                  mavenProject,
                  isNewModule,
                  recursive,
-                 recursive && force // do not force update modules if only this project was requested to be updated
+                 recursive && forceReading // do not force update modules if only this project was requested to be updated
           );
         }
         else {
