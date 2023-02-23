@@ -123,4 +123,157 @@ public class HtmlParsingTest extends XmlParsingTest {
                  </script>""");
   }
 
+  public void testTemplateWithinP() throws Exception {
+    doTestHtml("""
+                 <div class="card-body">
+                   <p class="card-text">
+                     <template>
+                       <div>something</div>
+                     </template>
+                   </p>
+                 </div>""");
+  }
+
+  public void testCustomTagWithinP() throws Exception {
+    doTestHtml("""
+                 <p class="quotationAuthor">
+                   <span>
+                     <nuxt-link>
+                       <div>
+                         <img>
+                         <span> <span class="quotationDash"> - </span> author </span>
+                       </div>
+                       <span> <span class="quotationDash"> - </span> author </span>
+                     </nuxt-link>
+                   </span>
+                 </p>""");
+  }
+
+  public void testTemplateWithinCell() throws Exception {
+    doTestHtml("""
+                 <table border="1">
+                   <tr>
+                     <td>
+                       1st cell
+                       <template>
+                         <tr>
+                           <td>
+                             not yet a cell
+                       </template>
+                     <td>
+                       2nd cell
+                 </table>
+                 """);
+  }
+
+  public void testPAutoClosedByDl() throws Exception {
+    doTestHtml("""
+                 <p>
+                 <dl>
+                   <dd></dd>
+                 </dl>
+                 </p>
+                 """);
+  }
+
+  public void testNestedCustomTable() throws Exception {
+    doTestHtml("""
+                 <p-table>
+                     <ng-template>
+                         <tr>
+                             <td>
+                                 <p-table>
+                                     <ng-template>
+                                         <tr>
+                                             <td></td>
+                                         </tr>
+                                     </ng-template>
+                                 </p-table>
+                                 <p-table>
+                                  <tbody>
+                                    <td>a</td>
+                                    <td>b
+                                    <td>c
+                                  </tbody>
+                                 </p-table>
+                             </td>
+                         </tr>
+                     </ng-template>
+                 </p-table>
+                 """);
+  }
+
+  public void testMenuLi() throws Exception {
+    doTestHtml("""
+                 <ul>
+                    <li>
+                        <menu>
+                          <li></li>
+                        </menu>
+                    </li>
+                 </ul>
+                 <menu>
+                    <li>
+                        <menu>
+                          <li></li>
+                        </menu>
+                    </li>
+                 </menu>
+                 <UlUnlisted>
+                    <li>
+                      <UlUnlisted>
+                        <li></li>
+                      </UlUnlisted>
+                    </li>
+                 </UlUnlisted>
+                 """);
+  }
+
+  public void testTagOmissionP() throws Exception {
+    doTestHtml("""
+                 <body>
+                     <p>Paragraph
+                     <blockquote>
+                       <p>Quoted text
+                       <cite>cite</cite>
+                     </blockquote>
+                 </body>
+                 """);
+  }
+
+  public void testTagOmissionUlLi() throws Exception {
+    doTestHtml("""
+                 <ul>
+                   <li>
+                     <span>
+                       <i></i>
+                       <span>Entities</span>
+                     </span>
+                     <ul>
+                       <li>
+                         <span>e</span>
+                     </ul>
+                   </li>
+                 </ul>
+                 """);
+  }
+
+  public void testPMustBeClosedCustomTag() throws Exception {
+    doTestHtml("""
+                 <component>foo<p>bar</component>
+                 """);
+  }
+
+  public void testPMustBeClosedA() throws Exception {
+    doTestHtml("""
+                 <a href="foo">foo<p>bar</a>
+                 """);
+  }
+
+  public void testPIsAutoClosed() throws Exception {
+    doTestHtml("""
+                 <div>foo<p>bar</div>
+                 """);
+  }
+
 }
