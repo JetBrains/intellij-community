@@ -144,11 +144,14 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (contextType instanceof ContextType.Blocking) {
         return;
       }
-      if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking && myHolder.isOnTheFly()) {
-        myHolder.registerProblem(elementToHighLight,
-                                 JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
-                                 ProblemHighlightType.INFORMATION,
-                                 new ConsiderUnknownContextBlockingFix(false));
+      if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking) {
+        if (myHolder.isOnTheFly()) {
+          myHolder.registerProblem(
+            elementToHighLight,
+            JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
+            ProblemHighlightType.INFORMATION,
+            new ConsiderUnknownContextBlockingFix(false));
+        }
         return;
       }
       ProgressIndicatorProvider.checkCanceled();

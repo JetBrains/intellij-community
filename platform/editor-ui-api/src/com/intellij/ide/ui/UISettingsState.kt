@@ -34,6 +34,10 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale by property(0f)
 
+  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
+  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.overrideLafFonts"))
+  var overrideLafFonts by property(false)
+
   @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit by property(50)
@@ -152,8 +156,6 @@ class UISettingsState : BaseState() {
   var alphaModeDelay by property(1500)
   @get:OptionTag("ALPHA_MODE_RATIO")
   var alphaModeRatio by property(0.5f)
-  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
-  var overrideLafFonts by property(false)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
   var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS

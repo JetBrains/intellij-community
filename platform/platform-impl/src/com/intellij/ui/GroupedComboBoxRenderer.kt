@@ -34,10 +34,10 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
     val centerComponent: JComponent = object : NonOpaquePanel(itemComponent) {
       override fun getPreferredSize(): Dimension {
-        val dimension = UIUtil.updateListRowHeight(super.getPreferredSize())
-        return when (maxWidth) {
-          -1 -> dimension
-          else -> Dimension(maxWidth, dimension.height)
+        return super.getPreferredSize().let {
+          if (maxWidth > 0) it.width = maxWidth
+          it.height = JBUI.CurrentTheme.Tree.defaultRowHeight()
+          UIUtil.updateListRowHeight(it)
         }
       }
     }
@@ -75,8 +75,13 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
     }
   }
 
-  override fun getBackground(): Color = UIUtil.getListBackground(false, false)
-  override fun getForeground(): Color = UIUtil.getListForeground(false, false)
+  // TODO: remove when old UI is not supported
+  @Suppress("UNNECESSARY_SAFE_CALL")
+  private val enabled: Boolean
+    get() = combo?.isEnabled == true
+
+  override fun getBackground(): Color = if (enabled) UIUtil.getListBackground(false, false) else UIUtil.getComboBoxDisabledBackground()
+  override fun getForeground(): Color = if (enabled) UIUtil.getListForeground(false, false) else UIUtil.getComboBoxDisabledForeground()
   override fun getSelectionBackground(): Color = UIUtil.getListSelectionBackground(true)
   override fun getSelectionForeground(): Color = UIUtil.getListSelectionForeground(true)
 

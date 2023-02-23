@@ -23,12 +23,11 @@ import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UQualifiedReferenceExpression
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.getAnchorPsi
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspectionBase(UClass::class.java) {
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = UastHintedVisitorAdapter.create(
     holder.file.language, object : AbstractUastNonRecursiveVisitor() {
     override fun visitClass(node: UClass): Boolean {
@@ -58,7 +57,7 @@ class NonFinalOrNonInternalExtensionClassInspection : DevKitUastInspectionBase(U
       }
       return true
     }
-  }, arrayOf(UClass::class.java, UQualifiedReferenceExpression::class.java))
+  }, arrayOf(UClass::class.java))
 
 
   fun isInternal(aClass: PsiClass): Boolean {

@@ -15,8 +15,6 @@
                  description="Wrap workspace model error report with IJ classes"/>
     <registryKey key="ide.new.project.model.index.case.sensitivity" defaultValue="false" restartRequired="true"
                  description="Enable checking FS sensitivity for paths stored at VFU index"/>
-    <registryKey key="ide.workspace.model.rbs.as.tree" defaultValue="true" restartRequired="false"
-                 description="Enable new algorithm for ReplaceBySource operation"/>
     <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
                  description="Enable new method of workspace model caching"/>
     <registryKey key="ide.workspace.model.separate.component.for.roots" defaultValue="true" restartRequired="true"

@@ -1,11 +1,8 @@
 package com.intellij.codeInspection.tests.test
 
 import com.intellij.codeInspection.test.TestFailedLineInspection
-import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.codeInspection.tests.JvmInspectionTestBase
-import com.intellij.codeInspection.tests.test.junit.addHamcrestLibrary
-import com.intellij.codeInspection.tests.test.junit.addJUnit3Library
-import com.intellij.codeInspection.tests.test.junit.addJUnit5Library
+import com.intellij.codeInspection.tests.JvmLanguage
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo

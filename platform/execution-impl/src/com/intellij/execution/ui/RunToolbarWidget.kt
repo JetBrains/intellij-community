@@ -196,19 +196,19 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
   val inlineActions = if (showRerunAndStopButtons)
     listOf(
-      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false ),
+      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
       StopConfigurationInlineAction(activeExecutor, conf)
     )
   else
     listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
-      RunToolbarWidgetRunAction(debugExecutor) { conf }
+      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
     )
 
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
   if (showRerunAndStopButtons) {
-    val extraAction = if (activeExecutor === runExecutor) RunToolbarWidgetRunAction(debugExecutor) { conf }
-      else RunToolbarWidgetRunAction(runExecutor) { conf }
+    val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
+    val extraAction = ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
     result.addAction(extraAction, Constraints.FIRST)
   }
   addAdditionalActionsToRunConfigurationOptions(project, conf, result, false)
@@ -402,24 +402,6 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   else {
     stopCount.toString()
   }
-
-private class RunToolbarWidgetRunAction(
-  executor: Executor,
-  val hideIfDisable: Boolean = false,
-  val settingSupplier: (Project) -> RunnerAndConfigurationSettings?,
-) : ExecutorRegistryImpl.ExecutorAction(executor) {
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    if (hideIfDisable) {
-      e.presentation.isVisible = e.presentation.isEnabled
-    }
-  }
-
-  override fun getSelectedConfiguration(e: AnActionEvent): RunnerAndConfigurationSettings? {
-    return settingSupplier(e.project ?: return null)
-  }
-}
 
 private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings) : AnAction() {
 

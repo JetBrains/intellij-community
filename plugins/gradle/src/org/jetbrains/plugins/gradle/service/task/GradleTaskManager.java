@@ -61,7 +61,6 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
-import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -415,7 +414,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                    @NotNull Set<Class<?>> toolingExtensionClasses) {
     String taskName = taskClass.getSimpleName();
     Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
-    tools.addAll(set(taskClass, GsonBuilder.class, ExternalSystemException.class));
+    tools.add(taskClass);
+    tools.add(GsonBuilder.class);
+    tools.add(ExternalSystemException.class);
     String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +

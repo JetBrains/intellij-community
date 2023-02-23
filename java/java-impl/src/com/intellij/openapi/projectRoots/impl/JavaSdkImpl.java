@@ -8,7 +8,9 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -21,6 +23,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -43,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
@@ -297,6 +302,43 @@ public final class JavaSdkImpl extends JavaSdk {
     }
     modificator.addRoot(root, annoType);
     return true;
+  }
+
+  // return true on success
+  public static Promise<Boolean> attachIDEAAnnotationsToJdkAsync(@NotNull Sdk sdk) {
+    return ReadAction.nonBlocking(() -> {
+      List<String> pathsChecked = new ArrayList<>();
+      VirtualFile root = internalJdkAnnotationsPath(pathsChecked, false);
+      if (root != null && !isInternalJdkAnnotationRootCorrect(root)) {
+        root = null;
+      }
+      if (root == null) {
+        String msg = "Paths checked:\n"+
+                     StringUtil.join(pathsChecked, path -> {
+                       File file = new File(path);
+                       File parentFile = file.getParentFile();
+                       return " "+path+"; exists: "+file.exists()+(parentFile == null ? "" : "; siblings: "+Arrays.toString(parentFile.list()));
+                     }, "\n");
+        LOG.error("JDK annotations not found", msg);
+        return null;
+      }
+        SdkModificator modificator = sdk.getSdkModificator();
+      return new Pair<>(root, modificator);
+    })
+      .finishOnUiThread(ModalityState.NON_MODAL, rootAndModifiactor -> {
+        if (rootAndModifiactor == null) {
+          return;
+        }
+        VirtualFile root = rootAndModifiactor.first;
+        SdkModificator modificator = rootAndModifiactor.second;
+        OrderRootType annoType = AnnotationOrderRootType.getInstance();
+        if (modificator.getRoots(annoType).length != 0) {
+          modificator.removeRoot(root, annoType);
+        }
+        modificator.addRoot(root, annoType);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .then(file -> file != null);
   }
 
   // does this file look like the genuine root for all correct annotations.xml

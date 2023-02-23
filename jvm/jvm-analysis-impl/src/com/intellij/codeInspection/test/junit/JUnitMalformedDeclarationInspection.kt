@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
@@ -23,7 +24,10 @@ import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.*
@@ -39,6 +43,7 @@ import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import kotlin.streams.asSequence
@@ -119,7 +124,7 @@ private class JUnitMalformedSignatureVisitor(
 
   private val registeredExtensionProblem = AnnotatedSignatureProblem(
     annotations = listOf(ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION),
-    shouldBeSubTypeOf = listOf(ORG_JUNIT_JUPITER_API_EXTENSION),
+    shouldBeSubTypeOf = listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION),
     validVisibility = ::notPrivate
   )
 
@@ -235,6 +240,21 @@ private class JUnitMalformedSignatureVisitor(
         it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
       }
     }
+    return hasPotentialAutomaticParameterResolver(ModuleUtilCore.findModuleForPsiElement(this) ?: return false)
+  }
+
+  private fun hasPotentialAutomaticParameterResolver(module: Module): Boolean {
+    val resourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)
+    for (resourceRoot in resourceRoots) {
+      val directory = PsiManager.getInstance(module.project).findDirectory(resourceRoot)
+      val serviceFile = directory
+        ?.findSubdirectory("META-INF")
+        ?.findSubdirectory("services")
+        ?.findFile(ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION)
+      val serviceFqn = serviceFile?.text ?: break
+      val service = JavaPsiFacade.getInstance(module.project).findClass(serviceFqn, module.moduleContentScope) ?: break
+      if (InheritanceUtil.isInheritor(service, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)) return true
+    }
     return false
   }
 
@@ -330,7 +350,7 @@ private class JUnitMalformedSignatureVisitor(
     if (method.isConstructor) return
     if (!TestUtils.isJUnit3TestMethod(javaMethod.javaPsi)) return
     val containingClass = method.javaPsi.containingClass ?: return
-    if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return
+    if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, CHECK_HIERARCHY)) return
     if (checkSuspendFunction(method)) return
     if (PsiTypes.voidType() != method.returnType || method.visibility != UastVisibility.PUBLIC || javaMethod.isStatic
         || (!method.isNoArg() && !method.isParameterizedTest())) {
@@ -468,11 +488,11 @@ private class JUnitMalformedSignatureVisitor(
       if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
       val foundMethod = containingClass.findMethodsByName(method.name, true).singleOrNull { it.parameters.isEmpty() }
       val uFoundMethod = foundMethod.toUElementOfType<UMethod>()
-      if (uFoundMethod != null) {
-        return checkSourceProvider(uFoundMethod, containingClass, methodSource, method)
+      return if (uFoundMethod != null) {
+        checkSourceProvider(uFoundMethod, containingClass, methodSource, method)
       }
       else {
-        return checkAbsentSourceProvider(containingClass, methodSource, method.name, method)
+        checkAbsentSourceProvider(containingClass, methodSource, method.name, method)
       }
     }
     else {
@@ -503,7 +523,7 @@ private class JUnitMalformedSignatureVisitor(
       "jvm.inspections.junit.malformed.param.method.source.unresolved.descriptor",
       sourceProviderName
     )
-    if (isOnTheFly) {
+    return if (isOnTheFly) {
       val modifiers = mutableListOf(JvmModifier.PUBLIC)
       if (!TestUtils.testInstancePerClass(containingClass)) modifiers.add(JvmModifier.STATIC)
       val typeFromText = JavaPsiFacade.getElementFactory(containingClass.project).createTypeFromText(
@@ -513,9 +533,9 @@ private class JUnitMalformedSignatureVisitor(
       val actions = createMethodActions(containingClass, request)
       val quickFixes = IntentionWrapper.wrapToQuickFixes(actions, containingClass.containingFile).toTypedArray()
 
-      return holder.registerProblem(place, message, *quickFixes)
+      holder.registerProblem(place, message, *quickFixes)
     } else {
-      return holder.registerProblem(place, message)
+      holder.registerProblem(place, message)
     }
   }
 
@@ -597,9 +617,7 @@ private class JUnitMalformedSignatureVisitor(
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_INFO) &&
       !InheritanceUtil.isInheritor(param.type, ORG_JUNIT_JUPITER_API_TEST_REPORTER) &&
       !MetaAnnotationUtil.isMetaAnnotated(param, ignorableAnnotations)
-    } > 1 && !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(
-      containingClass, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
-    )
+    } > 1 && !containingClass.hasParameterResolver()
   }
   
   private fun getPassedParameter(method: PsiMethod): PsiParameter? {
@@ -800,6 +818,7 @@ private class JUnitMalformedSignatureVisitor(
   class AnnotatedSignatureProblem(
     private val annotations: List<String>,
     private val shouldBeStatic: Boolean? = null,
+    private val ignoreOnRunWith: Boolean = false,
     private val shouldBeInTestInstancePerClass: Boolean = false,
     private val shouldBeVoidType: Boolean? = null,
     private val shouldBeSubTypeOf: List<String>? = null,
@@ -817,7 +836,22 @@ private class JUnitMalformedSignatureVisitor(
       return problems
     }
 
+    private fun isApplicable(element: UElement): Boolean {
+      if (!ignoreOnRunWith) {
+        val containingClass = element.getContainingUClass()?.javaPsi ?: return false
+        val annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, setOf(ORG_JUNIT_RUNNER_RUN_WITH))
+        if (annotation != null) {
+          val runnerType = annotation.findAttributeValue("value")
+            .toUElement()?.asSafely<UClassLiteralExpression>()
+            ?.type ?: return false
+          return checkableRunners.any(runnerType::equalsToText)
+        }
+      }
+      return true
+    }
+
     fun report(holder: ProblemsHolder, element: UField) {
+      if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiField>() ?: return
       val annotation = annotations
         .firstOrNull { MetaAnnotationUtil.isMetaAnnotated(javaPsi, annotations) }
@@ -873,10 +907,11 @@ private class JUnitMalformedSignatureVisitor(
     }
 
     fun report(holder: ProblemsHolder, element: UMethod) {
+      if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiMethod>() ?: return
       val sourcePsi = element.sourcePsi ?: return
       val annotation = annotations
-        .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, AnnotationUtil.CHECK_HIERARCHY) }
+        .firstOrNull { AnnotationUtil.isAnnotated(javaPsi, it, CHECK_HIERARCHY) }
         ?.substringAfterLast('.') ?: return
       val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
       val elementIsStatic = alternatives.any { it.isStatic }
@@ -1139,6 +1174,18 @@ private class JUnitMalformedSignatureVisitor(
 
     const val TEST_INSTANCE_PER_CLASS = "@org.junit.jupiter.api.TestInstance(TestInstance.Lifecycle.PER_CLASS)"
     const val METHOD_SOURCE_RETURN_TYPE = "java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>"
+
+    val checkableRunners = listOf(
+      "org.junit.runners.AllTests",
+      "org.junit.runners.Parameterized",
+      "org.junit.runners.BlockJUnit4ClassRunner",
+      "org.junit.runners.JUnit4",
+      "org.junit.runners.Suite",
+      "org.junit.internal.runners.JUnit38ClassRunner",
+      "org.junit.internal.runners.JUnit4ClassRunner",
+      "org.junit.experimental.categories.Categories",
+      "org.junit.experimental.categories.Enclosed"
+    )
 
     val visibilityToModifier = mapOf(
       UastVisibility.PUBLIC to JvmModifier.PUBLIC,

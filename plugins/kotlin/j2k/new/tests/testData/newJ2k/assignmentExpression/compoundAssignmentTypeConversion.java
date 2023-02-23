@@ -7,7 +7,6 @@ public class J {
         c /= d;
         c %= f + d + f;
 
-        // TODO KTIJ-24541
         byte b = 1;
         b += f;
         b -= d;
@@ -15,7 +14,6 @@ public class J {
         b /= d;
         b %= f + d + f;
 
-        // TODO KTIJ-24541
         short s = 1;
         s += f;
         s -= d;
@@ -46,7 +44,6 @@ public class J {
         charArr[0] /= d;
         charArr[0] %= f + d + f;
 
-        // TODO KTIJ-24541
         byte[] byteArr = {1};
         byteArr[0] += f;
         byteArr[0] -= d;
@@ -54,7 +51,6 @@ public class J {
         byteArr[0] /= d;
         byteArr[0] %= f + d + f;
 
-        // TODO KTIJ-24541
         short[] shortArr = {1};
         shortArr[0] += f;
         shortArr[0] -= d;

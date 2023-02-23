@@ -20,7 +20,7 @@ import java.util.Set;
 import static com.intellij.psi.PsiKeyword.*;
 
 public final class JavaLexer extends LexerBase {
-  private static final Set<String> KEYWORDS = ContainerUtil.set(
+  private static final Set<String> KEYWORDS = ContainerUtil.immutableSet(
     ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
     FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,

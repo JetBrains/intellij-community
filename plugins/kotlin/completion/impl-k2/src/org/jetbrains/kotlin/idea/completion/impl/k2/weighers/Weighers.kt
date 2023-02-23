@@ -111,9 +111,11 @@ internal object Weighers {
             .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
             .weighBefore(PlatformWeighersIds.PREFIX, VariableOrParameterNameWithTypeWeigher.Weigher)
+            .weighAfter(PlatformWeighersIds.PROXIMITY, ByNameAlphabeticalWeigher.Weigher)
 
     private object PlatformWeighersIds {
         const val PREFIX = "prefix"
         const val STATS = "stats"
+        const val PROXIMITY = "proximity"
     }
 }

@@ -23,9 +23,19 @@ public class ReferenceResolveWithLibTestGenerated extends AbstractReferenceResol
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("dataClassSyntheticMethods.kt")
+    public void testDataClassSyntheticMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/dataClassSyntheticMethods.kt");
+    }
+
     @TestMetadata("delegatedPropertyWithTypeParameters.kt")
     public void testDelegatedPropertyWithTypeParameters() throws Exception {
         runTest("testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters.kt");
+    }
+
+    @TestMetadata("enumSyntheticMethods.kt")
+    public void testEnumSyntheticMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/enumSyntheticMethods.kt");
     }
 
     @TestMetadata("fakeOverride.kt")

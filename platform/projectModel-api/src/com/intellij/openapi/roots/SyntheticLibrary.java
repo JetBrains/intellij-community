@@ -249,7 +249,7 @@ public abstract class SyntheticLibrary {
                           @NotNull BooleanSupplier hasParentNotGrandparent);
 
     @NotNull
-    default Condition<VirtualFile> transformToCondition(@NotNull Collection<VirtualFile> allRoots) {
+    default Condition<VirtualFile> transformToCondition(@NotNull Collection<? extends VirtualFile> allRoots) {
       return file -> shouldExclude(file.isDirectory(), file.getName(),
                                    () -> allRoots.contains(file),
                                    () -> {

@@ -903,17 +903,18 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                                      List<? super FilePatch> remainingPatches,
                                                      CommitContext commitContext)
     throws IOException, PatchSyntaxException {
-    final List<TextFilePatch> textFilePatches = loadPatches(project, changeList.path, commitContext);
+    List<TextFilePatch> textFilePatches = loadPatches(project, changeList.path, commitContext);
 
     if (changes != null) {
-      final Iterator<TextFilePatch> iterator = textFilePatches.iterator();
-      while (iterator.hasNext()) {
-        TextFilePatch patch = iterator.next();
-        if (!needUnshelve(patch, changes)) {
-          remainingPatches.add(patch);
-          iterator.remove();
+      textFilePatches = ContainerUtil.filter(textFilePatches, patch -> {
+        if (needUnshelve(patch, changes)) {
+          return true;
         }
-      }
+        else {
+          remainingPatches.add(patch);
+          return false;
+        }
+      });
     }
     return textFilePatches;
   }

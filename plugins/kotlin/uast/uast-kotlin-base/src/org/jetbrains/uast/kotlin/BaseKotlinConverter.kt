@@ -93,7 +93,7 @@ interface BaseKotlinConverter {
                     el<UMethod>(build(KotlinUMethod::create))
                 }
 
-                is UastFakeLightMethod -> {
+                is UastFakeSourceLightMethod -> {
                     el<UMethod> {
                         val ktFunction = element.original
                         if (ktFunction.isLocal)
@@ -103,7 +103,7 @@ interface BaseKotlinConverter {
                     }
                 }
 
-                is UastFakeLightPrimaryConstructor -> {
+                is UastFakeSourceLightPrimaryConstructor -> {
                     convertFakeLightConstructorAlternatives(element, givenParent, requiredTypes).firstOrNull()
                 }
 
@@ -296,7 +296,7 @@ interface BaseKotlinConverter {
     }
 
     fun convertFakeLightConstructorAlternatives(
-        original: UastFakeLightPrimaryConstructor,
+        original: UastFakeSourceLightPrimaryConstructor,
         givenParent: UElement?,
         expectedTypes: Array<out Class<out UElement>>
     ): Sequence<UElement> {
@@ -366,7 +366,7 @@ interface BaseKotlinConverter {
                     is KtFunction -> LightClassUtil.getLightClassMethod(ownerFunction)
                         ?: getLightClassForFakeMethod(ownerFunction)
                             ?.takeIf { !it.isAnnotationType }
-                            ?.let { UastFakeLightMethod(ownerFunction, it) }
+                            ?.let { UastFakeSourceLightMethod(ownerFunction, it) }
 
                     is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerFunction)
                     else -> null

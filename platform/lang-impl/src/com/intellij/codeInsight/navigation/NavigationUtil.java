@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -64,20 +63,14 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements, @PopupTitle String title) {
-    return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title);
+    return new PsiTargetNavigator().createPopup(elements, title);
   }
 
   @NotNull
   public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
                                            @NotNull PsiElementListCellRenderer<? super PsiElement> renderer,
                                            @PopupTitle String title) {
-    return getPsiElementPopup(elements, renderer, title, element -> {
-      Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-      if (descriptor != null && descriptor.canNavigate()) {
-        descriptor.navigate(true);
-      }
-      return true;
-    });
+    return getPsiElementPopup(elements, renderer, title, element -> EditSourceUtil.navigateToPsiElement(element));
   }
 
   @NotNull

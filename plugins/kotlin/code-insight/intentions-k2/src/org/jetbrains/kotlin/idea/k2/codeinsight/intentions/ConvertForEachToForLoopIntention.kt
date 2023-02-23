@@ -30,6 +30,14 @@ private val FOR_EACH_CALLABLE_IDS = setOf(
     CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_NAME),
 )
 
+private val FOR_EACH_INDEXED_NAME = Name.identifier("forEachIndexed")
+
+private val FOR_EACH_INDEXED_CALLABLE_IDS = setOf(
+    CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, FOR_EACH_INDEXED_NAME),
+    CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("sequences")), FOR_EACH_INDEXED_NAME),
+    CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE.child(Name.identifier("text")), FOR_EACH_INDEXED_NAME),
+)
+
 private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
@@ -49,10 +57,15 @@ internal class ConvertForEachToForLoopIntention
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
-        if (element.getCallNameExpression()?.getReferencedName() != FOR_EACH_NAME.asString()) return false
+        val referencedName = element.getCallNameExpression()?.getReferencedName()
+        val isForEach = referencedName == FOR_EACH_NAME.asString()
+        val isForEachIndexed = referencedName == FOR_EACH_INDEXED_NAME.asString()
+        if (!isForEach && !isForEachIndexed) return false
 
         val lambdaArgument = element.getSingleLambdaArgument() ?: return false
-        return lambdaArgument.valueParameters.size <= 1 && lambdaArgument.bodyExpression != null
+        val valueParameterSize = lambdaArgument.valueParameters.size
+        if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false
+        return lambdaArgument.bodyExpression != null
     }
 
     private fun KtCallExpression.getSingleLambdaArgument(): KtLambdaExpression? =
@@ -61,6 +74,7 @@ internal class ConvertForEachToForLoopIntention
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): Context? {
         if (!element.isForEachByAnalyze()) return null
+        if (element.isUsedAsExpression()) return null
 
         val returnsToReplace = computeReturnsToReplace(element) ?: return null
 
@@ -75,7 +89,8 @@ internal class ConvertForEachToForLoopIntention
     context(KtAnalysisSession)
     private fun KtCallExpression.isForEachByAnalyze(): Boolean {
         val symbol = calleeExpression?.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return false
-        return symbol.callableIdIfNonLocal in FOR_EACH_CALLABLE_IDS
+        val callableId = symbol.callableIdIfNonLocal
+        return callableId in FOR_EACH_CALLABLE_IDS || callableId in FOR_EACH_INDEXED_CALLABLE_IDS
     }
 
     context(KtAnalysisSession)
@@ -99,14 +114,20 @@ internal class ConvertForEachToForLoopIntention
         val commentSaver = CommentSaver(targetExpression)
 
         val lambda = element.getSingleLambdaArgument() ?: return
-        val loop = generateLoop(receiverExpression, lambda, context) ?: return
+        val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
+        val loop = generateLoop(receiverExpression, lambda, isForEachIndexed, context) ?: return
         val result = targetExpression.replace(loop) as KtForExpression
         result.loopParameter?.let { editor?.caretModel?.moveToOffset(it.startOffset) }
 
         commentSaver.restore(result)
     }
 
-    private fun generateLoop(receiver: KtExpression?, lambda: KtLambdaExpression, context: Context): KtForExpression? {
+    private fun generateLoop(
+        receiver: KtExpression?,
+        lambda: KtLambdaExpression,
+        isForEachIndexed: Boolean,
+        context: Context
+    ): KtForExpression? {
         val factory = KtPsiFactory(lambda)
         val body = lambda.bodyExpression ?: return null
 
@@ -125,12 +146,27 @@ internal class ConvertForEachToForLoopIntention
             }
         }
 
-        val parameter = lambda.valueParameters.singleOrNull()
-        return factory.createExpressionByPattern(
-            "for($0 in $1){ $2 }",
-            parameter ?: "it",
-            loopRange,
-            body.allChildren
-        ) as? KtForExpression
+        val parameters = lambda.valueParameters
+        return if (isForEachIndexed) {
+            val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
+                factory.createExpression("withIndex()")
+            } else {
+                factory.createExpressionByPattern("$0.withIndex()", loopRange)
+            }
+            factory.createExpressionByPattern(
+                "for(($0, $1) in $2){ $3 }",
+                parameters[0].text,
+                parameters[1].text,
+                loopRangeWithIndex,
+                body.allChildren
+            )
+        } else {
+            factory.createExpressionByPattern(
+                "for($0 in $1){ $2 }",
+                parameters.singleOrNull() ?: "it",
+                loopRange,
+                body.allChildren
+            )
+        } as? KtForExpression
     }
 }

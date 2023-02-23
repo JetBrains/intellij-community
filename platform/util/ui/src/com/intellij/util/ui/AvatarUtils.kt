@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.withTxAndClipAligned
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
@@ -83,11 +84,21 @@ object AvatarUtils {
     g2.fill(avatarOvalArea)
 
     g2.paint = JBColor.WHITE
-    g2.font = JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
+    g2.font = getFont(size)
     UIUtil.drawCenteredString(g2, Rectangle(0, 0, size, size), shortName)
     g2.dispose()
 
     return image
+  }
+
+  private fun getFont(size: Int): Font {
+    return if (Registry.`is`("ide.experimental.ui")) {
+      val fontSize = 13 * size / 20 // Desired font is 13 with default icon size 20
+      JBFont.create(Font("JetBrains Mono Medium", Font.PLAIN, fontSize))
+    }
+    else {
+      JBFont.create(Font("Segoe UI", Font.PLAIN, (size / 2.2).toInt()))
+    }
   }
 }
 

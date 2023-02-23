@@ -30,6 +30,12 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
     else state.presentationModeIdeScale = presentationModeFontSize.toFloat() / state.fontSize
   }
 
+  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
+    if (state.overrideLafFontsWasMigrated) return
+    state.overrideLafFontsWasMigrated = true
+    state.overrideLafFonts = overrideLafFonts
+  }
+
   internal fun fixFontSettings() {
     val state = state
 
@@ -75,9 +81,14 @@ class NotRoamableUiOptions : BaseState() {
   @get:Property(filter = FontFilter::class)
   var fontScale by property(0f)
 
+  @get:ReportValue
   var ideScale by property(1f)
 
+  @get:ReportValue
   var presentationModeIdeScale by property(0f)
+
+  var overrideLafFonts by property(false)
+  var overrideLafFontsWasMigrated by property(false)
 
   init {
     val fontData = JBUIScale.getSystemFontData(null)

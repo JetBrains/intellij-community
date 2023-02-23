@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +12,7 @@ import java.util.Set;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Set<String> ALL_CONSUMING_OPERATIONS = ContainerUtil.set(
+  private static final Set<String> ALL_CONSUMING_OPERATIONS = Set.of(
     "sorted",
     "count",
     "reduce",
@@ -27,7 +26,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "summaryStatistics"
   );
 
-  private static final Set<String> NON_LIMITING_OPERATIONS = ContainerUtil.set(
+  private static final Set<String> NON_LIMITING_OPERATIONS = Set.of(
     "filter",
     "map",
     "distinct",

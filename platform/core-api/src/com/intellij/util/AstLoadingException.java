@@ -5,4 +5,8 @@ package com.intellij.util;
  * @see AstLoadingFilter
  */
 class AstLoadingException extends Exception {
+
+  AstLoadingException() {
+    super("See com.intellij.util.AstLoadingFilter documentation for details");
+  }
 }

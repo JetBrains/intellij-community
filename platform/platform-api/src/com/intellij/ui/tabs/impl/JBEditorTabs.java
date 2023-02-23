@@ -57,7 +57,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
       return new CompressibleSingleRowLayout(this);
     }
     else {
-      return new ScrollableSingleRowLayout(this, ExperimentalUI.isEditorTabsWithScrollBar());
+      return new ScrollableSingleRowLayout(this);
     }
   }
 

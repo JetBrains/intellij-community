@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -996,20 +996,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     String vendor = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getVendor());
     String organization = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getOrganization());
-    if (Strings.isEmptyOrSpaces(vendor) && Strings.isEmptyOrSpaces(organization)) {
-      myAuthor.hide();
+    if (!Strings.isEmptyOrSpaces(organization)) {
+      myAuthor.show(organization, () -> mySearchListener.linkSelected(
+        null,
+        SearchWords.ORGANIZATION.getValue() + (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
+      ));
+    }
+    else if (!Strings.isEmptyOrSpaces(vendor)) {
+      myAuthor.show(vendor, null);
     }
     else {
-      if (Strings.isEmptyOrSpaces(organization)) {
-        myAuthor.show(vendor, null);
-      }
-      else {
-        myAuthor.show(organization, () -> mySearchListener.linkSelected(
-          null,
-          SearchWords.ORGANIZATION.getValue() +
-          (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
-        ));
-      }
+      myAuthor.hide();
     }
 
     showLicensePanel();

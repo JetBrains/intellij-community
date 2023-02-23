@@ -9,6 +9,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
+    <appStarter id="dumpLaunchParameters" implementation="com.intellij.openapi.application.DumpLaunchParametersStarter"/>
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
@@ -22,7 +23,6 @@
     <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter"/>
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
-    <appStarter id="dumpLaunchParameters" implementation="com.intellij.internal.statistic.utils.DumpLaunchParametersStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
     <groupConfigurable id="appearance" weight="70"
@@ -1362,6 +1362,7 @@
 
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
+    <advancedSetting id="ide.show.tool.window.icons.on.hover" default="true" groupKey="group.advanced.settings.tool.windows"/>
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.macos.disable.native.shortcut.symbols" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
@@ -1393,8 +1394,8 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead" default="true" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="terminal.type.ahead.latency.threshold" default="100" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="terminal.use.1.0.line.spacing.for.alternative.screen.buffer" default="false" groupKey="group.advanced.settings.terminal"/>
-    <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.use.1.0.line.spacing.for.alternative.screen.buffer" default="true" groupKey="group.advanced.settings.terminal"/>
+    <advancedSetting id="terminal.fill.character.background.including.line.spacing" default="false" groupKey="group.advanced.settings.terminal"/>
     <advancedSetting id="documentation.components.enable.inline.code.highlighting" default="false" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.blocks.highlighting" default="true" groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false" groupKey="group.advanced.settings.documentation.components"/>
@@ -1432,6 +1433,9 @@
 
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
+
+    <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
+                    serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
     <!-- Minimap -->
     <registryKey key="editor.minimap.enabled" defaultValue="false" description="Enables Minimap"/>
@@ -1501,6 +1505,8 @@
               topic="com.intellij.openapi.keymap.KeymapManagerListener"/>
     <listener class="com.intellij.ide.plugins.advertiser.OnDemandDependencyFeatureCollector"
               topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="com.intellij.ide.actions.IdeScaleSettingsListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.ide.ui.UISettingsListener"/>
   </applicationListeners>
 
   <projectListeners>

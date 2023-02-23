@@ -351,11 +351,11 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
   }
 }
 
-private fun validatePlugin(path: Path, context: BuildContext) {
-  spanBuilder("plugin validation").setAttribute("path", "$path").useWithScope {
+private suspend fun validatePlugin(path: Path, context: BuildContext) {
+  context.executeStep(spanBuilder("plugin validation").setAttribute("path", "$path"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) {
     if (!Files.exists(path)) {
       it.addEvent("path doesn't exist, skipped")
-      return@useWithScope
+      return@executeStep
     }
 
     var id: String? = null

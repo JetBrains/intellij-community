@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.base.util.module
@@ -15,12 +16,10 @@ import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.platform.SimplePlatform
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.isMultiPlatform
+import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -59,19 +58,33 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         private fun SimplePlatform.providesRunnableTests(): Boolean {
             if (this is NativePlatformWithTarget) {
                 return when {
-                    HostManager.hostIsMac -> target in listOf(
-                        KonanTarget.IOS_X64,
-                        KonanTarget.MACOS_X64,
-                        KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_X86,
-                        KonanTarget.TVOS_X64
-                    )
+                    HostManager.hostIsMac -> {
+                        val testTargets = if (HostManager.host.architecture == Architecture.ARM64) {
+                            listOf(
+                                KonanTarget.IOS_SIMULATOR_ARM64,
+                                KonanTarget.MACOS_ARM64,
+                                KonanTarget.WATCHOS_SIMULATOR_ARM64,
+                                KonanTarget.TVOS_SIMULATOR_ARM64
+                            )
+                        } else {
+                            listOf(
+                                KonanTarget.IOS_X64,
+                                KonanTarget.MACOS_X64,
+                                KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_X86,
+                                KonanTarget.TVOS_X64
+                            )
+                        }
+                        target in testTargets
+                    }
                     HostManager.hostIsLinux -> target == KonanTarget.LINUX_X64
                     HostManager.hostIsMingw -> target in listOf(KonanTarget.MINGW_X86, KonanTarget.MINGW_X64)
                     else -> false
                 }
+            } else if (this is JsPlatform) {
+                return AdvancedSettings.getBoolean("kotlin.mpp.experimental")
+            } else {
+                return true
             }
-
-            return true
         }
 
         fun TargetPlatform.providesRunnableTests(): Boolean = componentPlatforms.any { it.providesRunnableTests() }

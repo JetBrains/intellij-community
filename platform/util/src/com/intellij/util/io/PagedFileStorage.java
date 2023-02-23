@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -397,15 +396,20 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
 
   private static final int MAX_FILLER_SIZE = 8192;
 
-  private void fillWithZeros(long from, long length) throws IOException {
-    byte[] buff = new byte[MAX_FILLER_SIZE];
-    Arrays.fill(buff, (byte)0);
+  private void fillWithZeros(final long from,
+                             final long length) throws IOException {
+    final byte[] zeroes = new byte[MAX_FILLER_SIZE];
 
-    while (length > 0) {
-      final int filled = Math.min((int)length, MAX_FILLER_SIZE);
-      put(from, buff, 0, filled);
-      length -= filled;
-      from += filled;
+    long offset = from;
+    long remaining = length;
+    while (remaining > 0) {
+      final int toFill = (int)Math.min(remaining, MAX_FILLER_SIZE);
+      assert toFill > 0 : "toFill: " + toFill + " -- must be positive (length: " + length + ", remaining: " + remaining + ")";
+
+      put(offset, zeroes, 0, toFill);
+
+      remaining -= toFill;
+      offset += toFill;
     }
   }
 

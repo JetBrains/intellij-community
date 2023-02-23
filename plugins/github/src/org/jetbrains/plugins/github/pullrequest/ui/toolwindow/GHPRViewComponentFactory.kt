@@ -30,6 +30,7 @@ import git4idea.changes.GitParsedChangesBundle
 import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewedState
@@ -270,7 +271,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   private fun createChangesTree(
     parentPanel: JPanel,
     model: SingleValueModel<Collection<Change>>,
-    emptyTextText: String,
+    emptyTextText: @Nls String,
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): ChangesTree {
     val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)

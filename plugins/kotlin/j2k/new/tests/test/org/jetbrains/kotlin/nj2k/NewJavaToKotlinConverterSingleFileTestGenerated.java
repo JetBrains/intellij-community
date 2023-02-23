@@ -5558,6 +5558,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/beforeDot.java");
         }
 
+        @TestMetadata("byteCasts.java")
+        public void testByteCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/byteCasts.java");
+        }
+
         @TestMetadata("castNullObject.java")
         public void testCastNullObject() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/castNullObject.java");
@@ -5573,9 +5578,19 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/charCasts.java");
         }
 
+        @TestMetadata("doubleCasts.java")
+        public void testDoubleCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/doubleCasts.java");
+        }
+
         @TestMetadata("extendsWildcardCast.java")
         public void testExtendsWildcardCast() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/extendsWildcardCast.java");
+        }
+
+        @TestMetadata("floatCasts.java")
+        public void testFloatCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/floatCasts.java");
         }
 
         @TestMetadata("fooCast.java")
@@ -5588,14 +5603,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/typeCastExpression/intCast.java");
         }
 
+        @TestMetadata("intCasts.java")
+        public void testIntCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/intCasts.java");
+        }
+
         @TestMetadata("ktij-17648.java")
         public void testKtij_17648() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/ktij-17648.java");
         }
 
+        @TestMetadata("longCasts.java")
+        public void testLongCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/longCasts.java");
+        }
+
         @TestMetadata("primitiveType.java")
         public void testPrimitiveType() throws Exception {
             runTest("testData/newJ2k/typeCastExpression/primitiveType.java");
+        }
+
+        @TestMetadata("shortCasts.java")
+        public void testShortCasts() throws Exception {
+            runTest("testData/newJ2k/typeCastExpression/shortCasts.java");
         }
 
         @TestMetadata("simpleGenericCast.java")

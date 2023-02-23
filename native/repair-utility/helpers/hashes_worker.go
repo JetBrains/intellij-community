@@ -222,7 +222,7 @@ func downloadManifest(ide IDE) (json []byte, err error) {
 }
 
 func generateManifestUrl(ide IDE) string {
-	url := ide.GetDownloadUrl() + ".manifest"
+	url := ide.GetManifestDownloadUrl()
 	return url
 }
 
@@ -248,8 +248,8 @@ func GenerateFilesInfo() (distrFiles []fileInfo) {
 	manifestGenerationWorkGroup.Wait()
 	distrFiles = distrFilesThreaded.distrFiles
 	sort.Slice(distrFiles[:], func(i, j int) bool {
-    return strings.Compare(distrFiles[i].Path, distrFiles[j].Path) == -1
-  })
+		return strings.Compare(distrFiles[i].Path, distrFiles[j].Path) == -1
+	})
 	logger.InfoLogger.Printf("File struct size: %d, Time %d sec", len(distrFiles), time.Now().Unix()-timebeginning)
 	return distrFiles
 }

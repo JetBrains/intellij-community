@@ -98,7 +98,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
 
-        List<AttachItem> allItems = ContainerUtil.immutableList(getTopLevelItems(indicator, project));
+        List<AttachItem> allItems = Collections.unmodifiableList(getTopLevelItems(indicator, project));
 
         ApplicationManager.getApplication().invokeLater(() -> {
           AttachListStep step = new AttachListStep(allItems, XDebuggerBundle.message("xdebugger.attach.popup.title.default"), project);

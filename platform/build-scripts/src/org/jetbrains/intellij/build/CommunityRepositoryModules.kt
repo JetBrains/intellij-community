@@ -82,6 +82,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.jira")
       spec.withModule("intellij.tasks.java")
+      spec.withProjectLibrary("XmlRPC")
     },
     plugin("intellij.xslt.debugger") { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")

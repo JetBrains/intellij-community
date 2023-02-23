@@ -95,9 +95,11 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      String fqn;
       if (ref != null &&
           ref.resolve() instanceof PsiClass annotationClass &&
-          !runtimeAnnotationsToIgnore.contains(annotationClass.getQualifiedName())) {
+          ((fqn = annotationClass.getQualifiedName()) == null ||
+          !runtimeAnnotationsToIgnore.contains(fqn))) {
         final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
         // Default retention is CLASS: keep it
         if (retentionAnno == null) return true;
@@ -332,8 +334,8 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
   @NotNull
   static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
-    final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
-    psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
+    final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
+    comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
   }
 

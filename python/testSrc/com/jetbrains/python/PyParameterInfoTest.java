@@ -15,7 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -1395,7 +1394,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       final StringBuilder wrongs = new StringBuilder();
 
       // see if highlighted matches
-      final Set<String> highlightSet = ContainerUtil.set(highlighted);
+      final Set<String> highlightSet = Set.of(highlighted);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(hintText[i])) {
           wrongs.append("Highlighted unexpected '").append(hintText[i]).append("'. ");
@@ -1408,7 +1407,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       }
 
       // see if disabled matches
-      final Set<String> disabledSet = ContainerUtil.set(disabled);
+      final Set<String> disabledSet = Set.of(disabled);
       for (int i = 0; i < hintText.length; i++) {
         if (hintFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(hintText[i])) {
           wrongs.append("Highlighted a disabled '").append(hintText[i]).append("'. ");

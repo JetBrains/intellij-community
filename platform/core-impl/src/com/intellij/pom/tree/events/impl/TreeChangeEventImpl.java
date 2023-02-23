@@ -15,6 +15,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -134,6 +135,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   @NotNull
+  @Unmodifiable
   public List<TreeChangeImpl> getSortedChanges() {
     return ContainerUtil.sorted(myChangedElements.values());
   }

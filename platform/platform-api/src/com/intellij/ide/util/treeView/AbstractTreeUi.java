@@ -1601,7 +1601,7 @@ public class AbstractTreeUi {
 
     Object[] passTwo = getTreeStructure().getChildElements(element);
 
-    Set<Object> two = ContainerUtil.set(passTwo);
+    Set<Object> two = ContainerUtil.newHashSet(passTwo);
 
     if (passOne.get().length != passTwo.length) {
       LOG.error(

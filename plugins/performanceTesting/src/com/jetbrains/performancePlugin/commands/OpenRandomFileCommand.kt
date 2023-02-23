@@ -64,34 +64,34 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
     return LinkedHashSet(topFiles + midFiles + lastFiles)
   }
 
-  private fun fileTypeOf(extension: String): FileType {
-    return object : FileType {
-      override fun getName(): String {
-        return when (extension) {
-          "kt" -> "Kotlin"
-          "java" -> "JAVA"
-          else -> {
-            "default"
-          }
+}
+
+fun fileTypeOf(extension: String): FileType {
+  return object : FileType {
+    override fun getName(): String {
+      return when (extension) {
+        "kt" -> "Kotlin"
+        "java" -> "JAVA"
+        else -> {
+          "default"
         }
       }
+    }
 
-      override fun getDescription(): String {
-        throw NotImplementedError("no implemented")
-      }
+    override fun getDescription(): String {
+      throw NotImplementedError("no implemented")
+    }
 
-      override fun getDefaultExtension(): String {
-        return extension
-      }
+    override fun getDefaultExtension(): String {
+      return extension
+    }
 
-      override fun getIcon(): Icon {
-        throw NotImplementedError("no implemented")
-      }
+    override fun getIcon(): Icon {
+      throw NotImplementedError("no implemented")
+    }
 
-      override fun isBinary(): Boolean {
-        throw NotImplementedError("no implemented")
-      }
+    override fun isBinary(): Boolean {
+      throw NotImplementedError("no implemented")
     }
   }
-
 }

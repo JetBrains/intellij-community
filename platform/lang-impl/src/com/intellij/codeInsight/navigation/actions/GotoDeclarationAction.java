@@ -8,10 +8,9 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
 import com.intellij.codeInsight.navigation.CtrlMouseData;
 import com.intellij.codeInsight.navigation.CtrlMouseInfo;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.find.actions.ShowUsagesAction;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -19,13 +18,11 @@ import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -181,7 +178,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
         title = MessageFormat.format(titlePattern, refText);
       }
 
-      NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
+      new PsiTargetNavigator().createPopup(elements, title, processor).showInBestPositionFor(editor);
       return true;
     }
     return false;

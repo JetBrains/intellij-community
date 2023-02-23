@@ -45,7 +45,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
   int maxPayloadSupported();
 
   <Out> Out readRecord(final int recordId,
-                       final @NotNull Reader<Out> reader) throws IOException;
+                       final @NotNull ByteBufferReader<Out> reader) throws IOException;
 
   boolean hasRecord(final int recordId) throws IOException;
 
@@ -63,14 +63,14 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    *                        this outdated id with actual one, since it improves performance (at least)
    */
   <Out> Out readRecord(final int recordId,
-                       final @NotNull Reader<Out> reader,
+                       final @NotNull ByteBufferReader<Out> reader,
                        final @Nullable IntRef redirectToIdRef) throws IOException;
 
   int writeToRecord(final int recordId,
-                    final @NotNull Writer writer) throws IOException;
+                    final @NotNull ByteBufferWriter writer) throws IOException;
 
   int writeToRecord(final int recordId,
-                    final @NotNull Writer writer,
+                    final @NotNull ByteBufferWriter writer,
                     final int expectedRecordSizeHint) throws IOException;
 
   /**
@@ -99,7 +99,7 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
    *                                        recordId.
    */
   int writeToRecord(final int recordId,
-                    final @NotNull Writer writer,
+                    final @NotNull ByteBufferWriter writer,
                     final int expectedRecordSizeHint,
                     final boolean leaveRedirectOnRecordRelocation) throws IOException;
 
@@ -145,14 +145,6 @@ public interface StreamlinedBlobStorage extends Closeable, AutoCloseable, Forcea
   @Override
   void close() throws IOException;
 
-
-  interface Reader<T> {
-    T read(final @NotNull ByteBuffer data) throws IOException;
-  }
-
-  interface Writer {
-    ByteBuffer write(final @NotNull ByteBuffer data) throws IOException;
-  }
 
   interface Processor<E extends Exception> {
     boolean processRecord(final int recordId,

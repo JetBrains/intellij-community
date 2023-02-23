@@ -116,7 +116,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private final @NotNull EditorImpl myEditor;
-  // null renderer means we should not show traffic light icon
+  // null renderer means we should not show a traffic light icon
   private @Nullable ErrorStripeRenderer myErrorStripeRenderer;
   private final MergingUpdateQueue myStatusUpdates;
   private final ErrorStripeMarkersModel myErrorStripeMarkersModel;
@@ -552,65 +552,58 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return new Rectangle(location, hint.getSize());
   }
 
-  private boolean showToolTipByMouseMove(final @NotNull MouseEvent e) {
-    MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
-                                              e.isPopupTrigger());
-
+  private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
     LightweightHint currentHint = getCurrentHint();
-    if (currentHint != null) {
-      if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
-        return true;
-      }
+    if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
+      return true;
     }
-
-    final int visualLine = getVisualLineByEvent(e);
+    int visualLine = getVisualLineByEvent(e);
     myLastVisualLine = visualLine;
     Rectangle area = myEditor.getScrollingModel().getVisibleArea();
     int visualY = myEditor.visualLineToY(visualLine);
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
-    if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
-      final Set<RangeHighlighter> highlighters = new HashSet<>();
-      getNearestHighlighters(this, me.getY(), highlighters);
-      getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
-      if (highlighters.isEmpty()) return false;
-
-      int y = e.getY();
-      RangeHighlighter nearest = getNearestRangeHighlighter(e);
-      if (nearest != null) {
-        ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
-        int eachStartY = range.getStartOffset();
-        int eachEndY = range.getEndOffset();
-        y = eachStartY + (eachEndY - eachStartY) / 2;
-      }
-      if (currentHint != null && y == myCurrentHintAnchorY) return true;
-      me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
-                          e.isPopupTrigger());
-      TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
-      if (bigRenderer != null) {
-        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(true));
-        myCurrentHint = new WeakReference<>(hint);
-        myCurrentHintAnchorY = y;
-        myKeepHint = false;
-        myMouseMovementTracker.reset();
-        return true;
-      }
-      return false;
-    }
-    else {
-      float rowRatio = (float)visualLine /(myEditor.getVisibleLineCount() - 1);
-      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : me.getY();
-      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
-      final List<RangeHighlighterEx> highlighters = new ArrayList<>();
+    if (!isVisible &&
+        UISettings.getInstance().getShowEditorToolTip() &&
+        !UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty()) {
+      float rowRatio = (float)visualLine / (myEditor.getVisibleLineCount() - 1);
+      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : e.getY() + 1;
+      List<RangeHighlighterEx> highlighters = new ArrayList<>();
       collectRangeHighlighters(this, visualLine, highlighters);
       collectRangeHighlighters(myEditor.getFilteredDocumentMarkupModel(), visualLine, highlighters);
-      myEditorFragmentRenderer.show(visualLine, highlighters, me.isAltDown(), createHint(me));
+      myEditorFragmentRenderer.show(visualLine, highlighters, e.isAltDown(), createHint(e.getComponent(), new Point(0,y)));
       return true;
     }
+
+    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY() + 1);
+    if (highlighters.isEmpty()) return false;
+
+    int y = e.getY();
+    RangeHighlighter nearest = getNearestRangeHighlighter(e);
+    if (nearest != null) {
+      ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
+      int eachStartY = range.getStartOffset();
+      int eachEndY = range.getEndOffset();
+      y = eachStartY + (eachEndY - eachStartY) / 2;
+    }
+    if (currentHint != null && y == myCurrentHintAnchorY) {
+      return true;
+    }
+    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
+    if (bigRenderer != null) {
+      LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
+      myCurrentHint = new WeakReference<>(hint);
+      myCurrentHintAnchorY = y;
+      myKeepHint = false;
+      myMouseMovementTracker.reset();
+      return true;
+    }
+    return false;
   }
 
-  private static HintHint createHint(MouseEvent me) {
-    return new HintHint(me)
+  @NotNull
+  private static HintHint createHint(Component component, Point point) {
+    return new HintHint(component, point)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
       .setBorderInsets(JBUI.insets(EditorFragmentRenderer.EDITOR_FRAGMENT_POPUP_BORDER))
@@ -642,9 +635,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return myEditor.visualPositionToOffset(new VisualPosition(visualLine, startLine ? 0 : Integer.MAX_VALUE));
   }
 
-  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, final @NotNull Collection<? super RangeHighlighterEx> highlighters) {
-    final int startOffset = getOffset(fitLineToEditor(myEditor, visualLine - EditorFragmentRenderer.PREVIEW_LINES), true);
-    final int endOffset = getOffset(fitLineToEditor(myEditor, visualLine + EditorFragmentRenderer.PREVIEW_LINES), false);
+  private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, int visualLine, @NotNull Collection<? super RangeHighlighterEx> highlighters) {
+    int startOffset = getOffset(fitLineToEditor(myEditor, visualLine - EditorFragmentRenderer.PREVIEW_LINES), true);
+    int endOffset = getOffset(fitLineToEditor(myEditor, visualLine + EditorFragmentRenderer.PREVIEW_LINES), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       Object tooltip = highlighter.getErrorStripeTooltip();
       if (tooltip != null &&
@@ -658,14 +651,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     });
   }
 
-  private @Nullable RangeHighlighter getNearestRangeHighlighter(final @NotNull MouseEvent e) {
-    List<RangeHighlighter> highlighters = new ArrayList<>();
-    getNearestHighlighters(this, e.getY(), highlighters);
-    getNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), e.getY(), highlighters);
+  private @Nullable RangeHighlighter getNearestRangeHighlighter(@NotNull MouseEvent e) {
+    Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY());
     RangeHighlighter nearestMarker = null;
     int yPos = 0;
     for (RangeHighlighter highlighter : highlighters) {
-      final int newYPos = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
+      int newYPos = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset()).getStartOffset();
 
       if (nearestMarker == null || Math.abs(yPos - e.getY()) > Math.abs(newYPos - e.getY())) {
         nearestMarker = highlighter;
@@ -675,9 +666,17 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     return nearestMarker;
   }
 
-  private void getNearestHighlighters(@NotNull MarkupModelEx markupModel,
-                                      final int scrollBarY,
-                                      final @NotNull Collection<? super RangeHighlighter> nearest) {
+  @NotNull
+  private Set<RangeHighlighter> getNearestHighlighters(int y) {
+    Set<RangeHighlighter> highlighters = new HashSet<>();
+    addNearestHighlighters(this, y, highlighters);
+    addNearestHighlighters(myEditor.getFilteredDocumentMarkupModel(), y, highlighters);
+    return highlighters;
+  }
+
+  private void addNearestHighlighters(@NotNull MarkupModelEx markupModel,
+                                      int scrollBarY,
+                                      @NotNull Collection<? super RangeHighlighter> result) {
     int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
     int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
@@ -685,14 +684,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (scrollBarY >= range.getStartOffset() - getMinMarkHeight() * 2 &&
             scrollBarY <= range.getEndOffset() + getMinMarkHeight() * 2) {
-          nearest.add(highlighter);
+          result.add(highlighter);
         }
       }
       return true;
     });
   }
 
-  private void doClick(final @NotNull MouseEvent e) {
+  private void doClick(@NotNull MouseEvent e) {
     RangeHighlighter marker = getNearestRangeHighlighter(e);
     int offset;
     LogicalPosition logicalPositionToScroll = null;
@@ -708,10 +707,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       offset = marker.getStartOffset();
     }
 
-    final Document doc = myEditor.getDocument();
+    Document doc = myEditor.getDocument();
     if (doc.getLineCount() > 0 && editorPreviewHint == null) {
       // Necessary to expand folded block even if navigating just before one
-      // Very useful when navigating to first unused import statement.
+      // Very useful when navigating to the first unused import statement.
       int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
       myEditor.getCaretModel().moveToOffset(lineEnd);
     }
@@ -766,7 +765,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @Override
-  public void setErrorStripTooltipRendererProvider(final @NotNull ErrorStripTooltipRendererProvider provider) {
+  public void setErrorStripTooltipRendererProvider(@NotNull ErrorStripTooltipRendererProvider provider) {
     myTooltipRendererProvider = provider;
   }
 
@@ -859,7 +858,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private @Nullable BufferedImage myCachedTrack;
     private int myCachedHeight = -1;
 
-    public void dropCache() {
+    void dropCache() {
       myCachedTrack = null;
       myCachedHeight = -1;
     }
@@ -995,7 +994,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         myDirtyYPositions = docRange;
       }
       if (myDirtyYPositions != null) {
-        final Graphics2D imageGraphics = myCachedTrack.createGraphics();
+        Graphics2D imageGraphics = myCachedTrack.createGraphics();
 
         myDirtyYPositions = myDirtyYPositions.intersection(docRange);
         if (myDirtyYPositions == null) myDirtyYPositions = docRange;
@@ -1024,8 +1023,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       return isMacOverlayScrollbar() ? super.adjustColor(c) : EditorImpl.adjustThumbColor(super.adjustColor(c), isDark());
     }
 
-    private void repaint(final @NotNull Graphics g, int gutterWidth, @NotNull ProperTextRange yRange) {
-      final Rectangle clip = new Rectangle(0, yRange.getStartOffset(), gutterWidth, yRange.getLength() + getMinMarkHeight());
+    private void repaint(@NotNull Graphics g, int gutterWidth, @NotNull ProperTextRange yRange) {
+      Rectangle clip = new Rectangle(0, yRange.getStartOffset(), gutterWidth, yRange.getLength() + getMinMarkHeight());
       paintTrackBasement(g, clip);
 
       int startOffset = yPositionToOffset(clip.y - getMinMarkHeight(), true);
@@ -1039,14 +1038,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       g.setClip(oldClip);
     }
 
-    private void drawErrorStripeMarkers(final @NotNull Graphics g, int startOffset, int endOffset) {
-      final Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
-      final Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
+    private void drawErrorStripeMarkers(@NotNull Graphics g, int startOffset, int endOffset) {
+      Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
+      Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
       // sorted by layer
-      final List<PositionedStripe> thinStripes = new ArrayList<>(); // layer desc
-      final List<PositionedStripe> wideStripes = new ArrayList<>(); // layer desc
-      final int[] thinYStart = new int[1];  // in range 0...yStart all spots are drawn
-      final int[] wideYStart = new int[1];  // in range 0...yStart all spots are drawn
+      List<PositionedStripe> thinStripes = new ArrayList<>(); // layer desc
+      List<PositionedStripe> wideStripes = new ArrayList<>(); // layer desc
+      int[] thinYStart = new int[1];  // in range 0...yStart all spots are drawn
+      int[] wideYStart = new int[1];  // in range 0...yStart all spots are drawn
 
       MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
       try {
@@ -1057,13 +1056,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           Queue<PositionedStripe> ends = isThin ? thinEnds : wideEnds;
 
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-          final int ys = range.getStartOffset();
+          int ys = range.getStartOffset();
           int ye = range.getEndOffset();
           if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight();
 
           yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
 
-          final int layer = highlighter.getLayer();
+          int layer = highlighter.getLayer();
 
           PositionedStripe stripe = null;
           int i;
@@ -1172,7 +1171,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     // mouse events
     @Override
-    public void mouseClicked(final @NotNull MouseEvent e) {
+    public void mouseClicked(@NotNull MouseEvent e) {
       CommandProcessor.getInstance().executeCommand(myEditor.getProject(), () -> doMouseClicked(e),
                                                     EditorBundle.message("move.caret.command.name"),
                                                     DocCommandGroupId.noneGroupId(getDocument()), UndoConfirmationPolicy.DEFAULT,
@@ -1239,9 +1238,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       showToolTipByMouseMove(e);
     }
 
-    private void cancelMyToolTips(final MouseEvent e, boolean checkIfShouldSurvive) {
+    private void cancelMyToolTips(MouseEvent e, boolean checkIfShouldSurvive) {
       hideMyEditorPreviewHint();
-      final TooltipController tooltipController = TooltipController.getInstance();
+      TooltipController tooltipController = TooltipController.getInstance();
       if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
         tooltipController.cancelTooltip(ERROR_STRIPE_TOOLTIP_GROUP, e, true);
       }
@@ -1297,7 +1296,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     myLastVisualLine = 0;
   }
 
-  private LightweightHint showTooltip(final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
+  private LightweightHint showTooltip(TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
     hideMyEditorPreviewHint();
     return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
                                                                   myEditor.getVerticalScrollbarOrientation() ==
@@ -1305,7 +1304,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @Override
-  public void addErrorMarkerListener(final @NotNull ErrorStripeListener listener, @NotNull Disposable parent) {
+  public void addErrorMarkerListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parent) {
     myErrorStripeMarkersModel.addErrorMarkerListener(listener, parent);
   }
 
@@ -1338,17 +1337,17 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
-    public TooltipRenderer calcTooltipRenderer(final @NotNull Collection<? extends RangeHighlighter> highlighters) {
+    public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
       LineTooltipRenderer bigRenderer = null;
-      //do not show same tooltip twice
+      //do not show the same tooltip twice
       Set<String> tooltips = null;
 
       for (RangeHighlighter highlighter : highlighters) {
-        final Object tooltipObject = highlighter.getErrorStripeTooltip();
+        Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
         //noinspection HardCodedStringLiteral
-        final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
+        String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (text == null) continue;
 
         if (tooltips == null) {
@@ -1368,12 +1367,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     @Override
-    public @NotNull TooltipRenderer calcTooltipRenderer(final @NotNull String text) {
+    public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text) {
       return new LineTooltipRenderer(text, new Object[]{text});
     }
 
     @Override
-    public @NotNull TooltipRenderer calcTooltipRenderer(final @NotNull String text, final int width) {
+    public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text, int width) {
       return new LineTooltipRenderer(text, width, new Object[]{text});
     }
   }
@@ -1417,7 +1416,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     if (!dimensionsAreValid) {
       recalcEditorDimensions();
     }
-    final int safeY = Math.max(0, y - myEditorScrollbarTop);
+    int safeY = Math.max(0, y - myEditorScrollbarTop);
     int editorY;
     if (myEditorSourceHeight < myEditorTargetHeight) {
       editorY = safeY;
@@ -1432,15 +1431,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     if (line < 0) return 0;
     if (line >= document.getLineCount()) return document.getTextLength();
 
-    final FoldingModelEx foldingModel = myEditor.getFoldingModel();
+    FoldingModelEx foldingModel = myEditor.getFoldingModel();
     if (beginLine) {
-      final int offset = document.getLineStartOffset(line);
-      final FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
+      int offset = document.getLineStartOffset(line);
+      FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
       return startCollapsed != null ? Math.min(offset, startCollapsed.getStartOffset()) : offset;
     }
     else {
-      final int offset = document.getLineEndOffset(line);
-      final FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
+      int offset = document.getLineEndOffset(line);
+      FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
       return startCollapsed != null ? Math.max(offset, startCollapsed.getEndOffset()) : offset;
     }
   }
@@ -1516,10 +1515,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       mouseListener = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent me) {
-          if (SwingUtilities.isLeftMouseButton(me)) showInspectionsHint(me);
+          if (SwingUtilities.isLeftMouseButton(me)) {
+            showInspectionHint(me);
+          }
         }
 
-        private void showInspectionsHint(MouseEvent me) {
+        private void showInspectionHint(MouseEvent me) {
           DataContext context = ActionToolbar.getDataContextFor(TrafficLightButton.this);
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
           if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
@@ -1533,7 +1534,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           }
         }
 
-        private void showContextMenu(MouseEvent me) {
+        private static void showContextMenu(MouseEvent me) {
           DefaultActionGroup group = new DefaultActionGroup();
           /*
           TODO: show context menu by right click
@@ -1661,7 +1662,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           if (!SystemInfo.isWindows) {
             Font font = getFont();
-            font = new FontUIResource(font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2))); // Allow to reset the font by UI
+            font = new FontUIResource(font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2))); // Allow resetting the font by UI
             setFont(font);
           }
         }

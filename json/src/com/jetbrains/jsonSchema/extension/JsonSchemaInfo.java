@@ -26,7 +26,7 @@ public class JsonSchemaInfo {
   @Nullable @NlsSafe private final String myUrl;
   @Nullable private @Nls String myName = null;
   @Nullable private @Nls String myDocumentation = null;
-  @NotNull  private final static Set<String> myDumbNames = ContainerUtil.set(
+  @NotNull  private final static Set<String> myDumbNames = Set.of(
     "schema",
     "lib",
     "cli",

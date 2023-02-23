@@ -25,7 +25,7 @@ internal object GHPRDetailsCommitInfoComponentFactory {
       bindText(scope, commitsVm.selectedCommit.map { commit ->
         commit ?: return@map ""
         val author = commit.author?.user ?: commitsVm.ghostUser
-        "${author.shortName} ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
+        "${author.getPresentableName()} ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
       })
     }
 

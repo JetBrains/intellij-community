@@ -5,7 +5,6 @@ package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
@@ -22,7 +21,6 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
@@ -43,12 +41,6 @@ fun main(rawArgs: Array<String>) {
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
       val busyThread = Thread.currentThread()
 
-      if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-        launch(CoroutineName("coroutine debug probes init")) {
-          enableCoroutineDump()
-        }
-      }
-
       launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
         IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
       }
@@ -65,10 +57,7 @@ fun main(rawArgs: Array<String>) {
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        startApplication(args = args,
-                         appStarterDeferred = appStarterDeferred,
-                         mainScope = this@runBlocking,
-                         busyThread = busyThread)
+        startApplication(args, appStarterDeferred, this@runBlocking, busyThread)
       }
 
       awaitCancellation()
@@ -90,10 +79,10 @@ private fun initProjectorIfNeeded(args: List<String>) {
   }
 
   runActivity("cwm host init") {
-    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider(Supplier {
+    JBR.getProjectorUtils().setLocalGraphicsEnvironmentProvider {
       val projectorEnvClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.awt.image.PGraphicsEnvironment")
       projectorEnvClass.getDeclaredMethod("getInstance").invoke(null) as GraphicsEnvironment
-    })
+    }
 
     val projectorMainClass = AppStarter::class.java.classLoader.loadClass("org.jetbrains.projector.server.ProjectorLauncher\$Starter")
     MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup()).findStatic(

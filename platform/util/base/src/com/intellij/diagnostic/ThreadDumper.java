@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public final class ThreadDumper {
         StackTraceElement[] trace = threadInfo.getStackTrace();
         return trace == null ? 0 : -trace.length;
       }) // show meaningful stacktraces first
-      .thenComparing(threadInfo -> threadInfo.getThreadName()) // sorted by name among same stacktraces
+      .thenComparing(threadInfo -> StringUtilRt.notNullize(threadInfo.getThreadName())) // sorted by name among same stacktraces
     );
     return threads;
   }

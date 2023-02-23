@@ -6,6 +6,7 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,8 +17,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import static com.intellij.openapi.application.ActionsKt.runReadAction;
 
 public final class TestProxyPrinterProvider {
 
@@ -80,7 +79,7 @@ public final class TestProxyPrinterProvider {
     }
 
     private void printLine(@NotNull String line, @NotNull ConsoleViewContentType contentType) {
-      Filter.Result result = runReadAction(() -> {
+      Filter.Result result = ReadAction.compute(() -> {
         try {
           return myFilter.applyFilter(line, line.length());
         }

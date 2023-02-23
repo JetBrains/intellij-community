@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -42,7 +41,7 @@ import java.util.Set;
 public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
-  protected void checkDomElement(DomElement element, DomElementAnnotationHolder holder, DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof ActionOrGroup) {
       checkActionOrGroup((ActionOrGroup)element, holder);
     }
@@ -122,7 +121,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     }
   }
 
-  private static final Set<String> EXTENSION_KNOWN_NON_NLS_ATTRIBUTES = ContainerUtil.immutableSet(
+  private static final Set<String> EXTENSION_KNOWN_NON_NLS_ATTRIBUTES = Set.of(
     Extension.ID_ATTRIBUTE, Extension.ORDER_ATTRIBUTE, Extension.OS_ATTRIBUTE
   );
 

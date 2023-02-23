@@ -6,13 +6,17 @@ import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileWriter
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.*
 import kotlin.io.path.writeText
 
@@ -22,6 +26,7 @@ class HtmlReportGenerator(
   private val comparisonFilterName: String,
   suggestionsComparators: List<SuggestionsComparator>,
   featuresStorages: List<FeaturesStorage>,
+  fullLineStorages: List<FullLineLogsStorage>,
   isCompletionGolfEvaluation: Boolean
 ) : FullReportGenerator {
   companion object {
@@ -49,7 +54,7 @@ class HtmlReportGenerator(
   private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
   private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
-    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
+    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
   }
   else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
@@ -58,11 +63,14 @@ class HtmlReportGenerator(
   private fun copyResources(resource: String) {
     val resultFile = Paths.get(dirs.resourcesDir.toString(), resource).toFile()
     resultFile.parentFile.mkdirs()
-    Files.copy(HtmlReportGenerator::class.java.getResourceAsStream(resource), resultFile.toPath())
+    Files.copy(HtmlReportGenerator::class.java.getResourceAsStream(resource)!!, resultFile.toPath())
   }
 
   init {
     resources.forEach { copyResources(it) }
+    if (isCompletionGolfEvaluation) {
+      downloadV2WebFiles()
+    }
   }
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) = fileGenerator.generateFileReport(sessions)
@@ -302,5 +310,20 @@ class HtmlReportGenerator(
         ${ifSessions("|&&Math.max(${evaluationTypes.joinToString { "toNum(data['Sessions$it'])" }})>-!emptyHidden();")}
         |</script>""".trimMargin()
     return toolbar + toolbarScript
+  }
+
+  private fun downloadV2WebFiles() {
+    val resultFile = File(dirs.resourcesDir.toString())
+
+    Files.copy(
+      BufferedInputStream(URL("https://packages.jetbrains.team/files/p/ccrm/completion-golf-web/index.js").openStream()),
+      resultFile.resolve("index-v2.js").toPath(),
+      StandardCopyOption.REPLACE_EXISTING
+    )
+    Files.copy(
+      BufferedInputStream(URL("https://packages.jetbrains.team/files/p/ccrm/completion-golf-web/index.css").openStream()),
+      resultFile.resolve("index-v2.css").toPath(),
+      StandardCopyOption.REPLACE_EXISTING
+    )
   }
 }

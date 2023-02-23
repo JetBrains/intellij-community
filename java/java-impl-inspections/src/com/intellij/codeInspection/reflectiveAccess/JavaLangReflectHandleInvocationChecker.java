@@ -38,11 +38,11 @@ final class JavaLangReflectHandleInvocationChecker {
     .register(METHOD_TYPE_WITH_METHOD_TYPE_MATCHER, call -> getLazyMethodSignatureForReturnTypeAndMethodType(call))
     .register(GENERIC_METHOD_TYPE_MATCHER, call -> getLazyMethodSignatureForGenericMethodType(call));
 
-  private static final Set<String> METHOD_HANDLE_INVOKE_NAMES = ContainerUtil.set(INVOKE, INVOKE_EXACT, INVOKE_WITH_ARGUMENTS);
+  private static final Set<String> METHOD_HANDLE_INVOKE_NAMES = Set.of(INVOKE, INVOKE_EXACT, INVOKE_WITH_ARGUMENTS);
 
   static boolean checkMethodHandleInvocation(@NotNull PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     final String referenceName = methodCall.getMethodExpression().getReferenceName();
-    if (METHOD_HANDLE_INVOKE_NAMES.contains(referenceName)) {
+    if (referenceName != null && METHOD_HANDLE_INVOKE_NAMES.contains(referenceName)) {
       final PsiMethod method = methodCall.resolveMethod();
       if (method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLE)) {
         if (isWithDynamicArguments(methodCall)) {

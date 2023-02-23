@@ -58,4 +58,12 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         doCheck("FlexibleFunctionalInterfaceType", ::checkFlexibleFunctionalInterfaceType)
     }
 
+    fun testInvokedLambdaBody() {
+        doCheck("InvokedLambdaBody", ::checkInvokedLambdaBody)
+    }
+
+    fun testLambdaImplicitParameters() {
+        doCheck("LambdaImplicitParameters", ::checkLambdaImplicitParameters)
+    }
+
 }

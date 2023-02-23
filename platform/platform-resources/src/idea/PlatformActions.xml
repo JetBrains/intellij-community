@@ -201,7 +201,7 @@
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
-    <action id="EnableNewUi" icon="AllIcons.Actions.EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction"/>
+    <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction"/>
     <action id="DisableNewUi" class="com.intellij.ide.actions.DisableNewUiAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
@@ -621,11 +621,12 @@
             </action>
             <separator/>
             <action id="ToggleCompactMode" class="com.intellij.ide.actions.ToggleCompactModeAction" />
-            <separator/>
-            <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
-              <synonym key="action.SwitchIdeScaleAction.text"/>
-            </action>
           </group>
+
+          <separator/>
+          <action id="SwitchIdeScaleAction" class="com.intellij.ide.actions.SwitchIdeScaleAction">
+            <synonym key="action.SwitchIdeScaleAction.text"/>
+          </action>
 
           <group id="UIToggleActions">
             <separator/>
@@ -741,17 +742,13 @@
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
         <action id="MoveWindowToNextDisplay" class="com.intellij.ide.actions.MoveWindowToNextDisplayAction"/>
-        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
-        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
-        <group id="StoreLayoutGroup" popup="true">
-          <group id="StoreNamedLayoutGroup" class="com.intellij.ide.actions.StoreNamedLayoutActionGroup"/>
+        <group id="LayoutsGroup" popup="true">
+          <group id="CustomLayoutsGroup" class="com.intellij.ide.actions.CustomLayoutsActionGroup" />
           <separator/>
-          <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction">
-            <override-text place="MainMenu"/>
-          </action>
+          <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
+          <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+          <action id="StoreNewLayout" class="com.intellij.ide.actions.StoreNewLayoutAction" />
         </group>
-        <group id="RestoreNamedLayoutGroup" class="com.intellij.ide.actions.RestoreNamedLayoutActionGroup" popup="true"/>
-        <group id="DeleteNamedLayoutGroup" class="com.intellij.ide.actions.DeleteNamedLayoutActionGroup" popup="true"/>
         <separator/>
         <group id="ActiveToolwindowGroup" popup="true">
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
@@ -855,6 +852,7 @@
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
+        <action id="MeetNewUi" class="com.intellij.ide.actions.MeetNewUiAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>

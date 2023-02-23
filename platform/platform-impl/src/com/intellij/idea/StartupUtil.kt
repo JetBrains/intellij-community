@@ -191,6 +191,12 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+    launch(CoroutineName("coroutine debug probes init")) {
+      enableCoroutineDump()
+    }
+  }
+
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
   // async - handle error separately
@@ -233,7 +239,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     val rwLockHolder = rwLockHolderDeferred.await()
     val app = runActivity("app instantiation") {
-      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), rwLockHolder)
+      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), false, rwLockHolder)
     }
 
     runActivity("telemetry waiting") {

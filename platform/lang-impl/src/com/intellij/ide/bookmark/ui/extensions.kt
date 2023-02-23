@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.icons.AllIcons
@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.tree.TreeUtil
@@ -38,6 +40,9 @@ internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
 
 internal val AbstractTreeNode<*>.asVirtualFile
   get() = (this as? ProjectViewNode<*>)?.virtualFile
+
+internal val AbstractTreeNode<*>.module: Module?
+  get() = this.asVirtualFile?.let { ModuleUtilCore.findModuleForFile(it, project) }
 
 @Suppress("DialogTitleCapitalization")
 internal fun StatusText.initialize(owner: Component) {

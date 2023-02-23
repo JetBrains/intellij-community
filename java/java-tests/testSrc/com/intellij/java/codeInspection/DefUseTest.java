@@ -63,6 +63,8 @@ public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFieldOverwriteAfterQualifierUpdate() { doTest(); }
   public void testAssignmentInCatch() { doTest(); }
 
+  public void testFieldCouldBeUsedOutside() { doTest(); }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

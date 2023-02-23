@@ -58,7 +58,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
+import static org.jetbrains.idea.maven.utils.MavenUtil.verifyMavenSdkRequirements;
 
 public final class MavenExternalParameters {
 
@@ -414,6 +414,10 @@ public final class MavenExternalParameters {
 
     for (String goal : parameters.getGoals()) {
       parametersList.add(goal);
+    }
+
+    for (var cmdOption : parameters.getCmdOptions()) {
+      parametersList.add(cmdOption);
     }
 
     if (parameters.getPomFileName() != null && !FileUtil.namesEqual(MavenConstants.POM_XML, parameters.getPomFileName())) {

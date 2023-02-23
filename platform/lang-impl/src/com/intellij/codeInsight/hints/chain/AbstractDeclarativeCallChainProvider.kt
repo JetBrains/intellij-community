@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.hints.chain
 
 import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.NoPresentableEntriesException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -9,6 +11,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 
 abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : PsiElement, ExpressionType, TypeComputationContext> : InlayHintsProvider {
+  companion object {
+    private val logger = logger<AbstractDeclarativeCallChainProvider<*, *, *>>()
+  }
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     if (!isAvailable(file, editor)) return null
@@ -58,8 +63,12 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
       if (reversedChain.asSequence().distinctBy { it.type }.count() < uniqueTypeCount) return
 
       for ((expression, type) in reversedChain) {
-        sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hasBackground = true) {
-          type.buildTree(expression, file.project, context, this)
+        try {
+          sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hasBackground = true) {
+            type.buildTree(expression, file.project, context, this)
+          }
+        } catch (e: NoPresentableEntriesException) {
+          logger.warn("No presentable entries for type: ${presentableType(type)}", e)
         }
       }
       return
@@ -95,6 +104,10 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
   protected abstract fun PsiElement.skipParenthesesAndPostfixOperatorsDown(): PsiElement?
 
   protected abstract fun getTypeComputationContext(topmostDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
+
+  protected open fun presentableType(type: ExpressionType) : String {
+    return type.toString()
+  }
 
   protected val uniqueTypeCount: Int
     get() = 2

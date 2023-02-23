@@ -322,7 +322,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       @Override
       public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
         requested.addAll(files);
-        Set<VirtualFile> denied = ContainerUtil.set(filesToDeny);
+        Set<VirtualFile> denied = ContainerUtil.newHashSet(filesToDeny);
         denied.retainAll(files);
         return denied;
       }

@@ -43,13 +43,11 @@ private class FileInfo(val file: Path) {
   val checksum: ByteArray by lazy(LazyThreadSafetyMode.PUBLICATION) { digest(file) }
 }
 
-/// the expected scales of images that we have the macOS touch bar uses 2.5x scale, the application icon (which one?) is 4x on macOS
 private val scales = floatArrayOf(
   1f,
   1.25f, /*Windows*/
   1.5f, /*Windows*/
   2.0f,
-  2.5f /*macOS touchBar*/
 )
 
 /**

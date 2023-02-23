@@ -327,7 +327,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public boolean isExcluded(@NotNull RefEntity entity) {
     CommonProblemDescriptor[] excluded = myExcludedElements.get(entity);
     CommonProblemDescriptor[] problems = myProblemElements.get(entity);
-    return excluded != null && problems != null && Comparing.equal(ContainerUtil.set(excluded), ContainerUtil.set(problems));
+    return excluded != null && problems != null && Comparing.equal(ContainerUtil.newHashSet(excluded), ContainerUtil.newHashSet(problems));
   }
 
   @Override

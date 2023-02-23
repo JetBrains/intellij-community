@@ -4,8 +4,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.AnnotationUtil.*
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
-import com.intellij.codeInsight.navigation.NavigationUtil
-import com.intellij.ide.util.PsiClassListCellRenderer
+import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -165,9 +164,9 @@ object ExtractMethodPipeline {
     }
 
     val preselection = findDefaultTargetCandidate(classToOptionMap.keys.toList())
-    NavigationUtil
-      .getPsiElementPopup(classToOptionMap.keys.toTypedArray(), PsiClassListCellRenderer(),
-                          RefactoringBundle.message("choose.destination.class"), processor, preselection)
+    PsiTargetNavigator().selection(preselection)
+      .createPopup(classToOptionMap.keys.toTypedArray(),
+                          RefactoringBundle.message("choose.destination.class"), processor)
       .showInBestPositionFor(editor)
 
     return selectedOption

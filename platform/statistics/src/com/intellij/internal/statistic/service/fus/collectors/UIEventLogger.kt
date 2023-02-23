@@ -4,13 +4,10 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId
-import com.intellij.internal.statistic.eventLog.events.EventId1
-import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.lang.Language
 
-private val uiEventGroup = EventLogGroup("ui.event", 16)
+private val uiEventGroup = EventLogGroup("ui.event", 17)
 
 @JvmField
 val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
@@ -142,6 +139,19 @@ val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
   "StatusBarPopupShown",
   EventFields.Class("class"),
 )
+
+@JvmField
+val IdeZoomChanged: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.changed",
+                                                                     IdeZoomEventFields.zoomMode,
+                                                                     IdeZoomEventFields.place,
+                                                                     IdeZoomEventFields.zoomScalePercent,
+                                                                     IdeZoomEventFields.presentationMode)
+
+@JvmField
+val IdeZoomSwitcherClosed: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.switcher.closed",
+                                                                            IdeZoomEventFields.applied,
+                                                                            IdeZoomEventFields.finalZoomScalePercent,
+                                                                            IdeZoomEventFields.presentationMode)
 
 internal class UIEventLoggerC : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = uiEventGroup

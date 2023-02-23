@@ -84,7 +84,11 @@
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
     <trustedProjectsLocator implementation="org.jetbrains.idea.maven.wizards.MavenTrustedProjectsLocator"/>
 
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
+    <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager"
+                        serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManagerImpl"/>
+    <applicationService serviceInterface="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactory"
+                        serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager$MavenServerConnectorFactoryImpl"/>
+
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
@@ -348,9 +352,6 @@
 
     <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
                  description="Create facets in a background thread instead of EDT"/>
-
-    <registryKey key="maven.import.to.workspace.model.ignored.facet.importers" defaultValue=""
-                 description="Comma-separated list of facet importer class names that should be ignored during import for better performance. E.g., JpaFacetImporter"/>
 
     <intentionAction>
       <language>XML</language>

@@ -3,8 +3,9 @@ package com.intellij.ide.ui.experimental.meetNewUi
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.paint.LinePainter2D.StrokeType
-import com.intellij.ui.paint.RectanglePainter2D.DRAW
+import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -41,7 +42,7 @@ internal class MeetNewUiButton(text: @NlsContexts.Button String? = null, icon: I
   private var fireClicked = false
 
   init {
-    border = JBUI.Borders.empty(8, 8, 8, 12)
+    border = JBUI.Borders.empty(8, if (icon == null) 12 else 8, 8, 12)
     iconTextGap = JBUI.scale(5)
 
     addMouseListener(object : MouseAdapter() {
@@ -66,8 +67,14 @@ internal class MeetNewUiButton(text: @NlsContexts.Button String? = null, icon: I
   }
 
   override fun paintComponent(g: Graphics?) {
-    super.paintComponent(g)
     g as Graphics2D
+
+    g.paint = UIUtil.getGradientPaint(0f, 0f, JBUI.CurrentTheme.Button.buttonColorStart(),
+                                      0f, height.toFloat(), JBUI.CurrentTheme.Button.buttonColorEnd())
+    RectanglePainter2D.FILL.paint(g, 0.0, 0.0, width.toDouble(), height.toDouble(), selectionArc.toDouble(),
+                                  StrokeType.INSIDE, 0.0, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    super.paintComponent(g)
 
     val borderSize: Int
     if (selected) {
@@ -79,8 +86,8 @@ internal class MeetNewUiButton(text: @NlsContexts.Button String? = null, icon: I
       borderSize = unselectedBorderSize
     }
 
-    DRAW.paint(g, 0.0, 0.0, width.toDouble(), height.toDouble(), selectionArc.toDouble(),
-               StrokeType.INSIDE, JBUI.scale(borderSize).toDouble(), RenderingHints.VALUE_ANTIALIAS_ON)
+    RectanglePainter2D.DRAW.paint(g, 0.0, 0.0, width.toDouble(), height.toDouble(), selectionArc.toDouble(),
+                                  StrokeType.INSIDE, JBUI.scale(borderSize).toDouble(), RenderingHints.VALUE_ANTIALIAS_ON)
   }
 
   fun addClickListener(listener: Runnable) {

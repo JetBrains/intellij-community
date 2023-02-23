@@ -164,7 +164,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     return data;
   }
 
-  private static void addFileNamePattern(@NotNull List<EventPair<?>> data, @NotNull VirtualFile file) {
+  private static void addFileNamePattern(@NotNull List<? super EventPair<?>> data, @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     if (!(fileTypeManager instanceof FileTypeManagerImpl)) {

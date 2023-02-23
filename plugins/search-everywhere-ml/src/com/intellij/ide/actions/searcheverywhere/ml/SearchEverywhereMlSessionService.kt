@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
@@ -68,12 +69,15 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
                                keysTyped: Int,
                                backspacesTyped: Int,
                                searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                               searchScope: ScopeDescriptor?,
+                               isSearchEverywhere: Boolean) {
     if (!isEnabled()) return
 
     val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
-      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider)
+      project, experiment, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
+      searchScope, isSearchEverywhere
     )
   }
 

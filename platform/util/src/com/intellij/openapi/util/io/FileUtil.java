@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -1307,12 +1307,16 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static String expandUserHome(@NotNull String path) {
-    if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = SystemProperties.getUserHome() + path.substring(1);
+  public static @NotNull String expandUserHome(@NotNull String path) {
+    if (path.equals("~")) {
+      return SystemProperties.getUserHome();
     }
-    return path;
+    else if (path.startsWith("~/") || path.startsWith("~\\")) {
+      return SystemProperties.getUserHome() + path.substring(1);
+    }
+    else {
+      return path;
+    }
   }
 
   public static File @NotNull [] notNullize(File @Nullable [] files) {

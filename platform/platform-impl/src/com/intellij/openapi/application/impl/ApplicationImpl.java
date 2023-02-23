@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -91,6 +91,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
   private int myWriteStackBase;
 
+  private final ReadActionCacheIml myReadActionCacheIml = new ReadActionCacheIml();
+
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
@@ -106,8 +108,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  @TestOnly
-  public ApplicationImpl(boolean isHeadless, RwLockHolder lockHolder) {
+  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, boolean isTestMode, @NotNull RwLockHolder lockHolder) {
     super(null, true);
 
     myLock = lockHolder.getLock$intellij_platform_ide_impl();
@@ -115,56 +116,22 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
     registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
-
-    BundleBase.assertOnMissedKeys(true);
-
-    // do not crash AWT on exceptions
-    AWTExceptionHandler.register();
-
-    Disposer.setDebugMode(true);
-
-    myIsInternal = true;
-    myTestModeFlag = true;
-    myHeadlessMode = isHeadless;
-    myCommandLineMode = true;
-    Logger.setUnitTestMode();
-
-    mySaveAllowed = false;
-
-    // reset back to null only when all components already disposed
-    ApplicationManager.setApplication(this, myLastDisposable);
-
-    // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!IMPLICIT_READ_ON_EDT_DISABLED) {
-      EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
-    }
-
-    NoSwingUnderWriteAction.watchForEvents(this);
-  }
-
-  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, RwLockHolder lockHolder) {
-    super(null, true);
-
-    myLock = lockHolder.getLock$intellij_platform_ide_impl();
-
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ReadActionCache.class, myReadActionCacheIml, ComponentManagerImpl.fakeCorePluginDescriptor);
 
     myIsInternal = isInternal;
-    myTestModeFlag = false;
+    myTestModeFlag = isTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
-    if (!isHeadless) {
-      mySaveAllowed = true;
-    }
+    mySaveAllowed = !isHeadless;
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
+    Activity activity = StartUpMeasurer.isEnabled() ? StartUpMeasurer.startActivity("AppDelayQueue instantiation") : null;
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
-    activity.end();
+    if (activity != null) {
+      activity.end();
+    }
 
     NoSwingUnderWriteAction.watchForEvents(this);
 
@@ -865,6 +832,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -878,6 +846,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -891,6 +860,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return computation.compute();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1097,6 +1067,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       action.run();
     }
     finally {
+      myReadActionCacheIml.clear();
       if (status != null) {
         myLock.endRead(status);
       }
@@ -1270,6 +1241,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     @Override
     public void finish() {
+      myReadActionCacheIml.clear();
       myLock.endRead(myReader);
     }
   }

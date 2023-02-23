@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -70,9 +71,7 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.WEST);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
+    String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
@@ -126,10 +125,7 @@ public final class WelcomeScreenComponentFactory {
       panel.add(logo, BorderLayout.NORTH);
     }
 
-    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                             : ApplicationNamesInfo.getInstance().getFullProductName();
-    JLabel appName = new JLabel(applicationName);
+    JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
     appName.setFont(WelcomeScreenUIManager.getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
@@ -324,10 +320,11 @@ public final class WelcomeScreenComponentFactory {
     return selectablePanel;
   }
 
+  private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
+
   private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
     if (ExperimentalUI.isNewUI()) {
-      return IconUtil.resizeSquared(
-        notificationTypes.isEmpty() ? AllIcons.Toolwindows.Notifications : AllIcons.Toolwindows.NotificationsNew, JBUIScale.scale(16));
+      return IconUtil.resizeSquared(NOTIFICATION_ICON.getInfoIcon(!notificationTypes.isEmpty()), JBUIScale.scale(16));
     }
     else {
       if (notificationTypes.isEmpty()) {
@@ -354,21 +351,21 @@ public final class WelcomeScreenComponentFactory {
   }
 
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
-    JPanel panel = new NonOpaquePanel(new FlowLayout(FlowLayout.RIGHT));
     JComponent errorsLink = createErrorsLink(parentDisposable);
     JComponent eventLink = createEventLink("", parentDisposable);
+    JPanel panel = new NonOpaquePanel();
     if (ExperimentalUI.isNewUI()) {
+      panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
       panel.setBorder(JBUI.Borders.empty(10, 0, 16, 24));
       errorsLink.setBorder(JBUI.Borders.empty(5, 5, 5, 13));
       eventLink.setBorder(JBUI.Borders.empty(5));
-      panel.add(errorsLink);
-      panel.add(eventLink);
     }
     else {
+      panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
       panel.setBorder(JBUI.Borders.empty(10, 0, 0, 3));
-      panel.add(errorsLink);
-      panel.add(eventLink);
     }
+    panel.add(errorsLink);
+    panel.add(eventLink);
     return panel;
   }
 
@@ -394,5 +391,11 @@ public final class WelcomeScreenComponentFactory {
 
     StartPagePromoter selectedPromoter = promoters.get(new Random().nextInt(promoters.size()));
     return selectedPromoter.getPromotion(isEmptyState);
+  }
+
+  public static @NlsSafe String getAppName() {
+    return Boolean.getBoolean("ide.ui.name.with.edition")
+           ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+           : ApplicationNamesInfo.getInstance().getFullProductName();
   }
 }

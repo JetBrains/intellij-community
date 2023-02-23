@@ -9,9 +9,8 @@ import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.PluginSet
-import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
-import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.util.PropertiesComponent
@@ -30,7 +29,6 @@ import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -256,14 +254,7 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
   }
 
   launch {
-    val noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted()
-    if (noteAccepted == true) {
-      UpdateSettings.getInstance().isThirdPartyPluginsAllowed = true
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED)
-    }
-    else if (noteAccepted == false) {
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED)
-    }
+    PluginManagerMain.checkThirdPartyPluginsAllowed()
   }
 
   if (app.isHeadlessEnvironment) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
@@ -323,11 +323,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  public void resetUndoRedoActions() {
-    SwingUndoUtil.resetUndoRedoActions(mySearchTextComponent);
-    SwingUndoUtil.resetUndoRedoActions(myReplaceTextComponent);
-  }
-
   @Override
   public void removeNotify() {
     super.removeNotify();
@@ -529,21 +524,19 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   public void addTextToRecent(@NotNull JTextComponent textField) {
     final String text = textField.getText();
-    if (text.length() > 0) {
-      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-      if (textField == mySearchTextComponent) {
-        if (myAddSearchResultsToGlobalSearch) {
-          findInProjectSettings.addStringToFind(text);
-        }
-        if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+    if (textField == mySearchTextComponent) {
+      if (myAddSearchResultsToGlobalSearch) {
+        findInProjectSettings.addStringToFind(text);
       }
-      else {
-        findInProjectSettings.addStringToReplace(text);
-        if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+      if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
+      }
+    }
+    else {
+      findInProjectSettings.addStringToReplace(text);
+      if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
       }
     }
   }

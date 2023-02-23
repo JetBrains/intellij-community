@@ -1,23 +1,3 @@
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toByte(): Byte' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Byte.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
-// ERROR: Using 'toShort(): Short' is an error. Unclear conversion. To achieve the same result convert to Int explicitly and then to Short.
 class J {
     fun testField(f: Float, d: Double) {
         var c = 1.toChar()
@@ -26,22 +6,18 @@ class J {
         c = (c.code.toFloat() * f).toInt().toChar()
         c = (c.code.toDouble() / d).toInt().toChar()
         c = (c.code.toDouble() % (f + d + f)).toInt().toChar()
-
-        // TODO KTIJ-24541
         var b: Byte = 1
-        b = (b + f).toByte()
-        b = (b - d).toByte()
-        b = (b * f).toByte()
-        b = (b / d).toByte()
-        b = (b % (f + d + f)).toByte()
-
-        // TODO KTIJ-24541
+        b = (b + f).toInt().toByte()
+        b = (b - d).toInt().toByte()
+        b = (b * f).toInt().toByte()
+        b = (b / d).toInt().toByte()
+        b = (b % (f + d + f)).toInt().toByte()
         var s: Short = 1
-        s = (s + f).toShort()
-        s = (s - d).toShort()
-        s = (s * f).toShort()
-        s = (s / d).toShort()
-        s = (s % (f + d + f)).toShort()
+        s = (s + f).toInt().toShort()
+        s = (s - d).toInt().toShort()
+        s = (s * f).toInt().toShort()
+        s = (s / d).toInt().toShort()
+        s = (s % (f + d + f)).toInt().toShort()
         var i = 1
         i = (i + f).toInt()
         i = (i - d).toInt()
@@ -63,22 +39,18 @@ class J {
         charArr[0] = (charArr[0].code.toFloat() * f).toInt().toChar()
         charArr[0] = (charArr[0].code.toDouble() / d).toInt().toChar()
         charArr[0] = (charArr[0].code.toDouble() % (f + d + f)).toInt().toChar()
-
-        // TODO KTIJ-24541
         val byteArr = byteArrayOf(1)
-        byteArr[0] = (byteArr[0] + f).toByte()
-        byteArr[0] = (byteArr[0] - d).toByte()
-        byteArr[0] = (byteArr[0] * f).toByte()
-        byteArr[0] = (byteArr[0] / d).toByte()
-        byteArr[0] = (byteArr[0] % (f + d + f)).toByte()
-
-        // TODO KTIJ-24541
+        byteArr[0] = (byteArr[0] + f).toInt().toByte()
+        byteArr[0] = (byteArr[0] - d).toInt().toByte()
+        byteArr[0] = (byteArr[0] * f).toInt().toByte()
+        byteArr[0] = (byteArr[0] / d).toInt().toByte()
+        byteArr[0] = (byteArr[0] % (f + d + f)).toInt().toByte()
         val shortArr = shortArrayOf(1)
-        shortArr[0] = (shortArr[0] + f).toShort()
-        shortArr[0] = (shortArr[0] - d).toShort()
-        shortArr[0] = (shortArr[0] * f).toShort()
-        shortArr[0] = (shortArr[0] / d).toShort()
-        shortArr[0] = (shortArr[0] % (f + d + f)).toShort()
+        shortArr[0] = (shortArr[0] + f).toInt().toShort()
+        shortArr[0] = (shortArr[0] - d).toInt().toShort()
+        shortArr[0] = (shortArr[0] * f).toInt().toShort()
+        shortArr[0] = (shortArr[0] / d).toInt().toShort()
+        shortArr[0] = (shortArr[0] % (f + d + f)).toInt().toShort()
         val intArr = intArrayOf(1)
         intArr[0] = (intArr[0] + f).toInt()
         intArr[0] = (intArr[0] - d).toInt()

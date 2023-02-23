@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
 
@@ -13,7 +12,7 @@ public interface SpockConstants {
   @NlsSafe String SETUP_SPEC_METHOD_NAME = "setupSpec";
   @NlsSafe String CLEANUP_SPEC_METHOD_NAME = "cleanupSpec";
 
-  Set<String> FIXTURE_METHOD_NAMES = ContainerUtil.immutableSet(
+  Set<String> FIXTURE_METHOD_NAMES = Set.of(
     SETUP_METHOD_NAME,
     CLEANUP_METHOD_NAME,
     SETUP_SPEC_METHOD_NAME,

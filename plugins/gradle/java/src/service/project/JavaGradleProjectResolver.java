@@ -264,7 +264,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   @NotNull
   @Override
   public Set<Class<?>> getExtraProjectModelClasses() {
-    return ContainerUtil.set(AnnotationProcessingModel.class, ProjectDependencies.class);
+    return Set.of(AnnotationProcessingModel.class, ProjectDependencies.class);
   }
 
   private void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {

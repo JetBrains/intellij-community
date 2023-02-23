@@ -73,13 +73,14 @@ import java.util.stream.Stream;
 public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
   private final Tree myTree;
+  @NotNull
   private final Project myProject;
   private final TaintNode myRoot;
   private final PropagateTreeListener myTreeSelectionListener;
   private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
   private Content myContent;
 
-  PropagateAnnotationPanel(Project project, @NotNull TaintNode root, @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback) {
+  PropagateAnnotationPanel(@NotNull Project project, @NotNull TaintNode root, @NotNull Consumer<? super Collection<@NotNull TaintNode>> callback) {
     super(new BorderLayout());
     myTree = PropagateTree.create(this, root);
     myRoot = root;

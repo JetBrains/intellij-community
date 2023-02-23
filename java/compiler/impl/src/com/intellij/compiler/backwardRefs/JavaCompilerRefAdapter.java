@@ -11,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @NotNull
   @Override
   public Set<FileType> getFileTypes() {
-    return ContainerUtil.set(JavaFileType.INSTANCE, JavaClassFileType.INSTANCE);
+    return Set.of(JavaFileType.INSTANCE, JavaClassFileType.INSTANCE);
   }
 
   @Override

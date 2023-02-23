@@ -17,11 +17,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
@@ -30,10 +33,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,8 +139,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final PsiTypeCodeFragment myTypeCodeFragment;
     private final EditorComboBox myToTypeEditor;
 
-    public SingleElement(@NotNull Project project,
-                         PsiElement @NotNull [] roots) {
+    public SingleElement(@NotNull Project project, PsiElement @NotNull [] roots) {
       super(project, roots, null);
       LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
@@ -149,14 +148,16 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       PsiElement root = roots[0];
       if (root instanceof PsiParameter) {
         final PsiElement scope = ((PsiParameter)root).getDeclarationScope();
-        if (scope instanceof PsiMethod) {
+        if (scope instanceof PsiMethod && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_5)) {
           flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
         }
         else if (scope instanceof PsiCatchSection && PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
           flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
         }
       }
-      flags |= JavaCodeFragmentFactory.ALLOW_VOID;
+      else if (root instanceof PsiMethod) {
+        flags |= JavaCodeFragmentFactory.ALLOW_VOID;
+      }
       myTypeCodeFragment = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(text, root, true, flags);
 
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -167,7 +168,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
+        public void documentChanged(@NotNull DocumentEvent e) {
           documentManager.commitDocument(document);
           validateButtons();
         }
@@ -178,11 +179,14 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     @Override
     protected void canRun() throws ConfigurationException {
       super.canRun();
-      if (!checkType(getMigrationType()))
+      if (!checkType(getMigrationType())) {
         throw new ConfigurationException(
           JavaBundle.message("type.migration.dialog.message.invalid.type", StringUtil.escapeXmlEntities(myTypeCodeFragment.getText())));
-      if (isVoidVariableMigration()) throw new ConfigurationException(
-        JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+      }
+      if (isIllegalVoidMigration()) {
+        throw new ConfigurationException(
+          JavaBundle.message("type.migration.dialog.message.void.not.applicable"));
+      }
     }
 
     @Override
@@ -194,11 +198,11 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints gc) {
       final PsiType type = getRootType();
       final String typeText = type != null ? type.getPresentableText() : "<unknown>";
-      panel.add(new JLabel(JavaRefactoringBundle.message("type.migration.label", getElementPresentation(myRoots[0]), typeText)), gc);
+      panel.add(new JLabel(getTypeMigrationLabelText(myRoots[0], typeText)), gc);
       panel.add(myToTypeEditor, gc);
     }
 
-    private String @Nullable [] getValidTypes(final Project project, final PsiElement root) {
+    private String @Nullable [] getValidTypes(Project project, PsiElement root) {
       if (root instanceof PsiField || root instanceof PsiMethod) {
         final PsiModifierList modifierList = ((PsiModifierListOwner)root).getModifierList();
         if (VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(modifierList), PsiModifier.PRIVATE) < 0) return null;
@@ -214,7 +218,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       }
       try {
         final PsiExpression[] occurrences = expressions.toArray(PsiExpression.EMPTY_ARRAY);
-        final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
+        PsiType type = myTypeCodeFragment.getType();
+        PsiType[] psiTypes = new TypeSelectorManagerImpl(project, type, occurrences).getTypesForAll();
+        if (root instanceof PsiMethod) {
+          psiTypes = ArrayUtil.append(psiTypes, PsiTypes.voidType());
+        }
+        if (type instanceof PsiIntersectionType) {
+          psiTypes = ArrayUtil.prepend(type, psiTypes);
+        }
+
         if (psiTypes.length > 0) {
           final String[] history = new String[psiTypes.length];
           for (int i = 0; i < psiTypes.length; i++) {
@@ -263,45 +275,41 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return TypeMigrationLabeler.getElementType(myRoots[0]);
     }
 
-    private static String getElementPresentation(PsiElement element) {
-      if (element instanceof PsiMethod) {
-        return "return type of method " + ((PsiMethod)element).getName();
+    private static @NlsContexts.Label String getTypeMigrationLabelText(PsiElement element, String type) {
+      if (element instanceof PsiMethod method) {
+        String methodText = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                       PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                       PsiFormatUtilBase.SHOW_TYPE);
+        return JavaRefactoringBundle.message("type.migration.return.type.of.method.label", type, methodText);
+      } else if (element instanceof PsiField field) {
+        String variableText = PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        return JavaRefactoringBundle.message("type.migration.type.of.field.label", type, variableText);
+      } else if (element instanceof PsiLocalVariable variable) {
+        String variableText = PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        return JavaRefactoringBundle.message("type.migration.type.of.variable.label", type, variableText);
+      } else if (element instanceof PsiParameter parameter) {
+        PsiElement scope = parameter.getDeclarationScope();
+        boolean realParameter = scope instanceof PsiMethod || scope instanceof PsiLambdaExpression;
+        String variableText = PsiFormatUtil.formatVariable(parameter, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        return JavaRefactoringBundle.message(realParameter
+                                             ? "type.migration.type.of.parameter.label"
+                                             : "type.migration.type.of.variable.label",
+                                             type, variableText);
+      } else if (element instanceof PsiReferenceParameterList) {
+        return JavaRefactoringBundle.message("type.migration.class.type.argument.label", type);
       }
-
-      if (element instanceof PsiField) {
-        return "type of field " + ((PsiField)element).getName();
-      }
-
-      if (element instanceof PsiLocalVariable) {
-        return "type of variable " + ((PsiLocalVariable)element).getName();
-      }
-
-      if (element instanceof PsiReferenceParameterList) {
-        return "class type arguments ";
-      }
-
-      if (element instanceof PsiParameter param) {
-        String result = "type of parameter " + param.getName();
-        if (param.getParent() instanceof PsiParameterList) {
-          final PsiMethod method = PsiTreeUtil.getParentOfType(param, PsiMethod.class);
-          assert method != null;
-          result  += " of method " + method.getName();
-        }
-        return result;
-      }
-
-      return element.toString();
+      throw new AssertionError("unknown element");
     }
 
-    private boolean isVoidVariableMigration() {
+    private boolean isIllegalVoidMigration() {
       if (!PsiTypes.voidType().equals(getMigrationType())) return false;
       for (PsiElement root : myRoots) {
-        if (root instanceof PsiVariable) return true;
+        if (!(root instanceof PsiMethod)) return true;
       }
       return false;
     }
 
-    private static boolean checkType(final PsiType type) {
+    private static boolean checkType(PsiType type) {
       if (type == null) return false;
       if (!type.isValid()) return false;
       if (type instanceof PsiClassType psiClassType){

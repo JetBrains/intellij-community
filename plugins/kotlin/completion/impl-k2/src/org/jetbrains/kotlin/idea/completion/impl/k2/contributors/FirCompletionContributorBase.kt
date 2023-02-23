@@ -128,7 +128,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {
         val explicitReceiverRange = weigherContext.explicitReceiver?.textRange
         val explicitReceiverText = weigherContext.explicitReceiver?.text
-        return when (val kind = callableWeight?.kind) {
+        return when (callableWeight?.kind) {
             // Make the text bold if it's immediate member of the receiver
             CallableMetadataProvider.CallableKind.ThisClassMember, CallableMetadataProvider.CallableKind.ThisTypeExtension ->
                 object : LookupElementDecorator<LookupElement>(this) {
@@ -143,7 +143,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             //is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
             //    override fun renderElement(presentation: LookupElementPresentation) {
             //        super.renderElement(presentation)
-            //        presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
+            //        presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR
             //        // gray all tail fragments too:
             //        val fragments = presentation.tailFragments
             //        presentation.clearTail()
@@ -155,7 +155,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             //    override fun handleInsert(context: InsertionContext) {
             //        super.handleInsert(context)
             //        if (explicitReceiverRange == null || explicitReceiverText == null) return
-            //        val castType = explicitReceiverTypeHint ?: kind.fullyQualifiedCastType
+            //        val castType = explicitReceiverTypeHint ?: return
             //        val newReceiver = "(${explicitReceiverText} as $castType)"
             //        context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
             //        context.commitDocument()

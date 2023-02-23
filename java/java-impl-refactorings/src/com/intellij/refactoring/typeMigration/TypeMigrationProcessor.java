@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.java.JavaBundle;
@@ -143,8 +143,8 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       FailedConversionsDialog dialog = new FailedConversionsDialog(myLabeler.getFailedConversionsReport(), myProject);
       if (!dialog.showAndGet()) {
         final int exitCode = dialog.getExitCode();
-        prepareSuccessful();
         if (exitCode == FailedConversionsDialog.VIEW_USAGES_EXIT_CODE) {
+          prepareSuccessful();
           previewRefactoring(refUsages.get());
         }
         return false;
@@ -194,14 +194,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   public UsageInfo @NotNull [] findUsages() {
     myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
 
-    try {
-      return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
-    }
-    catch (TypeMigrationLabeler.MigrateException e) {
-      setPreviewUsages(true);
-      myLabeler.clearStopException();
-      return myLabeler.getMigratedUsages(false, myRoots);
-    }
+    return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
   }
 
   @Override
@@ -239,7 +232,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     for (SmartPsiElementPointer<PsiNewExpression> newExpressionPointer : newExpressionsToCheckDiamonds) {
       final PsiNewExpression newExpression = newExpressionPointer.getElement();
       if (newExpression != null) {
-        labeler.postProcessNewExpression(newExpression);
+        TypeMigrationReplacementUtil.tryToReplaceWithDiamond(newExpression, null);
       }
     }
 

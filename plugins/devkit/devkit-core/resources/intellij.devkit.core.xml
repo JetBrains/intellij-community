@@ -229,11 +229,21 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MigrateToOptControlInspection"
                      key="inspection.migrate.to.opt.control.display.name"/>
-    <localInspection language="UAST" shortName="LightService"
+    <localInspection language="JVM" shortName="LightServiceMustBeFinal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceInspection"
-                     key="inspection.light.service.display.name"/>
+                     enabledByDefault="false" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection"
+                     key="inspection.light.service.must.be.final.display.name"/>
+    <localInspection language="JVM" shortName="MismatchedLightServiceLevelAndCtor"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection"
+                     key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
+    <localInspection language="UAST" shortName="RetrievingLightService"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingLightServiceInspection"
+                     key="inspection.retrieving.light.service.display.name"/>
     <localInspection language="UAST" shortName="NonFinalOrNonInternalExtensionClass"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
@@ -284,6 +294,11 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      key="jvm.inspections.usages.of.obsolete.api.display.name"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UsagesOfObsoleteApiInspection"/>
+
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="ExtensionRegisteredAsServiceOrComponent"
+                     key="inspection.extension.registered.as.service.or.component.display.name"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceOrComponentInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>

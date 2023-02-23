@@ -2511,99 +2511,151 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertForEachToForLoop")
-    public static class ConvertForEachToForLoop extends AbstractK2IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class ConvertForEachToForLoop extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed")
+        public static class ForEachIndexed extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/implicitReceiver.kt");
+            }
+
+            @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+            public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/implicitReceiverWithMultipleReceivers.kt");
+            }
+
+            @TestMetadata("labeledReturn.kt")
+            public void testLabeledReturn() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/labeledReturn.kt");
+            }
+
+            @TestMetadata("list.kt")
+            public void testList() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/list.kt");
+            }
+
+            @TestMetadata("range.kt")
+            public void testRange() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
+            }
+
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/sequence.kt");
+            }
+
+            @TestMetadata("string.kt")
+            public void testString() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/string.kt");
+            }
         }
 
-        @TestMetadata("complexReceiver.kt")
-        public void testComplexReceiver() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/complexReceiver.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertForEachToForLoop")
+        public static class Uncategorized extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("explicitFunctionLiteral.kt")
-        public void testExplicitFunctionLiteral() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/explicitFunctionLiteral.kt");
-        }
+            @TestMetadata("complexReceiver.kt")
+            public void testComplexReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/complexReceiver.kt");
+            }
 
-        @TestMetadata("extraArguments.kt")
-        public void testExtraArguments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/extraArguments.kt");
-        }
+            @TestMetadata("explicitFunctionLiteral.kt")
+            public void testExplicitFunctionLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/explicitFunctionLiteral.kt");
+            }
 
-        @TestMetadata("implicitFunctionLiteralParameter.kt")
-        public void testImplicitFunctionLiteralParameter() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
-        }
+            @TestMetadata("extraArguments.kt")
+            public void testExtraArguments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/extraArguments.kt");
+            }
 
-        @TestMetadata("implicitReceiver.kt")
-        public void testImplicitReceiver() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
-        }
+            @TestMetadata("implicitFunctionLiteralParameter.kt")
+            public void testImplicitFunctionLiteralParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitFunctionLiteralParameter.kt");
+            }
 
-        @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
-        public void testImplicitReceiverWithMultipleReceivers() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
-        }
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiver.kt");
+            }
 
-        @TestMetadata("keepComments.kt")
-        public void testKeepComments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");
-        }
+            @TestMetadata("implicitReceiverWithMultipleReceivers.kt")
+            public void testImplicitReceiverWithMultipleReceivers() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/implicitReceiverWithMultipleReceivers.kt");
+            }
 
-        @TestMetadata("parenthesizedExpression.kt")
-        public void testParenthesizedExpression() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
-        }
+            @TestMetadata("keepComments.kt")
+            public void testKeepComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/keepComments.kt");
+            }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple.kt");
-        }
+            @TestMetadata("parenthesizedExpression.kt")
+            public void testParenthesizedExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
+            }
 
-        @TestMetadata("simple2.kt")
-        public void testSimple2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple2.kt");
-        }
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple.kt");
+            }
 
-        @TestMetadata("simpleCharSequence.kt")
-        public void testSimpleCharSequence() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleCharSequence.kt");
-        }
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simple2.kt");
+            }
 
-        @TestMetadata("simpleNotAvailable.kt")
-        public void testSimpleNotAvailable() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleNotAvailable.kt");
-        }
+            @TestMetadata("simpleCharSequence.kt")
+            public void testSimpleCharSequence() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleCharSequence.kt");
+            }
 
-        @TestMetadata("simpleSequence.kt")
-        public void testSimpleSequence() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleSequence.kt");
-        }
+            @TestMetadata("simpleNotAvailable.kt")
+            public void testSimpleNotAvailable() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleNotAvailable.kt");
+            }
 
-        @TestMetadata("typeArgumentPresent.kt")
-        public void testTypeArgumentPresent() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/typeArgumentPresent.kt");
-        }
+            @TestMetadata("simpleSequence.kt")
+            public void testSimpleSequence() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/simpleSequence.kt");
+            }
 
-        @TestMetadata("userDefined.kt")
-        public void testUserDefined() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/userDefined.kt");
-        }
+            @TestMetadata("typeArgumentPresent.kt")
+            public void testTypeArgumentPresent() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/typeArgumentPresent.kt");
+            }
 
-        @TestMetadata("withNestedReturn.kt")
-        public void testWithNestedReturn() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withNestedReturn.kt");
-        }
+            @TestMetadata("usedAsExpression.kt")
+            public void testUsedAsExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/usedAsExpression.kt");
+            }
 
-        @TestMetadata("withReturn.kt")
-        public void testWithReturn() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withReturn.kt");
-        }
+            @TestMetadata("userDefined.kt")
+            public void testUserDefined() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/userDefined.kt");
+            }
 
-        @TestMetadata("zeroArguments.kt")
-        public void testZeroArguments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/zeroArguments.kt");
+            @TestMetadata("withNestedReturn.kt")
+            public void testWithNestedReturn() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withNestedReturn.kt");
+            }
+
+            @TestMetadata("withReturn.kt")
+            public void testWithReturn() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/withReturn.kt");
+            }
+
+            @TestMetadata("zeroArguments.kt")
+            public void testZeroArguments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/zeroArguments.kt");
+            }
         }
     }
 

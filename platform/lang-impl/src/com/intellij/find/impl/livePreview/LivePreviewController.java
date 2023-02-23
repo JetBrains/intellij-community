@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
@@ -35,7 +35,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   private final Alarm myLivePreviewAlarm;
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
-  private static final boolean myReplaceDenied = false;
   private boolean mySuppressUpdate;
 
   private boolean myTrackingDocument;
@@ -106,10 +105,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return cursor == last;
   }
 
-  public boolean isReplaceDenied() {
-    return myReplaceDenied;
-  }
-
   public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
@@ -161,7 +156,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   @Nullable
   public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
     Project project = mySearchResults.getProject();
-    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
     CommandProcessor.getInstance().runUndoTransparentAction(() -> getEditor().getCaretModel().moveToOffset(occurrence.getEndOffset()));
     TextRange result = FindUtil.doReplace(project,
@@ -208,21 +203,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return true;
   }
 
-  public boolean canReplace() {
-    if (mySearchResults != null && mySearchResults.getCursor() != null && !isReplaceDenied()) {
-
-      final String replacement;
-      try {
-        replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
-      }
-      catch (FindManager.MalformedReplacementStringException e) {
-        return false;
-      }
-      return replacement != null;
-    }
-    return false;
-  }
-
   private Editor getEditor() {
     return mySearchResults.getEditor();
   }
@@ -236,10 +216,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     final TextRange textRange = performReplace(mySearchResults.getCursor(), replacement, getEditor());
     if (textRange == null) {
       mySuppressUpdate = false;
-    }
-    if (myComponent != null) {
-      myComponent.addTextToRecent(myComponent.getComponent().getReplaceTextComponent());
-      myComponent.clearUndoInTextFields();
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collection;
 import java.util.Set;
 
 @TestOnly
@@ -34,9 +35,8 @@ public final class SdkLeakTracker {
       return;
     }
 
-    Set<Sdk> leaked = ContainerUtil.set(jdks);
-    Set<Sdk> old = ContainerUtil.set(oldSdks);
-    leaked.removeAll(old);
+    Set<Sdk> old = Set.of(oldSdks);
+    Collection<Sdk> leaked = ContainerUtil.subtract(Set.of(jdks), old);
 
     try {
       if (!leaked.isEmpty()) {
@@ -59,7 +59,7 @@ public final class SdkLeakTracker {
     }
   }
 
-  private static Pair<Sdk, Throwable> findSdkWithRegistrationTrace(Set<? extends Sdk> sdks) {
+  private static Pair<Sdk, Throwable> findSdkWithRegistrationTrace(@NotNull Collection<? extends Sdk> sdks) {
     for (Sdk sdk : sdks) {
       if (sdk instanceof Disposable) {
         Throwable trace = Disposer.getRegistrationTrace((Disposable)sdk);

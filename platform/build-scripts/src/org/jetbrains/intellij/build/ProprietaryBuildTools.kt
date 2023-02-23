@@ -48,8 +48,8 @@ class ProprietaryBuildTools(
   companion object {
     val DUMMY = ProprietaryBuildTools(
       signTool = object : SignTool {
-        override val usePresignedNativeFiles: Boolean
-          get() = false
+        override val signNativeFileMode: SignNativeFileMode
+          get() = SignNativeFileMode.DISABLED
 
         override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
           Span.current().addEvent("files won't be signed", Attributes.of(
@@ -59,7 +59,7 @@ class ProprietaryBuildTools(
         }
 
         override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path? {
-          error("Must be not called if usePresignedNativeFiles is false")
+          error("Must be not called if signNativeFileMode equals to ENABLED")
         }
 
         override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {

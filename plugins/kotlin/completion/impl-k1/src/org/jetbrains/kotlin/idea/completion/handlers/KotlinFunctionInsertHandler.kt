@@ -9,8 +9,10 @@ import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.InsertionContext.TAIL_OFFSET
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -376,20 +378,31 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
             val document = context.document
+            // Calling document.commit() will invalidate injected trees and context data
+            val isInjected = context.file.viewProvider.virtualFile is VirtualFileWindow
 
             if (!argumentsOnly) {
+                val knownStart = context.startOffset
+                val newTailOffset = context.startOffset + item.lookupString.length
                 surroundWithBracesIfInStringTemplate(context)
 
                 super.handleInsert(context, item)
+                if (isInjected) {
+                    context.offsetMap.addOffset(START_OFFSET, knownStart)
+                    context.offsetMap.addOffset(IDENTIFIER_END_OFFSET, newTailOffset)
+                    context.offsetMap.addOffset(TAIL_OFFSET, newTailOffset)
+                }
             }
 
-            psiDocumentManager.commitDocument(document)
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
+            if (!isInjected) {
+                psiDocumentManager.commitDocument(document)
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
+            }
 
             val startOffset = context.startOffset
             val element = context.file.findElementAt(startOffset) ?: return
 
-            addArguments(context, element)
+            addArguments(context, element, isInjected)
 
             // hack for KT-31902
             if (callType == CallType.DEFAULT) {
@@ -397,14 +410,16 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                     .findElementAt(startOffset)
                     ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
                     ?.createSmartPointer()?.let {
-                        psiDocumentManager.commitDocument(document)
+                        if (!isInjected) {
+                            psiDocumentManager.commitDocument(document)
+                        }
                         val dotQualifiedExpression = it.element ?: return@let
                         SHORTEN_REFERENCES.process(dotQualifiedExpression)
                     }
             }
         }
 
-        private fun addArguments(context: InsertionContext, offsetElement: PsiElement) {
+        private fun addArguments(context: InsertionContext, offsetElement: PsiElement, isInjected: Boolean) {
             val completionChar = context.completionChar
             if (completionChar == '(') { //TODO: more correct behavior related to braces type
                 context.setAddCompletionChar(false)
@@ -432,7 +447,9 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 val offset1 = chars.skipSpaces(offset)
                 if (offset1 < chars.length) {
                     if (chars[offset1] == '<') {
-                        psiDocumentManager.commitDocument(document)
+                        if (!isInjected) {
+                            psiDocumentManager.commitDocument(document)
+                        }
                         val token = context.file.findElementAt(offset1)!!
                         if (token.node.elementType == KtTokens.LT) {
                             val parent = token.parent
@@ -484,7 +501,9 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                         document.insertString(offset, "()")
                     }
                 }
-                psiDocumentManager.commitDocument(document)
+                if (!isInjected) {
+                    psiDocumentManager.commitDocument(document)
+                }
 
                 openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
                 closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
@@ -539,8 +558,10 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         super.handleInsert(context, item)
 
-        val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-        psiDocumentManager.commitDocument(context.document)
-        psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
+        if (context.file.viewProvider.virtualFile !is VirtualFileWindow) {
+            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+            psiDocumentManager.commitDocument(context.document)
+            psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
+        }
     }
 }

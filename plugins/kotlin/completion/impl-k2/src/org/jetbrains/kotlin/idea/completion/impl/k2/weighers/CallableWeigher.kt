@@ -15,8 +15,8 @@ internal object CallableWeigher {
     private enum class Weight1 {
         LOCAL,
         MEMBER_OR_EXTENSION,
-        GLOBAL_OR_STATIC,
         TYPE_PARAMETER_EXTENSION,
+        GLOBAL_OR_STATIC,
         RECEIVER_CAST_REQUIRED
     }
 

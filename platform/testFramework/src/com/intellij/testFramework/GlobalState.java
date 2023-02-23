@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -53,7 +53,7 @@ public class GlobalState {
   }
 
   /**
-   * System.out or System.err has been redirected to another destination, without undoing the redirection afterwards.
+   * System.out or System.err has been redirected to another destination, without undoing the redirection afterward.
    * This prevents all following tests from using this stream for logging.
    * <p>
    * To fix the root cause of this error,

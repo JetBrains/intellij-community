@@ -132,8 +132,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         return Collections.singletonList(element);
       }
       PsiMethod[] methods =
-        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element,
-                                                 allElementsToDelete);
+        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, allElementsToDelete);
       if (methods.length == 0) return null;
       ArrayList<PsiMethod> psiMethods = new ArrayList<>(Arrays.asList(methods));
       psiMethods.add((PsiMethod)element);
@@ -242,7 +241,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (getters != null) {
           List<PsiMethod> validGetters = new ArrayList<>(1);
           for (PsiMethod getter : getters) {
-            if (!allElementsToDelete.contains(getter) && getter != null && getter.isPhysical()) {
+            if (getter != null && !allElementsToDelete.contains(getter) && getter.isPhysical()) {
               validGetters.add(getter);
             }
           }
@@ -250,7 +249,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
 
         PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, propertyName, isStatic, false);
-        if (allElementsToDelete.contains(setter) || setter != null && !setter.isPhysical()) setter = null;
+        if (setter != null && (allElementsToDelete.contains(setter) || !setter.isPhysical())) {
+          setter = null;
+        }
         if (askUser && (getters != null || setter != null)) {
           String message =
             RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getters != null ? getters[0] : null, setter);

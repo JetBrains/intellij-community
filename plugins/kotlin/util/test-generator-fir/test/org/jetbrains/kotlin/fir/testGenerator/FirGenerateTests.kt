@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFile
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
+import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
@@ -82,6 +83,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
 
+        testClass<AbstractFirReferenceResolveWithLibTest> {
+            model("resolve/referenceWithLib", pattern = KT_WITHOUT_DOTS, isRecursive = false)
+        }
+
         testClass<AbstractFirReferenceResolveInJavaTest> {
             model("resolve/referenceInJava/binaryAndSource", pattern = JAVA)
             model("resolve/referenceInJava/sourceOnly", pattern = JAVA)
@@ -103,6 +108,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/lateinit", pattern = pattern)
             model("quickfix/localVariableWithTypeParameters", pattern = pattern)
             model("quickfix/modifiers", pattern = pattern, isRecursive = false)
+            model("quickfix/modifiers/addOpenToClassDeclaration", pattern = pattern)
             model("quickfix/nullables", pattern = pattern)
             model("quickfix/override", pattern = pattern, isRecursive = false)
             model("quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)

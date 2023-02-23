@@ -37,6 +37,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsClass() {
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests"""",
             runReadActionAndWait {
@@ -61,6 +62,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun testForJsMethod() {
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests.jsTest"""",
             runReadActionAndWait {
@@ -85,6 +87,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsPackage() {
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
             runReadActionAndWait {
@@ -110,6 +113,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsDirectory() {
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {
@@ -137,6 +141,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
 
     @Test
     fun allTestsInJsModule() {
+        enableExperimentalMPP(true)
         assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
             """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
             runReadActionAndWait {

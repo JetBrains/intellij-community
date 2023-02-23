@@ -38,7 +38,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -85,7 +84,7 @@ public final class HtmlUtil {
   }
 
   private static final Set<String> EMPTY_TAGS_MAP = new HashSet<>();
-  private static final Set<String> OPTIONAL_END_TAGS_MAP = ContainerUtil.set(
+  private static final Set<String> OPTIONAL_END_TAGS_MAP = Set.of(
     //"html",
     "head",
     //"body",
@@ -94,7 +93,7 @@ public final class HtmlUtil {
   );
 
   private static final Set<String> BLOCK_TAGS_MAP =
-    ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
+    Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
                       "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
                       // nonexplicitly specified
                       "map",
@@ -103,14 +102,14 @@ public final class HtmlUtil {
 
   // flow elements are block or inline, so they should not close <p> for example
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP =
-    ContainerUtil.set("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
+    Set.of("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
                       "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
                       "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
                       "strong", "sub", "sup", "textarea", "tt", "u", "var");
 
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
 
-  private static final Set<String> HTML5_TAGS_SET = ContainerUtil.set("article", "aside", "audio", "canvas", "command", "datalist",
+  private static final Set<String> HTML5_TAGS_SET = Set.of("article", "aside", "audio", "canvas", "command", "datalist",
                                                                       "details", "embed", "figcaption", "figure", "footer", "header",
                                                                       "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt",
                                                                       "ruby", "section", "source", "summary", "time", "video", "wbr",
@@ -146,7 +145,7 @@ public final class HtmlUtil {
     return OPTIONAL_END_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
   }
 
-  public static boolean isOptionalEndForHtmlTagL(String tagName) {
+  public static boolean isOptionalEndForHtmlTagL(@NotNull String tagName) {
     return OPTIONAL_END_TAGS_MAP.contains(tagName);
   }
 
@@ -159,11 +158,11 @@ public final class HtmlUtil {
     return BLOCK_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
   }
 
-  public static boolean isPossiblyInlineTag(String tagName) {
+  public static boolean isPossiblyInlineTag(@NotNull String tagName) {
     return POSSIBLY_INLINE_TAGS_MAP.contains(tagName);
   }
 
-  public static boolean isHtmlBlockTagL(String tagName) {
+  public static boolean isHtmlBlockTagL(@NotNull String tagName) {
     return BLOCK_TAGS_MAP.contains(tagName);
   }
 
@@ -171,7 +170,7 @@ public final class HtmlUtil {
     return INLINE_ELEMENTS_CONTAINER_MAP.contains(StringUtil.toLowerCase(tagName));
   }
 
-  public static boolean isInlineTagContainerL(String tagName) {
+  public static boolean isInlineTagContainerL(@NotNull String tagName) {
     return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName);
   }
 
@@ -440,7 +439,7 @@ public final class HtmlUtil {
     return doctype != null && !isHtml5Doctype(doctype);
   }
 
-  public static boolean isHtml5Tag(String tagName) {
+  public static boolean isHtml5Tag(@NotNull String tagName) {
     return HTML5_TAGS_SET.contains(tagName);
   }
 

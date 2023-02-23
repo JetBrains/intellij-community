@@ -437,7 +437,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("highlighter")
         }
 
-        testClass<AbstractHighlightingMetaInfoTest> {
+        testClass<AbstractK1HighlightingMetaInfoTest> {
             model("highlighterMetaInfo")
         }
 

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.execution.test.runner.SourcePath
 import org.jetbrains.plugins.gradle.execution.test.runner.TestName
@@ -73,27 +74,23 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
             val module = element.module ?: continue
             val sourceFile = getSourceFile(element) ?: continue
 
-            val groupedTasks = module.externalSystemTestRunTasks()
+            module.externalSystemTestRunTasks()
                 .filter { taskFilter(it) }
                 .groupBy { it.targetName }
-
-            for ((group, tasksInGroup) in groupedTasks) {
-                if (tasksInGroup.isEmpty()) {
-                    continue
-                } else if (tasksInGroup.size == 1) {
-                    val task = tasksInGroup[0]
-                    val presentableName = task.presentableName
-                    val tasksMap = tasks.getOrPut(presentableName) { LinkedHashMap() }
-                    tasksMap[sourceFile.path] = TasksToRun.Impl(presentableName, getTaskNames(task))
-                } else {
-                    for (task in tasksInGroup) {
-                        val rawTaskName = ':' + task.taskName
-                        val presentableName = if (group != null) "$group ($rawTaskName)" else rawTaskName
+                .forEach { (targetName, targetTasks) ->
+                    val singleTask = targetTasks.size == 1
+                    targetTasks.forEach { task ->
+                        //KT-56540: by default, android tests are being launched on a local JVM
+                        val isAndroidTarget = task.kotlinPlatformId == KotlinPlatform.ANDROID.id
+                        val presentableName = if (isAndroidTarget) {
+                            if (singleTask) "$targetName (local)" else "$targetName (local :${task.taskName})"
+                        } else {
+                            if (singleTask) targetName else "$targetName (:${task.taskName})"
+                        }
                         val tasksMap = tasks.getOrPut(presentableName) { LinkedHashMap() }
                         tasksMap[sourceFile.path] = TasksToRun.Impl(presentableName, getTaskNames(task))
                     }
                 }
-            }
         }
 
         return tasks
@@ -126,6 +123,3 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         return listOf("${taskNamePrefix}clean${task.taskName.capitalizeAsciiOnly()}", "${taskNamePrefix}${task.taskName}")
     }
 }
-
-private val ExternalSystemRunTask.presentableName: String
-    get() = targetName ?: (":$taskName")

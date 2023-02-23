@@ -55,7 +55,8 @@ internal fun navBarItemFont(): Font? {
 
 internal fun navBarItemInsets(): Insets {
   return if (ExperimentalUI.isNewUI()) {
-    JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets", JBUI.insets(1))
+    JBUI.insets("StatusBar.Breadcrumbs.itemBackgroundInsets",
+                if (ExperimentalUI.isNewUI()) JBUI.insets(2, 4) else JBUI.insets(1))
   }
   else {
     JBInsets.emptyInsets()
@@ -74,7 +75,7 @@ internal fun navBarItemPadding(floating: Boolean): Insets {
     return JBUI.insets("StatusBar.Breadcrumbs.floatingItemInsets", JBUI.insets(1))
   }
   else {
-    return JBUI.insets("StatusBar.Breadcrumbs.itemInsets", JBUI.insets(2, 0))
+    return JBUI.CurrentTheme.StatusBar.Breadcrumbs.itemInsets()
   }
 }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +150,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
                                  @Nullable Editor editor,
                                  double progress) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     PsiFile file = highlightingSession.getPsiFile();
     repaintTrafficIcon(file, editor, progress);
   }
@@ -158,17 +158,12 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   private final Alarm repaintIconAlarm = new Alarm();
   private void repaintTrafficIcon(@NotNull PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
-
-    if (repaintIconAlarm.isEmpty() || progress >= 1) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (editor != null && (repaintIconAlarm.isEmpty() || progress >= 1)) {
       repaintIconAlarm.addRequest(() -> {
         Project myProject = file.getProject();
-        if (myProject.isDisposed()) return;
-        Editor myeditor = editor;
-        if (myeditor == null) {
-          myeditor = PsiEditorUtil.findEditor(file);
-        }
-        if (myeditor != null && !myeditor.isDisposed()) {
-          repaintErrorStripeAndIcon(myeditor, myProject, file);
+        if (!myProject.isDisposed() && !editor.isDisposed()) {
+          repaintErrorStripeAndIcon(editor, myProject, file);
         }
       }, 50, null);
     }

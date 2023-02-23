@@ -166,9 +166,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final int posVarargIndex = ContainerUtil.indexOf(newParamInfos, info -> isPositionalVarargName(info.getName()));
     final int posOnlyMarkerIndex = ContainerUtil.indexOf(newParamInfos, info -> PySlashParameter.TEXT.equals(info.getName()));
     final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos.get(posVarargIndex).getOldIndex()).isEmpty();
-    List<PyExpression> notInsertedVariadicKeywordArgs = ContainerUtil.filter(call.getArguments(), a -> {
-      return a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword();
-    });
+    List<PyExpression> notInsertedVariadicKeywordArgs =
+      new ArrayList<>(ContainerUtil.filter(call.getArguments(), a -> a instanceof PyStarArgument && ((PyStarArgument)a).isKeyword()));
     boolean variadicKeywordArgsUsed = false;
     final int implicitCount = mapping.getImplicitParameters().size();
     for (int paramIndex = implicitCount; paramIndex < newParamInfos.size(); paramIndex++) {

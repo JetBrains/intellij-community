@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MethodNameSameAsClassNameInspection extends BaseInspection {
-  private static final Set<String> MODIFIERS_ALLOWED_ON_CONSTRUCTORS = ContainerUtil.set(
+  private static final Set<String> MODIFIERS_ALLOWED_ON_CONSTRUCTORS = Set.of(
     // JLS 8.8.3
     PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE
   );

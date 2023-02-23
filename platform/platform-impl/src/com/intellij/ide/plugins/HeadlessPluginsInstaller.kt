@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTaskHeadlessImpl
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.io.URLUtil
 import kotlin.system.exitProcess
 
@@ -36,25 +35,25 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
         val hosts = System.getProperty("idea.plugin.hosts")
         val newHosts = customRepositories.joinToString(separator = ";", prefix = if (hosts.isNullOrBlank()) "" else "${hosts};")
         System.setProperty("idea.plugin.hosts", newHosts)
-        println("plugin hosts: $newHosts")
         LOG.info("plugin hosts: $newHosts")
       }
-      println("installing: $pluginIds")
       LOG.info("installing: $pluginIds")
-      ProgressManager.getInstance().run(object : InstallAndEnableTaskHeadlessImpl(pluginIds) {
-        override fun onSuccess() {
+
+      ProgressManager.getInstance().run(object : InstallAndEnableTaskHeadlessImpl(pluginIds, {}) {
+        override fun onThrowable(error: Throwable) {
+          LOG.error("Failed to install plugins:", error)
+          exitProcess(1)
+        }
+
+        override fun onFinished() {
+          val allPluginIds = PluginManager.getPlugins().map { it.pluginId }.toSet()
           for (pluginId in pluginIds) {
-            if (!this.plugins.any { it.id == pluginId }) {
-              LOG.error("Plugin $pluginId was not installed")
+            if (pluginId !in allPluginIds) {
+              println("Unable to install plugin '$pluginId'")
               exitProcess(1)
             }
           }
           exitProcess(0)
-        }
-
-        override fun onThrowable(error: Throwable) {
-          LOG.error("Failed to install plugins:", error)
-          exitProcess(1)
         }
       })
       exitProcess(0)

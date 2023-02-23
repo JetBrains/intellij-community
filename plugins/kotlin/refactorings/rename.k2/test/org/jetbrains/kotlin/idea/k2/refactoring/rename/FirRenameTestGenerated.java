@@ -1208,6 +1208,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameReferencedResourceFile/renameReferencedResourceFile.test");
     }
 
+    @TestMetadata("renameSamConstructorDescriptor/renameSamConstructorDescriptor.test")
+    public void testRenameSamConstructorDescriptor_RenameSamConstructorDescriptor() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameSamConstructorDescriptor/renameSamConstructorDescriptor.test");
+    }
+
     @TestMetadata("renameSet/set.test")
     public void testRenameSet_Set() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameSet/set.test");

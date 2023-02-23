@@ -36,7 +36,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
       LOG.trace("Before starting addDiff no consistency issues were found")
     }
 
-    for ((_, change) in diffLog.shake()) {
+    for ((entityId, change) in diffLog.shake()) {
       when (change) {
         is ChangeEntry.AddEntity -> {
           LOG.trace { "addDiff: newEntity" }
@@ -88,7 +88,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
         is ChangeEntry.ReplaceEntity -> {
           LOG.trace { "addDiff: replace entity" }
-          replaceOperation(change)
+          replaceOperation(entityId, change)
         }
         is ChangeEntry.ChangeEntitySource -> {
           LOG.trace { "addDiff: change entity source" }
@@ -96,7 +96,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         }
         is ChangeEntry.ReplaceAndChangeSource -> {
           LOG.trace { "addDiff: replace and change source" }
-          replaceOperation(change.dataChange)
+          replaceOperation(entityId, change.dataChange)
           replaceSourceOperation(change.sourceChange.newData, change.sourceChange.originalSource)
         }
       }
@@ -191,20 +191,23 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     }
   }
 
-  private fun replaceOperation(change: ChangeEntry.ReplaceEntity) {
-    val sourceEntityId = change.newData.createEntityId().notThis()
+  private fun replaceOperation(entityId: EntityId, change: ChangeEntry.ReplaceEntity) {
+    val sourceEntityId = entityId.notThis()
 
     val beforeChildren = target.refs.getChildrenRefsOfParentBy(sourceEntityId.id.asParent()).flatMap { (key, value) -> value.map { key to it } }
     val beforeParents = target.refs.getParentRefsOfChild(sourceEntityId.id.asChild())
 
     val targetEntityId = replaceMap.getOrDefault(sourceEntityId, sourceEntityId.id.asThis())
-    val newTargetEntityData = change.newData.clone()
-    newTargetEntityData.id = targetEntityId.id.arrayId
-
-    checkSymbolicId(change.newData, newTargetEntityData.createEntityId())
 
     // We don't modify entity that doesn't exist in target version of storage
     val existingTargetEntityData = target.entityDataById(targetEntityId.id) ?: return
+    val newTargetEntityData = change.data?.newData?.clone() ?: existingTargetEntityData.clone()
+    newTargetEntityData.id = targetEntityId.id.arrayId
+
+    if (change.data != null) {
+      checkSymbolicId(change.data.newData, newTargetEntityData.createEntityId())
+    }
+
     val originalEntityData = target.getOriginalEntityData(targetEntityId.id)
     val originalParents = target.getOriginalParents(targetEntityId.id.asChild())
 
@@ -224,10 +227,10 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.newChildren.forEach { addedChildrenMap.put(it.first, it.second) }
+    change.references?.newChildren?.forEach { addedChildrenMap.put(it.first, it.second) }
 
     val removedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()
-    change.removedChildren.forEach { removedChildrenMap.put(it.first, it.second) }
+    change.references?.removedChildren?.forEach { removedChildrenMap.put(it.first, it.second) }
 
     replaceRestoreChildren(sourceEntityId.id.asParent(), newEntityId.asParent(), addedChildrenMap, removedChildrenMap)
 
@@ -316,7 +319,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     change: ChangeEntry.ReplaceEntity,
     newEntityId: EntityId,
   ) {
-    val updatedModifiedParents = change.modifiedParents.mapValues { it.value }
+    val updatedModifiedParents = change.references?.modifiedParents?.mapValues { it.value } ?: emptyMap()
 
     val modifiedParentsMap = updatedModifiedParents.toMutableMap()
     val newChildEntityId = newEntityId.asChild()

@@ -4,25 +4,55 @@ import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
-import com.intellij.cce.metric.*
+import com.intellij.cce.metric.MovesCount
+import com.intellij.cce.metric.MovesCountNormalised
+import com.intellij.cce.metric.PerfectLine
+import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
+import java.io.File
+import java.nio.file.Path
 import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
+  private val fullLineStorages: List<FullLineLogsStorage>,
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
+
+  override fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) {
+    super.createHead(head, reportTitle, resourcePath)
+    with(head) {
+      script {
+        type = "module"
+        src = "../res/index-v2.js?v=" + System.currentTimeMillis()
+      }
+      link {
+        rel = "stylesheet"
+        href = "../res/index-v2.css?v=" + System.currentTimeMillis()
+      }
+    }
+  }
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
     return createHTML().body {
       div("cg") {
         div {
           style = "display: flex; gap: 12px;"
+          div {
+            a(classes = "v2-switcher") {
+              onClick = "enableV2()"
+              button {
+                type = ButtonType.button
+                +"v2 view"
+              }
+            }
+          }
           div {
             label("labelText") { +"With delimiter:" }
             select("delimiter-pick") {
@@ -66,6 +96,34 @@ class CompletionGolfFileReportGenerator(
       }
       script { src = "../res/script.js" }
       script { +"isCompletionGolf = true" }
+      script {
+        +"""
+          function enableV2() {
+              const urlParams = new URLSearchParams(window.location.search);
+              urlParams.set('v2', 'true');
+              window.location.search = urlParams;
+          }
+        """.trimIndent()
+      }
+    }
+  }
+
+  override fun processStorages(fileInfos: List<FileEvaluationInfo>, resourceFile: File) {
+    super.processStorages(fileInfos, resourceFile)
+    for ((storage, fileInfo) in fullLineStorages.zip(fileInfos)) {
+      val log = storage.getLog(fileInfo.sessionsInfo.filePath) ?: continue
+      val offset2json = mutableMapOf<Int, String>()
+      for (line in log.lines()) {
+        val offset = offsetRegex.find(line)?.destructured?.component1()?.toIntOrNull() ?: continue
+        offset2json[offset] = line
+      }
+      for (session in fileInfo.sessionsInfo.sessions) {
+        for (lookup in session.lookups) {
+          val offset = session.offset + lookup.offset
+          val json = offset2json[offset] ?: continue
+          resourceFile.appendText("fullLineLog[(\"$offset\")] = `${zipJson(json)}`;\n")
+        }
+      }
     }
   }
 
@@ -151,7 +209,7 @@ class CompletionGolfFileReportGenerator(
             add("delimiter")
           }
         }.joinToString(" ")
-        offset = prepareSpan(expectedText, lookup, session.id, i, offset, delimiter)
+        offset = prepareSpan(expectedText, lookup, session.id, i, offset, session.offset + lookup.offset, delimiter)
       }
       if (expectedText.length != offset) {
         span("code-span") { +expectedText.substring(offset) }
@@ -187,6 +245,7 @@ class CompletionGolfFileReportGenerator(
     uuid: String,
     columnId: Int,
     offset: Int,
+    offsetInFile: Int,
     delimiter: String = "",
   ): Int {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
@@ -201,6 +260,7 @@ class CompletionGolfFileReportGenerator(
     span("code-span completion $kindClass $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
+      attributes["data-offset"] = offsetInFile.toString()
       +text
     }
     return offset + text.length
@@ -226,7 +286,8 @@ class CompletionGolfFileReportGenerator(
   private fun Double.format() = DecimalFormat("0.##").format(this)
 
   companion object {
-    const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji
+    const val perfectLineSign: String = "\uD83C\uDF89" // :tada emoji:
+    private val offsetRegex = "\"offset\":([0-9]+),".toRegex()
 
     private enum class Threshold(val value: Double) {
       EXCELLENT(System.getenv("CG_THRESHOLD_EXCELLENT")?.toDouble() ?: 0.15),

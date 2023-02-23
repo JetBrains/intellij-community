@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -121,7 +120,7 @@ public final class FindUtil {
     model.setRegularExpressions(with.isRegularExpressions());
     model.setSearchContext(with.getSearchContext());
 
-    if (saveFindString && !with.getStringToFind().isEmpty()) {
+    if (saveFindString) {
       model.setStringToFind(with.getStringToFind());
     }
 
@@ -150,7 +149,7 @@ public final class FindUtil {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText == null && Registry.is("ide.find.select.word.at.caret")) {
-      selectedText  = getWordAtCaret(editor, true);
+      selectedText = getWordAtCaret(editor, true);
     }
     return selectedText;
   }

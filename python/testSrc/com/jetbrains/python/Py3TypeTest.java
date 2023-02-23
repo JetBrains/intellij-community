@@ -1172,8 +1172,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecExample() {
     doTest("(a: str, b: bool) -> str",
            """
-             from collections.abc import Callable
-             from typing import ParamSpec
+             from typing import Callable, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1186,6 +1185,19 @@ public class Py3TypeTest extends PyTestCase {
 
 
              expr = changes_return_type_to_str(returns_int)""");
+  }
+
+  // PY-59127
+  public void testParamSpecInImportedFile() {
+    doMultiFileTest("(a: str, b: bool) -> str",
+                    """
+                      from mod import changes_return_type_to_str
+                            
+                      def returns_int(a: str, b: bool) -> int:
+                          return 42
+
+                      expr = changes_return_type_to_str(returns_int)
+                      """);
   }
 
   // PY-49935
@@ -1370,8 +1382,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAdd() {
     doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1389,8 +1400,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateAddSeveralParameters() {
     doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1408,8 +1418,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateRemove() {
     doTest("(args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 
@@ -1427,8 +1436,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testParamSpecConcatenateTransform() {
     doTest("(str, args: tuple[bool, ...]) -> bool",
            """
-             from collections.abc import Callable
-             from typing import Concatenate, ParamSpec
+             from typing import Callable, Concatenate, ParamSpec
 
              P = ParamSpec("P")
 

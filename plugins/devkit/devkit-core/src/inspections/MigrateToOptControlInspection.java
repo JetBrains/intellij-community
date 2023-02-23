@@ -26,6 +26,10 @@ import java.util.List;
 public class MigrateToOptControlInspection extends DevKitUastInspectionBase {
   private static final String OPT_PANE = "com.intellij.codeInspection.options.OptPane";
 
+  public MigrateToOptControlInspection() {
+    super(UMethod.class);
+  }
+
   @Override
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!method.getName().equals("createOptionsPanel")) return null;

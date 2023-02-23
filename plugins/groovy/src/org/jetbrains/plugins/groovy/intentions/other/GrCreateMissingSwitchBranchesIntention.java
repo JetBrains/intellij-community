@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class GrCreateMissingSwitchBranchesIntention extends Intention {
     if (resolved == null || !resolved.isEnum()) return Collections.emptyList();
 
     final PsiField[] fields = resolved.getFields();
-    final List<PsiEnumConstant> constants = ContainerUtil.findAll(fields, PsiEnumConstant.class);
+    final List<PsiEnumConstant> constants = new ArrayList<>(ContainerUtil.findAll(fields, PsiEnumConstant.class));
 
     final GrCaseSection[] sections = switchStatement.getCaseSections();
     for (GrCaseSection section : sections) {

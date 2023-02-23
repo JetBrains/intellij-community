@@ -251,6 +251,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
   }
 
   protected fun relayout() {
+    if (layeredPane == null) return
     val size = layeredPane!!.size
     JBInsets.removeFrom(size, insets)
     val layoutRec = Rectangle(Point(insets.left, insets.top), size)

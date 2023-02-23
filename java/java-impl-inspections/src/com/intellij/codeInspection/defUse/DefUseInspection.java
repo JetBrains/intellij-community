@@ -13,12 +13,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.controlFlow.AnalysisCanceledException;
-import com.intellij.psi.controlFlow.ControlFlow;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -181,10 +179,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           if (isDefinitely) {
             try {
               ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
-              if (ControlFlowUtil.getReadBeforeWrite(flow)
-                                 .stream()
-                                 .anyMatch(read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
-                                                   read.isReferenceTo(field))) {
+              if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
+                                       read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
+                                               read.isReferenceTo(field))) {
                 isDefinitely = false;
               }
             }
@@ -233,8 +230,11 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       }
       try {
         ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
-        if (ControlFlowUtil.getReadBeforeWrite(flow).stream()
-                           .anyMatch(read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
+        if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
+                                 read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
+          return false;
+        }
+        if (canBeUsedInCalledMethods(field, collectMethodsBeforeAssignment(field, flow))) {
           return false;
         }
       }
@@ -243,6 +243,72 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       }
     }
     return true;
+  }
+
+  private static boolean canBeUsedInCalledMethods(PsiField field, List<PsiMethodCallExpression> expressions) {
+    PsiClass containingClass = field.getContainingClass();
+    PsiManager manager = field.getManager();
+    for (PsiMethodCallExpression expression : expressions) {
+      if (expression.getMethodExpression().resolve() instanceof PsiMethod method
+          && !method.isConstructor()
+          && !method.hasModifierProperty(PsiModifier.STATIC)
+          && manager.areElementsEquivalent(method.getContainingClass(), containingClass)) {
+        return true;
+      }
+      if (PsiTreeUtil.getChildrenOfType(expression.getArgumentList(), PsiThisExpression.class) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static List<PsiMethodCallExpression> collectMethodsBeforeAssignment(PsiField field, ControlFlow flow) {
+    List<PsiMethodCallExpression> results = new ArrayList<>();
+    PsiManager manager = field.getManager();
+    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, 0);
+    Map<Integer, List<ControlFlowUtil.ControlFlowEdge>> edgesFromStart = new HashMap<>();
+    List<Instruction> instructions = flow.getInstructions();
+    for (ControlFlowUtil.ControlFlowEdge edge : edges) {
+      ProgressManager.checkCanceled();
+      List<ControlFlowUtil.ControlFlowEdge> existedEdge = edgesFromStart.get(edge.myFrom);
+      if (existedEdge != null) {
+        existedEdge.add(edge);
+      }
+      else {
+        List<ControlFlowUtil.ControlFlowEdge> newEdges = new ArrayList<>();
+        newEdges.add(edge);
+        edgesFromStart.put(edge.myFrom, newEdges);
+      }
+    }
+    BitSet untilAssignment = new BitSet();
+    ArrayDeque<Integer> unprocessedInstructions = new ArrayDeque<>();
+    unprocessedInstructions.add(0);
+    while (!unprocessedInstructions.isEmpty()) {
+      Integer currentPoint = unprocessedInstructions.poll();
+      if (instructions.size() <= currentPoint) {
+        return results;
+      }
+      if (untilAssignment.get(currentPoint)) {
+        continue;
+      }
+      Instruction instruction = instructions.get(currentPoint);
+      if (instruction instanceof WriteVariableInstruction writeVariableInstruction &&
+          manager.areElementsEquivalent(writeVariableInstruction.variable, field)) {
+        continue;
+      }
+      untilAssignment.set(currentPoint);
+      List<ControlFlowUtil.ControlFlowEdge> nextPoints = edgesFromStart.get(currentPoint);
+      if (nextPoints != null) {
+        unprocessedInstructions.addAll(ContainerUtil.map(nextPoints, t->t.myTo));
+      }
+    }
+    for (int index : untilAssignment.stream().toArray()) {
+      if (flow.getElement(index) instanceof PsiMethodCallExpression methodCallExpression) {
+        results.add(methodCallExpression);
+      }
+    }
+    return results;
   }
 
   @NotNull

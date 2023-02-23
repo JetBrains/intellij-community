@@ -12,19 +12,20 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.maven.testFramework.MavenTestCase;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProfile;
+import org.jetbrains.idea.maven.model.MavenResource;
 import org.junit.Assume;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectReaderTest extends MavenTestCase {
+public class MavenProjectReaderTest extends MavenProjectReaderTestCase {
   public void testBasics() {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1763,22 +1764,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertActiveProfiles("project", "settings");
   }
 
-  private MavenModel readProject(VirtualFile file, String... profiles) {
-    MavenProjectReaderResult readResult = readProject(file, new NullProjectLocator(), profiles);
-    assertProblems(readResult);
-    return readResult.mavenModel;
-  }
-
-  private MavenProjectReaderResult readProject(VirtualFile file,
-                                               MavenProjectReaderProjectLocator locator,
-                                               String... profiles) {
-    MavenProjectReaderResult result = new MavenProjectReader(myProject).readProject(getMavenGeneralSettings(),
-                                                                                    file,
-                                                                                    new MavenExplicitProfiles(Arrays.asList(profiles)),
-                                                                                    locator);
-    return result;
-  }
-
   private static void assertParent(MavenModel p,
                                    String groupId,
                                    String artifactId,
@@ -1802,14 +1787,6 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
   }
 
-  private static void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
-    List<String> actualProblems = new ArrayList<>();
-    for (MavenProjectProblem each : readerResult.readingProblems) {
-      actualProblems.add(each.getDescription());
-    }
-    assertOrderedElementsAreEqual(actualProblems, expectedProblems);
-  }
-
   private void assertActiveProfiles(String... expected) {
     assertActiveProfiles(Collections.emptyList(), expected);
   }
@@ -1820,10 +1797,4 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertUnorderedElementsAreEqual(result.activatedProfiles.getEnabledProfiles(), expected);
   }
 
-  private static class NullProjectLocator implements MavenProjectReaderProjectLocator {
-    @Override
-    public VirtualFile findProjectFile(MavenId coordinates) {
-      return null;
-    }
-  }
 }

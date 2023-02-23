@@ -124,7 +124,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       return isFromThisModule(fileSet) && ProjectFileIndexImpl.isSourceRootOfType(fileSet, rootTypes);
     }
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+    if (!info.isInModuleSource(fileOrDir) || !myModule.equals(info.getModule())) return  false;
+    JpsModuleSourceRootType<?> rootType = myDirectoryIndex.getSourceRootType(info);
+    return rootType != null && rootTypes.contains(rootType);
   }
 
   @Override

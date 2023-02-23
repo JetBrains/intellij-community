@@ -10,7 +10,7 @@ wasm20221114.commonTest
     org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
-    wasmMain (TEST)
+    wasmMain (friend, TEST)
 
 wasm20221114.wasmMain
     commonMain (refines, COMPILE)

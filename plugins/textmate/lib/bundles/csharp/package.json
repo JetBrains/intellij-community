@@ -4,6 +4,11 @@
   "description": "%description%",
   "license": "MIT",
   "contributes": {
+    "configurationDefaults": {
+      "[csharp]": {
+        "editor.maxTokenizationLineLength": 2500
+      }
+    },
     "languages": [
       {
         "id": "csharp",

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.toolWindow.StripeButton;
@@ -274,20 +275,30 @@ public final class ComponentPropertiesCollector {
   }
 
   private void addToolWindowInfo(Object component) {
-    if (component instanceof StripeButton) {
-      ToolWindowImpl window = ((StripeButton)component).getToolWindow$intellij_platform_ide_impl();
-      myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
-      myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
+    ToolWindowImpl window;
+    if (component instanceof StripeButton stripeButton) {
+      // old UI
+      window = stripeButton.getToolWindow$intellij_platform_ide_impl();
+    }
+    else if (component instanceof SquareStripeButton stripeButton) {
+      // new UI
+      window = stripeButton.getToolWindow();
+    }
+    else {
+      return;
+    }
 
-      ToolWindowFactory contentFactory = ReflectionUtil.getField(ToolWindowImpl.class, window, ToolWindowFactory.class, "contentFactory");
-      if (contentFactory != null) {
-        myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
-      }
-      else {
-        ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> Objects.equals(it.id, window.getId()));
-        if (ep != null && ep.factoryClass != null) {
-          myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
-        }
+    myProperties.add(new PropertyBean("Tool Window ID", window.getId(), true));
+    myProperties.add(new PropertyBean("Tool Window Icon", window.getIcon()));
+
+    ToolWindowFactory contentFactory = ReflectionUtil.getField(ToolWindowImpl.class, window, ToolWindowFactory.class, "contentFactory");
+    if (contentFactory != null) {
+      myProperties.add(new PropertyBean("Tool Window Factory", contentFactory));
+    }
+    else {
+      ToolWindowEP ep = ToolWindowEP.EP_NAME.findFirstSafe(it -> Objects.equals(it.id, window.getId()));
+      if (ep != null && ep.factoryClass != null) {
+        myProperties.add(new PropertyBean("Tool Window Factory", ep.factoryClass));
       }
     }
   }

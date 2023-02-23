@@ -5,7 +5,6 @@ import com.intellij.openapi.util.LowMemoryWatcherManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ParameterizedRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import org.jetbrains.jps.api.BuildType;
@@ -22,12 +21,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.Map;
-import java.util.Collections;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -120,7 +114,7 @@ public class Standalone {
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, false, initializer);
-    Set<String> modulesSet = ContainerUtil.set(modules);
+    Set<String> modulesSet = Set.of(modules);
     List<String> artifactsList = Arrays.asList(artifacts);
     File dataStorageRoot;
     if (cacheDirPath != null) {

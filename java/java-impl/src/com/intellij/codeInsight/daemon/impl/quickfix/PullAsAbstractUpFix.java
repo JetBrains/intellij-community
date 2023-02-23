@@ -21,10 +21,9 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
@@ -109,15 +108,16 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         pullUp(method, containingClass, classesToPullUp.iterator().next());
       }
       else if (editor != null) {
-        NavigationUtil.getPsiElementPopup(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                          JavaBundle.message("choose.super.class.popup.title"),
-                                          new PsiElementProcessor<>() {
-                                            @Override
-                                            public boolean execute(@NotNull PsiClass aClass) {
-                                              pullUp(method, containingClass, aClass);
-                                              return false;
-                                            }
-                                          }, classesToPullUp.iterator().next()).showInBestPositionFor(editor);
+        new PsiTargetNavigator()
+          .selection(classesToPullUp.iterator().next())
+          .createPopup(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY), JavaBundle.message("choose.super.class.popup.title"),
+                       new PsiElementProcessor<>() {
+                         @Override
+                         public boolean execute(@NotNull PsiClass aClass) {
+                           pullUp(method, containingClass, aClass);
+                           return false;
+                         }
+                       }).showInBestPositionFor(editor);
       }
     }
   }

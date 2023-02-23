@@ -3,6 +3,7 @@
 
 package com.intellij.testFramework.common
 
+import com.intellij.BundleBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
@@ -16,6 +17,7 @@ import com.intellij.idea.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.impl.RwLockHolder
@@ -124,7 +126,11 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     rwLockHolder.initialize(Thread.currentThread())
   }
 
-  val app = ApplicationImpl(isHeadless, rwLockHolder)
+  val app = ApplicationImpl(true, isHeadless, true, true, rwLockHolder)
+  BundleBase.assertOnMissedKeys(true);
+  // do not crash AWT on exceptions
+  AWTExceptionHandler.register();
+  Disposer.setDebugMode(true);
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)
@@ -233,11 +239,11 @@ fun Application.cleanApplicationStateCatching(): Throwable? {
       }
     },
     { (serviceIfCreated<DocumentReferenceManager>() as? DocumentReferenceManagerImpl)?.cleanupForNextTest() },
-    { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() },
     { UiInterceptors.clear() },
     {
       runInEdtAndWait {
         CompletionProgressIndicator.cleanupForNextTest()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
       }
     },
   )

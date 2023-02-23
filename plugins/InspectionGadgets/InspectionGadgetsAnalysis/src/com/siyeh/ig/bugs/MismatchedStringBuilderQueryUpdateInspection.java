@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -24,7 +23,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   @NonNls
   static final Set<String> returnSelfNames =
-    ContainerUtil.set("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse");
+    Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse");
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -141,7 +140,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
     private static final Set<String> updateNames =
-      ContainerUtil.set("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength");
+      Set.of("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse", "setCharAt", "setLength");
 
     private final PsiVariable variable;
     private boolean updated;
@@ -170,7 +169,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
     private void checkReferenceExpression(PsiReferenceExpression methodExpression) {
       final String name = methodExpression.getReferenceName();
-      if (!updateNames.contains(name)) return;
+      if (name == null || !updateNames.contains(name)) return;
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (hasReferenceToVariable(variable, qualifierExpression)) {
         updated = true;
@@ -180,8 +179,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
 
   private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
-    private static final Set<String> queryNames = ContainerUtil
-      .set("capacity", "charAt", "chars", "codePointAt", "codePointBefore", "codePointCount", "codePoints", "compareTo", "equals",
+    private static final Set<String> queryNames = Set.of("capacity", "charAt", "chars", "codePointAt", "codePointBefore", "codePointCount", "codePoints", "compareTo", "equals",
            "getChars", "hashCode", "indexOf", "lastIndexOf", "length", "offsetByCodePoints", "subSequence", "substring", "toString");
 
     private final PsiVariable variable;
@@ -229,6 +227,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (queried) return;
       super.visitMethodReferenceExpression(expression);
       final String name = expression.getReferenceName();
+      if (name == null) return;
       if (!queryNames.contains(name) && !returnSelfNames.contains(name)) return;
       if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) return;
       final PsiExpression qualifierExpression = expression.getQualifierExpression();
@@ -243,6 +242,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
+      if (name == null) return;
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (!queryNames.contains(name)) {
         if (returnSelfNames.contains(name) && hasReferenceToVariable(variable, qualifierExpression) && isVariableValueUsed(expression)) {
@@ -317,7 +317,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     else if (element instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String name = methodExpression.getReferenceName();
-      if (returnSelfNames.contains(name)) {
+      if (name != null && returnSelfNames.contains(name)) {
         return hasReferenceToVariable(variable, methodExpression.getQualifierExpression());
       }
     }

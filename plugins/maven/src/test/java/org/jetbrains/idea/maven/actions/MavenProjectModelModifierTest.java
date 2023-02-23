@@ -201,7 +201,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                     """);
 
     Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.JDK_1_8);
     assertNotNull(result);
     assertImportingIsInProgress(result);
@@ -222,7 +222,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                     <version>1</version>
                     """);
     Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
     assertImportingIsInProgress(result);
     assertEquals("--enable-preview",

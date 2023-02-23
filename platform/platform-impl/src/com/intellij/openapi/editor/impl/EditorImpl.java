@@ -4181,7 +4181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
                   break;
 
-              case 3:
+                case 3:
                   if (eventArea == EditorMouseEventArea.EDITING_AREA &&
                       HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
                     // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
@@ -4265,7 +4265,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void selectWordAtCaret(boolean honorCamelCase) {
     Caret caret = getCaretModel().getCurrentCaret();
-    caret.selectWordAtCaret(honorCamelCase);
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      caret.selectWordAtCaret(honorCamelCase);
+    }
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
     mySavedSelectionStart = caret.getSelectionStart();
     mySavedSelectionEnd = caret.getSelectionEnd();

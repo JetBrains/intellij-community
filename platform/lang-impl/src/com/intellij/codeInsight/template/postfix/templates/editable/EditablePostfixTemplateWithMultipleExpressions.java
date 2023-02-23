@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -72,7 +73,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
 
   @NotNull
   public Set<? extends ConditionType> getExpressionConditions() {
-    return myExpressionConditions;
+    return Collections.unmodifiableSet(myExpressionConditions);
   }
 
   public boolean isUseTopmostExpression() {

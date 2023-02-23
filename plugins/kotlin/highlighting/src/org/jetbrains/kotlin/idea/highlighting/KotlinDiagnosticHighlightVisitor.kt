@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactoryName
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
 import org.jetbrains.kotlin.psi.KtFile
@@ -55,7 +54,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     context(KtAnalysisSession)
     private fun KtAnalysisSession.addDiagnostic(diagnostic: KtDiagnosticWithPsi<*>, holder: HighlightInfoHolder) {
-        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic as KtFirDiagnostic)
+        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic)
         diagnostic.textRanges.forEach { range ->
             val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
                 .descriptionAndTooltip(diagnostic.getMessageToRender())

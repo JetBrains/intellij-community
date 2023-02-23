@@ -4,11 +4,13 @@ package com.intellij.internal.statistic.libraryJar;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.serialization.SerializationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
+import java.util.Set;
 
 /**
  * @author Ivan Chirkov
@@ -21,6 +23,10 @@ public final class LibraryJarStatisticsService implements DumbAware {
   @NotNull
   public static LibraryJarStatisticsService getInstance() {
     return ourInstance;
+  }
+
+  public Set<String> getLibraryNames() {
+    return ContainerUtil.map2Set(getTechnologyDescriptors(), descriptor -> descriptor.myName);
   }
 
   public LibraryJarDescriptor @NotNull [] getTechnologyDescriptors() {

@@ -84,11 +84,11 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   private void storeRefreshStatusToFiles() {
     if (myWatcher.isOperational()) {
-      FileWatcher.DirtyPaths dirtyPaths = myWatcher.getDirtyPaths();
-      markPathsDirty(dirtyPaths.dirtyPaths);
-      markFlatDirsDirty(dirtyPaths.dirtyDirectories);
-      markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
-      if ((!dirtyPaths.dirtyPaths.isEmpty() || !dirtyPaths.dirtyDirectories.isEmpty() || !dirtyPaths.dirtyPathsRecursive.isEmpty())) {
+      var dirtyPaths = myWatcher.getDirtyPaths();
+      var marked = markPathsDirty(dirtyPaths.dirtyPaths) |
+                   markFlatDirsDirty(dirtyPaths.dirtyDirectories) |
+                   markRecursiveDirsDirty(dirtyPaths.dirtyPathsRecursive);
+      if (marked) {
         statusRefreshed();
       }
     }
@@ -96,40 +96,51 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
   protected void statusRefreshed() { }
 
-  private void markPathsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      VirtualFile file = findFileByPathIfCached(dirtyPath);
-      if (file instanceof NewVirtualFile) {
-        ((NewVirtualFile)file).markDirty();
+  private boolean markPathsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var file = findFileByPathIfCached(dirtyPath);
+      if (file instanceof NewVirtualFile nvf) {
+        nvf.markDirty();
+        marked = true;
       }
     }
+    return marked;
   }
 
-  private void markFlatDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
-      if (pair.first != null) {
-        pair.first.markDirty();
-        for (VirtualFile child : pair.first.getCachedChildren()) {
+  private boolean markFlatDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (exactOrParent.first != null) {
+        exactOrParent.first.markDirty();
+        for (var child : exactOrParent.first.getCachedChildren()) {
           ((NewVirtualFile)child).markDirty();
+          marked = true;
         }
       }
-      else if (pair.second != null) {
-        pair.second.markDirty();
+      else if (exactOrParent.second != null) {
+        exactOrParent.second.markDirty();
+        marked = true;
       }
     }
+    return marked;
   }
 
-  private void markRecursiveDirsDirty(@NotNull Iterable<String> dirtyPaths) {
-    for (String dirtyPath : dirtyPaths) {
-      Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
-      if (pair.first != null) {
-        pair.first.markDirtyRecursively();
+  private boolean markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
+    var marked = false;
+    for (var dirtyPath : dirtyPaths) {
+      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      if (exactOrParent.first != null) {
+        exactOrParent.first.markDirtyRecursively();
+        marked = true;
       }
-      else if (pair.second != null) {
-        pair.second.markDirty();
+      else if (exactOrParent.second != null) {
+        exactOrParent.second.markDirty();
+        marked = true;
       }
     }
+    return marked;
   }
 
   public void markSuspiciousFilesDirty(@NotNull List<? extends VirtualFile> files) {

@@ -58,7 +58,9 @@ class TerminalPanel(private val project: Project,
   private val document: Document
   private val editor: EditorImpl
 
+  // disposable for updating content and forwarding mouse events
   private val runningDisposable: Disposable = Disposer.newDisposable()
+  private val keyEventsForwardingDisposable = Disposable { eventDispatcher.unregister() }
 
   private val palette: ColorPalette
     get() = settings.terminalColorPalette
@@ -83,9 +85,19 @@ class TerminalPanel(private val project: Project,
   }
 
   fun makeReadOnly() {
-    editor.setCaretEnabled(false)
-    editor.isViewer = true
+    // remove listening for content changes and forwarding events to terminal process
     Disposer.dispose(runningDisposable)
+
+    invokeLater {
+      Disposer.dispose(keyEventsForwardingDisposable)
+
+      // remove empty line at the end of output
+      val output = editor.document.text
+      editor.document.setText(output.trimEnd())
+
+      editor.setCaretEnabled(false)
+      editor.isViewer = true
+    }
   }
 
   fun toggleFullScreen(isFullScreen: Boolean) {
@@ -210,8 +222,6 @@ class TerminalPanel(private val project: Project,
 
   private fun setupEventDispatcher() {
     // Key events forwarding from the editor to terminal panel
-    val dispatcherDisposable = Disposable { eventDispatcher.unregister() }
-    Disposer.register(runningDisposable, dispatcherDisposable)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         if (settings.overrideIdeShortcuts()) {

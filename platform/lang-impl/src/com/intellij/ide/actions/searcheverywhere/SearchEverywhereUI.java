@@ -17,6 +17,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.Disposable;
@@ -559,7 +560,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       myMlService.onSearchRestart(
         myProject, tabId, reason,
         mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, namePattern,
-        () -> myListModel.getFoundElementsInfo()
+        () -> myListModel.getFoundElementsInfo(),
+        getSelectedSearchScope(myHeader.getSelectedTab()), myHeader.isEverywhere()
       );
     }
 
@@ -715,6 +717,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
     });
+  }
+
+  /**
+   * Returns selected search scope for a single-contributor scope-supporting tab, null for any other type of tab.
+   */
+  private static @Nullable ScopeDescriptor getSelectedSearchScope(@NotNull SETab tab) {
+    if (tab.isSingleContributor() && tab.getContributors().get(0) instanceof ScopeSupporting tabContributor) {
+      return tabContributor.getScope();
+    }
+    return null;
   }
 
   private void showDescriptionForIndex(int index) {

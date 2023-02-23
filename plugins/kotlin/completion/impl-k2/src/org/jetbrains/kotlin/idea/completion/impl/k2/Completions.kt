@@ -23,9 +23,9 @@ internal object Completions {
                 complete(factory.namedArgumentContributor(0), positionContext)
             } else {
                 complete(factory.keywordContributor(0), positionContext)
+                complete(factory.namedArgumentContributor(0), positionContext)
                 complete(factory.callableContributor(0), positionContext)
                 complete(factory.classifierContributor(0), positionContext)
-                complete(factory.namedArgumentContributor(0), positionContext)
                 complete(factory.packageCompletionContributor(1), positionContext)
             }
 

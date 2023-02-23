@@ -24,6 +24,9 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -31,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,26 +94,32 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {
-    final List<PsiElement> references = collectReferences(myVariable);
-    final List<PsiElement> sideEffects = new ArrayList<>();
-    boolean canCopeWithSideEffects = true;
-    // check for side effects
-    for (PsiElement element : references) {
-      Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveMode.CANCEL);
-      if (result == null) return;
-      canCopeWithSideEffects &= result;
-    }
+    record Context(RemoveMode deleteMode, List<PsiElement> references) {}
 
-    final RemoveMode deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects);
+    ReadAction.nonBlocking(() -> {
+      final List<PsiElement> references = collectReferences(myVariable);
+      final List<PsiElement> sideEffects = new ArrayList<>();
+      boolean canCopeWithSideEffects = true;
+      // check for side effects
+      for (PsiElement element : references) {
+        Boolean result = RemoveUnusedVariableUtil.processUsage(element, myVariable, sideEffects, RemoveMode.CANCEL);
+        if (result == null) return null;
+        canCopeWithSideEffects &= result;
+      }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        RemoveUnusedVariableUtil.deleteReferences(myVariable, references, deleteMode);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    });
+      final RemoveMode deleteMode = showSideEffectsWarning(sideEffects, myVariable, editor, canCopeWithSideEffects);
+      return new Context(deleteMode, references);
+    }).finishOnUiThread(ModalityState.NON_MODAL, context -> {
+        WriteCommandAction.writeCommandAction(myVariable.getProject()).run(() -> {
+          try {
+            RemoveUnusedVariableUtil.deleteReferences(myVariable, context.references, context.deleteMode);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        });
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static List<PsiElement> collectReferences(@NotNull PsiVariable variable) {

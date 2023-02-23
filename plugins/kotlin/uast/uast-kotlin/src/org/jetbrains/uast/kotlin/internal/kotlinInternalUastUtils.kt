@@ -67,9 +67,9 @@ import org.jetbrains.kotlin.types.typeUtil.isInterface
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
-import org.jetbrains.uast.kotlin.psi.UastDescriptorLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
-import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
+import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import java.text.StringCharacterIterator
 
 val kotlinUastPlugin: UastLanguagePlugin by lz {
@@ -350,7 +350,7 @@ internal fun resolveToPsiMethod(
         val lightClass = source.toLightClass() ?: return null
         lightClass.constructors.firstOrNull()?.let { return it }
         if (source.isLocal) {
-            return UastFakeLightPrimaryConstructor(source, lightClass)
+            return UastFakeSourceLightPrimaryConstructor(source, lightClass)
         }
         return null
     }
@@ -365,9 +365,9 @@ internal fun resolveToPsiMethod(
     return when (source) {
         is KtFunction ->
             if (source.isLocal)
-                getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             else // UltraLightMembersCreator.createMethods() returns nothing for JVM-invisible methods, so fake it if we get null here
-                LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+                LightClassUtil.getLightClassMethod(source) ?: getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
         is PsiMethod -> source
         null -> {
             val unwrapped = descriptor.unwrapIfFakeOverride() as? DeserializedCallableMemberDescriptor ?: descriptor
@@ -537,7 +537,7 @@ private fun resolveDeserialized(
             psiClass.getMethodBySignature(
                 JvmProtoBufUtil.getJvmMethodSignature(proto, nameResolver, typeTable)
                     ?: getMethodSignatureFromDescriptor(context, descriptor)
-            ) ?: UastDescriptorLightMethod(descriptor as SimpleFunctionDescriptor, psiClass, context) // fake Java-invisible methods
+            ) ?: UastFakeDescriptorLightMethod(descriptor as SimpleFunctionDescriptor, psiClass, context) // fake Java-invisible methods
         }
         is ProtoBuf.Constructor -> {
             val signature = JvmProtoBufUtil.getJvmConstructorSignature(proto, nameResolver, typeTable)

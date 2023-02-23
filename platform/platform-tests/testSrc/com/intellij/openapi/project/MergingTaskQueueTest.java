@@ -12,10 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Ignore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -53,12 +50,12 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
   }
 
   static class LoggingTask implements MergeableQueueTask<LoggingTask> {
-    private final @Nullable List<@NotNull Integer> performLog;
-    private final @Nullable List<@NotNull Integer> disposeLog;
+    private final @Nullable Collection<@NotNull Integer> performLog;
+    private final @Nullable Collection<@NotNull Integer> disposeLog;
     private final BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn;
     private final int taskId;
 
-    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog) {
+    LoggingTask(int taskId, @Nullable Collection<Integer> performLog, @Nullable Collection<Integer> disposeLog) {
       this(taskId, performLog, disposeLog, (thiz, other) -> null);
     }
 
@@ -66,7 +63,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       this(taskId, null, null, tryMergeWithFn);
     }
 
-    LoggingTask(int taskId, @Nullable List<Integer> performLog, @Nullable List<Integer> disposeLog,
+    LoggingTask(int taskId, @Nullable Collection<Integer> performLog, @Nullable Collection<Integer> disposeLog,
                 @NotNull BiFunction<@NotNull LoggingTask, @NotNull LoggingTask, @Nullable LoggingTask> tryMergeWithFn) {
       this.performLog = performLog;
       this.disposeLog = disposeLog;

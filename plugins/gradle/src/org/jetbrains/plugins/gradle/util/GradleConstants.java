@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +23,7 @@ public final class GradleConstants {
 
   @NonNls public static final String @NotNull [] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION};
 
-  @NotNull public static final Set<String> KNOWN_GRADLE_FILES = ContainerUtil.immutableSet(DEFAULT_SCRIPT_NAME,
+  @NotNull public static final Set<String> KNOWN_GRADLE_FILES = Set.of(DEFAULT_SCRIPT_NAME,
                                                                                            KOTLIN_DSL_SCRIPT_NAME,
                                                                                            SETTINGS_FILE_NAME,
                                                                                            KOTLIN_DSL_SETTINGS_FILE_NAME);

@@ -230,7 +230,7 @@ internal object GHPRStatusChecksComponentFactory {
       }
       val reviewerLabel = JLabel().apply {
         icon = avatarIconsProvider.getIcon(reviewer.avatarUrl, AVATAR_SIZE)
-        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.shortName)
+        text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.getPresentableName())
         iconTextGap = STATUS_COMPONENTS_GAP
       }
 

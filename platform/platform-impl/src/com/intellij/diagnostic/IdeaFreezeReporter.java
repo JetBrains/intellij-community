@@ -17,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +32,10 @@ import java.util.function.Function;
 final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
 
-  private static final int FREEZE_THRESHOLD = Math.max(SystemProperties.getIntProperty(
-    "freeze.reporter.threshold.s", ApplicationManager.getApplication().isInternal() ? 10 : 20), 1);
+  // intentionally hardcoded and not implemented via a registry key or system property
+  // to be updated when we ready to collect freezes from the specified duration and up
+  private static final int FREEZE_THRESHOLD = 10;
+
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   private static final String MESSAGE_FILE_NAME = ".message";
@@ -173,8 +174,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         myDumpTask.stop();
       }
       reset();
-      myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms", 100),
-                                    Registry.intValue("freeze.reporter.dump.duration.s", 180) * 1000) {
+      PerformanceWatcher watcher = PerformanceWatcher.getInstance();
+      int maxDumpDuration = watcher.getMaxDumpDuration();
+      if (maxDumpDuration == 0) return;
+      myDumpTask = new SamplingTask(100, maxDumpDuration) {
         @Override
         public void stop() {
           super.stop();

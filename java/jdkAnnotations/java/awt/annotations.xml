@@ -210,6 +210,9 @@
       <val name="intValues" val="{java.awt.Label.LEFT, java.awt.Label.CENTER, java.awt.Label.RIGHT}" />
     </annotation>
   </item>
+  <item name='java.awt.MouseInfo java.awt.PointerInfo getPointerInfo()'>
+    <annotation name='org.jetbrains.annotations.UnknownNullability'/>
+  </item>
   <item name='java.awt.Point Point(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

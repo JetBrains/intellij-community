@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -104,7 +104,7 @@ public class TestAll implements Test {
   private int myIgnoredTests;
   private TestRecorder myTestRecorder;
 
-  private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
+  private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
 
   public TestAll(String rootPackage) throws Throwable {
@@ -120,11 +120,11 @@ public class TestAll implements Test {
     }
     myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
 
-    outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
+    ourClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
   }
 
   public static List<Throwable> getLoadingClassProblems() {
-    return outClassLoadingProblems;
+    return ourClassLoadingProblems;
   }
 
   public static List<Path> getClassRoots() {

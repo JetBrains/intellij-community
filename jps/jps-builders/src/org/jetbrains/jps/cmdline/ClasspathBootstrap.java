@@ -36,7 +36,8 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.xxh3.Xxh3;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -162,12 +163,6 @@ public final class ClasspathBootstrap {
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
     cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
-    try {
-      // trove
-      cp.add(getResourceFile(ClasspathBootstrap.class.getClassLoader().loadClass("gnu.trove.THashSet")));
-    }
-    catch (ClassNotFoundException ignore) {
-    }
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));

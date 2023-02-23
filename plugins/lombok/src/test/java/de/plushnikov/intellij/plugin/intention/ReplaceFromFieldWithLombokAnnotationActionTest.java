@@ -146,6 +146,6 @@ public class ReplaceFromFieldWithLombokAnnotationActionTest extends LombokIntent
   }
 
   private void setExpectedAnnotations(String... annotationNames) {
-    expectedAnnotations = ContainerUtil.set(annotationNames);
+    expectedAnnotations = Set.of(annotationNames);
   }
 }

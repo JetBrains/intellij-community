@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.application.options.CodeCompletionConfigurable;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -19,6 +18,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -49,7 +50,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
 
 class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
@@ -175,16 +175,20 @@ class LookupUi {
 
     LookupElement item = myLookup.getCurrentItem();
     if (item != null && item.isValid()) {
-      Collection<LookupElementAction> actions = myLookup.getActionsFor(item);
-      if (!actions.isEmpty()) {
-        myHintAlarm.addRequest(() -> {
-          if (ShowHideIntentionIconLookupAction.shouldShowLookupHint() &&
-              !((CompletionExtender)myList.getExpandableItemsHandler()).isShowing() &&
-              !myProcessIcon.isVisible()) {
-            myHintButton.setVisible(true);
+      ReadAction.nonBlocking(() -> myLookup.getActionsFor(item))
+        .expireWhen(() -> !item.isValid() || myHintAlarm.isDisposed())
+        .finishOnUiThread(ModalityState.NON_MODAL, actions -> {
+          if (!actions.isEmpty()) {
+            myHintAlarm.addRequest(() -> {
+              if (ShowHideIntentionIconLookupAction.shouldShowLookupHint() &&
+                  !((CompletionExtender)myList.getExpandableItemsHandler()).isShowing() &&
+                  !myProcessIcon.isVisible()) {
+                myHintButton.setVisible(true);
+              }
+            }, 500, myModalityState);
           }
-        }, 500, myModalityState);
-      }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
 

@@ -35,10 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.List;
@@ -129,6 +126,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
 
 
   @NotNull
+  @Unmodifiable
   public List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {

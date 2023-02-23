@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -93,7 +92,7 @@ public class PersistentBTreeEnumeratorTest {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2),
+    assertEquals(Set.of(COLLISION_1, COLLISION_2),
                  new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
@@ -113,7 +112,7 @@ public class PersistentBTreeEnumeratorTest {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(Set.of(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   @Test
@@ -124,7 +123,7 @@ public class PersistentBTreeEnumeratorTest {
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(ContainerUtil.set(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(Set.of(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   @Test

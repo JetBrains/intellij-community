@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -20,10 +19,6 @@ public final class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
 
   private ReflectionUtil() { }
-
-  static {
-    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
-  }
 
   public static @NotNull List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();

@@ -10,7 +10,7 @@ import java.util.Set;
 @ApiStatus.Internal
 public class InstallAndEnableTaskHeadlessImpl
   extends InstallAndEnableTask {
-  public InstallAndEnableTaskHeadlessImpl(@NotNull Set<PluginId> pluginIds) {
-    super(null, pluginIds, true);
+  public InstallAndEnableTaskHeadlessImpl(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
+    super(null, pluginIds, true, false, true, null, onSuccess);
   }
 }

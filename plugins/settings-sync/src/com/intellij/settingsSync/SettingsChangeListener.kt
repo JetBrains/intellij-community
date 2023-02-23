@@ -3,13 +3,13 @@ package com.intellij.settingsSync
 import com.intellij.openapi.util.NlsSafe
 import java.util.*
 
-internal fun interface SettingsChangeListener : EventListener {
+fun interface SettingsChangeListener : EventListener {
 
   fun settingChanged(event: SyncSettingsEvent)
 
 }
 
-internal sealed class SyncSettingsEvent {
+sealed class SyncSettingsEvent {
   /**
    * These events are processed in a batch
    */
@@ -51,14 +51,14 @@ internal sealed class SyncSettingsEvent {
     return javaClass.simpleName
   }
 
-  internal sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : StandardEvent() {
+  sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : StandardEvent() {
     override fun toString(): String {
       return "${javaClass.simpleName}[${snapshot.fileStates.joinToString(limit = 5) { it.file }}]"
     }
   }
 }
 
-internal sealed class DeleteServerDataResult {
+sealed class DeleteServerDataResult {
   object Success: DeleteServerDataResult()
   class Error(@NlsSafe val error: String): DeleteServerDataResult()
 }

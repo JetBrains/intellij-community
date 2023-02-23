@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
@@ -187,7 +187,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           super.updateInfo(null);
         }
         else {
-        super.updateInfo(info);
+          super.updateInfo(info);
         }
       }
     };
@@ -199,8 +199,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     });
 
     initComponents();
-    initByModel();
-
     FindUsagesCollector.triggerUsedOptionsStats(myProject, FindUsagesCollector.FIND_IN_PATH, myHelper.getModel());
   }
 
@@ -494,10 +492,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       if (usages == null) {
         return;
       }
+      myHelper.updateFindSettings();
       CommandProcessor.getInstance().executeCommand(myProject, () -> {
         for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
           try {
-            ReplaceInProjectManager.getInstance(myProject).replaceUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet(), false);
+            boolean success = ReplaceInProjectManager.getInstance(myProject)
+              .replaceSingleUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet());
+            if (!success) return;
             ((DefaultTableModel)myResultsPreviewTable.getModel()).removeRow(entry.getKey());
           }
           catch (FindManager.MalformedReplacementStringException ex) {
@@ -674,6 +675,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     Runnable updatePreviewRunnable = () -> {
       if (Disposer.isDisposed(myDisposable)) return;
       int[] selectedRows = myResultsPreviewTable.getSelectedRows();
+      if (selectedRows.length > 1 || selectedRows.length == 1 && selectedRows[0] != 0) {
+        myHelper.updateFindSettings();
+      }
+      myReplaceSelectedButton.setEnabled(selectedRows.length > 0);
       List<CompletableFuture<UsageInfo[]>> selectedUsagePromises = new SmartList<>();
       String file = null;
       for (int row : selectedRows) {
@@ -714,7 +719,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     };
     myResultsPreviewTable.getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || Disposer.isDisposed(myPreviewUpdater)) return;
-      myPreviewUpdater.addRequest(updatePreviewRunnable, 50); //todo[vasya]: remove this dirty hack of updating preview panel after clicking on Replace button
+      myPreviewUpdater.addRequest(updatePreviewRunnable, 50);
     });
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
@@ -872,6 +877,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
         .filter(usage -> usage instanceof UsageInfoAdapter)
         .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
         .map(info -> info.getElement())
+        .filter(Objects::nonNull)
         .toArray(PsiElement[]::new);
     }
     return null;
@@ -982,6 +988,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       if (validateModel.isReplaceState() &&
           !openInFindWindow &&
           myResultsPreviewTable.getRowCount() > 1 &&
+          !"1".equals(myFilesCount) &&
           !ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
             myUsagesCount,
             getStringToFind(),
@@ -1040,22 +1047,9 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
       header.fileMaskField.setSelectedItem(fileMask != null ? fileMask : fileMasks[fileMasks.length - 1]);
     }
     header.fileMaskField.setEnabled(isThereFileFilter);
-    String toSearch = myModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-
-    if (StringUtil.isEmpty(toSearch)) {
-      String[] history = findInProjectSettings.getRecentFindStrings();
-      toSearch = history.length > 0 ? history[history.length - 1] : "";
-    }
-
-    mySearchComponent.setText(toSearch);
-    String toReplace = myModel.getStringToReplace();
-
-    if (StringUtil.isEmpty(toReplace)) {
-      String[] history = findInProjectSettings.getRecentReplaceStrings();
-      toReplace = history.length > 0 ? history[history.length - 1] : "";
-    }
-    myReplaceComponent.setText(toReplace);
+    mySearchComponent.setText(findInProjectSettings.getMostRecentFindString());
+    myReplaceComponent.setText(findInProjectSettings.getMostRecentReplaceString());
     updateControls();
     updateScopeDetailsPanel();
 
@@ -1063,7 +1057,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     header.titleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
-    myOKButton.setText(FindBundle.message("find.popup.find.button"));
     myReplaceAllButton.setVisible(isReplaceState);
     myReplaceSelectedButton.setVisible(isReplaceState);
   }
@@ -1140,6 +1133,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
+    myOKButton.setEnabled(result == null);
     myComponentValidator.updateInfo(result);
 
     ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase() {
@@ -1582,7 +1576,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     model.setRegularExpressions(myRegexState.get());
     model.setStringToFind(getStringToFind());
 
-    if (model.isReplaceState()) {
+    if (myHelper.isReplaceState()) {
       model.setStringToReplace(StringUtil.convertLineSeparators(getStringToReplace()));
     }
 

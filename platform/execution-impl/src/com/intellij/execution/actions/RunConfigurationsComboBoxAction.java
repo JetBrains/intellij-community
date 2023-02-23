@@ -273,12 +273,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
           group.add(createAction.apply(settings));
         }
         if (group != actionGroup) {
-          allConfigurationsNumber++;
           actionGroup.add(group);
         }
-        else {
-          allConfigurationsNumber += configurationsList.size();
-        }
+        allConfigurationsNumber += configurationsList.size();
       }
 
       allActionsGroup.add(actionGroup);

@@ -624,7 +624,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    myGuiDumbTaskRunner.runBackgroundProcess(visibleIndicator);
+    myGuiDumbTaskRunner.tryStartProcessInThisThread(visibleIndicator);
   }
 
   @Override

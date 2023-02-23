@@ -123,18 +123,6 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @org.junit.jupiter.params.provider.ValueSource(strings = "foo")
         void implicitParameter(String argument, org.junit.jupiter.api.TestInfo testReporter) { }
         
-        @org.junit.jupiter.api.extension.ExtendWith(org.junit.jupiter.api.extension.TestExecutionExceptionHandler.class)
-        @interface RunnerExtension { }
-      
-        @RunnerExtension
-        abstract class AbstractValueSource { }
-        
-        class ValueSourcesWithCustomProvider extends AbstractValueSource {
-          @org.junit.jupiter.params.ParameterizedTest
-          @org.junit.jupiter.params.provider.ValueSource(ints = {1})
-          void testWithIntValues(int i, String fromExtension) { }
-        }
-        
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = { "FIRST" })
         void implicitConversionEnum(TestEnum e) { }
@@ -673,6 +661,36 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "Fix 'beforeAll' method signature")
   }
+  fun `test no highlighting when automatic parameter resolver is found`() {
+    myFixture.addFileToProject("com/intellij/testframework/ext/AutomaticExtension.java", """
+      package com.intellij.testframework.ext;
+      
+      class AutomaticExtension implements org.junit.jupiter.api.extension.ParameterResolver {
+        @Override
+        public boolean supportsParameter(
+          org.junit.jupiter.api.extension.ParameterContext parameterContext, 
+          org.junit.jupiter.api.extension.ExtensionContext extensionContext
+        ) {
+          return true;
+        }
+    
+        @Override
+        public Object resolveParameter(
+          org.junit.jupiter.api.extension.ParameterContext parameterContext, 
+          org.junit.jupiter.api.extension.ExtensionContext extensionContext
+        ) {
+          return "";
+        }
+      }    
+    """.trimIndent())
+    addAutomaticExtension("com.intellij.testframework.ext.AutomaticExtension")
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class MainTest {
+        @org.junit.jupiter.api.BeforeEach
+        public void foo(int x) { }
+      }
+    """.trimIndent())
+  }
 
   /* Malformed Datapoint(s) */
   fun `test malformed dataPoint no highlighting`() {
@@ -981,11 +999,29 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
       }
     """.trimIndent(), "JUnit4TestMethodIsPublicVoidNoArg")
   }
-  fun `test malformed test for JUnit 4 runWith highlighting`() {
+  fun `test no highlighting on custom runner`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
-      @org.junit.runner.RunWith(org.junit.runner.Runner.class)
-      class JUnit4RunWith {
-          @org.junit.Test public int <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(int i) { return -1; }
+      class MyRunner extends org.junit.runner.Runner {
+          @Override
+          public org.junit.runner.Description getDescription() { return null; }
+        
+          @Override
+          public void run(org.junit.runner.notification.RunNotifier notifier) { }
+      }
+      
+      @org.junit.runner.RunWith(MyRunner.class)
+      class Foo {
+          @org.junit.Test 
+          public int testMe(int i) { return -1; }
+      }
+    """.trimIndent())
+  }
+  fun `test highlighting on predefined runner`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      @org.junit.runner.RunWith(org.junit.runners.JUnit4.class)
+      class Foo {
+          @org.junit.Test 
+          public int <warning descr="Method 'testMe' annotated with '@Test' should be of type 'void' and not declare parameter 'i'">testMe</warning>(int i) { return -1; }
       }
     """.trimIndent())
   }

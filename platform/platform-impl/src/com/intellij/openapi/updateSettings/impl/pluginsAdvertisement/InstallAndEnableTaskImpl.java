@@ -12,10 +12,6 @@ import java.util.Set;
 
 @ApiStatus.Internal
 public class InstallAndEnableTaskImpl extends InstallAndEnableTask {
-  private final boolean myShowDialog;
-  private final boolean mySelectAllInDialog;
-  private final @Nullable ModalityState myModalityState;
-  private @NotNull final Runnable myOnSuccess;
 
   InstallAndEnableTaskImpl(@Nullable Project project,
                            @NotNull Set<PluginId> pluginIds,
@@ -23,32 +19,7 @@ public class InstallAndEnableTaskImpl extends InstallAndEnableTask {
                            boolean selectAllInDialog,
                            @Nullable ModalityState modalityState,
                            @NotNull Runnable onSuccess) {
-    super(project, pluginIds, false);
-    myShowDialog = showDialog;
-    mySelectAllInDialog = selectAllInDialog;
-    myModalityState = modalityState;
-    myOnSuccess = onSuccess;
-  }
-
-
-  @Override
-  public void onSuccess() {
-    if (myCustomPlugins == null) {
-      return;
-    }
-
-    new PluginsAdvertiserDialog(myProject,
-                                myPlugins,
-                                myCustomPlugins,
-                                mySelectAllInDialog,
-                                this::runOnSuccess)
-      .doInstallPlugins(myShowDialog, myModalityState);
-  }
-
-  private void runOnSuccess(boolean onSuccess) {
-    if (onSuccess) {
-      myOnSuccess.run();
-    }
+    super(project, pluginIds, false, showDialog, selectAllInDialog, modalityState, onSuccess);
   }
 }
 

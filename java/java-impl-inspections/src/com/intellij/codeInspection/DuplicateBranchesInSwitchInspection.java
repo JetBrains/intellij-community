@@ -443,7 +443,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = ContainerUtil.set(myBranchToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myBranchToMergeWith.myCommentTexts);
       return true;
     }
 
@@ -1104,7 +1104,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = ContainerUtil.set(myRuleToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = ContainerUtil.immutableSet(myRuleToMergeWith.myCommentTexts);
       return true;
     }
 

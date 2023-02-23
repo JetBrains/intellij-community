@@ -40,8 +40,6 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
       state.reopenLastProject = value
     }
 
-  private var supportScreenReaders = SUPPORT_SCREEN_READERS_OVERRIDDEN ?: false
-
   var isSyncOnFrameActivation: Boolean
     get() = state.autoSyncFiles
     set(value) {
@@ -163,10 +161,10 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   }
 
   var isSupportScreenReaders: Boolean
-    get() = supportScreenReaders
+    get() = SUPPORT_SCREEN_READERS_OVERRIDDEN ?: state.supportScreenReaders
     set(value) {
-      val changed = supportScreenReaders != value
-      supportScreenReaders = value
+      val changed = state.supportScreenReaders != value
+      state.supportScreenReaders = value
       if (changed) {
         propertyChanged(PropertyNames.supportScreenReaders)
       }
@@ -255,6 +253,9 @@ data class GeneralSettingsState(
 
   @JvmField
   var inactiveTimeout: Int = 15,
+
+  @JvmField
+  var supportScreenReaders: Boolean = false
 )
 
 enum class ProcessCloseConfirmation {

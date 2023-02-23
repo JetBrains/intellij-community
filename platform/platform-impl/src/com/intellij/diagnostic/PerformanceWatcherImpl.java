@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -76,12 +77,8 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
 
   private final JitWatcher myJitWatcher = new JitWatcher();
 
-  private final @NotNull RegistryValue mySamplingInterval;
-  private final @NotNull RegistryValue myMaxAttemptsCount;
   private final @NotNull RegistryValue myUnresponsiveInterval;
-  private final @NotNull RegistryValue myMaxDumpDuration;
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
     if (application == null) {
@@ -89,10 +86,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     }
 
     RegistryManager registryManager = application.getService(RegistryManager.class);
-    mySamplingInterval = registryManager.get("performance.watcher.sampling.interval.ms");
-    myMaxAttemptsCount = registryManager.get("performance.watcher.unresponsive.max.attempts.before.log");
     myUnresponsiveInterval = registryManager.get("performance.watcher.unresponsive.interval.ms");
-    myMaxDumpDuration = registryManager.get("performance.watcher.dump.duration.s");
 
     if (application.isHeadlessEnvironment()) {
       return;
@@ -101,16 +95,14 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     RegistryValueListener cancelingListener = new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
-        int samplingIntervalMs = getUnresponsiveInterval() > 0 && getMaxAttemptsCount() > 0 ?
-                                 getSamplingInterval() :
-                                 0;
-
+        LOG.info("on UI freezes more than " + getUnresponsiveInterval() + " ms will " +
+                 "dump threads each " + getDumpInterval() + " ms for " + getMaxDumpDuration() + " ms max");
+        int samplingIntervalMs = getSamplingInterval();
+        cancelThread();
         if (samplingIntervalMs <= 0) {
-          cancelThread();
           myThread = null;
         }
-        else if (mySamplingInterval == value) {
-          cancelThread();
+        else {
           myThread = myExecutor.scheduleWithFixedDelay(() -> samplePerformance(samplingIntervalMs),
                                                        samplingIntervalMs,
                                                        samplingIntervalMs,
@@ -118,11 +110,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
         }
       }
     };
-
-    for (RegistryValue value : List.of(mySamplingInterval, myMaxAttemptsCount, myUnresponsiveInterval)) {
-      value.addListener(cancelingListener, this);
-    }
-
+    myUnresponsiveInterval.addListener(cancelingListener, this);
     if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
       RegistryValue ourReasonableThreadPoolSize = registryManager.get("reasonable.application.thread.pool.size");
       AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
@@ -139,7 +127,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     reportCrashesIfAny();
     cleanOldFiles(myLogDir, 0);
 
-    cancelingListener.afterValueChanged(mySamplingInterval);
+    cancelingListener.afterValueChanged(myUnresponsiveInterval);
   }
 
 
@@ -309,27 +297,28 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
     });
   }
 
-  private int getSamplingInterval() {
-    return mySamplingInterval.asInteger();
+  /** for {@link IdePerformanceListener#uiResponded} events (ms) */
+  private static int getSamplingInterval() {
+    return 1000;
   }
 
-  private int getMaxAttemptsCount() {
-    return myMaxAttemptsCount.asInteger();
-  }
-
+  /** for dump files on disk and in EA reports (ms) */
   @Override
   public int getDumpInterval() {
-    return getSamplingInterval() * getMaxAttemptsCount();
+    return MathUtil.clamp(5000, 500, getUnresponsiveInterval());
   }
 
+  /** defines the freeze (ms) */
   @Override
   public int getUnresponsiveInterval() {
-    return myUnresponsiveInterval.asInteger();
+    int value = myUnresponsiveInterval.asInteger();
+    return value <= 0 ? 0 : MathUtil.clamp(value, 500, 20000);
   }
 
+  /** to limit the number of dumps and the size of performance snapshot */
   @Override
   public int getMaxDumpDuration() {
-    return myMaxDumpDuration.asInteger() * 1000;
+    return MathUtil.clamp(getDumpInterval() * 20, 0, 40000); // 20 files max
   }
 
   private static String buildName() {
@@ -633,7 +622,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
           StackTraceElement[] edtStack = edt.getStackTrace();
           if (edtStack != null) {
             if (stacktraceCommonPart == null) {
-              stacktraceCommonPart = List.of(edtStack);
+              stacktraceCommonPart = Arrays.asList(edtStack);
             }
             else {
               stacktraceCommonPart = getStacktraceCommonPart(stacktraceCommonPart, edtStack);

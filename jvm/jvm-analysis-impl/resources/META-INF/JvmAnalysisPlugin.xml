@@ -12,7 +12,7 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="assertequals.between.inconvertible.types.display.name"
-                     implementationClass="com.intellij.codeInspection.AssertBetweenInconvertibleTypesInspection"/>
+                     implementationClass="com.intellij.codeInspection.test.AssertBetweenInconvertibleTypesInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestOnlyProblems"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"

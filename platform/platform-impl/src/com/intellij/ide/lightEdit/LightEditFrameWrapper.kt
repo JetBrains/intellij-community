@@ -99,7 +99,7 @@ internal class LightEditFrameWrapper(
       if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
         frame.toggleFullScreen(true)
       }
-      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper, frame))
+      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
       IdeMenuBar.installAppMenuIfNeeded(uiFrame)
 
       @Suppress("DEPRECATION")
@@ -154,16 +154,6 @@ internal class LightEditFrameWrapper(
   }
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
-
-  override fun createCloseProjectWindowHelper(): CloseProjectWindowHelper {
-    return object : CloseProjectWindowHelper() {
-      override fun windowClosing(project: Project?) {
-        if (closeHandler.asBoolean) {
-          super.windowClosing(project)
-        }
-      }
-    }
-  }
 
   override fun dispose() {
     Disposer.dispose(editPanel!!)

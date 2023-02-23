@@ -1,5 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.utils
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("PackageDirectoryMismatch")
+
+package com.intellij.openapi.application
 
 import com.google.gson.GsonBuilder
 import com.intellij.idea.AppExitCodes
@@ -65,7 +67,7 @@ internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
       cmdArguments = args,
       vmOptions = ManagementFactory.getRuntimeMXBean().inputArguments,
       systemProperties = System.getProperties() as? Map<String, String>
-        ?: error("Failed to cast System.getProperties() result to Map<String, String>"),
+                         ?: error("Failed to cast System.getProperties() result to Map<String, String>"),
       environmentVariables = System.getenv()
     )
 

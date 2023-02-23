@@ -201,24 +201,26 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
     project.putUserData(ANNOTATIONS_BEING_ATTACHED, Boolean.TRUE);
     ApplicationManager.getApplication().invokeLater(() -> {
-      SdkModificator modificator = sdk.getSdkModificator();
-      boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
-      // daemon will restart automatically
-      if (success) {
-        modificator.commitChanges();
-      }
-      if (success) {
-        ReadAction.nonBlocking(() -> {
-            // check if we really attached the necessary annotations, to avoid IDEA-247322
-            return getJDKToAnnotate(project) == null;
-          }).finishOnUiThread(ModalityState.NON_MODAL, hasNoJdkToAnnotate -> {
-            if (hasNoJdkToAnnotate) {
-              // avoid endless loop on JDK misconfiguration
-              project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
-            }
-          }).inSmartMode(project)
-          .submit(AppExecutorUtil.getAppExecutorService());
-      }
+      JavaSdkImpl.attachIDEAAnnotationsToJdkAsync(sdk)
+        .onSuccess(success -> {
+          // daemon will restart automatically
+          if (success) {
+            SdkModificator modificator = sdk.getSdkModificator();
+            modificator.commitChanges();
+          }
+          if (success) {
+            ReadAction.nonBlocking(() -> {
+                // check if we really attached the necessary annotations, to avoid IDEA-247322
+                return getJDKToAnnotate(project) == null;
+              }).finishOnUiThread(ModalityState.NON_MODAL, hasNoJdkToAnnotate -> {
+                if (hasNoJdkToAnnotate) {
+                  // avoid endless loop on JDK misconfiguration
+                  project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
+                }
+              }).inSmartMode(project)
+              .submit(AppExecutorUtil.getAppExecutorService());
+          }
+        });
     }, project.getDisposed());
   }
 

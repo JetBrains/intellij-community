@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JarBuilder")
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.common.AttributeKey
@@ -13,10 +12,6 @@ import java.nio.file.PathMatcher
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-const val UTIL_JAR = "util.jar"
-const val UTIL_RT_JAR = "util_rt.jar"
-const val UTIL_8_JAR = "util-8.jar"
-
 sealed interface Source {
   val sizeConsumer: IntConsumer?
 
@@ -27,18 +22,11 @@ sealed interface Source {
 private val USER_HOME = Path.of(System.getProperty("user.home"))
 private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
-internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
-
-data class ZipSource(
-  @JvmField val file: Path,
-  @JvmField val excludes: List<Regex> = emptyList(),
-  @JvmField val isPreSignedCandidate: Boolean = false,
-  override val filter: ((String) -> Boolean)? = null,
-  override val sizeConsumer: IntConsumer? = null,
-) : Source, Comparable<ZipSource> {
-  override fun compareTo(other: ZipSource): Int {
-    return if (isWindows) file.toString().compareTo(other.file.toString()) else file.compareTo(other.file)
-  }
+data class ZipSource(@JvmField val file: Path,
+                     @JvmField val excludes: List<Regex> = emptyList(),
+                     override val filter: ((String) -> Boolean)? = null,
+                     override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
+  override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
   override fun toString(): String {
     val shortPath = when {
@@ -100,7 +88,7 @@ fun buildJar(targetFile: Path,
       val uniqueNames = HashMap<String, Path>()
 
       for (source in sources) {
-        val positionBefore = outChannel.position()
+        val positionBefore = zipCreator.resultStream.getChannelPosition()
         when (source) {
           is DirSource -> {
             val archiver = ZipArchiver(zipCreator, fileAdded = {
@@ -131,9 +119,13 @@ fun buildJar(targetFile: Path,
 
           is ZipSource -> {
             val sourceFile = source.file
+            val sourceFileName = sourceFile.fileName.toString()
+            val isPresigned = sourceFileName.startsWith("jna-") ||
+                              sourceFileName.startsWith("pty4j-") ||
+                              sourceFileName.startsWith("native-")
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (nativeFiles != null && source.isPreSignedCandidate && isNative(name)) {
+              if (nativeFiles != null && isPresigned && isNative(name)) {
                 if (isDuplicated(uniqueNames, name, sourceFile)) {
                   return@readZipFile
                 }
@@ -202,14 +194,10 @@ private fun getIgnoredNames(): Set<String> {
   set.add("pom.xml")
   set.add("about.html")
   set.add("module-info.class")
-  set.add("META-INF/versions/9/module-info.class")
   set.add("META-INF/services/javax.xml.parsers.SAXParserFactory")
   set.add("META-INF/services/javax.xml.stream.XMLEventFactory")
   set.add("META-INF/services/javax.xml.parsers.DocumentBuilderFactory")
   set.add("META-INF/services/javax.xml.datatype.DatatypeFactory")
-
-  set.add("com/sun/jna/aix-ppc/libjnidispatch.a")
-  set.add("com/sun/jna/aix-ppc64/libjnidispatch.a")
 
   // duplicates in maven-resolver-transport-http and maven-resolver-transport-file
   set.add("META-INF/sisu/javax.inject.Named")
@@ -283,8 +271,8 @@ private fun checkName(name: String,
          //!name.startsWith("com/thoughtworks/xstream/io/xml/XppDom") &&
          //!name.startsWith("com/michaelbaranov/microba/jgrpah/birdview/Birdview") &&
 
-         !name.startsWith("kotlinx/coroutines/repackaged/") &&
-
+         // XmlRPC lib
+         !name.startsWith("org/xml/sax/") &&
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&
          (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&

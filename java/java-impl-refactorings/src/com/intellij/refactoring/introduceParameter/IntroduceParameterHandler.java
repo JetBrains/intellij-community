@@ -4,8 +4,7 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -529,16 +528,16 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           LOG.assertTrue(returnType != null);
           final String title = RefactoringBundle.message("refactoring.introduce.parameter.interface.chooser.popup.title",
                                                              methodSignature, returnType.getPresentableText());
-          NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
-                                            new PsiElementProcessor<>() {
-                                              @Override
-                                              public boolean execute(@NotNull PsiClass psiClass) {
-                                                functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor,
-                                                                            processor,
-                                                                            elements);
-                                                return true;
-                                              }
-                                            }).showInBestPositionFor(editor);
+          new PsiTargetNavigator().createPopup(psiClasses, title,
+                                               new PsiElementProcessor<>() {
+                                                 @Override
+                                                 public boolean execute(@NotNull PsiClass psiClass) {
+                                                   functionalInterfaceSelected(classes.get(psiClass), enclosingMethods, project, editor,
+                                                                               processor,
+                                                                               elements);
+                                                   return true;
+                                                 }
+                                               }).showInBestPositionFor(editor);
           return true;
         }
 

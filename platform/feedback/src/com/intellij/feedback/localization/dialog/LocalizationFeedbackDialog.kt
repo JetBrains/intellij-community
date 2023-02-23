@@ -2,6 +2,9 @@
 package com.intellij.feedback.localization.dialog
 
 import com.intellij.feedback.common.dialog.BaseFeedbackDialog
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
@@ -19,4 +22,12 @@ class LocalizationFeedbackDialog(
   override fun createCenterPanel(): JComponent? {
     TODO("Not yet implemented")
   }
+}
+
+private class ShowLocalizationFeedbackDialog : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    LocalizationFeedbackDialog(e.project, true).show()
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }

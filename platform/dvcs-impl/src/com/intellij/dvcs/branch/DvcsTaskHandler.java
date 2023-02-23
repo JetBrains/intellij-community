@@ -67,8 +67,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         checkout(taskName, problems, null);
         map.addAll(problems);
       }
+      repositories = ContainerUtil.filter(repositories, r->!problems.contains(r));
     }
-    repositories.removeAll(problems);
     if (!repositories.isEmpty()) {
       checkoutAsNewBranch(taskName, repositories);
     }

@@ -364,14 +364,14 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     private final String myEnumFqn;
 
     private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
-      ContainerUtil.immutableSet(
+      Set.of(
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
         "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
         "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
-      ContainerUtil.immutableSet(
+      Set.of(
         "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
       );
 
@@ -434,11 +434,11 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     private boolean doNotTransformName() {
-      return LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+      return myEnumFqn != null && LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
     }
 
     private boolean enumLowerUnderscore() {
-      return LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+      return myEnumFqn != null && LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
     }
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -244,10 +241,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           try {
             listener.startNotified(event);
           }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
       }
@@ -258,10 +256,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           try {
             listener.processTerminated(event);
           }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
       }
@@ -272,10 +271,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           try {
             listener.processWillTerminate(event, willBeDestroyed);
           }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
       }
@@ -286,10 +286,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
           try {
             listener.onTextAvailable(event, outputType);
           }
+          catch (ProcessCanceledException e) {
+            LOG.info(e);
+          }
           catch (Throwable e) {
-            if (!isCanceledException(e)) {
-              LOG.error(e);
-            }
+            LOG.error(e);
           }
         }
       }

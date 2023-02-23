@@ -12,12 +12,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.CREATE_BY_PATTERN_MAY_NOT_REFORMAT
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
+@ApiStatus.Internal
 abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAction, Cloneable {
     @SafeFieldForPreview // not actually safe but will be properly patched in getFileModifierForPreview
     private val elementPointer = element.createSmartPointer()
