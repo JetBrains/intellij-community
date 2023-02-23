@@ -93,7 +93,7 @@ public class BranchFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
 
     actionGroup.add(createSelectMultipleValuesAction());

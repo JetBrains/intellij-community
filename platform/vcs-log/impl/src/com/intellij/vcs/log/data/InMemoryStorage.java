@@ -7,7 +7,6 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
@@ -45,7 +44,7 @@ public final class InMemoryStorage implements VcsLogStorage {
   }
 
   @Override
-  public @Nullable VcsRef getVcsRef(int refIndex) {
+  public @NotNull VcsRef getVcsRef(int refIndex) {
     return myRefsEnumerator.getValue(refIndex);
   }
 

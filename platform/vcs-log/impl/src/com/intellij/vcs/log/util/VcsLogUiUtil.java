@@ -196,7 +196,7 @@ public final class VcsLogUiUtil {
         }
 
         @Override
-        public void onFailure(Throwable t) {
+        public void onFailure(@NotNull Throwable t) {
           callback.setRejected();
         }
       }, EdtExecutorService.getInstance());

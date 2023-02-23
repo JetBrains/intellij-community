@@ -186,7 +186,7 @@ public class GoToHashOrRefPopup {
     }
 
     @Override
-    protected @Nullable InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
+    protected @NotNull InsertHandler<LookupElement> createInsertHandler(@NotNull VcsRef item) {
       return (context, item1) -> {
         mySelectedRef = (VcsRef)item1.getObject();
         ApplicationManager.getApplication().invokeLater(() -> {

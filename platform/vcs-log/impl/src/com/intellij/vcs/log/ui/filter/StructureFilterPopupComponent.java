@@ -175,7 +175,7 @@ public class StructureFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     Set<VirtualFile> roots = getAllRoots();
 
     List<SelectVisibleRootAction> rootActions = new ArrayList<>();
