@@ -104,10 +104,22 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
                   textRange = textRange.union(ret.getTextRangeInParent());
                 }
               }
+              List<LocalQuickFix> fixes = new ArrayList<>();
+              fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
+              if (inputVariables.size() > 1) {
+                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "maxParameters",
+                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
+                                                     inputVariables.size() - 1));
+              }
+              if (textRange.getLength() < 10_000) {
+                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "minLength",
+                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
+                                                     textRange.getLength() + 1));
+              }
               holder.registerProblem(block, JavaAnalysisBundle.message("inspection.extract.method.message", output.getName()),
                                      ProblemHighlightType.WEAK_WARNING,
                                      textRange,
-                                     new ExtractMethodFix(from, count, output, inputVariables));
+                                     fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
               return;
             }
             catch (PrepareFailedException | ControlFlowWrapper.ExitStatementsNotSameException | ExtractException ignored) {
