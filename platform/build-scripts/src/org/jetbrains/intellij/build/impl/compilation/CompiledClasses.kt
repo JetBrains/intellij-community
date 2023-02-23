@@ -139,6 +139,11 @@ internal object CompiledClasses {
       if (!context.options.incrementalCompilation) {
         throw e
       }
+      if (!context.options.incrementalCompilationFallbackRebuild) {
+        context.messages.warning("Incremental compilation failed. Not re-trying with clean build because " +
+                                 "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
+        throw e
+      }
       context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
       context.options.incrementalCompilation = false
       context.compilationData.reset()

@@ -116,11 +116,11 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     )
     println("Finished building '" + java.lang.String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms")
     val errors: List<String> = ArrayList(messageHandler.myErrors)
-    if (!errors.isEmpty() && !rebuild) {
+    if (!errors.isEmpty() && !rebuild && System.getProperty("intellij.build.incremental.compilation.fallback.rebuild", "true") == "true") {
       warn("""
-    Incremental build finished with errors. Forcing rebuild. Compilation errors:
-    ${java.lang.String.join("\n", errors)}
-    """.trimIndent())
+        Incremental build finished with errors. Forcing rebuild. Compilation errors:
+        ${java.lang.String.join("\n", errors)}
+        """.trimIndent())
       cleanDirectory(myDataStorageRoot)
       runBuild(modules, true)
     }

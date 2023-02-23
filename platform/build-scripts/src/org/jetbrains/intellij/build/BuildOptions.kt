@@ -160,6 +160,11 @@ class BuildOptions {
     const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
 
     /**
+     * By default, if the incremental compilation fails, a clean rebuild is attempted.
+     */
+    const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY = "intellij.build.incremental.compilation.fallback.rebuild"
+
+    /**
      * Enables module structure validation, false by default
      */
     const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
@@ -250,6 +255,12 @@ class BuildOptions {
    * If `true` the project modules will be compiled incrementally
    */
   var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
+
+  /**
+   * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
+   */
+  var incrementalCompilationFallbackRebuild =
+    SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
    * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to

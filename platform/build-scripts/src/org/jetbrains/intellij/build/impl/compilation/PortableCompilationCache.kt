@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
@@ -179,6 +180,11 @@ class PortableCompilationCache(private val context: CompilationContext) {
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
+        throw e
+      }
+      if (!context.options.incrementalCompilationFallbackRebuild) {
+        context.messages.warning("Incremental compilation failed. Not re-trying with clean build because " +
+                                 "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
         throw e
       }
       val successMessage: String
