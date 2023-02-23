@@ -14,9 +14,11 @@ import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -53,6 +55,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   private fun createCiStatusComponent(scope: CoroutineScope, reviewDetailsVm: GitLabMergeRequestReviewFlowViewModel): JComponent {
     val ciJobs = reviewDetailsVm.pipeline.map { it?.jobs ?: emptyList() }
     val checkStatus = JLabel().apply {
+      JLabelUtil.setTrimOverflow(this, true)
       bindIcon(scope, ciJobs.map { getCheckStatusIcon(it) })
       bindText(scope, ciJobs.map { getCheckStatusText(it) })
     }
@@ -80,6 +83,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, detailsInfoVm.hasConflicts)
     }
   }
@@ -91,6 +95,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, detailsReviewFlowVm.reviewerAndReviewState.map { it.isEmpty() })
     }
   }
@@ -133,6 +138,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       val reviewerLabel = JLabel().apply {
         icon = avatarIconsProvider.getIcon(reviewer, AVATAR_SIZE)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.name)
+        JLabelUtil.setTrimOverflow(this, true)
         iconTextGap = STATUS_COMPONENTS_GAP
       }
 

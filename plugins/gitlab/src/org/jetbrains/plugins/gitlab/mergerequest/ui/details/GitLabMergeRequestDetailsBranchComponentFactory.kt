@@ -14,10 +14,12 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.repo.GitRepository
 import icons.CollaborationToolsIcons
@@ -72,6 +74,7 @@ internal object GitLabMergeRequestDetailsBranchComponentFactory {
 
   private fun createBranchLabel(scope: CoroutineScope, branchName: Flow<@NlsContexts.Label String>): JBLabel {
     return JBLabel(CollaborationToolsIcons.Review.Branch).apply {
+      JLabelUtil.setTrimOverflow(this, true)
       bindText(scope, branchName)
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {

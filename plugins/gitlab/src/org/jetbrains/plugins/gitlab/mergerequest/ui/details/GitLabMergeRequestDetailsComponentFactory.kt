@@ -12,10 +12,10 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -70,10 +70,10 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val changesVm = detailsVm.changesVm
     val repository = detailsVm.repository
 
-    val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
+    val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm), HorizontalLayout.LEFT)
-      add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository), HorizontalLayout.RIGHT)
+      add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm))
+      add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository))
     }
 
     val layout = MigLayout(
