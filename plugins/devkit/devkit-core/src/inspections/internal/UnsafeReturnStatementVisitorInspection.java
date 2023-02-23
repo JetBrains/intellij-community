@@ -8,10 +8,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,12 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
 
   public UnsafeReturnStatementVisitorInspection() {
     super(UClass.class);
+  }
+
+  @Override
+  protected boolean isAllowed(@NotNull ProblemsHolder holder) {
+    return super.isAllowed(holder) &&
+           JavaPsiFacade.getInstance(holder.getProject()).findClass(BASE_VISITOR_NAME, holder.getFile().getResolveScope()) != null;
   }
 
   @Override
