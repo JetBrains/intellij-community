@@ -332,15 +332,22 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
+  public boolean recompileProjectAndRerunAction(@NotNull Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
+    if (suite.isModuleChecked(module)) return false;
+    for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
+      Module moduleCandidate = extension.getModuleWithOutput(module);
+      if (moduleCandidate != null) {
+        module = moduleCandidate;
+        break;
+      }
+    }
     final CoverageDataManager dataManager = CoverageDataManager.getInstance(module.getProject());
     final boolean includeTests = suite.isTrackTestFolders();
     final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
     final boolean rootsExist = roots.length >= (includeTests ? 2 : 1) && ContainerUtil.all(roots, (root) -> root != null && root.exists());
     if (!rootsExist) {
       final Project project = module.getProject();
-      if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
       LOG.debug("Going to ask to rebuild project. Include tests:" + includeTests +
                 ". Module: " + module.getName() + ".  Output roots are: ");
