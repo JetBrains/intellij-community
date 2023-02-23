@@ -41,6 +41,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,7 +63,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final DumbModeListener myPublisher;
   private long myModificationCount;
 
-  private final Deque<Runnable> myRunWhenSmartQueue = new ArrayDeque<>(5);
+  private final Deque<Runnable> myRunWhenSmartQueue = new ConcurrentLinkedDeque<>();
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -201,10 +202,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void dispose() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     myBalloon.dispose();
-
-    synchronized (myRunWhenSmartQueue) {
-      myRunWhenSmartQueue.clear();
-    }
+    myRunWhenSmartQueue.clear();
     myTaskQueue.disposePendingTasks();
   }
 
@@ -416,12 +414,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
       // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
       while (!isDumb()) {
-        final Runnable runnable;
-        synchronized (myRunWhenSmartQueue) {
-          runnable = myRunWhenSmartQueue.pollFirst();
-          if (runnable == null) {
-            break;
-          }
+        final Runnable runnable = myRunWhenSmartQueue.pollFirst();
+        if (runnable == null) {
+          break;
         }
         doRun(runnable);
       }
