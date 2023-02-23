@@ -979,7 +979,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         if (labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
-                element instanceof PsiPattern && exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
+                exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
               needToCreateDefault = true;
               break;
             }

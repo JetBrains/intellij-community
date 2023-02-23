@@ -3,6 +3,8 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
@@ -16,7 +18,7 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
   fun testEnhancedSwitchDefinitelyAssigned() = doTest()
-  fun testEnhancedSwitchUnreachable() = doTest()
+  fun testEnhancedSwitchUnreachable() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
   fun testSwitchExpressionHasResult() = doTest()
   fun testYieldStatements() = doTest()
   fun testAssignToFinalInSwitchExpression() = doTest()
