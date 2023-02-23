@@ -48,11 +48,10 @@ public class LiteralNameSuggester {
     new PatternBasedSuggestions("SELECT\\s.*FROM\\s.*", "query", "sql"),
     new PatternBasedSuggestions("(19|20)[0-9][0-9]([-/])(0?[1-9]|1[0-2])\\2(0?[1-9]|[12][0-9]|30|31)", "date"),
     new PatternBasedSuggestions("(?:[0-1]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?", "time"),
-    new PatternBasedSuggestions("[0-9a-fA-F]{32}", "md5", "hash"),
-    new PatternBasedSuggestions("[0-9a-fA-F]{40}", "sha1", "hash"),
-    new PatternBasedSuggestions("[0-9a-fA-F]{64}", "sha256", "hash"),
-    new PatternBasedSuggestions("[0-9a-fA-F]{96}|sha384-[A-Za-z0-9+=/]{64}", "sha384", "hash"),
-    new PatternBasedSuggestions("[0-9a-fA-F]{128}|sha512-[A-Za-z0-9+=/]{88}", "sha512", "hash"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{40}", "sha1", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{64}", "sha256", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{96}|sha384-[A-Za-z0-9+=/]{64}", "sha384", "hash", "key", "secret", "token"),
+    new PatternBasedSuggestions("[0-9a-fA-F]{128}|sha512-[A-Za-z0-9+=/]{88}", "sha512", "hash", "key", "secret", "token"),
   };
 
   /**
