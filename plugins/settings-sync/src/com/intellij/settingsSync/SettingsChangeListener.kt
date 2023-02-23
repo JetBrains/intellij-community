@@ -1,14 +1,17 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
+@Internal
 fun interface SettingsChangeListener : EventListener {
 
   fun settingChanged(event: SyncSettingsEvent)
 
 }
 
+@Internal
 sealed class SyncSettingsEvent {
   /**
    * These events are processed in a batch
@@ -58,6 +61,7 @@ sealed class SyncSettingsEvent {
   }
 }
 
+@Internal
 sealed class DeleteServerDataResult {
   object Success: DeleteServerDataResult()
   class Error(@NlsSafe val error: String): DeleteServerDataResult()
