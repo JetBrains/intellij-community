@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.util.io.FileUtil
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
@@ -36,6 +37,20 @@ fun loadTaskInitScript(
     "TASK_TYPE" to taskType,
     "TASK_CONFIGURATION" to (taskConfiguration ?: "")
   ))
+}
+
+fun createWrapperInitScript(
+  gradleVersion: GradleVersion?,
+  jarFile: File,
+  scriptFile: File,
+  fileWithPathToProperties: File
+): File {
+  return createInitScript("ijWrapper", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/WrapperInit.gradle", mapOf(
+    "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyString() ?: "null"),
+    "JAR_FILE" to jarFile.path.toGroovyString(),
+    "SCRIPT_FILE" to scriptFile.path.toGroovyString(),
+    "FILE_WITH_PATH_TO_PROPERTIES" to fileWithPathToProperties.path.toGroovyString()
+  )))
 }
 
 fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boolean): File {

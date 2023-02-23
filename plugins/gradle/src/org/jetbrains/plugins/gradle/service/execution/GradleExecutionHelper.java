@@ -292,33 +292,13 @@ public class GradleExecutionHelper {
     @Nullable GradleVersion gradleVersion,
     @NotNull GradleExecutionSettings settings
   ) throws IOException {
-    String wrapperFilesLocationPath = FileUtil.createTempDirectory("wrap", "loc").getCanonicalPath();
-    String jarFile = FileUtil.join(wrapperFilesLocationPath, "gradle-wrapper.jar");
-    String scriptFile = FileUtil.join(wrapperFilesLocationPath, "gradlew");
-    String fileWithPathToProperties = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
+    File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
+    File jarFile = new File(wrapperFilesLocation, "gradle-wrapper.jar");
+    File scriptFile = new File(wrapperFilesLocation, "gradlew");
+    File fileWithPathToProperties = new File(wrapperFilesLocation, "path.tmp");
 
-    StringJoiner lines = new StringJoiner(System.lineSeparator());
-    lines.add("");
-    lines.add("gradle.projectsEvaluated { gr ->");
-    lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
-    lines.add("  if (wrapper != null) {");
-    lines.add("    if (wrapper.jarFile.exists()) {");
-    lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile) + "')");
-    lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile) + "')");
-    lines.add("    }");
-    if (gradleVersion != null) {
-      lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
-    }
-    lines.add("    wrapper.doLast {");
-    lines.add("      def fileWithPathToProperties = new File('" + StringUtil.escapeBackSlashes(fileWithPathToProperties) + "')");
-    lines.add("      fileWithPathToProperties.write wrapper.propertiesFile.getCanonicalPath()");
-    lines.add("    }");
-    lines.add("  }");
-    lines.add("}");
-    lines.add("");
-
-    File initScriptFile = GradleInitScriptUtil.createInitScript("wrapper_init", lines.toString());
-    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getCanonicalPath());
+    var initScriptFile = GradleInitScriptUtil.createWrapperInitScript(gradleVersion, jarFile, scriptFile, fileWithPathToProperties);
+    settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
 
     return () -> FileUtil.loadFileOrNull(fileWithPathToProperties);
   }
