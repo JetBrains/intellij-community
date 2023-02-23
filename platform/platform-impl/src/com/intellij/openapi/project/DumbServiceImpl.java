@@ -382,7 +382,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     finally {
-      myProject.getService(SmartModeScheduler.class).runAllWhileSmartInThisThread();
+      myProject.getService(SmartModeScheduler.class).onDumbModeFinished();
     }
   }
 
