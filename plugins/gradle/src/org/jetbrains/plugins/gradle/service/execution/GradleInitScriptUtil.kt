@@ -6,6 +6,7 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -20,10 +21,12 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
   )))
 }
 
-fun createTestInitScript(testPatterns: Set<String>, forceExecution: Boolean): File {
-  return createInitScript("ijTestInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle", mapOf(
-    "TEST_PATTERNS" to testPatterns.toGradleGroovyList { toGradleGroovyString() },
-    "FORCE_TEST_EXECUTION" to forceExecution.toGradleGroovyBoolean()
+fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boolean): File {
+  return createInitScript("ijTestInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
+    "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+    "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
+      .toGroovyMap({ toGroovyString() }, { toGroovyList { toGroovyString() } }),
+    "FORCE_TEST_EXECUTION" to forceExecution.toString()
   )))
 }
 

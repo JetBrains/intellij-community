@@ -32,7 +32,8 @@ private fun generateGradleWrapper(root: Path, configuration: WrapperConfiguratio
 
 private fun generateGradleWrapperConfiguration(gradleVersion: GradleVersion): WrapperConfiguration {
   return WrapperConfiguration().apply {
-    distribution = URI("https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip")
+    val distributionSource = if (gradleVersion.isSnapshot) "distributions-snapshots" else "distributions"
+    distribution = URI("https://services.gradle.org/$distributionSource/gradle-${gradleVersion.version}-bin.zip")
   }
 }
 

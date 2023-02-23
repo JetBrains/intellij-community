@@ -167,27 +167,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
   }
 
-  private static boolean isApplicableTestLauncher(
-    @NotNull List<String> tasks,
-    @NotNull GradleExecutionSettings settings
-  ) {
-    boolean allowedByRegistry = Registry.is("gradle.testLauncherAPI.enabled", false);
-    boolean allowedByGradleVersion = isSupportedByGradleVersion(settings);
-    boolean allowedByTasksList = tasks.size() < 2;
-    return Boolean.TRUE == settings.getUserData(GradleConstants.RUN_TASK_AS_TEST)
-      && allowedByGradleVersion
-      && allowedByTasksList
-      && allowedByRegistry;
-  }
-
-  private static boolean isSupportedByGradleVersion(
-    @NotNull GradleExecutionSettings settings
-  ) {
-    return Optional.ofNullable(settings.getGradleHome())
-      .map(GradleInstallationManager::getGradleVersion)
-      .map(GradleInstallationManager::getGradleVersionSafe)
-      .map(v -> GradleVersion.version("6.1").compareTo(v) <= 0)
-      .orElse(false);
+  private static boolean isApplicableTestLauncher(@NotNull GradleExecutionSettings settings) {
+    return Registry.is("gradle.testLauncherAPI.enabled", false)
+           && Boolean.TRUE.equals(settings.getUserData(GradleConstants.RUN_TASK_AS_TEST))
+           && Optional.ofNullable(settings.getGradleHome())
+             .map(GradleInstallationManager::getGradleVersion)
+             .map(GradleInstallationManager::getGradleVersionSafe)
+             .map(v -> GradleVersion.version("7.6").compareTo(v) <= 0)
+             .orElse(false);
   }
 
   private static void prepareTaskState(@NotNull ExternalSystemTaskId id,

@@ -400,11 +400,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return builder.generate();
   }
 
-  protected @NotNull String getJUnitTestAnnotationClass() {
-    return GradleBuildScriptBuilderUtil.isSupportedJUnit5(getCurrentGradleVersion())
-           ? "org.junit.jupiter.api.Test" : "org.junit.Test";
-  }
-
   @Override
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(super.createImportSpec());

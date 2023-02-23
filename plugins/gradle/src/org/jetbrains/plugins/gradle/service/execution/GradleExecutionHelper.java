@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.apache.commons.cli.Option;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
@@ -51,6 +50,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import java.awt.geom.IllegalPathStateException;
 import java.io.File;
@@ -352,6 +352,8 @@ public class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) {
+    applyIdeaParameters(settings);
+
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, settings);
 
     setupJvmArguments(operation, settings, buildEnvironment);
@@ -372,12 +374,12 @@ public class GradleExecutionHelper {
       .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
   }
 
-  private static void addIdeaParameters(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
+  private static void applyIdeaParameters(@NotNull GradleExecutionSettings settings) {
     if (settings.isOfflineWork()) {
-      arguments.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
+      settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
-    arguments.add("-Didea.active=true");
-    arguments.add("-Didea.version=" + getIdeaVersion());
+    settings.withArgument("-Didea.active=true");
+    settings.withArgument("-Didea.version=" + getIdeaVersion());
   }
 
   private static void setupProgressListeners(
@@ -454,35 +456,58 @@ public class GradleExecutionHelper {
     @NotNull List<String> tasksAndArguments,
     @NotNull GradleExecutionSettings settings
   ) {
-    var arguments = new ArrayList<>(tasksAndArguments);
-    addSettingsArguments(arguments, settings);
-    if (operation instanceof TestLauncher) {
-      var testTasksConfiguration = extractTestCommandOptions(arguments);
-      for (var entry : testTasksConfiguration.entrySet()) {
-        // TODO we need better point of call to pass this info
-        ((TestLauncher)operation).withTaskAndTestClasses(entry.getKey(), entry.getValue());
-      }
+    var commandLine = GradleTestExecutionUtil.parseCommandLine(tasksAndArguments, settings.getArguments());
+
+    LOG.info("Passing command-line to Gradle Tooling API: " +
+             StringUtil.join(obfuscatePasswordParameters(commandLine.getTokens()), " "));
+
+    if (operation instanceof TestLauncher testLauncher) {
+      setupTestLauncherArguments(testLauncher, commandLine);
+    }
+    else if (operation instanceof BuildLauncher buildLauncher) {
+      setupBuildLauncherArguments(buildLauncher, commandLine, isTestExecForced(settings));
     }
     else {
-      var testTaskPatterns = extractTestTaskPatterns(arguments);
-      var path = GradleInitScriptUtil.createTestInitScript(testTaskPatterns, isTestExecForced(settings));
-      ContainerUtil.addAll(arguments, GradleConstants.INIT_SCRIPT_CMD_OPTION, path.getAbsolutePath());
+      operation.withArguments(commandLine.getTokens());
     }
-    addIdeaParameters(arguments, settings);
-    operation.withArguments(arguments);
   }
 
-  private static boolean isTestExecForced(GradleExecutionSettings settings) {
-    return Optional.ofNullable(settings)
-      .map(s -> s.getUserData(GradleConstants.FORCE_TEST_EXECUTION))
-      .orElse(false);
+  private static boolean isTestExecForced(@NotNull GradleExecutionSettings settings) {
+    return ObjectUtils.chooseNotNull(settings.getUserData(GradleConstants.FORCE_TEST_EXECUTION), false);
   }
 
-  private static void addSettingsArguments(@NotNull ArrayList<String> arguments, @NotNull GradleExecutionSettings settings) {
-    LOG.info("Passing command-line args to Gradle Tooling API: " +
-             StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " "));
+  private static void setupTestLauncherArguments(
+    @NotNull TestLauncher testLauncher,
+    @NotNull GradleCommandLine commandLine
+  ) {
+    for (var task : commandLine.getTasks()) {
+      var patterns = GradleTestExecutionUtil.getTestPatterns(task);
+      if (!patterns.isEmpty()) {
+        testLauncher.withTestsFor(
+          it -> it.forTaskPath(task.getName())
+            .includePatterns(patterns)
+        );
+      }
+      else {
+        testLauncher.forTasks(ArrayUtil.toStringArray(task.getTokens()));
+      }
+    }
+    testLauncher.withArguments(commandLine.getOptions().getTokens());
+  }
 
-    arguments.addAll(ContainerUtil.filter(settings.getArguments(), it -> StringUtil.isNotEmpty(it)));
+  private static void setupBuildLauncherArguments(
+    @NotNull BuildLauncher buildLauncher,
+    @NotNull GradleCommandLine commandLine,
+    boolean forceExecution
+  ) {
+    var tasks = ContainerUtil.flatMap(commandLine.getTasks(), it ->
+      GradleTestExecutionUtil.getTestPatterns(it).isEmpty() ? it.getTokens() : List.of(it.getName())
+    );
+    buildLauncher.forTasks(ArrayUtil.toStringArray(tasks));
+    buildLauncher.withArguments(commandLine.getOptions().getTokens());
+
+    var initScript = GradleInitScriptUtil.createTestInitScript(commandLine.getTasks(), forceExecution);
+    buildLauncher.addArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
   }
 
   private static void setupLogging(@NotNull GradleExecutionSettings settings,
@@ -754,75 +779,6 @@ public class GradleExecutionHelper {
       LOG.warn("Failed to obtain build environment from Gradle daemon.", t);
     }
     return buildEnvironment;
-  }
-
-  /**
-   * @return test include patterns: classes, methods, etc.
-   */
-  private static Set<String> extractTestTaskPatterns(@NotNull List<String> args) {
-    var testIncludePatterns = new LinkedHashSet<String>();
-    var it = args.iterator();
-    while (it.hasNext()) {
-      final String next = it.next();
-      if (GradleConstants.TESTS_ARG_NAME.equals(next)) {
-        it.remove();
-        if (it.hasNext()) {
-          testIncludePatterns.add(it.next());
-          it.remove();
-        }
-      }
-    }
-    return testIncludePatterns;
-  }
-
-  /**
-   * For Test Launcher, all tasks are considered test task names and should be set through separate API
-   * Args list will contain all other known arguments.
-   *
-   * @param args full command line
-   * @return test tasks grouped with its patterns
-   */
-  static  MultiMap<String, String> extractTestCommandOptions(@NotNull List<String> args) {
-    MultiMap<String, String> taskToTestsPatterns = new MultiMap<>();
-
-    Map<String, Option> optionsIndex = new HashMap<>();
-    for (Option option : GradleCommandLineOptionsProvider.getSupportedOptions().getOptions()) {
-      optionsIndex.put(option.getOpt(), option);
-      optionsIndex.put(option.getLongOpt(), option);
-    }
-
-    int j = 0;
-    while (j < args.size()) {
-      String token = args.get(j);
-      Option option = optionsIndex.get(StringUtil.trimLeading(token, '-'));
-      if (option!= null) {
-        j++;
-        if (option.hasArg()) {
-          j++;
-        }
-        continue;
-      }
-
-      while (j < args.size() - 2) {
-        String peek = args.get(j + 1);
-        if (GradleConstants.TESTS_ARG_NAME.equals(peek)) {
-          taskToTestsPatterns.putValue(token, args.get(j + 2));
-          // remove --tests <pattern> argument
-          args.remove(j + 1);
-          args.remove(j + 1);
-        } else {
-          break;
-        }
-      }
-
-      if (!taskToTestsPatterns.containsKey(token)) {
-        taskToTestsPatterns.putValue(token, "*");
-      }
-      // remove current task name
-      args.remove(j);
-    }
-
-    return taskToTestsPatterns;
   }
 
   public static @NotNull Set<String> getToolingExtensionsJarPaths(@NotNull Set<Class<?>> toolingExtensionClasses) {

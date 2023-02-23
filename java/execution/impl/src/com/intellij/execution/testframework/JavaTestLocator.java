@@ -18,13 +18,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * Protocol format as follows:
@@ -169,7 +168,7 @@ public class JavaTestLocator implements SMTestLocator {
   }
 
   public static @NotNull String createLocationUrl(@NotNull String protocol, @NotNull String fqClassName, @Nullable String methodName) {
-    var baseUrl = protocol + SCHEME_SEPARATOR;
+    var baseUrl = protocol + URLUtil.SCHEME_SEPARATOR;
     if (methodName == null) {
       return baseUrl + fqClassName;
     }

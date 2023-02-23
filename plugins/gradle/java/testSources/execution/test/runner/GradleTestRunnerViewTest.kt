@@ -1,317 +1,290 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.impl.ConsoleViewImpl
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.execution.testframework.TestConsoleProperties
-import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.testFramework.runInEdtAndGet
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.asSafely
-import com.intellij.util.ui.tree.TreeUtil
-import groovy.json.StringEscapeUtils.escapeJava
-import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.Test
-import javax.swing.tree.DefaultMutableTreeNode
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestRunnerViewTest : GradleImportingTestCase() {
+class GradleTestRunnerViewTest : GradleTestRunnerViewTestCase() {
 
-  private lateinit var buildViewTestFixture: BuildViewTestFixture
+  @ParameterizedTest
+  @TargetVersions("4.7+")
+  @AllGradleVersionsSource
+  fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |  @Test
+        |  public void test() {
+        |    String prop = System.getProperty("prop");
+        |    if (prop != null) {
+        |      throw new RuntimeException(prop);
+        |    }
+        |  }
+        |}
+      """.trimMargin())
+      appendText("build.gradle", """
+        |tasks.register('additionalTest', Test) {
+        |  testClassesDirs = sourceSets.test.output.classesDirs
+        |  classpath = sourceSets.test.runtimeClasspath
+        |  jvmArgs += "-Dprop='Test error message'"
+        |
+        |  useJUnitPlatform()
+        |}
+      """.trimMargin())
 
-  override fun setUp() {
-    super.setUp()
-    buildViewTestFixture = BuildViewTestFixture(myProject)
-    buildViewTestFixture.setUp()
-    Registry.get("gradle.testLauncherAPI.enabled").setValue(true)
+      executeTasks(":test :additionalTest")
+
+      assertTestExecutionTree(
+        testLauncher = """
+          |-[root]
+          | -AppTest
+          |  Test test()(org.example.AppTest)
+          |  Test test()(org.example.AppTest)
+        """.trimMargin(),
+        junit5 = """
+          |-[root]
+          | -AppTest
+          |  test()
+          |  test()
+        """.trimMargin(),
+        junit4 = """
+          |-[root]
+          | -org.example.AppTest
+          |  test
+          |  test
+        """.trimMargin()
+      )
+      assertBuildExecutionTreeContains(
+        testLauncher = """
+          |-
+          | -failed
+          |  :compileJava
+          |  :processResources
+          |  :classes
+          |  :compileTestJava
+          |  :processTestResources
+          |  :testClasses
+          |  -:test
+          |   -Gradle Test Run :test
+          |    -Gradle Test Executor 1
+          |     -AppTest
+          |      Test test()(org.example.AppTest)
+          |  -:additionalTest
+          |   -Gradle Test Run :additionalTest
+          |    -Gradle Test Executor 2
+          |     -AppTest
+          |      -Test test()(org.example.AppTest)
+          |       'Test error message'
+          |  Test failed.
+        """.trimMargin(),
+        junit = """
+          |-
+          | -failed
+          |  :compileJava
+          |  :processResources
+          |  :classes
+          |  :compileTestJava
+          |  :processTestResources
+          |  :testClasses
+          |  :test
+          |  -:additionalTest
+          |   There were failing tests. See the report at:
+        """.trimMargin()
+      )
+    }
   }
 
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
-      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
-  }
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test console empty lines and output without eol at the end`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |  @Test
+        |  public void test() {
+        |    System.out.println("test \n" + "output\n" + "\n" + "text");
+        |  }
+        |}
+      """.trimMargin())
+      prependText("build.gradle", """
+        |buildscript {
+        |  print("buildscript \n" + "output\n" + "\n" + "text\n")
+        |}
+      """.trimMargin())
+      appendText("build.gradle", """
+        |print("script output text without eol")
+      """.trimMargin())
 
-  @TargetVersions("5.0+")
-  @Test
-  fun `test grouping events of the same suite comes from different tasks`() {
-    createProjectSubFile("src/test/java/my/pack/AppTest.java",
-                         "package my.pack;\n" +
-                         "import org.junit.Test;\n" +
-                         "import static org.junit.Assert.fail;\n" +
-                         "public class AppTest {\n" +
-                         "    @Test\n" +
-                         "    public void test() {\n" +
-                         "        String prop = System.getProperty(\"prop\");\n" +
-                         "        if (prop != null) {\n" +
-                         "            fail(prop);\n" +
-                         "        }\n" +
-                         "    }\n" +
-                         "}\n")
+      executeTasks(":test")
 
-    importProject {
-      withJavaPlugin()
-      withJUnit4()
-      withTask("additionalTest", "Test") {
-        assign("testClassesDirs", code("sourceSets.test.output.classesDirs"))
-        assign("classpath", code("sourceSets.test.runtimeClasspath"))
-        plusAssign("jvmArgs", "-Dprop='integ test error'")
+      assertTestExecutionTree(
+        testLauncher = """
+          |-[root]
+          | -AppTest
+          |  Test test()(org.example.AppTest)
+        """.trimMargin(),
+        junit5 = """
+          |-[root]
+          | -AppTest
+          |  test()
+        """.trimMargin(),
+        junit4 = """
+          |-[root]
+          | -org.example.AppTest
+          |  test
+        """.trimMargin()
+      )
+      when {
+        SystemInfo.isWindows ->
+          assertTestExecutionConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
+        else ->
+          assertTestExecutionConsoleContains("buildscript \n" + "output\n" + "text\n")
       }
-    }
-
-    val treeStringPresentation = runTasksAndGetTestRunnerTree(listOf("clean", "test", "additionalTest"))
-
-    assertEquals("-[root]\n" +
-                 " -my.pack.AppTest\n" +
-                 "  test\n" +
-                 "  test",
-                 treeStringPresentation.trim())
-
-    buildViewTestFixture.assertBuildViewTreeEquals {
-      assertThat(it)
-        .startsWith("-\n" +
-                    " -failed")
-        .containsOnlyOnce("  -:additionalTest\n" +
-                          "   There were failing tests. See the report at: ")
+      assertTestExecutionConsoleContains("script output text without eol")
+      assertTestExecutionConsoleContains("test \n" + "output\n" + "\n" + "text\n")
     }
   }
 
-  @TargetVersions("2.14+")
-  @Test
-  fun `test console empty lines and output without eol at the end`() {
-    val testOutputText = "test \noutput\n\ntext"
-    createProjectSubFile("src/test/java/my/pack/AppTest.java",
-                         """package my.pack;
-                            import org.junit.Test;
-                            import static org.junit.Assert.fail;
-                            public class AppTest {
-                                @Test
-                                public void test() {
-                                    System.out.println("${escapeJava(testOutputText)}");
-                                }
-                            }""".trimIndent())
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test build tw output for Gradle test runner execution`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |    @Test public void test() {}
+        |}
+      """.trimMargin())
 
-    val scriptOutputText = "script \noutput\n\ntext\n"
-    val scriptOutputTextWOEol = "text w/o eol"
-    importProject(createBuildScriptBuilder()
-                    .withJavaPlugin()
-                    .withJUnit4()
-                    .addBuildScriptPrefix("print(\"${escapeJava(scriptOutputText)}\")")
-                    .addPostfix("print(\"${escapeJava(scriptOutputTextWOEol)}\")")
-                    .generate())
+      executeTasks(":test")
 
-    var testsExecutionConsole: GradleTestsExecutionConsole? = null
-    maskExtensions(ExternalSystemExecutionConsoleManager.EP_NAME,
-                   listOf(object : GradleTestsExecutionConsoleManager() {
-                     override fun attachExecutionConsole(project: Project,
-                                                         task: ExternalSystemTask,
-                                                         env: ExecutionEnvironment?,
-                                                         processHandler: ProcessHandler?): GradleTestsExecutionConsole? {
-                       testsExecutionConsole = super.attachExecutionConsole(project, task, env, processHandler)
-                       return testsExecutionConsole
-                     }
-                   }),
-                   testRootDisposable)
-
-    val settings = ExternalSystemTaskExecutionSettings().apply {
-      externalProjectPath = projectPath
-      taskNames = listOf("clean", "test")
-      scriptParameters = "--quiet"
-      externalSystemIdString = GradleConstants.SYSTEM_ID.id
+      assertTestExecutionTree(
+        testLauncher = """
+          |-[root]
+          | -AppTest
+          |  Test test()(org.example.AppTest)
+        """.trimMargin(),
+        junit5 = """
+          |-[root]
+          | -AppTest
+          |  test()
+        """.trimMargin(),
+        junit4 = """
+          |-[root]
+          | -org.example.AppTest
+          |  test
+        """.trimMargin()
+      )
+      assertBuildExecutionTree(
+        testLauncher = """
+          |-
+          | -successful
+          |  :compileJava
+          |  :processResources
+          |  :classes
+          |  :compileTestJava
+          |  :processTestResources
+          |  :testClasses
+          |  -:test
+          |   -Gradle Test Run :test
+          |    -Gradle Test Executor 1
+          |     -AppTest
+          |      Test test()(org.example.AppTest)
+        """.trimMargin(),
+        junit = """
+          |-
+          | -successful
+          |  :compileJava
+          |  :processResources
+          |  :classes
+          |  :compileTestJava
+          |  :processTestResources
+          |  :testClasses
+          |  :test
+        """.trimMargin()
+      )
     }
-
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID,
-                               myProject, GradleConstants.SYSTEM_ID, null,
-                               ProgressExecutionMode.NO_PROGRESS_SYNC)
-
-    val treeStringPresentation = runInEdtAndGet {
-      val tree = testsExecutionConsole!!.resultsViewer.treeView!!
-      TestConsoleProperties.HIDE_PASSED_TESTS.set(testsExecutionConsole!!.properties, false)
-      PlatformTestUtil.expandAll(tree)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
-
-      val testsRootNode = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
-        val userObject = it.userObject
-        userObject is SMTRunnerNodeDescriptor && userObject.element == testsExecutionConsole!!.resultsViewer.testsRootNode
-      }
-      TreeUtil.selectNode(tree, testsRootNode)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
-      return@runInEdtAndGet PlatformTestUtil.print(tree, true)
-    }
-
-    assertEquals("-[[root]]\n" +
-                 " -my.pack.AppTest\n" +
-                 "  test",
-                 treeStringPresentation.trim())
-
-    val console = testsExecutionConsole!!.console as ConsoleViewImpl
-    val consoleText = runInEdtAndGet {
-      console.flushDeferredText()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      console.text
-    }
-
-    val consoleTextWithoutFirstTestingGreetingsLine: String
-    if (consoleText.startsWith("Testing started at ")) {
-      consoleTextWithoutFirstTestingGreetingsLine = consoleText.substringAfter("\n")
-    } else {
-      consoleTextWithoutFirstTestingGreetingsLine = consoleText
-    }
-    assertThat(consoleTextWithoutFirstTestingGreetingsLine).contains(testOutputText)
-    val expectedText = if (SystemInfo.isWindows) {
-      scriptOutputText + scriptOutputTextWOEol + "\n"
-    } else {
-      "script \n" +
-      "output\n" +
-      "text\n" +
-      "text w/o eol\n"
-    }
-    assertEquals(expectedText, consoleTextWithoutFirstTestingGreetingsLine.substringBefore(testOutputText))
   }
 
-  @Test
-  fun `test build tw output for Gradle test runner execution`() {
-    createProjectSubFile("src/test/java/my/pack/AppTest.java",
-                         "package my.pack;\n" +
-                         "import org.junit.Test;\n" +
-                         "public class AppTest {\n" +
-                         "    @Test\n" +
-                         "    public void test() {}\n" +
-                         "}\n")
-
-    importProject(createBuildScriptBuilder()
-                    .withJavaPlugin()
-                    .withJUnit4()
-                    .generate())
-
-    val testRunnerTree = runTasksAndGetTestRunnerTree(listOf("clean", "test"))
-
-    assertEquals("-[root]\n" +
-                 " -my.pack.AppTest\n" +
-                 "  test",
-                 testRunnerTree.trim())
-
-    buildViewTestFixture.assertBuildViewTreeEquals(
-      """
-      -
-       -successful
-        :clean
-        :compileJava
-        :processResources
-        :classes
-        :compileTestJava
-        :processTestResources
-        :testClasses
-        :test
-      """.trimIndent()
-    )
-  }
-
+  @ParameterizedTest
   @TargetVersions("5.6+")
-  @Test
-  fun `navigation for unrolled spock 2 tests`() {
-    createProjectSubFile("src/test/groovy/HelloSpockSpec.groovy", """
-      import spock.lang.Specification
+  @AllGradleVersionsSource
+  fun `navigation for unrolled spock 2 tests`(gradleVersion: GradleVersion) {
+    test(gradleVersion, GROOVY_SPOCK_FIXTURE) {
+      writeText("src/test/groovy/org/example/HelloSpockSpec.groovy", """
+        |package org.example
+        |
+        |import spock.lang.Specification
+        |
+        |class HelloSpockSpec extends Specification {
+        |
+        |  def "length of #name is #length"() {
+        |    expect:
+        |    name.size() != length
+        |
+        |    where:
+        |    name     | length
+        |    "Spock"  | 5
+        |  }
+        |}
+      """.trimMargin())
 
-      class HelloSpockSpec extends Specification {
+      executeTasks(":test")
 
-          def "length of #name is #length"() {
-              expect:
-              name.size() != length
+      val rootTestProxy = testExecutionConsole.resultsViewer.root
+      val classTestProxy = rootTestProxy.children.single()
+      val methodTestProxy = classTestProxy.children.single()
+      val errorTestProxy = methodTestProxy.children.single()
+      assertTestDisplayName(
+        actual = classTestProxy.name,
+        testLauncher = "HelloSpockSpec",
+        junit5 = "HelloSpockSpec",
+        junit4 = "org.example.HelloSpockSpec",
+      )
+      assertTestDisplayName(
+        actual = methodTestProxy.name,
+        testLauncher = "Test suite 'length of #name is #length'",
+        junit5 = "length of #name is #length",
+        junit4 = "length of #name is #length"
+      )
+      assertTestDisplayName(
+        actual = errorTestProxy.name,
+        testLauncher = "Test length of Spock is 5(org.example.HelloSpockSpec)",
+        junit5 = "length of Spock is 5",
+        junit4 = "length of Spock is 5",
+      )
+      Assertions.assertEquals("HelloSpockSpec", classTestProxy.psiClass.name)
+      Assertions.assertEquals("length of #name is #length", methodTestProxy.psiMethod.name)
+      Assertions.assertEquals("length of #name is #length", errorTestProxy.psiMethod.name)
+    }
+  }
 
-              where:
-              name     | length
-              "Spock"  | 5
-          }
+  companion object {
+
+    private val GROOVY_SPOCK_FIXTURE = GradleTestFixtureBuilder.create("groovy-spock-junit-fixture") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("groovy-spock-junit-fixture")
       }
-    """.trimIndent())
-
-    importProject {
-      withGroovyPlugin("3.0.0")
-
-      addTestImplementationDependency(call("platform", "org.spockframework:spock-bom:2.1-groovy-3.0"))
-      addTestImplementationDependency("org.spockframework:spock-core:2.1-groovy-3.0")
-
-      withJUnit5()
-    }
-
-    val console = getTestExecutionConsole(listOf("clean", "test"))
-    val root = console.resultsViewer.root
-    val classChild = root.children.single()
-    assertEquals("HelloSpockSpec", classChild.name)
-
-    fun AbstractTestProxy.resolveToMethod() : PsiMethod = getLocation(myProject, GlobalSearchScope.allScope(myProject)).psiElement.asSafely<PsiMethod>()!!
-
-    runReadAction {
-      val testNodeChild = classChild.children.single()
-      assertEquals("length of #name is #length", testNodeChild.resolveToMethod().name)
-      val failedTestChild = testNodeChild.children.single()
-      assertEquals("length of #name is #length", failedTestChild.resolveToMethod().name)
-    }
-
-  }
-
-  private fun getTestExecutionConsole(tasks: List<String>): GradleTestsExecutionConsole {
-    var testsExecutionConsole: GradleTestsExecutionConsole? = null
-    maskExtensions(ExternalSystemExecutionConsoleManager.EP_NAME,
-                   listOf(object : GradleTestsExecutionConsoleManager() {
-                     override fun attachExecutionConsole(project: Project,
-                                                         task: ExternalSystemTask,
-                                                         env: ExecutionEnvironment?,
-                                                         processHandler: ProcessHandler?): GradleTestsExecutionConsole? {
-                       testsExecutionConsole = super.attachExecutionConsole(project, task, env, processHandler)
-                       return testsExecutionConsole
-                     }
-                   }),
-                   testRootDisposable)
-
-    val settings = ExternalSystemTaskExecutionSettings().apply {
-      externalProjectPath = projectPath
-      taskNames = tasks
-      externalSystemIdString = GradleConstants.SYSTEM_ID.id
-    }
-
-    ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID,
-                               myProject, GradleConstants.SYSTEM_ID, null,
-                               ProgressExecutionMode.NO_PROGRESS_SYNC)
-
-    return testsExecutionConsole!!
-  }
-
-  private fun runTasksAndGetTestRunnerTree(tasks: List<String>): String {
-    val console = getTestExecutionConsole(tasks)
-    return runInEdtAndGet {
-      val tree = console.resultsViewer.treeView!!
-      TestConsoleProperties.HIDE_PASSED_TESTS.set(console.properties, false)
-      PlatformTestUtil.expandAll(tree)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
-      return@runInEdtAndGet PlatformTestUtil.print(tree, false)
+      withBuildFile(gradleVersion) {
+        withGroovyPlugin("3.0.0")
+        addTestImplementationDependency(call("platform", "org.spockframework:spock-bom:2.1-groovy-3.0"))
+        addTestImplementationDependency("org.spockframework:spock-core:2.1-groovy-3.0")
+        withJUnit()
+      }
+      withDirectory("src/main/groovy")
+      withDirectory("src/test/groovy")
     }
   }
 }
