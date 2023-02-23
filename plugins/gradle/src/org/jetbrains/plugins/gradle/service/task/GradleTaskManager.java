@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.GradleGroovyUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.service.execution.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -134,7 +131,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       setupGradleScriptDebugging(settings);
       setupDebuggerDispatchPort(settings);
 
-      var isApplicableTestLauncher = isApplicableTestLauncher(tasks, settings);
+      var isApplicableTestLauncher = isApplicableTestLauncher(settings);
       appendInitScriptArgument(tasks, jvmParametersSetup, settings, gradleVersion, isApplicableTestLauncher);
 
       for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
@@ -398,27 +395,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                    @Nullable TaskCallback callback,
                                    @NotNull Set<Class<?>> toolingExtensionClasses) {
     String taskName = taskClass.getSimpleName();
+    String taskType = taskClass.getName();
     Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
     tools.add(taskClass);
     tools.add(GsonBuilder.class);
     tools.add(ExternalSystemException.class);
-    Set<String> paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
-    String toolingPaths = GradleGroovyUtil.toGroovyList(paths, it -> "mapPath(" + GradleGroovyUtil.toGroovyString(it) + ")");
-    String initScript = "initscript {\n" +
-                        "  dependencies {\n" +
-                        "    classpath files(" + toolingPaths + ")\n" +
-                        "  }\n" +
-                        "}\n" +
-                        "allprojects {\n" +
-                        "  afterEvaluate { project ->\n" +
-                        "    if(project.path == '" + gradlePath + "' || ':' + rootProject.projectDir.name + project.path == '" + gradlePath + "' ) {\n" +
-                        "        def overwrite = project.tasks.findByName('" + taskName + "') != null\n" +
-                        "        project.tasks.create(name: '" + taskName + "', overwrite: overwrite, type: " + taskClass.getName() + ") {\n" +
-                        notNullize(taskConfiguration) + "\n" +
-                        "        }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "}\n";
+    String initScript = GradleInitScriptUtil.loadTaskInitScript(gradlePath, taskName, taskType, tools, taskConfiguration);
     runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
   }
 

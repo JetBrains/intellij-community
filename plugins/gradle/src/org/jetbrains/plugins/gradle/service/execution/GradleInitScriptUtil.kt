@@ -21,6 +21,23 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
   )))
 }
 
+fun loadTaskInitScript(
+  projectPath: String,
+  taskName: String,
+  taskType: String,
+  toolingExtensionClasses: Set<Class<*>>,
+  taskConfiguration: String?
+): String {
+  val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TaskInit.gradle", mapOf(
+    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyList { "mapPath(" + toGroovyString() + ")" },
+    "PROJECT_PATH" to projectPath.toGroovyString(),
+    "TASK_NAME" to taskName.toGroovyString(),
+    "TASK_TYPE" to taskType,
+    "TASK_CONFIGURATION" to (taskConfiguration ?: "")
+  ))
+}
+
 fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boolean): File {
   return createInitScript("ijTestInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
     "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
