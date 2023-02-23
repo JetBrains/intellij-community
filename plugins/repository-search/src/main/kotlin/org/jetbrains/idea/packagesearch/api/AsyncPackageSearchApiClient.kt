@@ -21,11 +21,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.AppExecutorUtil
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.future.future
 import org.jetbrains.idea.packagesearch.DefaultPackageServiceConfig
@@ -37,7 +35,7 @@ import java.util.concurrent.CompletableFuture
 
 @Service(PROJECT)
 internal class LifecycleScope : CoroutineScope, Disposable {
-  override val coroutineContext = SupervisorJob() + AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
+  override val coroutineContext = SupervisorJob()
   override fun dispose() = cancel()
 }
 
