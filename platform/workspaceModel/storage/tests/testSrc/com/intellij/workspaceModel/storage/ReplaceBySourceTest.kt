@@ -3,9 +3,12 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.*
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
@@ -1733,6 +1736,33 @@ class ReplaceBySourceTest {
     children = builder.entities(NamedEntity::class.java).single().children
     assertEquals("one", children[0].childProperty)
     assertEquals("two", children[1].childProperty)
+  }
+
+  @RepeatedTest(10)
+  fun `test rbs to itself with multiple parents and same children`() {
+    val virtualFileManager = VirtualFileUrlManagerImpl()
+    val root11 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    val root12 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+
+    builder add ModuleEntity("MyModule", emptyList(), MySource) {
+      this.contentRoots = listOf(root11, root12)
+    }
+    builder add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root11
+    }
+
+    val root21 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    val root22 = ContentRootEntity(virtualFileManager.fromUrl("/abc"), emptyList(), MySource)
+    replacement add ModuleEntity("MyModule", emptyList(), MySource) {
+      this.contentRoots = listOf(root21, root22)
+    }
+    replacement add ProjectModelTestEntity("", Descriptor(""), MySource) {
+      this.contentRoot = root21
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
   }
 
   private inner class ThisStateChecker {

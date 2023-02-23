@@ -11,6 +11,11 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
+/**
+ * This is map ot entities to itself to get quick get by equals.
+ * In the majority of cases the list should contain a single element - the key itself, but it may contain more elements
+ *   if there are multiple entities are equal
+ */
 private typealias WorkspaceEntityDataCustomCollection = MutableMap<WorkspaceEntityData<out WorkspaceEntity>,
                                                                    MutableList<WorkspaceEntityData<out WorkspaceEntity>>>
 
@@ -638,46 +643,55 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         replaceWithEntity = replaceWithStorage.resolve(targetEntity.symbolicId) as? WorkspaceEntityBase
       }
       else {
-        // Here we're just traversing parents. If we find a parent that does have a child entity that is equal to our entity, stop and save
-        //   this "equaled" entity as our "associated" entity.
-        // After that we're checking that other parents does have this child among their children. If not, we do not register this parent as
-        //   "new" parent for our entity.
+        // What do we have at this moment:
+        // - Child entity in target storage
+        // - Parents of this entity in target storage
+        // - To every parent in target storage we have an associated parent in replaceWith storage
+        // What we need: find child in replaceWith storage that is the same as our child from target storage
         //
-        // Another approach would be finding the "most common" child among of all parents. But currently we use this approach
-        //   because I think that it's "good enough" and the "most common child" may be not what we're looking for.
+        // Approach used here:
+        // - For every parent in replaceWith storage we get a list of children and select ones that are equal to our child
+        // In the most basic scenario we'll get a single child for every parent that is our "associated" child
+        // However, it may happen that two children of parent are equals to each other or two separate entities from two separate parents
+        //   are also equals.
+        // So, we select one of these children and say "now you're associated child in replaceWith storage"
+        // The one child is selected that is presented in most amount of parents. So, the "associated" child and our target child have
+        //   the most common parents.
 
-        // So, here we search for the first equal entity
-        val parentsAssociation = targetEntityTrack.parents.associateWith { findSameEntity(it) }
-        val entriesList = parentsAssociation.entries.toList()
-        var index = 0
-        for (i in entriesList.indices) {
-          index = i
+        val replaceWithParentsCounter = HashMap<EntityId, Int>() // replaceWith child id to amount of parents where it's presented
 
-          val replaceWithEntityDataCollection = replaceWithProcessingCache.getOrPut(entriesList[i].value to targetEntityTrack.entity.clazz) {
-            childrenInReplaceWith(entriesList[i].value, targetEntityTrack.entity.clazz)
+        val parentAssociationsWithChildren = targetEntityTrack
+          .parents.associateWith { findSameEntity(it) } // Find a parent in replaceWith storage to each of our parents
+          .map { (targetParent, replaceWithParent) ->
+
+            // The map contains entity data to itself association. See the doc for the map for explanation
+            val replaceWithChildrenOfParent = replaceWithProcessingCache.getOrPut(replaceWithParent to targetEntityTrack.entity.clazz) {
+              childrenInReplaceWith(replaceWithParent, targetEntityTrack.entity.clazz)
+            }
+
+            val mutableListOfEqualEntities = replaceWithChildrenOfParent[targetEntityData]
+            val replaceWithChildrenOptions = mutableListOfEqualEntities
+                                               ?.filter { replaceWithState[it.createEntityId()] == null } // Filter entities that are already processed
+                                               ?.map { it.createEntityId() }
+                                               ?.toSet() ?: emptySet()
+
+            // For every child count in what amount of parents it's presented
+            replaceWithChildrenOptions.forEach { replaceWithChildOption ->
+              replaceWithParentsCounter[replaceWithChildOption] = (replaceWithParentsCounter[replaceWithChildOption] ?: 0) + 1
+            }
+            Triple(targetParent, replaceWithChildrenOptions, mutableListOfEqualEntities)
           }
 
-          val entityDataMutableList = replaceWithEntityDataCollection[targetEntityData]
-          if (!entityDataMutableList.isNullOrEmpty()) {
-            replaceWithEntity = entityDataMutableList.removeFirst().createEntity(replaceWithStorage) as? WorkspaceEntityBase
-            if (replaceWithEntity != null) {
-              assert(replaceWithState[replaceWithEntity.id] == null)
-              targetParents += ParentsRef.TargetRef(entriesList[i].key.entity)
-              break
+        val mostCommonReplaceWithChildId = replaceWithParentsCounter.maxByOrNull { it.value }?.key
+        if (mostCommonReplaceWithChildId != null) {
+          parentAssociationsWithChildren.forEach { (targetParent, replaceWithChildren, replaceWithSimilarEntityData) ->
+            if (mostCommonReplaceWithChildId in replaceWithChildren) {
+              targetParents += ParentsRef.TargetRef(targetParent.entity)
+              replaceWithSimilarEntityData?.removeIf { it.id == mostCommonReplaceWithChildId.arrayId }
             }
           }
-        }
-
-        // Here we know our "associated" entity, so we just check what parents remain with it.
-        entriesList.drop(index + 1).forEach { tailItem ->
-          // Should we use cache as in above?
-          val replaceWithEntityDataCollection = childrenInReplaceWith(tailItem.value, targetEntityTrack.entity.clazz)
-          val replaceWithEntityData = replaceWithEntityDataCollection[targetEntityData]?.find { entityData ->
-            replaceWithEntity!!.id == entityData.createEntityId()
-          }
-          if (replaceWithEntityData != null) {
-            targetParents += ParentsRef.TargetRef(tailItem.key.entity)
-          }
+          replaceWithEntity = replaceWithStorage.entityDataByIdOrDie(mostCommonReplaceWithChildId)
+            .createEntity(replaceWithStorage) as WorkspaceEntityBase
         }
       }
 
