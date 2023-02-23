@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
+import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -45,10 +46,10 @@ internal object GHPRDetailsComponentFactory {
   ): JComponent {
     val title = GHPRTitleComponent.create(scope, reviewDetailsVm)
     val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
-    val commitsAndBranches = JPanel(HorizontalLayout(0)).apply {
+    val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge), HorizontalLayout.LEFT)
-      add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel), HorizontalLayout.RIGHT)
+      add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge))
+      add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel))
     }
     val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)

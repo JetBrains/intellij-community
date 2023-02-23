@@ -10,11 +10,13 @@ import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.childScope
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
@@ -82,6 +84,8 @@ internal object GHPRStatusChecksComponentFactory {
 
   private fun createChecksStateComponent(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
     val checkStatus = JLabel().apply {
+      JLabelUtil.setTrimOverflow(this, true)
+
       bindIcon(scope, reviewDetailsVm.mergeabilityState.map { getCheckStatusIcon(it) })
       bindText(scope, reviewDetailsVm.mergeabilityState.map { getCheckStatusText(it) })
     }
@@ -109,6 +113,7 @@ internal object GHPRStatusChecksComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, reviewDetailsVm.hasConflictsState.map { it == true })
     }
   }
@@ -119,6 +124,7 @@ internal object GHPRStatusChecksComponentFactory {
       name = "Required reviews label"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, combine(
         reviewDetailsVm.requiredApprovingReviewsCountState,
         reviewDetailsVm.isDraftState
@@ -138,6 +144,7 @@ internal object GHPRStatusChecksComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = GithubBundle.message("pull.request.not.authorized.to.merge")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, combine(reviewDetailsVm.isRestrictedState, reviewDetailsVm.isDraftState) { isRestricted, isDraft ->
         isRestricted && !isDraft
       })
@@ -178,6 +185,7 @@ internal object GHPRStatusChecksComponentFactory {
           isVisible = false
         }
       }
+      JLabelUtil.setTrimOverflow(this, true)
     }
   }
 
@@ -188,6 +196,7 @@ internal object GHPRStatusChecksComponentFactory {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.reviewer.missing")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, reviewFlowVm.reviewerAndReviewState.map { it.isEmpty() })
     }
   }
@@ -232,6 +241,7 @@ internal object GHPRStatusChecksComponentFactory {
         icon = avatarIconsProvider.getIcon(reviewer.avatarUrl, AVATAR_SIZE)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewer.shortName)
         iconTextGap = STATUS_COMPONENTS_GAP
+        JLabelUtil.setTrimOverflow(this, true)
       }
 
       add(reviewStatusIconLabel)
