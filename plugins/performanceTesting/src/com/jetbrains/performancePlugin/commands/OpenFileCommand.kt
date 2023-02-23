@@ -19,12 +19,15 @@ import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "openFile"
     const val SPAN_NAME: @NonNls String = "firstCodeAnalysis"
+    const val SUPPRESS_ERROR: @NonNls String = "SUPPRESS_ERROR"
 
     @JvmStatic
     fun findFile(filePath: String, project: Project): VirtualFile? {
@@ -37,7 +40,10 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val filePath = text.split(' ', limit = 2)[1]
+    val params = text.split(' ', limit = 4)
+    val filePath = params[1]
+    val timeout = if (params.size > 2) params[2].toLong() else 0
+    val suppressErrors = text.contains(SUPPRESS_ERROR)
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val job = CompletableFuture<Unit>()
@@ -45,6 +51,7 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     val span = PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
     val scopeRef = Ref<Scope>()
+    val projectPath = project.basePath
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
       override fun daemonFinished() {
         try {
@@ -61,8 +68,31 @@ class OpenFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter
     withContext(Dispatchers.EDT) {
       spanRef.set(span.startSpan())
       scopeRef.set(spanRef.get().makeCurrent())
+      setFilePath(projectPath, spanRef, file)
       FileEditorManager.getInstance(project).openFile(file, true)
     }
-    job.join()
+    try {
+      if (timeout > 0) {
+        job.orTimeout(timeout, TimeUnit.SECONDS)
+      }
+      job.join()
+    } catch (e: Exception) {
+      spanRef.get()?.setAttribute("timeout", "true")
+      spanRef.get()?.end()
+      scopeRef.get()?.close()
+      if (!suppressErrors)
+        throw IllegalStateException("Timeout on open file ${file.path} more than $timeout seconds", e)
+    }
+  }
+
+  private fun setFilePath(projectPath: @SystemIndependent @NonNls String?,
+                        spanRef: Ref<Span>,
+                        file: VirtualFile) {
+    if (projectPath != null) {
+      spanRef.get().setAttribute("filePath", file.path.replaceFirst(projectPath, ""))
+    }
+    else {
+      spanRef.get().setAttribute("filePath", file.path)
+    }
   }
 }
