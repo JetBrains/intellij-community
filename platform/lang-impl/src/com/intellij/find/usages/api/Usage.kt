@@ -14,6 +14,12 @@ interface Usage {
   fun createPointer(): Pointer<out Usage>
 
   /**
+   * Whether this usage represents a read or write access.
+   */
+  val access: UsageAccess?
+    get() = null
+
+  /**
    * Whether this usage is a declaration (`true`).
    * Other (`false`) usages may include references, text usages, model usages, etc.
    */

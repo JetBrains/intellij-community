@@ -8,6 +8,7 @@ import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
 import com.intellij.find.usages.api.PsiUsage
 import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageAccess
 import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
@@ -115,11 +116,19 @@ private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   )).findAll()
   val readRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()
+  val writeRanges = ArrayList<TextRange>()
+  val writeDeclarationRanges = ArrayList<TextRange>()
   for (usage in usages) {
     if (usage !is PsiUsage) {
       continue
     }
-    HighlightUsagesHandler.collectHighlightRanges(usage.file, usage.range, if (usage.declaration) readDeclarationRanges else readRanges)
+    val collector: ArrayList<TextRange> = when (Pair(usage.access ?: UsageAccess.Read, usage.declaration)) {
+      Pair(UsageAccess.Read, true) -> readDeclarationRanges
+      Pair(UsageAccess.Write, true) -> writeDeclarationRanges
+      Pair(UsageAccess.Write, false) -> writeRanges
+      else -> readRanges
+    }
+    HighlightUsagesHandler.collectHighlightRanges(usage.file, usage.range, collector)
   }
-  return UsageRanges(readRanges, emptyList(), readDeclarationRanges, emptyList())
+  return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
