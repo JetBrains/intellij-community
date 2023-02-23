@@ -300,6 +300,12 @@
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionRegisteredAsServiceOrComponentInspection"/>
 
+    <localInspection language="UAST" key="inspection.cancellation.check.in.loops.display.name" shortName="CancellationCheckInLoops"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CancellationCheckInLoopsInspection"/>
+
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
@@ -418,10 +424,11 @@
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for kotlin plugin"/>
-  </extensions>
+</extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
     <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+    <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -429,6 +436,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+    <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
     </extensionPoint>
   </extensionPoints>
 
