@@ -240,7 +240,17 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private val conversions: Map<String, List<Conversion>> =
         listOf(
-            Method("java.lang.Short.valueOf") convertTo ExtensionMethod("kotlin.Short.toShort")
+            Method("java.lang.Byte.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Short.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Integer.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Long.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Float.valueOf") convertTo numericValueOfReplacement()
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+            Method("java.lang.Double.valueOf") convertTo numericValueOfReplacement()
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
             Method("java.lang.Byte.parseByte") convertTo ExtensionMethod("kotlin.text.toByte")
@@ -248,9 +258,11 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
             Method("java.lang.Short.parseShort") convertTo ExtensionMethod("kotlin.text.toShort")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Integer.parseInt") convertTo ExtensionMethod("kotlin.text.toInt")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withByArgumentsFilter { it.size <= 2 },
             Method("java.lang.Long.parseLong") convertTo ExtensionMethod("kotlin.text.toLong")
-                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
+                    withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
+                    withByArgumentsFilter { it.size <= 2 },
             Method("java.lang.Float.parseFloat") convertTo ExtensionMethod("kotlin.text.toFloat")
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
             Method("java.lang.Double.parseDouble") convertTo ExtensionMethod("kotlin.text.toDouble")
@@ -672,6 +684,29 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER
                     withFilter ::isSystemOutCall
         ).groupBy { it.from.fqName }
+
+    private fun numericValueOfReplacement() = CustomExpression { expression ->
+        val arguments = (expression as JKCallExpression).arguments
+        if (arguments.arguments.isEmpty()) return@CustomExpression expression
+        val detachedArguments = arguments::arguments.detached()
+
+        val firstArgument = detachedArguments[0]::value.detached()
+        // Extract simple name of numeric class (for example, "Short" from "java.lang.Short.valueOf")
+        val typeName = expression.identifier.fqName.split(".").dropLast(1).lastOrNull()?.let {
+            if (it == "Integer") "Int" else it
+        }
+        val result = if (firstArgument.calculateType(typeFactory)?.isStringType() == true) {
+            firstArgument.callOn(
+                symbolProvider.provideMethodSymbol("kotlin.text.String.to$typeName"),
+                detachedArguments.drop(1)
+            )
+        } else {
+            // this is a call like `Short.valueOf(short)`, which can be converted to just `short`
+            firstArgument
+        }
+
+        result.withFormattingFrom(expression)
+    }
 
     private fun convertFirstArgumentToRegex(arguments: JKArgumentList): JKArgumentList {
         val detachedArguments = arguments::arguments.detached()
