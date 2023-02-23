@@ -7,6 +7,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @State(
@@ -15,7 +17,7 @@ import java.util.stream.IntStream;
 )
 public class GitRefNameValidatorSettings
   implements PersistentStateComponent<GitRefNameValidatorSettings.State>, GitRefNameValidatorSettingsInterface {
-  public static final IntStream MAX_NUM_OF_CONSECUTIVE_UNDERSCORES_OPTIONS = IntStream.range(1, 5);
+  public static final List<Integer> MAX_NUM_OF_CONSECUTIVE_UNDERSCORES_OPTIONS = IntStream.range(1, 5).boxed().collect(Collectors.toList());
 
   public static class State {
     public boolean isOn = true;
