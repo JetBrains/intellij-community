@@ -29,7 +29,7 @@ class TerminalBlocksComponent(private val project: Project,
                               parentDisposable: Disposable) : JPanel() {
   private val blocksPanel: JPanel
   private val scrollPane: JBScrollPane
-  private val promptPanel: TerminalPromptPanel = TerminalPromptPanel(project, settings, commandExecutor)
+  private val promptPanel: TerminalPromptPanel = TerminalPromptPanel(project, settings, session, commandExecutor)
 
   private var runningPanel: TerminalPanel? = null
 
