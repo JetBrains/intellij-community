@@ -64,8 +64,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   //   1. If there is dumb mode now, tasks added to myRunWhenSmartQueue will be executed after becoming smart
   //   2. If there is NO dumb mode now, don't add tasks to myRunWhenSmartQueue - they will NOT be executed
   private final Object myDumbSmartTransitionLock = new Object();
-  private final RunWhenSmartQueue myRunWhenSmartQueue;
-
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -124,7 +122,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
-    myRunWhenSmartQueue = new RunWhenSmartQueue(project);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
@@ -178,7 +175,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void dispose() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     myBalloon.dispose();
-    myRunWhenSmartQueue.clear();
     myTaskQueue.disposePendingTasks();
   }
 
@@ -276,7 +272,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!ALWAYS_SMART) {
       synchronized (myDumbSmartTransitionLock) {
         if (isDumb()) {
-          myRunWhenSmartQueue.addLast(runnable);
+          myProject.getService(SmartModeScheduler.class).addLast(runnable);
           return;
         }
       }
@@ -386,7 +382,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     finally {
-      myRunWhenSmartQueue.runAllWhileSmartInThisThread();
+      myProject.getService(SmartModeScheduler.class).runAllWhileSmartInThisThread();
     }
   }
 
@@ -451,7 +447,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return;
       }
       switched = new CountDownLatch(1);
-      myRunWhenSmartQueue.addLast(switched::countDown);
+      myProject.getService(SmartModeScheduler.class).addLast(switched::countDown);
     }
 
     while (myState.get() != State.SMART && !myProject.isDisposed()) {

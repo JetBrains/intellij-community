@@ -5,6 +5,8 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -16,10 +18,13 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
 
-
+/**
+ * Please, don't use this service. Use [DumbService.runWhenSmart] to schedule runnables in smart mode.
+ */
 @Experimental
 @Internal
-class RunWhenSmartQueue(private val project: Project) {
+@Service(Service.Level.PROJECT)
+class SmartModeScheduler(private val project: Project) : Disposable {
   private class RunnableDelegate(val task: Runnable, private val executor: Consumer<in Runnable>) : Runnable {
     override fun run() {
       executor.accept(task)
@@ -71,7 +76,11 @@ class RunWhenSmartQueue(private val project: Project) {
     myRunWhenSmartQueue.clear()
   }
 
+  override fun dispose() {
+    clear()
+  }
+
   companion object {
-    val LOG: Logger = logger<RunWhenSmartQueue>()
+    val LOG: Logger = logger<SmartModeScheduler>()
   }
 }
