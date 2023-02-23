@@ -440,7 +440,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     @Override
     public synchronized void addMouseListener(MouseListener l) {
-      // avoid this (transparent) panel consuming mouse click events
+      // Avoid this (transparent) panel consuming mouse click events, see IDEA-171695.
+      // This is a dirty hack since it shows an inconsistent mouse cursor.
     }
 
     @RequiresEdt
