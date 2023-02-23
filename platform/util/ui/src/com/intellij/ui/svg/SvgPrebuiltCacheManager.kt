@@ -3,6 +3,7 @@
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.icons.IconLoadMeasurer
 import org.h2.mvstore.DataUtils
 import org.jetbrains.ikv.Ikv
@@ -16,14 +17,11 @@ internal class SvgPrebuiltCacheManager(dbDir: Path) {
   fun loadFromCache(key: Int, mapper: SvgCacheMapper): Image? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val list = if (mapper.isDark) darkStores else lightStores
-    // not supported scale
-    val store = when (mapper.scale) {
-      1f -> list.s1.getOrCreate()
-      1.25f -> list.s1_25.getOrCreate()
-      1.5f -> list.s1_5.getOrCreate()
-      2f -> list.s2.getOrCreate()
-      else -> return null
-    }
+    val store = if (mapper.scale == 1f) list.s1.getOrCreate()
+    else if (mapper.scale == 2f) list.s2.getOrCreate()
+    else if (mapper.scale == 1.25f && SystemInfoRt.isWindows) list.s1_25.getOrCreate()
+    else if (mapper.scale == 1.5f && SystemInfoRt.isWindows) list.s1_5.getOrCreate()
+    else return null  // unsupported scale
 
     val data = store.getUnboundedValue(key) ?: return null
     val actualWidth: Int
