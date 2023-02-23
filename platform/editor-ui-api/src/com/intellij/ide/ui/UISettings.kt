@@ -352,9 +352,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var overrideLafFonts: Boolean
-    get() = state.overrideLafFonts
+    get() = notRoamableOptions.state.overrideLafFonts
     set(value) {
-      state.overrideLafFonts = value
+      notRoamableOptions.state.overrideLafFonts = value
     }
 
   var fontFace: @NlsSafe String?
@@ -688,7 +688,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   override fun noStateLoaded() {
     super.noStateLoaded()
-    migratePresentationFontSize()
+    migrateFontParameters()
   }
 
   override fun loadState(state: UISettingsState) {
@@ -699,7 +699,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (migrateOldFontSettings()) {
       notRoamableOptions.fixFontSettings()
     }
-    migratePresentationFontSize()
+    migrateFontParameters()
 
     // Check tab placement in editor
     val editorTabPlacement = state.editorTabPlacement
@@ -763,8 +763,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     return migrated
   }
 
-  private fun migratePresentationFontSize() {
+  private fun migrateFontParameters() {
     notRoamableOptions.migratePresentationModeFontSize(state.presentationModeFontSize)
+    notRoamableOptions.migrateOverrideLafFonts(state.overrideLafFonts)
   }
 
   //<editor-fold desc="Deprecated stuff.">
