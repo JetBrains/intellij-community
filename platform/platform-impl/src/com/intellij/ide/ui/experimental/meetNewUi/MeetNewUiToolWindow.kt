@@ -59,7 +59,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       /*
       row {
         val scale = JBUI.scale(BANNER_HEIGHT).toFloat() / BANNER.iconHeight
-        cell(JLabel(IconUtil.scale(BANNER, null, scale)))
+        cell(JLabel(IconUtil.scale(BANNER, WindowManager.getFrame(project), scale)))
       }
       */
       panel {
