@@ -83,46 +83,75 @@ public final class HtmlUtil {
   private HtmlUtil() {
   }
 
-  private static final Set<String> EMPTY_TAGS_MAP = new HashSet<>();
+  private static final Set<String> EMPTY_TAGS_MAP = Set.of(
+    "area", "base", "basefont", "br", "col", "embed", "frame", "hr", "meta", "img", "input", "isindex", "link", "param", "source", "track",
+    "wbr"
+  );
+
   private static final Set<String> OPTIONAL_END_TAGS_MAP = Set.of(
     //"html",
     "head",
     //"body",
-    "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed",
-    "caption"
+    "caption", "colgroup", "dd", "dt", "embed", "li", "noembed", "optgroup", "option", "p", "rt", "rp", "tbody", "td", "tfoot", "th",
+    "thead", "tr"
   );
 
   private static final Set<String> BLOCK_TAGS_MAP =
     Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
-                      "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
-                      // nonexplicitly specified
-                      "map",
-                      // flow elements
-                      "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment");
+           "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
+           // nonexplicitly specified
+           "map",
+           // flow elements
+           "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment");
 
   // flow elements are block or inline, so they should not close <p> for example
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP =
     Set.of("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
-                      "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
-                      "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
-                      "strong", "sub", "sup", "textarea", "tt", "u", "var");
+           "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
+           "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
+           "strong", "sub", "sup", "textarea", "tt", "u", "var");
 
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
 
   private static final Set<String> HTML5_TAGS_SET = Set.of("article", "aside", "audio", "canvas", "command", "datalist",
-                                                                      "details", "embed", "figcaption", "figure", "footer", "header",
-                                                                      "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt",
-                                                                      "ruby", "section", "source", "summary", "time", "video", "wbr",
-                                                                      "main"
+                                                           "details", "embed", "figcaption", "figure", "footer", "header",
+                                                           "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt",
+                                                           "ruby", "section", "source", "summary", "time", "video", "wbr",
+                                                           "main"
   );
-  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new HashMap<>();
+
+  private static final Set<String> P_AUTO_CLOSE_CLOSING_TAGS =
+    Set.of("abbr", "acronym", "address", "applet", "area", "article", "aside", "b", "base", "basefont", "bdi", "bdo", "big",
+           "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "data", "datalist", "dd",
+           "details", "dfn", "dialog", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer",
+           "form", "frame", "frameset", "head", "header", "hgroup", "h1", "hr", "html", "i", "iframe", "img", "input", "kbd",
+           "keygen", "label", "legend", "li", "link", "main", "mark", "menu", "menuitem", "meta", "meter", "nav", "noframes",
+           "object", "ol", "optgroup", "option", "output", "p", "param", "picture", "pre", "progress", "q", "rp", "rt", "ruby",
+           "s", "samp", "script", "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup",
+           "svg", "table", "tbody", "td", "template", "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul",
+           "var", "wbr"
+    );
+
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_OPENING_TAG = new HashMap<>();
 
   static {
-    for (HTMLControls.Control control : HTMLControls.getControls()) {
-      final String tagName = StringUtil.toLowerCase(control.name());
-      if (control.endTag() == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy()));
-    }
+    AUTO_CLOSE_BY_OPENING_TAG.put("colgroup", Set.of("colgroup", "tbody", "tfoot", "thead"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("dd", Set.of("dd", "dt"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("dt", Set.of("dd", "dt"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("head", Set.of("body"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("li", Set.of("li"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("optgroup", Set.of("optgroup"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("option", Set.of("optgroup", "option"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("p", Set.of("address", "article", "aside", "blockquote", "details", "div", "dl", "fieldset", "figcaption",
+                                              "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hgroup", "hr",
+                                              "main", "menu", "nav", "ol", "p", "pre", "section", "table", "ul"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("rp", Set.of("rp", "rt"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("rt", Set.of("rp", "rt"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("tbody", Set.of("tbody", "tfoot"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("td", Set.of("td", "th"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("th", Set.of("td", "th"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("thead", Set.of("tbody", "tfoot"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("tr", Set.of("tr"));
   }
 
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
@@ -149,9 +178,24 @@ public final class HtmlUtil {
     return OPTIONAL_END_TAGS_MAP.contains(tagName);
   }
 
-  public static boolean canTerminate(final String childTagName, final String tagName) {
-    final Set<String> closingTags = AUTO_CLOSE_BY_MAP.get(tagName);
-    return closingTags != null && closingTags.contains(childTagName);
+  public static @Nullable Boolean canOpeningTagAutoClose(@NotNull String tagOnStack, @NotNull String openingTag) {
+    if (!isOptionalEndForHtmlTagL(openingTag)) {
+      return false;
+    }
+    final Set<String> closingTags = AUTO_CLOSE_BY_OPENING_TAG.get(openingTag);
+    if (closingTags != null && closingTags.contains(tagOnStack)) {
+      return true;
+    }
+    // Maybe
+    return null;
+  }
+
+  public static boolean canClosingTagAutoClose(@NotNull String tagOnStack, @NotNull String closingTag) {
+    if (!isOptionalEndForHtmlTagL(tagOnStack)) return false;
+    if (tagOnStack.equals("p")) {
+      return P_AUTO_CLOSE_CLOSING_TAGS.contains(closingTag);
+    }
+    return true;
   }
 
   public static boolean isHtmlBlockTag(String tagName) {
