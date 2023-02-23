@@ -61,7 +61,7 @@ internal class A {
         s.lowercase(Locale.FRENCH)
         s.uppercase(Locale.getDefault())
         s.uppercase(Locale.FRENCH)
-        s
+        s.toString()
         s.toCharArray()
     }
 
