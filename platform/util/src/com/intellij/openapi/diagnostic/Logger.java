@@ -15,18 +15,31 @@ import java.util.Collection;
 import java.util.function.Function;
 
 /**
- * <p>A standard interface to write to {@code %system%/log/idea.log} (or {@code %system%/testlog/idea.log} in tests).
- *
- * <p>The {@code error} methods, in addition to writing to the log file,
- * result in showing the "IDE fatal errors" dialog in the IDE
- * (in EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true}).
+ * Write messages to {@code idea.log}.
+ * <p>
+ * Production mode:
+ * <ul>
+ * <li>The log messages go to {@code %system%/log/idea.log}.
+ * <li>Error, warning and info messages go to the log file.
+ * <li>Debug and trace messages are dropped.
+ * <li>In EAP versions or if the {@code idea.fatal.error.notification} system property is set to {@code true},
+ * errors additionally result in an 'IDE Internal Error'.
  * See {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.
- *
- * <p>The {@code error} methods, when run in unit test mode, throw an {@linkplain AssertionError}.
- * In production, they do not throw exceptions, so the execution continues.
- *
- * <p>In most non-performance tests, the debug level is enabled by default -
- * so that when a test fails, the full content of its log is printed to stdout.
+ * <li>The log level of each logger can be adjusted in
+ * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
+ * </ul>
+ * <p>
+ * Test mode in tests that extend {@code UsefulTest}:
+ * <ul>
+ * <li>The log messages go to {@code %system%/testlog/idea.log}.
+ * <li>Error and warning messages go directly to the console.
+ * <li>Error messages additionally throw an {@code AssertionError}.
+ * <li>Info and debug messages are buffered in memory.
+ * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+ * <li>Trace messages are dropped.
+ * <li>To configure the log level during a single test,
+ * see {@code TestLoggerFactory.enableDebugLogging} and {@code TestLoggerFactory.enableTraceLogging}.
+ * </ul>
  */
 public abstract class Logger {
   private static boolean isUnitTestMode;
@@ -177,6 +190,9 @@ public abstract class Logger {
    *
    * <p>Use this method instead of {@link #debug(String)} for internal events of a subsystem,
    * to avoid overwhelming the log if 'debug' level is enabled.
+   *
+   * @param message should be a plain string literal,
+   *                or the call should be enclosed in {@link #isTraceEnabled()}
    */
   public void trace(String message) {
     debug(message);
