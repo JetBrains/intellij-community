@@ -1160,7 +1160,7 @@ public class MavenProject {
 
   @Override
   public String toString() {
-    return getMavenId().toString();
+    return null == myState.myMavenId ? myFile.getPath() : getMavenId().toString();
   }
 
   private static class State implements Cloneable, Serializable {
