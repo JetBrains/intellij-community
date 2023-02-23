@@ -511,6 +511,7 @@
         <group id="PowerSaveGroup">
           <separator/>
           <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
+          <action id="ToggleEssentialHighlighting" class="com.intellij.ide.actions.ToggleEssentialHighlightingAction" internal="true"/>
         </group>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>

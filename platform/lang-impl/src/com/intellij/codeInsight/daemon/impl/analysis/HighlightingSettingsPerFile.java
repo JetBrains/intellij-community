@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.FileViewProvider;
@@ -96,7 +97,11 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
         return setting;
       }
     }
-    return FileHighlightingSetting.FORCE_HIGHLIGHTING;
+    return isGlobalEssentialHighlightingModeEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
+  }
+  
+  private static boolean isGlobalEssentialHighlightingModeEnabled() {
+    return RegistryManager.getInstance().is("ide.highlighting.mode.essential");
   }
 
   private static FileHighlightingSetting @NotNull [] getDefaults(@NotNull PsiFile file) {
@@ -234,7 +239,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
   public long getModificationCount() {
     return myModificationTracker.getModificationCount();
   }
-  private void incModificationCount() {
+  public void incModificationCount() {
     myModificationTracker.incModificationCount();
   }
 }
