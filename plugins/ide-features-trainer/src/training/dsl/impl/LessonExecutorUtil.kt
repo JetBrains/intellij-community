@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.ActionsRecorder
 import training.ui.LearningUiHighlightingManager
@@ -72,7 +73,7 @@ internal object LessonExecutorUtil {
     val textBuilder = MessageFactory.convertToGotItFormat(text)
     val balloonBuilder = GotItComponentBuilder(textBuilder)
     if (balloonConfig.width > 0) {
-      balloonBuilder.withMaxWidth(balloonConfig.width)
+      balloonBuilder.withMaxWidth(JBUI.scale(balloonConfig.width))
     }
     val balloon: Balloon = balloonBuilder
       .withStepNumber(lessonExecutor.visualIndexNumber)
@@ -81,7 +82,7 @@ internal object LessonExecutorUtil {
       .requestFocus(balloonConfig.gotItCallBack != null)
       .withContrastColors(true)
       .build(actionsRecorder) {
-        setCornerToPointerDistance(balloonConfig.cornerToPointerDistance)
+        setCornerToPointerDistance(JBUI.scale(balloonConfig.cornerToPointerDistance))
         setAnimationCycle(if (useAnimationCycle) balloonConfig.animationCycle else 0)
         setCloseButtonEnabled(false)
         setHideOnCloseClick(false)
