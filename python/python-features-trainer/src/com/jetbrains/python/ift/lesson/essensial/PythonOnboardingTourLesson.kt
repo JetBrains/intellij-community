@@ -38,7 +38,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -233,7 +232,7 @@ class PythonOnboardingTourLesson :
 
     toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = { IntRange(13, it - 17) }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
-           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = JBUI.scale(20)))
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 20))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1",
                                        code("6.5"), code("find_average"), code("26")))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
@@ -406,7 +405,7 @@ class PythonOnboardingTourLesson :
       text(PythonLessonsBundle.message("python.onboarding.project.view.description",
                                        action("ActivateProjectToolWindow")))
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = JBUI.scale(8)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = 8))
       triggerAndBorderHighlight().treeItem { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).isToStringContains("PyCharmLearningProject")
         if (result) {

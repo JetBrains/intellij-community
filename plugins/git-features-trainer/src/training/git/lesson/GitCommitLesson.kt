@@ -21,7 +21,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.DocumentUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitActionsPanel
@@ -219,7 +218,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task {
       text(GitLessonsBundle.message("git.commit.select.top.commit"))
       text(GitLessonsBundle.message("git.commit.select.top.commit.balloon"),
-           LearningBalloonConfig(Balloon.Position.below, width = JBUI.scale(300)))
+           LearningBalloonConfig(Balloon.Position.below, width = 300))
       triggerOnTopCommitSelected()
       showWarningIfGitWindowClosed()
       test {
@@ -238,7 +237,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       text(GitLessonsBundle.message("git.commit.committed.file.explanation", strong(GitBundle.message("git4idea.vcs.name"))))
       gotItStep(Balloon.Position.atLeft, width = 0,
                 GitLessonsBundle.message("git.commit.committed.file.got.it"),
-                cornerToPointerDistance = JBUI.scale(20), duplicateMessage = false)
+                cornerToPointerDistance = 20, duplicateMessage = false)
       showWarningIfGitWindowClosed()
     }
 
@@ -329,7 +328,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
     task {
       gotItStep(Balloon.Position.atLeft, width = 0,
                 GitLessonsBundle.message("git.commit.two.committed.files.explanation"),
-                cornerToPointerDistance = JBUI.scale(20))
+                cornerToPointerDistance = 20)
     }
 
     restoreCommitWindowStateInformer()

@@ -48,7 +48,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerManager
@@ -322,7 +321,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
 
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(JavaLessonsBundle.message("java.onboarding.balloon.click.here"),
-           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = JBUI.scale(20)))
+           LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 20))
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.1",
                                      code("6.5"), code("findAverage"), code("26")))
       text(JavaLessonsBundle.message("java.onboarding.toggle.breakpoint.2"))
@@ -490,7 +489,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       text(JavaLessonsBundle.message("java.onboarding.project.view.description",
                                      action("ActivateProjectToolWindow")))
       text(JavaLessonsBundle.message("java.onboarding.balloon.project.view"),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = JBUI.scale(8)))
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0, cornerToPointerDistance = 8))
       triggerUI().treeItem { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 2 && path.getPathComponent(1).isToStringContains("IdeaLearningProject")
         if (result) {
