@@ -424,7 +424,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       if (moduleMap.containsKey(mainModuleId)) {
         // we should ensure deduplicated module names in the scope of single import
-        throw new IllegalStateException("Duplicate modules names detected: " + gradleModule);
+        throw new IllegalStateException("Attempt to add module with already existing id [" + mainModuleId + "]\n" +
+                                        " new module: " + gradleModule + "\n" +
+                                        " existing module: " + moduleMap.get(mainModuleId).second);
       }
       moduleMap.put(mainModuleId, Pair.create(moduleDataNode, gradleModule));
     }
