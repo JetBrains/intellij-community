@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
@@ -17,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
@@ -40,14 +35,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
@@ -69,7 +64,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   //   1. If there is dumb mode now, tasks added to myRunWhenSmartQueue will be executed after becoming smart
   //   2. If there is NO dumb mode now, don't add tasks to myRunWhenSmartQueue - they will NOT be executed
   private final Object myDumbSmartTransitionLock = new Object();
-  private final Deque<Runnable> myRunWhenSmartQueue = new ConcurrentLinkedDeque<>();
+  private final RunWhenSmartQueue myRunWhenSmartQueue;
 
   private final Project myProject;
 
@@ -129,6 +124,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
+    myRunWhenSmartQueue = new RunWhenSmartQueue(project);
 
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
 
@@ -141,35 +137,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
-
-    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myRunWhenSmartQueue.removeIf(runnable -> {
-          if (runnable instanceof RunnableDelegate) {
-            runnable = ((RunnableDelegate)runnable).task;
-          }
-          ClassLoader classLoader = runnable.getClass().getClassLoader();
-          return classLoader instanceof PluginAwareClassLoader &&
-                 ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId());
-        });
-      }
-    });
-  }
-
-  private static final class RunnableDelegate implements Runnable {
-    final Runnable task;
-    private final @NotNull Consumer<? super Runnable> executor;
-
-    private RunnableDelegate(@NotNull Runnable task, @NotNull Consumer<? super Runnable> executor) {
-      this.task = task;
-      this.executor = executor;
-    }
-
-    @Override
-    public void run() {
-      executor.accept(task);
-    }
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
@@ -287,10 +254,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void doUnsafeRunWhenSmart(@NotNull Runnable runnable) {
     if (!ALWAYS_SMART) {
-      synchronized (myRunWhenSmartQueue) {
+      synchronized (myDumbSmartTransitionLock) {
         if (isDumb()) {
-          Runnable executor = ClientId.decorateRunnable(runnable);
-          myRunWhenSmartQueue.addLast(executor == runnable ? runnable : new RunnableDelegate(runnable, it -> executor.run()));
+          myRunWhenSmartQueue.addLast(runnable);
           return;
         }
       }
@@ -310,7 +276,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!ALWAYS_SMART) {
       synchronized (myDumbSmartTransitionLock) {
         if (isDumb()) {
-          myRunWhenSmartQueue.addLast(ClientId.decorateRunnable(runnable));
+          myRunWhenSmartQueue.addLast(runnable);
           return;
         }
       }
@@ -420,28 +386,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
     }
     finally {
-      // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
-      // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-      while (!isDumb()) {
-        final Runnable runnable = myRunWhenSmartQueue.pollFirst();
-        if (runnable == null) {
-          break;
-        }
-        doRun(runnable);
-      }
-    }
-  }
-
-  // Extracted to have a capture point
-  private static void doRun(@Async.Execute Runnable runnable) {
-    try {
-      runnable.run();
-    }
-    catch (ProcessCanceledException e) {
-      LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
-    }
-    catch (Throwable e) {
-      LOG.error("Error executing task " + runnable, e);
+      myRunWhenSmartQueue.runAllWhileSmartInThisThread();
     }
   }
 
