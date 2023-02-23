@@ -34,7 +34,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
   @Override
   public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     LineTooltipRenderer bigRenderer = null;
     List<HighlightInfo> infos = new SmartList<>();

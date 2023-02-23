@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -52,6 +53,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -516,12 +518,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     ActivityTracker.getInstance().inc();
   }
 
-  public void forcingUpdateStatusToolbar() {
-    myStatusUpdates.queue(Update.create("forcingUpdate", () -> {
-      statusToolbar.updateActionsImmediately();
-    }));
-  }
-
   private static final class PositionedStripe {
     private @NotNull Color color;
     private int yEnd;
@@ -552,9 +548,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     SwingUtilities.convertPointToScreen(location, component);
     return new Rectangle(location, hint.getSize());
   }
-
   // true if tooltip shown
   private boolean showToolTipByMouseMove(@NotNull MouseEvent e) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     LightweightHint currentHint = getCurrentHint();
     if (currentHint != null && (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint)))) {
       return true;
@@ -578,11 +574,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     Set<RangeHighlighter> highlighters = getNearestHighlighters(e.getY() + 1);
-    if (highlighters.isEmpty()) return false;
+    if (highlighters.isEmpty()) {
+      return false;
+    }
 
-    int y = e.getY();
+    int y;
     RangeHighlighter nearest = getNearestRangeHighlighter(e);
-    if (nearest != null) {
+    if (nearest == null) {
+      y = e.getY();
+    }
+    else {
       ProperTextRange range = offsetsToYPositions(nearest.getStartOffset(), nearest.getEndOffset());
       int eachStartY = range.getStartOffset();
       int eachEndY = range.getEndOffset();
@@ -591,16 +592,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     if (currentHint != null && y == myCurrentHintAnchorY) {
       return true;
     }
-    TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
-    if (bigRenderer != null) {
-      LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
-      myCurrentHint = new WeakReference<>(hint);
-      myCurrentHintAnchorY = y;
-      myKeepHint = false;
-      myMouseMovementTracker.reset();
-      return true;
-    }
-    return false;
+    ReadAction.nonBlocking(()->myTooltipRendererProvider.calcTooltipRenderer(highlighters))
+      .expireWhen(() -> myEditor.isDisposed())
+      .finishOnUiThread(ModalityState.NON_MODAL, bigRenderer -> {
+        if (bigRenderer != null) {
+          LightweightHint hint = showTooltip(bigRenderer, createHint(e.getComponent(), new Point(0, y+1)).setForcePopup(true));
+          myCurrentHint = new WeakReference<>(hint);
+          myCurrentHintAnchorY = y;
+          myKeepHint = false;
+          myMouseMovementTracker.reset();
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    return true;
   }
 
   @NotNull
@@ -1240,7 +1244,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       showToolTipByMouseMove(e);
     }
 
-    private void cancelMyToolTips(MouseEvent e, boolean checkIfShouldSurvive) {
+    private void cancelMyToolTips(@NotNull MouseEvent e, boolean checkIfShouldSurvive) {
       hideMyEditorPreviewHint();
       TooltipController tooltipController = TooltipController.getInstance();
       if (!checkIfShouldSurvive || !tooltipController.shouldSurvive(e)) {
@@ -1340,7 +1344,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull Collection<? extends RangeHighlighter> highlighters) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsNonDispatchThread();
       LineTooltipRenderer bigRenderer = null;
       //do not show the same tooltip twice
       Set<String> tooltips = null;
