@@ -595,7 +595,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     //noinspection unchecked
-    return ((List<TreeNodeOnVcsRevision>)myDualView.getSelection()).size() > 0;
+    return !((List<TreeNodeOnVcsRevision>)myDualView.getSelection()).isEmpty();
   }
 
   @Override

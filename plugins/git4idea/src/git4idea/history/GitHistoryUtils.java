@@ -197,7 +197,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -222,7 +222,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -264,7 +264,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     GitLogFullRecord record = parser.parseOneRecord(result);
@@ -300,7 +300,7 @@ public final class GitHistoryUtils {
     GitCommandResult result = Git.getInstance().runCommand(h);
     if (!result.success()) return null;
     String output = result.getOutputAsJoinedString().trim();
-    if (output.length() == 0) return null;
+    if (output.isEmpty()) return null;
     return GitRevisionNumber.resolve(project, root, output);
   }
 

@@ -97,7 +97,7 @@ class MultilinePopupBuilder {
     StringBuilder s = new StringBuilder();
     for (char c : separators) {
       String separator = c == '\n' ? VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.new.lines") : Character.toString(c);
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         s.append(separator);
       }
       else {
