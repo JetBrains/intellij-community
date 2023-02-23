@@ -47,6 +47,17 @@ fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boo
   )))
 }
 
+fun loadJvmDebugInitScript(
+  debuggerId: String,
+  parameters: String
+): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", java.util.Map.of(
+    "IMPORT_GRADLE_TASKS_UTIL", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
+    "DEBUGGER_ID", debuggerId.toGroovyString(),
+    "PROCESS_PARAMETERS", parameters.toGroovyString()
+  ))
+}
+
 private fun loadInitScript(resourcePath: String, parameters: Map<String, String>): String {
   var script = loadInitScript(resourcePath)
   for ((key, value) in parameters) {
