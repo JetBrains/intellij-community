@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,7 @@ public class AddAnnotationFixWithoutArgFix extends AddAnnotationFix {
   public AddAnnotationFixWithoutArgFix(@NotNull String fqn,
                                        @NotNull PsiModifierListOwner modifierListOwner,
                                        String @NotNull ... annotationsToRemove) {
-    super(fqn, modifierListOwner, annotationsToRemove);
+    super(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, ExternalAnnotationsManager.AnnotationPlace.IN_CODE, annotationsToRemove);
   }
 
   public static boolean isApplicable(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotationFQN) {
