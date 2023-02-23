@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +17,9 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -42,6 +46,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
         }
       }
     }, this);
+    RegistryManager.getInstance().get("ide.highlighting.mode.essential").addListener(new EssentialHighlightingModeListener(), this);
   }
 
   @Override
@@ -109,5 +114,24 @@ public final class ErrorStripeUpdateManager implements Disposable {
         return super.createUIController(editor);
       }
     };
+  }
+  
+  private class EssentialHighlightingModeListener implements RegistryValueListener {
+    @Override
+    public void afterValueChanged(@NotNull RegistryValue value) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          Editor editor = ((TextEditor)fileEditor).getEditor();
+          PsiFile file = myPsiDocumentManager.getCachedPsiFile(editor.getDocument());
+          repaintErrorStripePanel(editor, file);
+        }
+      }
+      
+      // Run all checks after disabling essential highlighting
+      if (!value.asBoolean()) {
+        DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
+        codeAnalyzer.restartToCompleteEssentialHighlighting();
+      }
+    }
   }
 }
