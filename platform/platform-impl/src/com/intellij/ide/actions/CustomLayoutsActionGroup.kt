@@ -32,7 +32,6 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val manager = ToolWindowDefaultLayoutManager.getInstance()
       e.presentation.text = if (manager.activeLayoutName == layoutName)
         ActionsBundle.message("group.CustomLayoutActionsGroup.current.text", layoutName)
       else
@@ -48,6 +47,12 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       }
 
       override fun isSelected(e: AnActionEvent): Boolean = false // no check mark needed in this submenu
+
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+        e.presentation.isEnabled = manager.activeLayoutName != layoutNameSupplier()
+      }
+
     }
 
     private class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {
@@ -59,3 +64,5 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
   }
 
 }
+
+private val manager get() = ToolWindowDefaultLayoutManager.getInstance()
