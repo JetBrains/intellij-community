@@ -31,8 +31,11 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
+
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
+
+  var layoutCallBack : LayoutCallBack? = null
 
   init {
     background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true)
@@ -94,7 +97,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   private fun createActionBar(group: ActionGroup): JComponent {
-    val toolbar = MyActionToolbarImpl(group = group)
+    val toolbar = MyActionToolbarImpl(group, layoutCallBack)
     toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
     toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
@@ -108,7 +111,9 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 }
 
-private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+typealias LayoutCallBack = () -> Unit
+
+private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: LayoutCallBack?) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
 
   init {
     updateFont()
@@ -117,6 +122,11 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
     super.calculateBounds(size2Fit, bounds)
     for (i in 0 until bounds.size) fitRectangle(bounds[i], getComponent(i))
+  }
+
+  override fun doLayout() {
+    super.doLayout()
+    layoutCallBack?.invoke()
   }
 
   private fun fitRectangle(rect: Rectangle, cmp: Component) {
