@@ -92,7 +92,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     if (index < 1) return false;
     String maybeBlockTag = text.substring(1, index);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
   }
 
   private static boolean endsWithHtmlBlockTag(String text) {
@@ -100,7 +100,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     if (text.isEmpty() || text.charAt(text.length() - 1) != '>') return false;
     String maybeBlockTag = text.substring(text.lastIndexOf('<') + 1, text.length() - 1);
     String trimmed = StringUtil.trim(maybeBlockTag.strip(), ch -> NOT_WHITESPACE_FILTER.accept(ch) && ch != '/');
-    return HtmlUtil.isHtmlBlockTag(trimmed) || "br".equalsIgnoreCase(trimmed);
+    return HtmlUtil.isHtmlBlockTag(trimmed, false) || "br".equalsIgnoreCase(trimmed);
   }
 
   private static boolean isNullOrBlockTag(PsiElement element) {
