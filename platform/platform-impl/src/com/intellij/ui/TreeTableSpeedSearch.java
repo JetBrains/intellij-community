@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -14,6 +14,9 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+/**
+ * To install the speed search on a {@link TreeTable} component, pass the tree table component to one of the constructors.
+ */
 public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   private static final Convertor<TreePath, String> TO_STRING = object -> {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
@@ -81,7 +84,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   protected String getElementText(Object element) {
     TreePath path = (TreePath)element;
     String string = myToStringConvertor.convert(path);
-    if (string == null) return TreeTableSpeedSearch.TO_STRING.convert(path);
+    if (string == null) return TO_STRING.convert(path);
     return string;
   }
 }
