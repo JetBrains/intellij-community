@@ -2100,7 +2100,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             val kotlinMainPluginVersion = "1.5.10"
             val kotlinMavenPluginVersion1 = "1.6.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
-            val notifications = catchNotifications(myProject) {
+            val notifications = catchNotifications(myProject, "Kotlin JPS plugin") {
                 val mainPom = createProjectPom(
                     """
                     <groupId>test</groupId>
@@ -2209,7 +2209,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         fun testJpsCompilerUnsupportedVersionUp() {
             val maxVersion = KotlinJpsPluginSettings.jpsMaximumSupportedVersion
             val versionToImport = KotlinVersion(maxVersion.major, maxVersion.minor, maxVersion.minor + 1)
-            val text = catchNotificationText(myProject) {
+            val text = catchNotificationText(myProject, "Kotlin JPS plugin") {
                 doUnsupportedVersionTest(versionToImport.toString())
             }
 
@@ -3406,7 +3406,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
     protected fun doJvmTarget6Test(version: String?): Pair<KotlinFacetSettings, List<Notification>> {
         createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
-        val notifications = catchNotifications(myProject) {
+        val notifications = catchNotifications(myProject, "Kotlin Maven project import") {
             importProject(
                 """
                     <groupId>test</groupId>
