@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
+import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.ItemSelectable
@@ -147,7 +148,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun bold(): CellImpl<T> {
-    component.font = component.font.deriveFont(Font.BOLD)
+    component.font = JBFont.create(component.font.deriveFont(Font.BOLD), false)
     return this
   }
 
