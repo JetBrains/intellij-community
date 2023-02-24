@@ -1921,7 +1921,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         size = window.getPreferredSize();
       }
       window.setBounds(location.x, location.y, size.width, size.height);
-      //window.validate();
       window.setCursor(Cursor.getDefaultCursor());
       updateMaskAndAlpha(window);
     }
