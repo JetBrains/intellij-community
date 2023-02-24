@@ -44,7 +44,7 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
       scopeRef.set(spanRef.get().makeCurrent())
       executeAction(editor, parameter)
     }
-    job.join()
+    job.waitForComplete()
   }
 
   fun executeAction(editor: Editor, actionId: String) {
