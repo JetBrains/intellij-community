@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -21,20 +21,20 @@ public final class PopupDragListener extends MouseAdapter {
     myPopup = popup;
   }
 
-  private Point initialClick;
+  private Point myInitialPress;
 
   @Override
   public void mousePressed(MouseEvent e) {
-    initialClick = e.getPoint();
+    myInitialPress = e.getPoint();
   }
 
   @Override
   public void mouseDragged(MouseEvent e) {
-    if (initialClick == null) {
+    if (myInitialPress == null) {
       return;
     }
     Point location = myPopup.getLocationOnScreen();
-    myPopup.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
+    myPopup.setLocation(new Point(location.x + e.getX() - myInitialPress.x, location.y + e.getY() - myInitialPress.y));
     e.consume();
   }
 
