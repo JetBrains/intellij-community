@@ -26,7 +26,8 @@
  * <h3>Limitations</h3>
  *
  * <ul>
- * <li>Only Java code is instrumented, Kotlin instrumentation is coming soon.
+ * <li>Only Java code is instrumented,
+ * <a href="https://youtrack.jetbrains.com/issue/IDEA-263465">Kotlin instrumentation is planned</a>.
  * </ul>
  */
 package org.jetbrains.jps.devkit.threadingModelHelper;
