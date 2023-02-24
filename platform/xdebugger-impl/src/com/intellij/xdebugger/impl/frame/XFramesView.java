@@ -119,7 +119,13 @@ public final class XFramesView extends XDebugView {
       }
 
       @Override
-      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame) {
+      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+        if (isMainSourceKindPreferred) {
+          Navigatable navigatable = super.getFrameNavigatable(frame, true);
+          if (navigatable != null) {
+            return navigatable;
+          }
+        }
         XSourcePosition position = session.getFrameSourcePosition(frame);
         return position != null ? position.createNavigatable(session.getProject()) : null;
       }
