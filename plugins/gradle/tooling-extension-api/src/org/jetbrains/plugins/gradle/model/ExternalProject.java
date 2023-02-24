@@ -23,6 +23,22 @@ public interface ExternalProject extends Model, Serializable {
   @NotNull
   String getId();
 
+  /**
+   * @return The Gradle path of the project as evaluated by org.gradle.api.Project.path
+   * Note, that for tooling purposes you might almost always want to use getIdentityPath() instead.
+   */
+  @NotNull
+  String getPath();
+
+  /**
+   * @return The Gradle path of the project in the current build context.
+   * This might not be the same as .getPath() e.g. for composite builds
+   * However, this path has to be used to construct proper paths for tasks to execute.
+   * Contrary to .getPath() this path is expected to be unique
+   */
+  @NotNull
+  String getIdentityPath();
+
   @NotNull
   String getName();
 
@@ -66,7 +82,6 @@ public interface ExternalProject extends Model, Serializable {
 
   /**
    * The paths where the artifacts is constructed
-   *
    */
   @NotNull
   List<File> getArtifacts();

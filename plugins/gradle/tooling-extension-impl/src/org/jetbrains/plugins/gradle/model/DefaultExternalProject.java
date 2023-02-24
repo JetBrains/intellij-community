@@ -13,6 +13,13 @@ import java.util.*;
 public final class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
   @NotNull
   private String id;
+
+  @NotNull
+  private String path;
+
+  @NotNull
+  private String identityPath;
+
   @NotNull
   private String name;
   @NotNull
@@ -56,6 +63,8 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
     id = externalProject.getId();
+    path = externalProject.getPath();
+    identityPath = externalProject.getIdentityPath();
     name = externalProject.getName();
     qName = externalProject.getQName();
     version = externalProject.getVersion();
@@ -104,6 +113,26 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
 
   public void setId(@NotNull String id) {
     this.id = id;
+  }
+
+  @NotNull
+  @Override
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(@NotNull String path) {
+    this.path = path;
+  }
+
+  @NotNull
+  @Override
+  public String getIdentityPath() {
+    return identityPath;
+  }
+
+  public void setIdentityPath(@NotNull String path) {
+    this.identityPath = path;
   }
 
   public void setExternalSystemId(@NotNull String externalSystemId) {
