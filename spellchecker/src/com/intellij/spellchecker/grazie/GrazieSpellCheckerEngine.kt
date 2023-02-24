@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.spellchecker.grazie
@@ -133,7 +133,11 @@ internal class GrazieSpellCheckerEngine(project: Project) : SpellCheckerEngine, 
   }
 
   override fun isCorrect(word: String): Boolean {
-    return !(speller ?: return true).isMisspelled(word = word, caseSensitive = false)
+    val speller = speller ?: return true
+    if (speller.isAlien(word)) {
+      return true
+    }
+    return !speller.isMisspelled(word = word, caseSensitive = false)
   }
 
   override fun getSuggestions(word: String, maxSuggestions: Int, maxMetrics: Int): List<String> {
