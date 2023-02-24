@@ -204,8 +204,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   // they belong to.
   // TODO Make this the result of PyExpressionCodeFragment.getContext()
   private static final Key<PsiElement> FRAGMENT_OWNER = Key.create("PY_FRAGMENT_OWNER");
-
-  private static final ThreadLocal<Map<TypeEvalContext, Context>> ourCurrentContext = ThreadLocal.withInitial(HashMap::new);
+  private static final Key<Context> TYPE_HINT_EVAL_CONTEXT = Key.create("TYPE_HINT_EVAL_CONTEXT");
 
   @Nullable
   @Override
@@ -1967,19 +1966,18 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   private static <T> T staticWithCustomContext(@NotNull TypeEvalContext context, @NotNull Function<@NotNull Context, T> delegate) {
-    Map<TypeEvalContext, Context> map = ourCurrentContext.get();
-    Context customContext = map.get(context);
-    boolean createNew = customContext == null;
-    if (createNew) {
+    Context customContext = context.getProcessingContext().get(TYPE_HINT_EVAL_CONTEXT);
+    boolean firstEntrance = customContext == null;
+    if (firstEntrance) {
       customContext = new Context(context);
-      map.put(context, customContext);
+      context.getProcessingContext().put(TYPE_HINT_EVAL_CONTEXT, customContext);
     }
     try {
       return delegate.apply(customContext);
     }
     finally {
-      if (createNew) {
-        map.remove(context);
+      if (firstEntrance) {
+        context.getProcessingContext().put(TYPE_HINT_EVAL_CONTEXT, null);
       }
     }
   }
