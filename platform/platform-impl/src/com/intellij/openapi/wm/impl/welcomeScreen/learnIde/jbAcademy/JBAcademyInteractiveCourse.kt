@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.edutools
+package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginManager
@@ -16,22 +16,22 @@ import javax.swing.JComponent
 
 
 private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
-internal class EduToolsInteractiveCourse : InteractiveCourseFactory {
+internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val isActive: Boolean
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
             PlatformUtils.isGoIde()
 
-  override fun getInteractiveCourseComponent(): JComponent = EduToolsInteractiveCoursePanel(EduToolsInteractiveCourseData())
+  override fun getInteractiveCourseComponent(): JComponent = JBAcademyInteractiveCoursePanel(EduToolsInteractiveCourseData())
 }
 
 private class EduToolsInteractiveCourseData : InteractiveCourseData {
   override fun getName(): String {
-    return EduWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.name")
+    return JBAcademyWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.name")
   }
 
   override fun getDescription(): String {
-    return EduWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.description")
+    return JBAcademyWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.description")
   }
 
   override fun getIcon(): Icon {
@@ -40,10 +40,10 @@ private class EduToolsInteractiveCourseData : InteractiveCourseData {
 
   override fun getActionButtonName(): String {
     return if (PluginManager.isPluginInstalled(EDU_TOOLS_PLUGIN_ID) && !PluginManagerCore.isDisabled(EDU_TOOLS_PLUGIN_ID)) {
-      EduWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.get.started.button")
+      JBAcademyWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.get.started.button")
     }
     else {
-      EduWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.button.enable")
+      JBAcademyWelcomeScreenBundle.message("welcome.tab.jetbrains.academy.button.enable")
     }
   }
 

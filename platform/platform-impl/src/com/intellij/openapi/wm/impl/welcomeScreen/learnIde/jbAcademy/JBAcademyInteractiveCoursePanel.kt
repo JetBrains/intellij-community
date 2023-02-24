@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.edutools
+package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.*
@@ -31,7 +31,7 @@ private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
 private const val BUTTON_ID = "Button"
 private const val PROGRESS_ID = "Progress"
 
-class EduToolsInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveCoursePanel(data) {
+class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : InteractiveCoursePanel(data) {
   private lateinit var cardLayoutPanel: JPanel
   private lateinit var cardLayout: CardLayout
   private lateinit var progressBarPanel: ProgressBarPanel
