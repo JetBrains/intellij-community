@@ -22,7 +22,7 @@
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
+    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
       order="first"/>

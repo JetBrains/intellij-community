@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.model
 
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl
 import com.intellij.ide.actions.searcheverywhere.ml.model.local.LocalRankingModelProviderUtil
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
@@ -50,7 +50,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
   protected abstract val supportedContributorName: String
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlSessionService.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
+    return SearchEverywhereMlServiceImpl.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {

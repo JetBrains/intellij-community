@@ -9,11 +9,11 @@ import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
+internal class SearchEverywhereMlServiceImpl : SearchEverywhereMlService() {
   companion object {
     internal const val RECORDER_CODE = "MLSE"
 
-    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlSessionService::class.java).takeIf { it.isEnabled() }
+    fun getService() = EP_NAME.findExtensionOrFail(SearchEverywhereMlServiceImpl::class.java).takeIf { it.isEnabled() }
   }
 
   private val sessionIdCounter = AtomicInteger()

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereFoundElementInfoWithMl
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlServiceImpl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContributorFeaturesProvider
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileService
@@ -39,7 +39,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   private fun shouldActionBeEnabled(e: AnActionEvent): Boolean {
     val seManager = SearchEverywhereManager.getInstance(e.project)
-    val session = SearchEverywhereMlSessionService.getService()?.getCurrentSession()
+    val session = SearchEverywhereMlServiceImpl.getService()?.getCurrentSession()
 
     return e.project != null
            && seManager.isShown
@@ -59,7 +59,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
   }
 
   private fun getFeaturesReport(searchEverywhereUI: SearchEverywhereUI): Map<String, Any> {
-    val mlSessionService = SearchEverywhereMlSessionService.getService() ?: return emptyMap()
+    val mlSessionService = SearchEverywhereMlServiceImpl.getService() ?: return emptyMap()
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()!!
 
