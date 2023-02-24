@@ -805,7 +805,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile$InspectionWidgetUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.cache.CacheRecoveryUsageCollector"/>.
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="3"/>
-
+    <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.DefenderCheckerUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
