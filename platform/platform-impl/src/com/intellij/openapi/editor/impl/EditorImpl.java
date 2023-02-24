@@ -2254,7 +2254,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    *         soft wraps appliance) minus number of folded lines
    */
   public int getVisibleLineCount() {
-    return Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber());
+    return ReadAction.compute(() -> Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber()));
   }
 
   /**
