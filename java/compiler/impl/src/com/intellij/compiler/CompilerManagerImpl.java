@@ -7,6 +7,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdleTracker;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
@@ -37,8 +38,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -625,7 +624,7 @@ public class CompilerManagerImpl extends CompilerManager {
     // check idle javac processes every 10 seconds when IDE is idle
     private static final int CHECK_PERIOD = 10_000;
     private final ExternalJavacManager myManager;
-    Function0<Unit> removeIdleListener;
+    AccessToken removeIdleListener;
 
     IdleTask(@NotNull ExternalJavacManager manager) {
       myManager = manager;
@@ -637,7 +636,7 @@ public class CompilerManagerImpl extends CompilerManager {
         myManager.shutdownIdleProcesses();
       }
       else if (removeIdleListener != null) {
-        removeIdleListener.invoke();
+        removeIdleListener.close();
       }
     }
   }

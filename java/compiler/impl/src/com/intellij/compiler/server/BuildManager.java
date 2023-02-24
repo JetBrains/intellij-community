@@ -32,10 +32,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -87,7 +84,6 @@ import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.VersionedStorageChange;
@@ -101,8 +97,6 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -408,14 +402,14 @@ public final class BuildManager implements Disposable {
   private void configureIdleAutomake() {
     int idleTimeout = getAutomakeWhileIdleTimeout();
     int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
-    Ref<Function0<Unit>> idleListenerHandle = new Ref<>();
+    Ref<AccessToken> idleListenerHandle = new Ref<>();
     idleListenerHandle.set(IdleTracker.getInstance().addIdleListener(listenerTimeout, () -> {
       int currentTimeout = getAutomakeWhileIdleTimeout();
       if (idleTimeout != currentTimeout) {
         // re-schedule with a changed period
-        Function0<Unit> removeListener = idleListenerHandle.get();
+        AccessToken removeListener = idleListenerHandle.get();
         if (removeListener != null) {
-          removeListener.invoke();
+          removeListener.close();
         }
         configureIdleAutomake();
       }
