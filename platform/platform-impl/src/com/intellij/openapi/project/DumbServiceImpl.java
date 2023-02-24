@@ -152,6 +152,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       synchronized (myDumbSmartTransitionLock) {
         myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.SMART);
       }
+      myTrackedEdtActivityService.submitTransaction(myPublisher::exitDumbMode);
     } else {
       // switch to smart mode and notify subscribers if no dumb mode tasks were scheduled
       if (myState.compareAndSet(State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS, State.WAITING_FOR_FINISH)) {
