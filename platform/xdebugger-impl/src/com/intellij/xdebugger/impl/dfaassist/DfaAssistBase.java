@@ -144,7 +144,7 @@ public abstract class DfaAssistBase implements Disposable {
       return this == INLAYS || this == BOTH;
     }
 
-    boolean displayGrayOut() {
+    public boolean displayGrayOut() {
       return this == GRAY_OUT || this == BOTH;
     }
   }
