@@ -95,7 +95,7 @@ private fun findGradleTasks(project: Project): List<ProjectTaskData> {
 private fun getModuleTasks(moduleNode: DataNode<ModuleData>): ModuleTaskData {
   val moduleData = moduleNode.data
   val externalModulePath = moduleData.linkedExternalProjectPath
-  val gradlePath = GradleProjectResolverUtil.getGradlePath(moduleData)
+  val gradlePath = GradleProjectResolverUtil.getGradleIdentityPath(moduleData)
     .removeSuffix(":")
   val tasks = ExternalSystemApiUtil.getChildren(moduleNode, ProjectKeys.TASK)
     .filter { it.data.name.isNotEmpty() }

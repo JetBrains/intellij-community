@@ -87,7 +87,7 @@ public class GradleExtensionsSettings {
         DataNode<?> parent = node.getParent();
         if (parent == null) continue;
         if (!(parent.getData() instanceof ModuleData)) continue;
-        String gradlePath = GradleProjectResolverUtil.getGradlePath((ModuleData)parent.getData());
+        String gradlePath = GradleProjectResolverUtil.getGradleIdentityPath((ModuleData)parent.getData());
         extensionMap.put(gradlePath, node.getData());
       }
 

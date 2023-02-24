@@ -12,6 +12,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RegularFile
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
@@ -98,11 +99,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.QName = qName
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
-    def parentBuildRootProject = project.gradle.parent?.rootProject
-    def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
-                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : ""
     def ideaModuleName = ideaPluginModule?.name ?: project.name
-    defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
+
+    /*
+    Right now, there is no public API available to get this identityPath
+    Agreement with Gradle: We can use ProjectInternal for now.
+    This identity path will get a public tooling API which will replace the cast.
+    Until then, this API will be kept stable as agreement between Gradle and JetBrains
+
+    Note: identityPath was introduced with Gradle 3.3:
+    https://github.com/gradle/gradle/commit/2c009b27b97c1564344f3cc93258ce5a0e18a03f
+     */
+    def projectIdentityPath = GradleVersion.current() >= GradleVersion.version("3.3") ?
+                              (project as ProjectInternal).identityPath.path : project.path
+
+    defaultExternalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
+    defaultExternalProject.path = project.path
+    defaultExternalProject.identityPath = projectIdentityPath
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir
