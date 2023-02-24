@@ -29,7 +29,7 @@ internal class VcsLogNewUiTableCellRenderer(
   private var isRight = false
   private var isLeft = false
   private var cachedRenderer: JComponent? = null
-  private var hasRootColumn: Boolean = false;
+  private var hasRootColumn: Boolean = false
 
   private lateinit var selectablePanel: SelectablePanel
 

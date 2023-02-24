@@ -3,7 +3,6 @@ package git4idea.history;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
@@ -49,7 +48,7 @@ class GitLogFullRecord extends GitLogRecord {
   }
 
   @NotNull
-  List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
+  List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
     String[] hashes = getParentsHashes();
     return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }

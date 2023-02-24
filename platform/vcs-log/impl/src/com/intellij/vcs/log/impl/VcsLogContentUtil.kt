@@ -13,7 +13,6 @@ import com.intellij.ui.content.TabDescriptor
 import com.intellij.ui.content.TabGroupId
 import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
@@ -21,7 +20,6 @@ import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent

@@ -116,7 +116,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     branchesPanel.setReferences(references.filter { it.type.isBranch })
     tagsPanel.setReferences(references.filter { !it.type.isBranch })
     if (tagsPanel.isVisible) {
-      branchesPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, 0)
+      branchesPanel.border = JBUI.Borders.emptyLeft(SIDE_BORDER - ReferencesPanel.H_GAP)
       tagsPanel.border = JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, 0)
     }
     else if (branchesPanel.isVisible) {

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
@@ -67,10 +66,10 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
     }
 
     if (ExperimentalUI.isNewUI()) return NewUiRootCellRenderer(table.properties, table.colorManager)
-    return RootCellRenderer(table.properties, table.colorManager);
+    return RootCellRenderer(table.properties, table.colorManager)
   }
 
-  override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(ContainerUtil.getFirstItem(model.logData.roots))
+  override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(model.logData.roots.first())
 }
 
 internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject", VcsLogBundle.message("vcs.log.column.subject"), false),

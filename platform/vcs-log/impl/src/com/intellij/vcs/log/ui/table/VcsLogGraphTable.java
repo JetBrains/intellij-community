@@ -90,7 +90,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
-  @SuppressWarnings("UseJBColor")
   private static final Color DEFAULT_HOVERED_BACKGROUND = new JBColor(ColorUtil.withAlpha(new Color(0xC3D2E3), 0.4),
                                                                       new Color(0x464A4D));
   private static final Color HOVERED_BACKGROUND = JBColor.namedColor("VersionControl.Log.Commit.hoveredBackground",
@@ -492,8 +491,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int rootWidth;
 
     TableCellRenderer component = column.getCellRenderer();
-    if (component instanceof RootCellRenderer) {
-      RootCellRenderer rootCellRenderer = (RootCellRenderer)component;
+    if (component instanceof RootCellRenderer rootCellRenderer) {
       rootCellRenderer.updateInsets();
     }
 

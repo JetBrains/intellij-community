@@ -165,7 +165,7 @@ object VcsLogNavigationUtil {
   }
 
   private suspend fun VcsLogManager.waitForRefresh() {
-    suspendCancellableCoroutine<Unit> { continuation ->
+    suspendCancellableCoroutine { continuation ->
       val dataPackListener = object : DataPackChangeListener {
         override fun onDataPackChange(newDataPack: DataPack) {
           if (isLogUpToDate) {
@@ -240,7 +240,7 @@ object VcsLogNavigationUtil {
    */
   @JvmStatic
   fun VcsLogUiEx.jumpToRefOrHash(reference: String, silently: Boolean, focus: Boolean): ListenableFuture<Boolean> {
-    if (StringUtil.isEmptyOrSpaces(reference)) return Futures.immediateFuture(false)
+    if (reference.isBlank()) return Futures.immediateFuture(false)
     val future = SettableFuture.create<Boolean>()
     val refs = dataPack.refs
     ApplicationManager.getApplication().executeOnPooledThread {
