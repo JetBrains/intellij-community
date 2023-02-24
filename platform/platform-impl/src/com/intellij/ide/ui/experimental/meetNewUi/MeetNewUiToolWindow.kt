@@ -43,11 +43,14 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private const val CUSTOM_THEME_INDEX = 0
 
     //private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val LIGHT = IconLoader.getIcon("expui/meetNewUi/light.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val DARK = IconLoader.getIcon("expui/meetNewUi/dark.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val SYSTEM = IconLoader.getIcon("expui/meetNewUi/system.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val CLEAN = IconLoader.getIcon("expui/meetNewUi/density-default.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val COMPACT = IconLoader.getIcon("expui/meetNewUi/density-compact.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val LIGHT = IconLoader.getIcon("expui/meetNewUi/lightTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val LIGHT_SELECTED = IconLoader.getIcon("expui/meetNewUi/lightThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val DARK = IconLoader.getIcon("expui/meetNewUi/darkTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val DARK_SELECTED = IconLoader.getIcon("expui/meetNewUi/darkThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val SYSTEM = IconLoader.getIcon("expui/meetNewUi/systemTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val SYSTEM_SELECTED = IconLoader.getIcon("expui/meetNewUi/systemThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val CLEAN = IconLoader.getIcon("expui/meetNewUi/densityDefault.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val COMPACT = IconLoader.getIcon("expui/meetNewUi/densityCompact.svg", MeetNewUiToolWindow::class.java.classLoader)
   }
 
   private val themes = mutableListOf<Theme>()
@@ -73,14 +76,14 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           label(IdeBundle.message("meetnewui.toolwindow.theme"))
         }.customize(JBVerticalGaps(bottom = 8))
         row {
-          themes += Theme(null, false, null)
+          themes += Theme(null, false, null, null)
           findLafReference("Light")?.let { lafReference ->
-            themes += Theme(lafReference, false, LIGHT)
+            themes += Theme(lafReference, false, LIGHT, LIGHT_SELECTED)
           }
           findLafReference("Dark")?.let { lafReference ->
-            themes += Theme(lafReference, false, DARK)
+            themes += Theme(lafReference, false, DARK, DARK_SELECTED)
           }
-          themes += Theme(null, true, SYSTEM)
+          themes += Theme(null, true, SYSTEM, SYSTEM_SELECTED)
 
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
@@ -167,7 +170,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   }
 
   private fun Row.density(icon: Icon, @Nls name: String, gaps: Gaps, compactMode: Boolean): Density {
-    val button = MeetNewUiButton(icon = icon).apply {
+    val button = MeetNewUiButton(null, icon, icon).apply {
       border = null
       putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
       selectionArc = JBUI.scale(8)
@@ -184,7 +187,11 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       }
 
       row {
-        label = label(name).component
+        label = label(name)
+          .applyToComponent {
+            font = JBFont.medium()
+          }
+          .component
       }
     }.customize(gaps)
 
@@ -210,7 +217,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   }
 }
 
-private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon?) {
+private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon?, iconSelected: Icon?) {
 
   val button: MeetNewUiButton
   var lafReference: LafReference? = null
@@ -221,7 +228,7 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
     }
 
   init {
-    button = MeetNewUiButton(null, icon).apply {
+    button = MeetNewUiButton(null, icon, iconSelected).apply {
       selectionArc = JBUI.scale(32)
       addClickListener(Runnable {
         val laf = this@Theme.lafReference
@@ -258,11 +265,11 @@ private data class Density(val button: MeetNewUiButton, val label: JLabel) {
     button.selected = selected
 
     if (selected) {
-      label.font = JBFont.medium().deriveFont(Font.BOLD)
+      label.font = label.font.deriveFont(Font.BOLD)
       label.foreground = JBUI.CurrentTheme.Label.foreground()
     }
     else {
-      label.font = JBFont.medium()
+      label.font = label.font.deriveFont(Font.PLAIN)
       label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
     }
   }

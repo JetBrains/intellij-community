@@ -15,11 +15,14 @@ import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-internal class MeetNewUiButton(text: @NlsContexts.Button String? = null, icon: Icon? = null) : JLabel(text, icon, LEFT) {
+internal class MeetNewUiButton(text: @NlsContexts.Button String? = null,
+                               private val icon: Icon? = null,
+                               private val iconSelected: Icon?) : JLabel(text, icon, LEFT) {
 
   var selected: Boolean = false
     set(value) {
       if (field != value) {
+        setIcon(if (value) iconSelected else icon)
         field = value
         repaint()
       }
