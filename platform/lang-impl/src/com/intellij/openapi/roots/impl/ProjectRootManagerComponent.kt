@@ -20,12 +20,14 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.VirtualFilePointerContainerImpl
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -36,9 +38,14 @@ import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.util.indexing.roots.IndexingRootsCollectionUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
@@ -292,6 +299,8 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
     collectModuleWatchRoots(recursivePaths, flatPaths, true)
 
+    collectCustomWorkspaceWatchRoots(recursivePaths)
+
     return recursivePaths to flatPaths
   }
 
@@ -326,6 +335,33 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
         }
         true
       }
+    }
+  }
+
+  private fun collectCustomWorkspaceWatchRoots(recursivePaths: MutableSet<String>) {
+    val settings = IndexingRootsCollectionUtil.IndexingRootsCollectionSettings()
+    settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
+      it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
+    }
+    val roots = IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, WorkspaceModel.getInstance(
+      project).currentSnapshot, settings)
+
+    fun register(rootFiles: Collection<VirtualFile>, name: String) {
+      WATCH_ROOTS_LOG.trace { "  $name from workspace entities: ${rootFiles}" }
+      rootFiles.forEach { recursivePaths.add(it.path) }
+    }
+
+    for (contentEntityRoot in roots.contentEntityRoots) {
+      register(contentEntityRoot.roots, "content roots")
+    }
+
+    for (moduleRoot in roots.moduleRoots) {
+      register(moduleRoot.roots, "module content roots")
+    }
+
+    for (externalRoot in roots.externalEntityRoots) {
+      register(externalRoot.roots, "external roots")
+      register(externalRoot.sourceRoots, "external source roots")
     }
   }
 
