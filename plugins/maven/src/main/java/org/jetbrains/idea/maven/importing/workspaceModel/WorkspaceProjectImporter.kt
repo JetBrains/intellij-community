@@ -25,9 +25,9 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.platform.workspaceModel.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -141,9 +141,33 @@ internal class WorkspaceProjectImporter(
       }
       else {
         MavenLog.LOG.info("Project has been migrated to external project files storage")
+        notifyUserAboutExternalStorageMigration();
       }
     }
     return migratedToExternalStorage
+  }
+
+  private fun notifyUserAboutExternalStorageMigration() {
+    val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
+
+    val showNotification = {
+      val notification = notificationGroup
+        .createNotification(
+          SyncBundle.message("maven.workspace.external.storage.notification.title"),
+          SyncBundle.message("maven.workspace.external.storage.notification.text"),
+          NotificationType.INFORMATION)
+
+      notification.addAction(object : AnAction(
+        SyncBundle.message("maven.workspace.external.storage.notification.settings")) {
+        override fun actionPerformed(e: AnActionEvent) {
+          notification.expire()
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("maven.tab.importing"))
+        }
+      })
+      notification.notify(myProject)
+    }
+
+    ApplicationManager.getApplication().invokeLater(showNotification, myProject.disposed)
   }
 
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
