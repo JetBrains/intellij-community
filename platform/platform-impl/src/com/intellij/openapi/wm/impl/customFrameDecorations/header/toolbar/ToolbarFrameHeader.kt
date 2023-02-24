@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalGaps
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GridBag
@@ -64,7 +65,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   private fun createMenuBarContainer(): JPanel {
     val panel = JPanel(GridLayout())
     panel.isOpaque = false
-    RowsGridBuilder(panel)
+    RowsGridBuilder(panel).defaultVerticalAlign(VerticalAlign.FILL)
       .row(resizable = true)
       .cell(component = myMenuBar, resizableColumn = true)
       .cell(menuBarHeaderTitle, resizableColumn = true)
