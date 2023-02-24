@@ -21,6 +21,8 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
   override val methodForStepInto = "extract_number"
   override val stepIntoDirectionToRight = false
 
+  override val breakpointXRange: (width: Int) -> IntRange = { IntRange(13, it - 17) }
+
   override fun LessonContext.applyProgramChangeTasks() {
     highlightButtonById("Rerun")
 
