@@ -70,8 +70,8 @@ object FileManifestUtil {
     private fun addManifestEntry(name: String, type: EntryType, mode: Int, size: Long, lastModifiedTime: FileTime) {
       // If the modified date is excluded from manifest, it will be 0 in all entries.
       val modifiedDateValue = if (includeModifiedDate) {
-        lastModifiedTime.toMillis() / 1000
-      } else 0
+        (lastModifiedTime.toMillis() / 1000).toString()
+      } else "N/A"
 
       when(type) {
         EntryType.SYMLINK -> {
