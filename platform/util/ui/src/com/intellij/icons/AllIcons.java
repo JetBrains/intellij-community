@@ -1230,6 +1230,11 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon CreateNewProjectTabSelected = load("welcome/createNewProjectTabSelected.svg", -192851221, 0);
     /** 24x24 */ public static final @NotNull Icon FromVCSTab = load("welcome/fromVCSTab.svg", -695190002, 2);
     /** 24x24 */ public static final @NotNull Icon FromVCSTabSelected = load("welcome/fromVCSTabSelected.svg", -815523628, 0);
+
+    public static final class LearnTab {
+      /** 16x16 */ public static final @NotNull Icon JetBrainsAcademy = load("welcome/learnTab/jetBrainsAcademy.svg", 1610871461, 0);
+    }
+
     /** 24x24 */ public static final @NotNull Icon Open = load("welcome/open.svg", 1137367903, 2);
     /** 24x24 */ public static final @NotNull Icon OpenSelected = load("welcome/openSelected.svg", 210385900, 0);
 
