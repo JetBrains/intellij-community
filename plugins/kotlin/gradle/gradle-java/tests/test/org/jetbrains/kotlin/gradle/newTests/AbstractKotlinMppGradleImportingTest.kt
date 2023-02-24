@@ -43,17 +43,18 @@ abstract class AbstractKotlinMppGradleImportingTest :
         LinkedProjectPathsTestsFeature,
         NoErrorEventsDuringImportFeature,
 
-        HighlightingChecker,
         ContentRootsChecker,
         KotlinFacetSettingsChecker,
         OrderEntriesChecker,
         TestTasksChecker,
+        HighlightingChecker,
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
 
     @get:Rule
     val testDescriptionProviderJUnitRule = TestDescriptionProviderJUnitRule(context)
+
     @get:Rule
     val testFeaturesBeforeAfterJUnit4Adapter = TestFeaturesBeforeAfterJUnit4Adapter()
 
@@ -113,6 +114,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
                     // Highlighting checker should be disabled explicitly, because it's rarely the intention to not run
                     // highlighting when you have sources and say 'onlyCheckers(OrderEntriesCheckers)'
                     || checker is HighlightingChecker
+
             else -> true
         }
     }
@@ -202,7 +204,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
                 error("Asked to write test project to ${rootForProjectCopy.canonicalPath}, but it's not empty and 'overwriteExisting = true' isn't specified")
         }
 
-       return rootForProjectCopy
+        return rootForProjectCopy
     }
 
     final override fun importProject(skipIndexing: Boolean?) {
