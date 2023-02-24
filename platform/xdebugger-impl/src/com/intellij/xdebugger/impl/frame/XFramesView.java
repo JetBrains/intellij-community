@@ -107,8 +107,9 @@ public final class XFramesView extends XDebugView {
       }
 
       @Override
-      protected @NotNull Navigatable getSelectedFrameNavigatable() {
-        Navigatable navigatable = super.getSelectedFrameNavigatable();
+      protected @NotNull Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+        XSourcePosition position = getFrameSourcePosition(frame, isMainSourceKindPreferred);
+        Navigatable navigatable = position != null ? position.createNavigatable(session.getProject()) : null;
         return new NavigatableAdapter() {
           @Override
           public void navigate(boolean requestFocus) {
@@ -118,16 +119,15 @@ public final class XFramesView extends XDebugView {
         };
       }
 
-      @Override
-      protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
+      @Nullable
+      private XSourcePosition getFrameSourcePosition(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
         if (isMainSourceKindPreferred) {
-          Navigatable navigatable = super.getFrameNavigatable(frame, true);
-          if (navigatable != null) {
-            return navigatable;
+          XSourcePosition position = frame.getSourcePosition();
+          if (position != null) {
+            return position;
           }
         }
-        XSourcePosition position = session.getFrameSourcePosition(frame);
-        return position != null ? position.createNavigatable(session.getProject()) : null;
+        return session.getFrameSourcePosition(frame);
       }
     };
     myFrameSelectionHandler.install(myFramesList);
