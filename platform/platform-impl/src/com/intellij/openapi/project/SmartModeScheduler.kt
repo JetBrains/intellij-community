@@ -82,12 +82,24 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   private fun onStateChanged(updateState: () -> Unit) {
     updateState()
     if (isSmart()) {
-      ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        // Execute immediately only because some tests expect this behavior. No production need.
+        runAllWhileSmart()
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
+      }
     }
   }
 
   fun runWhenSmart(runnable: Runnable) {
-    onStateChanged { addLast(runnable) }
+    if (isSmart() && ApplicationManager.getApplication().isDispatchThread) {
+      // Execute immediately only because some tests expect this behavior. No production need.
+      runnable.run()
+    }
+    else {
+      onStateChanged { addLast(runnable) }
+    }
   }
 
   private fun runAllWhileSmart() {
