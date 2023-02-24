@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Graphics
@@ -142,8 +143,10 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
   private fun realignChanges() {
     if (viewer.editors.any { (it.foldingModel as FoldingModelImpl).isInBatchFoldingOperation }) return
 
-    clear()
-    viewer.diffChanges.forEach(::alignChange)
+    RecursionManager.doPreventingRecursion(this, true) {
+      clear()
+      viewer.diffChanges.forEach(::alignChange)
+    }
   }
 
   fun clear() {
