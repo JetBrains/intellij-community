@@ -38,6 +38,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -142,9 +143,9 @@ public final class HtmlUtil {
     AUTO_CLOSE_BY_OPENING_TAG.put("li", Set.of("li"));
     AUTO_CLOSE_BY_OPENING_TAG.put("optgroup", Set.of("optgroup"));
     AUTO_CLOSE_BY_OPENING_TAG.put("option", Set.of("optgroup", "option"));
-    AUTO_CLOSE_BY_OPENING_TAG.put("p", Set.of("address", "article", "aside", "blockquote", "details", "div", "dl", "fieldset", "figcaption",
-                                              "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hgroup", "hr",
-                                              "main", "menu", "nav", "ol", "p", "pre", "section", "table", "ul"));
+    AUTO_CLOSE_BY_OPENING_TAG.put("p", Set.of("address", "article", "aside", "blockquote", "center", "details", "div", "dl", "fieldset",
+                                              "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header",
+                                              "hgroup", "hr", "main", "menu", "nav", "ol", "p", "pre", "section", "table", "ul"));
     AUTO_CLOSE_BY_OPENING_TAG.put("rp", Set.of("rp", "rt"));
     AUTO_CLOSE_BY_OPENING_TAG.put("rt", Set.of("rp", "rt"));
     AUTO_CLOSE_BY_OPENING_TAG.put("tbody", Set.of("tbody", "tfoot"));
@@ -154,68 +155,75 @@ public final class HtmlUtil {
     AUTO_CLOSE_BY_OPENING_TAG.put("tr", Set.of("tr"));
   }
 
-  public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
+  public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean toLowerCase) {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(!lowerCase || tag.isCaseSensitive()
+    boolean result = EMPTY_TAGS_MAP.contains(!toLowerCase || tag.isCaseSensitive()
                                              ? name : StringUtil.toLowerCase(name));
     return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
+  public static boolean isSingleHtmlTag(String tagName, boolean caseSensitive) {
+    return EMPTY_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
+  }
+
+  /**
+   * @deprecated Unclear distinction whether tag should be case-sensitive. Use {@link #isSingleHtmlTag(String, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isSingleHtmlTag(String tagName) {
-    return EMPTY_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return isSingleHtmlTag(tagName, false);
   }
 
-  public static boolean isSingleHtmlTagL(String tagName) {
-    return EMPTY_TAGS_MAP.contains(tagName);
+  public static boolean isTagWithOptionalEnd(@NotNull String tagName, boolean caseSensitive) {
+    return OPTIONAL_END_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
   }
 
-  public static boolean isOptionalEndForHtmlTag(String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
-  }
-
-  public static boolean isOptionalEndForHtmlTagL(@NotNull String tagName) {
-    return OPTIONAL_END_TAGS_MAP.contains(tagName);
-  }
-
-  public static @Nullable Boolean canOpeningTagAutoClose(@NotNull String tagOnStack, @NotNull String openingTag) {
-    if (!isOptionalEndForHtmlTagL(openingTag)) {
-      return false;
+  public static @NotNull ThreeState canOpeningTagAutoClose(@NotNull String tagToClose,
+                                                           @NotNull String openingTag,
+                                                           boolean caseSensitive) {
+    var normalizedTagToClose = caseSensitive ? tagToClose : StringUtil.toLowerCase(tagToClose);
+    var normalizedOpeningTag = caseSensitive ? openingTag : StringUtil.toLowerCase(openingTag);
+    if (!isTagWithOptionalEnd(normalizedTagToClose, true)) {
+      return ThreeState.NO;
     }
-    final Set<String> closingTags = AUTO_CLOSE_BY_OPENING_TAG.get(openingTag);
-    if (closingTags != null && closingTags.contains(tagOnStack)) {
-      return true;
+    final Set<String> closingTags = AUTO_CLOSE_BY_OPENING_TAG.get(normalizedTagToClose);
+    if (closingTags != null && closingTags.contains(normalizedOpeningTag)) {
+      return ThreeState.YES;
     }
-    // Maybe
-    return null;
+    return ThreeState.UNSURE;
   }
 
-  public static boolean canClosingTagAutoClose(@NotNull String tagOnStack, @NotNull String closingTag) {
-    if (!isOptionalEndForHtmlTagL(tagOnStack)) return false;
-    if (tagOnStack.equals("p")) {
-      return P_AUTO_CLOSE_CLOSING_TAGS.contains(closingTag);
+  public static boolean canClosingTagAutoClose(@NotNull String tagToClose,
+                                               @NotNull String closingTag,
+                                               boolean caseSensitive) {
+    var normalizedTagToClose = caseSensitive ? tagToClose : StringUtil.toLowerCase(tagToClose);
+    var normalizedClosingTag = caseSensitive ? closingTag : StringUtil.toLowerCase(closingTag);
+    if (!isTagWithOptionalEnd(normalizedTagToClose, true)) return false;
+    if (normalizedTagToClose.equals("p")) {
+      return P_AUTO_CLOSE_CLOSING_TAGS.contains(normalizedClosingTag);
     }
     return true;
   }
 
+  public static boolean isHtmlBlockTag(String tagName, boolean caseSensitive) {
+    return BLOCK_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
+  }
+
+  /**
+   * @deprecated Unclear distinction whether tag should be case-sensitive. Use {@link #isHtmlBlockTag(String, boolean)} instead
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isHtmlBlockTag(String tagName) {
-    return BLOCK_TAGS_MAP.contains(StringUtil.toLowerCase(tagName));
+    return isHtmlBlockTag(tagName, false);
   }
 
   public static boolean isPossiblyInlineTag(@NotNull String tagName) {
     return POSSIBLY_INLINE_TAGS_MAP.contains(tagName);
   }
 
-  public static boolean isHtmlBlockTagL(@NotNull String tagName) {
-    return BLOCK_TAGS_MAP.contains(tagName);
-  }
-
-  public static boolean isInlineTagContainer(String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(StringUtil.toLowerCase(tagName));
-  }
-
-  public static boolean isInlineTagContainerL(@NotNull String tagName) {
-    return INLINE_ELEMENTS_CONTAINER_MAP.contains(tagName);
+  public static boolean isInlineTagContainer(String tagName, boolean caseSensitive) {
+    return INLINE_ELEMENTS_CONTAINER_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
   }
 
   public static void addHtmlSpecificCompletions(final XmlElementDescriptor descriptor,
@@ -224,7 +232,7 @@ public final class HtmlUtil {
     // add html block completions for tags with optional ends!
     String name = descriptor.getName(element);
 
-    if (name != null && isOptionalEndForHtmlTag(name)) {
+    if (name != null && isTagWithOptionalEnd(name, false)) {
       PsiElement parent = element.getParent();
 
       if (parent instanceof XmlTag && XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parent.getNode()) != null) {
@@ -241,7 +249,7 @@ public final class HtmlUtil {
 
         if (parentDescriptor != descriptor && parentDescriptor != null) {
           for (final XmlElementDescriptor elementsDescriptor : parentDescriptor.getElementsDescriptors((XmlTag)parent)) {
-            if (isHtmlBlockTag(elementsDescriptor.getName())) {
+            if (isHtmlBlockTag(elementsDescriptor.getName(), false)) {
               variants.add(elementsDescriptor);
             }
           }
@@ -251,7 +259,7 @@ public final class HtmlUtil {
         final XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
         if (nsDescriptor != null) {
           for (XmlElementDescriptor elementDescriptor : nsDescriptor.getRootElementsDescriptors((XmlDocument)parent)) {
-            if (isHtmlBlockTag(elementDescriptor.getName()) && !variants.contains(elementDescriptor)) {
+            if (isHtmlBlockTag(elementDescriptor.getName(), false) && !variants.contains(elementDescriptor)) {
               variants.add(elementDescriptor);
             }
           }
@@ -574,7 +582,7 @@ public final class HtmlUtil {
           return ProcessingOrder.TAGS_AND_ATTRIBUTES;
         }
 
-        private void terminate() {
+        private static void terminate() {
           throw TerminateException.INSTANCE;
         }
 
@@ -592,7 +600,7 @@ public final class HtmlUtil {
               charsetName = contentAttributeValue.substring(start, end);
             }
             else /*if (metHttml5Charset) */ {
-              charsetName = StringUtil.stripQuotesAroundValue(contentAttributeValue);
+              charsetName = StringUtil.unquoteString(contentAttributeValue);
             }
             charsetNameRef.set(charsetName);
             terminate();

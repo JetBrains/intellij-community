@@ -22,6 +22,7 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
   @NonNls private static final String BODY = "body";
   @NonNls private static final String HTML = "html";
   @NonNls private static final String HEAD = "head";
+
   private static class Holder {
     @NonNls private static final Map<String, String> ourTagToCssMap = new HashMap<>();
 
@@ -102,7 +103,8 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
     }
     XmlTag tag = (XmlTag)parent;
     XmlTag parentTag = PsiTreeUtil.getParentOfType(tag, XmlTag.class, true);
-    boolean toReplaceWithSpan = parentTag == null || HtmlUtil.isInlineTagContainer(parentTag.getLocalName());
+    boolean toReplaceWithSpan = parentTag == null
+                                || HtmlUtil.isInlineTagContainer(parentTag.getLocalName(), false);
     if (!toReplaceWithSpan) {
       String name = StringUtil.toLowerCase(parentTag.getLocalName());
       if (BODY.equals(name) || HTML.equals(name) || HEAD.equals(name)) {
@@ -133,7 +135,8 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
           if (type == XmlTokenType.XML_TAG_END) {
             started = true;
             continue;
-          } else if (type == XmlTokenType.XML_END_TAG_START) {
+          }
+          else if (type == XmlTokenType.XML_END_TAG_START) {
             break;
           }
         }
@@ -144,7 +147,7 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
       tag.delete();
     }
     else {
-      PsiElement[] elements = generateContainingElements(project, HtmlUtil.isHtmlBlockTag(tagName));
+      PsiElement[] elements = generateContainingElements(project, HtmlUtil.isHtmlBlockTag(tagName, false));
       int cnt = 0;
       for (PsiElement psiElement : tag.getChildren()) {
         if (psiElement instanceof XmlToken) {
@@ -154,7 +157,7 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
           }
         }
       }
-     addCssAttribute(tag, tagName);
+      addCssAttribute(tag, tagName);
     }
   }
 }
