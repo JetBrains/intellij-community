@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -60,9 +59,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   // Lock that must be hold to perform transition form dumb to smart mode and back (as defined by isDumb(): !SMART and SMART)
   // This lock is not needed while transiting between different !SMART states (e.g. SCHEDULED_TASKS>RUNNING_DUMB_TASKS)
-  // Used with myRunWhenSmartQueue to make sure that either of two statements hold true:
-  //   1. If there is dumb mode now, tasks added to myRunWhenSmartQueue will be executed after becoming smart
-  //   2. If there is NO dumb mode now, don't add tasks to myRunWhenSmartQueue - they will NOT be executed
+  // Used with SmartModeScheduler.addLast() to make sure that either of two statements hold true:
+  //   1. If there is dumb mode now, tasks added to SmartModeScheduler will be executed after becoming smart
+  //   2. If there is NO dumb mode now, don't add tasks to SmartModeScheduler - they will NOT be executed
   private final Object myDumbSmartTransitionLock = new Object();
   private final Project myProject;
 
@@ -245,26 +244,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runAfterOpened(() -> doUnsafeRunWhenSmart(runnable));
-  }
-
-  private void doUnsafeRunWhenSmart(@NotNull Runnable runnable) {
-    if (!ALWAYS_SMART) {
-      synchronized (myDumbSmartTransitionLock) {
-        if (isDumb()) {
-          myRunWhenSmartQueue.addLast(runnable);
-          return;
-        }
-      }
-    }
-
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(() -> doUnsafeRunWhenSmart(runnable), ModalityState.NON_MODAL, myProject.getDisposed());
-    }
+    myProject.getService(SmartModeScheduler.class).runWhenSmart(runnable);
   }
 
   @Override
@@ -377,13 +357,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
-    try {
-      myPublisher.exitDumbMode();
-      FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
-    }
-    finally {
-      myProject.getService(SmartModeScheduler.class).onDumbModeFinished();
-    }
+    myPublisher.exitDumbMode();
+    FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
   }
 
   @Override
@@ -441,14 +416,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myWaitIntolerantThread == Thread.currentThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from a background startup activity");
     }
-    CountDownLatch switched;
-    synchronized (myDumbSmartTransitionLock) {
-      if (!isDumb()) {
-        return;
-      }
-      switched = new CountDownLatch(1);
-      myProject.getService(SmartModeScheduler.class).addLast(switched::countDown);
-    }
+    CountDownLatch switched = new CountDownLatch(1);
+    myProject.getService(SmartModeScheduler.class).runWhenSmart(switched::countDown);
 
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
       try {

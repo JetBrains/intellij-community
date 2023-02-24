@@ -7,20 +7,33 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.startup.StartupManager
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
 /**
  * Please, don't use this service. Use [DumbService.runWhenSmart] to schedule runnables in smart mode.
+ *
+ * Scheduled runnables will be executed on EDT thread after all three conditions met:
+ * 1. There is no scanning in progress, and initial project scanning (on project open) has finished
+ * 2. There is no dumb mode
+ * 3. All the [com.intellij.openapi.startup.StartupActivity] completed
+ *
+ * It is important to note that while dumb mode cannot start without write action, scanning can start without write action, so by the
+ * moment when runnable executes scanning can run, but it is guaranteed that initial scanning on project open has finished.
  */
 @Experimental
 @Internal
@@ -33,6 +46,15 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   }
 
   private val myRunWhenSmartQueue: Deque<Runnable> = ConcurrentLinkedDeque()
+
+  private val projectOpening: AtomicBoolean = AtomicBoolean(true)
+
+  // DumbService starts in dumb mode and then becomes smart
+  private val projectDumb: AtomicBoolean = AtomicBoolean(true)
+
+  // Actual initial state for projectScanning should be `false`, but we want to make sure that IDE is not smart immediately after start.
+  // There will be mandatory "scanning on project open" that will clear the flag.
+  private val projectScanning: AtomicBoolean = AtomicBoolean(true)
 
   init {
     project.messageBus.simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
@@ -51,11 +73,26 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
-  fun onDumbModeFinished() {
-    runAllWhileSmartInThisThread()
+  internal fun onFilesScanningStarted() = onStateChanged { projectScanning.set(true) }
+  internal fun onFilesScanningFinished() = onStateChanged { projectScanning.set(false) }
+  internal fun onProjectOpened() = onStateChanged { projectOpening.set(false) }
+  internal fun onEnteredDumbMode() = onStateChanged { projectDumb.set(true) }
+  internal fun onExitDumbMode() = onStateChanged { projectDumb.set(false) }
+
+  private fun onStateChanged(updateState: () -> Unit) {
+    updateState()
+    if (isSmart()) {
+      ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
+    }
   }
 
-  private fun runAllWhileSmartInThisThread() {
+  fun runWhenSmart(runnable: Runnable) {
+    onStateChanged { addLast(runnable) }
+  }
+
+  private fun runAllWhileSmart() {
+    // we need write lock to make sure that dumb mode does not start while the method is in progress
+    // write lock is not enough to protect against switching to "almost smart": scanning can start at any moment (it does not need write lock)
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
@@ -79,7 +116,11 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     }
   }
 
-  private fun isSmart() = !DumbService.isDumb(project)
+  private fun isSmart() = (getCurrentMode() == 0)
+  fun getCurrentMode(): Int =
+    (if (projectScanning.get()) SCANNING else 0) +
+    (if (projectDumb.get()) DUMB else 0) +
+    (if (projectOpening.get()) OPENING else 0)
 
   fun clear() {
     myRunWhenSmartQueue.clear()
@@ -89,7 +130,29 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     clear()
   }
 
+  class SmartModeSchedulerStartupActivity : ProjectActivity {
+    override suspend fun execute(project: Project) {
+      StartupManager.getInstance(project).runAfterOpened {
+        project.service<SmartModeScheduler>().onProjectOpened()
+      }
+    }
+  }
+
+  class SmartModeSchedulerDumbModeListener(private val project: Project) : DumbService.DumbModeListener {
+    override fun enteredDumbMode() = project.service<SmartModeScheduler>().onEnteredDumbMode()
+    override fun exitDumbMode() = project.service<SmartModeScheduler>().onExitDumbMode()
+  }
+
+  class SmartModeSchedulerFilesScannerListener(private val project: Project) : FilesScanningListener {
+    override fun filesScanningStarted() = project.service<SmartModeScheduler>().onFilesScanningStarted()
+
+    override fun filesScanningFinished() = project.service<SmartModeScheduler>().onFilesScanningFinished()
+  }
+
   companion object {
     val LOG: Logger = logger<SmartModeScheduler>()
+    const val SCANNING = 1
+    const val DUMB = 1.shl(1)
+    const val OPENING = 1.shl(2)
   }
 }
