@@ -33,6 +33,10 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import java.nio.file.Path
 
 abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
+  protected val INDENT_SIZE = 2
+  protected val TAB_SIZE = 2
+  protected val CONTINUATION_INDENT_SIZE = 2
+
   override fun setUp() {
     super.setUp()
     val settings = EditorSettingsExternalizable.getInstance()
@@ -53,9 +57,9 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     kotlinCommonSettings.RIGHT_MARGIN = 140
     codeStyleSettings.getCustomSettings(KotlinCodeStyleSettings::class.java).LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = false
     val indentOptions = codeStyleSettings.getIndentOptions(KotlinFileType.INSTANCE)
-    indentOptions.INDENT_SIZE = 2
-    indentOptions.TAB_SIZE = 2
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
+    indentOptions.INDENT_SIZE = INDENT_SIZE
+    indentOptions.TAB_SIZE = TAB_SIZE
+    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
     CodeStyle.setTemporarySettings(project, codeStyleSettings)
     disposeOnTearDown(Disposable {
       settings.stripTrailingSpaces = oldTrailingSpacesValue

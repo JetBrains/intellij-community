@@ -39,12 +39,10 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
-        operator fun invoke(
-            path: String,
-            dependencies: Set<KotlinScriptLibraryId>,
-            entitySource: EntitySource,
-            init: (Builder.() -> Unit)? = null
-        ): KotlinScriptEntity {
+        operator fun invoke(path: String,
+                            dependencies: Set<KotlinScriptLibraryId>,
+                            entitySource: EntitySource,
+                            init: (Builder.() -> Unit)? = null): KotlinScriptEntity {
             val builder = builder()
             builder.path = path
             builder.dependencies = dependencies.toMutableWorkspaceSet()
@@ -58,8 +56,8 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) =
-    modifyEntity(KotlinScriptEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) = modifyEntity(
+    KotlinScriptEntity.Builder::class.java, entity, modification)
 //endregion
 
 data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource

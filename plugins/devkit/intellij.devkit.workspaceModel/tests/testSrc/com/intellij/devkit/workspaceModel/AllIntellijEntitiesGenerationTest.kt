@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
@@ -24,6 +25,7 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
+import org.jetbrains.kotlin.idea.KotlinFileType
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -45,6 +47,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     "intellij.platform.workspaceModel.storage" to
       "com/intellij/workspaceModel/storage"
   )
+
+  private val modulesWithCustomIndentSize: Map<String, Int> = mapOf("kotlin.base.scripting" to 4)
 
   override fun setUp() {
     CodeGeneratorVersions.checkApiInInterface = false
@@ -132,27 +136,25 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
+    setupCustomIndent(moduleEntity)
 
     val result = pathToPackages.map { pathToPackage ->
       val packagePath = pathToPackage.replace(".", "/")
       val (srcRoot, genRoot) = generateCode(packagePath, keepUnknownFields)
       runWriteActionAndWait {
         var storageChanged = false
-        val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot
-                            ?: run {
-                              val genFolderVirtualFile = VfsUtil.createDirectories(
-                                "${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
-                              val javaSourceRoot = sourceRoot.javaSourceRoots.first()
-                              val result = storage.addEntity(
-                                SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager), sourceRoot.rootType,
-                                                 sourceRoot.entitySource) {
-                                  contentRoot = sourceRoot.contentRoot
-                                  javaSourceRoots = listOf(
-                                    JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
-                                })
-                              storageChanged = true
-                              result
-                            }
+        val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot ?: run {
+          val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
+          val javaSourceRoot = sourceRoot.javaSourceRoots.first()
+          val result = storage.addEntity(SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
+                                                          sourceRoot.rootType, sourceRoot.entitySource) {
+              contentRoot = sourceRoot.contentRoot
+              javaSourceRoots = listOf(
+                JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
+            })
+          storageChanged = true
+          result
+        }
 
         val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
         val implRootPath = Path.of(genSourceRoot.url.presentableUrl, pathToPackage)
@@ -166,6 +168,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         storageChanged
       }
     }.any { it }
+
+    resetCustomIndent(moduleEntity)
     (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
     return result
   }
@@ -176,11 +180,15 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
+    setupCustomIndent(moduleEntity)
+
     pathToPackages.forEach { pathToPackage ->
       val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
       val implRootPath = Path.of(genSourceRoots.first().sourceRoot.url.presentableUrl, pathToPackage)
       generateAndCompare(apiRootPath, implRootPath, keepUnknownFields, pathToPackage)
     }
+
+    resetCustomIndent(moduleEntity)
     (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
     return false
   }
@@ -196,6 +204,24 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
                                                                     errorReporter = TestErrorReporter,
                                                                     context = context)
     return mutableEntityStorage to jpsProjectSerializer
+  }
+
+  private fun setupCustomIndent(moduleEntity: ModuleEntity) {
+    val indent = modulesWithCustomIndentSize[moduleEntity.name] ?: return
+    val settings = CodeStyle.getSettings(project)
+    val indentOptions = settings.getIndentOptions(KotlinFileType.INSTANCE)
+    indentOptions.INDENT_SIZE = indent
+    indentOptions.TAB_SIZE = indent
+    indentOptions.CONTINUATION_INDENT_SIZE = indent
+  }
+
+  private fun resetCustomIndent(moduleEntity: ModuleEntity) {
+    modulesWithCustomIndentSize[moduleEntity.name] ?: return
+    val settings = CodeStyle.getSettings(project)
+    val indentOptions = settings.getIndentOptions(KotlinFileType.INSTANCE)
+    indentOptions.INDENT_SIZE = INDENT_SIZE
+    indentOptions.TAB_SIZE = TAB_SIZE
+    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
   }
 
   private fun createProjectConfigLocation(): JpsProjectConfigLocation {
