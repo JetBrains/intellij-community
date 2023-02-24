@@ -90,7 +90,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
           if (regex.containsMatchIn(it.readText())) {
             val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent)).systemIndependentPath
             if (moduleEntity.name to relativePath !in skippedModulePaths) {
-              modulesToCheck.getOrDefault(moduleEntity to sourceRoot, mutableSetOf()).add(relativePath)
+              modulesToCheck.getOrPut(moduleEntity to sourceRoot){ mutableSetOf() }.add(relativePath)
             }
           }
         }
@@ -133,22 +133,26 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
 
-    return pathToPackages.map { pathToPackage->
+    val result = pathToPackages.map { pathToPackage ->
       val packagePath = pathToPackage.replace(".", "/")
       val (srcRoot, genRoot) = generateCode(packagePath, keepUnknownFields)
       runWriteActionAndWait {
         var storageChanged = false
-        val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot ?: run {
-          val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
-          val javaSourceRoot = sourceRoot.javaSourceRoots.first()
-          val result = storage.addEntity(
-            SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager), sourceRoot.rootType, sourceRoot.entitySource) {
-              contentRoot = sourceRoot.contentRoot
-              javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
-            })
-          storageChanged = true
-          result
-        }
+        val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot
+                            ?: run {
+                              val genFolderVirtualFile = VfsUtil.createDirectories(
+                                "${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
+                              val javaSourceRoot = sourceRoot.javaSourceRoots.first()
+                              val result = storage.addEntity(
+                                SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager), sourceRoot.rootType,
+                                                 sourceRoot.entitySource) {
+                                  contentRoot = sourceRoot.contentRoot
+                                  javaSourceRoots = listOf(
+                                    JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
+                                })
+                              storageChanged = true
+                              result
+                            }
 
         val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
         val implRootPath = Path.of(genSourceRoot.url.presentableUrl, pathToPackage)
@@ -162,6 +166,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         storageChanged
       }
     }.any { it }
+    (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
+    return result
   }
 
   private fun generateAndCompare(storage: MutableEntityStorage, moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity,
