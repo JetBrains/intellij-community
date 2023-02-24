@@ -1454,22 +1454,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
-    return myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
+    return ReadAction.compute(() -> myView.offsetToVisualPosition(offset, leanForward, beforeSoftWrap));
   }
 
   public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
     assertIsDispatchThread();
-    return myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets);
+    return ReadAction.compute(() -> myView.offsetToVisualColumnInFoldRegion(region, offset, leanTowardsLargerOffsets));
   }
 
   public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
     assertIsDispatchThread();
-    return myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight);
+    return ReadAction.compute(() -> myView.visualColumnToOffsetInFoldRegion(region, visualColumn, leansRight));
   }
 
   @Override
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    return myView.offsetToLogicalPosition(offset);
+    return ReadAction.compute(() -> myView.offsetToLogicalPosition(offset));
   }
 
   @TestOnly
