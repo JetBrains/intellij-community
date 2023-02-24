@@ -51,7 +51,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
    */
   @Internal
   @OptIn(FlowPreview::class)
-  fun addIdleListener(delayInMs: Int, listener: java.lang.Runnable): AccessToken {
+  fun addIdleListener(delayInMs: Int, listener: Runnable): AccessToken {
     val delay = delayInMs.milliseconds
     checkDelay(delay, listener)
 
