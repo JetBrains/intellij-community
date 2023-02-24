@@ -243,7 +243,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         if (activity is ProjectActivity) {
           val pluginId = pluginDescriptor.pluginId
           if (async) {
-            coroutineScope.launch {
+            coroutineScope.launch(CoroutineName("Project Activity: ${activity.javaClass.name}")) {
               val startTime = StartUpMeasurer.getCurrentTime()
               val span = tracer.spanBuilder("run activity")
                 .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
