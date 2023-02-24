@@ -60,6 +60,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   protected abstract val debuggingMethodName: String
   protected abstract val methodForStepInto: String
   protected abstract val stepIntoDirectionToRight: Boolean
+  protected open val breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange
 
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
@@ -72,7 +73,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     clearBreakpoints()
     prepareTask()
 
-    toggleBreakpointTask(sample, { logicalPosition }) {
+    toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = breakpointXRange) {
       text(LessonsBundle.message("debug.workflow.toggle.breakpoint",
                                  action("ToggleLineBreakpoint")))
     }

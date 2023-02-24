@@ -257,7 +257,7 @@ object LessonUtil {
   }
 
 
-  val breakpointXRange: (width: Int) -> IntRange = { IntRange(20, it - 27) }
+  val breakpointXRange: (width: Int) -> IntRange = { IntRange(14, it - 30) }
 
   fun LessonContext.highlightBreakpointGutter(xRange: (width: Int) -> IntRange = breakpointXRange,
                                               logicalPosition: () -> LogicalPosition
