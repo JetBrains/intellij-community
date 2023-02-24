@@ -47,9 +47,7 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
     override val roots: List<KotlinScriptLibraryRoot>
         get() = dataSource.roots
 
-    override var indexSourceRoots: Boolean = false
-        get() = dataSource.indexSourceRoots
-
+    override val indexSourceRoots: Boolean get() = dataSource.indexSourceRoots
     override val usedInScripts: Set<KotlinScriptId>
         get() = dataSource.usedInScripts
 
@@ -61,7 +59,9 @@ open class KotlinScriptLibraryEntityImpl(val dataSource: KotlinScriptLibraryEnti
     }
 
     class Builder(result: KotlinScriptLibraryEntityData?) :
-        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(result), KotlinScriptLibraryEntity.Builder {
+        ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
+            result
+        ), KotlinScriptLibraryEntity.Builder {
         constructor() : this(KotlinScriptLibraryEntityData())
 
         override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -209,6 +209,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
 
     fun isNameInitialized(): Boolean = ::name.isInitialized
     fun isRootsInitialized(): Boolean = ::roots.isInitialized
+
     fun isUsedInScriptsInitialized(): Boolean = ::usedInScripts.isInitialized
 
     override fun getLinks(): Set<SymbolicEntityId<*>> {
