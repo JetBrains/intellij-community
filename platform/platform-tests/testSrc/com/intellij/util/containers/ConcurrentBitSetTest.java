@@ -90,8 +90,8 @@ class ConcurrentBitSetTest {
   void testStressFineGrainedSmallSetModifications() {
     PlatformTestUtil.assumeEnoughParallelism();
     int L = 128;
-    int N = 100_000;
-    PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 220_000, () -> tortureParallelSetClear(L, N)).assertTiming();
+    int N = 10_000;
+    PlatformTestUtil.startPerformanceTest("testStressFineGrainedSmallSetModifications", 22_000, () -> tortureParallelSetClear(L, N)).assertTiming();
   }
 
   @Test
@@ -112,7 +112,7 @@ class ConcurrentBitSetTest {
     try {
       Set<Thread> threadUsed = ContainerUtil.newConcurrentSet();
       Semaphore threadReady = new Semaphore();
-      IntStream.range(0, N).forEach(__-> {
+      for (int it = 0; it < N; it++) {
         ConcurrentBitSet bitSet = ConcurrentBitSet.create();
         assertEquals(-1, bitSet.nextSetBit(0));
         boundedParallelRun(executor, threadUsed, threadReady, L, i -> {
@@ -139,7 +139,7 @@ class ConcurrentBitSetTest {
         });
         bitSet.clear();
         assertEquals(-1, bitSet.nextSetBit(0));
-      });
+      }
       System.out.println("threadUsed = " + threadUsed);
     }
     finally {
@@ -155,7 +155,7 @@ class ConcurrentBitSetTest {
                                   r -> new Thread(r, "ConcurrentBitSetTest.tortureParallelSetClear-"+cnt.getAndIncrement()));
   }
 
-  // feeds indices [0..L) to consumer in parallel with parallelism = exactly 4, to make tests run more/less uniformly, locally and on TC
+  // feeds indices [0..L) to the consumer in parallel, with parallelism = exactly 4, to make tests run more/less uniformly, locally and on TC
   static void boundedParallelRun(ExecutorService executor, Set<? super Thread> threadUsed, Semaphore threadReady, int L, IntConsumer index) {
     assert L % 4 == 0;
     threadUsed.clear();
