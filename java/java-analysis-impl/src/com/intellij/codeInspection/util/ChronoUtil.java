@@ -91,6 +91,9 @@ public final class ChronoUtil {
     if (method == null || chronoField == null) {
       return false;
     }
+    if (!"with".equals(method.getName())) {
+      return false;
+    }
     if (!CHRONO_WITH_MATCHERS.methodMatches(method)) {
       return false;
     }
@@ -105,7 +108,7 @@ public final class ChronoUtil {
   }
 
   @Nullable
-  private static String getQualifiedName(@NotNull PsiMethod method) {
+  public static String getQualifiedName(@NotNull PsiMethod method) {
     return Optional.of(method)
       .map(m -> m.getContainingClass())
       .map(c -> c.getQualifiedName())
@@ -116,14 +119,17 @@ public final class ChronoUtil {
    * @return true if the {@code method} (<code>get(ChronoField)</code> or <code>getLong(ChronoField)</code>)
    * can be called with given {@code chronoField} without an exception, otherwise false
    */
-  public static boolean isGetSupported(@Nullable PsiMethod method, @Nullable ChronoField chronoField) {
+  public static boolean isAnyGetSupported(@Nullable PsiMethod method, @Nullable ChronoField chronoField) {
     if (method == null || chronoField == null) {
+      return false;
+    }
+    String methodName = method.getName();
+    if (!"get".equals(methodName) && !"getLong".equals(methodName)) {
       return false;
     }
     if (!CHRONO_ALL_GET_MATCHERS.methodMatches(method)) {
       return false;
     }
-    String methodName = method.getName();
     if ("get".equals(methodName) && !chronoField.range().isIntValue()) {
       return false;
     }
@@ -145,6 +151,10 @@ public final class ChronoUtil {
     if (method == null || chronoUnit == null) {
       return false;
     }
+    String methodName = method.getName();
+    if (!"plus".equals(methodName) && !"minus".equals(methodName)) {
+      return false;
+    }
     if (!CHRONO_PLUS_MINUS_MATCHERS.methodMatches(method)) {
       return false;
     }
@@ -160,7 +170,7 @@ public final class ChronoUtil {
 
   //easy to check
   @SuppressWarnings("DuplicateBranchesInSwitch")
-  private static boolean isAvailableByType(@NotNull ChronoField chronoField, @NotNull String classQualifiedName) {
+  public static boolean isAvailableByType(@NotNull ChronoField chronoField, @NotNull String classQualifiedName) {
     return switch (classQualifiedName) {
       case CommonClassNames.JAVA_TIME_LOCAL_TIME -> chronoField.isTimeBased();
       case CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME -> chronoField.isTimeBased() || chronoField.isDateBased();

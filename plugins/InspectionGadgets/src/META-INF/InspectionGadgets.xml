@@ -403,6 +403,10 @@
                      key="variable.not.used.inside.if.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.VariableNotUsedInsideIfInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnsupportedChronoFieldUnitCall" enabledByDefault="true" level="WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.unsupported.chrono.field.unit.call.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     implementationClass="com.siyeh.ig.bugs.UnsupportedChronoFieldUnitCallInspection"/>
 
     <!--group.names.class.structure-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClass" bundle="messages.InspectionGadgetsBundle" key="anonymous.inner.class.display.name"

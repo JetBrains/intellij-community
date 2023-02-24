@@ -423,7 +423,7 @@ public final class CustomMethodHandlers {
       return DfType.TOP;
     }
     ChronoField myChronoField = ChronoUtil.getChronoField(enumConstant.getName());
-    if (myChronoField == null || !ChronoUtil.isGetSupported(method, myChronoField)) {
+    if (myChronoField == null || !ChronoUtil.isAnyGetSupported(method, myChronoField)) {
       return DfType.TOP;
     }
     LongRangeSet range = LongRangeSet.range(myChronoField.range().getMinimum(), myChronoField.range().getMaximum());
