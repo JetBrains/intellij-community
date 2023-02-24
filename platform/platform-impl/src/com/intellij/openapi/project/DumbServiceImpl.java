@@ -107,6 +107,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
       }
       else {
+        // because of tryEnterDumbMode in queueTaskOnEdt, it is possible that myGuiDumbTaskRunner::startBackgroundProcess is not invoked
+        // for some queued tasks. Code below makes sure that dumb tasks do not stuck in dumb queue.
         boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_TASKS);
         if (needToScheduleNow) {
           myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);

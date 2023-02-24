@@ -29,11 +29,9 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
   }
 
   private static class TaskQueueListener implements ExecutorStateListener {
-    private final Project project;
     private final FilesScanningListener projectLevelEventPublisher;
 
     private TaskQueueListener(Project project) {
-      this.project = project;
       this.projectLevelEventPublisher = project.getMessageBus().syncPublisher(FilesScanningListener.TOPIC);
     }
 
@@ -45,11 +43,6 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
 
     @Override
     public void afterLastTask() {
-      UnindexedFilesScannerExecutor executor = project.getService(UnindexedFilesScannerExecutor.class);
-      if (!executor.getTaskQueue().isEmpty()) {
-        // process the tasks which were submitted after background thread finished polling, but before is set "completed" flag
-        executor.startBackgroundProcess();
-      }
       projectLevelEventPublisher.filesScanningFinished();
     }
   }
