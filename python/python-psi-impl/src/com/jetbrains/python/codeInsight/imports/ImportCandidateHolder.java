@@ -7,14 +7,15 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * An immutable holder of information for one auto-import candidate.
@@ -127,23 +128,10 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   @NotNull
   public @NlsSafe String getPresentableText() {
     PyImportElement importElement = getImportElement();
-    PsiElement importable = getImportable();
     final StringBuilder sb = new StringBuilder(getQualifiedName(getImportableName(), myPath, importElement));
     PsiElement parent = null;
     if (importElement != null) {
       parent = importElement.getParent();
-    }
-    if (importable instanceof PyFunction) {
-      sb.append("()");
-    }
-    else if (importable instanceof PyClass) {
-      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)importable).getSuperClasses(null),
-                                                           cls -> PyUtil.isObjectClass(cls) ? null : cls.getName());
-      if (!supers.isEmpty()) {
-        sb.append("(");
-        StringUtil.join(supers, ", ", sb);
-        sb.append(")");
-      }
     }
     if (parent instanceof PyFromImportStatement fromImportStatement) {
       sb.append(" from ");
