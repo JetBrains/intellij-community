@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -45,11 +45,11 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return false;
-    final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    if (psiField == null) return false;
-    if (psiField.getLanguage() != JavaLanguage.INSTANCE) return false;
-    if (psiField.getTypeElement() == null) return false;
-    final PsiType fieldType = psiField.getType();
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiField field)) return false;
+    if (field.getLanguage() != JavaLanguage.INSTANCE) return false;
+    if (field.getTypeElement() == null) return false;
+    final PsiType fieldType = field.getType();
     final PsiClass fieldTypeClass = PsiUtil.resolveClassInType(fieldType);
     if (fieldType instanceof PsiPrimitiveType && !PsiTypes.voidType().equals(fieldType) || fieldType instanceof PsiArrayType) return true;
     return fieldTypeClass != null && !Comparing.strEqual(fieldTypeClass.getQualifiedName(), ThreadLocal.class.getName())
