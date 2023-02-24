@@ -7,6 +7,7 @@ import com.intellij.psi.util.CachedValueProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.analysis.providers.impl.KotlinPackageProviderBase
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -20,7 +21,10 @@ internal class IdeKotlinPackageProviderFactory(private val project: Project) : K
     }
 }
 
-private class IdeKotlinPackageProvider(project: Project, private val searchScope: GlobalSearchScope) : KotlinPackageProvider() {
+private class IdeKotlinPackageProvider(
+    project: Project,
+   searchScope: GlobalSearchScope
+) : KotlinPackageProviderBase(project, searchScope) {
     private val cache by CachedValue(project) {
         CachedValueProvider.Result(
             ConcurrentHashMap<FqName, Boolean>(),
@@ -28,13 +32,13 @@ private class IdeKotlinPackageProvider(project: Project, private val searchScope
         )
     }
 
-    override fun doKotlinPackageExists(packageFqName: FqName): Boolean {
+    override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         return cache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
     }
 
-    override fun getKotlinSubPackageFqNames(packageFqName: FqName): Set<Name> {
-        return KotlinPackageIndexUtils
-            .getSubPackageFqNames(packageFqName, searchScope) { true }
+    override fun getKotlinOnlySubPackagesFqNames(packageFqName: FqName, nameFilter: (Name) -> Boolean): Set<Name> =
+        KotlinPackageIndexUtils
+            .getSubpackages(packageFqName, searchScope, nameFilter)
             .mapTo(mutableSetOf()) { it.shortName() }
-    }
+
 }
