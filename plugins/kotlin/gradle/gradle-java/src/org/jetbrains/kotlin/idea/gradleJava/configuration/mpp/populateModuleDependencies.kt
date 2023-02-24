@@ -2,16 +2,10 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
-import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.project.ModuleData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
-import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleTooling.IdeaKotlinDependenciesContainer
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinGradlePluginVersionDependentApi
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @OptIn(KotlinGradlePluginVersionDependentApi::class)
 internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies() {
@@ -34,8 +28,8 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
-        val sourceSetModuleIde = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleIde) ?: return@forEach
+        val sourceSetModuleId = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
+        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleId) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
 
         /* Call into extension points, skipping dependency population of source set if instructed */
