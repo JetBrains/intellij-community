@@ -21,7 +21,6 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
-      Save(layoutName),
       Separator(),
       Delete(layoutName),
     )
@@ -49,12 +48,6 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       }
 
       override fun isSelected(e: AnActionEvent): Boolean = false // no check mark needed in this submenu
-    }
-
-    private class Save(layoutName: String) : StoreNamedLayoutAction(layoutName) {
-      init {
-        templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Save.text")
-      }
     }
 
     private class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {
