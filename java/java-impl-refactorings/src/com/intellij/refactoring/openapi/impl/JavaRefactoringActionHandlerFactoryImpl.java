@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.psi.PsiAnonymousClass;
@@ -24,7 +24,6 @@ import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
-import com.intellij.refactoring.typeCook.TypeCookHandler;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
 public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
@@ -86,11 +85,6 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   @Override
   public RefactoringActionHandler createExtractSuperclassHandler() {
     return new ExtractSuperclassHandler();
-  }
-
-  @Override
-  public RefactoringActionHandler createTypeCookHandler() {
-    return new TypeCookHandler();
   }
 
   @Override

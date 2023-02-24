@@ -14,6 +14,8 @@
       <action id="RemoveMiddleman" class="com.intellij.refactoring.actions.RemoveMiddlemanAction"/>
       <action id="ReplaceTempWithQuery" class="com.intellij.refactoring.actions.TempWithQueryAction"/>
       <action id="WrapReturnValue" class="com.intellij.refactoring.wrapreturnvalue.WrapReturnValueAction"/>
+      <separator/>
+      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
     </group>
   </actions>
   <resource-bundle>messages.JavaRareRefactoringsBundle</resource-bundle>

@@ -373,8 +373,6 @@
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <reference ref="MigrationMenu"/>
       <separator/>
-      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
-      <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>
     </group>
