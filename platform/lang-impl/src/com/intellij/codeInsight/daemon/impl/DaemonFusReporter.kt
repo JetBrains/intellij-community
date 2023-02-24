@@ -1,9 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.IntEventField
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.ex.EditorMarkupModel
@@ -12,14 +16,23 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import kotlin.math.log10
 import kotlin.math.pow
 
 class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  private var daemonStartTime = -1L
+  private var daemonStartTime: Long = -1L
+  private var dirtyRange: TextRange? = null
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
     daemonStartTime = System.currentTimeMillis()
+    val editor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()?.editor
+    dirtyRange = if (editor == null) {
+      null
+    }
+    else {
+      FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL)
+    }
   }
 
   override fun daemonFinished(fileEditors: Collection<FileEditor>) {
@@ -45,6 +58,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val lines = document?.lineCount?.roundToOneSignificantDigit() ?: -1
     val elapsedTime = System.currentTimeMillis() - daemonStartTime
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
+    val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
 
     DaemonFusCollector.FINISHED.log(
       project,
@@ -52,7 +66,8 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
       DaemonFusCollector.ERRORS with errorCount,
       DaemonFusCollector.WARNINGS with warningCount,
       DaemonFusCollector.LINES with lines,
-      EventFields.FileType with fileType
+      EventFields.FileType with fileType,
+      DaemonFusCollector.ENTIRE_FILE_HIGHLIGHTED with wasEntireFileHighlighted
     )
   }
 
@@ -70,12 +85,13 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
 
 class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("daemon", 2)
-    val ERRORS = EventFields.Int("errors")
-    val WARNINGS = EventFields.Int("warnings")
-    val LINES = EventFields.Int("lines")
-    val FINISHED = GROUP.registerVarargEvent("finished",
-        EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType)
+    val GROUP: EventLogGroup = EventLogGroup("daemon", 2)
+    val ERRORS: IntEventField = EventFields.Int("errors")
+    val WARNINGS: IntEventField = EventFields.Int("warnings")
+    val LINES: IntEventField = EventFields.Int("lines")
+    val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
+    val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
+                                                  EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED)
   }
 
   override fun getGroup(): EventLogGroup {
