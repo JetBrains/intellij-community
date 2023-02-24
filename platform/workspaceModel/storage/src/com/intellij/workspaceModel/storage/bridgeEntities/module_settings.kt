@@ -24,6 +24,9 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<ModuleSettingsBase, Builder<ModuleSettingsBase>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         moduleId: ModuleId,
                         entitySource: EntitySource,
