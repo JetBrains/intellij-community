@@ -68,9 +68,16 @@ internal fun <T> Flow<T>.onEach(context: CoroutineContext, action: suspend (T) -
 internal fun <T, R> Flow<T>.map(context: CoroutineContext, action: suspend (T) -> R) =
     map { withContext(context) { action(it) } }
 
-suspend fun <T, R> Iterable<T>.parallelMap(transform: suspend CoroutineScope.(T) -> R) = coroutineScope {
-    map { async { transform(it) } }.awaitAll()
-}
+@ExperimentalStdlibApi
+private suspend fun currentCoroutineDispatcher() =
+    currentCoroutineContext()[CoroutineDispatcher] ?: error("Current coroutine has no dispatcher.")
+
+suspend fun <T, R> Iterable<T>.parallelMap(
+    maxConcurrency: Int = Runtime.getRuntime().availableProcessors(),
+    transform: suspend CoroutineScope.(T) -> R
+) =  withContext(currentCoroutineDispatcher().limitedParallelism(maxConcurrency)) {
+    map { async { transform(it) } }
+}.awaitAll()
 
 internal fun timer(each: Duration, emitAtStartup: Boolean = true) = flow {
     if (emitAtStartup) emit(Unit)
