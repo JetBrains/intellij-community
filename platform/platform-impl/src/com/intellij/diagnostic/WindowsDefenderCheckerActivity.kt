@@ -30,14 +30,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
-      DefenderCheckerUsagesCollector.rtProtectionCheckSkipped(project)
+      WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return
     }
 
     val protection = checker.isRealTimeProtectionEnabled
     if (protection != true) {
       LOG.info("real-time protection: ${protection}")
-      DefenderCheckerUsagesCollector.rtProtectionCheckStatus(project, protection)
+      WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
       return
     }
 
@@ -65,7 +65,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
-    DefenderCheckerUsagesCollector.auto(project)
+    WindowsDefenderStatisticsCollector.auto(project)
     @Suppress("DialogTitleCapitalization")
     runBackgroundableTask(DiagnosticBundle.message("defender.config.progress"), project, false) {
       val success = checker.excludeProjectPaths(paths)
@@ -79,13 +79,13 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
           .addAction(ShowLogAction.notificationAction())
           .notify(project)
       }
-      DefenderCheckerUsagesCollector.configured(project, success)
+      WindowsDefenderStatisticsCollector.configured(project, success)
     }
   }
 
   private fun showInstructions(checker: WindowsDefenderChecker, project: Project) {
     BrowserUtil.browse(checker.configurationInstructionsUrl)
-    DefenderCheckerUsagesCollector.manual(project)
+    WindowsDefenderStatisticsCollector.manual(project)
   }
 
   private fun suppressCheck(checker: WindowsDefenderChecker, project: Project, globally: Boolean) {
@@ -93,7 +93,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val action = ActionsBundle.message("action.ResetWindowsDefenderNotification.text")
     notification(DiagnosticBundle.message("defender.config.restore", action), NotificationType.INFORMATION)
       .notify(project)
-    DefenderCheckerUsagesCollector.suppressed(project, globally)
+    WindowsDefenderStatisticsCollector.suppressed(project, globally)
   }
 
   private fun notification(@NlsContexts.NotificationContent content: String, type: NotificationType): Notification =

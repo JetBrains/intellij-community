@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class DefenderCheckerUsagesCollector extends CounterUsagesCollector {
+final class WindowsDefenderStatisticsCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("defender", 1);
 
   private enum Status {Skipped, Enabled, Disabled, Error}
@@ -19,11 +19,11 @@ final class DefenderCheckerUsagesCollector extends CounterUsagesCollector {
   private static final EventId1<Reaction> NOTIFICATION_EVENT = GROUP.registerEvent("notification", EventFields.Enum("reaction", Reaction.class));
   private static final EventId1<Boolean> AUTO_CONFIG_EVENT = GROUP.registerEvent("auto_config", EventFields.Boolean("success"));
 
-  static void rtProtectionCheckSkipped(@NotNull Project project) {
+  static void protectionCheckSkipped(@NotNull Project project) {
     PROTECTION_CHECK_EVENT.log(project, Status.Skipped);
   }
 
-  static void rtProtectionCheckStatus(@NotNull Project project, @Nullable Boolean status) {
+  static void protectionCheckStatus(@NotNull Project project, @Nullable Boolean status) {
     PROTECTION_CHECK_EVENT.log(project, status == Boolean.TRUE ? Status.Enabled : status == Boolean.FALSE ? Status.Disabled : Status.Error);
   }
 
