@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.REFINER_CAPABILITY
 import org.jetbrains.kotlin.types.checker.Ref
 import org.jetbrains.kotlin.types.checker.TypeRefinementSupport
+import java.util.*
 
 class IdeaResolverForProject(
     debugName: String,
@@ -66,6 +67,7 @@ class IdeaResolverForProject(
     }
 
     private val resolutionAnchorProvider = projectContext.project.service<ResolutionAnchorProvider>()
+    private val created = Date().toString()
 
     private val invalidModuleNotifier: InvalidModuleNotifier = object: InvalidModuleNotifier {
         override fun notifyModuleInvalidated(moduleDescriptor: ModuleDescriptor) {
