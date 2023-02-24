@@ -12,7 +12,7 @@ import java.awt.*;
 /**
  * A custom visual element displayed in the editor.
  * It is associated with a certain position in a document, but is not represented in the document text in any way.
- * Inlay's document position (offset) is updated on document changes just like for a {@link RangeMarker}.
+ * The inlay's document position (offset) is updated on document changes just like for a {@link RangeMarker}.
  * Both 'inline' (displayed within text lines) and 'block' (displayed between text lines) elements are supported.
  * <p>
  * An inlay becomes invalid on explicit disposal, or when a document range that contains the inlay's offset is deleted.
