@@ -1048,8 +1048,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     }
     header.fileMaskField.setEnabled(isThereFileFilter);
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-    mySearchComponent.setText(findInProjectSettings.getMostRecentFindString());
-    myReplaceComponent.setText(findInProjectSettings.getMostRecentReplaceString());
+    String search = myModel.hasStringToFind() ? myModel.getStringToFind() : findInProjectSettings.getMostRecentFindString();
+    mySearchComponent.setText(search);
+    String replace = myModel.hasStringToFind() ? myModel.getStringToReplace() : findInProjectSettings.getMostRecentReplaceString();
+    myReplaceComponent.setText(replace);
     updateControls();
     updateScopeDetailsPanel();
 

@@ -1,5 +1,5 @@
 --- FIND MODEL ---
-myStringToFind = ''
+myStringToFind = null
 myStringToReplace = ''
 isReplaceState = false
 isWholeWordsOnly = false
