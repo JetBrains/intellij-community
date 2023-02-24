@@ -144,7 +144,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
   @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)realDataId -> getSlowData(getSelectedBreakpoints(), realDataId);
+      var selectedBreakpoints = getSelectedBreakpoints(); // gather in EDT
+      return (DataProvider)realDataId -> getSlowData(selectedBreakpoints, realDataId);
     }
     return null;
   }
