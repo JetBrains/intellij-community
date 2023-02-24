@@ -100,8 +100,15 @@ class StubBasedPackageMemberDeclarationProvider(
                 override fun accept(t: String?): Boolean = childName == t
             }
             KotlinFullClassNameIndex.processAllKeys(searchScope, null, processor)
-            if (processor.isFound) {
-                throw IllegalStateException("KotlinFullClassNameIndex has '$childName' but has no value for it in $searchScope")
+            val everyObjects = KotlinFullClassNameIndex.get(childName, project, GlobalSearchScope.everythingScope(project))
+            if (processor.isFound || everyObjects.isNotEmpty()) {
+                throw IllegalStateException(
+                    """
+                     | KotlinFullClassNameIndex ${if (processor.isFound) "has" else "has not"} '$childName' key.
+                     | No value for it in $searchScope.
+                     | Everything scope has ${everyObjects.size} objects${if (everyObjects.isNotEmpty())" locations: ${everyObjects.map { it.containingFile.virtualFile }}" else ""}.
+                    """.trimMargin()
+                )
             }
         }
     }
