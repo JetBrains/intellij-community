@@ -174,6 +174,10 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     }
   }
 
+  RefreshSessionImpl getSession(long id) {
+    return mySessions.get(id);
+  }
+
   @Override
   public @NotNull RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
     return new RefreshSessionImpl(async, recursively, finishRunnable, state);
