@@ -27,7 +27,7 @@ class InterfaceTraverserTest {
   }
 
   private fun ObjClassImpl<Obj>.addField(name: String, type: ValueType<*>) {
-    addField(OwnPropertyImpl(this, name, type, ObjProperty.ValueKind.Plain, false, false, false, 0, false, SourceElement.NO_SOURCE))
+    addField(OwnPropertyImpl(this, name, type, ObjProperty.ValueKind.Plain, false, false,false, false, 0, false, SourceElement.NO_SOURCE))
   }
 
   @Test

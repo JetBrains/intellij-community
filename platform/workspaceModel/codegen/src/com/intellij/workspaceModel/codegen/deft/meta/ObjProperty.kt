@@ -12,6 +12,8 @@ interface ObjProperty<T : Obj, V> : Obj {
 
   val open: Boolean
 
+  val mutable: Boolean
+
   val receiver: ObjClass<T>
 
   @Name

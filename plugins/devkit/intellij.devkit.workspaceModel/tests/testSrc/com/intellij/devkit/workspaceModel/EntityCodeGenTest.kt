@@ -70,6 +70,10 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     assertThrows(IllegalStateException::class.java) { doTest() }
   }
 
+  fun testVarFieldForbidden() {
+    assertThrows(IllegalStateException::class.java) { doTest() }
+  }
+
   private fun doTest(keepUnknownFields: Boolean = false) {
     generateAndCompare(getExpectedDir(), getExpectedDir().resolve("gen"), keepUnknownFields)
   }

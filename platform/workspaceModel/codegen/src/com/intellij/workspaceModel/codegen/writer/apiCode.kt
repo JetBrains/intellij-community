@@ -61,6 +61,7 @@ fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
 
 private fun checkProperty(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
   checkInheritance(objProperty, reporter)
+  checkAllImmutable(objProperty, reporter)
   checkPropertyType(objProperty, reporter)
 }
 
@@ -68,7 +69,7 @@ fun checkInheritance(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) 
   objProperty.receiver.allSuperClasses.mapNotNull { it.fieldsByName[objProperty.name] }.forEach { overriddenField -> 
     if (!overriddenField.open) {
       reporter.reportProblem(
-        GenerationProblem("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overriden",
+        GenerationProblem("Property '${overriddenField.receiver.name}::${overriddenField.name}' cannot be overridden",
                           GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
     }
   }
@@ -84,6 +85,12 @@ private fun checkPropertyType(objProperty: ObjProperty<*, *>, reporter: ProblemR
   }
   if (errorMessage != null) {
     reporter.reportProblem(GenerationProblem(errorMessage, GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
+  }
+}
+
+fun checkAllImmutable(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+  if (objProperty.mutable) {
+    reporter.reportProblem(GenerationProblem("An immutable interface can't contain mutable properties", GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
   }
 }
 
