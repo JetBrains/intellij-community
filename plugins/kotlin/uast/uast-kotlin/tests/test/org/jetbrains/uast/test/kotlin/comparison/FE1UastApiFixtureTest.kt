@@ -51,6 +51,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkExpressionTypeFromIncorrectObject(myFixture)
     }
 
+    fun testExpressionTypeForCallToInternalOperator() {
+        checkExpressionTypeForCallToInternalOperator(myFixture)
+    }
+
     fun testFlexibleFunctionalInterfaceType() {
         checkFlexibleFunctionalInterfaceType(myFixture)
     }
