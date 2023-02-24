@@ -69,12 +69,25 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);
-    if (toType == null) toType = AtomicReference.class.getName();
     String variableName = variable.getName();
-    String presentableText = StringUtil.getShortName(toType);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, null,
-                                               type.getCanonicalText() + " " + variableName,
-                                               presentableText + " " + variableName + " = new " + presentableText + "(...)");
+    String modifiedText;
+    if (toType == null) {
+      Class<?> atomicClass;
+      if (type instanceof PsiArrayType arrayType) {
+        type = arrayType.getComponentType();
+        atomicClass = AtomicReferenceArray.class;
+      }
+      else {
+        atomicClass = AtomicReference.class;
+      }
+      String presentableText = StringUtil.getShortName(atomicClass.getName());
+      modifiedText = presentableText + '<' + type.getPresentableText() + "> " + variableName + " = new " + presentableText + "<>(...)";
+    }
+    else {
+      String presentableText = StringUtil.getShortName(toType);
+      modifiedText = presentableText + " " + variableName + " = new " + presentableText + "(...)";
+    }
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, type.getPresentableText() + " " + variableName, modifiedText);
   }
 
   @Override
@@ -142,7 +155,6 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
-
     Project project = var.getProject();
     if (var instanceof PsiField || JavaCodeStyleSettings.getInstance(var.getContainingFile()).GENERATE_FINAL_LOCALS) {
       PsiModifierList modifierList = Objects.requireNonNull(var.getModifierList());
