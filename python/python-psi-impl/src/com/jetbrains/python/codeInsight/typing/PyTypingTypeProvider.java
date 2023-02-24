@@ -889,7 +889,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       }
       final Ref<PyType> classObjType = getClassObjectType(resolved, context);
       if (classObjType != null) {
-        return Ref.create(anchorTypeParameter(typeHint, classObjType.get(), context));
+        return classObjType;
       }
       final Ref<PyType> finalType = getFinalType(resolved, context);
       if (finalType != null) {
@@ -1087,7 +1087,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     }
     final PyGenericType typeVar = as(type, PyGenericType.class);
     if (typeVar != null && !typeVar.isDefinition()) {
-      return Ref.create(new PyGenericType(typeVar.getName(), typeVar.getBound(), true));
+      return Ref.create(typeVar.toClass());
     }
     // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
     final PyUnionType unionType = as(type, PyUnionType.class);
@@ -1586,25 +1586,31 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   private static @Nullable PyGenericType findSameTypeVarInDefinition(@NotNull PyQualifiedNameOwner owner,
                                                                      @NotNull String name,
                                                                      @NotNull Context context) {
-    // We use a brand-new context because we start constructing type hints from expressions unrelated to
-    // what's being evaluated now. If we re-use the existing context, resolving to the same type var definition
-    // will be considered a recursive type alias.
-    Context newContext = new Context(context.getTypeContext());
-    if (owner instanceof PyClass) {
-      return StreamEx.of(collectGenericTypes((PyClass)owner, newContext))
-        .select(PyGenericType.class)
-        .findFirst(type -> name.equals(type.getName()))
-        .orElse(null);
+    // At this moment, the definition of the TypeVar should be the type alias at the top of the stack.
+    // While evaluating type hints of enclosing functions' parameters, resolving to the same TypeVar
+    // definition shouldn't trigger the protection against recursive aliases, so we manually remove
+    // it from the top for the time being.
+    PyTargetExpression typeVarDeclaration = context.getTypeAliasStack().pop();
+    try {
+      if (owner instanceof PyClass) {
+        return StreamEx.of(collectGenericTypes((PyClass)owner, context))
+          .select(PyGenericType.class)
+          .findFirst(type -> name.equals(type.getName()))
+          .orElse(null);
+      }
+      else if (owner instanceof PyFunction) {
+        return StreamEx.of(((PyFunction)owner).getParameterList().getParameters())
+          .select(PyNamedParameter.class)
+          .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, (PyFunction)owner, context))
+          .map(Ref::deref)
+          .map(paramType -> PyTypeChecker.collectGenerics(paramType, context.getTypeContext()))
+          .flatMap(generics -> StreamEx.of(generics.getTypeVars()))
+          .findFirst(type -> name.equals(type.getName()))
+          .orElse(null);
+      }
     }
-    else if (owner instanceof PyFunction) {
-      return StreamEx.of(((PyFunction)owner).getParameterList().getParameters())
-        .select(PyNamedParameter.class)
-        .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, (PyFunction)owner, newContext))
-        .map(Ref::deref)
-        .map(paramType -> PyTypeChecker.collectGenerics(paramType, newContext.getTypeContext()))
-        .flatMap(generics -> StreamEx.of(generics.getTypeVars()))
-        .findFirst(type -> name.equals(type.getName()))
-        .orElse(null);
+    finally {
+      context.getTypeAliasStack().push(typeVarDeclaration);
     }
     return null;
   }
