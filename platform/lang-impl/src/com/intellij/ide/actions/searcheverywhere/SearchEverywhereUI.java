@@ -1245,6 +1245,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     @Override
     public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+      if (mySearchProgressIndicator == null || mySearchProgressIndicator.isCanceled()) return;
+
       boolean wasEmpty = myListModel.getSize() == 0;
 
       if (myMlService != null) {
@@ -1275,6 +1277,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     @Override
     public void elementsRemoved(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
+      if (mySearchProgressIndicator == null || mySearchProgressIndicator.isCanceled()) return;
+
       list.forEach(info -> myListModel.removeElement(info.getElement(), info.getContributor()));
       myExternalSearchListeners.forEach(listener -> listener.elementsRemoved(list));
     }
