@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastApiFixtureTestBase : UastPluginSelection {
@@ -359,6 +360,68 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 }
 
                 super.visitElement(element)
+            }
+        })
+    }
+
+    fun checkExpressionTypeForCallToInternalOperator(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                object Dependency {
+                    internal operator fun unaryPlus() = Any()
+                    operator fun unaryMinus() = Any()
+                    operator fun not() = Any()
+                }
+                
+                class OtherDependency {
+                    internal operator fun inc() = this
+                    operator fun dec() = this
+                }
+                
+                fun test {
+                    +Dependency
+                    Dependency.unaryPlus()
+                    -Dependency
+                    Dependency.unaryMinus()
+                    !Dependency
+                    Dependency.not()
+                    
+                    var x = OtherDependency()
+                    x++
+                    x.inc()
+                    x--
+                    x.dec()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val binaryOperators = setOf("inc", "dec")
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.isConstructorCall()) return super.visitCallExpression(node)
+
+                if (node.methodName in binaryOperators) {
+                    TestCase.assertEquals("OtherDependency", node.getExpressionType()?.canonicalText)
+                } else {
+                    TestCase.assertEquals("java.lang.Object", node.getExpressionType()?.canonicalText)
+                }
+
+                return super.visitCallExpression(node)
+            }
+
+            override fun visitPrefixExpression(node: UPrefixExpression): Boolean {
+                TestCase.assertEquals("java.lang.Object", node.getExpressionType()?.canonicalText)
+
+                return super.visitPrefixExpression(node)
+            }
+
+            override fun visitPostfixExpression(node: UPostfixExpression): Boolean {
+                TestCase.assertEquals("OtherDependency", node.getExpressionType()?.canonicalText)
+
+                return super.visitPostfixExpression(node)
             }
         })
     }
