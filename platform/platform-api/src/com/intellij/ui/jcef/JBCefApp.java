@@ -188,9 +188,9 @@ public final class JBCefApp {
           if (Boolean.getBoolean("ide.browser.jcef.sandbox.disable_linux_os_check")) {
             LOG.warn("JCEF sandbox enabled via VM-option 'disable_linux_os_check', OS: " + linuxDistrib);
           } else {
-            LOG.info("JCEF sandbox was disabled because of unsupported OS: " + linuxDistrib);
+            LOG.info("JCEF sandbox was disabled because of unsupported OS: " + linuxDistrib
+                     + ". To skip this check run IDE with VM-option -Dide.browser.jcef.sandbox.disable_linux_os_check=true");
             settings.no_sandbox = true;
-            // TODO: show notification with workaround
           }
         }
       }
