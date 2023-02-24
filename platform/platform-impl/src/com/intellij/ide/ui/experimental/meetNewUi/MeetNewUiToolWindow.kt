@@ -47,8 +47,8 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private val LIGHT = IconLoader.getIcon("expui/meetNewUi/light.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val DARK = IconLoader.getIcon("expui/meetNewUi/dark.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val SYSTEM = IconLoader.getIcon("expui/meetNewUi/system.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val CLEAN = IconLoader.getIcon("expui/meetNewUi/clean.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val COMPACT = IconLoader.getIcon("expui/meetNewUi/compact.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val CLEAN = IconLoader.getIcon("expui/meetNewUi/density-default.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val COMPACT = IconLoader.getIcon("expui/meetNewUi/density-compact.svg", MeetNewUiToolWindow::class.java.classLoader)
   }
 
   private val themes = mutableListOf<Theme>()
