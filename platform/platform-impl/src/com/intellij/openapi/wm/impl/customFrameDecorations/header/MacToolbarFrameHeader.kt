@@ -62,6 +62,7 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
 
   private fun createToolBar(): MainToolbar {
     val toolbar = MainToolbar()
+    toolbar.layoutCallBack = { updateCustomDecorationHitTestSpots() }
     toolbar.isOpaque = false
     toolbar.addComponentListener(object: ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {

@@ -119,6 +119,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     removeToolbar()
 
     val toolbar = MainToolbar()
+    toolbar.layoutCallBack = { updateCustomDecorationHitTestSpots() }
     toolbar.init(toolbarActionGroups)
     toolbar.isOpaque = false
     toolbar.addComponentListener(contentResizeListener)
