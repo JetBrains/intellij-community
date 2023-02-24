@@ -38,7 +38,11 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     if (initializer == null || initializer.getNextSibling() instanceof PsiErrorElement) return false;
     PsiClass psiClass = field.getContainingClass();
 
-    return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof PsiSyntheticClass);
+    return psiClass != null &&
+           !psiClass.isInterface() &&
+           !psiClass.isRecord() &&
+           !(psiClass instanceof PsiAnonymousClass) &&
+           !(psiClass instanceof PsiSyntheticClass);
   }
 
   private boolean hasUnsuitableModifiers(@NotNull PsiField field) {
@@ -52,7 +56,6 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @NotNull
   protected abstract Collection<String> getUnsuitableModifiers();
-
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
@@ -79,7 +82,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
   private static void highlightRExpression(@NotNull PsiAssignmentExpression assignment, @NotNull Project project, Editor editor) {
     final PsiExpression expression = assignment.getRExpression();
 
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression}, 
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression},
                                                                   EditorColors.SEARCH_RESULT_ATTRIBUTES, false, null);
   }
 
@@ -104,7 +107,6 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @NotNull
   protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass);
-
 
   @NotNull
   private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
