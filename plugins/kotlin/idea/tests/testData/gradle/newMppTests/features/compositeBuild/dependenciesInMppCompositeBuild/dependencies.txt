@@ -1,125 +1,80 @@
 MODULES
-    includedBuild
-    includedBuild.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    includedBuild.commonTest
-        includedBuild.commonMain (friend, TEST)
-        includedBuild.jvmMain (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    includedBuild.jvmMain
-        includedBuild.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    includedBuild.jvmTest
-        includedBuild.commonMain (friend, TEST)
-        includedBuild.commonTest (refines, TEST)
-        includedBuild.jvmMain (friend, TEST)
-        includedBuild.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    includedBuild.p1
-    includedBuild.p1.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    includedBuild.p1.commonTest
-        includedBuild.p1.commonMain (friend, TEST)
-        includedBuild.p1.jvmMain (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    includedBuild.p1.jvmMain
-        includedBuild.p1.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    includedBuild.p1.jvmTest
-        includedBuild.p1.commonMain (friend, TEST)
-        includedBuild.p1.commonTest (refines, TEST)
-        includedBuild.p1.jvmMain (friend, TEST)
-        includedBuild.p1.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    includedBuild.p2
-    includedBuild.p2.commonMain
-        includedBuild.p1.commonMain (COMPILE)
-        includedBuild.commonMain (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    includedBuild.p2.commonTest
-        includedBuild.p2.commonMain (friend, TEST)
-        includedBuild.p2.jvmMain (TEST)
-        includedBuild.p1.commonMain (TEST)
-        includedBuild.commonMain (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    includedBuild.p2.jvmMain
-        includedBuild.p2.commonMain (refines, COMPILE)
-        includedBuild.p1.jvmMain (COMPILE)
-        includedBuild.p1.commonMain (COMPILE)
-        includedBuild.jvmMain (COMPILE)
-        includedBuild.p1.commonMain (COMPILE)
-        includedBuild.commonMain (COMPILE)
-        includedBuild.commonMain (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    includedBuild.p2.jvmTest
-        includedBuild.p2.commonMain (friend, TEST)
-        includedBuild.p2.commonTest (refines, TEST)
-        includedBuild.p2.jvmMain (friend, TEST)
-        includedBuild.p2.jvmMain (friend, RUNTIME)
-        includedBuild.p1.jvmMain (TEST)
-        includedBuild.p1.commonMain (TEST)
-        includedBuild.p1.commonMain (TEST)
-        includedBuild.commonMain (TEST)
-        includedBuild.jvmMain (TEST)
-        includedBuild.commonMain (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project
-    project.commonMain
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    project.commonTest
-        project.commonMain (friend, TEST)
-        project.jvmMain (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
-    project.jvmMain
-        project.commonMain (refines, COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
-        Gradle: org.jetbrains:annotations:13.0 (COMPILE)
-    project.jvmTest
-        project.commonMain (friend, TEST)
-        project.commonTest (refines, TEST)
-        project.jvmMain (friend, TEST)
-        project.jvmMain (friend, RUNTIME)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
-        Gradle: org.jetbrains:annotations:13.0 (TEST)
+includedBuild.consumer
+
+includedBuild.consumer.androidTest
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
+    includedBuild.consumer.main (friend, TEST)
+    includedBuild.producer.commonMain (TEST)
+    includedBuild.producer.jvmMain (TEST)
+
+includedBuild.consumer.commonMain
+    includedBuild.producer.commonMain (COMPILE)
+
+includedBuild.consumer.commonTest
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.producer.commonMain (TEST)
+
+includedBuild.consumer.iosArm64Main
+    includedBuild.consumer.commonMain (refines, COMPILE)
+    includedBuild.consumer.iosMain (refines, COMPILE)
+    includedBuild.producer.commonMain (COMPILE)
+    includedBuild.producer.iosArm64Main (COMPILE)
+    includedBuild.producer.iosMain (COMPILE)
+
+includedBuild.consumer.iosArm64Test
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
+    includedBuild.consumer.iosArm64Main (friend, TEST)
+    includedBuild.consumer.iosMain (friend, TEST)
+    includedBuild.consumer.iosTest (refines, TEST)
+    includedBuild.producer.commonMain (TEST)
+    includedBuild.producer.iosArm64Main (TEST)
+    includedBuild.producer.iosMain (TEST)
+
+includedBuild.consumer.iosMain
+    includedBuild.consumer.commonMain (refines, COMPILE)
+    includedBuild.producer.commonMain (COMPILE)
+    includedBuild.producer.iosMain (COMPILE)
+
+includedBuild.consumer.iosTest
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
+    includedBuild.consumer.iosMain (friend, TEST)
+    includedBuild.producer.commonMain (TEST)
+    includedBuild.producer.iosMain (TEST)
+
+includedBuild.consumer.iosX64Main
+    includedBuild.consumer.commonMain (refines, COMPILE)
+    includedBuild.consumer.iosMain (refines, COMPILE)
+    includedBuild.producer.commonMain (COMPILE)
+    includedBuild.producer.iosMain (COMPILE)
+    includedBuild.producer.iosX64Main (COMPILE)
+
+includedBuild.consumer.iosX64Test
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
+    includedBuild.consumer.iosMain (friend, TEST)
+    includedBuild.consumer.iosTest (refines, TEST)
+    includedBuild.consumer.iosX64Main (friend, TEST)
+    includedBuild.producer.commonMain (TEST)
+    includedBuild.producer.iosMain (TEST)
+    includedBuild.producer.iosX64Main (TEST)
+
+includedBuild.consumer.main
+    includedBuild.consumer.commonMain (refines, COMPILE)
+    includedBuild.producer.commonMain (COMPILE)
+    includedBuild.producer.jvmMain (COMPILE)
+
+includedBuild.consumer.unitTest
+    includedBuild.consumer.commonMain (friend, TEST)
+    includedBuild.consumer.commonTest (refines, TEST)
+    includedBuild.consumer.main (friend, TEST)
+    includedBuild.producer.commonMain (TEST)
+    includedBuild.producer.jvmMain (TEST)
+
 
 Test configuration:
-- hiding following roots: android-specific roots, generated
-- hiding following standard dependencies: sdk, self
+- showing only modules matching .*includedBuild.consumer.*
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- dependencies order is not checked
