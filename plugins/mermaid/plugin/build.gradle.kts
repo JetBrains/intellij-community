@@ -191,9 +191,14 @@ tasks {
   publishPlugin {
     dependsOn("patchChangelog")
     token.set(marketplaceToken)
-    val channel = project.publishChannel.takeIf { it != PublishChannel.STABLE }
-    if (channel != null) {
-      channels.set(listOf(channel.actualName))
+    val channel = project.publishChannel
+    // If IDE is set to a custom plugin repository, it will override the default one,
+    // so we won't see updates published to the stable channel (even if their versions are greater).
+    // So, just publish all stable versions to the nightly channel as well.
+    val channels = mutableSetOf(PublishChannel.NIGHTLY)
+    if (channel == PublishChannel.STABLE) {
+      channels.add(PublishChannel.STABLE)
     }
+    this.channels.set(channels.map { it.actualName })
   }
 }
