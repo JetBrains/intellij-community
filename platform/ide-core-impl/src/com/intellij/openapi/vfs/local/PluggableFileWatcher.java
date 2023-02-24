@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,6 +17,12 @@ public abstract class PluggableFileWatcher {
 
   public abstract void dispose();
 
+  /**
+   * The method should return {@code true} if the watcher is ready to receive {@link #setWatchRoots} requests
+   * (e.g. if the watcher depends on some external helper, the latter should be present and possibly running).
+   *
+   * @implNote the method is expected to be fast; perform potentially long tasks in {@link #initialize} or {@link #setWatchRoots}.
+   */
   public abstract boolean isOperational();
 
   public abstract boolean isSettingRoots();
