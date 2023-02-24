@@ -21,6 +21,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
+      RenameLayoutAction(layoutName),
       Separator(),
       Delete(layoutName),
     )

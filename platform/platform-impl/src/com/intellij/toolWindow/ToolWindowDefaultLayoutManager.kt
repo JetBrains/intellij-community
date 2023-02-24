@@ -58,6 +58,11 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     state = state.withUpdatedLayout(name, list, isNewUi, weights)
   }
 
+  fun renameLayout(oldName: String, newName: String) {
+    tracker.incModificationCount()
+    state = state.withRenamedLayout(oldName, newName)
+  }
+
   fun deleteLayout(name: String) {
     tracker.incModificationCount()
     state = state.withoutLayout(name)
@@ -132,6 +137,12 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
     private fun getUnifiedWeights(): Map<String, Float> =
         layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
+
+    fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
+      copy(
+        activeLayoutName = if (oldName == activeLayoutName) newName else activeLayoutName,
+        layouts = layouts + (newName to layouts.getValue(oldName)) - oldName
+      )
 
     fun withUpdatedLayout(
       name: String,
