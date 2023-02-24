@@ -30,10 +30,16 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (!CAN_BE_SIMPLIFIED_MATCHERS.test(call)) return;
-        PsiReferenceExpression methodExpression = call.getMethodExpression();
-        String methodName = methodExpression.getReferenceName();
-        if (methodName == null) return;
+        PsiMethod method = call.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        String methodName = method.getName();
+        if (!"get".equals(methodName) && !"with".equals(methodName) &&
+            !"plus".equals(methodName) && !"minus".equals(methodName)) {
+          return;
+        }
+        if (!CAN_BE_SIMPLIFIED_MATCHERS.methodMatches(method)) return;
         int fieldArgumentIndex = 1;
         if ("get".equals(methodName) || "with".equals(methodName)) {
           fieldArgumentIndex = 0;
@@ -47,7 +53,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
         if (chronoEnumName == null) return;
         String newMethodName = getNewMethodName(chronoEnumName, call);
         if (newMethodName == null) return;
-        PsiElement identifier = getIdentifier(methodExpression);
+        PsiElement identifier = getIdentifier(call.getMethodExpression());
         if (identifier == null) return;
         holder.registerProblem(identifier,
                                InspectionGadgetsBundle.message("inspection.explicit.chrono.field.problem.descriptor"),
@@ -76,7 +82,7 @@ public class RedundantExplicitChronoFieldInspection extends AbstractBaseJavaLoca
 
       private static boolean isAvailableCall(@NotNull PsiMethod method, @NotNull String chronoEnumName) {
         return switch (method.getName()) {
-          case "get" -> ChronoUtil.isGetSupported(method, ChronoUtil.getChronoField(chronoEnumName));
+          case "get" -> ChronoUtil.isAnyGetSupported(method, ChronoUtil.getChronoField(chronoEnumName));
           case "with" -> ChronoUtil.isWithSupported(method, ChronoUtil.getChronoField(chronoEnumName));
           case "plus", "minus" -> ChronoUtil.isPlusMinusSupported(method, ChronoUtil.getChronoUnit(chronoEnumName));
           default -> false;

@@ -6,13 +6,13 @@ Reports <code>java.time</code> method calls with <code>java.time.temporal.Chrono
 calls of more specific methods.
 <p>Example:</p>
 <pre><code>
-		LocalTime localTime = LocalTime.now();
-		int minute = localTime.get(ChronoField.MINUTE_OF_HOUR);
+LocalTime localTime = LocalTime.now();
+int minute = localTime.get(ChronoField.MINUTE_OF_HOUR);
 </code></pre>
 <p>After the quick-fix is applied:</p>
 <pre><code>
-		LocalTime localTime = LocalTime.now();
-		int minute = localTime.getMinute();
+LocalTime localTime = LocalTime.now();
+int minute = localTime.getMinute();
 </code></pre>
 <!-- tooltip end -->
 <p><small>New in 2023.2</small></p>
