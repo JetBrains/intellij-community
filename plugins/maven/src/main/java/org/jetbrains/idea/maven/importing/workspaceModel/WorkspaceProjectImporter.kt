@@ -158,7 +158,7 @@ internal class WorkspaceProjectImporter(
           NotificationType.INFORMATION)
 
       notification.addAction(object : AnAction(
-        SyncBundle.message("maven.workspace.external.storage.notification.settings")) {
+        SyncBundle.message("maven.sync.quickfixes.open.settings")) {
         override fun actionPerformed(e: AnActionEvent) {
           notification.expire()
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenProjectBundle.message("maven.tab.importing"))
