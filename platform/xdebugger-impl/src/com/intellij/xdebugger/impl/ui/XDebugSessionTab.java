@@ -75,7 +75,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       }
     }
     XDebugSessionTab tab;
-    if (Registry.is("debugger.new.tool.window.layout") || forceShowNewDebuggerUi(session.getDebugProcess())) {
+    if (Registry.is("debugger.new.tool.window.layout") || XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess())) {
       if (XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess())) {
         tab = new XDebugSessionTab3(session, icon, environment);
       }
@@ -412,10 +412,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (tab != null) {
       showView(session, tab.getFramesContentId());
     }
-  }
-
-  private static boolean forceShowNewDebuggerUi(XDebugProcess debugProcess) {
-    return debugProcess instanceof XDebugSessionTabCustomizer && ((XDebugSessionTabCustomizer)debugProcess).forceShowNewDebuggerUi();
   }
 
   private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
