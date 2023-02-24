@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,7 +20,6 @@ abstract class StoreNamedLayoutAction(protected val layoutNameSupplier: () -> @N
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabled = e.project != null
-    e.presentation.description = ActionsBundle.message("action.StoreNamedLayout.description", layoutNameSupplier())
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
