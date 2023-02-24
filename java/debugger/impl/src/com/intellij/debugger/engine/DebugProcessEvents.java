@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
@@ -77,8 +76,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     if (vm != null) {
       vmAttached();
       if (vm.canBeModified()) {
-        Factory<DebuggerEventThread> createEventThread = () -> new DebuggerEventThread();
-        DebuggerEventThread eventThread = ContainerUtil.getOrCreate(myEventThreads, vm, createEventThread);
+        DebuggerEventThread eventThread = myEventThreads.computeIfAbsent(vm, __ -> new DebuggerEventThread());
         ApplicationManager.getApplication().executeOnPooledThread(
           ConcurrencyUtil.underThreadNameRunnable("DebugProcessEvents", eventThread));
       }

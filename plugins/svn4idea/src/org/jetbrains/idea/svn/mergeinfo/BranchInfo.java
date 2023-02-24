@@ -1,25 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
-import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
-import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
-
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -31,6 +17,11 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.properties.PropertyValue;
+
+import java.io.File;
+import java.util.*;
+
+import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class BranchInfo {
 
@@ -101,8 +92,7 @@ public class BranchInfo {
         result = MergeCheckResult.COMMON;
       }
       else {
-        result = ContainerUtil.getOrCreate(myAlreadyCalculatedMap, list.getNumber(),
-                                           (Factory<MergeCheckResult>)() -> checkAlive(list, branchPath));
+        result = myAlreadyCalculatedMap.computeIfAbsent(list.getNumber(), __ -> checkAlive(list, branchPath));
       }
       return result;
     }

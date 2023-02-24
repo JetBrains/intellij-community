@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -726,7 +725,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static void mergeSourceSetContentRoots(@NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap,
                                                  @NotNull ProjectResolverContext resolverCtx) {
-    final Factory<Counter> counterFactory = () -> new Counter();
 
     final Map<String, Counter> weightMap = new HashMap<>();
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
@@ -734,7 +732,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       for (DataNode<ContentRootData> contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
         File file = new File(contentRootNode.getData().getRootPath());
         while (file != null) {
-          ContainerUtil.getOrCreate(weightMap, file.getPath(), counterFactory).increment();
+          weightMap.computeIfAbsent(file.getPath(), __ -> new Counter()).increment();
           file = file.getParentFile();
         }
       }
@@ -749,7 +747,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
         }
         for (String path : set) {
-          ContainerUtil.getOrCreate(weightMap, path, counterFactory).increment();
+          weightMap.computeIfAbsent(path, __ -> new Counter()).increment();
         }
       }
     }

@@ -2190,6 +2190,10 @@ public final class ContainerUtil {
     return result.computeIfAbsent(key, __ -> defaultValue);
   }
 
+  /**
+   * @deprecated use {@link Map#computeIfAbsent(Object, java.util.function.Function)}
+   */
+  @Deprecated
   public static <T, V> V getOrCreate(@NotNull Map<T, V> result, T key, @NotNull Factory<? extends V> factory) {
     return result.computeIfAbsent(key, __ -> factory.create());
   }
