@@ -208,7 +208,7 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId
       }
     }
     if (links_data != null) {
-      links = links_data as MutableList
+      links = links_data as MutableList<NameId>
     }
     return changed
   }

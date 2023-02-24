@@ -652,7 +652,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
       }
     }
     if (dependencies_data != null) {
-      dependencies = dependencies_data as MutableList
+      dependencies = dependencies_data as MutableList<ModuleDependencyItem>
     }
     return changed
   }

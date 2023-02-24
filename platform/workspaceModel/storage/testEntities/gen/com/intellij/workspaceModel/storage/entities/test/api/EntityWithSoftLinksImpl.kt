@@ -789,7 +789,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (manyLinks_data != null) {
-      manyLinks = manyLinks_data as MutableList
+      manyLinks = manyLinks_data as MutableList<OneSymbolicId>
     }
     var optionalLink_data_optional = if (optionalLink != null) {
       val optionalLink___data = if (optionalLink!! == oldLink) {
@@ -861,7 +861,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (inContainerList_data != null) {
-      inContainerList = inContainerList_data as MutableList
+      inContainerList = inContainerList_data as MutableList<Container>
     }
     val deepContainer_data = deepContainer.map {
       val it_goDeeper_data = it.goDeeper.map {
@@ -923,7 +923,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (deepContainer_data != null) {
-      deepContainer = deepContainer_data as MutableList
+      deepContainer = deepContainer_data as MutableList<TooDeepContainer>
     }
     val _sealedContainer = sealedContainer
     val res_sealedContainer = when (_sealedContainer) {
@@ -1057,7 +1057,7 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       }
     }
     if (listSealedContainer_data != null) {
-      listSealedContainer = listSealedContainer_data as MutableList
+      listSealedContainer = listSealedContainer_data as MutableList<SealedContainer>
     }
     val _deepSealedClass = deepSealedClass
     val res_deepSealedClass = when (_deepSealedClass) {
