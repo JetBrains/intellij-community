@@ -46,6 +46,7 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+import java.util.*
 import kotlin.streams.asSequence
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
@@ -53,9 +54,12 @@ class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool(
   val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
   override fun getOptionsPane(): OptPane = pane(
-    stringList("ignorableAnnotations",
-               JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by"),
-               JavaClassValidator().annotationsOnly()))
+    stringList(
+      "ignorableAnnotations",
+      JvmAnalysisBundle.message("jvm.inspections.junit.malformed.option.ignore.test.parameter.if.annotated.by"),
+      JavaClassValidator().annotationsOnly()
+    )
+  )
 
   private fun shouldInspect(file: PsiFile) = isJUnit3InScope(file) || isJUnit4InScope(file) || isJUnit5InScope(file)
 
@@ -212,8 +216,6 @@ private class JUnitMalformedSignatureVisitor(
     }
   )
 
-  fun JvmModifier.nonMessage() = "non-${toString().lowercase()}"
-
   private val PsiAnnotation.shortName get() = qualifiedName?.substringAfterLast(".")
 
   private fun notPrivate(method: UDeclaration): UastVisibility? =
@@ -309,10 +311,9 @@ private class JUnitMalformedSignatureVisitor(
     if (aClass.isStatic) problems.add(JvmModifier.STATIC)
     if (aClass.visibility == UastVisibility.PRIVATE) problems.add(JvmModifier.PRIVATE)
     if (problems.isEmpty()) return
-    val message = JvmAnalysisBundle.message("jvm.inspections.junit.malformed.nested.class.descriptor",
-                                            problems.size,
-                                            problems.first().nonMessage(),
-                                            problems.last().nonMessage()
+    val message = JvmAnalysisBundle.message(
+      "jvm.inspections.junit.malformed.nested.class.descriptor",
+      problems.size, problems.first().toString().lowercase(Locale.US), problems.last().toString().lowercase(Locale.US)
     )
     val fix = ClassSignatureQuickFix(aClass.javaPsi.name ?: return, false, aClass.visibility == UastVisibility.PRIVATE)
     holder.registerUProblem(aClass, message, fix)
