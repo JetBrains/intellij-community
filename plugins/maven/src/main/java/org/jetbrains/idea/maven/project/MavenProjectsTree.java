@@ -535,11 +535,12 @@ public final class MavenProjectsTree {
       boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
       boolean readProject = forceReading || timeStampChanged;
 
-      MavenProjectChanges changes = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
       if (readProject) {
         MavenId oldProjectId = isNew ? null : mavenProject.getMavenId();
         MavenId oldParentId = mavenProject.getParentId();
-        changes = MavenProjectChangesBuilder.merged(changes, mavenProject.read(generalSettings, explicitProfiles, reader, tree.myProjectLocator));
+        var forcedChanges = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
+        var readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.myProjectLocator);
+        var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
         tree.withWriteLock(() -> {
           tree.clearIDMaps(oldProjectId);
           tree.myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
@@ -551,18 +552,16 @@ public final class MavenProjectsTree {
           timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
         }
         tree.myTimestamps.put(mavenProject, timestamp);
+        updateContext.update(mavenProject, changes);
       }
 
-      boolean reconnected = isNew;
       if (isNew) {
         tree.connect(aggregator, mavenProject);
       }
       else {
-        reconnected = tree.reconnect(aggregator, mavenProject);
-      }
-
-      if (readProject || reconnected) {
-        updateContext.update(mavenProject, changes);
+        if (tree.reconnect(aggregator, mavenProject)) {
+          updateContext.update(mavenProject, MavenProjectChanges.NONE);
+        }
       }
 
       List<VirtualFile> existingModuleFiles = mavenProject.getExistingModuleFiles();
