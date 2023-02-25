@@ -339,7 +339,7 @@ public final class ClassPath {
         return null;
       }
 
-      Path path = files[searchOffset++];
+      Path path = files[searchOffset++].toAbsolutePath();
       try {
         Loader loader = createLoader(path);
         if (loader != null) {
