@@ -19,7 +19,7 @@ class OutputStreamLogger extends OutputStream {
   private static final int BUFFER_SIZE = 10000;
   private final byte[] myBuffer = new byte[BUFFER_SIZE];
   private final PrintStream myOriginalStream;
-  private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final Logger myLogger;
   private int myPosition;
   private boolean mySlashRWritten;
 
