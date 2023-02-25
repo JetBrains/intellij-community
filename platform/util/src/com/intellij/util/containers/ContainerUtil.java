@@ -980,11 +980,11 @@ public final class ContainerUtil {
 
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2List(collection, mapper).toArray(to);
+    return map(collection, mapper).toArray(to);
   }
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(T @NotNull [] collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2List(collection, mapper).toArray(to);
+    return map(collection, mapper).toArray(to);
   }
 
   @Contract(pure = true)
@@ -2705,27 +2705,23 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of results of {@code mapper.fun} for each element in {@code array}
+   * @deprecated use {@link #map(Object[], Function)}
    */
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <T, V> List<V> map2List(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapper) {
-    if (array.length == 0) return emptyList();
-    List<V> list = new ArrayList<>(array.length);
-    for (T t : array) {
-      list.add(mapper.fun(t));
-    }
-    return list;
+    return map(array, mapper);
   }
 
+  /**
+   * @deprecated use {@link #map(Collection, Function)}
+   */
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
-    if (collection.isEmpty()) return emptyList();
-    List<V> list = new ArrayList<>(collection.size());
-    for (T t : collection) {
-      list.add(mapper.fun(t));
-    }
-    return list;
+    return map(collection, mapper);
   }
 
   /**
@@ -2734,12 +2730,7 @@ public final class ContainerUtil {
   @Contract(pure = true)
   @Unmodifiable
   public static @NotNull <K, V> List<Pair<K, V>> map2List(@NotNull Map<? extends K, ? extends V> map) {
-    if (map.isEmpty()) return emptyList();
-    List<Pair<K, V>> result = new ArrayList<>(map.size());
-    for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
-      result.add(Pair.create(entry.getKey(), entry.getValue()));
-    }
-    return result;
+    return map(map.entrySet(), entry -> Pair.create(entry.getKey(), entry.getValue()));
   }
 
   /**

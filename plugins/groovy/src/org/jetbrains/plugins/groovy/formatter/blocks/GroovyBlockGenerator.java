@@ -554,7 +554,7 @@ public class GroovyBlockGenerator {
 
     GrStatement first = embedded ? inner : group.get(1);
     List<AlignmentProvider.Aligner> alignments = ContainerUtil
-      .map2List(getSpockTable(first), leaf -> myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT));
+      .map(getSpockTable(first), leaf -> myAlignmentProvider.createAligner(leaf, true, Alignment.Anchor.RIGHT));
 
     int second = embedded ? 1 : 2;
     for (int i = second; i < group.size(); i++) {

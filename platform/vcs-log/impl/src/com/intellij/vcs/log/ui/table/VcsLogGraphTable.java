@@ -262,7 +262,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public @NotNull List<VcsLogColumn<?>> getVisibleColumns() {
-    return ContainerUtil.map2List(getVisibleColumnIndices(),
+    return ContainerUtil.map(getVisibleColumnIndices(),
                                   columnModelIndex -> VcsLogColumnManager.getInstance().getColumn(columnModelIndex));
   }
 

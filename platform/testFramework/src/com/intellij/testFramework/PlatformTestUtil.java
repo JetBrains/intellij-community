@@ -71,6 +71,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
@@ -114,7 +115,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
 import static com.intellij.util.ObjectUtils.consumeIfNotNull;
-import static com.intellij.util.containers.ContainerUtil.map2List;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static org.junit.Assert.*;
 
@@ -261,8 +261,8 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      List<String> actualLines = sorted(map2List(splitByLines(treeStringPresentation), String::trim));
-      List<String> expectedLines = sorted(map2List(splitByLines(expected), String::trim));
+      List<String> actualLines = sorted(ContainerUtil.map(splitByLines(treeStringPresentation), String::trim));
+      List<String> expectedLines = sorted(ContainerUtil.map(splitByLines(expected), String::trim));
       assertEquals("Expected:\n" + expected + "\nActual:\n" + treeStringPresentation, expectedLines, actualLines);
     }
     else {

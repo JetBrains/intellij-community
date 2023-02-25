@@ -112,8 +112,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return () -> ContainerUtil.<Enum, Pair<String, Icon>>map2List(
-      aClass.getEnumConstants(), s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
+    return () -> ContainerUtil.map(aClass.getEnumConstants(), s -> Pair.create(
+      NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
   }
 
   public static <T extends Enum<?>> JComboBox<Pair<String, Icon>> createEnumComboBox(final Class<T> type) {

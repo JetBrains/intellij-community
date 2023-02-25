@@ -808,7 +808,7 @@ public final class Switcher extends BaseSwitcherAction {
 
     @TestOnly
     static List<VirtualFile> getFilesToShowForTest(@NotNull Project project) {
-      return ContainerUtil.map2List(getFilesToShow(project, false, 10, true), SwitcherVirtualFile::getFile);
+      return ContainerUtil.map(getFilesToShow(project, false, 10, true), SwitcherVirtualFile::getFile);
     }
 
     @TestOnly

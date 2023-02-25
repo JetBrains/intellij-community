@@ -201,7 +201,7 @@ public class StructureFilterPopupComponent
 
   private @NotNull List<VcsLogStructureFilter> getRecentFilters() {
     List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(PATHS);
-    return ContainerUtil.map2List(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
+    return ContainerUtil.map(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
   }
 
   private Set<VirtualFile> getAllRoots() {

@@ -491,7 +491,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     // convert report
     if (reportConverter != null) {
       try {
-        List<File> results = ContainerUtil.map2List(inspectionsResults, Path::toFile);
+        List<File> results = ContainerUtil.map(inspectionsResults, Path::toFile);
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 results);
         InspectResultsConsumer.runConsumers(context.getTools(), results, project);

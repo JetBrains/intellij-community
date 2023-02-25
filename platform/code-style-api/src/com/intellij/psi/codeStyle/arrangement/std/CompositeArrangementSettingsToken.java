@@ -45,14 +45,13 @@ public class CompositeArrangementSettingsToken {
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            ArrangementSettingsToken @NotNull ... children)
   {
-    this(token, deduceRole(token),
-         ContainerUtil.map2List(Arrays.asList(children), WRAPPER));
+    this(token, deduceRole(token), ContainerUtil.map(Arrays.asList(children), WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
                                            @NotNull Collection<? extends ArrangementSettingsToken> children)
   {
-    this(token, deduceRole(token), ContainerUtil.map2List(children, WRAPPER));
+    this(token, deduceRole(token), ContainerUtil.map(children, WRAPPER));
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,

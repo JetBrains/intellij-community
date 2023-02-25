@@ -81,7 +81,7 @@ public final class ModuleDataService extends AbstractModuleDataService<ModuleDat
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> data = new HashMap<>();
     for (Map.Entry<DataNode<ProjectData>, Collection<DataNode<ModuleData>>> entry : grouped.entrySet()) {
       data.put(ExternalProjectPojo.from(entry.getKey().getData()),
-               ContainerUtil.map2List(entry.getValue(), node -> ExternalProjectPojo.from(node.getData())));
+               ContainerUtil.map(entry.getValue(), node -> ExternalProjectPojo.from(node.getData())));
     }
 
     AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);

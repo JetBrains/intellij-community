@@ -70,7 +70,7 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
           () -> {
-            Collection<PsiMethodMember> members = ContainerUtil.map2List(toImplement, PsiMethodMember::new);
+            Collection<PsiMethodMember> members = ContainerUtil.map(toImplement, PsiMethodMember::new);
             OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
           });
       }
@@ -95,7 +95,7 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
     invokeImpl(aClass);
     final Collection<CandidateInfo> toImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
     if (toImplement.isEmpty()) return IntentionPreviewInfo.EMPTY;
-    Collection<PsiMethodMember> members = ContainerUtil.map2List(toImplement, PsiMethodMember::new);
+    Collection<PsiMethodMember> members = ContainerUtil.map(toImplement, PsiMethodMember::new);
     OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, members, false);
     return IntentionPreviewInfo.DIFF;
   }

@@ -198,7 +198,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
       { action: AnAction? -> ActionGroupPanelWrapper.wrapGroups(action!!, parentDisposable) },
       ProjectsTabFactory.PRIMARY_BUTTONS_NUM)
     val toolbarActionGroup = DefaultActionGroup(
-      ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null)) { action: AnAction -> createButtonWrapper(action) })
+      mainAndMore.getFirst().getChildren(null).map { action: AnAction -> createButtonWrapper(action) })
     val moreActionGroup: ActionGroup = mainAndMore.getSecond()
     val moreActionPresentation = moreActionGroup.templatePresentation
     moreActionPresentation.icon = AllIcons.Actions.More

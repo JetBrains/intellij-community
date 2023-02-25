@@ -114,7 +114,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     String fqName = myLibraries.get(firstItem);
     String refName = !StringUtil.isEmpty(fqName) ? StringUtil.getShortName(fqName) : null;
 
-    String libraryList = NlsMessages.formatAndList(ContainerUtil.map2List(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
+    String libraryList = NlsMessages.formatAndList(ContainerUtil.map(myLibraries.keySet(), library -> "'" + library.getPresentableName() + "'"));
     String libraryName = firstItem.getPresentableName();
     String message = refName != null ? JavaBundle.message("adds.library.preview", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName(), refName)
                                      : JavaBundle.message("adds.library.preview.no.import", myLibraries.size(), libraryName, libraryList, myCurrentModule.getName());

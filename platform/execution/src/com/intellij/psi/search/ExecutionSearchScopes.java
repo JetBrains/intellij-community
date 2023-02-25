@@ -33,7 +33,7 @@ public final class ExecutionSearchScopes {
     if (modules.isEmpty()) {
       return null;
     }
-    return GlobalSearchScope.union(ContainerUtil.map2List(modules, module -> {
+    return GlobalSearchScope.union(ContainerUtil.map(modules, module -> {
       return GlobalSearchScope.moduleRuntimeScope(module, true);
     }));
   }

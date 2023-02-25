@@ -51,7 +51,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
   @NotNull
   protected List<VcsRef> expect(String @NotNull ... refNames) {
     final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, getProjectRoot(), myProject.getService(VcsLogObjectsFactory.class));
-    return ContainerUtil.map2List(refNames, refName -> {
+    return ContainerUtil.map(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
       assertNotNull("Ref " + refName + " not found among " + refs, item);
       return item;

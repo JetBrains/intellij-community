@@ -78,7 +78,7 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer();
     TaintValue taintValue = taintAnalyzer.analyze(uExpression);
     if (taintValue != TaintValue.UNKNOWN) return null;
-    return ContainerUtil.map2List(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked);
+    return ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked);
   }
 
   @Override

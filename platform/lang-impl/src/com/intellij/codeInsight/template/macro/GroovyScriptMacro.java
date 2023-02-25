@@ -68,7 +68,7 @@ public class GroovyScriptMacro extends Macro {
         Result paramResult = params[i].calculateResult(context);
         Object value = null;
         if (paramResult instanceof ListResult) {
-          value = ContainerUtil.map2List(((ListResult)paramResult).getComponents(), result1 -> result1.toString());
+          value = ContainerUtil.map(((ListResult)paramResult).getComponents(), result1 -> result1.toString());
         } else if (paramResult != null) {
           value = paramResult.toString();
         }

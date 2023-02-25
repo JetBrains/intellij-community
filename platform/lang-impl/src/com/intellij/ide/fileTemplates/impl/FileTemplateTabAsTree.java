@@ -55,7 +55,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     FileTemplateNode(FileTemplateDescriptor descriptor) {
       this(descriptor.getDisplayName(),
            descriptor.getIcon(),
-           descriptor instanceof FileTemplateGroupDescriptor ? ContainerUtil.map2List(((FileTemplateGroupDescriptor)descriptor).getTemplates(),
+           descriptor instanceof FileTemplateGroupDescriptor ? ContainerUtil.map(((FileTemplateGroupDescriptor)descriptor).getTemplates(),
                                                                                       s -> new FileTemplateNode(s)) : Collections.emptyList(),
            descriptor instanceof FileTemplateGroupDescriptor ? null : descriptor.getFileName());
     }

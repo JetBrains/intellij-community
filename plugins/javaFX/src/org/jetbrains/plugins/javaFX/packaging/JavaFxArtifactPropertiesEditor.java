@@ -100,7 +100,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     }
     myNativeBundleCB.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(bundleNames)));
 
-    final List<String> outputLevels = ContainerUtil.map2List(JavaFxPackagerConstants.MsgOutputLevel.values(), Enum::name);
+    final List<String> outputLevels = ContainerUtil.map(JavaFxPackagerConstants.MsgOutputLevel.values(), Enum::name);
     myMsgOutputLevel.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(outputLevels)));
   }
 

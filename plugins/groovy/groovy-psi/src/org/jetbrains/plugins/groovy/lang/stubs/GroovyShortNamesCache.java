@@ -103,7 +103,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
       }
     }
     GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
-    return ContainerUtil.map2List(
+    return ContainerUtil.map(
       StubIndex.getElements(GrFullScriptNameStringIndex.KEY, name, myProject, actualScope, GroovyFile.class),
       o -> Objects.requireNonNull(o.getScriptClass()));
   }

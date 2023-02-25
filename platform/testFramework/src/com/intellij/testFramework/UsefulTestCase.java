@@ -39,10 +39,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.junit.Assert;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
@@ -703,7 +700,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
-    List<String> list = ContainerUtil.sorted(ContainerUtil.map2List(collection, String::valueOf));
+    List<String> list = ContainerUtil.sorted(ContainerUtil.map(collection, String::valueOf));
     StringBuilder builder = new StringBuilder();
     boolean flag = false;
     for (String o : list) {

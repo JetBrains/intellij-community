@@ -63,7 +63,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
     }
 
     final Collection<String> methodNames = getAvailableAnnotationMethodNames(pair);
-    return ContainerUtil.map2List(methodNames, name -> new AddAnnotationAttributeNameFix(pair, name));
+    return ContainerUtil.map(methodNames, name -> new AddAnnotationAttributeNameFix(pair, name));
   }
 
   public static void doFix(@NotNull PsiNameValuePair annotationParameter, @NotNull String name) {

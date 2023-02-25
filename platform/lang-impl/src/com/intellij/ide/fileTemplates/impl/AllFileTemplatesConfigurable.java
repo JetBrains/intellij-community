@@ -239,7 +239,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
             ContainerUtil.addIfNotNull(categories, templateGroupFactory.getFileTemplatesDescriptor());
           }
 
-          return new FileTemplateNode("ROOT", null, ContainerUtil.map2List(categories, FileTemplateNode::new));
+          return new FileTemplateNode("ROOT", null, ContainerUtil.map(categories, FileTemplateNode::new));
         }
       };
       allTabs.add(otherTemplatesList);
