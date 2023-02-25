@@ -459,12 +459,7 @@ public final class MavenProjectsTree {
 
     UpdateContext updateContext = new UpdateContext();
 
-    var updater = new MavenProjectsTreeUpdater(this,
-                                               explicitProfiles,
-                                               updateContext,
-                                               projectReader,
-                                               generalSettings,
-                                               process);
+    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
     for (VirtualFile file : files) {
       MavenProject mavenProject = findProject(file);
       MavenProject aggregator = null;
@@ -482,10 +477,7 @@ public final class MavenProjectsTree {
         force = forceUpdate;
       }
 
-      updater.update(file,
-                     aggregator,
-                     recursive,
-                     force);
+      updater.update(file, aggregator, recursive, force);
     }
 
     updateExplicitProfiles();
@@ -615,11 +607,8 @@ public final class MavenProjectsTree {
         }
 
         if (readProject || isNewModule || recursive) {
-          update(module.getFile(),
-                 mavenProject,
-                 recursive,
-                 recursive && forceReading // do not force update modules if only this project was requested to be updated
-          );
+          // do not force update modules if only this project was requested to be updated
+          update(module.getFile(), mavenProject, recursive, recursive && forceReading);
         }
         else {
           if (tree.reconnect(mavenProject, module)) {
@@ -631,10 +620,8 @@ public final class MavenProjectsTree {
       prevInheritors.addAll(tree.findInheritors(mavenProject));
 
       for (MavenProject each : prevInheritors) {
-        update(each.getFile(),
-               tree.findAggregator(each),
-               false, // no need to go recursively in case of inheritance, only when updating modules
-               false);
+        // no need to go recursively in case of inheritance, only when updating modules
+        update(each.getFile(), tree.findAggregator(each), false, false);
       }
 
       updateStack.pop();
