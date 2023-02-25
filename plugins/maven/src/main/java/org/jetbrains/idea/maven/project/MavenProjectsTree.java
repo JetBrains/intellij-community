@@ -469,7 +469,6 @@ public final class MavenProjectsTree {
       MavenProject mavenProject = findProject(file);
       MavenProject aggregator = null;
       boolean force = false;
-      boolean isNew = false;
       if (mavenProject == null) {
         for (MavenProject each : getProjects()) {
           if (each.getExistingModuleFiles().contains(file)) {
@@ -477,7 +476,6 @@ public final class MavenProjectsTree {
             break;
           }
         }
-        isNew = true;
       }
       else {
         aggregator = findAggregator(mavenProject);
@@ -486,7 +484,6 @@ public final class MavenProjectsTree {
 
       updater.update(file,
                      aggregator,
-                     isNew,
                      recursive,
                      force);
     }
@@ -520,7 +517,6 @@ public final class MavenProjectsTree {
 
     public void update(final VirtualFile mavenProjectFile,
                        final MavenProject aggregator,
-                       final boolean isNew,
                        final boolean recursive,
                        final boolean forceReading) {
       if (updateStack.contains(mavenProjectFile)) {
@@ -533,6 +529,7 @@ public final class MavenProjectsTree {
       process.setText2("");
 
       var existingMavenProject = tree.findProject(mavenProjectFile);
+      boolean isNew = existingMavenProject == null;
       var mavenProject = existingMavenProject == null ? new MavenProject(mavenProjectFile) :existingMavenProject;
 
       List<MavenProject> prevModules = tree.getModules(mavenProject);
@@ -621,7 +618,6 @@ public final class MavenProjectsTree {
         if (readProject || isNewModule || recursive) {
           update(module.getFile(),
                  mavenProject,
-                 isNewModule,
                  recursive,
                  recursive && forceReading // do not force update modules if only this project was requested to be updated
           );
@@ -638,7 +634,6 @@ public final class MavenProjectsTree {
       for (MavenProject each : prevInheritors) {
         update(each.getFile(),
                tree.findAggregator(each),
-               false,
                false, // no need to go recursively in case of inheritance, only when updating modules
                false);
       }
@@ -741,7 +736,7 @@ public final class MavenProjectsTree {
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
-      updater.update(mavenProject.getFile(), null, false, false, false);
+      updater.update(mavenProject.getFile(), null, false, false);
     }
 
     updateExplicitProfiles();
