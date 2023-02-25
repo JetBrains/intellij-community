@@ -471,7 +471,6 @@ public final class MavenProjectsTree {
       boolean force = false;
       boolean isNew = false;
       if (mavenProject == null) {
-        mavenProject = new MavenProject(file);
         for (MavenProject each : getProjects()) {
           if (each.getExistingModuleFiles().contains(file)) {
             aggregator = each;
@@ -485,7 +484,7 @@ public final class MavenProjectsTree {
         force = forceUpdate;
       }
 
-      updater.update(mavenProject,
+      updater.update(file,
                      aggregator,
                      isNew,
                      recursive,
@@ -500,7 +499,7 @@ public final class MavenProjectsTree {
     private final MavenProjectsTree tree;
     private final MavenExplicitProfiles explicitProfiles;
     private final UpdateContext updateContext;
-    private final Stack<MavenProject> updateStack = new Stack<>();
+    private final Stack<VirtualFile> updateStack = new Stack<>();
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
@@ -519,18 +518,22 @@ public final class MavenProjectsTree {
       this.process = process;
     }
 
-    public void update(final MavenProject mavenProject,
+    public void update(final VirtualFile mavenProjectFile,
                        final MavenProject aggregator,
                        final boolean isNew,
                        final boolean recursive,
                        final boolean forceReading) {
-      if (updateStack.contains(mavenProject)) {
-        MavenLog.LOG.info("Recursion detected in " + mavenProject.getFile());
+      if (updateStack.contains(mavenProjectFile)) {
+        MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
         return;
       }
-      updateStack.push(mavenProject);
-      process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
+
+      updateStack.push(mavenProjectFile);
+      process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
+
+      var existingMavenProject = tree.findProject(mavenProjectFile);
+      var mavenProject = existingMavenProject == null ? new MavenProject(mavenProjectFile) :existingMavenProject;
 
       List<MavenProject> prevModules = tree.getModules(mavenProject);
 
@@ -616,7 +619,7 @@ public final class MavenProjectsTree {
         }
 
         if (readProject || isNewModule || recursive) {
-          update(module,
+          update(module.getFile(),
                  mavenProject,
                  isNewModule,
                  recursive,
@@ -633,7 +636,7 @@ public final class MavenProjectsTree {
       prevInheritors.addAll(tree.findInheritors(mavenProject));
 
       for (MavenProject each : prevInheritors) {
-        update(each,
+        update(each.getFile(),
                tree.findAggregator(each),
                false,
                false, // no need to go recursively in case of inheritance, only when updating modules
@@ -738,7 +741,7 @@ public final class MavenProjectsTree {
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
-      updater.update(mavenProject, null, false, false, false);
+      updater.update(mavenProject.getFile(), null, false, false, false);
     }
 
     updateExplicitProfiles();
