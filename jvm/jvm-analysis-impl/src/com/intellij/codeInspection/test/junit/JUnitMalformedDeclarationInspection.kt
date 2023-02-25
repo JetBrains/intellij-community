@@ -87,10 +87,10 @@ private class JUnitMalformedSignatureVisitor(
 
   override fun visitField(node: UField): Boolean {
     checkMalformedCallbackExtension(node)
-    dataPoint.report(holder, node)
-    ruleSignatureProblem.report(holder, node)
-    classRuleSignatureProblem.report(holder, node)
-    registeredExtensionProblem.report(holder, node)
+    dataPoint.check(holder, node)
+    ruleSignatureProblem.check(holder, node)
+    classRuleSignatureProblem.check(holder, node)
+    registeredExtensionProblem.check(holder, node)
     return true
   }
 
@@ -98,18 +98,18 @@ private class JUnitMalformedSignatureVisitor(
     checkMalformedParameterized(node)
     checkRepeatedTestNonPositive(node)
     checkIllegalCombinedAnnotations(node)
-    dataPoint.report(holder, node)
+    dataPoint.check(holder, node)
     checkSuite(node)
     checkedMalformedSetupTeardown(node)
-    beforeAfterProblem.report(holder, node)
-    beforeAfterEachProblem.report(holder, node)
-    beforeAfterClassProblem.report(holder, node)
-    beforeAfterAllProblem.report(holder, node)
-    ruleSignatureProblem.report(holder, node)
-    classRuleSignatureProblem.report(holder, node)
+    beforeAfterProblem.check(holder, node)
+    beforeAfterEachProblem.check(holder, node)
+    beforeAfterClassProblem.check(holder, node)
+    beforeAfterAllProblem.check(holder, node)
+    ruleSignatureProblem.check(holder, node)
+    classRuleSignatureProblem.check(holder, node)
     checkJUnit3Test(node)
-    junit4TestProblem.report(holder, node)
-    junit5TestProblem.report(holder, node)
+    junit4TestProblem.check(holder, node)
+    junit5TestProblem.check(holder, node)
     return true
   }
 
@@ -851,7 +851,7 @@ private class JUnitMalformedSignatureVisitor(
       return true
     }
 
-    fun report(holder: ProblemsHolder, element: UField) {
+    fun check(holder: ProblemsHolder, element: UField) {
       if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiField>() ?: return
       val annotation = annotations
@@ -907,7 +907,7 @@ private class JUnitMalformedSignatureVisitor(
       return registerUProblem(element, message, quickFix)
     }
 
-    fun report(holder: ProblemsHolder, element: UMethod) {
+    fun check(holder: ProblemsHolder, element: UMethod) {
       if (!isApplicable(element)) return
       val javaPsi = element.javaPsi.asSafely<PsiMethod>() ?: return
       val sourcePsi = element.sourcePsi ?: return
