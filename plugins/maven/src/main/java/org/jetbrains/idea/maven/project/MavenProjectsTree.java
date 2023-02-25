@@ -530,7 +530,7 @@ public final class MavenProjectsTree {
 
       var existingMavenProject = tree.findProject(mavenProjectFile);
       boolean isNew = existingMavenProject == null;
-      var mavenProject = existingMavenProject == null ? new MavenProject(mavenProjectFile) :existingMavenProject;
+      var mavenProject = existingMavenProject == null ? new MavenProject(mavenProjectFile) : existingMavenProject;
 
       List<MavenProject> prevModules = tree.getModules(mavenProject);
 
@@ -545,14 +545,11 @@ public final class MavenProjectsTree {
 
       MavenProjectChanges changes = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
       if (readProject) {
-        tree.withWriteLock(() -> {
-          if (!isNew) {
-            tree.clearIDMaps(mavenProject);
-          }
-        });
+        MavenId oldProjectId = isNew ? null : mavenProject.getMavenId();
         MavenId oldParentId = mavenProject.getParentId();
         changes = MavenProjectChangesBuilder.merged(changes, mavenProject.read(generalSettings, explicitProfiles, reader, tree.myProjectLocator));
         tree.withWriteLock(() -> {
+          tree.clearIDMaps(oldProjectId);
           tree.myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
           tree.fillIDMaps(mavenProject);
         });
@@ -598,7 +595,9 @@ public final class MavenProjectsTree {
       }
 
       for (MavenProject each : modulesToBecomeRoots) {
-        if (tree.reconnect(null, each)) updateContext.update(each, MavenProjectChanges.NONE);
+        if (tree.reconnect(null, each)) {
+          updateContext.update(each, MavenProjectChanges.NONE);
+        }
       }
 
       for (VirtualFile each : existingModuleFiles) {
@@ -764,7 +763,7 @@ public final class MavenProjectsTree {
       }
       myTimestamps.remove(project);
       myVirtualFileToProjectMapping.remove(project.getFile());
-      clearIDMaps(project);
+      clearIDMaps(project.getMavenId());
       myAggregatorToModuleMapping.remove(project);
       myModuleToAggregatorMapping.remove(project);
     });
@@ -777,10 +776,11 @@ public final class MavenProjectsTree {
     myMavenIdToProjectMapping.put(id, mavenProject);
   }
 
-  private void clearIDMaps(MavenProject mavenProject) {
-    MavenId id = mavenProject.getMavenId();
-    myWorkspaceMap.unregister(id);
-    myMavenIdToProjectMapping.remove(id);
+  private void clearIDMaps(MavenId mavenId) {
+    if (null == mavenId) return;
+
+    myWorkspaceMap.unregister(mavenId);
+    myMavenIdToProjectMapping.remove(mavenId);
   }
 
   private void connect(MavenProject newAggregator, MavenProject project) {
