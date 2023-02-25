@@ -2725,15 +2725,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of entries of {@code map}
-   */
-  @Contract(pure = true)
-  @Unmodifiable
-  public static @NotNull <K, V> List<Pair<K, V>> map2List(@NotNull Map<? extends K, ? extends V> map) {
-    return map(map.entrySet(), entry -> Pair.create(entry.getKey(), entry.getValue()));
-  }
-
-  /**
    * @return read-only set consisting of results of {@code mapper.fun} for each element in {@code array}
    */
   @Contract(pure = true)
