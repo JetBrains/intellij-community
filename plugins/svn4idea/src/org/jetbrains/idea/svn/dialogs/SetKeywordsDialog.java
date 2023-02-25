@@ -22,13 +22,12 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class SetKeywordsDialog extends DialogWrapper {
   private static final List<String> KNOWN_KEYWORDS = List.of("Id", "HeadURL", "LastChangedDate", "LastChangedRevision", "LastChangedBy");
 
-  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = ContainerUtil.<@NlsSafe String, @NlsSafe String>immutableMapBuilder()
-    .put("URL", "HeadURL")
-    .put("Date", "LastChangedDate")
-    .put("Revision", "LastChangedRevision")
-    .put("Rev", "LastChangedRevision")
-    .put("Author", "LastChangedBy")
-    .build();
+  private static final Map<String, String> KNOWN_KEYWORD_ALIASES = Map.of(
+    "URL", "HeadURL",
+    "Date", "LastChangedDate",
+    "Revision", "LastChangedRevision",
+    "Rev", "LastChangedRevision",
+    "Author", "LastChangedBy");
 
   @Nullable private final PropertyValue myKeywordsValue;
   @NotNull private final List<JCheckBox> myKeywordOptions;

@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -178,19 +177,18 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerBinding()
       methodObject("bind", "org.codehaus.groovy.binding.FullBinding", "groovy.swing.factory.BindFactory",
-                    ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
-                     .put("source", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("target", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("update", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("targetProperty", NamedArgumentDescriptor.TYPE_STRING)
-                     .put("mutual", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("sourceEvent", NamedArgumentDescriptor.TYPE_STRING)
-                     .put("sourceValue", NamedArgumentDescriptor.TYPE_CLOSURE)
-                     .put("sourceProperty", NamedArgumentDescriptor.TYPE_STRING)
-                     .put("value", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("bind", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .put("group", NamedArgumentDescriptor.SIMPLE_ON_TOP)
-                     .build());
+                    Map.ofEntries(
+                     Map.entry("source", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("target", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("update", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("targetProperty", NamedArgumentDescriptor.TYPE_STRING),
+                     Map.entry("mutual", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("sourceEvent", NamedArgumentDescriptor.TYPE_STRING),
+                     Map.entry("sourceValue", NamedArgumentDescriptor.TYPE_CLOSURE),
+                     Map.entry("sourceProperty", NamedArgumentDescriptor.TYPE_STRING),
+                     Map.entry("value", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("bind", NamedArgumentDescriptor.SIMPLE_ON_TOP),
+                     Map.entry("group", NamedArgumentDescriptor.SIMPLE_ON_TOP)));
 
       methodObject("bindProxy", "org.codehaus.groovy.binding.BindingProxy", "groovy.swing.factory.BindProxyFactory",
                    ImmutableMap.of("bind", NamedArgumentDescriptor.SIMPLE_ON_TOP));

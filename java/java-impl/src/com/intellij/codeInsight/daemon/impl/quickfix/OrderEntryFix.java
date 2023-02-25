@@ -263,7 +263,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .collect(Collectors.toSet());
     if (!libraries.isEmpty()) {
       result.add(new AddLibraryDependencyFix(reference, currentModule,
-                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, null)), scope, exported));
+                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, "")), scope, exported));
     }
   }
 

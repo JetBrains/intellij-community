@@ -511,6 +511,10 @@ public final class ContainerUtil {
     return list instanceof ImmutableList ? (ImmutableList<E>)list : new ImmutableListBackedByList<>(list);
   }
 
+  /**
+   * @deprecated Use {@link Map#of}
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K, V> ImmutableMapBuilder<K, V> immutableMapBuilder() {
     return new ImmutableMapBuilder<>();
@@ -539,6 +543,10 @@ public final class ContainerUtil {
     return elements.size() > i ? elements.get(i) : defaultValue;
   }
 
+  /**
+   * @deprecated Use {@link Map#of}
+   */
+  @Deprecated
   public static final class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new HashMap<>();
 
