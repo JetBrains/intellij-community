@@ -475,12 +475,11 @@ public final class MavenProjectsTree {
             break;
           }
         }
-        connect(aggregator, mavenProject);
-      }
-      else {
-        aggregator = findAggregator(mavenProject);
-        if (reconnect(aggregator, mavenProject)) {
-          updateContext.update(mavenProject, MavenProjectChanges.NONE);
+        if (null == aggregator) {
+          connectRoot(mavenProject);
+        }
+        else {
+          connect(aggregator, mavenProject);
         }
       }
     }
@@ -581,7 +580,7 @@ public final class MavenProjectsTree {
       }
 
       for (MavenProject each : modulesToBecomeRoots) {
-        if (tree.reconnect(null, each)) {
+        if (tree.reconnectRoot(each)) {
           updateContext.update(each, MavenProjectChanges.NONE);
         }
       }
@@ -618,10 +617,6 @@ public final class MavenProjectsTree {
       for (MavenProject each : prevInheritors) {
         // no need to go recursively in case of inheritance, only when updating modules
         update(each.getFile(), false, false);
-
-        if (tree.reconnect(tree.findAggregator(each), each)) {
-          updateContext.update(each, MavenProjectChanges.NONE);
-        }
       }
 
       updateStack.pop();
@@ -723,7 +718,7 @@ public final class MavenProjectsTree {
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       updater.update(mavenProject.getFile(), false, false);
-        if (reconnect(null, mavenProject)) {
+        if (reconnectRoot(mavenProject)) {
           updateContext.update(mavenProject, MavenProjectChanges.NONE);
         }
     }
@@ -735,7 +730,7 @@ public final class MavenProjectsTree {
   private void doDelete(MavenProject aggregator, MavenProject project, UpdateContext updateContext) {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
-        if (reconnect(null, each)) {
+        if (reconnectRoot(each)) {
           updateContext.update(each, MavenProjectChanges.NONE);
         }
       }
@@ -773,18 +768,19 @@ public final class MavenProjectsTree {
     myMavenIdToProjectMapping.remove(mavenId);
   }
 
-  private void connect(MavenProject newAggregator, MavenProject project) {
+  private void connect(@NotNull MavenProject newAggregator, @NotNull MavenProject project) {
     withWriteLock(() -> {
-      if (newAggregator != null) {
-        addModule(newAggregator, project);
-      }
-      else {
-        myRootProjects.add(project);
-      }
+      addModule(newAggregator, project);
     });
   }
 
-  private boolean reconnect(MavenProject newAggregator, MavenProject project) {
+  private void connectRoot(@NotNull MavenProject project) {
+    withWriteLock(() -> {
+      myRootProjects.add(project);
+    });
+  }
+
+  private boolean reconnect(@NotNull MavenProject newAggregator, @NotNull MavenProject project) {
     MavenProject prevAggregator = findAggregator(project);
 
     if (prevAggregator == newAggregator) return false;
@@ -797,12 +793,20 @@ public final class MavenProjectsTree {
         myRootProjects.remove(project);
       }
 
-      if (newAggregator != null) {
-        addModule(newAggregator, project);
-      }
-      else {
-        myRootProjects.add(project);
-      }
+      addModule(newAggregator, project);
+    });
+
+    return true;
+  }
+
+  private boolean reconnectRoot(@NotNull MavenProject project) {
+    MavenProject prevAggregator = findAggregator(project);
+
+    if (prevAggregator == null) return false;
+
+    withWriteLock(() -> {
+      removeModule(prevAggregator, project);
+      myRootProjects.add(project);
     });
 
     return true;
