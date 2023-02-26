@@ -586,7 +586,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
       ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
-      List<ShelvedChangeList> cantRestoreList = findAll(myListDateMap.keySet(), l -> !manager.getDeletedLists().contains(l));
+      List<ShelvedChangeList> cantRestoreList = findAll(myListDateMap.keySet(), l -> l==null||!manager.getDeletedLists().contains(l));
       myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
       notification.expire();
       if (!cantRestoreList.isEmpty()) {

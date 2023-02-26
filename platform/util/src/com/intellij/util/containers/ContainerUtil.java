@@ -189,7 +189,9 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of the elements from the input collection
+   * @deprecated use {@link List#copyOf(Collection)}
    */
+  @Deprecated
   @Contract(pure = true)
   @Unmodifiable
   public static @NotNull <T> List<T> newUnmodifiableList(@NotNull List<? extends T> originalList) {
