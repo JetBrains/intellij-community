@@ -89,8 +89,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
     return !myMethod.isConstructor();
   }
 
-  @Unmodifiable
-  public List<AccessModifier> getAllowedModifiers() {
+  @Unmodifiable List<AccessModifier> getAllowedModifiers() {
     return AccessModifier.getAvailableModifiers(myMethod);
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class AccessibilityWeigher extends ProximityWeigher {
   @Override
   public AccessibilityLevel weigh(@NotNull PsiElement element, @NotNull ProximityLocation location) {
@@ -21,7 +23,7 @@ public class AccessibilityWeigher extends ProximityWeigher {
           return AccessibilityLevel.INACCESSIBLE;
         }
         if (JavaCompletionUtil.isEffectivelyDeprecated(member)) return AccessibilityLevel.DEPRECATED;
-        if (AnnotationUtil.isAnnotated(member, StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations(), 0)) {
+        if (AnnotationUtil.isAnnotated(member, Arrays.asList(StaticAnalysisAnnotationManager.getInstance().getKnownUnstableApiAnnotations()), 0)) {
           return AccessibilityLevel.DISCOURAGED;
         }
       }

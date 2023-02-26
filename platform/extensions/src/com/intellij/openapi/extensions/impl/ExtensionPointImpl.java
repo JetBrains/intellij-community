@@ -542,9 +542,10 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     List<ExtensionComponentAdapter> oldAdapters = adapters;
     boolean oldAdaptersAreSorted = adaptersAreSorted;
 
-    cachedExtensions = ContainerUtil.immutableList(newList);
     //noinspection unchecked
-    cachedExtensionsAsArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    T[] newArray = newList.toArray((T[])Array.newInstance(getExtensionClass(), 0));
+    cachedExtensionsAsArray = newArray;
+    cachedExtensions = ContainerUtil.immutableList(newArray);
     adapters = ContainerUtil.map(newList, it -> new ObjectComponentAdapter<>(it, pluginDescriptor, LoadingOrder.ANY));
     adaptersAreSorted = true;
 

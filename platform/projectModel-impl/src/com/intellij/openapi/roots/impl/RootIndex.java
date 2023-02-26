@@ -35,6 +35,7 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.HashMap;
@@ -483,6 +484,7 @@ class RootIndex {
   private static class OrderEntryGraph {
     private static class Edge {
       private final Module myKey;
+      @NotNull
       private final ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       private final boolean myRecursive; // Whether this edge should be descended into during graph walk
 
@@ -626,6 +628,7 @@ class RootIndex {
      * Traverses the graph from the given file, collecting all encountered order entries.
      */
     @NotNull
+    @Unmodifiable
     private List<OrderEntry> collectOrderEntries(@NotNull VirtualFile file) {
       List<VirtualFile> roots = getHierarchy(file, myAllRoots, myRootInfo);
       if (roots == null) {
@@ -671,7 +674,7 @@ class RootIndex {
         ContainerUtil.addIfNotNull(result, myRootInfo.getModuleSourceEntry(roots, moduleContentRoot, myLibClassRootEntries));
       }
       result.sort(BY_OWNER_MODULE);
-      return ContainerUtil.immutableList(result);
+      return List.copyOf(result);
     }
 
     @NotNull

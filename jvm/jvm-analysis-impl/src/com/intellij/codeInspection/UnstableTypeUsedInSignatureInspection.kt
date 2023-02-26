@@ -29,7 +29,7 @@ class UnstableTypeUsedInSignatureInspection : LocalInspectionTool() {
 
   @JvmField
   val unstableApiAnnotations: MutableList<String> =
-    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations.toTypedArray())
+    ExternalizableStringSet(*StaticAnalysisAnnotationManager.getInstance().knownUnstableApiAnnotations)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (unstableApiAnnotations.none { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {

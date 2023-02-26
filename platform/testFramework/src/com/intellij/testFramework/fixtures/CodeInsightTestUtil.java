@@ -55,7 +55,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Functions;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -325,7 +324,7 @@ public final class CodeInsightTestUtil {
     AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile), false);
     ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
     annotationHolder.assertAllAnnotationsCreated();
-    return ContainerUtil.immutableList(annotationHolder);
+    return List.copyOf(annotationHolder);
   }
 
   /**
@@ -339,6 +338,6 @@ public final class CodeInsightTestUtil {
       annotationHolder.runAnnotatorWithContext(element, annotator);
     }
     annotationHolder.assertAllAnnotationsCreated();
-    return ContainerUtil.immutableList(annotationHolder);
+    return List.copyOf(annotationHolder);
   }
 }

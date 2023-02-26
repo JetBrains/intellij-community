@@ -446,16 +446,16 @@ public final class ContainerUtil {
   }
 
   /**
+   * @deprecated use {@link List#of} or {@link Collections#unmodifiableList(List)}
    * @return unmodifiable list (in which mutation methods throw {@link UnsupportedOperationException}) which contains elements from {@code array}.
    * When contents of {@code array} changes (e.g. via {@code array[0] = null}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
-   * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
-   * (Subject to change in subsequent JDKs).
-   * Otherwise, please prefer {@link List#of} or {@link Collections#unmodifiableList(List)}.
+   * unlike the {@link Collections#unmodifiableList(List)} (Subject to change in subsequent JDKs).
    */
   @SafeVarargs
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <E> ImmutableList<E> immutableList(E @NotNull ... array) {
     return new ImmutableListBackedByArray<>(array);
   }
@@ -499,15 +499,15 @@ public final class ContainerUtil {
   }
 
   /**
+   * @deprecated use {@link List#copyOf(Collection)} or {@link Collections#unmodifiableList(List)}
    * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code list} elements.
    * When contents of {@code list} changes (e.g. via {@code list.set(0, null)}), this collection contents changes accordingly.
    * This collection doesn't contain {@link Collections.UnmodifiableList#list} and {@link Collections.UnmodifiableCollection#c} fields,
-   * unlike the {@link Collections#unmodifiableList(List)}, so it might be useful in extremely space-conscious places.
-   * (Subject to change in subsequent JDKs).
-   * Otherwise, please prefer {@link Collections#unmodifiableList(List)} or {@link List#copyOf(Collection)}.
+   * unlike the {@link Collections#unmodifiableList(List)} (Subject to change in subsequent JDKs).
    */
   @Contract(pure = true)
   @Unmodifiable
+  @Deprecated
   public static @NotNull <E> ImmutableList<E> immutableList(@NotNull List<? extends E> list) {
     //noinspection unchecked
     return list instanceof ImmutableList ? (ImmutableList<E>)list : new ImmutableListBackedByList<>(list);
@@ -572,6 +572,7 @@ public final class ContainerUtil {
   }
 
   @Unmodifiable
+  @Deprecated
   private static final class ImmutableListBackedByList<E> extends ImmutableList<E> {
     private final List<? extends E> myStore;
 
@@ -596,6 +597,7 @@ public final class ContainerUtil {
   }
 
   @Unmodifiable
+  @Deprecated
   private static final class ImmutableListBackedByArray<E> extends ImmutableList<E> {
     private final E[] myStore;
 
