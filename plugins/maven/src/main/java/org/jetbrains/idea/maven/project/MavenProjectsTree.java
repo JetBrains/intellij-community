@@ -912,19 +912,19 @@ public final class MavenProjectsTree {
 
         Writer crcWriter = new Writer() {
           @Override
-          public void write(char[] cbuf, int off, int len) throws IOException {
+          public void write(char[] cbuf, int off, int len) {
             for (int i = off, end = off + len; i < end; i++) {
               crc.update(cbuf[i]);
             }
           }
 
           @Override
-          public void flush() throws IOException {
+          public void flush() {
 
           }
 
           @Override
-          public void close() throws IOException {
+          public void close() {
 
           }
         };
@@ -1200,12 +1200,6 @@ public final class MavenProjectsTree {
     public void deleted(MavenProject project) {
       updatedProjectsWithChanges.remove(project);
       deletedProjects.add(project);
-    }
-
-    public void deleted(Collection<MavenProject> projects) {
-      for (MavenProject each : projects) {
-        deleted(each);
-      }
     }
 
     public void fireUpdatedIfNecessary() {
