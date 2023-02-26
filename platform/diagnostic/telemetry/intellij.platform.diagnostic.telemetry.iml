@@ -18,6 +18,5 @@
     <orderEntry type="library" name="ktor-client-cio" level="project" />
     <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
     <orderEntry type="library" name="HdrHistogram" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" />
   </component>
 </module>
