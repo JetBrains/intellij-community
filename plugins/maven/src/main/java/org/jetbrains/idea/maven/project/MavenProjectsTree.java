@@ -476,10 +476,10 @@ public final class MavenProjectsTree {
           }
         }
         if (null == aggregator) {
-          connectRoot(mavenProject);
+          addRootModule(mavenProject);
         }
         else {
-          connect(aggregator, mavenProject);
+          addModule(aggregator, mavenProject);
         }
       }
     }
@@ -603,7 +603,7 @@ public final class MavenProjectsTree {
 
         MavenProject module = tree.findProject(each);
         if (isNewModule) {
-          tree.connect(mavenProject, module);
+          tree.addModule(mavenProject, module);
         }
         else {
           if (tree.reconnect(mavenProject, module)) {
@@ -768,13 +768,7 @@ public final class MavenProjectsTree {
     myMavenIdToProjectMapping.remove(mavenId);
   }
 
-  private void connect(@NotNull MavenProject newAggregator, @NotNull MavenProject project) {
-    withWriteLock(() -> {
-      addModule(newAggregator, project);
-    });
-  }
-
-  private void connectRoot(@NotNull MavenProject project) {
+  private void addRootModule(@NotNull MavenProject project) {
     withWriteLock(() -> {
       myRootProjects.add(project);
     });
@@ -1028,7 +1022,7 @@ public final class MavenProjectsTree {
     });
   }
 
-  private void addModule(MavenProject aggregator, MavenProject module) {
+  private void addModule(@NotNull MavenProject aggregator, @NotNull MavenProject module) {
     withWriteLock(() -> {
       List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
       if (modules == null) {
