@@ -19,6 +19,11 @@
       implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
@@ -26,6 +31,9 @@
               class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
       <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
               class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
+              internal="true"/>
+      <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
