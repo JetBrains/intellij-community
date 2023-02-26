@@ -46,6 +46,7 @@ object DistributedTestModel : Ext(TestRoot) {
     signal("shutdown", void)
     signal("dumpThreads", void).async
     call("closeProject", void, bool)
+    call("closeProjectIfOpened", void, bool)
     call("runNextAction", void, bool)
     call("makeScreenshot", string, bool)
   }
