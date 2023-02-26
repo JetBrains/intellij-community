@@ -2942,23 +2942,6 @@ public final class ContainerUtil {
     return Integer.compare(o1.size(), o2.size());
   }
 
-  /**
-   * Returns a String representation of the given map, by listing all key-value pairs contained in the map.
-   */
-  @Contract(pure = true)
-  public static @NotNull String toString(@NotNull Map<?, ?> map) {
-    StringBuilder sb = new StringBuilder("{");
-    for (Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<?, ?> entry = iterator.next();
-      sb.append(entry.getKey()).append('=').append(entry.getValue());
-      if (iterator.hasNext()) {
-        sb.append(", ");
-      }
-    }
-    sb.append('}');
-    return sb.toString();
-  }
-
   public static final class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
       super(new TreeMap<>());
