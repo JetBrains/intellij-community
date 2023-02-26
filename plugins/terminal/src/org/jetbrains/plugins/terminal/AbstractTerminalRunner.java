@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -68,8 +69,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     mySettingsProvider = new JBTerminalSystemSettingsProvider();
   }
 
+  /**
+   * @deprecated {@link TerminalToolWindowManager} instead
+   */
+  @Deprecated
   public void run() {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, TerminalBundle.message("progress.title.running.terminal"), false) {
+      @SuppressWarnings("DialogTitleCapitalization")
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         indicator.setText(TerminalBundle.message("progress.text.running.terminal"));
@@ -236,7 +242,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ProcessHandler processHandler = createProcessHandler(process);
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process)); //NON-NLS
+      new RunContentDescriptor(null, processHandler, panel, getDefaultTabTitle());
 
     contentDescriptor.setAutoFocusContent(true);
 
@@ -263,7 +269,18 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     session.start();
   }
 
-  protected abstract String getTerminalConnectionName(T process);
+  public @Nullable @NlsContexts.TabTitle String getDefaultTabTitle() {
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link #getDefaultTabTitle()} instead
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  protected String getTerminalConnectionName(T process) {
+    return getDefaultTabTitle();
+  }
 
   public abstract @NotNull TtyConnector createTtyConnector(@NotNull T process);
 
@@ -287,7 +304,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return myProject;
   }
 
-  public abstract String runningTargetName();
+  /**
+   * @deprecated use {@link #getDefaultTabTitle()} instead
+   */
+  @Deprecated
+  public String runningTargetName() {
+    return getDefaultTabTitle();
+  }
 
   /**
    * @return true if all live terminal sessions created with this runner
@@ -318,12 +341,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
             terminalWidget.connectToTty(connector);
           }
           catch (Exception e) {
-            printError(terminalWidget, "Cannot create terminal session for " + runningTargetName(), e);
+            printError(terminalWidget, "Cannot create terminal session for " + terminalWidget.getTerminalTitle().buildTitle(), e);
           }
         }, modalityState, myProject.getDisposed());
       }
       catch (Exception e) {
-        printError(terminalWidget, "Cannot open " + runningTargetName(), e);
+        printError(terminalWidget, "Cannot open " + terminalWidget.getTerminalTitle().buildTitle(), e);
       }
     });
   }
