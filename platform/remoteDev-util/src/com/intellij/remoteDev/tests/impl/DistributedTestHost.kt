@@ -90,13 +90,13 @@ class DistributedTestHost {
     logger.info("Advise for session...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       try {
-        logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
         logger.info("Setting up loggers")
         AgentTestLoggerFactory.bindSession(sessionLifetime, session)
         if (session.testMethodName == null) {
           logger.info("Test session without test class to run.")
         }
         else {
+          logger.info("New test session: ${session.testClassName}.${session.testMethodName}")
           // Create test class
           val testClass = Class.forName(session.testClassName)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
@@ -166,14 +166,29 @@ class DistributedTestHost {
               logger.info("Close project...")
               try {
                 ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-                return@set RdTask.fromResult(false)
+                return@set RdTask.fromResult(true)
               }
               catch (e: Exception) {
                 logger.error("Error on project closing", e)
-                return@set RdTask.fromResult(true)
+                return@set RdTask.fromResult(false)
               }
             }
           }
+        }
+
+        session.closeProjectIfOpened.set { _, _ ->
+          logger.info("Close project if it is opened...")
+          projectOrNull?.let {
+            try {
+              ProjectManagerEx.getInstanceEx().forceCloseProject(project)
+              return@set RdTask.fromResult(true)
+            }
+            catch (e: Exception) {
+              logger.error("Error on project closing", e)
+              return@set RdTask.fromResult(false)
+            }
+          } ?: return@set RdTask.fromResult(true)
+
         }
 
         session.shutdown.advise(lifetime) {
