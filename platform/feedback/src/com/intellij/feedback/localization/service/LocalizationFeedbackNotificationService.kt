@@ -10,7 +10,10 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 
 @Service(Service.Level.APP)
 class LocalizationFeedbackNotificationService {
@@ -18,14 +21,23 @@ class LocalizationFeedbackNotificationService {
     fun getInstance() = service<LocalizationFeedbackNotificationService>()
   }
 
-  private var lastNotification: Notification? = null
+  private val notifications = mutableListOf<Notification>()
 
-  fun showNotification(project: Project) {
+  fun showNotification() {
+    ProjectManager.getInstance().openProjects.forEach {
+      showNotification(it)
+    }
+  }
+
+  private fun showNotification(project: Project) {
     val notification = buildNotification {
-      LocalizationFeedbackDialog(it, false).show()
+      LocalizationFeedbackDialog(it, LocalizationFeedbackService.isTesting()).show()
     }
 
-    lastNotification = notification
+    notifications.add(notification)
+    Disposer.register(project) {
+      notifications.remove(notification)
+    }
 
     notification.notify(project)
   }
@@ -40,11 +52,13 @@ class LocalizationFeedbackNotificationService {
       val project = e.project ?: return@createExpiring
       LocalizationFeedbackService.getInstance().setInteraction()
       action(project)
+      notifications.forEach { it.expire() }
+      notifications.removeAll { true }
     })
 
     notification.addAction(NotificationAction.createSimpleExpiring(LocalizationFeedbackBundle.message("notification.dotNotShow.button")) {
-      lastNotification?.expire()
-      lastNotification = null
+      notifications.forEach { it.expire() }
+      notifications.removeAll { true }
       LocalizationFeedbackService.getInstance().setInteraction()
     })
 
