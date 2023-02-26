@@ -718,9 +718,9 @@ public final class MavenProjectsTree {
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       updater.update(mavenProject.getFile(), false, false);
-        if (reconnectRoot(mavenProject)) {
-          updateContext.update(mavenProject, MavenProjectChanges.NONE);
-        }
+      if (reconnectRoot(mavenProject)) {
+        updateContext.update(mavenProject, MavenProjectChanges.NONE);
+      }
     }
 
     updateExplicitProfiles();
