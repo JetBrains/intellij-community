@@ -83,7 +83,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
-    List<KeyStroke> strokes = getKeyStrokesByActionId("Terminal.SelectAll");
+    return getSelectAllActionPresentation(true);
+  }
+
+  protected @NotNull TerminalActionPresentation getSelectAllActionPresentation(boolean useCommonShortcuts) {
+    List<KeyStroke> strokes = getKeyStrokesByActionId(useCommonShortcuts ? "$SelectAll" : "Terminal.SelectAll");
     return new TerminalActionPresentation(UIUtil.removeMnemonic(ActionsBundle.message("action.$SelectAll.text")), strokes);
   }
 
