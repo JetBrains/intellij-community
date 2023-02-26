@@ -1072,7 +1072,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                        """);
     importProject();
     assertModules("project");
-
+    assertSources("project", "src/main/java");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
