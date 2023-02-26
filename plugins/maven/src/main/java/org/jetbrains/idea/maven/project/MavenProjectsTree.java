@@ -461,12 +461,8 @@ public final class MavenProjectsTree {
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
     for (VirtualFile file : files) {
-      MavenProject foundProject = findProject(file);
-      boolean force = false;
-      var isNew = foundProject == null;
-      if (!isNew) {
-        force = forceUpdate;
-      }
+      var isNew = null == findProject(file);
+      boolean force = isNew ? false : forceUpdate;
 
       updater.update(file, recursive, force);
 
@@ -530,7 +526,7 @@ public final class MavenProjectsTree {
 
       var existingMavenProject = tree.findProject(mavenProjectFile);
       boolean isNew = existingMavenProject == null;
-      var mavenProject = existingMavenProject == null ? new MavenProject(mavenProjectFile) : existingMavenProject;
+      var mavenProject = isNew ? new MavenProject(mavenProjectFile) : existingMavenProject;
 
       List<MavenProject> prevModules = tree.getModules(mavenProject);
 
