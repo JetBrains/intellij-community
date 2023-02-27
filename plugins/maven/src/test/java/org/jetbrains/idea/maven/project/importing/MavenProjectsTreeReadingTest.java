@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -30,10 +31,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
   @Test 
@@ -266,11 +264,18 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     List<MavenProject> roots = myTree.getRootProjects();
 
     assertEquals(1, roots.size());
-    assertEquals(1, myTree.getModules(roots.get(0)).size());
-    assertEquals(m1, myTree.getModules(roots.get(0)).get(0).getFile());
+    var allModules = collectAllModulesRecursively(myTree, roots.get(0));
+    assertEquals(2, allModules.size());
+    assertSameElements(Set.of(m1, m2), ContainerUtil.map(allModules, m -> m.getFile()));
+  }
 
-    assertEquals(1, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).size());
-    assertEquals(m2, myTree.getModules(myTree.getModules(roots.get(0)).get(0)).get(0).getFile());
+  private static List<MavenProject> collectAllModulesRecursively(MavenProjectsTree tree, MavenProject aggregator) {
+    var directModules = new ArrayList<>(tree.getModules(aggregator));
+    var allModules = new ArrayList<>(directModules);
+    for (var directModule : directModules) {
+      allModules.addAll(collectAllModulesRecursively(tree, directModule));
+    }
+    return allModules;
   }
 
   @Test 
