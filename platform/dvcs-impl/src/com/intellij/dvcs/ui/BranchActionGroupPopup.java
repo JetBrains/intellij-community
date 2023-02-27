@@ -299,14 +299,14 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @Override
-  protected void handleToggleAction() {
+  protected void handleToggleAction(@Nullable InputEvent inputEvent) {
     BranchActionGroup branchActionGroup = getSelectedBranchGroup();
     if (branchActionGroup != null) {
       branchActionGroup.toggle();
       getList().repaint();
     }
     else {
-      super.handleToggleAction();
+      super.handleToggleAction(inputEvent);
     }
   }
 

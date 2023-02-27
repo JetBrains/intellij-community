@@ -278,7 +278,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     registerAction("handleSelection1", KeyEvent.VK_ENTER, 0, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        handleSelect(true);
+        handleSelect(true, createKeyEvent(e, KeyEvent.VK_ENTER));
       }
     });
 
@@ -290,7 +290,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           if (nextExtendedButton(selected)) return;
         }
 
-        handleSelect(false);
+        handleSelect(false, createKeyEvent(e, KeyEvent.VK_RIGHT));
       }
     });
 
@@ -323,6 +323,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return myList;
+  }
+
+ protected @NotNull KeyEvent createKeyEvent(@NotNull ActionEvent e, int keyCode) {
+    return new KeyEvent(myList, KeyEvent.KEY_PRESSED, e.getWhen(), e.getModifiers(), keyCode, KeyEvent.CHAR_UNDEFINED);
   }
 
   private boolean nextExtendedButton(Object selected) {

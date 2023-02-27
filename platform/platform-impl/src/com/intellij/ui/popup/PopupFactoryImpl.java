@@ -248,7 +248,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          handleToggleAction();
+          handleToggleAction(createKeyEvent(e, KeyEvent.VK_SPACE));
         }
       });
 
@@ -303,7 +303,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    protected void handleToggleAction() {
+    protected void handleToggleAction(@Nullable InputEvent inputEvent) {
       List<Object> selectedValues = getList().getSelectedValuesList();
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step == null) return;
@@ -311,7 +311,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       for (Object value : selectedValues) {
         ActionItem item = ObjectUtils.tryCast(value, ActionItem.class);
         if (item != null && step.isSelectable(item) && item.getAction() instanceof Toggleable) {
-          step.performAction(item.getAction(), null);
+          step.performAction(item.getAction(), inputEvent);
           updateStep = true;
         }
       }
