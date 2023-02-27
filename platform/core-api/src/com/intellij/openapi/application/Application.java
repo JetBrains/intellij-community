@@ -377,6 +377,7 @@ public interface Application extends ComponentManager {
    *
    * @return the modality state for the current thread.
    */
+  @RequiresBlockingContext
   @NotNull ModalityState getDefaultModalityState();
 
   /**
