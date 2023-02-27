@@ -151,4 +151,19 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLambdaInvoke(myFixture)
     }
 
+    fun testIsMethodCallCanBeOneOfInvoke() {
+        checkIsMethodCallCanBeOneOfInvoke(myFixture)
+    }
+
+    fun testIsMethodCallCanBeOneOfRegularMethod() {
+        checkIsMethodCallCanBeOneOfRegularMethod(myFixture)
+    }
+
+    fun testCheckIsMethodCallCanBeOneOfConstructor() {
+        checkIsMethodCallCanBeOneOfConstructor(myFixture)
+    }
+
+    fun testIsMethodCallCanBeOneOfImportAliased() {
+        checkIsMethodCallCanBeOneOfImportAliased(myFixture)
+    }
 }

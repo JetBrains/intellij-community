@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
@@ -20,6 +21,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.KotlinUFile
+import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.jetbrains.uast.test.env.findUElementByTextFromPsi
@@ -1305,6 +1308,80 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 }
             }
         )
+    }
+
+    fun checkIsMethodCallCanBeOneOfInvoke(myFixture: JavaCodeInsightTestFixture) {
+        @Language("kotlin")
+        val mainCode = """               
+                operator fun Int.invoke() {}
+                
+                fun call() {
+                   val foo = 1
+                   foo()
+                }
+            """.trimIndent()
+        myFixture.configureByText("main.kt", mainCode)
+        myFixture.checkIsMethodNameCanBeOneOf(listOf("invoke"))
+    }
+
+
+    fun checkIsMethodCallCanBeOneOfRegularMethod(myFixture: JavaCodeInsightTestFixture) {
+        @Language("kotlin")
+        val mainCode = """               
+                fun foo(){}
+                
+                fun call() {
+                   foo()
+                }
+            """.trimIndent()
+        myFixture.configureByText("main.kt", mainCode)
+        myFixture.checkIsMethodNameCanBeOneOf(listOf("foo"))
+    }
+
+    fun checkIsMethodCallCanBeOneOfConstructor(myFixture: JavaCodeInsightTestFixture) {
+        @Language("kotlin")
+        val mainCode = """               
+                class Foo
+                
+                fun call() {
+                   Foo()
+                }
+            """.trimIndent()
+        myFixture.configureByText("main.kt", mainCode)
+        myFixture.checkIsMethodNameCanBeOneOf(listOf("<init>"))
+    }
+
+    fun checkIsMethodCallCanBeOneOfImportAliased(myFixture: JavaCodeInsightTestFixture) {
+        @Language("kotlin")
+        val mainCode = """
+                import kotlin.collections.listOf as lst
+                fun call() {
+                   lst(1)
+                }
+            """.trimIndent()
+        myFixture.configureByText("main.kt", mainCode)
+        myFixture.checkIsMethodNameCanBeOneOf(listOf("listOf"))
+    }
+
+    private fun JavaCodeInsightTestFixture.checkIsMethodNameCanBeOneOf(names: Collection<String>) {
+        var call: UCallExpression? = null
+        val uFile =  file.toUElement() as KotlinUFile
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    if (call != null) {
+                        error("Only a single call should be present in the test")
+                    }
+                    call = node
+                    return super.visitCallExpression(node)
+                }
+            }
+        )
+        check(call != null) {
+            "Call should be present in the test"
+        }
+        TestCase.assertTrue(call is KotlinUFunctionCallExpression)
+        TestCase.assertTrue("expected method name to be one of ${names}", call!!.methodNameCanBeOneOf(names))
     }
 
 }
