@@ -460,6 +460,7 @@ public final class MavenProjectsTree {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
+    var updateSpecs = new ArrayList<UpdateSpec>();
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       var isNew = null == findProject(file);
@@ -468,8 +469,9 @@ public final class MavenProjectsTree {
         filesToAddModules.add(file);
       }
 
-      updater.update(file, recursive, force);
+      updateSpecs.add(new UpdateSpec(file, recursive, force));
     }
+    updater.updateProjects(updateSpecs);
 
     for (MavenProject aggregator : getProjects()) {
       for (VirtualFile moduleFile : aggregator.getExistingModuleFiles()) {
@@ -496,6 +498,9 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
+  private record UpdateSpec(VirtualFile mavenProjectFile, boolean recursive, boolean forceReading) {
+  }
+
   private static class MavenProjectsTreeUpdater {
     private final MavenProjectsTree tree;
     private final MavenExplicitProfiles explicitProfiles;
@@ -519,9 +524,15 @@ public final class MavenProjectsTree {
       this.process = process;
     }
 
-    public void update(final VirtualFile mavenProjectFile,
-                       final boolean recursive,
-                       final boolean forceReading) {
+    public void updateProjects(@NotNull List<UpdateSpec> specs) {
+      if (specs.isEmpty()) return;
+
+      ParallelRunner.runSequentially(specs, spec -> {
+        update(spec.mavenProjectFile(), spec.recursive(), spec.forceReading());
+      });
+    }
+
+    private void update(final VirtualFile mavenProjectFile, final boolean recursive, final boolean forceReading) {
       if (updateStack.contains(mavenProjectFile)) {
         MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
         return;
@@ -593,8 +604,8 @@ public final class MavenProjectsTree {
         }
       }
 
-      var modulesFilesToAdd = new ArrayList<VirtualFile>();
       var modulesFilesToReconnect = new ArrayList<VirtualFile>();
+      var moduleUpdateSpecs = new ArrayList<UpdateSpec>();
       for (VirtualFile each : existingModuleFiles) {
         MavenProject foundModule = tree.findProject(each);
         boolean isNewModule = foundModule == null;
@@ -606,25 +617,14 @@ public final class MavenProjectsTree {
           }
         }
 
-        if (isNewModule) {
-          modulesFilesToAdd.add(each);
-        }
-        else {
-          modulesFilesToReconnect.add(each);
-        }
+        modulesFilesToReconnect.add(each);
 
         if (readProject || isNewModule || recursive) {
           // do not force update modules if only this project was requested to be updated
-          update(each, recursive, recursive && forceReading);
+          moduleUpdateSpecs.add(new UpdateSpec(each, recursive, recursive && forceReading));
         }
       }
-
-      for (var file : modulesFilesToAdd) {
-        MavenProject module = tree.findProject(file);
-        if (null != module) {
-          tree.addModule(mavenProject, module);
-        }
-      }
+      updateProjects(moduleUpdateSpecs);
 
       for (var file : modulesFilesToReconnect) {
         MavenProject module = tree.findProject(file);
@@ -637,10 +637,12 @@ public final class MavenProjectsTree {
 
       prevInheritors.addAll(tree.findInheritors(mavenProject));
 
+      var inheritorUpdateSpecs = new ArrayList<UpdateSpec>();
       for (MavenProject each : prevInheritors) {
         // no need to go recursively in case of inheritance, only when updating modules
-        update(each.getFile(), false, false);
+        inheritorUpdateSpecs.add(new UpdateSpec(each.getFile(), false, false));
       }
+      updateProjects(inheritorUpdateSpecs);
 
       updateStack.pop();
     }
@@ -738,14 +740,17 @@ public final class MavenProjectsTree {
     inheritorsToUpdate.removeAll(updateContext.deletedProjects);
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
+    var updateSpecs = new ArrayList<UpdateSpec>();
+    for (MavenProject mavenProject : inheritorsToUpdate) {
+      updateSpecs.add(new UpdateSpec(mavenProject.getFile(), false, false));
+    }
+    updater.updateProjects(updateSpecs);
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
-      updater.update(mavenProject.getFile(), false, false);
       if (reconnectRoot(mavenProject)) {
         updateContext.update(mavenProject, MavenProjectChanges.NONE);
       }
     }
-
     updateExplicitProfiles();
     updateContext.fireUpdatedIfNecessary();
   }
