@@ -10,7 +10,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 class CodeBlockHtmlSyntaxHighlighter(
   private val project: Project?
 ) : HtmlSyntaxHighlighter {
-  override fun color(language: String?, @NlsSafe rawContent: String): HtmlChunk {
+  override fun color(language: String?, rawContent: @NlsSafe String): HtmlChunk {
     return findRegisteredLanguage(language)?.let {
       colorHtmlChunk(project, it, rawContent).wrapWith("pre")
     } ?: HtmlChunk.text(rawContent)
