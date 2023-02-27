@@ -10,7 +10,7 @@ fun String.foo() {
     )
     val b = Foo(
         //Breakpoint!
-        a = this
+        a = this + ""
     )
 }
 
@@ -18,4 +18,3 @@ private class Foo(val a: String)
 
 // EXPRESSION: this
 // RESULT: "foo": Ljava/lang/String;
-// IGNORE_FOR_K2_CODE
