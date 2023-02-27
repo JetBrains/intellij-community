@@ -184,25 +184,12 @@
         <echo message="Applying ${trustedPathsSettings}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${trustedPathsSettings}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
             <arg value="${trustedPathsSettings}"/>
-        </exec>
-
-        <property name="patchProjectsTabFactory"
-                  value="${basedir}/patches/MPS-35212-ProjectsTabFactory.patch"/>
-        <echo message="Applying ${patchProjectsTabFactory}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchProjectsTabFactory}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchProjectsTabFactory}"/>
         </exec>
 
         <property name="patchFileApplicationNamesInfo"
@@ -210,7 +197,7 @@
         <echo message="Applying ${patchFileApplicationNamesInfo}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchFileApplicationNamesInfo}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
@@ -223,7 +210,7 @@
         <echo message="Applying ${patchFile}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchFile}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
@@ -236,7 +223,7 @@
         <echo message="Applying ${patchFile2}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchFile2}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
@@ -249,7 +236,7 @@
         <echo message="Applying ${patchFile3}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchFile3}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
@@ -262,7 +249,7 @@
         <echo message="Applying ${patchJps}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchJps}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
@@ -275,7 +262,7 @@
         <echo message="Applying ${patchJBUIScale}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="--check"/>
+            <arg value="&#45;-check"/>
             <arg value="${patchJBUIScale}"/>
         </exec>
         <exec executable="git" dir="${community.folder}">
