@@ -81,7 +81,7 @@ internal class VcsLogNewUiTableCellRenderer(
     }
   }
 
-  private fun createWrappablePanel(renderer: JComponent, isLeft: Boolean = false, isRight: Boolean = false): BorderLayoutPanel {
+  private fun createWrappablePanel(renderer: JComponent, isLeft: Boolean, isRight: Boolean): BorderLayoutPanel {
     val panel = BorderLayoutPanel().addToCenter(renderer).andTransparent()
     if (isLeft) {
       panel.addToLeft(createEmptyPanel())
