@@ -69,11 +69,13 @@ class JCefImageViewer(private val myFile: VirtualFile,
     private const val IMAGE_PATH = "/image"
     private const val SCROLLBARS_CSS_PATH = "/scrollbars.css"
     private const val CHESSBOARD_CSS_PATH = "/chessboard.css"
+    private const val GRID_CSS_PATH = "/pixel_grid.css"
 
     private const val VIEWER_URL = "$PROTOCOL://$HOST_NAME$VIEWER_PATH"
     private const val IMAGE_URL = "$PROTOCOL://$HOST_NAME$IMAGE_PATH"
     private const val SCROLLBARS_STYLE_URL = "$PROTOCOL://$HOST_NAME$SCROLLBARS_CSS_PATH"
     private const val CHESSBOARD_STYLE_URL = "$PROTOCOL://$HOST_NAME$CHESSBOARD_CSS_PATH"
+    private const val GRID_STYLE_URL = "$PROTOCOL://$HOST_NAME$GRID_CSS_PATH"
 
     private val ourCefClient = JBCefApp.getInstance().createClient()
 
@@ -195,6 +197,10 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
     myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
       CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+    }
+
+    myRequestHandler.addResource(GRID_CSS_PATH) {
+      CefStreamResourceHandler(ByteArrayInputStream(buildGridStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(IMAGE_PATH) {
@@ -421,10 +427,27 @@ class JCefImageViewer(private val myFile: VirtualFile,
     """.trimIndent()
   }
 
+  private fun buildGridStyle(): String {
+    val color = colorToCSS(OptionsManager.getInstance().options.editorOptions.gridOptions.lineColor)
+    return /*language=css*/ """
+      #pixel_grid {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background-image: linear-gradient(to right, ${color} 1px, transparent 1px),
+        linear-gradient(to bottom, ${color} 1px, transparent 1px);
+        background-size: 1px 1px;
+        mix-blend-mode: normal;
+      }
+      """.trimIndent()
+  }
+
   private fun reloadStyles() {
     execute("""
       loadScrollbarsStyle('$SCROLLBARS_STYLE_URL');
       loadChessboardStyle('$CHESSBOARD_STYLE_URL');
+      loadPixelGridStyle('$GRID_STYLE_URL');
     """.trimIndent())
   }
 }

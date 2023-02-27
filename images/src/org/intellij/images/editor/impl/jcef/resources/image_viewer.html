@@ -116,6 +116,7 @@
   </style>
   <link id="scrollbars_style" rel="stylesheet" type="text/css" href="scrollbars.css"/>
   <link id="chessboard_style" rel="stylesheet" type="text/css" href="chessboard.css"/>
+  <link id="pixel_grid_style" rel="stylesheet" type="text/css" href="pixel_grid.css"/>
   <title>Image viewer</title>
 </head>
 
@@ -153,7 +154,7 @@
 <script>
   const gIsDebug = (new URL(window.location.href).searchParams.get('debug') != null)
 
-  const MIN_GRID_ZOOM = 10
+  const MIN_GRID_ZOOM = 3
   const MAX_ZOOM = 150
   const MIN_IMAGE_SIZE = 5
   const ViewerStatus = {
@@ -185,7 +186,8 @@
 
   const gStyles = {
     'scrollbars': document.getElementById('scrollbars_style'),
-    'chessboard': document.getElementById('chessboard_style')
+    'chessboard': document.getElementById('chessboard_style'),
+    'pixel_grid': document.getElementById('pixel_grid_style')
   }
   let sendInfo = function (info_string) {}
 
@@ -452,6 +454,10 @@
     gStyles.chessboard.href = _setTimestamp(url)
   }
 
+  function loadPixelGridStyle(url) {
+    gStyles.pixel_grid.href = _setTimestamp(url)
+  }
+
   function _setTimestamp(url) {
     let patched_url = new URL(url)
     patched_url.searchParams.set('timestamp', new Date().getTime().toString())
@@ -461,6 +467,7 @@
   function reloadStyles() {
     loadScrollbarsStyle(gStyles.scrollbars.href)
     loadChessboardStyle(gStyles.chessboard.href)
+    loadPixelGridStyle(gStyles.pixel_grid.href)
   }
 </script>
 
