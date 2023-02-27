@@ -23,7 +23,6 @@ import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -177,11 +176,6 @@ abstract class ScriptClassRootsUpdater(
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
 
     private fun ensureUpdateScheduled() {
-        if (isK2Plugin()) {
-            // scripts are not supported in k2, and it's impossible to disable script functionality completely as a lot depends on it
-            // KTIJ-21108
-            return
-        }
         val disposable = KotlinPluginDisposable.getInstance(project)
         lock.withLock {
             scheduledUpdate?.cancel()
@@ -202,11 +196,6 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
-        if (isK2Plugin()) {
-            // scripts are not supported in k2, and it's impossible to disable script functionality completely as a lot depends on it
-            // KTIJ-21108
-            return
-        }
         val disposable = KotlinPluginDisposable.getInstance(project)
         try {
             val updates = recreateRootsCacheAndDiff()
