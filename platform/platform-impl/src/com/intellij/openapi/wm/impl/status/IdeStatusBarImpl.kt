@@ -745,6 +745,7 @@ internal fun createComponentByWidgetPresentation(presentation: WidgetPresentatio
             withContext(Dispatchers.EDT) {
               panel.icon = icon
               panel.isVisible = icon != null
+              panel.repaint()
             }
           }
       }
