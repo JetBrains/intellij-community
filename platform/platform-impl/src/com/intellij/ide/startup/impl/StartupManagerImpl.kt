@@ -91,7 +91,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
               }
             }
             else -> {
-              DumbService.getInstance(project).unsafeRunWhenSmart {
+              DumbService.getInstance(project).runWhenSmart {
                 @Suppress("UsagesOfObsoleteApi")
                 startupManager.runActivityAndMeasureDuration(extension as StartupActivity, pluginDescriptor.pluginId)
               }
@@ -279,7 +279,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
           blockingContext {
-            dumbService.unsafeRunWhenSmart {
+            dumbService.runWhenSmart {
               traceContext.makeCurrent()
               val duration = runActivityAndMeasureDuration(activity as StartupActivity, pluginDescriptor.pluginId)
               if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
@@ -396,7 +396,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, action) }
     }
     else if (!LightEdit.owns(project)) {
-      runAfterOpened { DumbService.getInstance(project).unsafeRunWhenSmart(action) }
+      runAfterOpened { DumbService.getInstance(project).runWhenSmart(action) }
     }
   }
 
