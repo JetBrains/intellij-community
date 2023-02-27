@@ -163,6 +163,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       // But it has quick fixes, so it needs to be created.
       attributes = NONEMPTY_TEXT_ATTRIBUTES;
     }
+    if (attributesKey != null) b.textAttributes(attributesKey);
     if (attributes != null) b.textAttributes(attributes);
     if (problemDescriptor.isAfterEndOfLine()) b.endOfLine();
     if (isFileLevel) b.fileLevelAnnotation();
