@@ -37,17 +37,25 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 private val REQUIRES_SUSPEND_CONTEXT_ANNOTATION = RequiresBlockingContext::class.java.canonicalName
 private const val PROGRESS_MANAGER_CHECKED_CANCELED = "com.intellij.openapi.progress.ProgressManager.checkCanceled"
 private const val APPLICATION_INVOKE_AND_WAIT = "com.intellij.openapi.application.Application.invokeAndWait"
+private const val MODALITY_STATE_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.ModalityState.defaultModalityState"
+private const val APPLICATION_GET_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.Application.getDefaultModalityState"
 private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
 private const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
+private const val CONTEXT_MODALITY_EXT = "com.intellij.openapi.application.contextModality"
 
 private val progressManagerCheckedCanceledName = FqName(PROGRESS_MANAGER_CHECKED_CANCELED)
 private val applicationInvokeAndWaitName = FqName(APPLICATION_INVOKE_AND_WAIT)
+private val modalityStateDefaultModalityState = FqName(MODALITY_STATE_DEFAULT_MODALITY_STATE)
+private val applicationGetDefaultModalityState = FqName(APPLICATION_GET_DEFAULT_MODALITY_STATE)
 private val restrictsSuspensionName = FqName(RESTRICTS_SUSPENSION)
 private val intelliJEdtDispatcher = FqName(INTELLIJ_EDT_DISPATCHER)
+private val contextModalityExt = FqName(CONTEXT_MODALITY_EXT)
 
 private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCancelled"
 private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
+private const val CURRENT_COROUTINE_CONTEXT = "kotlinx.coroutines.currentCoroutineContext"
+private const val KOTLIN_TODO = "kotlin.TODO"
 
 @Internal
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
@@ -121,6 +129,14 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
               ReplaceInvokeAndWaitWithWithContextQuickFix(expression)
             )
           }
+          applicationGetDefaultModalityState, modalityStateDefaultModalityState -> {
+            holder.registerProblem(
+              extractElementToHighlight(expression),
+              DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.default.modality.state.text"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+              ReplaceDefaultModalityStateWithCurrentModalityQuickFix(expression)
+            )
+          }
           else -> {
             holder.registerProblem(
               extractElementToHighlight(expression),
@@ -147,7 +163,13 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       }
     }
 
-    override fun visitDeclaration(dcl: KtDeclaration): Unit = Unit
+    override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression): Unit = Unit
+
+    override fun visitDeclaration(dcl: KtDeclaration) {
+      if (dcl is KtVariableDeclaration) {
+        dcl.initializer?.accept(this)
+      }
+    }
   }
 
   private class ReplaceProgressManagerCheckCanceledQuickFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
@@ -156,21 +178,16 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
     override fun getText(): String = familyName
 
-    override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-      return startElement.getParentOfType<KtCallExpression>(false) != null
-    }
+    override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
+      getCallExpression(startElement) != null
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-      val callExpression = startElement.getParentOfType<KtCallExpression>(false)!!
+      val callExpression = getCallExpression(startElement)!!
       val factory = KtPsiFactory(project)
       val suspendAwareCheckCanceled = factory.createExpression("$COROUTINE_CHECK_CANCELED_FIX()")
       val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
-      val resultExpression = if (qualifiedExpression != null) {
-        qualifiedExpression.replace(suspendAwareCheckCanceled)
-      }
-      else {
-        callExpression.replace(suspendAwareCheckCanceled)
-      }
+      val expressionToReplace = qualifiedExpression ?: callExpression
+      val resultExpression = expressionToReplace.replace(suspendAwareCheckCanceled)
       ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
     }
   }
@@ -182,12 +199,12 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
     override fun getText(): String = familyName
 
     override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-      val callExpression = startElement.getParentOfType<KtCallExpression>(false) ?: return false
+      val callExpression = getCallExpression(startElement) ?: return false
       return callExpression.valueArguments.firstOrNull()?.getArgumentExpression() is KtLambdaExpression
     }
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-      val callExpression = startElement.getParentOfType<KtCallExpression>(false)!!
+      val callExpression = getCallExpression(startElement)!!
 
       if (!isImported(FqName("com.intellij.openapi.application.EDT"), callExpression.containingKtFile)) {
         ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, intelliJEdtDispatcher)
@@ -214,7 +231,40 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
     }
   }
+
+  private class ReplaceDefaultModalityStateWithCurrentModalityQuickFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(
+    element
+  ) {
+    override fun getFamilyName(): String = DevKitKotlinBundle.message(
+      "inspections.forbidden.method.in.suspend.context.default.modality.state.fix.text")
+
+    override fun getText(): String = familyName
+
+    override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
+      getCallExpression(startElement) != null
+
+    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+      val callExpression = getCallExpression(startElement)!!
+      val factory = KtPsiFactory(project)
+
+      if (!isImported(contextModalityExt, callExpression.containingKtFile)) {
+        ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, contextModalityExt)
+      }
+
+      // ?: because defaultModalityState is @NotNull, so it can be unexpected to replace with something nullable
+      val contextModalityCall = factory.createExpression(
+        "$CURRENT_COROUTINE_CONTEXT().${contextModalityExt.shortName()}() ?: $KOTLIN_TODO(\"Handle absence of ModalityState\")"
+      )
+      val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
+      val expressionToReplace = qualifiedExpression ?: callExpression
+      val resultExpression = expressionToReplace.replace(contextModalityCall)
+      ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
+    }
+  }
 }
+
+fun getCallExpression(startElement: PsiElement): KtCallExpression? =
+  startElement.getParentOfType<KtCallExpression>(false)
 
 private fun isImported(name: FqName, file: KtFile): Boolean {
   if (name.parent() == file.packageFqName) return true

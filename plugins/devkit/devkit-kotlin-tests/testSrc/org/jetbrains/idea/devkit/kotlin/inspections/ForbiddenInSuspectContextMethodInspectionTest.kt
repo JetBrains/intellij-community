@@ -43,6 +43,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
   private val invokeAndWaitDescr = "'invokeAndWait' can block current coroutine. Use 'Dispatchers.EDT' instead"
   private val invokeAndWaitFix = "Replace 'invokeAndWait' call with 'withContext(Dispatchers.EDT) {}'"
 
+  private val defaultModalityDescr = "'defaultModalityState()' does not work in suspend context. If it is really necessary, use 'contextModality()'"
+  private val defaultModalityFix = "Replace with 'contextModality()'"
+
   @Test
   fun `progress manager checkCanceled in suspend function`() {
     addCheckCanceledFunctions()
@@ -536,6 +539,78 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     """.trimIndent())
   }
 
+  @Test
+  fun `defaultModalityState in suspend context`() {
+    addApplicationAndEtc()
+
+    myFixture.configureByText("file.kt", """
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      class MyService {
+        suspend fun fn() {
+          val state: ModalityState = ModalityState.<warning descr="$defaultModalityDescr">default<caret>ModalityState</warning>()
+        } 
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(defaultModalityFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      class MyService {
+        suspend fun fn() {
+          val state: ModalityState = currentCoroutineContext().contextModality() ?: TODO("Handle absence of ModalityState")
+        } 
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `getDefaultModalityState in suspend context`() {
+    addApplicationAndEtc()
+
+    myFixture.configureByText("file.kt", """
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      class MyService {
+        suspend fun fn() {
+          val state: ModalityState = ApplicationManager.getApplication().<warning descr="$defaultModalityDescr">getDefault<caret>ModalityState</warning>()
+        } 
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(defaultModalityFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      class MyService {
+        suspend fun fn() {
+          val state: ModalityState = currentCoroutineContext().contextModality() ?: TODO("Handle absence of ModalityState")
+        } 
+      }
+    """.trimIndent())
+  }
+
   private fun addApplicationAndEtc() {
     myFixture.addClass("""
         package com.intellij.openapi.progress;
@@ -557,6 +632,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
             
             @RequiresBlockingContext
             void invokeAndWait(Runnable runnable) throws ProcessCanceledException;
+            
+            @RequiresBlockingContext
+            ModalityState getDefaultModalityState();
         }
       """.trimIndent())
 
@@ -573,8 +651,13 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     myFixture.addClass("""
         package com.intellij.openapi.application;
         
+        import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+        
         public abstract class ModalityState {
-          
+          @RequiresBlockingContext
+          public static ModalityState defaultModalityState() {
+            return null;
+          }
         }
       """.trimIndent())
   }
