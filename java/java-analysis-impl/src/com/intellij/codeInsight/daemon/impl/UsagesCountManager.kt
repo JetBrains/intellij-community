@@ -57,6 +57,7 @@ private class FileUsagesCache {
     val externalScope = GlobalSearchScope.notScope(localScope)
 
     val internalUsages = JavaTelescope.usagesCount(file, superMembers, localScope)
+    if (internalUsages < 0) return  internalUsages
     val key = QualifiedNameProviderUtil.getQualifiedName(member)
     val externalUsages = if (key != null) {
       externalUsagesCache.getOrPut(key) { JavaTelescope.usagesCount(file, superMembers, externalScope) }
@@ -64,6 +65,7 @@ private class FileUsagesCache {
     else {
       JavaTelescope.usagesCount(file, superMembers, externalScope)
     }
+    if (externalUsages < 0) return externalUsages
     return externalUsages + internalUsages
   }
 }
