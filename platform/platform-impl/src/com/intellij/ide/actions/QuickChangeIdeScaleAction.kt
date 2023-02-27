@@ -54,7 +54,10 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
         if (anAction is ChangeScaleAction) {
           switchAlarm.cancelAllRequests()
           switchAlarm.addRequest(Runnable {
-            applyScale(anAction.scale, popup, true)
+            applyUserScale(anAction.scale, false)
+            if (!popup.isDisposed) {
+              popup.pack(true, true)
+            }
           }, SELECTION_THROTTLING_MS)
         }
       }
@@ -64,7 +67,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
       override fun onClosed(event: LightweightWindowEvent) {
         switchAlarm.cancelAllRequests()
         if (!event.isOk) {
-          applyScale(initialScale, popup, false)
+          applyUserScale(initialScale, true)
           logSwitcherClosed(false)
         }
       }
@@ -77,32 +80,23 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == initialScale.percentValue }
   }
 
-  private fun applyScale(scale: Float, popup: ListPopup, shouldLog: Boolean) {
-    if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
-    if (shouldLog) logIdeZoomChanged(scale)
-
-    UISettingsUtils.instance.setCurrentIdeScale(scale)
-    UISettings.getInstance().fireUISettingsChanged()
-
-    if (!popup.isDisposed) {
-      popup.pack(true, true)
-    }
-  }
-
   private class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
     override fun actionPerformed(e: AnActionEvent) {
-      val utils = UISettingsUtils.instance
-      if (utils.currentIdeScale.percentValue != scale.percentValue) {
-        logIdeZoomChanged(scale)
-        utils.setCurrentIdeScale(scale)
-        UISettings.getInstance().fireUISettingsChanged()
-      }
+      applyUserScale(scale, true)
       logSwitcherClosed(true)
     }
   }
 
   companion object {
+    private fun applyUserScale(scale: Float, shouldLog: Boolean) {
+      if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
+      if (shouldLog) logIdeZoomChanged(scale)
+
+      UISettingsUtils.instance.setCurrentIdeScale(scale)
+      UISettings.getInstance().fireUISettingsChanged()
+    }
+
     private const val SELECTION_THROTTLING_MS = 500
   }
 }
