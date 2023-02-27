@@ -983,7 +983,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
                                                                    : PsiTreeUtil.getStubOrPsiParentOfType(typeHintContext, PyClass.class);
       if (containingClass == null) return null;
 
-      PyClassLikeType scopeClassType = containingClass.getType(context.getTypeContext());
+      PyClassType scopeClassType = as(containingClass.getType(context.getTypeContext()), PyClassType.class);
       if (scopeClassType == null) return null;
 
       return Ref.create(new PySelfType(scopeClassType));
