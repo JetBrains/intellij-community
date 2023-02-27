@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.intellij.lang.annotations.Language
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses
@@ -30,7 +31,7 @@ internal class MermaidPreviewStaticServer: HttpRequestHandler() {
   }
 
   // TODO: Add CSP
-  private fun buildIndexContent(): ByteArray {
+  private fun buildIndexContent(): String {
     // language=HTML
     val content = """
     <!--suppress HtmlUnknownTarget -->
@@ -49,12 +50,12 @@ internal class MermaidPreviewStaticServer: HttpRequestHandler() {
       </body>
     </html>
     """.trimIndent()
-    return content.toByteArray()
+    return content
   }
 
   private fun obtainResource(name: String): ByteArray? {
     return when (name) {
-      "index.html" -> buildIndexContent()
+      "index.html" -> buildIndexContent().toByteArray()
       "index.css" -> PreviewThemeStyles.createStylesheet().toByteArray()
       "mermaid-theme.js" -> """window["mermaidTheme"] = "${determineTheme()}";""".toByteArray()
       else -> obtainWebApplicationResource(name)
@@ -90,7 +91,7 @@ internal class MermaidPreviewStaticServer: HttpRequestHandler() {
     }
 
     @JvmStatic
-    fun obtainStaticUrl(): String {
+    fun obtainStaticIndexUrl(): String {
       val port = BuiltInServerManager.getInstance().port
       val raw = "http://localhost:$port/$endpointPrefix/index.html?isStandaloneViewer=true"
       val url = Urls.parseEncoded(raw)

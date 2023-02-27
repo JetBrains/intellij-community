@@ -1,5 +1,8 @@
 package com.intellij.mermaid.jcef
 
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
 import kotlin.js.Console
@@ -19,4 +22,13 @@ inline fun Console.timeEnd(name: String) {
 
 fun EventTarget.addEventListener(type: String, callback: (Event) -> Unit) {
   addEventListener(type, callback)
+}
+
+fun <T: Event> EventTarget.eventFlowOf(type: String): Flow<T> {
+  return callbackFlow {
+    addEventListener(type) { event ->
+      trySend(event.unsafeCast<T>())
+    }
+    awaitCancellation()
+  }
 }

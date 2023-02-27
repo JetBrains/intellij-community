@@ -22,14 +22,21 @@ private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
   block.findSvgElement()?.setAttribute("opacity", "50%")
 }
 
-suspend fun renderBlock(block: HTMLElement, cacheId: String, content: String): Node? {
+suspend fun renderBlock(
+  block: HTMLElement,
+  cacheId: String,
+  content: String,
+  addExplicitDimensions: Boolean = true
+): Node? {
   val id = "mermaid-generated-$cacheId"
   try {
     val renderResult = Mermaid.api.render(id, content).await()
     renderResult.appendTo(block)
     val node = block.findSvgElement()
     checkNotNull(node) { "Failed to find svg node after append" }
-    addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
+    if (addExplicitDimensions) {
+      addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
+    }
     nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
     return node
   } catch (exception: Throwable) {
@@ -74,7 +81,7 @@ suspend fun processBlock(block: HTMLElement): Node? {
   val content = block.getAttribute("data-actual-fence-content")
   checkNotNull(content) { "data-actual-fence-content was not set for block" }
   val actualContent = decode(content)
-  val generated = renderBlock(block, cacheId, actualContent) ?: return null
+  val generated = renderBlock(block, cacheId, actualContent, addExplicitDimensions = true) ?: return null
   cacheBlock(cacheId, generated)
   return generated
 }

@@ -2,14 +2,10 @@ package com.intellij.mermaid.jcef
 
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
-import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import org.w3c.dom.HTMLElement
-import org.w3c.dom.Window
 import org.w3c.dom.events.Event
+import org.w3c.dom.events.EventTarget
 
 suspend fun viewerMain() {
   window.asDynamic()["updateMermaidDiagramContent"] = ::updateView
@@ -19,7 +15,7 @@ suspend fun viewerMain() {
 private suspend fun performViewUpdate(content: String) {
   val document = window.document
   val container = document.getElementById("diagram-container") as HTMLElement
-  renderBlock(container, "", content)
+  renderBlock(container, "", content, addExplicitDimensions = false)
 }
 
 private data class UpdateViewRequest(val content: String)
@@ -31,12 +27,6 @@ fun updateView(content: String) {
   window.dispatchEvent(event)
 }
 
-private fun Window.updateViewRequests(): Flow<UpdateViewRequest> {
-  return callbackFlow {
-    addEventListener("updateDiagramView") { event ->
-      val request = event.asDynamic().request as UpdateViewRequest
-      trySend(request)
-    }
-    awaitCancellation()
-  }
+private fun EventTarget.updateViewRequests(): Flow<UpdateViewRequest> {
+  return eventFlowOf<Event>("updateDiagramView").map { it.asDynamic().request as UpdateViewRequest }
 }
