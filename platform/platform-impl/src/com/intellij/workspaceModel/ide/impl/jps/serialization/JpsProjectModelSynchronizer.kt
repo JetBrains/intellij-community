@@ -97,9 +97,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
 
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+    val unloadedModuleNameHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
     val reloadingResult = loadAndReportErrors {
-      serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNames, it)
+      serializers.reloadFromChangedFiles(changes, fileContentReader, unloadedModuleNameHolder, it)
     }
 
     fileContentReader.clearCache()
@@ -233,8 +233,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity?.endAndStart("loading entities from files")
-      val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNames, it) }
+      val unloadedModuleNamesHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
+      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModuleNamesHolder, it) }
       fileContentReader.clearCache()
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.entityTracer?.printInfoAboutTracedEntity(builder, "JPS files")
       if (GlobalLibraryTableBridge.isEnabled()) {

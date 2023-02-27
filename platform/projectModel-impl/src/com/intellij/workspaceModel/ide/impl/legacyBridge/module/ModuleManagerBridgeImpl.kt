@@ -245,20 +245,20 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
 
   override suspend fun setUnloadedModules(unloadedModuleNames: List<String>) {
     // optimization
-    if (unloadedModules.keys == unloadedModuleNames) {
+   /* if (unloadedModules.keys == unloadedModuleNames) {
       return
-    }
+    }*/
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(unloadedModuleNames)
 
-    val unloadedModuleNamesSet = unloadedModuleNames.toHashSet()
+    val unloadedModulesNameHolder = UnloadedModulesListStorage.getInstance(project).unloadedModuleNameHolder
     val mainStorage = entityStore.current
     val moduleEntitiesToUnload = mainStorage.entities(ModuleEntity::class.java)
-      .filter { it.name in unloadedModuleNamesSet }
+      .filter { unloadedModulesNameHolder.isUnloaded(it.name)}
       .toList()
     val unloadedEntityStorage = WorkspaceModel.getInstance(project).currentSnapshotOfUnloadedEntities
     val moduleEntitiesToLoad = unloadedEntityStorage.entities(ModuleEntity::class.java)
-      .filter { it.name !in unloadedModuleNamesSet }
+      .filter { !unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
 
     if (unloadedModuleNames.isNotEmpty()) {
@@ -270,7 +270,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       AutomaticModuleUnloader.getInstance(project).setLoadedModules(emptyList())
     }
 
-    unloadedModules.keys.removeAll { it !in unloadedModuleNamesSet }
+    unloadedModules.keys.removeAll { !unloadedModulesNameHolder.isUnloaded(it) }
 
     // we need to save module configurations before unloading, otherwise their settings will be lost
     if (moduleEntitiesToUnload.isNotEmpty()) {

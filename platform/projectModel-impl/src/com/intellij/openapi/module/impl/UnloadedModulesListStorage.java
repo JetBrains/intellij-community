@@ -10,6 +10,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,8 +31,9 @@ public final class UnloadedModulesListStorage implements PersistentStateComponen
   }
 
   @Transient
-  public @NotNull Set<String> getUnloadedModuleNames() {
-    return moduleNames;
+  @NotNull
+  public UnloadedModulesNameHolder getUnloadedModuleNameHolder() {
+    return new UnloadedModulesNameHolderImpl(moduleNames);
   }
 
   public void setUnloadedModuleNames(@NotNull Collection<String> value) {

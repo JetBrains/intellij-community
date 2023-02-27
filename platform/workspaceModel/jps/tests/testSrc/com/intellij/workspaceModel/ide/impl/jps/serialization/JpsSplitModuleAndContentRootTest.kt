@@ -606,7 +606,7 @@ class JpsSplitModuleAndContentRootTest {
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     externalStorageConfigurationManager.isEnabled = externalStorage
     checkSaveProjectAfterChange(initialDir, dirAfter, { builder, orphanage, _, location -> change(builder, orphanage, location) },
-                                emptySet(),
+                                UnloadedModulesNameHolder.DUMMY,
                                 virtualFileManager, "serialization/splitModuleAndContentRoot", false,
                                 externalStorageConfigurationManager, forceAllFilesRewrite = forceFilesRewrite)
   }

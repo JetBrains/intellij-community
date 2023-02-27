@@ -12,6 +12,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.reportErrorAndAttachStorage
@@ -126,7 +127,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                                       reader: JpsFileContentReader,
-                                      unloadedModuleNames: Set<String>,
+                                      unloadedModuleNames: UnloadedModulesNameHolder,
                                       errorReporter: ErrorReporter): ReloadingResult {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
@@ -221,7 +222,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val orphanage = MutableEntityStorage.create()
     val unloadedEntityBuilder = MutableEntityStorage.create()
     affectedFileLoaders.forEach {
-      val unloaded = (it as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName in unloadedModuleNames
+      val unloaded = unloadedModuleNames.isUnloaded((it as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
       val targetBuilder = if (unloaded) unloadedEntityBuilder else builder
       loadEntitiesAndReportExceptions(it, targetBuilder, orphanage, reader, errorReporter)
     }
@@ -234,7 +235,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                builder: MutableEntityStorage,
                                orphanageBuilder: MutableEntityStorage,
                                unloadedEntityBuilder: MutableEntityStorage,
-                               unloadedModuleNames: Set<String>,
+                               unloadedModulesNameHolder: UnloadedModulesNameHolder,
                                errorReporter: ErrorReporter
   ): List<EntitySource> {
     val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
@@ -244,7 +245,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val result = MutableEntityStorage.create()
           val orphanage = MutableEntityStorage.create()
           loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
-          val unloaded = (serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName in unloadedModuleNames
+          val unloaded = unloadedModulesNameHolder.isUnloaded((serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
           BuilderWithLoadedState(result, orphanage, unloaded)
         }
       }

@@ -11,10 +11,12 @@ import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
@@ -67,7 +69,7 @@ internal data class LoadedProjectData(
 
 internal fun copyAndLoadProject(originalProjectFile: File,
                                 virtualFileManager: VirtualFileUrlManager,
-                                unloadedModuleNames: Set<String> = emptySet(),
+                                unloadedModuleNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                                 checkConsistencyAfterLoading: Boolean = true,
                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): LoadedProjectData {
   val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
@@ -77,7 +79,7 @@ internal fun copyAndLoadProject(originalProjectFile: File,
   val unloadedEntitiesBuilder = MutableEntityStorage.create()
   val orphanage = MutableEntityStorage.create()
   val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, externalStorageConfigurationManager = externalStorageConfigurationManager,
-                                unloadedModuleNames = unloadedModuleNames,
+                                unloadedModuleNameHolder = unloadedModuleNameHolder,
                                 unloadedEntitiesBuilder = unloadedEntitiesBuilder) as JpsProjectSerializersImpl
   val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
                                             serializers, configLocation,
@@ -99,7 +101,7 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation,
                          originalBuilder: MutableEntityStorage,
                          orphanage: MutableEntityStorage,
                          virtualFileManager: VirtualFileUrlManager,
-                         unloadedModuleNames: Set<String> = emptySet(),
+                         unloadedModuleNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                          unloadedEntitiesBuilder: MutableEntityStorage = MutableEntityStorage.create(),
                          fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
                          externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null,
@@ -113,7 +115,7 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation,
                                          orphanage,
                                          File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
                                          errorReporter,
-                                         unloadedModuleNames,
+                                         unloadedModuleNameHolder,
                                          unloadedEntitiesBuilder,
                                          context)
   }
@@ -344,13 +346,13 @@ internal class CollectingErrorReporter : ErrorReporter {
 internal fun checkSaveProjectAfterChange(originalProjectFile: File,
                                          changedFilesDirectoryName: String?,
                                          change: (MutableEntityStorage, MutableEntityStorage, MutableEntityStorage, JpsProjectConfigLocation) -> Unit,
-                                         unloadedModuleNames: Set<String>,
+                                         unloadedModuleNameHolder: UnloadedModulesNameHolder = UnloadedModulesNameHolder.DUMMY,
                                          virtualFileManager: VirtualFileUrlManager,
                                          testDir: String,
                                          checkConsistencyAfterLoading: Boolean = true,
                                          externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null,
                                          forceAllFilesRewrite: Boolean = false) {
-  val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNames, checkConsistencyAfterLoading, externalStorageConfigurationManager)
+  val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager, unloadedModuleNameHolder, checkConsistencyAfterLoading, externalStorageConfigurationManager)
   val builder = MutableEntityStorage.from(projectData.storage)
   val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
   change(builder, projectData.orphanage.toBuilder(), unloadedEntitiesBuilder, projectData.configLocation)
@@ -428,4 +430,9 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null, expectedFil
 
   ApplicationManager.getApplication().stateStore.clearCaches()
   PathManager.setExplicitConfigPath(null)
+}
+
+internal fun unloadedHolder(unloaded: String) : UnloadedModulesNameHolder {
+  val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
+  return UnloadedModulesNameHolderImpl(unloadedModuleNames)
 }

@@ -157,7 +157,7 @@ class DelayedProjectSynchronizerTest {
     val unloadedEntitiesBuilder = MutableEntityStorage.create()
     val orphanage = MutableEntityStorage.create()
     val configLocation = toConfigLocation(projectData.projectDir.toPath(), virtualFileManager)
-    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, emptySet(), unloadedEntitiesBuilder,
+    val serializers = loadProject(configLocation, originalBuilder, orphanage, virtualFileManager, UnloadedModulesNameHolder.DUMMY, unloadedEntitiesBuilder,
                                   fileInDirectorySourceNames) as JpsProjectSerializersImpl
     val loadedProjectData = LoadedProjectData(originalBuilder.toSnapshot(), orphanage.toSnapshot(), unloadedEntitiesBuilder.toSnapshot(),
                                               serializers,

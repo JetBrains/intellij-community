@@ -229,10 +229,10 @@ internal class WorkspaceProjectImporter(
                              val modules: MutableList<ModuleWithTypeData<ModuleEntity>>)
 
     val projectToModulesData = mutableMapOf<MavenProject, PartialModulesData>()
-    val unloadedModuleNames = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNames.toSet()
+    val unloadedModulesNameHolder = UnloadedModulesListStorage.getInstance(myProject).unloadedModuleNameHolder
 
     for (importData in sortProjectsToImportByPrecedence(context)) {
-      if (importData.moduleData.moduleName in unloadedModuleNames) continue
+      if (unloadedModulesNameHolder.isUnloaded(importData.moduleData.moduleName)) continue
 
       val moduleEntity = WorkspaceModuleImporter(myProject,
                                                  storageBeforeImport,
