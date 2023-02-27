@@ -471,26 +471,24 @@ public final class MavenProjectsTree {
       updater.update(file, recursive, force);
     }
 
+    for (MavenProject aggregator : getProjects()) {
+      for (VirtualFile moduleFile : aggregator.getExistingModuleFiles()) {
+        if (filesToAddModules.contains(moduleFile)) {
+          filesToAddModules.remove(moduleFile);
+          var mavenProject = findProject(moduleFile);
+          if (null != mavenProject) {
+            if (reconnect(aggregator, mavenProject)) {
+              updateContext.update(mavenProject, MavenProjectChanges.NONE);
+            }
+          }
+        }
+      }
+    }
+
     for (VirtualFile file : filesToAddModules) {
-      MavenProject mavenProject = findProject(file);
-      if (null == mavenProject) {
-        LOG.warn("Maven project not found: " + file.getPath());
-        continue;
-      }
-      MavenProject aggregator = null;
-      for (MavenProject each : getProjects()) {
-        if (each.getExistingModuleFiles().contains(file)) {
-          aggregator = each;
-          break;
-        }
-      }
-      if (null == aggregator) {
+      var mavenProject = findProject(file);
+      if (null != mavenProject) {
         addRootModule(mavenProject);
-      }
-      else {
-        if (reconnect(aggregator, mavenProject)) {
-          updateContext.update(mavenProject, MavenProjectChanges.NONE);
-        }
       }
     }
 
