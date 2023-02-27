@@ -22,10 +22,9 @@ import javax.swing.event.ListSelectionEvent
 
 class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   private val switchAlarm = Alarm()
-  private var initialScale = UISettingsUtils.instance.currentIdeScale
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
-    initialScale = UISettingsUtils.instance.currentIdeScale
+    val initialScale = UISettingsUtils.instance.currentIdeScale
 
     val options = IdeScaleTransformer.Settings.currentScaleOptions.toMutableList()
     if (options.firstOrNull { it.percentValue == initialScale.percentValue } == null) {
@@ -45,6 +44,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun showPopup(e: AnActionEvent?, popup: ListPopup) {
+    val initialScale = UISettingsUtils.instance.currentIdeScale
     switchAlarm.cancelAllRequests()
 
     popup.addListSelectionListener { event: ListSelectionEvent ->
@@ -77,7 +77,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun preselectAction(): Condition<in AnAction?> {
-    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == initialScale.percentValue }
+    return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == UISettingsUtils.instance.currentIdeScale.percentValue }
   }
 
   private class ChangeScaleAction(val scale: Float) : DumbAwareAction(scale.percentStringValue) {

@@ -28,17 +28,15 @@ import javax.swing.*;
 import java.util.List;
 
 public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
-  private UIManager.LookAndFeelInfo initialLaf;
   private final Alarm switchAlarm = new Alarm();
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    LafManager lafMan = LafManager.getInstance();
-    initialLaf = lafMan.getCurrentLookAndFeel();
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
 
     for (List<UIManager.LookAndFeelInfo> list : ThemesListProvider.getInstance().getShownThemes()) {
       if (group.getChildrenCount() > 0) group.addSeparator();
-      for (UIManager.LookAndFeelInfo lf: list) group.add(new LafChangeAction(lf, initialLaf == lf));
+      for (UIManager.LookAndFeelInfo lf : list) group.add(new LafChangeAction(lf, initialLaf == lf));
     }
 
     group.addSeparator();
@@ -53,6 +51,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
+    UIManager.LookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentLookAndFeel();
+
     switchAlarm.cancelAllRequests();
     if (Registry.is("ide.instant.theme.switch")) {
       popup.addListSelectionListener(event -> {
