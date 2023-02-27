@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @deprecated Use {@link java.util.function.Consumer} instead
  */
+@Deprecated
 public interface Consumer<T> {
   /**
    * @deprecated use {@link com.intellij.util.EmptyConsumer#getInstance()} instead
