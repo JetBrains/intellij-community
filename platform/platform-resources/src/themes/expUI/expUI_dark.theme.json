@@ -638,27 +638,39 @@
       "Users": {
         "1": {
           "Background": "Green6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey14"
         },
         "2": {
           "Background": "Red6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey14"
         },
         "3": {
           "Background": "Purple6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey14"
         },
         "4": {
           "Background": "Orange6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey14"
         },
         "5": {
           "Background": "Teal6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey14"
         },
         "6": {
           "Background": "Yellow6",
-          "Foreground": "Grey14"
+          "Foreground": "Grey14",
+          "StopFollowingLinkForeground": "Blue1",
+          "FollowingBorderTextForeground": "Grey1"
         }
       }
     },
