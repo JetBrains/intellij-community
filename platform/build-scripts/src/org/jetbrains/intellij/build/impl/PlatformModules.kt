@@ -187,7 +187,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.tracing.rt",
     "intellij.platform.util.base",
     "intellij.platform.util",
-    "intellij.platform.extensions",
     "intellij.platform.core",
   ), productLayout = productLayout, layout = layout)
   // used by jdom - pack to the same JAR
@@ -204,6 +203,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     // Scala uses GeneralCommandLine in JPS plugin
     "intellij.platform.ide.util.io",
     "intellij.platform.boot",
+    "intellij.platform.extensions",
   ), productLayout = productLayout, layout = layout)
   addModule("externalProcess-rt.jar", listOf(
     "intellij.platform.externalProcessAuthHelper.rt"
