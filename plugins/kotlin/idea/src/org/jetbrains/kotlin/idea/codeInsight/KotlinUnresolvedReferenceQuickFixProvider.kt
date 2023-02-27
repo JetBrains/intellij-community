@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.diagnostics.Severity
@@ -22,13 +23,15 @@ class KotlinUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQuickFixProv
         }.ifEmpty { return }
 
         val quickFixProvider = Fe10QuickFixProvider.getInstance(project)
+        val documentWindow = (element.containingFile.virtualFile as? VirtualFileWindow)?.documentWindow
         diagnostics.groupBy { it.psiElement }.forEach { (psiElement, sameElementDiagnostics) ->
             val textRange = psiElement.textRange
             if (textRange in element.textRange) {
+                val textRangeInHost = documentWindow?.injectedToHost(textRange) ?: textRange
                 sameElementDiagnostics.groupBy { it.factory }.forEach { (_, sameTypeDiagnostic) ->
                     val quickFixes = quickFixProvider.createUnresolvedReferenceQuickFixes(sameTypeDiagnostic)
                     quickFixes.values().forEach {
-                        registrar.register(textRange, it, null)
+                        registrar.register(textRangeInHost, it, null)
                     }
                 }
             }
