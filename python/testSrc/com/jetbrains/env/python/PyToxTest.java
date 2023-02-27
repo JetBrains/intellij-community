@@ -32,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Ilya.Kazakevich
  */
+@EnvTestTagsRequired(tags = "python3")
 public final class PyToxTest extends PyEnvTestCase {
   public PyToxTest() {
     super("tox");
