@@ -5,12 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.Magnificator
 import com.intellij.ui.components.ZoomableViewport
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
 import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.actionSystem.ImageEditorActions
@@ -100,6 +103,12 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     val actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true)
     actionToolbar.targetComponent = this
 
+    background = JBColor.lazy {
+      ObjectUtils.notNull(
+        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.PREVIEW_BACKGROUND),
+        EditorColorsManager.getInstance().globalScheme.defaultBackground)
+    }
+
     val toolbarPanel = actionToolbar.component
     toolbarPanel.background = JBColor.lazy { background }
     val topPanel: JPanel = NonOpaquePanel(BorderLayout())
@@ -114,6 +123,7 @@ class JCefImageViewerUI(private val myContentComponent: Component,
     myViewPort.setLayout(CardLayout())
     myViewer.preferredFocusedComponent.addMouseWheelListener(MOUSE_WHEEL_LISTENER)
     myViewPort.add(myContentComponent, IMAGE_PANEL)
+    myContentComponent.background = JBColor.lazy { background }
 
     val errorLabel = JLabel(
       ImagesBundle.message("error.broken.image.file.format"),
