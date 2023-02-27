@@ -573,9 +573,6 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   @RequiresBackgroundThread
   private HashMap<PropertiesFile, IProperty> findExistingProperties(Collection<PropertiesFile> files) {
-    try {
-      Thread.sleep(2000);
-    } catch (Exception e) {}
     final HashMap<PropertiesFile, IProperty> existingProperties = new HashMap<>();
     for (PropertiesFile propertiesFile : files) {
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
