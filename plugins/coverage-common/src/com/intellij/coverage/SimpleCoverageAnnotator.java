@@ -49,7 +49,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                                                @NotNull final CoverageSuitesBundle currentSuite) {
     final VirtualFile dir = directory.getVirtualFile();
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(dir, directory.getProject());
+    final boolean isInTestContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, directory.getProject()));
     if (!currentSuite.isTrackTestFolders() && isInTestContent) {
       return null;
     }
