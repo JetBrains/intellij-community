@@ -13,6 +13,7 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
 import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
