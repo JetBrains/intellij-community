@@ -4,7 +4,7 @@ package com.intellij.codeInspection.inspectionProfile
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
- * Extension provides pre-defined inspection groups which can be used inside the YAML profile configuration.
+ * Extension provides pre-defined inspection groups which can be used inside the YAML inspection profile.
  * @see InspectionBasicGroupProvider
  * @see YamlInspectionProfile
  */
