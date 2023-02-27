@@ -5,3 +5,5 @@ fun foo() {
 }
 
 fun call(s: String?) {}
+
+// IGNORE_FIR

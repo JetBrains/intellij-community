@@ -4,3 +4,5 @@ class C {
     @Suppress("REDUNDANT_NULLABLE")
     fun foo(): String?<caret>? = null
 }
+
+// IGNORE_FIR

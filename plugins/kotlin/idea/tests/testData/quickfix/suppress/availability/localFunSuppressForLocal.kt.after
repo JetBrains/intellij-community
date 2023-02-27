@@ -4,3 +4,5 @@ fun foo() {
     @Suppress("REDUNDANT_NULLABLE")
     fun local(): String?<caret>? = null
 }
+
+// IGNORE_FIR

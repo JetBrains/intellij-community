@@ -7,3 +7,5 @@
 
 @Suppress("SpellCheckingInspection")
 val str = "<caret>kjsghkjshtiurhuig"
+
+// IGNORE_FIR

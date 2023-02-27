@@ -4,3 +4,5 @@ class C {
     @Suppress("REDUNDANT_NULLABLE")
     constructor(s: String?<caret>?)
 }
+
+// IGNORE_FIR

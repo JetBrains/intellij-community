@@ -3,3 +3,5 @@
 @ann fun foo(): String?<caret>? = null
 
 annotation class ann
+
+// IGNORE_FIR

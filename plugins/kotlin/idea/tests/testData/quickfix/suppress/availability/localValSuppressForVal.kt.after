@@ -3,3 +3,5 @@
 fun foo() {
     @Suppress("REDUNDANT_NULLABLE") val a: String?<caret>? = null
 }
+
+// IGNORE_FIR

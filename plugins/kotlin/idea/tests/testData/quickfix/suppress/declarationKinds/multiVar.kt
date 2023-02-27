@@ -5,3 +5,5 @@ fun foo() {
 }
 
 data class Pair<A, B>(val a: A, val b: B)
+
+// IGNORE_FIR

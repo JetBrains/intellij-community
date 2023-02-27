@@ -5,3 +5,5 @@ fun foo() {
     @Suppress("UNUSED_EXPRESSION")
     a
 }
+
+// IGNORE_FIR
