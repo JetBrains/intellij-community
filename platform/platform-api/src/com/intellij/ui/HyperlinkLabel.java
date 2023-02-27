@@ -322,6 +322,11 @@ public class HyperlinkLabel extends HighlightableComponent {
     super.removeNotify();
   }
 
+  @Override
+  public void setForeground(Color fg) {
+    myAnchorAttributes.setForegroundColor(fg);
+  }
+
   /**
    * Hyperlink accessibility: "HYPERLINK" role and expose a "click" action.
    * @see AbstractButton.AccessibleAbstractButton
@@ -362,11 +367,15 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private final class CustomTextAttributes extends TextAttributes {
+    private Color customColor = null;
     private CustomTextAttributes(Color textBackgroundColor) {
       super(null, textBackgroundColor, null, null, Font.PLAIN);
     }
 
     @Override public Color getForegroundColor() {
+      if (customColor != null) {
+        return customColor;
+      }
       return !isEnabled() ? UIManager.getColor("Label.disabledForeground") :
              myMousePressed ? JBUI.CurrentTheme.Link.Foreground.PRESSED :
              myMouseHover ? JBUI.CurrentTheme.Link.Foreground.HOVERED :
@@ -382,7 +391,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
 
     @Override public void setForegroundColor(Color color) {
-      throw new UnsupportedOperationException();
+      customColor = color;
     }
     @Override public void setEffectColor(Color color) {
       throw new UnsupportedOperationException();
