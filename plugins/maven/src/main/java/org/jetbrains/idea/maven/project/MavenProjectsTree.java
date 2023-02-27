@@ -460,26 +460,36 @@ public final class MavenProjectsTree {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
+    var filesToAddModules = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       var isNew = null == findProject(file);
       boolean force = isNew ? false : forceUpdate;
+      if (isNew) {
+        filesToAddModules.add(file);
+      }
 
       updater.update(file, recursive, force);
+    }
 
+    for (VirtualFile file : filesToAddModules) {
       MavenProject mavenProject = findProject(file);
+      if (null == mavenProject) {
+        LOG.warn("Maven project not found: " + file.getPath());
+        continue;
+      }
       MavenProject aggregator = null;
-      if (isNew) {
-        for (MavenProject each : getProjects()) {
-          if (each.getExistingModuleFiles().contains(file)) {
-            aggregator = each;
-            break;
-          }
+      for (MavenProject each : getProjects()) {
+        if (each.getExistingModuleFiles().contains(file)) {
+          aggregator = each;
+          break;
         }
-        if (null == aggregator) {
-          addRootModule(mavenProject);
-        }
-        else {
-          addModule(aggregator, mavenProject);
+      }
+      if (null == aggregator) {
+        addRootModule(mavenProject);
+      }
+      else {
+        if (reconnect(aggregator, mavenProject)) {
+          updateContext.update(mavenProject, MavenProjectChanges.NONE);
         }
       }
     }
