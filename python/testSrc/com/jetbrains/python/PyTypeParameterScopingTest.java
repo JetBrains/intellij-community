@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-public class PyTypeVarScopingTest extends PyTestCase {
+public class PyTypeParameterScopingTest extends PyTestCase {
   public void testFunctionDeclaresOwnTypeVarInAnnotation() {
     assertTypeScopeVarOwner("func", "func",
                             """
@@ -293,7 +293,16 @@ public class PyTypeVarScopingTest extends PyTestCase {
                               """);
   }
 
-
+  public void testSelfTypeScope() {
+    assertTypeScopeVarOwner("C.m", "C",
+                            """
+                              from typing import Self
+                              
+                              class C:
+                                  def m(self) -> Self:
+                                      ...
+                              """);
+  }
 
   private void assertTypeScopeVarOwner(@NotNull String elementQName,
                                        @NotNull String scopeOwnerQName,
@@ -321,7 +330,7 @@ public class PyTypeVarScopingTest extends PyTestCase {
     else if (type instanceof PyCallableType) {
       type = ((PyCallableType)type).getReturnType(typeEvalContext);
     }
-    PyGenericType typeVar = assertInstanceOf(type, PyGenericType.class);
+    PyTypeParameterType typeVar = assertInstanceOf(type, PyTypeParameterType.class);
     QualifiedName ownerQualifiedName = QualifiedName.fromDottedString(scopeOwnerQName);
     PsiElement owner = resolveQualifiedName(pyFile, ownerQualifiedName, typeEvalContext);
     assertNotNull(scopeOwnerQName, owner);
