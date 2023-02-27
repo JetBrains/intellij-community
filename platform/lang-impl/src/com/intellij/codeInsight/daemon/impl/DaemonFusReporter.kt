@@ -85,7 +85,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
 
 class DaemonFusCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP: EventLogGroup = EventLogGroup("daemon", 2)
+    val GROUP: EventLogGroup = EventLogGroup("daemon", 3)
     val ERRORS: IntEventField = EventFields.Int("errors")
     val WARNINGS: IntEventField = EventFields.Int("warnings")
     val LINES: IntEventField = EventFields.Int("lines")
