@@ -161,10 +161,12 @@ public final class CommonProcessors {
   }
 
   /**
+   * @deprecated use {@code x -> { processX(x); return true; } } code instead
    * @return processor processing all elements.
    * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning {@code false} value.
    */
   @NotNull
+  @Deprecated
   public static <T> Processor<T> processAll(@NotNull final Consumer<? super T> consumer) {
     return t -> {
       consumer.consume(t);
