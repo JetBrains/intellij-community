@@ -50,6 +50,8 @@ class IdeScaleTransformer : Disposable {
   private fun tweakEditorFont() {
     for (editor in EditorFactory.getInstance().allEditors) {
       if (editor is EditorEx) {
+        if (editor.isDisposed) continue
+
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
         editor.setFontSize(settingsUtils.scaledEditorFontSize)
       }
