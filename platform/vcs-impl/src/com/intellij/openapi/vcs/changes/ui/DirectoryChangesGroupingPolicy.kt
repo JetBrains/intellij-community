@@ -30,7 +30,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
       parentPath = parentPath.parent ?: break
 
       val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
-      if (cachedParent != null && cachedParent != grandParent) {
+      if (cachedParent != null) {
         chainParent = cachedParent
         break
       }
@@ -40,10 +40,6 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
         pathNode.markAsHelperNode()
         DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key] = pathNode
         nodes.add(pathNode)
-      }
-
-      if (cachedParent != null) { // cachedParent == grandParent
-        break
       }
     }
 
