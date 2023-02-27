@@ -179,10 +179,10 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     List<MavenProject> roots = myTree.getRootProjects();
     assertEquals(2, roots.size());
-    assertEquals(m2, roots.get(0).getFile());
-    assertEquals(m1, roots.get(1).getFile());
-    assertEquals("m2", roots.get(0).getMavenId().getArtifactId());
-    assertEquals("m1", roots.get(1).getMavenId().getArtifactId());
+    assertEquals(m1, roots.get(0).getFile());
+    assertEquals(m2, roots.get(1).getFile());
+    assertEquals("m1", roots.get(0).getMavenId().getArtifactId());
+    assertEquals("m2", roots.get(1).getMavenId().getArtifactId());
 
     assertEquals("updated: m2 m1 deleted: <none> ", listener.log);
   }
@@ -1911,7 +1911,8 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     List<MavenProject> roots = myTree.getRootProjects();
 
-    MavenProject childProject = roots.get(1);
+    assertEquals(2, roots.size());
+    MavenProject childProject = roots.get(0);
     assertUnorderedPathsAreEqual(childProject.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
     createProfilesXmlOldStyle("parent",

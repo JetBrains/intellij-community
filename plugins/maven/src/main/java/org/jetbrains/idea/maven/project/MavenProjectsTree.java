@@ -460,7 +460,7 @@ public final class MavenProjectsTree {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
-    var filesToAddModules = new ArrayList<VirtualFile>();
+    var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       var isNew = null == findProject(file);
       boolean force = isNew ? false : forceUpdate;
@@ -778,9 +778,14 @@ public final class MavenProjectsTree {
     myMavenIdToProjectMapping.remove(mavenId);
   }
 
+  private static Path mavenProjectToNioPath(@NotNull MavenProject mavenProject) {
+    return Path.of(mavenProject.getFile().getParent().getPath());
+  }
+
   private void addRootModule(@NotNull MavenProject project) {
     withWriteLock(() -> {
       myRootProjects.add(project);
+      myRootProjects.sort(Comparator.comparing(MavenProjectsTree::mavenProjectToNioPath));
     });
   }
 
@@ -810,7 +815,7 @@ public final class MavenProjectsTree {
 
     withWriteLock(() -> {
       removeModule(prevAggregator, project);
-      myRootProjects.add(project);
+      addRootModule(project);
     });
 
     return true;
