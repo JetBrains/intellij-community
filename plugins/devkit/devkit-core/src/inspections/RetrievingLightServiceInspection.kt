@@ -24,7 +24,6 @@ internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
   private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
   private val COMPONENT_MANAGER_GET_SERVICE: CallMatcher = CallMatcher.anyOf(
     CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-    CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getServiceIfCreated").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
     CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS, "boolean"))
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
