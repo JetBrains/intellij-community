@@ -618,21 +618,21 @@ public final class ExpectedTypesProvider {
           }
         }
       }
-      result.addAll(findTypeInfosForExpressionTypes(labeledExpressionTypes, mustBeReference, statement));
-      result.addAll(findTypeInfosForPatternTypes(labeledPatternsTypes, statement));
+      result.addAll(findExpectedTypesForExpressions(labeledExpressionTypes, mustBeReference, statement));
+      result.addAll(findExpectedTypesForPatterns(labeledPatternsTypes, statement));
       return result;
     }
 
 
-    private static List<ExpectedTypeInfo> findTypeInfosForPatternTypes(@NotNull List<PsiType> expectedTypes,
+    private static List<ExpectedTypeInfo> findExpectedTypesForPatterns(@NotNull List<PsiType> expectedTypes,
                                                                        @NotNull PsiSwitchBlock statement) {
       PsiManager manager = statement.getManager();
-      PsiType lub = getLUB(expectedTypes, manager);
+      PsiType lub = getLeastUpperBound(expectedTypes, manager);
       if (lub == null) return Collections.emptyList();
       return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, TailType.NONE));
     }
 
-    private static PsiType getLUB(List<PsiType> types, PsiManager manager) {
+    private static PsiType getLeastUpperBound(List<PsiType> types, PsiManager manager) {
       if (types.isEmpty()) return null;
       Iterator<PsiType> iterator = types.iterator();
       PsiType accumulator = iterator.next();
@@ -645,7 +645,7 @@ public final class ExpectedTypesProvider {
     }
 
     @NotNull
-    private static List<ExpectedTypeInfo> findTypeInfosForExpressionTypes(@NotNull List<PsiType> expectedTypes,
+    private static List<ExpectedTypeInfo> findExpectedTypesForExpressions(@NotNull List<PsiType> expectedTypes,
                                                                           boolean mustBeReference,
                                                                           @NotNull PsiSwitchBlock context) {
       List<ExpectedTypeInfo> result = new ArrayList<>();
